@@ -319,8 +319,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenOneBindingTableEntryWh
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState;
-    bindingTableState.sInit();
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
     auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
     size_t sizeUsed = 0x20;
@@ -353,8 +352,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhen
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     uint32_t numBindingTable = 0;
-    BINDING_TABLE_STATE bindingTableState;
-    bindingTableState.sInit();
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
     auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
     size_t sizeUsed = 0x20;
@@ -785,8 +783,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER = typename FamilyType::WALKER_TYPE;
     uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState;
-    bindingTableState.sInit();
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -816,8 +813,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThen
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER = typename FamilyType::WALKER_TYPE;
     uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState;
-    bindingTableState.sInit();
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -846,8 +842,7 @@ HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatching
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState;
-    bindingTableState.sInit();
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
     auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
     auto ioh = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
@@ -1135,8 +1130,7 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessKernelWhenBindlessModeE
     commandContainer->setDirtyStateForAllHeaps(false);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState;
-    bindingTableState.sInit();
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1170,8 +1164,7 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindfulKernelWhenBindlessModeEn
     commandContainer->setDirtyStateForAllHeaps(false);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState;
-    bindingTableState.sInit();
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1205,8 +1198,7 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessModeEnabledWhenDispatch
     commandContainer->setDirtyStateForAllHeaps(false);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState;
-    bindingTableState.sInit();
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

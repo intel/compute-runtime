@@ -141,7 +141,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
         timestampPacket->setPacketsUsed(partitionCount);
     } else {
-        auto computeWalkerOnStream = reinterpret_cast<typename GfxFamily::COMPUTE_WALKER *>(commandStream.getSpace(sizeof(typename GfxFamily::COMPUTE_WALKER)));
+        auto computeWalkerOnStream = commandStream.getSpaceForCmd<typename GfxFamily::COMPUTE_WALKER>();
         *computeWalkerOnStream = walkerCmd;
     }
 }

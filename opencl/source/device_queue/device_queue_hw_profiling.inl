@@ -13,15 +13,17 @@ namespace NEO {
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::addProfilingEndCmds(uint64_t timestampAddress) {
 
-    auto pPipeControlCmd = (PIPE_CONTROL *)slbCS.getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
-    pPipeControlCmd->setCommandStreamerStallEnable(true);
+    auto pipeControlSpace = (PIPE_CONTROL *)slbCS.getSpace(sizeof(PIPE_CONTROL));
+    auto pipeControlCmd = GfxFamily::cmdInitPipeControl;
+    pipeControlCmd.setCommandStreamerStallEnable(true);
+    *pipeControlSpace = pipeControlCmd;
 
     //low part
-    auto pMICmdLow = (MI_STORE_REGISTER_MEM *)slbCS.getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pMICmdLow = GfxFamily::cmdInitStoreRegisterMem;
-    GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(pMICmdLow);
-    pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    pMICmdLow->setMemoryAddress(timestampAddress);
+    auto mICmdLowSpace = (MI_STORE_REGISTER_MEM *)slbCS.getSpace(sizeof(MI_STORE_REGISTER_MEM));
+    auto mICmdLow = GfxFamily::cmdInitStoreRegisterMem;
+    GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(&mICmdLow);
+    mICmdLow.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    mICmdLow.setMemoryAddress(timestampAddress);
+    *mICmdLowSpace = mICmdLow;
 }
 } // namespace NEO

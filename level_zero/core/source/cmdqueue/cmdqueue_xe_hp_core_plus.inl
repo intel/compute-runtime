@@ -54,7 +54,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         auto &hwInfo = neoDevice->getHardwareInfo();
         auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-            auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
+            pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
             *pSbaCmd = sbaCmd;
         }
 

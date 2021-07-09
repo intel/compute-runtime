@@ -59,13 +59,13 @@ void DeviceQueueHw<GfxFamily>::buildSlbDummyCommands() {
 
         addMiAtomicCmdWa((uint64_t)&igilCmdQueue->m_controls.m_DummyAtomicOperationPlaceholder);
 
-        auto mediaIdLoad = slbCS.getSpaceForCmd<MEDIA_INTERFACE_DESCRIPTOR_LOAD>();
-        *mediaIdLoad = GfxFamily::cmdInitMediaInterfaceDescriptorLoad;
-        mediaIdLoad->setInterfaceDescriptorTotalLength(2048);
+        auto mediaIdLoadSpace = slbCS.getSpaceForCmd<MEDIA_INTERFACE_DESCRIPTOR_LOAD>();
+        auto mediaIdLoad = GfxFamily::cmdInitMediaInterfaceDescriptorLoad;
+        mediaIdLoad.setInterfaceDescriptorTotalLength(2048);
 
         auto dataStartAddress = colorCalcStateSize;
-
-        mediaIdLoad->setInterfaceDescriptorDataStartAddress(dataStartAddress + sizeof(INTERFACE_DESCRIPTOR_DATA) * schedulerIDIndex);
+        mediaIdLoad.setInterfaceDescriptorDataStartAddress(dataStartAddress + sizeof(INTERFACE_DESCRIPTOR_DATA) * schedulerIDIndex);
+        *mediaIdLoadSpace = mediaIdLoad;
 
         addLriCmdWa(true);
 
@@ -80,14 +80,15 @@ void DeviceQueueHw<GfxFamily>::buildSlbDummyCommands() {
             addPipeControlCmdWa(true);
         }
 
-        auto gpgpuWalker = slbCS.getSpaceForCmd<GPGPU_WALKER>();
-        *gpgpuWalker = GfxFamily::cmdInitGpgpuWalker;
-        gpgpuWalker->setSimdSize(GPGPU_WALKER::SIMD_SIZE::SIMD_SIZE_SIMD16);
-        gpgpuWalker->setThreadGroupIdXDimension(1);
-        gpgpuWalker->setThreadGroupIdYDimension(1);
-        gpgpuWalker->setThreadGroupIdZDimension(1);
-        gpgpuWalker->setRightExecutionMask(0xFFFFFFFF);
-        gpgpuWalker->setBottomExecutionMask(0xFFFFFFFF);
+        auto gpgpuWalkerSpace = slbCS.getSpaceForCmd<GPGPU_WALKER>();
+        auto gpgpuWalker = GfxFamily::cmdInitGpgpuWalker;
+        gpgpuWalker.setSimdSize(GPGPU_WALKER::SIMD_SIZE::SIMD_SIZE_SIMD16);
+        gpgpuWalker.setThreadGroupIdXDimension(1);
+        gpgpuWalker.setThreadGroupIdYDimension(1);
+        gpgpuWalker.setThreadGroupIdZDimension(1);
+        gpgpuWalker.setRightExecutionMask(0xFFFFFFFF);
+        gpgpuWalker.setBottomExecutionMask(0xFFFFFFFF);
+        *gpgpuWalkerSpace = gpgpuWalker;
 
         mediaStateFlush = slbCS.getSpaceForCmd<MEDIA_STATE_FLUSH>();
         *mediaStateFlush = GfxFamily::cmdInitMediaStateFlush;
@@ -109,10 +110,11 @@ void DeviceQueueHw<GfxFamily>::buildSlbDummyCommands() {
     auto bbStartOffset = (commandsSize * 128) - slbCS.getUsed();
     slbCS.getSpace(bbStartOffset);
 
-    auto bbStart = slbCS.getSpaceForCmd<MI_BATCH_BUFFER_START>();
-    *bbStart = GfxFamily::cmdInitBatchBufferStart;
+    auto bbStartSpace = slbCS.getSpaceForCmd<MI_BATCH_BUFFER_START>();
+    auto bbStart = GfxFamily::cmdInitBatchBufferStart;
     auto slbPtr = reinterpret_cast<uintptr_t>(slbBuffer->getUnderlyingBuffer());
-    bbStart->setBatchBufferStartAddressGraphicsaddress472(slbPtr);
+    bbStart.setBatchBufferStartAddressGraphicsaddress472(slbPtr);
+    *bbStartSpace = bbStart;
 
     igilCmdQueue->m_controls.m_CleanupSectionSize = 0;
     igilQueue->m_controls.m_CleanupSectionAddress = 0;
@@ -124,12 +126,12 @@ void DeviceQueueHw<GfxFamily>::addMediaStateClearCmds() {
 
     addPipeControlCmdWa();
 
-    auto pipeControl = slbCS.getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = GfxFamily::cmdInitPipeControl;
-    pipeControl->setGenericMediaStateClear(true);
-    pipeControl->setCommandStreamerStallEnable(true);
-
-    addDcFlushToPipeControlWa(pipeControl);
+    auto pipeControlSpace = slbCS.getSpaceForCmd<PIPE_CONTROL>();
+    auto pipeControl = GfxFamily::cmdInitPipeControl;
+    pipeControl.setGenericMediaStateClear(true);
+    pipeControl.setCommandStreamerStallEnable(true);
+    addDcFlushToPipeControlWa(&pipeControl);
+    *pipeControlSpace = pipeControl;
 
     auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&slbCS, device->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};

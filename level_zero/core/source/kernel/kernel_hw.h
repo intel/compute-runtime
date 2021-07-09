@@ -48,10 +48,12 @@ struct KernelHw : public KernelImp {
             offset = 0;
         }
         void *surfaceStateAddress = nullptr;
+        auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
         if (NEO::isValidOffset(argInfo.bindless)) {
             surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
         } else {
             surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
+            surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
         }
         uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
@@ -66,10 +68,11 @@ struct KernelHw : public KernelImp {
         auto mocs = this->module->getDevice()->getMOCS(l3Enabled, false);
 
         NEO::Device *neoDevice = module->getDevice()->getNEODevice();
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceStateAddress, bufferAddressForSsh, bufferSizeForSsh, mocs,
+        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(&surfaceState, bufferAddressForSsh, bufferSizeForSsh, mocs,
                                                          false, false, false, neoDevice->getNumAvailableDevices(),
                                                          alloc, neoDevice->getGmmHelper(),
                                                          kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics, 1u);
+        *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
     }
 
     std::unique_ptr<Kernel> clone() const override {

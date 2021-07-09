@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,11 +98,12 @@ void ExperimentalCommandBuffer::addExperimentalCommands() {
     *semaphoreData = 1;
     uint64_t gpuAddr = experimentalAllocation->getGpuAddress() + experimentalAllocationOffset;
 
-    auto semaphoreCmd = currentStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    *semaphoreCmd = GfxFamily::cmdInitMiSemaphoreWait;
-    semaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD);
-    semaphoreCmd->setSemaphoreDataDword(*semaphoreData);
-    semaphoreCmd->setSemaphoreGraphicsAddress(gpuAddr);
+    auto semaphoreCmdSpace = currentStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    auto semaphoreCmd = GfxFamily::cmdInitMiSemaphoreWait;
+    semaphoreCmd.setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD);
+    semaphoreCmd.setSemaphoreDataDword(*semaphoreData);
+    semaphoreCmd.setSemaphoreGraphicsAddress(gpuAddr);
+    *semaphoreCmdSpace = semaphoreCmd;
 }
 
 template <typename GfxFamily>

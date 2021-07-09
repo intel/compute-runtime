@@ -126,13 +126,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     if (neoDevice->getDebugger()) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
-        auto surfaceState = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
+        auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
         auto debugSurface = device->getDebugSurface();
         auto mocs = device->getMOCS(false, false);
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceState, debugSurface->getGpuAddress(),
+        auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(&surfaceState, debugSurface->getGpuAddress(),
                                                          debugSurface->getUnderlyingBufferSize(), mocs,
                                                          false, false, false, neoDevice->getNumAvailableDevices(),
                                                          debugSurface, neoDevice->getGmmHelper(), kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, 1u);
+        *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
 
     appendSignalEventPostWalker(hEvent);

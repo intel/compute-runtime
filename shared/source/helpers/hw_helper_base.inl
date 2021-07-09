@@ -160,9 +160,9 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
         EncodeSurfaceState<Family>::setCoherencyType(&state, RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
         state.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
-    *surfaceState = state;
+    setL1CachePolicy(useL1Cache, &state, rootDeviceEnvironment.getHardwareInfo());
 
-    setL1CachePolicy(useL1Cache, surfaceState, rootDeviceEnvironment.getHardwareInfo());
+    *surfaceState = state;
 }
 
 template <typename GfxFamily>

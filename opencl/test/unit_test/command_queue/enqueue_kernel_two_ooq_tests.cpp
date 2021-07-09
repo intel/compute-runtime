@@ -141,7 +141,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhe
     auto numCommands = commandsList.size();
     EXPECT_EQ(1u, numCommands);
 
-    auto expectedCmd = MEDIA_VFE_STATE::sInit();
+    auto expectedCmd = FamilyType::cmdInitMediaVfeState;
 
     if (numCommands > 1) {
         uint32_t commandIndex = 0;

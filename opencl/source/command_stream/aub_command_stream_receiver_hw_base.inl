@@ -826,11 +826,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
     uint32_t *header = static_cast<uint32_t *>(linearStream.getSpace(sizeof(uint32_t)));
     *header = getGUCWorkQueueItemHeader();
 
-    MI_BATCH_BUFFER_START *miBatchBufferStart = linearStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
+    MI_BATCH_BUFFER_START *miBatchBufferStartSpace = linearStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
     DEBUG_BREAK_IF(bufferSize != linearStream.getUsed());
-    *miBatchBufferStart = GfxFamily::cmdInitBatchBufferStart;
-    miBatchBufferStart->setBatchBufferStartAddressGraphicsaddress472(AUB::ptrToPPGTT(buffer.get()));
-    miBatchBufferStart->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+    auto miBatchBufferStart = GfxFamily::cmdInitBatchBufferStart;
+    miBatchBufferStart.setBatchBufferStartAddressGraphicsaddress472(AUB::ptrToPPGTT(buffer.get()));
+    miBatchBufferStart.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+    *miBatchBufferStartSpace = miBatchBufferStart;
 
     auto physBufferAddres = ppgtt->map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize,
                                        this->getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()),

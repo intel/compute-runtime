@@ -94,12 +94,14 @@ void DeviceQueueHw<GfxFamily>::resetDeviceQueue() {
 
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::initPipeControl(PIPE_CONTROL *pc) {
-    *pc = GfxFamily::cmdInitPipeControl;
-    pc->setStateCacheInvalidationEnable(0x1);
-    pc->setDcFlushEnable(true);
-    pc->setPipeControlFlushEnable(true);
-    pc->setTextureCacheInvalidationEnable(true);
-    pc->setCommandStreamerStallEnable(true);
+    auto cmd = GfxFamily::cmdInitPipeControl;
+    cmd.setStateCacheInvalidationEnable(0x1);
+    cmd.setDcFlushEnable(true);
+    cmd.setPipeControlFlushEnable(true);
+    cmd.setTextureCacheInvalidationEnable(true);
+    cmd.setCommandStreamerStallEnable(true);
+
+    *pc = cmd;
 }
 
 template <typename GfxFamily>
