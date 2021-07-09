@@ -23,6 +23,7 @@
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/system_info.h"
+#include "shared/source/os_interface/linux/system_info_impl.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/directory.h"
@@ -750,6 +751,37 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
 int Drm::getTimestampFrequency(int &frequency) {
     frequency = 0;
     return getParamIoctl(I915_PARAM_CS_TIMESTAMP_FREQUENCY, &frequency);
+}
+
+bool Drm::querySystemInfo() {
+    auto length = 0;
+
+    auto deviceBlobQuery = this->query(DRM_I915_QUERY_HWCONFIG_TABLE, DrmQueryItemFlags::empty, length);
+    auto deviceBlob = reinterpret_cast<uint32_t *>(deviceBlobQuery.get());
+    if (!deviceBlob) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
+        return false;
+    }
+    this->systemInfo.reset(new SystemInfoImpl(deviceBlob, length));
+
+    return true;
+}
+
+void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * sysInfo->getNumThreadsPerEu();
+    gtSysInfo->L3CacheSizeInKb = sysInfo->getL3CacheSizeInKb();
+    gtSysInfo->L3BankCount = sysInfo->getL3BankCount();
+    gtSysInfo->MaxFillRate = sysInfo->getMaxFillRate();
+    gtSysInfo->TotalVsThreads = sysInfo->getTotalVsThreads();
+    gtSysInfo->TotalHsThreads = sysInfo->getTotalHsThreads();
+    gtSysInfo->TotalDsThreads = sysInfo->getTotalDsThreads();
+    gtSysInfo->TotalGsThreads = sysInfo->getTotalGsThreads();
+    gtSysInfo->TotalPsThreadsWindowerRange = sysInfo->getTotalPsThreads();
+    gtSysInfo->MaxEuPerSubSlice = sysInfo->getMaxEuPerDualSubSlice();
+    gtSysInfo->MaxSlicesSupported = sysInfo->getMaxSlicesSupported();
+    gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
+    gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
 }
 
 } // namespace NEO

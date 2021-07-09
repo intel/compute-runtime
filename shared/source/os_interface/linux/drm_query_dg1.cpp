@@ -51,12 +51,6 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     return 0;
 }
 
-bool Drm::querySystemInfo() {
-    return false;
-}
-
-void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {}
-
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_ENGINE_INFO, DrmQueryItemFlags::empty, length);

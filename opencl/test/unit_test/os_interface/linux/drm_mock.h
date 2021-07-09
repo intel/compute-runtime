@@ -205,6 +205,7 @@ class DrmMockEngine : public DrmMock {
     int handleRemainingRequests(unsigned long request, void *arg) override;
 
     void handleQueryItem(drm_i915_query_item *queryItem);
+    bool failQueryDeviceBlob = false;
 };
 
 class DrmMockResources : public DrmMock {

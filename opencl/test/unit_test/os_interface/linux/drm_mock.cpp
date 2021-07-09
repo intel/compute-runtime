@@ -10,6 +10,8 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include "opencl/test/unit_test/os_interface/linux/drm_mock_device_blob.h"
+
 #include <cstring>
 
 const int DrmMock::mockFd;
@@ -265,6 +267,20 @@ void DrmMockEngine::handleQueryItem(drm_i915_query_item *queryItem) {
             }
         }
         break;
+    case DRM_I915_QUERY_HWCONFIG_TABLE: {
+        if (failQueryDeviceBlob) {
+            queryItem->length = -EINVAL;
+        } else {
+            int deviceBlobSize = sizeof(dummyDeviceBlobData);
+            if (queryItem->length == 0) {
+                queryItem->length = deviceBlobSize;
+            } else {
+                EXPECT_EQ(deviceBlobSize, queryItem->length);
+                auto deviceBlobData = reinterpret_cast<uint32_t *>(queryItem->data_ptr);
+                memcpy(deviceBlobData, &dummyDeviceBlobData, deviceBlobSize);
+            }
+        }
+    } break;
     }
 }
 
