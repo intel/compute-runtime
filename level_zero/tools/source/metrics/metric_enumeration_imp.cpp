@@ -11,6 +11,8 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
 
+#include "level_zero/core/source/device/device_imp.h"
+
 #include <algorithm>
 
 namespace L0 {
@@ -120,16 +122,38 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    if (subDeviceIndex == 0) {
-        pAdapter->OpenMetricsDevice(&pMetricsDevice);
-    } else {
-        pAdapter->OpenMetricsSubDevice(subDeviceIndex, &pMetricsDevice);
-    }
+    auto &device = metricContext.getDevice();
+    if (device.isMultiDeviceCapable()) {
 
-    if (pMetricsDevice == nullptr) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", subDeviceIndex);
-        cleanupMetricsDiscovery();
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        // Open metrics device for each sub device.
+        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+
+        for (uint32_t i = 0; i < deviceImp.subDevices.size(); i++) {
+
+            auto &metricsDevice = deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().pMetricsDevice;
+
+            pAdapter->OpenMetricsSubDevice(i, &metricsDevice);
+
+            if (metricsDevice == nullptr) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", i);
+                cleanupMetricsDiscovery();
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+        }
+    } else {
+        if (subDeviceIndex == 0) {
+            // Open metrics device for root device or sub device with index 0.
+            pAdapter->OpenMetricsDevice(&pMetricsDevice);
+        } else {
+            // Open metrics device for a given sub device index.
+            pAdapter->OpenMetricsSubDevice(subDeviceIndex, &pMetricsDevice);
+        }
+
+        if (pMetricsDevice == nullptr) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", subDeviceIndex);
+            cleanupMetricsDiscovery();
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
     }
 
     return ZE_RESULT_SUCCESS;
@@ -142,9 +166,29 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
 
     metricGroups.clear();
 
-    if (pAdapter && pMetricsDevice) {
-        pAdapter->CloseMetricsDevice(pMetricsDevice);
-        pMetricsDevice = nullptr;
+    if (pAdapter) {
+
+        auto &device = metricContext.getDevice();
+        if (device.isMultiDeviceCapable()) {
+
+            // Close metrics device for each sub device.
+            const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+
+            for (uint32_t i = 0; i < deviceImp.subDevices.size(); i++) {
+
+                auto &metricsDevice = deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().pMetricsDevice;
+
+                if (metricsDevice) {
+                    pAdapter->CloseMetricsDevice(metricsDevice);
+                    metricsDevice = nullptr;
+                }
+            }
+        } else if (pMetricsDevice) {
+
+            // Close metrics device for one sub device or root device.
+            pAdapter->CloseMetricsDevice(pMetricsDevice);
+            pMetricsDevice = nullptr;
+        }
     }
 
     if (hMetricsDiscovery != nullptr) {
@@ -156,6 +200,22 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
 }
 
 ze_result_t MetricEnumeration::cacheMetricInformation() {
+
+    MetricsDiscovery::IMetricsDevice_1_5 *pMetricsDevice = nullptr;
+
+    auto &device = metricContext.getDevice();
+
+    if (device.isMultiDeviceCapable()) {
+
+        // Get metric information from sub device 0.
+        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+        pMetricsDevice = deviceImp.subDevices[0]->getMetricContext().getMetricEnumeration().pMetricsDevice;
+    } else {
+
+        // Get metric information from root or sub device.
+        pMetricsDevice = this->pMetricsDevice;
+    }
+
     DEBUG_BREAK_IF(pMetricsDevice == nullptr);
 
     MetricsDiscovery::TMetricsDeviceParams_1_2 *pMetricsDeviceParams = pMetricsDevice->GetParams();

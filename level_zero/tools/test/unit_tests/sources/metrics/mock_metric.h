@@ -166,5 +166,31 @@ class MetricContextFixture : public ContextFixture {
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
 };
 
+class MetricMultiDeviceFixture : public MultiDeviceFixture {
+
+  protected:
+    void SetUp() override;
+    void TearDown() override;
+    void openMetricsAdapter();
+    void openMetricsAdapterGroup();
+
+  public:
+    std::vector<L0::Device *> devices;
+
+    // Mocked objects.
+    std::unique_ptr<Mock<MetricEnumeration>> mockMetricEnumeration = nullptr;
+    std::unique_ptr<Mock<MetricsLibrary>> mockMetricsLibrary = nullptr;
+
+    // Mocked metrics library/discovery APIs.
+    MockMetricsLibraryApi mockMetricsLibraryApi = {};
+    MockMetricsDiscoveryApi mockMetricsDiscoveryApi = {};
+
+    // Metrics discovery device
+    Mock<IAdapterGroup_1_9> adapterGroup;
+    Mock<IAdapter_1_9> adapter;
+    Mock<IMetricsDevice_1_5> metricsDevice;
+    MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
+};
+
 } // namespace ult
 } // namespace L0
