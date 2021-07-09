@@ -66,6 +66,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     stateBaseAddress->setDynamicStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
     stateBaseAddress->setGeneralStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
     stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
+    stateBaseAddress->setBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
 
     bool enableMultiGpuAtomics = isMultiOsContextCapable;
     if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
