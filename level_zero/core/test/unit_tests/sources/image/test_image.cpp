@@ -20,6 +20,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
+#include "third_party/opencl_headers/CL/cl_ext_intel.h"
+
 namespace L0 {
 namespace ult {
 

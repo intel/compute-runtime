@@ -15,6 +15,7 @@
 
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 

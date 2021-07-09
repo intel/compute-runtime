@@ -13,9 +13,6 @@
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-
 namespace NEO {
 struct MockAubCenterFixture {
 

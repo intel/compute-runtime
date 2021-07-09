@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -100,9 +101,10 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
-struct WddmInstrumentationGmmFixture {
+struct WddmInstrumentationGmmFixture : DeviceFixture {
     void SetUp() {
-        executionEnvironment = platform()->peekExecutionEnvironment();
+        DeviceFixture::SetUp();
+        executionEnvironment = pDevice->getExecutionEnvironment();
         auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         gmmMem = new ::testing::NiceMock<GmockGmmMemory>(rootDeviceEnvironment->getGmmClientContext());
@@ -111,6 +113,7 @@ struct WddmInstrumentationGmmFixture {
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     }
     void TearDown() {
+        DeviceFixture::TearDown();
     }
 
     WddmMock *wddm;

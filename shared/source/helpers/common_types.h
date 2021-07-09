@@ -13,6 +13,8 @@ namespace NEO {
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
 using DeviceBitfield = std::bitset<32>;
+class Device;
+using DeviceVector = std::vector<std::unique_ptr<Device>>;
 
 enum class DebugPauseState : uint32_t {
     disabled,

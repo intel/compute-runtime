@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
