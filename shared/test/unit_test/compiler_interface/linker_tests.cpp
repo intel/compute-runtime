@@ -199,6 +199,33 @@ TEST(LinkerInputTests, givenFunctionsSymbolTableThenUndefIsNotAllowed) {
     EXPECT_FALSE(linkerInput.isValid());
 }
 
+TEST(LinkerInputTests, givenFunctionsSymbolTableWithAllowUndefinedSymbolsThenUndefIsAllowed) {
+    NEO::LinkerInput linkerInput;
+    vISA::GenSymEntry entry = {};
+    entry.s_name[0] = 'A';
+    entry.s_offset = 8;
+    entry.s_size = 16;
+    entry.s_type = vISA::GenSymType::S_UNDEF;
+    linkerInput.undefinedSymbolsAllowed = true;
+
+    auto decodeResult = linkerInput.decodeExportedFunctionsSymbolTable(&entry, 1, 3);
+    EXPECT_TRUE(decodeResult);
+    EXPECT_TRUE(linkerInput.isValid());
+}
+
+TEST(LinkerInputTests, givenFunctionsSymbolTableThenNoTypeIsNotAllowed) {
+    NEO::LinkerInput linkerInput;
+    vISA::GenSymEntry entry = {};
+    entry.s_name[0] = 'A';
+    entry.s_offset = 8;
+    entry.s_size = 16;
+    entry.s_type = vISA::GenSymType::S_NOTYPE;
+
+    auto decodeResult = linkerInput.decodeExportedFunctionsSymbolTable(&entry, 1, 3);
+    EXPECT_FALSE(decodeResult);
+    EXPECT_FALSE(linkerInput.isValid());
+}
+
 TEST(LinkerInputTests, givenRelocationTableThenRelocationEntriesAreProperlyParsed) {
     NEO::LinkerInput linkerInput;
     vISA::GenRelocEntry entry = {};
