@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/linux/system_info_impl.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -597,4 +598,39 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSVal), outHwInfo.gtSystemInfo.MaxSlicesSupported);
 
     EXPECT_EQ(hwInfo.gtSystemInfo.MaxDualSubSlicesSupported, outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
+}
+
+TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenSystemInfoIsCreatedThenSetHardwareInfoAttributesWithZeros) {
+    struct DrmMockToQuerySystemInfo : public DrmMock {
+        DrmMockToQuerySystemInfo(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+        bool querySystemInfo() override { return true; }
+    };
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto setupHardwareInfo = [](HardwareInfo *, bool) {};
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};
+
+    drm.systemInfo.reset(new SystemInfoImpl(nullptr, 0));
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_EQ(0u, gtSystemInfo.L3CacheSizeInKb);
+    EXPECT_EQ(0u, gtSystemInfo.L3BankCount);
+    EXPECT_EQ(0u, gtSystemInfo.MaxFillRate);
+    EXPECT_EQ(0u, gtSystemInfo.TotalVsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalHsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalGsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalPsThreadsWindowerRange);
+    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.MaxEuPerSubSlice);
+    EXPECT_EQ(0u, gtSystemInfo.MaxSlicesSupported);
+    EXPECT_EQ(0u, gtSystemInfo.MaxSubSlicesSupported);
+    EXPECT_EQ(0u, gtSystemInfo.MaxDualSubSlicesSupported);
 }
