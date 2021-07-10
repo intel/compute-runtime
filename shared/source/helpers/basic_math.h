@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <stdio.h>
+#include <limits>
 
 namespace Math {
 
