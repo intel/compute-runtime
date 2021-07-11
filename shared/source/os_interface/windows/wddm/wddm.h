@@ -189,6 +189,10 @@ class Wddm : public DriverModel {
 
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
 
+    ADAPTER_BDF getAdapterBDF() const {
+        return adapterBDF;
+    }
+
   protected:
     std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
     D3DKMT_HANDLE device = 0;

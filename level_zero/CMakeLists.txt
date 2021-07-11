@@ -392,13 +392,11 @@ if(BUILD_WITH_L0)
       append_sources_from_properties(L0_RUNTIME_SOURCES
                                      L0_SRCS_CACHE_RESERVATION_WINDOWS
                                      L0_SRCS_DEBUGGER_WINDOWS
-                                     L0_SRCS_DRIVER_WINDOWS
       )
     else()
       append_sources_from_properties(L0_RUNTIME_SOURCES
                                      L0_SRCS_CACHE_RESERVATION_LINUX
                                      L0_SRCS_DEBUGGER_LINUX
-                                     L0_SRCS_DRIVER_LINUX
       )
     endif()
 

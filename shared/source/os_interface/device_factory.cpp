@@ -122,6 +122,7 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
         rootDeviceIndex++;
     }
 
+    executionEnvironment.sortNeoDevices();
     executionEnvironment.parseAffinityMask();
     executionEnvironment.calculateMaxOsContextCount();
 

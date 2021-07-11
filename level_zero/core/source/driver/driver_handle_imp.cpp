@@ -140,10 +140,6 @@ DriverHandleImp::~DriverHandleImp() {
 }
 
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
-    if (enablePciIdDeviceOrder) {
-        sortNeoDevices(neoDevices);
-    }
-
     bool multiOsContextDriver = false;
     for (auto &neoDevice : neoDevices) {
         ze_result_t returnValue = ZE_RESULT_SUCCESS;

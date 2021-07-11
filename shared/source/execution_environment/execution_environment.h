@@ -25,6 +25,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void calculateMaxOsContextCount();
     void prepareRootDeviceEnvironments(uint32_t numRootDevices);
     void parseAffinityMask();
+    void sortNeoDevices();
     void setDebuggingEnabled() {
         debuggingEnabled = true;
     }
