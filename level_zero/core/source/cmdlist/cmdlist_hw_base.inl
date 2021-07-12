@@ -128,7 +128,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
         auto surfaceState = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
         auto debugSurface = device->getDebugSurface();
-        auto mocs = device->getMOCS(true, false);
+        auto mocs = device->getMOCS(false, false);
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceState, debugSurface->getGpuAddress(),
                                                          debugSurface->getUnderlyingBufferSize(), mocs,
                                                          false, false, false, neoDevice->getNumAvailableDevices(),

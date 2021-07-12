@@ -415,6 +415,27 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindle
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, debugSurfaceState->getCoherencyType());
 }
 
+HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceiIsProgrammedWithL3DisabledMOCS) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    Mock<::L0::Kernel> kernel;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->close();
+
+    auto *ssh = commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
+
+    const auto mocsNoCache = device->getNEODevice()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    const auto actualMocs = debugSurfaceState->getMemoryObjectControlState();
+
+    EXPECT_EQ(actualMocs, mocsNoCache);
+}
+
 using IsSklOrAbove = IsAtLeastProduct<IGFX_SKYLAKE>;
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, IsSklOrAbove) {
     ze_command_queue_desc_t queueDesc = {};
