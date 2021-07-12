@@ -59,6 +59,10 @@ using namespace L0::ult;
 PRODUCT_FAMILY productFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
 GFXCORE_FAMILY renderCoreFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eRenderCoreFamily;
 int32_t revId = -1;
+uint32_t euPerSubSlice = 0;
+uint32_t sliceCount = 0;
+uint32_t subSlicePerSliceCount = 0;
+int dieRecovery = 0;
 
 namespace NEO {
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
@@ -188,8 +192,32 @@ int main(int argc, char **argv) {
                 std::cout << "product family: " << NEO::hardwarePrefix[productFamily] << " ("
                           << productFamily << ")" << std::endl;
             }
-        }
-        if (!strcmp("--disable_default_listener", argv[i])) {
+        } else if (!strcmp("--rev_id", argv[i])) {
+            ++i;
+            if (i < argc) {
+                revId = atoi(argv[i]);
+            }
+        } else if (!strcmp("--slices", argv[i])) {
+            ++i;
+            if (i < argc) {
+                sliceCount = atoi(argv[i]);
+            }
+        } else if (!strcmp("--subslices", argv[i])) {
+            ++i;
+            if (i < argc) {
+                subSlicePerSliceCount = atoi(argv[i]);
+            }
+        } else if (!strcmp("--eu_per_ss", argv[i])) {
+            ++i;
+            if (i < argc) {
+                euPerSubSlice = atoi(argv[i]);
+            }
+        } else if (!strcmp("--die_recovery", argv[i])) {
+            ++i;
+            if (i < argc) {
+                dieRecovery = atoi(argv[i]) ? 1 : 0;
+            }
+        } else if (!strcmp("--disable_default_listener", argv[i])) {
             useDefaultListener = false;
         } else if (!strcmp("--tbx", argv[i])) {
             if (testMode == TestMode::AubTests) {
@@ -207,7 +235,17 @@ int main(int argc, char **argv) {
     }
     productFamily = hwInfoForTests.platform.eProductFamily;
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
-    revId = hwInfoForTests.platform.usRevId;
+    if (revId == -1) {
+        revId = hwInfoForTests.platform.usRevId;
+    }
+    sliceCount = sliceCount > 0 ? sliceCount : hwInfoForTests.gtSystemInfo.SliceCount;
+    subSlicePerSliceCount = subSlicePerSliceCount > 0 ? subSlicePerSliceCount : (hwInfoForTests.gtSystemInfo.SubSliceCount / sliceCount);
+    euPerSubSlice = euPerSubSlice > 0 ? euPerSubSlice : hwInfoForTests.gtSystemInfo.MaxEuPerSubSlice;
+
+    hwInfoForTests.platform.usRevId = revId;
+    hwInfoForTests.gtSystemInfo.SliceCount = sliceCount;
+    hwInfoForTests.gtSystemInfo.SubSliceCount = hwInfoForTests.gtSystemInfo.SliceCount * subSlicePerSliceCount;
+    hwInfoForTests.gtSystemInfo.EUCount = hwInfoForTests.gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
 
     // Platforms with uninitialized factory are not supported
     if (L0::commandListFactory[productFamily] == nullptr) {
