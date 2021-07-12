@@ -21,6 +21,7 @@ const std::string maxLinkSpeedFile("device/max_link_speed");
 const std::string maxLinkWidthFile("device/max_link_width");
 const std::string mockBdf = "0000:00:02.0";
 const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
+const std::string mockRealPathConfig = mockRealPath + "/config";
 const std::string mockRealPath2LevelsUp = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0";
 
 constexpr double mockMaxLinkSpeed = 2.5;
@@ -83,6 +84,11 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
     MOCK_METHOD(ze_result_t, read, (const std::string file, std::vector<std::string> &val), (override));
     MOCK_METHOD(ze_result_t, readSymLink, (const std::string file, std::string &buf), (override));
     MOCK_METHOD(ze_result_t, getRealPath, (const std::string file, std::string &buf), (override));
+    MOCK_METHOD(bool, isRootUser, (), (override));
+
+    bool checkRootUser() {
+        return true;
+    }
 
     ze_result_t getValDouble(const std::string file, double &val) {
         if (file.compare(maxLinkSpeedFile) == 0) {
@@ -120,6 +126,10 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
             val = mockRealPath;
             return ZE_RESULT_SUCCESS;
         }
+        if (file.compare("device/config") == 0) {
+            val = mockRealPathConfig;
+            return ZE_RESULT_SUCCESS;
+        }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -136,7 +146,13 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
 
 class PublicLinuxPciImp : public L0::LinuxPciImp {
   public:
+    PublicLinuxPciImp(OsSysman *pOsSysman) : LinuxPciImp(pOsSysman) {}
+    using LinuxPciImp::closeFunction;
+    using LinuxPciImp::configMemory;
+    using LinuxPciImp::openFunction;
+    using LinuxPciImp::pciExtendedConfigRead;
     using LinuxPciImp::pfsAccess;
+    using LinuxPciImp::preadFunction;
     using LinuxPciImp::pSysfsAccess;
 };
 

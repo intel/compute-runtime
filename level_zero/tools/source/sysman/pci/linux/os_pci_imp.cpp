@@ -12,6 +12,8 @@
 
 #include "sysman/pci/pci_imp.h"
 
+#include <linux/pci_regs.h>
+
 namespace L0 {
 
 const std::string LinuxPciImp::deviceDir("device");
@@ -150,7 +152,34 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
     return result;
 }
 
+// Parse PCIe configuration space to see if resizable Bar is supported
 bool LinuxPciImp::resizableBarSupported() {
+    uint32_t pos = PCI_CFG_SPACE_SIZE;
+    uint32_t header = 0;
+
+    if (!configMemory) {
+        return false;
+    }
+
+    // Minimum 8 bytes per capability. Hence maximum capabilities that
+    // could be present in PCI extended configuration space are
+    // represented by loopCount.
+    auto loopCount = (PCI_CFG_SPACE_EXP_SIZE - PCI_CFG_SPACE_SIZE) / 8;
+    header = getDwordFromConfig(pos);
+    if (!header) {
+        return false;
+    }
+
+    while (loopCount-- > 0) {
+        if (PCI_EXT_CAP_ID(header) == PCI_EXT_CAP_ID_REBAR) {
+            return true;
+        }
+        pos = PCI_EXT_CAP_NEXT(header);
+        if (pos < PCI_CFG_SPACE_SIZE) {
+            return false;
+        }
+        header = getDwordFromConfig(pos);
+    }
     return false;
 }
 
@@ -161,12 +190,30 @@ bool LinuxPciImp::resizableBarEnabled() {
 ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
+
+void LinuxPciImp::pciExtendedConfigRead() {
+    std::string pciConfigNode;
+    pSysfsAccess->getRealPath("device/config", pciConfigNode);
+    int fdConfig = -1;
+    fdConfig = this->openFunction(pciConfigNode.c_str(), O_RDONLY);
+    if (fdConfig < 0) {
+        return;
+    }
+    configMemory = std::make_unique<uint8_t[]>(PCI_CFG_SPACE_EXP_SIZE);
+    memset(configMemory.get(), 0, PCI_CFG_SPACE_EXP_SIZE);
+    this->preadFunction(fdConfig, configMemory.get(), PCI_CFG_SPACE_EXP_SIZE, 0);
+    this->closeFunction(fdConfig);
+}
+
 LinuxPciImp::LinuxPciImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pfsAccess = &pLinuxSysmanImp->getFsAccess();
     Device *pDevice = pLinuxSysmanImp->getDeviceHandle();
     isLmemSupported = pDevice->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pDevice->getRootDeviceIndex());
+    if (pSysfsAccess->isRootUser()) {
+        pciExtendedConfigRead();
+    }
 }
 
 OsPci *OsPci::create(OsSysman *pOsSysman) {

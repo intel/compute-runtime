@@ -577,4 +577,8 @@ bool SysfsAccess::isMyDeviceFile(const std::string dev) {
     return false;
 }
 
+bool SysfsAccess::isRootUser() {
+    return FsAccess::isRootUser();
+}
+
 } // namespace L0

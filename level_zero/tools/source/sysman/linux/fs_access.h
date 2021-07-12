@@ -111,6 +111,7 @@ class SysfsAccess : protected FsAccess {
     MOCKABLE_VIRTUAL bool fileExists(const std::string file) override;
     MOCKABLE_VIRTUAL bool isMyDeviceFile(const std::string dev);
     MOCKABLE_VIRTUAL bool directoryExists(const std::string path) override;
+    MOCKABLE_VIRTUAL bool isRootUser() override;
 
   private:
     SysfsAccess(const std::string file);

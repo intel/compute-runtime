@@ -106,8 +106,8 @@ ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properti
                 pBarPropsExt->index = pciBarProperties[i]->index;
                 pBarPropsExt->size = pciBarProperties[i]->size;
                 pBarPropsExt->type = pciBarProperties[i]->type;
-                pBarPropsExt->resizableBarEnabled = resizableBarEnabled;
-                pBarPropsExt->resizableBarSupported = resizableBarSupported;
+                pBarPropsExt->resizableBarEnabled = static_cast<ze_bool_t>(resizableBarEnabled);
+                pBarPropsExt->resizableBarSupported = static_cast<ze_bool_t>(resizableBarSupported);
             }
         }
     }
@@ -117,11 +117,8 @@ ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properti
 ze_result_t PciImp::pciGetState(zes_pci_state_t *pState) {
     return pOsPci->getState(pState);
 }
-void PciImp::init() {
-    if (pOsPci == nullptr) {
-        pOsPci = OsPci::create(pOsSysman);
-    }
-    UNRECOVERABLE_IF(nullptr == pOsPci);
+
+void PciImp::pciGetStaticFields() {
     pOsPci->getProperties(&pciProperties);
     resizableBarEnabled = pOsPci->resizableBarEnabled();
     resizableBarSupported = pOsPci->resizableBarSupported();
@@ -152,6 +149,15 @@ void PciImp::init() {
     pciProperties.maxSpeed.width = maxLinkWidth;
     pciProperties.maxSpeed.gen = convertLinkSpeedToPciGen(maxLinkSpeed);
     pOsPci->initializeBarProperties(pciBarProperties);
+}
+
+void PciImp::init() {
+    if (pOsPci == nullptr) {
+        pOsPci = OsPci::create(pOsSysman);
+    }
+    UNRECOVERABLE_IF(nullptr == pOsPci);
+
+    pciGetStaticFields();
 }
 
 PciImp::~PciImp() {

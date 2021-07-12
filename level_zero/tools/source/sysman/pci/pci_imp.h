@@ -25,6 +25,7 @@ class PciImp : public Pci, NEO::NonCopyableOrMovableClass {
     ze_result_t pciStaticProperties(zes_pci_properties_t *pProperties) override;
     ze_result_t pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) override;
     ze_result_t pciGetState(zes_pci_state_t *pState) override;
+    void pciGetStaticFields();
 
     PciImp() = default;
     PciImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
