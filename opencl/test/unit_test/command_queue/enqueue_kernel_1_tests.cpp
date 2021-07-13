@@ -909,6 +909,30 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenFlushIsC
     EXPECT_EQ(1, mockCsr->flushCalledCount);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTwoEnqueueProgrammedWithinSameCommandBufferWhenBatchedThenNoBBSBetweenThem) {
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    HardwareParse hwParse;
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+    size_t gws[3] = {1, 0, 0};
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    pCmdQ->flush();
+
+    hwParse.parseCommands<FamilyType>(*pCmdQ);
+    auto bbsCommands = findAll<typename FamilyType::MI_BATCH_BUFFER_START *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+
+    EXPECT_EQ(bbsCommands.size(), 1u);
+}
+
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
