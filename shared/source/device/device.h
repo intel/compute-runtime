@@ -119,6 +119,7 @@ class Device : public ReferenceTrackedObject<Device> {
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     GraphicsAllocation *getRTMemoryBackedBuffer() { return rtMemoryBackedBuffer; }
     void initializeRayTracing();
+    void reduceMaxMemAllocSize();
 
   protected:
     Device() = delete;

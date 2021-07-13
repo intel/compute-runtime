@@ -1045,7 +1045,7 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {0};
-    auto bigSize = MemoryConstants::gigaByte * 10;
+    auto bigSize = MemoryConstants::gigaByte * 20;
     auto allocationSize = static_cast<size_t>(bigSize);
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext.getDevice(0u)->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();

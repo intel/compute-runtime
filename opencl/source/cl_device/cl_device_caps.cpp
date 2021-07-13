@@ -302,6 +302,7 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.preferredInteropUserSync = 1u;
 
+    device.reduceMaxMemAllocSize();
     // OpenCL 1.2 requires 128MB minimum
 
     deviceInfo.maxConstantBufferSize = sharedDeviceInfo.maxMemAllocSize;

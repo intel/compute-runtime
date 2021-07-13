@@ -71,9 +71,6 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
 
-    // OpenCL 1.2 requires 128MB minimum
-    deviceInfo.maxMemAllocSize = std::max(deviceInfo.maxMemAllocSize / 2, static_cast<uint64_t>(128llu * MB));
-
     if (!deviceInfo.sharedSystemAllocationsSupport) {
         deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
     }
@@ -169,6 +166,18 @@ void Device::initializeCaps() {
     deviceName << " [0x" << std::hex << std::setw(4) << std::setfill('0') << hwInfo.platform.usDeviceID << "]";
 
     deviceInfo.name = deviceName.str();
+}
+
+void Device::reduceMaxMemAllocSize() {
+    deviceInfo.maxMemAllocSize = deviceInfo.globalMemSize;
+
+    if (!deviceInfo.sharedSystemAllocationsSupport) {
+        deviceInfo.maxMemAllocSize /= 2;
+        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
+    }
+
+    // OpenCL 1.2 requires 128MB minimum
+    deviceInfo.maxMemAllocSize = std::max(deviceInfo.maxMemAllocSize, static_cast<uint64_t>(128llu * MB));
 }
 
 } // namespace NEO
