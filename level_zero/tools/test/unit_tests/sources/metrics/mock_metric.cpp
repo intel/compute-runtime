@@ -146,6 +146,9 @@ void MetricMultiDeviceFixture::TearDown() {
 
 void MetricMultiDeviceFixture::openMetricsAdapter() {
 
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
 
@@ -153,13 +156,13 @@ void MetricMultiDeviceFixture::openMetricsAdapter() {
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
 
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+    EXPECT_CALL(adapter, OpenMetricsSubDevice(_, _))
+        .Times(subDeviceCount)
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&metricsDevice), Return(TCompletionCode::CC_OK)));
 
     EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+        .Times(subDeviceCount)
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
 
     EXPECT_CALL(adapterGroup, GetAdapter(_))
         .Times(0);
@@ -171,6 +174,9 @@ void MetricMultiDeviceFixture::openMetricsAdapter() {
 
 void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
 
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
 
@@ -178,13 +184,13 @@ void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
 
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+    EXPECT_CALL(adapter, OpenMetricsSubDevice(_, _))
+        .Times(subDeviceCount)
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&metricsDevice), Return(TCompletionCode::CC_OK)));
 
     EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+        .Times(subDeviceCount)
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
 }
 
 void MetricMultiDeviceContextFixture::SetUp() {

@@ -22,6 +22,8 @@ struct MetricEnumeration {
     virtual ~MetricEnumeration();
 
     ze_result_t metricGroupGet(uint32_t &count, zet_metric_group_handle_t *phMetricGroups);
+    MetricGroup *getMetricGroupByIndex(const uint32_t index);
+    uint32_t getMetricGroupCount();
 
     virtual bool isInitialized();
 
@@ -98,6 +100,8 @@ struct MetricGroupImp : MetricGroup {
     ze_result_t readIoStream(uint32_t &reportCount, uint8_t &reportData) override;
     ze_result_t closeIoStream() override;
 
+    std::vector<zet_metric_group_handle_t> &getMetricGroups();
+
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,
                         zet_metric_group_properties_t &destination);
@@ -118,6 +122,8 @@ struct MetricGroupImp : MetricGroup {
     };
     MetricsDiscovery::IMetricSet_1_5 *pReferenceMetricSet = nullptr;
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
+
+    std::vector<zet_metric_group_handle_t> metricGroups;
 };
 
 struct MetricImp : Metric {
