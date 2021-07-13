@@ -233,19 +233,37 @@ int main(int argc, char **argv) {
             useDefaultListener = true;
         }
     }
+
     productFamily = hwInfoForTests.platform.eProductFamily;
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
-    if (revId == -1) {
-        revId = hwInfoForTests.platform.usRevId;
+    uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
+    PLATFORM &platform = hwInfoForTests.platform;
+    if (revId != -1) {
+        platform.usRevId = revId;
+    } else {
+        revId = platform.usRevId;
     }
-    sliceCount = sliceCount > 0 ? sliceCount : hwInfoForTests.gtSystemInfo.SliceCount;
-    subSlicePerSliceCount = subSlicePerSliceCount > 0 ? subSlicePerSliceCount : (hwInfoForTests.gtSystemInfo.SubSliceCount / sliceCount);
-    euPerSubSlice = euPerSubSlice > 0 ? euPerSubSlice : hwInfoForTests.gtSystemInfo.MaxEuPerSubSlice;
+    uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
+    setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
-    hwInfoForTests.platform.usRevId = revId;
-    hwInfoForTests.gtSystemInfo.SliceCount = sliceCount;
-    hwInfoForTests.gtSystemInfo.SubSliceCount = hwInfoForTests.gtSystemInfo.SliceCount * subSlicePerSliceCount;
-    hwInfoForTests.gtSystemInfo.EUCount = hwInfoForTests.gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
+    // set Gt and FeatureTable to initial state
+    hardwareInfoSetup[productFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
+
+    // and adjust dynamic values if not secified
+    sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
+    subSlicePerSliceCount = subSlicePerSliceCount > 0 ? subSlicePerSliceCount : (gtSystemInfo.SubSliceCount / sliceCount);
+    euPerSubSlice = euPerSubSlice > 0 ? euPerSubSlice : gtSystemInfo.MaxEuPerSubSlice;
+    // clang-format off
+    gtSystemInfo.SliceCount             = sliceCount;
+    gtSystemInfo.SubSliceCount          = gtSystemInfo.SliceCount * subSlicePerSliceCount;
+    gtSystemInfo.EUCount                = gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
+    gtSystemInfo.ThreadCount            = gtSystemInfo.EUCount * threadsPerEu;
+    gtSystemInfo.MaxEuPerSubSlice       = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
+    gtSystemInfo.MaxSlicesSupported     = std::max(gtSystemInfo.MaxSlicesSupported, gtSystemInfo.SliceCount);
+    gtSystemInfo.MaxSubSlicesSupported  = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);
+    gtSystemInfo.IsDynamicallyPopulated = false;
+    // clang-format on
 
     // Platforms with uninitialized factory are not supported
     if (L0::commandListFactory[productFamily] == nullptr) {
@@ -305,12 +323,6 @@ int main(int argc, char **argv) {
     } else {
         NEO::GmmInterface::initialize(nullptr, nullptr);
     }
-
-    uint64_t hwInfoConfig = NEO::defaultHardwareInfoConfigTable[productFamily];
-    NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
-
-    // set Gt and FeatureTable to initial state
-    NEO::hardwareInfoSetup[productFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
 
     NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
     *NEO::defaultHwInfo = hwInfoForTests;
