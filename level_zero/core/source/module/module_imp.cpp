@@ -200,6 +200,7 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
     auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
     NEO::SingleDeviceBinary binary = {};
     binary.deviceBinary = blob;
+    binary.targetDevice.grfSize = device->getHwInfo().capabilityTable.grfSize;
     std::string decodeErrors;
     std::string decodeWarnings;
 

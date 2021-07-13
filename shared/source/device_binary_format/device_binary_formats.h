@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,7 @@ struct TargetDevice {
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
     uint32_t stepping = 0U;
     uint32_t maxPointerSizeInBytes = 4U;
+    uint32_t grfSize = 32U;
 };
 
 struct SingleDeviceBinary {

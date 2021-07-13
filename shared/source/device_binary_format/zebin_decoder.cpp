@@ -605,7 +605,7 @@ bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[Len], size_t vecSi
     return true;
 }
 
-NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT &src, NEO::KernelDescriptor &dst,
+NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t grfSize,
                                        std::string &outErrReason, std::string &outWarning) {
     switch (src.argType) {
     default:
@@ -620,6 +620,8 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
 
         uint32_t singleChannelIndicesCount = (dst.kernelAttributes.simdSize == 32 ? 32 : 16);
         uint32_t singleChannelBytes = singleChannelIndicesCount * sizeof(LocalIdT);
+        UNRECOVERABLE_IF(0 == grfSize);
+        singleChannelBytes = alignUp(singleChannelBytes, grfSize);
         auto tupleSize = (src.size / singleChannelBytes);
         switch (tupleSize) {
         default:
@@ -634,8 +636,9 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             break;
         }
         dst.kernelAttributes.perThreadDataSize = dst.kernelAttributes.simdSize;
-        dst.kernelAttributes.perThreadDataSize *= dst.kernelAttributes.numLocalIdChannels;
         dst.kernelAttributes.perThreadDataSize *= sizeof(LocalIdT);
+        dst.kernelAttributes.perThreadDataSize = alignUp(dst.kernelAttributes.perThreadDataSize, grfSize);
+        dst.kernelAttributes.perThreadDataSize *= dst.kernelAttributes.numLocalIdChannels;
         break;
     }
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypePackedLocalIds: {
@@ -956,7 +959,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     }
 
     for (const auto &arg : perThreadPayloadArguments) {
-        auto decodeErr = populateArgDescriptor(arg, kernelDescriptor, outErrReason, outWarning);
+        auto decodeErr = populateArgDescriptor(arg, kernelDescriptor, dst.grfSize, outErrReason, outWarning);
         if (DecodeError::Success != decodeErr) {
             return decodeErr;
         }
@@ -1130,6 +1133,7 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     }
 
     dst.decodedElf = elf;
+    dst.grfSize = src.targetDevice.grfSize;
 
     if (false == zebinSections.globalDataSections.empty()) {
         dst.globalVariables.initData = zebinSections.globalDataSections[0]->data.begin();
