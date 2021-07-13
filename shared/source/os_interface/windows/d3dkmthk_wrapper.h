@@ -14,10 +14,6 @@
     ScanLineOrdering:    \
     8;                   \
     int padding
-typedef enum _DEVICE_POWER_STATE {
-    PowerDeviceUnspecified = 0,
-} DEVICE_POWER_STATE,
-    *PDEVICE_POWER_STATE;
 #endif
 #include <d3dkmthk.h>
 
