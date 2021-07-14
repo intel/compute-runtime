@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/state_base_address_bdw_plus.inl"
-#include "shared/source/helpers/state_base_address_skl_plus.inl"
+#include "shared/source/helpers/state_base_address_skl.inl"
 
 namespace NEO {
 template struct StateBaseAddressHelper<SKLFamily>;
