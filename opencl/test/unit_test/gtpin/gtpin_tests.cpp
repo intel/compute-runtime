@@ -18,6 +18,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
@@ -39,6 +40,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/program/program_tests.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -135,6 +137,7 @@ void OnCommandBufferComplete(command_buffer_handle_t cb) {
 
 class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
   public:
+    using OsAgnosticMemoryManager::pageFaultManager;
     MockMemoryManagerWithFailures(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment){};
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
@@ -145,6 +148,14 @@ class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
         return OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
     }
     bool failAllAllocationsInDevicePool = false;
+};
+struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
+    void moveAllocationToGpuDomain(void *ptr) override {
+        moveAllocationToGpuDomainCalledTimes++;
+        migratedAddress = ptr;
+    }
+    uint32_t moveAllocationToGpuDomainCalledTimes = 0;
+    void *migratedAddress = nullptr;
 };
 
 class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
@@ -165,6 +176,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
         memoryManager = new MockMemoryManagerWithFailures(*executionEnvironment);
+        memoryManager->pageFaultManager.reset(new MockResidentTestsPageFaultManager());
         executionEnvironment->memoryManager.reset(memoryManager);
         initPlatform();
         pDevice = pPlatform->getClDevice(0);
@@ -2731,7 +2743,6 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
 
     RENDER_SURFACE_STATE *surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(pSurfaceState);
     memset(pSurfaceState, 0, renderSurfaceSize);
-
     gtpinNotifyKernelSubmit(kernel, pCmdQueue);
 
     auto allocData = reinterpret_cast<SvmAllocationData *>(kernelExecQueue[0].gtpinResource);
@@ -2768,5 +2779,61 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
 
     retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNotifyKernelSubmitThenMoveToAllocationDomainCalled) {
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+    class MockGTPinHwHelperHw : public GTPinHwHelperHw<FamilyType> {
+      public:
+        void *getSurfaceState(Kernel *pKernel, size_t bti) override {
+            return data;
+        }
+        uint8_t data[128];
+    };
+
+    struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
+        void moveAllocationToGpuDomain(void *ptr) override {
+            moveAllocationToGpuDomainCalledTimes++;
+            migratedAddress = ptr;
+        }
+        uint32_t moveAllocationToGpuDomainCalledTimes = 0;
+        void *migratedAddress = nullptr;
+    };
+    static std::unique_ptr<SvmAllocationData> allocDataHandle;
+    static std::unique_ptr<MockGraphicsAllocation> mockGAHandle;
+    const auto family = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    MockGTPinHwHelperHw mockGTPinHwHelperHw;
+    VariableBackup<GTPinHwHelper *> gtpinHwHelperBackup{&gtpinHwHelperFactory[family], &mockGTPinHwHelperHw};
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {
+        auto allocData = std::make_unique<SvmAllocationData>(0);
+        auto mockGA = std::make_unique<MockGraphicsAllocation>();
+        allocData->gpuAllocations.addAllocation(mockGA.get());
+        *resource = reinterpret_cast<resource_handle_t>(allocData.get());
+        allocDataHandle = std::move(allocData);
+        mockGAHandle = std::move(mockGA);
+    };
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+
+    GTPIN_DI_STATUS status = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+
+    MockKernelWithInternals mockkernel(*pDevice);
+    MockCommandQueue mockCmdQueue;
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    currContext = (gtpin::context_handle_t)(ctxt);
+    mockCmdQueue.device = pDevice;
+
+    gtpinNotifyKernelSubmit(mockkernel.mockMultiDeviceKernel, &mockCmdQueue);
+    EXPECT_EQ(reinterpret_cast<MockResidentTestsPageFaultManager *>(pDevice->getExecutionEnvironment()->memoryManager->getPageFaultManager())->moveAllocationToGpuDomainCalledTimes, 1u);
+
+    mockCmdQueue.device = nullptr;
+    mockGAHandle.reset();
+    allocDataHandle.reset();
 }
 } // namespace ULT
