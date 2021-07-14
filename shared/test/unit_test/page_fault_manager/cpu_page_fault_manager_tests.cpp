@@ -453,7 +453,7 @@ TEST(PageFaultManager, givenHwCsrWhenSelectingHandlerThenHwGpuDomainHandlerIsSet
 }
 
 struct PageFaultManagerTestWithDebugFlag : public ::testing::TestWithParam<uint32_t> {
-    void SetUp() {
+    void SetUp() override {
         memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
         unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
         pageFaultManager = std::make_unique<MockPageFaultManager>();
