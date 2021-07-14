@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -18,3 +19,25 @@ using namespace NEO;
 using HwHelperTest = Test<ClDeviceFixture>;
 
 void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo);
+
+struct ComputeSlmTestInput {
+    uint32_t expected;
+    uint32_t slmSize;
+};
+
+constexpr ComputeSlmTestInput computeSlmValuesXeHPPlusTestsInput[] = {
+    {0, 0 * KB},
+    {1, 0 * KB + 1},
+    {1, 1 * KB},
+    {2, 1 * KB + 1},
+    {2, 2 * KB},
+    {3, 2 * KB + 1},
+    {3, 4 * KB},
+    {4, 4 * KB + 1},
+    {4, 8 * KB},
+    {5, 8 * KB + 1},
+    {5, 16 * KB},
+    {6, 16 * KB + 1},
+    {6, 32 * KB},
+    {7, 32 * KB + 1},
+    {7, 64 * KB}};

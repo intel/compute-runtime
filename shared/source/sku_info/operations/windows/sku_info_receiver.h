@@ -133,6 +133,8 @@ class SkuInfoReceiver {
         RECEIVE_WA(Limit128BMediaCompr);
         RECEIVE_WA(UntypedBufferCompression);
         RECEIVE_WA(DisableFusedThreadScheduling);
+        RECEIVE_WA(DefaultTile4);
+
 #undef RECEIVE_WA
     }
 };
