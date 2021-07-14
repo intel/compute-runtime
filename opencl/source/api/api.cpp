@@ -2012,6 +2012,7 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
     }
 
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
+    auto flushEvents = true;
 
     switch (paramName) {
     default: {
@@ -2041,7 +2042,13 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
         TRACING_EXIT(clGetEventInfo, &retVal);
         return retVal;
     case CL_EVENT_COMMAND_EXECUTION_STATUS:
-        neoEvent->tryFlushEvent();
+        if (DebugManager.flags.SkipFlushingEventsOnGetStatusCalls.get()) {
+            flushEvents = false;
+        }
+        if (flushEvents) {
+            neoEvent->tryFlushEvent();
+        }
+
         if (neoEvent->isUserEvent()) {
             auto executionStatus = neoEvent->peekExecutionStatus();
             //Spec requires initial state to be queued

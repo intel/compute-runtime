@@ -326,3 +326,4 @@ DECLARE_DEBUG_VARIABLE(bool, ForcePerDssBackedBufferProgramming, false, "Always 
 DECLARE_DEBUG_VARIABLE(bool, UseCommandBufferHeaderSizeForWddmQueueSubmission, true, "0: Page size (4096), 1: sizeof(COMMAND_BUFFER_HEADER)")
 DECLARE_DEBUG_VARIABLE(bool, DisableDeepBind, false, "Disable passing RTLD_DEEPBIND flag to all dlopen calls.")
 DECLARE_DEBUG_VARIABLE(bool, UseUmKmDataTranslator, false, "Use helper library for UMD<->KMD (WDDM) struct layout compatibility")
+DECLARE_DEBUG_VARIABLE(bool, SkipFlushingEventsOnGetStatusCalls, false, "When set to 1, events are not causing internal flush when querying for CL_EVENT_COMMAND_EXECUTION_STATUS")

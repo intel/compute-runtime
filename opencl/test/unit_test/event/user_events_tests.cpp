@@ -539,6 +539,32 @@ TEST_F(MockEventTests, GivenAbortedUserEventWhenEnqueingNdrThenDoNotFlushToCsr) 
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(MockEventTests, givenDebugVariableWhenStatusIsQueriedThenNoFlushHappens) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SkipFlushingEventsOnGetStatusCalls.set(1);
+    DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
+    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    csr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    csr.postInitFlagsSetup();
+
+    cl_event retEvent = nullptr;
+
+    auto latestFlushed = csr.peekLatestFlushedTaskCount();
+    retVal = callOneWorkItemNDRKernel(nullptr, 0u, &retEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_int eventStatus = 0;
+    retVal = clGetEventInfo(retEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &eventStatus, NULL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(csr.peekLatestFlushedTaskCount(), latestFlushed);
+
+    retVal = clReleaseEvent(retEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(MockEventTests, GivenAbortedParentWhenDestroyingChildEventThenDoNotProcessBlockedCommands) {
     uEvent = make_releaseable<UserEvent>(context);
 
