@@ -104,13 +104,13 @@ NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D
 
 bool WddmMock::createAllocation64k(WddmAllocation *wddmAllocation) {
     if (wddmAllocation) {
-        return createAllocation64k(wddmAllocation->getDefaultGmm(), wddmAllocation->getHandleToModify(0u));
+        return createAllocation(wddmAllocation->getDefaultGmm(), wddmAllocation->getHandleToModify(0u));
     }
     return false;
 }
-bool WddmMock::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
+bool WddmMock::createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     createAllocationResult.called++;
-    return createAllocationResult.success = Wddm::createAllocation64k(gmm, outHandle);
+    return createAllocationResult.success = Wddm::createAllocation(gmm, outHandle);
 }
 
 bool WddmMock::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {

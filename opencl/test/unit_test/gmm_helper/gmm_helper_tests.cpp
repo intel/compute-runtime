@@ -734,6 +734,49 @@ TEST_F(GmmTests, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapability
     EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // RenderCompressed == 0
 }
 
+TEST_F(GmmTests, whenLargePagesAreImplicitlyAllowedThenEnableOptimizationPadding) {
+    size_t allocationSize = 128;
+    Gmm gmm(getGmmClientContext(), nullptr, allocationSize, 0, false);
+    EXPECT_FALSE(gmm.resourceParams.Flags.Info.NoOptimizationPadding);
+}
+
+TEST_F(GmmTests, whenLargePagesAreExplicitlyAllowedAndUserPtrIsNullThenAllowOptimizationPadding) {
+    size_t allocationSize = 128;
+    bool allowLargePages = true;
+    Gmm gmm(getGmmClientContext(), nullptr, allocationSize, 0, false, false, false, {}, allowLargePages);
+    EXPECT_FALSE(gmm.resourceParams.Flags.Info.NoOptimizationPadding);
+}
+
+TEST_F(GmmTests, whenLargePagesAreExplicitlyDisallowedButUserPtrIsNotNullThenAllowOptimizationPadding) {
+    const void *dummyPtr = reinterpret_cast<void *>(0x123);
+    size_t allocationSize = 128;
+    bool allowLargePages = false;
+    Gmm gmm(getGmmClientContext(), dummyPtr, allocationSize, 0, false, false, false, {}, allowLargePages);
+    EXPECT_FALSE(gmm.resourceParams.Flags.Info.NoOptimizationPadding);
+}
+
+TEST_F(GmmTests, whenLargePagesAreExplicitlyDisallowedAndUserPtrIsNullThenDisableOptimizationPadding) {
+    size_t allocationSize = 128;
+    bool allowLargePages = false;
+    Gmm gmm(getGmmClientContext(), nullptr, allocationSize, 0, false, false, false, {}, allowLargePages);
+    EXPECT_TRUE(gmm.resourceParams.Flags.Info.NoOptimizationPadding);
+}
+
+TEST_F(GmmTests, givenSizeIsMisallignedTo64kbWhenForceDisablingLargePagesThenSizeIsPreserved) {
+    const void *dummyPtr = reinterpret_cast<void *>(0x123);
+    size_t allocationSize = 256U;
+    bool allowLargePages = false;
+    Gmm gmm(getGmmClientContext(), dummyPtr, allocationSize, 0, false, false, false, {}, allowLargePages);
+    EXPECT_EQ(allocationSize, gmm.resourceParams.BaseWidth64);
+}
+
+TEST_F(GmmTests, givenSizeIsAllignedTo64kbWhenForceDisablingLargePagesThenSizeIsAlteredToBreak64kbAlignment) {
+    size_t allocationSize = MemoryConstants::pageSize64k;
+    bool allowLargePages = false;
+    Gmm gmm(getGmmClientContext(), nullptr, allocationSize, 0, false, false, false, {}, allowLargePages);
+    EXPECT_EQ(allocationSize + MemoryConstants::pageSize, gmm.resourceParams.BaseWidth64);
+}
+
 TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedThenSetThisHwInfoToGmmHelper) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_EQ(&device->getHardwareInfo(), device->getGmmHelper()->getHardwareInfo());

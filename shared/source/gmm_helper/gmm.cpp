@@ -20,13 +20,23 @@
 namespace NEO {
 Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, false, true, {}) {}
 
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo) : clientContext(clientContext) {
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo)
+    : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, preferRenderCompressed, systemMemoryPool, storageInfo, true) {
+}
+
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo, bool allowLargePages) : clientContext(clientContext) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
     resourceParams.BaseHeight = 1;
     resourceParams.Depth = 1;
     resourceParams.BaseAlignment = static_cast<uint32_t>(alignment);
+    if ((nullptr == alignedPtr) && (false == allowLargePages)) {
+        resourceParams.Flags.Info.NoOptimizationPadding = true;
+        if ((resourceParams.BaseWidth64 & MemoryConstants::page64kMask) == 0) {
+            resourceParams.BaseWidth64 += MemoryConstants::pageSize;
+        }
+    }
     if (!uncacheable) {
         resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
     } else {

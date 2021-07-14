@@ -1548,10 +1548,10 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
     if (memoryManager64k.isLimitedGPU(0)) {
         GTEST_SKIP();
     }
-    EXPECT_EQ(0, wddm->createAllocationResult.called);
+    EXPECT_EQ(0U, wddm->createAllocationResult.called);
 
     GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
-    EXPECT_EQ(1, wddm->createAllocationResult.called);
+    EXPECT_NE(0U, wddm->createAllocationResult.called);
     EXPECT_NE(nullptr, galloc);
     EXPECT_EQ(true, galloc->isLocked());
     EXPECT_NE(nullptr, galloc->getUnderlyingBuffer());
@@ -1629,7 +1629,8 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenCorrectHugeGfxMemoryChunkIsSet) {
     MockWddmMemoryManager memoryManager(*executionEnvironment);
-    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::UseUmdSystemPtr), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndRequestedSizeIsHugeThenResultAllocationIsSplitted) {

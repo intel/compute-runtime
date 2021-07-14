@@ -498,18 +498,8 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     AllocationInfo.pSystemMem = alignedCpuPtr;
     AllocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
     AllocationInfo.PrivateDriverDataSize = static_cast<uint32_t>(gmm->gmmResourceInfo->peekHandleSize());
-    AllocationInfo.Flags.Primary = 0;
-
-    CreateAllocation.hGlobalShare = 0;
-    CreateAllocation.PrivateRuntimeDataSize = 0;
-    CreateAllocation.PrivateDriverDataSize = 0;
-    CreateAllocation.Flags.Reserved = 0;
     CreateAllocation.NumAllocations = 1;
-    CreateAllocation.pPrivateRuntimeData = nullptr;
-    CreateAllocation.pPrivateDriverData = nullptr;
-    CreateAllocation.Flags.NonSecure = FALSE;
     CreateAllocation.Flags.CreateShared = outSharedHandle ? TRUE : FALSE;
-    CreateAllocation.Flags.RestrictSharedAccess = FALSE;
     CreateAllocation.Flags.CreateResource = outSharedHandle || alignedCpuPtr ? TRUE : FALSE;
     CreateAllocation.pAllocationInfo2 = &AllocationInfo;
     CreateAllocation.hDevice = device;
@@ -528,6 +518,13 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, getAdapter(), device, outHandle, getGdi()->escape);
 
     return status;
+}
+
+bool Wddm::createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
+    D3DKMT_HANDLE outResourceHandle = NULL_HANDLE;
+    D3DKMT_HANDLE *outSharedHandle = nullptr;
+    auto result = this->createAllocation(nullptr, gmm, outHandle, outResourceHandle, outSharedHandle);
+    return STATUS_SUCCESS == result;
 }
 
 bool Wddm::setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) {
@@ -551,36 +548,6 @@ bool Wddm::setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocati
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
 
     return STATUS_SUCCESS == status;
-}
-
-bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
-    NTSTATUS status = STATUS_SUCCESS;
-    D3DDDI_ALLOCATIONINFO2 AllocationInfo = {};
-    D3DKMT_CREATEALLOCATION CreateAllocation = {};
-
-    AllocationInfo.pSystemMem = 0;
-    AllocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
-    AllocationInfo.PrivateDriverDataSize = static_cast<uint32_t>(gmm->gmmResourceInfo->peekHandleSize());
-    AllocationInfo.Flags.Primary = 0;
-
-    CreateAllocation.NumAllocations = 1;
-    CreateAllocation.pPrivateRuntimeData = nullptr;
-    CreateAllocation.pPrivateDriverData = nullptr;
-    CreateAllocation.Flags.CreateResource = FALSE;
-    CreateAllocation.pAllocationInfo2 = &AllocationInfo;
-    CreateAllocation.hDevice = device;
-
-    status = getGdi()->createAllocation2(&CreateAllocation);
-
-    if (status != STATUS_SUCCESS) {
-        DEBUG_BREAK_IF(true);
-        return false;
-    }
-
-    outHandle = AllocationInfo.hAllocation;
-    kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, getAdapter(), device, outHandle, getGdi()->escape);
-
-    return true;
 }
 
 NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
