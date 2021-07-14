@@ -15,7 +15,10 @@
 #else
 #  include "shared/source/os_interface/windows/windows_wrapper.h"
 #  include "umKmInc/sharedata.h"
-#  undef LHDM
+#  ifdef LHDM
+#    undef LHDM
+#    define RESTORE_LHDM
+#  endif
 #  undef WDDM_LINUX
 #  define RESTORE_WDDM_LINUX
 #  define UFO_PORTABLE_COMPILER_H
@@ -36,7 +39,9 @@
 // clang-format on
 
 #ifdef RESTORE_WDDM_LINUX
+#ifdef RESTORE_LHDM
 #define LHDM 1
+#endif
 #define WDDM_LINUX 1
 #ifndef GMM_ESCAPE_HANDLE
 #define GMM_ESCAPE_HANDLE D3DKMT_HANDLE
@@ -47,7 +52,7 @@
 #ifndef GMM_HANDLE
 #define GMM_HANDLE D3DKMT_HANDLE
 #endif
-#endif
+#endif // RESTORE_WDDM_LINUX
 
 struct GmmResourceInfoCommonStruct {
     GMM_CLIENT ClientType;

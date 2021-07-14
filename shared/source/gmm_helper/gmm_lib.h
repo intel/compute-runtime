@@ -13,7 +13,10 @@
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 
 #include "umKmInc/sharedata.h"
+#ifdef LHDM
 #undef LHDM
+#define RESTORE_LHDM
+#endif
 #undef WDDM_LINUX
 #define RESTORE_WDDM_LINUX
 #define UFO_PORTABLE_COMPILER_H
@@ -26,7 +29,9 @@
 #include "GmmLib.h"
 
 #ifdef RESTORE_WDDM_LINUX
+#ifdef RESTORE_LHDM
 #define LHDM 1
+#endif
 #define WDDM_LINUX 1
 #ifndef GMM_ESCAPE_HANDLE
 #define GMM_ESCAPE_HANDLE D3DKMT_HANDLE
@@ -37,4 +42,4 @@
 #ifndef GMM_HANDLE
 #define GMM_HANDLE D3DKMT_HANDLE
 #endif
-#endif
+#endif // RESTORE_WDDM_LINUX
