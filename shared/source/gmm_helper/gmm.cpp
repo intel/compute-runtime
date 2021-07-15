@@ -322,4 +322,46 @@ uint32_t Gmm::getUnifiedAuxPitchTiles() {
 uint32_t Gmm::getAuxQPitch() {
     return this->gmmResourceInfo->getAuxQPitch();
 }
+
+void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) {
+    this->useSystemMemoryPool = systemMemoryPool;
+    auto hardwareInfo = clientContext->getHardwareInfo();
+
+    if (hardwareInfo->featureTable.ftrLocalMemory) {
+        if (systemMemoryPool) {
+            resourceParams.Flags.Info.NonLocalOnly = 1;
+        } else {
+            if (extraMemoryFlagsRequired()) {
+                applyExtraMemoryFlags(storageInfo);
+            } else if (!storageInfo.isLockable) {
+                resourceParams.Flags.Info.NotLockable = 1;
+                if (isCompressionEnabled || storageInfo.localOnlyRequired) {
+                    resourceParams.Flags.Info.LocalOnly = 1;
+                }
+            }
+        }
+    }
+
+    if (hardwareInfo->featureTable.ftrMultiTileArch) {
+        resourceParams.MultiTileArch.Enable = 1;
+        if (systemMemoryPool) {
+            resourceParams.MultiTileArch.GpuVaMappingSet = hardwareInfo->gtSystemInfo.MultiTileArchInfo.TileMask;
+            resourceParams.MultiTileArch.LocalMemPreferredSet = 0;
+            resourceParams.MultiTileArch.LocalMemEligibilitySet = 0;
+
+        } else {
+            auto tileSelected = std::max(storageInfo.memoryBanks.to_ulong(), 1lu);
+
+            if (storageInfo.cloningOfPageTables) {
+                resourceParams.MultiTileArch.GpuVaMappingSet = static_cast<uint8_t>(storageInfo.pageTablesVisibility.to_ulong());
+            } else {
+                resourceParams.MultiTileArch.TileInstanced = storageInfo.tileInstanced;
+                resourceParams.MultiTileArch.GpuVaMappingSet = static_cast<uint8_t>(tileSelected);
+            }
+
+            resourceParams.MultiTileArch.LocalMemPreferredSet = static_cast<uint8_t>(tileSelected);
+            resourceParams.MultiTileArch.LocalMemEligibilitySet = static_cast<uint8_t>(tileSelected);
+        }
+    }
+}
 } // namespace NEO

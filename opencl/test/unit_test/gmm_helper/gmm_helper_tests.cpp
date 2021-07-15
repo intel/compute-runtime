@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -17,6 +19,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/gmm_types_converter.h"
@@ -27,7 +30,6 @@
 
 #include "GL/gl.h"
 #include "GL/glext.h"
-#include "gtest/gtest.h"
 #include "igfxfmid.h"
 #include "mock_gmm_client_context.h"
 
@@ -1110,6 +1112,308 @@ HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingFo
     EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
     EXPECT_FALSE(gmm.isCompressionEnabled);
+}
+
+struct GmmLocalMemoryTests : public ::testing::Test, MockExecutionEnvironmentGmmFixture {
+    GmmLocalMemoryTests() {
+        localPlatformDevice = *defaultHwInfo;
+        localPlatformDevice.featureTable.ftrLocalMemory = true;
+    }
+    void SetUp() override {
+        MockExecutionEnvironmentGmmFixture::SetUp();
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localPlatformDevice);
+    }
+
+    HardwareInfo localPlatformDevice{};
+};
+
+struct MultiTileGmmTests : GmmLocalMemoryTests {
+    MultiTileGmmTests() {
+        localPlatformDevice.featureTable.ftrMultiTileArch = true;
+        localPlatformDevice.gtSystemInfo.MultiTileArchInfo.TileMask = customTileMask;
+    }
+    uint8_t customTileMask = 0xD;
+};
+
+TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsTrueThenNonLocalOnlyFlagIsSetAndLocalOnlyCleared) {
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, false, true, StorageInfo{});
+    EXPECT_TRUE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+}
+
+TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllocationIsLockableThenAllFlagsAreCleared) {
+    StorageInfo storageInfo{};
+    storageInfo.isLockable = true;
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, false, false, storageInfo);
+    EXPECT_FALSE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotLockable);
+}
+
+TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllocationIsNotLockableThenNotLockableFlagsIsSetAndLocalAndNonLocalOnlyAreNotSet) {
+    StorageInfo storageInfo{};
+    storageInfo.isLockable = false;
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, false, false, storageInfo);
+    EXPECT_FALSE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+}
+
+TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndNotLockableAllocationAndStorageInfoWithLocalOnlyRequiredWhenPreparingFlagsForGmmThenNotLockableAndLocalOnlyIsSet) {
+    StorageInfo storageInfo{};
+    storageInfo.localOnlyRequired = true;
+    storageInfo.isLockable = false;
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, false, false, storageInfo);
+    EXPECT_FALSE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+}
+
+TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithLocalOnlyRequiredWhenPreparingFlagsForGmmThenNotLockableAndLocalOnlyAreSet) {
+    StorageInfo storageInfo{};
+    storageInfo.localOnlyRequired = true;
+    storageInfo.isLockable = false;
+    DebugManagerStateRestore restorer;
+
+    for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::CSR_HW); csrMode < static_cast<int32_t>(CommandStreamReceiverType::CSR_TYPES_NUM); csrMode++) {
+        DebugManager.flags.SetCommandStreamReceiver.set(csrMode);
+        auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, false, false, storageInfo);
+        EXPECT_FALSE(gmm->useSystemMemoryPool);
+        EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
+        EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    }
+}
+
+TEST_F(GmmLocalMemoryTests, givenSystemMemoryAndStorageInfoWithLocalOnlyRequiredWhenPreparingFlagsForGmmThenLocalOnlyIsNotSet) {
+    StorageInfo storageInfo{};
+    storageInfo.localOnlyRequired = true;
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, false, true, storageInfo);
+    EXPECT_TRUE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+}
+
+TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithoutLocalOnlyRequiredWhenPreparingFlagsForGmmThenLocalOnlyIsNotSet) {
+    StorageInfo storageInfo{};
+    storageInfo.localOnlyRequired = false;
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, false, false, storageInfo);
+    EXPECT_FALSE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+}
+
+TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryAndCompressionEnabledWhenUseSystemMemoryIsFalseAndAllocationIsNotLockableThenNotLockableAndLocalOnlyFlagsAreSetAndNonLocalOnlyIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    StorageInfo storageInfo{};
+    storageInfo.isLockable = false;
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, true, false, storageInfo);
+    EXPECT_TRUE(gmm->isCompressionEnabled);
+    EXPECT_FALSE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+}
+
+TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllocationIsNotLockableThenLocalAndNonLocalOnlyAndNotLockableFlagsAreNotSet) {
+    DebugManagerStateRestore restorer;
+    for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::CSR_HW); csrMode < static_cast<int32_t>(CommandStreamReceiverType::CSR_TYPES_NUM); csrMode++) {
+        DebugManager.flags.SetCommandStreamReceiver.set(csrMode);
+        StorageInfo storageInfo{};
+        storageInfo.isLockable = false;
+        auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, false, false, false, storageInfo);
+        EXPECT_FALSE(gmm->useSystemMemoryPool);
+        EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+        EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+        EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    }
+}
+
+TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedThenLocalAndNonLocalOnlyFlagIsNotSetAndNotLockableIsSet) {
+    ImageInfo imgInfo = {};
+    cl_image_desc desc = {0};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    desc.image_width = 1;
+
+    cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+
+    imgInfo.imgDesc = Image::convertDescriptor(desc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+
+    imgInfo.useLocalMemory = true;
+
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    EXPECT_FALSE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+}
+
+TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhenGmmIsCreatedThenNonLocalOnlyFlagIsNotSetAndNotLockableAndLocalOnlyIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+    ImageInfo imgInfo = {};
+    cl_image_desc desc = {0};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    desc.image_width = 1;
+
+    cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+
+    imgInfo.imgDesc = Image::convertDescriptor(desc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+
+    imgInfo.useLocalMemory = true;
+    imgInfo.preferRenderCompression = true;
+
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    EXPECT_FALSE(gmm->useSystemMemoryPool);
+    EXPECT_TRUE(gmm->isCompressionEnabled);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+}
+
+TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoFalseWhenGmmIsCreatedThenLocalOnlyNotSet) {
+    ImageInfo imgInfo = {};
+    cl_image_desc desc = {0};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    desc.image_width = 1;
+
+    cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+
+    imgInfo.imgDesc = Image::convertDescriptor(desc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+
+    imgInfo.useLocalMemory = false;
+
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    EXPECT_TRUE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+}
+
+TEST_F(MultiTileGmmTests, whenCreateGmmWithImageInfoThenEnableMultiTileArch) {
+    ImageInfo imgInfo = {};
+    cl_image_desc desc = {0};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    desc.image_width = 1;
+
+    cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+
+    imgInfo.imgDesc = Image::convertDescriptor(desc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+
+    imgInfo.useLocalMemory = false;
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    EXPECT_TRUE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(1u, gmm->resourceParams.MultiTileArch.Enable);
+    imgInfo.useLocalMemory = true;
+    gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    EXPECT_FALSE(gmm->useSystemMemoryPool);
+    EXPECT_EQ(1u, gmm->resourceParams.MultiTileArch.Enable);
+}
+
+TEST_F(MultiTileGmmTests, givenMultiTileAllocationWhenGmmIsCreatedWithEmptyMemporyBanksThenMultitileArchIsEnabled) {
+    StorageInfo storageInfo;
+    storageInfo.memoryBanks = 0;
+    bool systemMemoryPool = false;
+
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false, false, systemMemoryPool, storageInfo);
+
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
+    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+}
+
+TEST_F(MultiTileGmmTests, givenMultiTileAllocationWithoutCloningWhenGmmIsCreatedThenSetMinimumOneTile) {
+    StorageInfo storageInfo;
+    storageInfo.memoryBanks = 0;
+    storageInfo.cloningOfPageTables = false;
+    bool systemMemoryPool = false;
+
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false, false, systemMemoryPool, storageInfo);
+
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.GpuVaMappingSet);
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.LocalMemPreferredSet);
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.LocalMemEligibilitySet);
+    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+}
+
+TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithNonLocalMemoryThenMultitileArchIsPropertlyFilled) {
+    StorageInfo storageInfo;
+    storageInfo.memoryBanks = 1;
+    bool systemMemoryPool = true;
+
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false, false, systemMemoryPool, storageInfo);
+
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
+    EXPECT_EQ(customTileMask, gmm.resourceParams.MultiTileArch.GpuVaMappingSet);
+    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.LocalMemPreferredSet);
+    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.LocalMemEligibilitySet);
+    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+}
+
+TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithSpecificMemoryBanksThenMultitileArchIsEnabled) {
+    StorageInfo storageInfo;
+    storageInfo.memoryBanks = 1u;
+    storageInfo.cloningOfPageTables = false;
+    bool systemMemoryPool = false;
+
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false, false, systemMemoryPool, storageInfo);
+
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
+    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.LocalMemPreferredSet);
+    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.GpuVaMappingSet);
+    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.LocalMemEligibilitySet);
+    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+}
+
+TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithCloningEnabledThenGpuVaMappingDependsOnPageTablesVisibityBitfield) {
+    StorageInfo storageInfo;
+    storageInfo.memoryBanks = 2u;
+    storageInfo.cloningOfPageTables = true;
+    storageInfo.pageTablesVisibility = 3u;
+    bool systemMemoryPool = false;
+
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false, false, systemMemoryPool, storageInfo);
+
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
+    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.LocalMemPreferredSet);
+    EXPECT_EQ(storageInfo.pageTablesVisibility, gmm.resourceParams.MultiTileArch.GpuVaMappingSet);
+    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.LocalMemEligibilitySet);
+    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+}
+
+TEST_F(MultiTileGmmTests, whenAllocationIsTileInstancedWithoutClonningPageTablesThenResourceParamsHaveTileInstancedEnabled) {
+    StorageInfo storageInfo;
+    storageInfo.cloningOfPageTables = false;
+    storageInfo.tileInstanced = true;
+    bool systemMemoryPool = false;
+
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false, false, systemMemoryPool, storageInfo);
+
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.TileInstanced);
+}
+
+TEST_F(MultiTileGmmTests, whenAllocationIsTileInstancedWithClonningPageTablesThenResourceParamsHaveTileInstancedDisabled) {
+    StorageInfo storageInfo;
+    storageInfo.cloningOfPageTables = true;
+    storageInfo.tileInstanced = true;
+    bool systemMemoryPool = false;
+
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false, false, systemMemoryPool, storageInfo);
+
+    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
+    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
 }
 
 } // namespace NEO
