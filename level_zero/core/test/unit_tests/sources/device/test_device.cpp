@@ -23,6 +23,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
@@ -1587,65 +1588,9 @@ TEST_F(MultipleDevicesTest, givenTopologyMapForSubdeviceZeroWhenGettingPhysicalS
     EXPECT_FALSE(ret);
 }
 
-struct MultipleDevicesWithCustomHwInfo : public ::testing::Test {
-    void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
-        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+using MultipleDevicesWithCustomHwInfoTest = Test<MultipleDevicesWithCustomHwInfo>;
 
-        std::vector<std::unique_ptr<NEO::Device>> devices;
-        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-
-        hwInfo = *NEO::defaultHwInfo.get();
-
-        hwInfo.gtSystemInfo.SliceCount = sliceCount;
-        hwInfo.gtSystemInfo.SubSliceCount = subsliceCount;
-        hwInfo.gtSystemInfo.EUCount = subsliceCount * numEuPerSubslice;
-        hwInfo.gtSystemInfo.ThreadCount = subsliceCount * numEuPerSubslice * numThreadsPerEu;
-
-        hwInfo.gtSystemInfo.MaxEuPerSubSlice = numEuPerSubslice;
-        hwInfo.gtSystemInfo.NumThreadsPerEu = numThreadsPerEu;
-
-        hwInfo.gtSystemInfo.MaxSlicesSupported = 2 * sliceCount;
-        hwInfo.gtSystemInfo.MaxSubSlicesSupported = 2 * subsliceCount;
-        hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 2 * subsliceCount;
-
-        hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = 1;
-        hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = numSubDevices;
-        hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
-        hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = 1;
-
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
-        }
-
-        memoryManager = new NEO::OsAgnosticMemoryManager(*executionEnvironment);
-        executionEnvironment->memoryManager.reset(memoryManager);
-        deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
-
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
-        }
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->initialize(std::move(devices));
-    }
-
-    NEO::HardwareInfo hwInfo;
-    const uint32_t numSubslicesPerSlice = 4;
-    const uint32_t numEuPerSubslice = 8;
-    const uint32_t numThreadsPerEu = 7;
-    const uint32_t sliceCount = 2;
-    const uint32_t subsliceCount = 8;
-
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    NEO::OsAgnosticMemoryManager *memoryManager = nullptr;
-    std::unique_ptr<UltDeviceFactory> deviceFactory;
-
-    const uint32_t numRootDevices = 1u;
-    const uint32_t numSubDevices = 2u;
-};
-
-TEST_F(MultipleDevicesWithCustomHwInfo, givenTopologyWhenMappingToAndFromApiAndPhysicalSliceIdThenIdsAreMatching) {
+TEST_F(MultipleDevicesWithCustomHwInfoTest, givenTopologyWhenMappingToAndFromApiAndPhysicalSliceIdThenIdsAreMatching) {
     L0::Device *device0 = driverHandle->devices[0];
     auto hwInfo = device0->getHwInfo();
 

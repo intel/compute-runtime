@@ -16,6 +16,10 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
+namespace NEO {
+struct UltDeviceFactory;
+}
+
 namespace L0 {
 struct Context;
 struct Device;
@@ -49,6 +53,24 @@ struct MultiDeviceFixture {
 struct ContextFixture : DeviceFixture {
     void SetUp() override;
     void TearDown() override;
+};
+
+struct MultipleDevicesWithCustomHwInfo {
+    virtual void SetUp();
+    virtual void TearDown() {}
+    NEO::HardwareInfo hwInfo;
+    const uint32_t numSubslicesPerSlice = 4;
+    const uint32_t numEuPerSubslice = 8;
+    const uint32_t numThreadsPerEu = 7;
+    const uint32_t sliceCount = 2;
+    const uint32_t subsliceCount = 8;
+
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::OsAgnosticMemoryManager *memoryManager = nullptr;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+
+    const uint32_t numRootDevices = 1u;
+    const uint32_t numSubDevices = 2u;
 };
 
 } // namespace ult
