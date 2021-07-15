@@ -8,6 +8,7 @@ git:
     depth: false
 notifications:
     email:
+        if: fork = false
         recipients:
             - compute-runtime@intel.com
 matrix:
