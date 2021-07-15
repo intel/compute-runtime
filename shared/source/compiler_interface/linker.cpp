@@ -171,7 +171,11 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
             break;
         case uint32_t(Elf::RELOCATION_X8664_TYPE::R_X8664_32):
             relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::AddressLow;
-        default:
+            break;
+        default: // Zebin relocation type
+            relocationInfo.type = reloc.relocType < uint32_t(NEO::LinkerInput::RelocationInfo::Type::RelocTypeMax)
+                                      ? static_cast<NEO::LinkerInput::RelocationInfo::Type>(reloc.relocType)
+                                      : NEO::LinkerInput::RelocationInfo::Type::Unknown;
             break;
         }
         auto name = elf.getSectionName(reloc.targetSectionIndex);

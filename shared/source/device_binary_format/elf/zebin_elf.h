@@ -30,6 +30,14 @@ enum SHT_ZEBIN : uint32_t {
     SHT_ZEBIN_GTPIN_INFO = 0xff000012 // .gtpin_info section
 };
 
+enum RELOC_TYPE_ZEBIN : uint32_t {
+    R_ZE_NONE,
+    R_ZE_SYM_ADDR,
+    R_ZE_SYM_ADDR_32,
+    R_ZE_SYM_ADDR_32_HI,
+    R_PER_THREAD_PAYLOAD_OFFSET
+};
+
 namespace SectionsNamesZebin {
 static constexpr ConstStringRef textPrefix = ".text.";
 static constexpr ConstStringRef dataConst = ".data.const";

@@ -469,6 +469,77 @@ TEST(LinkerInputTests, GivenInvalidTextSectionNameWhenDecodingElfTextRelocations
     ASSERT_EQ(0u, relocations.size());
 }
 
+TEST(LinkerInputTests, GivenValidZebinRelocationTypesWhenDecodingElfTextRelocationsThenCorrectTypeIsSet) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.const";
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc1;
+    reloc1.offset = 0;
+    reloc1.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_NONE;
+    reloc1.symbolName = "symbol1";
+    reloc1.symbolSectionIndex = 1;
+    reloc1.symbolTableIndex = 0;
+    reloc1.targetSectionIndex = 0;
+    elf64.relocations.emplace_back(reloc1);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2;
+    reloc2.offset = 0;
+    reloc2.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR;
+    reloc2.symbolName = "symbol2";
+    reloc2.symbolSectionIndex = 1;
+    reloc2.symbolTableIndex = 0;
+    reloc2.targetSectionIndex = 0;
+    elf64.relocations.emplace_back(reloc2);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc3;
+    reloc3.offset = 0;
+    reloc3.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32;
+    reloc3.symbolName = "symbol3";
+    reloc3.symbolSectionIndex = 1;
+    reloc3.symbolTableIndex = 0;
+    reloc3.targetSectionIndex = 0;
+    elf64.relocations.emplace_back(reloc3);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc4;
+    reloc4.offset = 0;
+    reloc4.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI;
+    reloc4.symbolName = "symbol4";
+    reloc4.symbolSectionIndex = 1;
+    reloc4.symbolTableIndex = 0;
+    reloc4.targetSectionIndex = 0;
+    elf64.relocations.emplace_back(reloc4);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc5;
+    reloc5.offset = 0;
+    reloc5.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_PER_THREAD_PAYLOAD_OFFSET;
+    reloc5.symbolName = "symbol5";
+    reloc5.symbolSectionIndex = 1;
+    reloc5.symbolTableIndex = 0;
+    reloc5.targetSectionIndex = 0;
+    elf64.relocations.emplace_back(reloc5);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    nameToKernelId["abc"] = 0;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getRelocationsInInstructionSegments();
+    ASSERT_EQ(1u, relocations.size());
+    ASSERT_EQ(5u, relocations[0].size());
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Unknown, relocations[0][0].type);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[0][1].type);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::AddressLow, relocations[0][2].type);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::AddressHigh, relocations[0][3].type);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::PerThreadPayloadOffset, relocations[0][4].type);
+}
+
 TEST(LinkerInputTests, GivenInvalidRelocationTypeWhenDecodingElfTextRelocationsThenUnknownTypeIsSet) {
     NEO::LinkerInput linkerInput = {};
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;

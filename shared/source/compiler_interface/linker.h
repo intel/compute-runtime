@@ -78,9 +78,10 @@ struct LinkerInput {
         enum class Type : uint32_t {
             Unknown,
             Address,
-            AddressHigh,
             AddressLow,
-            PerThreadPayloadOffset
+            AddressHigh,
+            PerThreadPayloadOffset,
+            RelocTypeMax
         };
 
         std::string symbolName;
