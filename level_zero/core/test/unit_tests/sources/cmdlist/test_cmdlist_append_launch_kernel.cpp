@@ -132,13 +132,30 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAp
     const auto stream = commandContainer.getCommandStream();
     const auto streamCpu = stream->getCpuBase();
 
-    ze_group_count_t groupCount{1, 1, 1};
-    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    Vec3<size_t> groupCount{1, 1, 1};
+    auto requiredSizeEstimate = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice(),
+                                                                                                       {0, 0, 0}, groupCount, false);
     auto available = stream->getAvailableSpace();
-    stream->getSpace(available - sizeof(MI_BATCH_BUFFER_END) - 16);
+    stream->getSpace(available - requiredSizeEstimate + 1);
     auto bbEndPosition = stream->getSpace(0);
 
-    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    const uint32_t threadGroupDimensions[3] = {1, 1, 1};
+    bool requiresUncachedMocs = false;
+    uint32_t partitionCount = 0;
+    NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer,
+                                                  threadGroupDimensions,
+                                                  false,
+                                                  false,
+                                                  kernel.get(),
+                                                  0,
+                                                  false,
+                                                  false,
+                                                  device->getNEODevice(),
+                                                  PreemptionMode::MidBatch,
+                                                  requiresUncachedMocs,
+                                                  false,
+                                                  partitionCount,
+                                                  false);
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, 0u);
