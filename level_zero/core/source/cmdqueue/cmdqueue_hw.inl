@@ -359,28 +359,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                        commandList->getPrintfFunctionContainer().begin(),
                                        commandList->getPrintfFunctionContainer().end());
 
-        for (auto alloc : commandList->commandContainer.getResidencyContainer()) {
-            if (csr->getResidencyAllocations().end() ==
-                std::find(csr->getResidencyAllocations().begin(), csr->getResidencyAllocations().end(), alloc)) {
-                csr->makeResident(*alloc);
-
-                if (performMigration) {
-                    if (alloc &&
-                        (alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_GPU ||
-                         alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_CPU)) {
-                        pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
-                    }
-                }
-            }
-        }
+        commandList->csr = csr;
+        commandList->makeResidentAndMigrate(performMigration);
     }
 
     if (performMigration) {
-        DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
-        std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
-        for (auto alloc : driverHandleImp->sharedMakeResidentAllocations) {
-            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc.second->getGpuAddress()));
-        }
+        auto commandList = CommandList::fromHandle(phCommandLists[0]);
+        commandList->migrateSharedAllocations();
     }
 
     if (stateSipRequired) {

@@ -1087,6 +1087,52 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForRegularC
     commandQueue->destroy();
 }
 
+HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsSklOrAbove) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    size_t size = (sizeof(uint32_t) * 4);
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    NEO::GraphicsAllocation srcPtr(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                   reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
+                                   MemoryPool::System4KBPages);
+    NEO::GraphicsAllocation dstPtr(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                   reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
+                                   MemoryPool::System4KBPages);
+
+    auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->destroy();
+}
+
+HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsSklOrAbove) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
+
+    size_t size = (sizeof(uint32_t) * 4);
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    NEO::GraphicsAllocation srcPtr(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                   reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
+                                   MemoryPool::System4KBPages);
+    NEO::GraphicsAllocation dstPtr(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                   reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
+                                   MemoryPool::System4KBPages);
+
+    auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->destroy();
+}
+
 HWTEST_F(L0DebuggerSimpleTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenCorrectCmdsAreAddedToStream) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);

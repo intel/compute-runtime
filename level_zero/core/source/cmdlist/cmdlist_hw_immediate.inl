@@ -65,6 +65,20 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
     this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadScratchSize());
 
+    if (performMigration) {
+        auto deviceImp = static_cast<DeviceImp *>(this->device);
+        auto pageFaultManager = deviceImp->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        if (pageFaultManager == nullptr) {
+            performMigration = false;
+        }
+    }
+
+    this->makeResidentAndMigrate(performMigration);
+
+    if (performMigration) {
+        this->migrateSharedAllocations();
+    }
+
     auto completionStamp = this->csr->flushTask(
         *commandStream,
         commandStreamStart,
@@ -319,9 +333,17 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost) {
 
+    if (this->isFlushTaskSubmissionEnabled) {
+        checkAvailableSpace();
+    }
+
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstptr, srcptr, size, flushHost);
     if (ret == ZE_RESULT_SUCCESS) {
-        executeCommandListImmediate(false);
+        if (this->isFlushTaskSubmissionEnabled) {
+            executeCommandListImmediateWithFlushTask(false);
+        } else {
+            executeCommandListImmediate(false);
+        }
     }
     return ret;
 }

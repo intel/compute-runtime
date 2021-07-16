@@ -248,6 +248,9 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
     bool isFlushTaskSubmissionEnabled = false;
 
+    void makeResidentAndMigrate(bool);
+    void migrateSharedAllocations();
+
   protected:
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     NEO::EngineGroupType engineGroupType;

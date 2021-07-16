@@ -7,9 +7,12 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
+
+#include "level_zero/core/source/device/device_imp.h"
 
 namespace L0 {
 
@@ -122,6 +125,32 @@ NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {
     flags.flags.disableLSQCROPERFforOCL = device->getHwInfo().workaroundTable.waDisableLSQCROPERFforOCL;
 
     return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
+}
+
+void CommandList::makeResidentAndMigrate(bool performMigration) {
+    for (auto alloc : commandContainer.getResidencyContainer()) {
+        if (csr->getResidencyAllocations().end() ==
+            std::find(csr->getResidencyAllocations().begin(), csr->getResidencyAllocations().end(), alloc)) {
+            csr->makeResident(*alloc);
+
+            if (performMigration &&
+                (alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_GPU ||
+                 alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_CPU)) {
+                auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+                pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
+            }
+        }
+    }
+}
+
+void CommandList::migrateSharedAllocations() {
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
+    std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
+    auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+    for (auto alloc : driverHandleImp->sharedMakeResidentAllocations) {
+        pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc.second->getGpuAddress()));
+    }
 }
 
 } // namespace L0
