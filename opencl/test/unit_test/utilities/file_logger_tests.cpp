@@ -926,6 +926,22 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
     EXPECT_STREQ(result, "ILLEGAL_VALUE");
 }
 
+TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenSupportAll) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+
+    for (uint32_t i = 0; i < static_cast<uint32_t>(GraphicsAllocation::AllocationType::COUNT); i++) {
+        graphicsAllocation.setAllocationType(static_cast<GraphicsAllocation::AllocationType>(i));
+
+        auto result = fileLogger.getAllocationTypeString(&graphicsAllocation);
+
+        EXPECT_STRNE(result, "ILLEGAL_VALUE");
+    }
+}
+
 TEST(AllocationTypeLoggingSingle, givenDisabledDebugFunctionalityWhenGettingGraphicsAllocationTypeThenNullptrReturned) {
     std::string testFile = "testfile";
     DebugVariables flags;

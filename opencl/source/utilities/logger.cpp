@@ -337,6 +337,14 @@ const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation c
         return "DEBUG_MODULE_AREA";
     case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
         return "WORK_PARTITION_SURFACE";
+    case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+        return "GPU_TIMESTAMP_DEVICE_BUFFER";
+    case GraphicsAllocation::AllocationType::RING_BUFFER:
+        return "RING_BUFFER";
+    case GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER:
+        return "SEMAPHORE_BUFFER";
+    case GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY:
+        return "UNIFIED_SHARED_MEMORY";
     default:
         return "ILLEGAL_VALUE";
     }
