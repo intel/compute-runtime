@@ -36,7 +36,7 @@ GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, U
     auto memoryManager = context->getMemoryManager();
     switch (description.type) {
     case UnifiedSharingHandleType::Win32Nt: {
-        return memoryManager->createGraphicsAllocationFromNTHandle(description.handle, context->getDevice(0)->getRootDeviceIndex(), GraphicsAllocation::AllocationType::SHARED_IMAGE);
+        return memoryManager->createGraphicsAllocationFromNTHandle(description.handle, context->getDevice(0)->getRootDeviceIndex());
     }
     case UnifiedSharingHandleType::LinuxFd:
     case UnifiedSharingHandleType::Win32Shared: {

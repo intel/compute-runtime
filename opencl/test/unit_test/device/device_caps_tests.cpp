@@ -1362,7 +1362,7 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
         void addAllocationToHostPtrManager(GraphicsAllocation *memory) override{};
         void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override{};
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; };
-        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override { return nullptr; };
+        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override { return nullptr; };
         AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
         void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
         void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override{};
