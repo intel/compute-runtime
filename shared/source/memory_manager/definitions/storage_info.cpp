@@ -93,10 +93,8 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         break;
     case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
         if (properties.flags.multiOsContextCapable) {
-            storageInfo.memoryBanks = allTilesValue;
             storageInfo.cloningOfPageTables = true;
         } else {
-            storageInfo.memoryBanks = preferredTile;
             storageInfo.pageTablesVisibility = preferredTile;
             storageInfo.cloningOfPageTables = false;
         }

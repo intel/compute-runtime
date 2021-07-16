@@ -421,7 +421,12 @@ TEST_F(MultiDeviceStorageInfoTest,
                                     false,
                                     allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-    EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
+
+    auto leastOccupiedBank = memoryManager->localMemoryUsageBankSelector[properties.rootDeviceIndex]->getLeastOccupiedBank(properties.subDevicesBitfield);
+    DeviceBitfield allocationMask;
+    allocationMask.set(leastOccupiedBank);
+
+    EXPECT_EQ(allocationMask, storageInfo.memoryBanks);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_FALSE(storageInfo.tileInstanced);
     EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
