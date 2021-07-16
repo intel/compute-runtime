@@ -323,6 +323,8 @@ bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Ty
         out = ArgTypeT::ArgTypeBufferOffset;
     } else if (tokenValue == PayloadArgument::ArgType::printfBuffer) {
         out = ArgTypeT::ArgTypePrintfBuffer;
+    } else if (tokenValue == PayloadArgument::ArgType::workDimensions) {
+        out = ArgTypeT::ArgTypeWorkDimensions;
     } else {
         outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" argument type in context of " + context.str() + "\n");
         return false;
@@ -833,6 +835,15 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         dst.kernelAttributes.flags.usesPrintf = true;
         dst.payloadMappings.implicitArgs.printfSurfaceAddress.stateless = src.offset;
         dst.payloadMappings.implicitArgs.printfSurfaceAddress.pointerSize = src.size;
+        break;
+    }
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeWorkDimensions: {
+        if (4 != src.size) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::workDimensions.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 4. Got : " + std::to_string(src.size) + "\n");
+            return DecodeError::InvalidBinary;
+        }
+        dst.payloadMappings.dispatchTraits.workDim = src.offset;
         break;
     }
     }

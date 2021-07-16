@@ -205,6 +205,7 @@ static constexpr ConstStringRef argByvalue("arg_byvalue");
 static constexpr ConstStringRef argBypointer("arg_bypointer");
 static constexpr ConstStringRef bufferOffset("buffer_offset");
 static constexpr ConstStringRef printfBuffer("printf_buffer");
+static constexpr ConstStringRef workDimensions("work_dimensions");
 } // namespace ArgType
 namespace MemoryAddressingMode {
 static constexpr ConstStringRef stateless("stateless");
@@ -368,7 +369,8 @@ enum ArgType : uint8_t {
     ArgTypeArgByvalue,
     ArgTypeArgBypointer,
     ArgTypeBufferOffset,
-    ArgTypePrintfBuffer
+    ArgTypePrintfBuffer,
+    ArgTypeWorkDimensions
 };
 
 namespace PerThreadPayloadArgument {
