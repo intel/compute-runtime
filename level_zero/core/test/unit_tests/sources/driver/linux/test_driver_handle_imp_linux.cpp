@@ -169,5 +169,107 @@ TEST_F(DriverPciOrderWitSimilarBusLinuxFixture, GivenEnvironmentVariableForDevic
     delete driverHandle;
 }
 
+class DriverPciOrderWitDifferentDeviceLinuxFixture : public ::testing::Test {
+  public:
+    void SetUp() override {
+        DebugManagerStateRestore restorer;
+        DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(1);
+
+        NEO::MockCompilerEnableGuard mock(true);
+        auto executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+        }
+        deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
+        }
+        for (auto i = 0u; i < devices.size(); i++) {
+            devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
+            auto osInterface = devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface.get();
+            osInterface->setDriverModel(std::make_unique<TestDriverMockDrm>(bdf[i], const_cast<NEO::RootDeviceEnvironment &>(devices[i]->getRootDeviceEnvironment())));
+        }
+        executionEnvironment->sortNeoDevices();
+    }
+    void TearDown() override {}
+
+    static constexpr uint32_t numRootDevices = 2u;
+    static constexpr uint32_t numSubDevices = 2u;
+    std::vector<std::unique_ptr<NEO::Device>> devices;
+    std::string bdf[numRootDevices] = {"03:05.0", "03:04.0"};
+    std::string sortedBdf[numRootDevices] = {"03:04.0", "03:05.0"};
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+};
+
+TEST_F(DriverPciOrderWitDifferentDeviceLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
+    NEO::MockCompilerEnableGuard mock(true);
+    DriverHandleImp *driverHandle = new DriverHandleImp;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    for (uint32_t i = 0; i < numRootDevices; i++) {
+        auto L0Device = driverHandle->devices[i];
+        if (L0Device != nullptr) {
+            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+            EXPECT_NE(pDrm, nullptr);
+            EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
+        }
+    }
+    delete driverHandle;
+}
+
+class DriverPciOrderWitSimilarBusAndDeviceLinuxFixture : public ::testing::Test {
+  public:
+    void SetUp() override {
+        DebugManagerStateRestore restorer;
+        DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(1);
+
+        NEO::MockCompilerEnableGuard mock(true);
+        auto executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+        }
+        deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
+        }
+        for (auto i = 0u; i < devices.size(); i++) {
+            devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
+            auto osInterface = devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface.get();
+            osInterface->setDriverModel(std::make_unique<TestDriverMockDrm>(bdf[i], const_cast<NEO::RootDeviceEnvironment &>(devices[i]->getRootDeviceEnvironment())));
+        }
+        executionEnvironment->sortNeoDevices();
+    }
+    void TearDown() override {}
+
+    static constexpr uint32_t numRootDevices = 2u;
+    static constexpr uint32_t numSubDevices = 2u;
+    std::vector<std::unique_ptr<NEO::Device>> devices;
+    std::string bdf[numRootDevices] = {"03:04.1", "03:04.0"};
+    std::string sortedBdf[numRootDevices] = {"03:04.0", "03:04.1"};
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+};
+
+TEST_F(DriverPciOrderWitSimilarBusAndDeviceLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
+    NEO::MockCompilerEnableGuard mock(true);
+    DriverHandleImp *driverHandle = new DriverHandleImp;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    for (uint32_t i = 0; i < numRootDevices; i++) {
+        auto L0Device = driverHandle->devices[i];
+        if (L0Device != nullptr) {
+            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+            EXPECT_NE(pDrm, nullptr);
+            EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
+        }
+    }
+    delete driverHandle;
+}
+
 } // namespace ult
 } // namespace L0
