@@ -1380,10 +1380,7 @@ TEST(CommandQueue, givenImageWithDifferentImageTypesWhenCallingBlitEnqueueImageA
     size_t correctOrigin[3] = {1u, 1u, 0};
     MockImageBase image;
 
-    image.imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
-    EXPECT_FALSE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
-
-    int imageTypes[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
+    int imageTypes[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
 
     for (auto imageType : imageTypes) {
         image.imageDesc.image_type = imageType;
