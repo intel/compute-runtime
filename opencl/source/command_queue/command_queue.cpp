@@ -72,7 +72,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
     flushStamp.reset(new FlushStampTracker(true));
 
     if (device) {
-        auto hwInfo = device->getHardwareInfo();
+        auto &hwInfo = device->getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         gpgpuEngine = &device->getDefaultEngine();
