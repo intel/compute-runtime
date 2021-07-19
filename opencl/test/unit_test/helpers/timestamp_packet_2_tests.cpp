@@ -5,11 +5,14 @@
  *
  */
 
+#include "shared/source/helpers/array_count.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/helpers/timestamp_packet_tests.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 
 using namespace NEO;
@@ -37,6 +40,86 @@ HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndEventWhenEnqueueingMarkerWit
     cmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
 
     EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
+
+    clReleaseEvent(event);
+}
+
+template <typename FamilyType>
+class MockCommandStreamReceiverHW : public UltCommandStreamReceiver<FamilyType> {
+  public:
+    MockCommandStreamReceiverHW(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+    CompletionStamp flushTask(
+        LinearStream &commandStream,
+        size_t commandStreamStart,
+        const IndirectHeap &dsh,
+        const IndirectHeap &ioh,
+        const IndirectHeap &ssh,
+        uint32_t taskLevel,
+        DispatchFlags &dispatchFlags,
+        Device &device) override {
+        stream = &commandStream;
+        return UltCommandStreamReceiver<FamilyType>::flushTask(
+            commandStream,
+            commandStreamStart,
+            dsh,
+            ioh,
+            ssh,
+            taskLevel,
+            dispatchFlags,
+            device);
+    }
+    LinearStream *stream = nullptr;
+};
+
+HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndEventWhenMarkerProfilingEnabledThenPipeControllAddedBeforeWritingTimestamp) {
+    auto commandStreamReceiver = std::make_unique<MockCommandStreamReceiverHW<FamilyType>>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    auto commandStreamReceiverPtr = commandStreamReceiver.get();
+    commandStreamReceiver->timestampPacketWriteEnabled = true;
+    device->resetCommandStreamReceiver(commandStreamReceiver.release());
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    cmdQ->setProfilingEnabled();
+
+    cl_event event;
+    cmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*(commandStreamReceiverPtr->stream), 0);
+    auto storeRegMemIt = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(storeRegMemIt, hwParser.cmdList.end());
+    auto pipeControlIt = find<typename FamilyType::PIPE_CONTROL *>(hwParser.cmdList.begin(), storeRegMemIt);
+    EXPECT_NE(storeRegMemIt, pipeControlIt);
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(TimestampPacketTests, givenWithWaitlistAndEventWhenMarkerProfilingEnabledThenPipeControllNotAddedBeforeWritingTimestamp) {
+    auto commandStreamReceiver = std::make_unique<MockCommandStreamReceiverHW<FamilyType>>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    auto commandStreamReceiverPtr = commandStreamReceiver.get();
+    commandStreamReceiver->timestampPacketWriteEnabled = true;
+    device->resetCommandStreamReceiver(commandStreamReceiver.release());
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    cmdQ->setProfilingEnabled();
+
+    cl_event event;
+    MockEvent<Event> events[] = {
+        {cmdQ.get(), CL_COMMAND_READ_BUFFER, 0, 0},
+        {cmdQ.get(), CL_COMMAND_READ_BUFFER, 0, 0},
+        {cmdQ.get(), CL_COMMAND_READ_BUFFER, 0, 0},
+    };
+    const cl_event waitList[] = {events, events + 1, events + 2};
+    const cl_uint waitListSize = static_cast<cl_uint>(arrayCount(waitList));
+
+    cmdQ->enqueueMarkerWithWaitList(waitListSize, waitList, &event);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*(commandStreamReceiverPtr->stream), 0);
+    auto storeRegMemIt = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(storeRegMemIt, hwParser.cmdList.end());
+    auto pipeControlIt = find<typename FamilyType::PIPE_CONTROL *>(hwParser.cmdList.begin(), storeRegMemIt);
+    EXPECT_EQ(storeRegMemIt, pipeControlIt);
 
     clReleaseEvent(event);
 }

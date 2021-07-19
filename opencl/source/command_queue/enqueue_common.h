@@ -280,6 +280,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         if (isMarkerWithProfiling) {
+            if (numEventsInWaitList == 0) {
+                PipeControlArgs args(false);
+                MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
+            }
             processDispatchForMarkerWithTimestampPacket(*this, &commandStream, eventsRequest, csrDeps);
         }
     } else if (isMarkerWithProfiling) {
