@@ -113,7 +113,7 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
         interfacesToIgnore.push_back(IGC::OclGenBinaryBase::GetInterfaceId());
     }
     if (false == main->IsCompatible<EntryPointT>(&interfacesToIgnore)) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatable\n", libName);
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
         DEBUG_BREAK_IF(true); // given compiler library is not compatible
         return false;
     }
