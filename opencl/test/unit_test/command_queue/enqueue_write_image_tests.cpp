@@ -299,7 +299,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenWriteImageIsCalledThenRowPi
     auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBuiltIn,
                                                                                                                               pCmdQ->getClDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
-    EXPECT_EQ(params->dstRowPitch, slicePitch);
+    EXPECT_EQ(params->srcRowPitch, slicePitch);
 
     // restore original builder and retrieve mock builder
     auto newBuilder = builtIns->setBuiltinDispatchInfoBuilder(

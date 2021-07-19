@@ -1463,9 +1463,8 @@ HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPrope
     builtinOpParams.size = {2, 3, 1};
     auto inputRowPitch = 0x20u;
     auto inputSlicePitch = 0x400u;
-    builtinOpParams.dstRowPitch = inputRowPitch;
-    builtinOpParams.dstSlicePitch = inputSlicePitch;
-
+    builtinOpParams.srcRowPitch = inputRowPitch;
+    builtinOpParams.srcSlicePitch = inputSlicePitch;
     auto dstRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
     auto dstSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
 
@@ -1491,8 +1490,8 @@ HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPrope
     builtinOpParams.size = {2, 3, 1};
     auto inputRowPitch = 0x20u;
     auto inputSlicePitch = 0x400u;
-    builtinOpParams.srcRowPitch = inputRowPitch;
-    builtinOpParams.srcSlicePitch = inputSlicePitch;
+    builtinOpParams.dstRowPitch = inputRowPitch;
+    builtinOpParams.dstSlicePitch = inputSlicePitch;
 
     auto srcRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
     auto srcSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;

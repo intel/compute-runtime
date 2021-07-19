@@ -182,10 +182,10 @@ struct ClBlitProperties {
     }
 
     static void setBlitPropertiesForImage(BlitProperties &blitProperties, const BuiltinOpParams &builtinOpParams) {
-        size_t srcRowPitch = builtinOpParams.dstRowPitch;
-        size_t dstRowPitch = builtinOpParams.srcRowPitch;
-        size_t srcSlicePitch = builtinOpParams.dstSlicePitch;
-        size_t dstSlicePitch = builtinOpParams.srcSlicePitch;
+        size_t srcRowPitch = builtinOpParams.srcRowPitch;
+        size_t dstRowPitch = builtinOpParams.dstRowPitch;
+        size_t srcSlicePitch = builtinOpParams.srcSlicePitch;
+        size_t dstSlicePitch = builtinOpParams.dstSlicePitch;
 
         if (blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
             adjustBlitPropertiesForImage(builtinOpParams.srcMemObj, blitProperties.srcSize, blitProperties.bytesPerPixel,

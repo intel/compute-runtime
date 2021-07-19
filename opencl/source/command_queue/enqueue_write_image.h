@@ -84,8 +84,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     dc.dstMemObj = dstImage;
     dc.dstOffset = origin;
     dc.size = region;
-    dc.dstRowPitch = ((dstImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) && (inputSlicePitch > inputRowPitch)) ? inputSlicePitch : inputRowPitch;
-    dc.dstSlicePitch = inputSlicePitch;
+    dc.srcRowPitch = ((dstImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) && (inputSlicePitch > inputRowPitch)) ? inputSlicePitch : inputRowPitch;
+    dc.srcSlicePitch = inputSlicePitch;
     if (isMipMapped(dstImage->getImageDesc())) {
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, origin);
     }

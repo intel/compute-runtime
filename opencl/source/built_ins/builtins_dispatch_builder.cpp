@@ -419,10 +419,10 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
 
         size_t region[] = {operationParams.size.x, operationParams.size.y, operationParams.size.z};
 
-        auto srcRowPitch = operationParams.dstRowPitch ? operationParams.dstRowPitch : region[0] * bytesPerPixel;
+        auto srcRowPitch = operationParams.srcRowPitch ? operationParams.srcRowPitch : region[0] * bytesPerPixel;
 
         auto srcSlicePitch =
-            operationParams.dstSlicePitch ? operationParams.dstSlicePitch : ((dstImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 1 : region[1]) * srcRowPitch);
+            operationParams.srcSlicePitch ? operationParams.srcSlicePitch : ((dstImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 1 : region[1]) * srcRowPitch);
 
         // Determine size of host ptr surface for residency purposes
         size_t hostPtrSize = operationParams.srcPtr ? Image::calculateHostPtrSize(region, srcRowPitch, srcSlicePitch, bytesPerPixel, dstImage->getImageDesc().image_type) : 0;
@@ -535,10 +535,10 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
 
         size_t region[] = {operationParams.size.x, operationParams.size.y, operationParams.size.z};
 
-        auto dstRowPitch = operationParams.srcRowPitch ? operationParams.srcRowPitch : region[0] * bytesPerPixel;
+        auto dstRowPitch = operationParams.dstRowPitch ? operationParams.dstRowPitch : region[0] * bytesPerPixel;
 
         auto dstSlicePitch =
-            operationParams.srcSlicePitch ? operationParams.srcSlicePitch : ((srcImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 1 : region[1]) * dstRowPitch);
+            operationParams.dstSlicePitch ? operationParams.dstSlicePitch : ((srcImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 1 : region[1]) * dstRowPitch);
 
         // Determine size of host ptr surface for residency purposes
         size_t hostPtrSize = operationParams.dstPtr ? Image::calculateHostPtrSize(region, dstRowPitch, dstSlicePitch, bytesPerPixel, srcImage->getImageDesc().image_type) : 0;
