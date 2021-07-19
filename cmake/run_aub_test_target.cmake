@@ -13,15 +13,17 @@ list(GET aub_test_config 4 revision_id)
 
 add_custom_target(run_${product}_${revision_id}_aub_tests ALL)
 
-if(NOT SKIP_NEO_UNIT_TESTS)
-  add_dependencies(run_${product}_${revision_id}_aub_tests copy_test_files_per_product)
-  add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels)
-  add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernel_for_shared)
-endif()
+if(NOT SKIP_NEO_UNIT_TESTS OR NOT SKIP_L0_UNIT_TESTS)
 
-add_dependencies(run_aub_tests run_${product}_${revision_id}_aub_tests)
-set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES FOLDER "${AUB_TESTS_TARGETS_FOLDER}/${product}/${revision_id}")
-if(NOT SKIP_NEO_UNIT_TESTS)
+  if(NOT SKIP_NEO_UNIT_TESTS)
+    add_dependencies(run_${product}_${revision_id}_aub_tests copy_test_files_per_product)
+    add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels)
+    add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernel_for_shared)
+  endif()
+
+  add_dependencies(run_aub_tests run_${product}_${revision_id}_aub_tests)
+  set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES FOLDER "${AUB_TESTS_TARGETS_FOLDER}/${product}/${revision_id}")
+
   if(WIN32)
     add_dependencies(run_${product}_${revision_id}_aub_tests mock_gdi)
   endif()
@@ -47,6 +49,9 @@ if(NOT SKIP_NEO_UNIT_TESTS)
                      COMMAND ${CMAKE_COMMAND} -E make_directory ${TargetDir}/${product}_aub/${revision_id}/cl_cache
   )
 
+endif()
+
+if(NOT SKIP_NEO_UNIT_TESTS)
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
     set(aub_test_cmd_prefix $<TARGET_FILE:igdrcl_aub_tests>)
   else()
@@ -60,26 +65,27 @@ if(NOT SKIP_NEO_UNIT_TESTS)
                      COMMAND echo Running AUB generation for ${product} in ${TargetDir}/${product}_aub
                      COMMAND ${aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${IGDRCL_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
   )
-  if(BUILD_WITH_L0)
-    if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
-      set(l0_aub_test_cmd_prefix $<TARGET_FILE:ze_intel_gpu_aub_tests>)
-    else()
-      set(l0_aub_test_cmd_prefix LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH} $<TARGET_FILE:ze_intel_gpu_aub_tests>)
-    endif()
+endif()
 
-    add_custom_command(
-                       TARGET run_${product}_${revision_id}_aub_tests
-                       POST_BUILD
-                       COMMAND WORKING_DIRECTORY ${TargetDir}
-                       COMMAND echo Running Level Zero AUB generation for ${product} in ${TargetDir}/${product}_aub
-                       COMMAND ${l0_aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} --rev_id ${revision_id}
-    )
+if(NOT SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
+  if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
+    set(l0_aub_test_cmd_prefix $<TARGET_FILE:ze_intel_gpu_aub_tests>)
+  else()
+    set(l0_aub_test_cmd_prefix LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH} $<TARGET_FILE:ze_intel_gpu_aub_tests>)
   endif()
 
-  if(DO_NOT_RUN_AUB_TESTS)
-    set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES
-                          EXCLUDE_FROM_DEFAULT_BUILD TRUE
-                          EXCLUDE_FROM_ALL TRUE
-    )
-  endif()
+  add_custom_command(
+                     TARGET run_${product}_${revision_id}_aub_tests
+                     POST_BUILD
+                     COMMAND WORKING_DIRECTORY ${TargetDir}
+                     COMMAND echo Running Level Zero AUB generation for ${product} in ${TargetDir}/${product}_aub
+                     COMMAND ${l0_aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} --rev_id ${revision_id}
+  )
+endif()
+
+if(DO_NOT_RUN_AUB_TESTS)
+  set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES
+                        EXCLUDE_FROM_DEFAULT_BUILD TRUE
+                        EXCLUDE_FROM_ALL TRUE
+  )
 endif()
