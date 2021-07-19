@@ -1,0 +1,37 @@
+name: verify
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc-5, gcc-6, gcc-7, gcc-8]
+    env:
+      WORKFLOW: VERIFY
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: neo
+    - name: prepare image
+      env:
+        BUILD_OS: ubuntu-18.04
+        COMPILER: ${{ matrix.compiler }}
+      working-directory: neo/scripts/actions
+      run: ./run-action-docker-prepare.sh
+    - name: build
+      env:
+        BUILD_OS: ubuntu-18.04
+        COMPILER: ${{ matrix.compiler }}
+      run: ./neo/scripts/actions/run-action-build.sh
+    - name: prepare artifacts
+      if: matrix.compiler == 'gcc-7'
+      run: |
+        mkdir artifacts
+        mv build/*.deb artifacts/
+    - name: upload artifacts
+      if: matrix.compiler == 'gcc-7'
+      uses: actions/upload-artifact@v1
+      with:
+        name: package
+        path: artifacts
