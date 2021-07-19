@@ -159,37 +159,46 @@ struct ClBlitProperties {
         }
     }
 
-    static void adjustBlitPropertiesForImage(MemObj *memObj, Vec3<size_t> &size, size_t &bytesPerPixel, uint64_t &gpuAddress) {
+    static void adjustBlitPropertiesForImage(MemObj *memObj, Vec3<size_t> &size, size_t &bytesPerPixel, uint64_t &gpuAddress, size_t &rowPitch, size_t &slicePitch) {
         auto image = castToObject<Image>(memObj);
-        auto image_width = image->getImageDesc().image_width;
-        auto image_height = image->getImageDesc().image_height;
-        auto image_depth = image->getImageDesc().image_depth;
+        const auto &imageDesc = image->getImageDesc();
+        auto image_width = imageDesc.image_width;
+        auto image_height = imageDesc.image_height;
+        auto image_depth = imageDesc.image_depth;
 
-        if (image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-            image_depth = std::max(image_depth, image->getImageDesc().image_array_size);
+        if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+            image_depth = std::max(image_depth, imageDesc.image_array_size);
         }
+
         SurfaceOffsets surfaceOffsets;
         image->getSurfaceOffsets(surfaceOffsets);
         gpuAddress += surfaceOffsets.offset;
-
         size.x = image_width;
         size.y = image_height ? image_height : 1;
         size.z = image_depth ? image_depth : 1;
         bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+        rowPitch = imageDesc.image_row_pitch;
+        slicePitch = imageDesc.image_slice_pitch;
     }
 
     static void setBlitPropertiesForImage(BlitProperties &blitProperties, const BuiltinOpParams &builtinOpParams) {
+        size_t srcRowPitch = builtinOpParams.dstRowPitch;
+        size_t dstRowPitch = builtinOpParams.srcRowPitch;
+        size_t srcSlicePitch = builtinOpParams.dstSlicePitch;
+        size_t dstSlicePitch = builtinOpParams.srcSlicePitch;
 
         if (blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
-            adjustBlitPropertiesForImage(builtinOpParams.srcMemObj, blitProperties.srcSize, blitProperties.bytesPerPixel, blitProperties.srcGpuAddress);
+            adjustBlitPropertiesForImage(builtinOpParams.srcMemObj, blitProperties.srcSize, blitProperties.bytesPerPixel,
+                                         blitProperties.srcGpuAddress, srcRowPitch, srcSlicePitch);
         } else {
-            adjustBlitPropertiesForImage(builtinOpParams.dstMemObj, blitProperties.dstSize, blitProperties.bytesPerPixel, blitProperties.dstGpuAddress);
+            adjustBlitPropertiesForImage(builtinOpParams.dstMemObj, blitProperties.dstSize, blitProperties.bytesPerPixel,
+                                         blitProperties.dstGpuAddress, dstRowPitch, dstSlicePitch);
         }
 
-        blitProperties.srcRowPitch = builtinOpParams.dstRowPitch ? builtinOpParams.dstRowPitch : blitProperties.srcSize.x * blitProperties.bytesPerPixel;
-        blitProperties.dstRowPitch = builtinOpParams.srcRowPitch ? builtinOpParams.srcRowPitch : blitProperties.dstSize.x * blitProperties.bytesPerPixel;
-        blitProperties.srcSlicePitch = builtinOpParams.dstSlicePitch ? builtinOpParams.dstSlicePitch : blitProperties.srcSize.y * blitProperties.srcRowPitch;
-        blitProperties.dstSlicePitch = builtinOpParams.srcSlicePitch ? builtinOpParams.srcSlicePitch : blitProperties.dstSize.y * blitProperties.dstRowPitch;
+        blitProperties.srcRowPitch = srcRowPitch ? srcRowPitch : blitProperties.srcSize.x * blitProperties.bytesPerPixel;
+        blitProperties.dstRowPitch = dstRowPitch ? dstRowPitch : blitProperties.dstSize.x * blitProperties.bytesPerPixel;
+        blitProperties.srcSlicePitch = srcSlicePitch ? srcSlicePitch : blitProperties.srcSize.y * blitProperties.srcRowPitch;
+        blitProperties.dstSlicePitch = dstSlicePitch ? dstSlicePitch : blitProperties.dstSize.y * blitProperties.dstRowPitch;
     }
 };
 

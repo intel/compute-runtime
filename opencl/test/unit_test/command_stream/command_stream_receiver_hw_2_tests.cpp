@@ -1311,7 +1311,13 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
     EXPECT_EQ(0ull, bbStart->getBatchBufferStartAddressGraphicsaddress472());
 }
 
-HWTEST_F(BcsTests, givenImage1DWhenAdjustBlitPropertiesForImageIsCalledThenValuesAreSetCorrectly) {
+struct BcsTestsImages : public BcsTests {
+
+    size_t rowPitch = 0;
+    size_t slicePitch = 0;
+};
+
+HWTEST_F(BcsTestsImages, givenImage1DWhenAdjustBlitPropertiesForImageIsCalledThenValuesAreSetCorrectly) {
     cl_image_desc imgDesc = Image1dDefaults::imageDesc;
     imgDesc.image_width = 10u;
     imgDesc.image_height = 0u;
@@ -1320,36 +1326,47 @@ HWTEST_F(BcsTests, givenImage1DWhenAdjustBlitPropertiesForImageIsCalledThenValue
     Vec3<size_t> size{0, 0, 0};
     size_t bytesPerPixel = 0u;
     size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
+    size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
+
     uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
-    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress, rowPitch, slicePitch);
 
     EXPECT_EQ(imgDesc.image_width, size.x);
     EXPECT_EQ(1u, size.y);
     EXPECT_EQ(1u, size.z);
     EXPECT_EQ(expectedBytesPerPixel, bytesPerPixel);
+    EXPECT_EQ(expectedRowPitch, rowPitch);
+    EXPECT_EQ(expectedSlicePitch, slicePitch);
 }
 
-HWTEST_F(BcsTests, givenImage2DArrayWhenAdjustBlitPropertiesForImageIsCalledThenValuesAreSetCorrectly) {
+HWTEST_F(BcsTestsImages, givenImage2DArrayWhenAdjustBlitPropertiesForImageIsCalledThenValuesAreSetCorrectly) {
     cl_image_desc imgDesc = Image1dDefaults::imageDesc;
     imgDesc.image_width = 10u;
     imgDesc.image_height = 3u;
     imgDesc.image_depth = 0u;
     imgDesc.image_array_size = 4u;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+
     std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
     Vec3<size_t> size{0, 0, 0};
     size_t bytesPerPixel = 0u;
     size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
+    size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
+
     uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
-    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress, rowPitch, slicePitch);
 
     EXPECT_EQ(imgDesc.image_width, size.x);
     EXPECT_EQ(imgDesc.image_height, size.y);
     EXPECT_EQ(imgDesc.image_array_size, size.z);
     EXPECT_EQ(expectedBytesPerPixel, bytesPerPixel);
+    EXPECT_EQ(expectedRowPitch, rowPitch);
+    EXPECT_EQ(expectedSlicePitch, slicePitch);
 }
 
-HWTEST_F(BcsTests, givenImageWithSurfaceOffsetWhenAdjustBlitPropertiesForImageIsCalledThenGpuAddressIsCorrect) {
+HWTEST_F(BcsTestsImages, givenImageWithSurfaceOffsetWhenAdjustBlitPropertiesForImageIsCalledThenGpuAddressIsCorrect) {
     cl_image_desc imgDesc = Image1dDefaults::imageDesc;
     std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
     Vec3<size_t> size{0, 0, 0};
@@ -1360,7 +1377,7 @@ HWTEST_F(BcsTests, givenImageWithSurfaceOffsetWhenAdjustBlitPropertiesForImageIs
     uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
     uint64_t expectedGpuAddress = gpuAddress + surfaceOffset;
 
-    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress, rowPitch, slicePitch);
 
     EXPECT_EQ(gpuAddress, expectedGpuAddress);
 }
@@ -1381,9 +1398,9 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesA
     auto expectedDstPtr = image.get()->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
     auto expectedBytesPerPixel = image.get()->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
     auto srcRowPitchExpected = expectedBytesPerPixel * builtinOpParams.size.x;
-    auto dstRowPitchExpected = expectedBytesPerPixel * image.get()->getImageDesc().image_width;
+    auto dstRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
     auto srcSlicePitchExpected = srcRowPitchExpected * builtinOpParams.size.y;
-    auto dstSlicePitchExpected = dstRowPitchExpected * image.get()->getImageDesc().image_height;
+    auto dstSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
 
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
                                                                 csr,
@@ -1415,9 +1432,9 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesA
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto expectedSrcPtr = image.get()->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
     auto expectedBytesPerPixel = image.get()->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-    auto srcRowPitchExpected = expectedBytesPerPixel * image.get()->getImageDesc().image_width;
+    auto srcRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
     auto dstRowPitchExpected = expectedBytesPerPixel * builtinOpParams.size.x;
-    auto srcSlicePitchExpected = srcRowPitchExpected * image.get()->getImageDesc().image_height;
+    auto srcSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
     auto dstSlicePitchExpected = dstRowPitchExpected * builtinOpParams.size.y;
 
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToHostPtr,
@@ -1449,9 +1466,8 @@ HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPrope
     builtinOpParams.dstRowPitch = inputRowPitch;
     builtinOpParams.dstSlicePitch = inputSlicePitch;
 
-    auto expectedBytesPerPixel = image.get()->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-    auto dstRowPitchExpected = expectedBytesPerPixel * image.get()->getImageDesc().image_width;
-    auto dstSlicePitchExpected = dstRowPitchExpected * image.get()->getImageDesc().image_height;
+    auto dstRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
+    auto dstSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
@@ -1478,9 +1494,8 @@ HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPrope
     builtinOpParams.srcRowPitch = inputRowPitch;
     builtinOpParams.srcSlicePitch = inputSlicePitch;
 
-    auto expectedBytesPerPixel = image.get()->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-    auto srcRowPitchExpected = expectedBytesPerPixel * image.get()->getImageDesc().image_width;
-    auto srcSlicePitchExpected = srcRowPitchExpected * image.get()->getImageDesc().image_height;
+    auto srcRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
+    auto srcSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToHostPtr,
