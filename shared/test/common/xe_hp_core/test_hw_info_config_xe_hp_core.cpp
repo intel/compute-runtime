@@ -13,9 +13,9 @@
 
 using namespace NEO;
 
-using XeHPHwInfoConfig = Test<DeviceFixture>;
+using XeHPMaxThreadsTest = Test<DeviceFixture>;
 
-XEHPTEST_F(XeHPHwInfoConfig, givenXEHPWithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
+XEHPTEST_F(XeHPMaxThreadsTest, givenXEHPWithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
@@ -24,7 +24,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenXEHPWithA0SteppingThenMaxThreadsForWorkgroupWA
     EXPECT_TRUE(isWARequired);
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenXEHPWithBSteppingThenMaxThreadsForWorkgroupWAIsNotRequired) {
+XEHPTEST_F(XeHPMaxThreadsTest, givenXEHPWithBSteppingThenMaxThreadsForWorkgroupWAIsNotRequired) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
