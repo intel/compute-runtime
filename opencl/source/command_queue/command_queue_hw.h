@@ -76,7 +76,7 @@ class CommandQueueHw : public CommandQueue {
 
             auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
             if (stateSaveAreaHeader.size() > 0) {
-                auto hwInfo = device->getDevice().getHardwareInfo();
+                auto &hwInfo = device->getDevice().getHardwareInfo();
                 auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
                 NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
                                                                       device->getDevice(), debugSurface, 0, stateSaveAreaHeader.data(),

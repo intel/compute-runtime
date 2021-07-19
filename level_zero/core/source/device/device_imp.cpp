@@ -698,7 +698,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
     }
 
     if (neoDevice->getCompilerInterface()) {
-        auto hwInfo = neoDevice->getHardwareInfo();
+        auto &hwInfo = neoDevice->getHardwareInfo();
         if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->getDebugger()) {
             bool ret = NEO::SipKernel::initSipKernel(NEO::SipKernel::getSipKernelType(*neoDevice), *neoDevice);
             UNRECOVERABLE_IF(!ret);
