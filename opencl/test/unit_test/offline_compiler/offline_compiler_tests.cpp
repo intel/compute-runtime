@@ -277,6 +277,10 @@ TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIs
     std::map<std::string, std::string> files;
     std::unique_ptr<MockOclocArgHelper> argHelper = std::make_unique<MockOclocArgHelper>(files);
 
+    if (argHelper->deviceProductTable.size() == 1 && argHelper->deviceProductTable[0].deviceId == 0) {
+        GTEST_SKIP();
+    }
+
     std::stringstream deviceString, productString;
     deviceString << "0x" << std::hex << argHelper->deviceProductTable[0].deviceId;
     productString << argHelper->deviceProductTable[0].product;
