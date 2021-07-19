@@ -12,14 +12,10 @@ endif()
 
 include(ExternalProject)
 
-# Include custom configs
-file(GLOB custom_configs *custom_config.cmake)
-foreach(config ${custom_configs})
-  include(${config})
-endforeach()
-
-# Include needed macros
-include(common_macros.cmake)
+# Set the runtime source directory
+if(NOT DEFINED NEO_SOURCE_DIR)
+  set(NEO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
 
 if(MSVC)
   set(CMAKE_GENERATOR_TOOLSET "host=x64")
@@ -30,6 +26,21 @@ if(NOT PROJECT_NAME)
 endif()
 
 project(${PROJECT_NAME})
+
+file(READ ".branch" BRANCH_TYPE)
+string(STRIP "${BRANCH_TYPE}" BRANCH_TYPE)
+set(BRANCH_DIR_SUFFIX "/${BRANCH_TYPE}")
+list(APPEND BRANCH_DIR_LIST "/")
+if(NOT "${BRANCH_TYPE}" STREQUAL "")
+  list(APPEND BRANCH_DIR_LIST "/${BRANCH_TYPE}/")
+endif()
+message(STATUS "branch dir list: ${BRANCH_DIR_LIST}")
+
+# Include custom configs
+include("${BRANCH_TYPE}/custom_config.cmake" OPTIONAL)
+
+# Include needed macros
+include(common_macros.cmake)
 
 if(CMAKE_CONFIGURATION_TYPES)
   # Set custom build types for multi-configuration generators
@@ -47,15 +58,6 @@ define_property(GLOBAL PROPERTY NEO_OCL_COMPONENTS_LIST BRIEF_DOCS "List of comp
 set(GLOBAL PROPERTY NEO_OCL_COMPONENTS_LIST "")
 define_property(GLOBAL PROPERTY NEO_L0_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
 set(GLOBAL PROPERTY NEO_L0_COMPONENTS_LIST "")
-
-file(READ ".branch" BRANCH_TYPE)
-string(STRIP "${BRANCH_TYPE}" BRANCH_TYPE)
-set(BRANCH_DIR_SUFFIX "/${BRANCH_TYPE}")
-list(APPEND BRANCH_DIR_LIST "/")
-if(NOT "${BRANCH_TYPE}" STREQUAL "")
-  list(APPEND BRANCH_DIR_LIST "/${BRANCH_TYPE}/")
-endif()
-message(STATUS "branch dir list: ${BRANCH_DIR_LIST}")
 
 if(WIN32)
   set(DISABLE_WDDM_LINUX TRUE)
@@ -202,11 +204,6 @@ if("${BUILD_TYPE_lower}" STREQUAL "releaseinternal")
 endif("${BUILD_TYPE_lower}" STREQUAL "releaseinternal")
 
 message(STATUS "${CMAKE_BUILD_TYPE} build configuration")
-
-# Set the runtime source directory
-if(NOT DEFINED NEO_SOURCE_DIR)
-  set(NEO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-endif()
 
 set(NEO_RUNTIME_SUB_DIR "opencl/source")
 set(NEO_RUNTIME_SOURCE_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_SUB_DIR}")
