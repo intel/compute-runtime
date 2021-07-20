@@ -46,6 +46,9 @@ struct CommandQueueImp : public CommandQueue {
         void setCurrentFlushStamp(uint32_t taskCount, NEO::FlushStamp flushStamp) {
             flushId[bufferUse] = std::make_pair(taskCount, flushStamp);
         }
+        std::pair<uint32_t, NEO::FlushStamp> &getCurrentFlushStamp() {
+            return flushId[bufferUse];
+        }
 
       private:
         NEO::GraphicsAllocation *buffers[BUFFER_ALLOCATION::COUNT];

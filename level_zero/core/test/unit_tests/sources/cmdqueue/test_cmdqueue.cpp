@@ -1402,20 +1402,28 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
         ~SynchronizeCsr() override {
             delete tagAddress;
         }
+
         SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
             : NEO::UltCommandStreamReceiver<FamilyType>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
             tagAddress = new uint32_t;
         }
+
         bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
             waitForComplitionCalledTimes++;
             return true;
         }
 
+        void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+            waitForTaskCountWithKmdNotifyFallbackCalled++;
+            NEO::UltCommandStreamReceiver<FamilyType>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
+        }
+
         volatile uint32_t *getTagAddress() const override {
             return tagAddress;
         }
-        uint32_t waitForComplitionCalledTimes = 0;
         uint32_t *tagAddress;
+        uint32_t waitForComplitionCalledTimes = 0;
+        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     };
 
     auto csr = std::unique_ptr<SynchronizeCsr>(new SynchronizeCsr(*device->getNEODevice()->getExecutionEnvironment(),
@@ -1435,14 +1443,17 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
 
     queue->synchronize(timeout);
 
-    EXPECT_EQ(csr->waitForComplitionCalledTimes, 1u);
+    EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+
     timeout = std::numeric_limits<uint64_t>::max();
     enableTimeoutExpected = false;
     timeoutMicrosecondsExpected = NEO::TimeoutControls::maxTimeout;
 
     queue->synchronize(timeout);
 
-    EXPECT_EQ(csr->waitForComplitionCalledTimes, 2u);
+    EXPECT_EQ(2u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(1u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
