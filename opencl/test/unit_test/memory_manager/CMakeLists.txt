@@ -33,5 +33,12 @@ if(UNIX)
   list(APPEND IGDRCL_SRCS_tests_memory_manager ${NEO_CORE_PAGE_FAULT_MANAGER_LINUX_TESTS})
 endif()
 
+if(TESTS_XEHP_PLUS)
+  list(APPEND IGDRCL_SRCS_tests_memory_manager
+       ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests_xehp_plus.h
+  )
+endif()
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_memory_manager})
 add_subdirectories()

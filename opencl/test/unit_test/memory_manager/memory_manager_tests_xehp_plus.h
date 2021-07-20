@@ -1,0 +1,19 @@
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+void givenEnabledLocalMemoryWhenLinearStreamIsAllocatedInSystemPoolThenLocalMemoryPoolIsUsed();
+void givenLinearStreamTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested();
+void givenLinearStreamWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested();
+void givenEnabledLocalMemoryWhenAllocateInternalHeapInSystemPoolThenLocalMemoryPoolIsNotUsed();
+void givenKernelIsaTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested();
+void givenRingBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet();
+void givenSemaphoreBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet();
+void givenConstantSurfaceTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequestedWithoutCpuAccess();
+void givenPrintfAllocationWhenGetAllocationDataIsCalledThenUseSystemMemoryAndRequireCpuAccess();
+void givenGpuTimestampTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested();

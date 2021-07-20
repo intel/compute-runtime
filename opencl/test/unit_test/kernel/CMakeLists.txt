@@ -32,5 +32,11 @@ set(IGDRCL_SRCS_tests_kernel
     ${CMAKE_CURRENT_SOURCE_DIR}/substitute_kernel_heap_tests.cpp
 )
 
+if(TESTS_XEHP_PLUS)
+  list(APPEND IGDRCL_SRCS_tests_kernel
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_plus_tests.inl
+  )
+endif()
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_kernel})
 add_subdirectories()
