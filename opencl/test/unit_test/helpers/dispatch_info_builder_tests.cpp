@@ -977,4 +977,31 @@ TEST_F(DispatchInfoBuilderTest, GivenNullKernelWhenSettingKernelArgThenSuccessIs
     delete diBuilder;
     delete buffer;
 }
+
+TEST_F(DispatchInfoBuilderTest, WhenDimensionIsNotSetThenProperDimensionIsReturned) {
+    MultiDispatchInfo mdi;
+
+    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>>(*pClDevice);
+    ASSERT_NE(nullptr, diBuilder);
+
+    diBuilder->setDispatchGeometry(0u, Vec3<size_t>(128, 4, 1), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder->bake(mdi);
+    for (auto &dispatchInfo : mdi) {
+        EXPECT_EQ(2u, dispatchInfo.getDim());
+    }
+}
+
+TEST_F(DispatchInfoBuilderTest, WhengDimensionIsNotMatchingGWSThenDimensionPassedAsArgumentIsReturned) {
+    MultiDispatchInfo mdi;
+
+    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>>(*pClDevice);
+    ASSERT_NE(nullptr, diBuilder);
+
+    diBuilder->setDispatchGeometry(2u, Vec3<size_t>(128, 1, 1), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder->bake(mdi);
+    for (auto &dispatchInfo : mdi) {
+        EXPECT_EQ(2u, dispatchInfo.getDim());
+    }
+}
+
 } // namespace NEO

@@ -249,7 +249,7 @@ class DispatchInfoBuilder {
                 continue;
             }
 
-            dispatchInfo.setDim(calculateDispatchDim(dispatchInfo.getGWS(), dispatchInfo.getOffset()));
+            dispatchInfo.setDim(dispatchInfo.getDim() == 0 ? calculateDispatchDim(dispatchInfo.getGWS(), dispatchInfo.getOffset()) : dispatchInfo.getDim());
             dispatchInfo.setGWS(canonizeWorkgroup(dispatchInfo.getGWS()));
             if (dispatchInfo.getActualWorkgroupSize() == Vec3<size_t>({0, 0, 0})) {
                 dispatchInfo.setActualGlobalWorkgroupSize(dispatchInfo.getGWS());
