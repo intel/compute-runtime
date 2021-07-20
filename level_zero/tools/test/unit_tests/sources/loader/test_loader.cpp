@@ -7,6 +7,7 @@
 
 #include "test.h"
 
+#include "level_zero/tools/test/unit_tests/sources/sysman/mocks/mock_sysman_env_vars.h"
 #include <level_zero/zes_api.h>
 #include <level_zero/zes_ddi.h>
 
@@ -15,8 +16,8 @@
 namespace L0 {
 namespace ult {
 
-TEST(zesGetDriverProcAddrTableTest,
-     whenCallingzesGetDriverProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetDriverProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_driver_dditable_t pDdiTable = {};
@@ -25,8 +26,8 @@ TEST(zesGetDriverProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetDiagnosticsProcAddrTableTest,
-     whenCallingzesGetDiagnosticsProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetDiagnosticsProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_diagnostics_dditable_t pDdiTable = {};
@@ -35,8 +36,8 @@ TEST(zesGetDiagnosticsProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetEngineProcAddrTableTest,
-     whenCallingzesGetEngineProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetEngineProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_engine_dditable_t pDdiTable = {};
@@ -45,9 +46,8 @@ TEST(zesGetEngineProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetFabricPortProcAddrTableTest,
-     whenCallingzesGetFabricPortProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
-
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetFabricPortProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_fabric_port_dditable_t pDdiTable = {};
 
@@ -55,8 +55,8 @@ TEST(zesGetFabricPortProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetFanProcAddrTableTest,
-     whenCallingzesGetFanProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetFanProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_fan_dditable_t pDdiTable = {};
@@ -65,8 +65,8 @@ TEST(zesGetFanProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetDeviceProcAddrTableTest,
-     whenCallingzesGetDeviceProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetDeviceProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_device_dditable_t pDdiTable = {};
@@ -75,8 +75,8 @@ TEST(zesGetDeviceProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetFirmwareProcAddrTableTest,
-     whenCallingzesGetFirmwareProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetFirmwareProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_firmware_dditable_t pDdiTable = {};
@@ -85,8 +85,8 @@ TEST(zesGetFirmwareProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetFrequencyProcAddrTableTest,
-     whenCallingzesGetFrequencyProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetFrequencyProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_frequency_dditable_t pDdiTable = {};
@@ -95,8 +95,8 @@ TEST(zesGetFrequencyProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetLedProcAddrTableTest,
-     whenCallingzesGetLedProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetLedProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_led_dditable_t pDdiTable = {};
@@ -105,8 +105,8 @@ TEST(zesGetLedProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetMemoryProcAddrTableTest,
-     whenCallingzesGetMemoryProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetMemoryProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_memory_dditable_t pDdiTable = {};
@@ -115,8 +115,8 @@ TEST(zesGetMemoryProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetPerformanceFactorProcAddrTableTest,
-     whenCallingzesGetPerformanceFactorProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetPerformanceFactorProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_performance_factor_dditable_t pDdiTable = {};
@@ -125,8 +125,8 @@ TEST(zesGetPerformanceFactorProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetPowerProcAddrTableTest,
-     whenCallingzesGetPowerProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetPowerProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_power_dditable_t pDdiTable = {};
@@ -135,8 +135,8 @@ TEST(zesGetPowerProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetPsuProcAddrTableTest,
-     whenCallingzesGetPsuProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetPsuProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_psu_dditable_t pDdiTable = {};
@@ -145,8 +145,8 @@ TEST(zesGetPsuProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetRasProcAddrTableTest,
-     whenCallingzesGetRasProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetRasProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_ras_dditable_t pDdiTable = {};
@@ -155,8 +155,8 @@ TEST(zesGetRasProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetSchedulerProcAddrTableTest,
-     whenCallingzesGetSchedulerProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetSchedulerProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_scheduler_dditable_t pDdiTable = {};
@@ -165,8 +165,8 @@ TEST(zesGetSchedulerProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetStandbyProcAddrTableTest,
-     whenCallingzesGetStandbyProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetStandbyProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
     zes_standby_dditable_t pDdiTable = {};
@@ -175,8 +175,8 @@ TEST(zesGetStandbyProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zesGetDriverProcAddrTableTest,
-     whenCallingzesGetDriverProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetDriverProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_driver_dditable_t pDdiTable = {};
@@ -185,8 +185,8 @@ TEST(zesGetDriverProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetDiagnosticsProcAddrTableTest,
-     whenCallingzesGetDiagnosticsProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetDiagnosticsProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_diagnostics_dditable_t pDdiTable = {};
@@ -195,8 +195,8 @@ TEST(zesGetDiagnosticsProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetEngineProcAddrTableTest,
-     whenCallingzesGetEngineProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetEngineProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_engine_dditable_t pDdiTable = {};
@@ -205,8 +205,8 @@ TEST(zesGetEngineProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetFabricPortProcAddrTableTest,
-     whenCallingzesGetFabricPortProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetFabricPortProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_fabric_port_dditable_t pDdiTable = {};
@@ -215,8 +215,8 @@ TEST(zesGetFabricPortProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetFanProcAddrTableTest,
-     whenCallingzesGetFanProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetFanProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_fan_dditable_t pDdiTable = {};
@@ -225,8 +225,8 @@ TEST(zesGetFanProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetDeviceProcAddrTableTest,
-     whenCallingzesGetDeviceProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetDeviceProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_device_dditable_t pDdiTable = {};
@@ -235,8 +235,8 @@ TEST(zesGetDeviceProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetFirmwareProcAddrTableTest,
-     whenCallingzesGetFirmwareProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetFirmwareProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_firmware_dditable_t pDdiTable = {};
@@ -245,8 +245,8 @@ TEST(zesGetFirmwareProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetFrequencyProcAddrTableTest,
-     whenCallingzesGetFrequencyProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetFrequencyProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_frequency_dditable_t pDdiTable = {};
@@ -255,8 +255,8 @@ TEST(zesGetFrequencyProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetLedProcAddrTableTest,
-     whenCallingzesGetLedProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetLedProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_led_dditable_t pDdiTable = {};
@@ -265,8 +265,8 @@ TEST(zesGetLedProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetMemoryProcAddrTableTest,
-     whenCallingzesGetMemoryProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetMemoryProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_memory_dditable_t pDdiTable = {};
@@ -275,8 +275,8 @@ TEST(zesGetMemoryProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetPerformanceFactorProcAddrTableTest,
-     whenCallingzesGetPerformanceFactorProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetPerformanceFactorProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_performance_factor_dditable_t pDdiTable = {};
@@ -285,8 +285,8 @@ TEST(zesGetPerformanceFactorProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetPowerProcAddrTableTest,
-     whenCallingzesGetPowerProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetPowerProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_power_dditable_t pDdiTable = {};
@@ -295,8 +295,8 @@ TEST(zesGetPowerProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetPsuProcAddrTableTest,
-     whenCallingzesGetPsuProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetPsuProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_psu_dditable_t pDdiTable = {};
@@ -305,8 +305,8 @@ TEST(zesGetPsuProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetRasProcAddrTableTest,
-     whenCallingzesGetRasProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetRasProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_ras_dditable_t pDdiTable = {};
@@ -315,8 +315,8 @@ TEST(zesGetRasProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetSchedulerProcAddrTableTest,
-     whenCallingzesGetSchedulerProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetSchedulerProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_scheduler_dditable_t pDdiTable = {};
@@ -325,8 +325,8 @@ TEST(zesGetSchedulerProcAddrTableTest,
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, result);
 }
 
-TEST(zesGetStandbyProcAddrTableTest,
-     whenCallingzesGetStandbyProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
+TEST_F(SysmanEnabledFixture,
+       whenCallingzesGetStandbyProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
     ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
     zes_standby_dditable_t pDdiTable = {};

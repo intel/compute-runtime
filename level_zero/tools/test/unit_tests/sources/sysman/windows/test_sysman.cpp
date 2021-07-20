@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/os_interface/debug_env_reader.h"
 
 #include "test.h"
 
@@ -25,6 +27,12 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanInitThenValidSysmanHan
     EXPECT_NE(pSysmanDevice, nullptr);
     delete pSysmanDevice;
     pSysmanDevice = nullptr;
+}
+
+TEST_F(SysmanDeviceFixture, GivenMockEnvValuesWhenGettingEnvValueThenCorrectValueIsReturned) {
+    ASSERT_NE(IoFunctions::mockableEnvValues, nullptr);
+    EnvironmentVariableReader envVarReader;
+    EXPECT_EQ(envVarReader.getSetting("ZES_ENABLE_SYSMAN", false), true);
 }
 
 } // namespace ult
