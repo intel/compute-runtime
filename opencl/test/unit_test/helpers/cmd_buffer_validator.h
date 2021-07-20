@@ -58,7 +58,7 @@ struct NamedValidator {
 };
 
 #define EXPECT_MEMBER(TYPE, FUNC, EXPECTED) \
-    NamedValidator { GenericCmdValidator<TYPE, decltype((((TYPE *)nullptr)->FUNC)()), &TYPE::FUNC, EXPECTED>::get(), #FUNC }
+    NamedValidator { GenericCmdValidator<TYPE, std::invoke_result_t<decltype(&TYPE::FUNC), TYPE>, &TYPE::FUNC, EXPECTED>::get(), #FUNC }
 
 using Expects = std::vector<NamedValidator>;
 

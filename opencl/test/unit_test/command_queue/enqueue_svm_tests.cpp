@@ -283,7 +283,7 @@ TEST_F(EnqueueSvmTest, GivenNullSrcPtrWhenCopyingMemoryThenInvalidVaueErrorIsRet
 }
 
 TEST_F(EnqueueSvmTest, givenSrcHostPtrAndEventWhenEnqueueSVMMemcpyThenEventCommandTypeIsCorrectlySet) {
-    char srcHostPtr[260];
+    char srcHostPtr[260] = {};
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
     cl_event event = nullptr;
@@ -304,7 +304,7 @@ TEST_F(EnqueueSvmTest, givenSrcHostPtrAndEventWhenEnqueueSVMMemcpyThenEventComma
 }
 
 TEST_F(EnqueueSvmTest, givenSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
-    char srcHostPtr[260];
+    char srcHostPtr[260] = {};
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -480,8 +480,8 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueBlockingSVMMemcp
 }
 
 TEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
-    char dstHostPtr[260];
-    char srcHostPtr[260];
+    char dstHostPtr[260] = {};
+    char srcHostPtr[260] = {};
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = srcHostPtr;
     retVal = this->pCmdQ->enqueueSVMMemcpy(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,17 +107,17 @@ bool tokenOffsetMatched(const uint8_t *base, size_t tokenOffset, const iOpenCL::
 }
 
 TEST(GetInlineData, GivenConstantMemorySurfaceTokenThenReturnProperOffsetToInlineData) {
-    iOpenCL::SPatchAllocateConstantMemorySurfaceProgramBinaryInfo surfTok[2];
+    iOpenCL::SPatchAllocateConstantMemorySurfaceProgramBinaryInfo surfTok[2] = {};
     EXPECT_EQ(reinterpret_cast<uint8_t *>(&surfTok[1]), NEO::PatchTokenBinary::getInlineData(&surfTok[0]));
 }
 
 TEST(GetInlineData, GivenGlobalMemorySurfaceTokenThenReturnProperOffsetToInlineData) {
-    iOpenCL::SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo surfTok[2];
+    iOpenCL::SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo surfTok[2] = {};
     EXPECT_EQ(reinterpret_cast<uint8_t *>(&surfTok[1]), NEO::PatchTokenBinary::getInlineData(&surfTok[0]));
 }
 
 TEST(GetInlineData, GivenStringTokenThenReturnProperOffsetToInlineData) {
-    iOpenCL::SPatchString surfTok[2];
+    iOpenCL::SPatchString surfTok[2] = {};
     EXPECT_EQ(reinterpret_cast<uint8_t *>(&surfTok[1]), NEO::PatchTokenBinary::getInlineData(&surfTok[0]));
 }
 
