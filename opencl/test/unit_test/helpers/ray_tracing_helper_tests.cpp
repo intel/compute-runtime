@@ -15,6 +15,15 @@
 
 using namespace NEO;
 
+TEST(RayTracingHelperTests, whenGetMemoryBackedFifoSizeToPatchIsCalledCorrectValueIsReturned) {
+    size_t fifoSize = RayTracingHelper::getMemoryBackedFifoSizeToPatch();
+    size_t expectedSize =
+        RayTracingHelper::memoryBackedFifoSizePerDss == 0
+            ? 0
+            : Math::log2(RayTracingHelper::memoryBackedFifoSizePerDss / KB) - 1;
+    EXPECT_EQ(expectedSize, fifoSize);
+}
+
 TEST(RayTracingHelperTests, whenMemoryBackedFifoSizeIsRequestedThenCorrectValueIsReturned) {
     MockDevice device;
 
