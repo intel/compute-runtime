@@ -13,8 +13,8 @@
 
 namespace L0 {
 
-template <typename Family>
-L0::Event *L0HwHelperHw<Family>::createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const {
+template <typename GfxFamily>
+L0::Event *L0HwHelperHw<GfxFamily>::createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const {
     if (NEO::DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
         if (NEO::DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
             return Event::create<uint32_t>(eventPool, desc, device);
@@ -25,7 +25,11 @@ L0::Event *L0HwHelperHw<Family>::createEvent(L0::EventPool *eventPool, const ze_
         }
     }
 
-    return Event::create<typename Family::TimestampPacketType>(eventPool, desc, device);
+    return Event::create<typename GfxFamily::TimestampPacketType>(eventPool, desc, device);
 }
 
+template <typename GfxFamily>
+bool L0HwHelperHw<GfxFamily>::isResumeWARequired() {
+    return false;
+}
 } // namespace L0

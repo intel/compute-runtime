@@ -22,6 +22,11 @@ void populateFactoryTable<L0HwHelperHw<Family>>() {
     l0HwHelperFactory[gfxCore] = &L0HwHelperHw<Family>::get();
 }
 
+template <>
+bool L0HwHelperHw<Family>::isResumeWARequired() {
+    return true;
+}
+
 template class L0HwHelperHw<Family>;
 
 } // namespace L0
