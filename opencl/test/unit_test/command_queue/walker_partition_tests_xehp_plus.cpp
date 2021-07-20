@@ -6,22 +6,10 @@
  */
 
 #include "shared/source/command_container/walker_partition_xehp_plus.h"
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/os_interface/os_context.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 using namespace WalkerPartition;
@@ -2087,64 +2075,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
-}
-
-struct EnqueueWithWalkerPartitionTests : public ::testing::Test {
-    void SetUp() override {
-        if (!OSInterface::osEnableLocalMemory) {
-            GTEST_SKIP();
-        }
-        DebugManager.flags.EnableWalkerPartition.set(1u);
-        executionEnvironment = platform()->peekExecutionEnvironment();
-        DebugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
-        executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->calculateMaxOsContextCount();
-
-        rootDevice = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
-
-        context = std::make_unique<MockContext>(rootDevice.get());
-
-        engineControlForFusedQueue = rootDevice->getDefaultEngine();
-    }
-
-    DebugManagerStateRestore restore;
-    VariableBackup<bool> mockDeviceFlagBackup{&MockDevice::createSingleDevice, false};
-    const uint32_t numberOfTiles = 3;
-    EngineControl engineControlForFusedQueue = {};
-    ExecutionEnvironment *executionEnvironment = nullptr;
-    std::unique_ptr<MockClDevice> rootDevice;
-    std::unique_ptr<MockContext> context;
-};
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests, givenCsrWithSpecificNumberOfTilesWhenDispatchingThenConstructCmdBufferForAllSupportedTiles) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    MockCommandQueueHw<FamilyType> commandQueue(context.get(), rootDevice.get(), nullptr);
-    commandQueue.gpgpuEngine = &engineControlForFusedQueue;
-    MockKernelWithInternals kernel(*rootDevice, context.get());
-
-    size_t offset[3] = {0, 0, 0};
-    size_t gws[3] = {32, 32, 32};
-    commandQueue.enqueueKernel(kernel, 3, offset, gws, nullptr, 0, nullptr, nullptr);
-    auto &cmdStream = commandQueue.getCS(0);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream, 0);
-
-    bool lastSemaphoreFound = false;
-    for (auto it = hwParser.cmdList.rbegin(); it != hwParser.cmdList.rend(); it++) {
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
-
-        if (semaphoreCmd) {
-            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
-                continue;
-            }
-            EXPECT_EQ(numberOfTiles, semaphoreCmd->getSemaphoreDataDword());
-            lastSemaphoreFound = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(lastSemaphoreFound);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenNativeCrossTileSyncWhenDebugForceDisableCrossTileSyncThenNativeOverridesDebugAndAddsOwnCleanupSection) {
