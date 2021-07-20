@@ -111,21 +111,21 @@ TEST_F(CoherentMemObjSurface, GivenCoherentMemObjWhenCreatingSurfaceFromMemObjTh
 }
 
 TEST(HostPtrSurfaceTest, givenHostPtrSurfaceWhenCreatedWithoutSpecifyingPtrCopyAllowanceThenPtrCopyIsNotAllowed) {
-    char memory[2];
+    char memory[2] = {};
     HostPtrSurface surface(memory, sizeof(memory));
 
     EXPECT_FALSE(surface.peekIsPtrCopyAllowed());
 }
 
 TEST(HostPtrSurfaceTest, givenHostPtrSurfaceWhenCreatedWithPtrCopyAllowedThenQueryReturnsTrue) {
-    char memory[2];
+    char memory[2] = {};
     HostPtrSurface surface(memory, sizeof(memory), true);
 
     EXPECT_TRUE(surface.peekIsPtrCopyAllowed());
 }
 
 TEST(HostPtrSurfaceTest, givenHostPtrSurfaceWhenCreatedWithPtrCopyNotAllowedThenQueryReturnsFalse) {
-    char memory[2];
+    char memory[2] = {};
     HostPtrSurface surface(memory, sizeof(memory), false);
 
     EXPECT_FALSE(surface.peekIsPtrCopyAllowed());

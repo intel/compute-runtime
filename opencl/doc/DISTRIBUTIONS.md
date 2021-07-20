@@ -36,7 +36,7 @@ swupd bundle-add computer-vision-basic
 cave resolve --execute intel-compute-runtime
 ```
 
-## Fedora* 32, 33, 34, rawhide, Red Hat Enterprise Linux* 8, Mageia* 7, 8
+## Fedora* 33, 34, rawhide, Red Hat Enterprise Linux* 8, Mageia* 8
 
 ```
 dnf install dnf-plugins-core
