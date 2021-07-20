@@ -73,8 +73,12 @@ struct Elf {
         return std::string(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()) + nameOffset);
     }
 
-    decltype(ElfSymbolEntry<NumBits>::value) getSymbolAddress(uint32_t idx) const {
+    decltype(ElfSymbolEntry<NumBits>::value) getSymbolValue(uint32_t idx) const {
         return symbolTable[idx].value;
+    }
+
+    decltype(ElfSectionHeader<NumBits>::offset) getSectionOffset(uint32_t idx) const {
+        return sectionHeaders[idx].header->offset;
     }
 
     const Relocations &getRelocations() const {

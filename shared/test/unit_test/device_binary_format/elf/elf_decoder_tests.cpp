@@ -668,8 +668,8 @@ TEST(ElfDecoder, WhenGettingSymbolAddressThenCorectValueIsReturned) {
     symbol.value = 0xfffff000;
     elf.symbolTable.push_back(symbol);
 
-    auto address0 = elf.getSymbolAddress(0);
-    auto address1 = elf.getSymbolAddress(1);
+    auto address0 = elf.getSymbolValue(0);
+    auto address1 = elf.getSymbolValue(1);
 
     EXPECT_EQ(0x1234000u, address0);
     EXPECT_EQ(0xfffff000u, address1);

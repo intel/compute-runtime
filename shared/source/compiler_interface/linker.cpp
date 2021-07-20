@@ -275,6 +275,7 @@ bool Linker::processRelocations(const SegmentInfo &globalVariables, const Segmen
 uint32_t addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationtype) {
     return (relocationtype == LinkerInput::RelocationInfo::Type::Address) ? sizeof(uintptr_t) : sizeof(uint32_t);
 }
+
 void Linker::patchAddress(void *relocAddress, const Linker::RelocatedSymbol &symbol, const Linker::RelocationInfo &relocation) {
     uint64_t gpuAddressAs64bit = static_cast<uint64_t>(symbol.gpuAddress);
     switch (relocation.type) {
@@ -429,7 +430,7 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
     for (auto &reloc : decodedElf.getDebugInfoRelocations()) {
         auto targetSectionName = decodedElf.getSectionName(reloc.targetSectionIndex);
         auto sectionName = decodedElf.getSectionName(reloc.symbolSectionIndex);
-        auto symbolAddress = decodedElf.getSymbolAddress(reloc.symbolTableIndex);
+        auto symbolAddress = decodedElf.getSymbolValue(reloc.symbolTableIndex);
 
         if (sectionName == Elf::SpecialSectionNames::text) {
             symbolAddress += text.gpuAddress;

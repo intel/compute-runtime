@@ -100,6 +100,14 @@ ElfProgramHeader<NumBits> &ElfEncoder<NumBits>::appendSegment(PROGRAM_HEADER_TYP
 }
 
 template <ELF_IDENTIFIER_CLASS NumBits>
+void ElfEncoder<NumBits>::appendProgramHeaderLoad(size_t sectionId, uint64_t vAddr, uint64_t segSize) {
+    programSectionLookupTable.push_back({programHeaders.size(), sectionId});
+    auto &programHeader = appendSegment(PROGRAM_HEADER_TYPE::PT_LOAD, {});
+    programHeader.vAddr = static_cast<decltype(programHeader.vAddr)>(vAddr);
+    programHeader.memSz = static_cast<decltype(programHeader.memSz)>(segSize);
+}
+
+template <ELF_IDENTIFIER_CLASS NumBits>
 uint32_t ElfEncoder<NumBits>::appendSectionName(ConstStringRef str) {
     if (str.empty() || (false == addHeaderSectionNamesSection)) {
         return specialStringsOffsets.undef;
@@ -158,6 +166,11 @@ std::vector<uint8_t> ElfEncoder<NumBits>::encode() const {
     ret.reserve(stringTabOffset + alignedSectionNamesDataSize);
     ret.insert(ret.end(), reinterpret_cast<uint8_t *>(&elfFileHeader), reinterpret_cast<uint8_t *>(&elfFileHeader + 1));
     ret.resize(programHeadersOffset, 0U);
+
+    for (auto &progSecLookup : programSectionLookupTable) {
+        programHeaders[progSecLookup.programId].offset = sectionHeaders[progSecLookup.sectionId].offset;
+        programHeaders[progSecLookup.programId].fileSz = sectionHeaders[progSecLookup.sectionId].size;
+    }
 
     for (auto &programHeader : programHeaders) {
         if (0 != programHeader.fileSz) {

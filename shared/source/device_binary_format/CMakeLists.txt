@@ -32,6 +32,8 @@ set(NEO_DEVICE_BINARY_FORMAT
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug_zebin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug_zebin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser.h
 )

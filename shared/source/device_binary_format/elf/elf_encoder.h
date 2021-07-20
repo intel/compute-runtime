@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ struct ElfEncoder {
 
     ElfSectionHeader<NumBits> &appendSection(SECTION_HEADER_TYPE sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
     ElfProgramHeader<NumBits> &appendSegment(PROGRAM_HEADER_TYPE segmentType, const ArrayRef<const uint8_t> segmentData);
+    void appendProgramHeaderLoad(size_t sectionId, uint64_t vAddr, uint64_t segSize);
 
     template <typename SectionHeaderEnumT>
     ElfSectionHeader<NumBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
@@ -58,6 +59,11 @@ struct ElfEncoder {
     StackVec<ElfSectionHeader<NumBits>, 32> sectionHeaders;
     std::vector<uint8_t> data;
     std::vector<char> stringTable;
+    struct ProgramSectionID {
+        size_t programId;
+        size_t sectionId;
+    };
+    StackVec<ProgramSectionID, 32> programSectionLookupTable;
     struct {
         uint32_t shStrTab = 0;
         uint32_t undef = 0;
