@@ -246,7 +246,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     auto event = Event::fromHandle(hEvent);
 
     uint64_t baseAddr = event->getGpuAddress(this->device);
@@ -268,6 +270,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     } else {
         NEO::PipeControlArgs args;
         args.dcFlushEnable = (!event->signalScope) ? false : true;
+
+        auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+        size_t estimatedSizeRequired =
+            NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packetsToReset + sizeof(MI_BATCH_BUFFER_END);
+        if (commandContainer.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
+            auto bbEnd = commandContainer.getCommandStream()->template getSpaceForCmd<MI_BATCH_BUFFER_END>();
+            *bbEnd = GfxFamily::cmdInitBatchBufferEnd;
+            commandContainer.allocateNextCommandBuffer();
+        }
 
         for (uint32_t i = 0u; i < packetsToReset; i++) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
