@@ -37,12 +37,17 @@ extern const char *dxcoreDllName;
 
 namespace NEO {
 void __attribute__((destructor)) platformsDestructor();
-}
+extern const DeviceDescriptor deviceDescriptorTable[];
+} // namespace NEO
 using namespace NEO;
 
 class DrmTestsFixture {
   public:
     void SetUp() {
+        if (deviceDescriptorTable[0].deviceId == 0) {
+            GTEST_SKIP();
+        }
+
         executionEnvironment.prepareRootDeviceEnvironments(1);
         rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     }
@@ -82,7 +87,15 @@ int openWithCounter(const char *fullPath, int, ...) {
     return -1;
 };
 
-TEST(DrmTest, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHwDeviceIds) {
+struct DrmSimpleTests : public ::testing::Test {
+    void SetUp() override {
+        if (deviceDescriptorTable[0].deviceId == 0) {
+            GTEST_SKIP();
+        }
+    }
+};
+
+TEST_F(DrmSimpleTests, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHwDeviceIds) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = openWithCounter;
     openCounter = 2;
@@ -91,7 +104,7 @@ TEST(DrmTest, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHwDeviceIds
     EXPECT_EQ(2u, hwDeviceIds.size());
 }
 
-TEST(DrmTest, GivenSelectedNotExistingDeviceWhenGetDeviceFdThenFail) {
+TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234");
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
@@ -102,7 +115,7 @@ TEST(DrmTest, GivenSelectedNotExistingDeviceWhenGetDeviceFdThenFail) {
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
-TEST(DrmTest, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
+TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234");
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
@@ -114,7 +127,7 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
-TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDeviceIdsHaveProperPciPaths) {
+TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDeviceIdsHaveProperPciPaths) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, false);
     VariableBackup<decltype(entryIndex)> backupEntryIndex(&entryIndex, 0u);
@@ -139,7 +152,7 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDeviceIdsHavePr
     EXPECT_STREQ("test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
-TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevices) {
+TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevices) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
     VariableBackup<decltype(readLinkCalledTimes)> backupReadlink(&readLinkCalledTimes, 0);
@@ -163,7 +176,7 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderD
     EXPECT_STREQ("00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
-TEST(DrmTest, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
+TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
     ::testing::internal::CaptureStdout();
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
@@ -180,7 +193,7 @@ TEST(DrmTest, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
     EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY returns 0, errno 9(Bad file descriptor)\n");
 }
 
-TEST(DrmTest, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
+TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
     struct DrmMock : public Drm {
         using Drm::ioctlStatistics;
     };
@@ -265,7 +278,7 @@ TEST(DrmTest, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
     EXPECT_STRNE(output.c_str(), "");
 }
 
-TEST(DrmTest, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevicesAndNoDevicesAreCreated) {
+TEST_F(DrmSimpleTests, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevicesAndNoDevicesAreCreated) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
     openFull = openWithCounter;
@@ -276,7 +289,7 @@ TEST(DrmTest, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRend
     EXPECT_EQ(0u, hwDeviceIds.size());
 }
 
-TEST(DrmTest, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {
+TEST_F(DrmSimpleTests, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {
     DebugManagerStateRestore stateRestore;
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
@@ -296,7 +309,7 @@ TEST(DrmTest, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateMultipleRo
     EXPECT_STREQ("00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
-TEST(DrmTest, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {
+TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {
     DebugManagerStateRestore stateRestore;
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = openWithCounter;
@@ -314,7 +327,7 @@ TEST(DrmTest, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSe
     EXPECT_STREQ("test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
-TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
+TEST_F(DrmSimpleTests, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234");
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
@@ -326,7 +339,7 @@ TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
-TEST(DrmTest, givenUseVmBindFlagWhenOverrideBindSupportThenReturnProperValue) {
+TEST_F(DrmSimpleTests, givenUseVmBindFlagWhenOverrideBindSupportThenReturnProperValue) {
     DebugManagerStateRestore dbgRestorer;
     bool useVmBind = false;
 

@@ -17,9 +17,15 @@
 
 using namespace NEO;
 
+extern const DeviceDescriptor NEO::deviceDescriptorTable[];
+
 class DrmNullDeviceTestsFixture {
   public:
     void SetUp() {
+        if (deviceDescriptorTable[0].deviceId == 0) {
+            GTEST_SKIP();
+        }
+
         // Create nullDevice drm
         DebugManager.flags.EnableNullHardware.set(true);
         executionEnvironment.prepareRootDeviceEnvironments(1);
