@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
+#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -693,4 +694,15 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagForClearColorSetWhenProgram
     EXPECT_EQ(blitCmd.getDestinationClearValueEnable(), XY_COPY_BLT::CLEAR_VALUE_ENABLE::CLEAR_VALUE_ENABLE_ENABLE);
     EXPECT_EQ(addressLow, blitCmd.getDestinationClearAddressLow());
     EXPECT_EQ(addressHigh, blitCmd.getDestinationClearAddressHigh());
+}
+
+XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnTrue) {
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(clDevice.get());
+    cl_int retVal = CL_SUCCESS;
+    auto cmdQ = std::unique_ptr<CommandQueue>(CommandQueue::create(&context, clDevice.get(), nullptr, false, retVal));
+
+    auto pHwQ = static_cast<CommandQueueHw<FamilyType> *>(cmdQ.get());
+
+    EXPECT_TRUE(pHwQ->isCacheFlushForBcsRequired());
 }
