@@ -78,6 +78,10 @@ class NoCompilerInterfaceRootDeviceEnvironment : public RootDeviceEnvironment {
     CompilerInterface *getCompilerInterface() override {
         return nullptr;
     }
+
+    bool initAilConfiguration() override {
+        return true;
+    }
 };
 
 class FailingGenBinaryProgram : public MockProgram {
@@ -2733,6 +2737,10 @@ struct SpecializationConstantRootDeviceEnvironemnt : public RootDeviceEnvironmen
     }
     CompilerInterface *getCompilerInterface() override {
         return compilerInterface.get();
+    }
+
+    bool initAilConfiguration() override {
+        return true;
     }
 };
 

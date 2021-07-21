@@ -52,6 +52,7 @@ struct RootDeviceEnvironment {
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex);
     void initGmm();
     void initDebugger();
+    MOCKABLE_VIRTUAL bool initAilConfiguration();
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();

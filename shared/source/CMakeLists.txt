@@ -91,6 +91,7 @@ endmacro()
 apply_macro_for_each_gen("SUPPORTED")
 
 append_sources_from_properties(CORE_SOURCES
+                               NEO_CORE_AIL
                                NEO_CORE_AUB
                                NEO_CORE_AUB_MEM_DUMP
                                NEO_CORE_BUILT_INS
@@ -138,6 +139,7 @@ if(WIN32)
                                  NEO_CORE_SRCS_HELPERS_WINDOWS
                                  NEO_CORE_UTILITIES_WINDOWS
                                  NEO_CORE_EXECUTION_ENVIRONMENT_WINDOWS
+                                 NEO_CORE_AIL_WINDOWS
   )
 else()
   append_sources_from_properties(CORE_SOURCES
@@ -146,6 +148,7 @@ else()
                                  NEO_CORE_PAGE_FAULT_MANAGER_LINUX
                                  NEO_CORE_UTILITIES_LINUX
                                  NEO_CORE_EXECUTION_ENVIRONMENT_LINUX
+                                 NEO_CORE_AIL_LINUX
   )
   if(NOT DISABLE_WDDM_LINUX)
     append_sources_from_properties(CORE_SOURCES

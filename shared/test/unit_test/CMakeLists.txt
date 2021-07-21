@@ -40,14 +40,11 @@ if(NOT SKIP_UNIT_TESTS)
   ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
   link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
-  append_sources_from_properties(CORE_ENABLERS NEO_CORE_SRCS_LINK)
-
   add_executable(${TARGET_NAME}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
-                 ${CORE_ENABLERS}
                  ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp

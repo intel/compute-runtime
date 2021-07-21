@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
@@ -65,6 +66,23 @@ GmmHelper *RootDeviceEnvironment::getGmmHelper() const {
 }
 GmmClientContext *RootDeviceEnvironment::getGmmClientContext() const {
     return gmmHelper->getClientContext();
+}
+
+bool RootDeviceEnvironment::initAilConfiguration() {
+    auto ailConfiguration = AILConfiguration::get(hwInfo->platform.eProductFamily);
+
+    if (ailConfiguration == nullptr) {
+        return true;
+    }
+
+    auto result = ailConfiguration->initProcessExecutableName();
+    if (result != true) {
+        return false;
+    }
+
+    ailConfiguration->apply(hwInfo->capabilityTable);
+
+    return true;
 }
 
 void RootDeviceEnvironment::initGmm() {

@@ -42,6 +42,7 @@ int fstatFuncRetVal = 0;
 uint32_t preadFuncCalled = 0u;
 uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
+bool isInvalidAILTest = false;
 
 int close(int fileDescriptor) {
     closeFuncCalled++;
@@ -108,6 +109,15 @@ int access(const char *pathName, int mode) {
 }
 
 int readlink(const char *path, char *buf, size_t bufsize) {
+    if (isInvalidAILTest) {
+        return -1;
+    }
+    if (strcmp(path, "/proc/self/exe") == 0) {
+        strcpy_s(buf, sizeof("/proc/self/exe/tests"), "/proc/self/exe/tests");
+
+        return sizeof("/proc/self/exe/tests");
+    }
+
     if (strcmp(path, "/sys/dev/char/226:128") != 0) {
         return -1;
     }

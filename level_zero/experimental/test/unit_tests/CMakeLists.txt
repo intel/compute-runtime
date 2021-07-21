@@ -8,8 +8,6 @@ link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
 set(TARGET_NAME ${TARGET_NAME_L0}_exp_tests)
 
-append_sources_from_properties(L0_CORE_ENABLERS NEO_CORE_SRCS_LINK)
-
 function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)
   set(L0_TESTED_PRODUCT_FAMILIES ${ALL_TESTED_PRODUCT_FAMILY})
   string(REPLACE ";" "," L0_TESTED_PRODUCT_FAMILIES
@@ -27,7 +25,6 @@ add_executable(
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.h
-               ${L0_CORE_ENABLERS}
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/sources/builtin/create_ult_builtin_functions_lib.cpp

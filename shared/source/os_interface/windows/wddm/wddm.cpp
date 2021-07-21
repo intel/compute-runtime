@@ -112,6 +112,9 @@ bool Wddm::init() {
     rootDeviceEnvironment.initGmm();
     this->rootDeviceEnvironment.getGmmClientContext()->setHandleAllocator(this->hwDeviceId->getUmKmDataTranslator()->createGmmHandleAllocator());
 
+    [[maybe_unused]] bool result = rootDeviceEnvironment.initAilConfiguration();
+    DEBUG_BREAK_IF(!result);
+
     if (WddmVersion::WDDM_2_3 == getWddmVersion()) {
         wddmInterface = std::make_unique<WddmInterface23>(*this);
     } else {

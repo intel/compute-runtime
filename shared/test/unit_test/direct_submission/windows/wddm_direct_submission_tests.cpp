@@ -19,6 +19,8 @@
 #include "shared/test/common/mocks/windows/mock_wddm_direct_submission.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
+using namespace NEO;
+
 struct WddmDirectSubmissionFixture : public WddmFixture {
     void SetUp() override {
         WddmFixture::SetUp();
@@ -39,8 +41,6 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
 };
 
 using WddmDirectSubmissionTest = WddmDirectSubmissionFixture;
-
-using namespace NEO;
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThenExpectProperCommandsDispatched) {
     std::unique_ptr<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>> wddmDirectSubmission =
