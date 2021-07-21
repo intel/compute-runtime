@@ -104,6 +104,7 @@ struct FeatureTableBase {
             bool ftrFlatPhysCCS : 1;
             bool ftrMultiTileArch : 1;
             bool ftrCCSMultiInstance : 1;
+            bool ftrPpgtt64KBWalkOptimization : 1;
         };
         uint64_t packed[2];
     };

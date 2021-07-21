@@ -44,6 +44,10 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrLocalMemory = 1;
         refFtrTable.FtrLocalMemoryAllows4KB = 1;
         refFtrTable.FtrSVM = 1;
+        refFtrTable.FtrFlatPhysCCS = 1;
+        refFtrTable.FtrMultiTileArch = 1;
+        refFtrTable.FtrCCSMultiInstance = 1;
+        refFtrTable.FtrPpgtt64KBWalkOptimization = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
@@ -144,6 +148,11 @@ struct SkuInfoBaseReference {
         refFtrTable.ftrMemTypeMocsDeferPAT = true;
         refFtrTable.ftrLocalMemory = true;
         refFtrTable.ftrLocalMemoryAllows4KB = true;
+
+        refFtrTable.ftrFlatPhysCCS = true;
+        refFtrTable.ftrMultiTileArch = true;
+        refFtrTable.ftrCCSMultiInstance = true;
+        refFtrTable.ftrPpgtt64KBWalkOptimization = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {

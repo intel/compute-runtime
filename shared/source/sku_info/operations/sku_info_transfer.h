@@ -47,6 +47,10 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(LocalMemory);
         TRANSFER_FTR_TO_GMM(LocalMemoryAllows4KB);
         TRANSFER_FTR_TO_GMM(SVM);
+        TRANSFER_FTR_TO_GMM(FlatPhysCCS);
+        TRANSFER_FTR_TO_GMM(MultiTileArch);
+        TRANSFER_FTR_TO_GMM(CCSMultiInstance);
+        TRANSFER_FTR_TO_GMM(Ppgtt64KBWalkOptimization);
 
 #undef TRANSFER_FTR_TO_GMM
     }
