@@ -2468,6 +2468,19 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
             }
         }
     }
+    if (DebugManager.flags.EnableStatelessCompression.get()) {
+        for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
+            if (gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+                kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+                auto &context = this->program->getContext();
+                if (context.isProvidingPerformanceHints()) {
+                    context.providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, KERNEL_ALLOCATION_AUX_TRANSLATION,
+                                                   kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(),
+                                                   reinterpret_cast<void *>(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
+                }
+            }
+        }
+    }
 }
 
 bool Kernel::hasDirectStatelessAccessToHostMemory() const {

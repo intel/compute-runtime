@@ -605,6 +605,41 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     }
 }
 
+TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectStatelessAccessWhenFillWithKernelObjsForAuxTranslationIsCalledThenSetKernelObjectsForAuxTranslation) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    pKernelInfo->hasIndirectStatelessAccess = true;
+
+    const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
+                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
+                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY};
+
+    MockGraphicsAllocation gfxAllocation;
+
+    for (const auto type : allocationTypes) {
+        gfxAllocation.setAllocationType(type);
+
+        pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
+
+        KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
+        pKernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+
+        if (type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+            EXPECT_EQ(1u, kernelObjsForAuxTranslation.size());
+            auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
+            EXPECT_NE(nullptr, kernelObj.object);
+            EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
+            kernelObjsForAuxTranslation.erase(kernelObj);
+        } else {
+            EXPECT_EQ(0u, kernelObjsForAuxTranslation.size());
+        }
+
+        pKernel->clearUnifiedMemoryExecInfo();
+        pKernel->setAuxTranslationRequired(false);
+    }
+}
+
 class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
   public:
     void SetUp() {
