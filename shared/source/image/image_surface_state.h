@@ -17,6 +17,8 @@
 namespace NEO {
 template <typename GfxFamily>
 void setFilterMode(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo);
+template <typename GfxFamily>
+bool checkIfArrayNeeded(ImageType type, const HardwareInfo *hwInfo);
 
 template <typename GfxFamily>
 inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, Gmm *gmm, GmmHelper &gmmHelper, uint32_t cubeFaceIndex, uint64_t gpuAddress, const SurfaceOffsets &surfaceOffsets, bool isNV12Format) {
@@ -48,6 +50,7 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
         renderTargetViewExtent = 1;
         minimumArrayElement = cubeFaceIndex;
     }
+    isImageArray |= checkIfArrayNeeded<GfxFamily>(imageInfo.imgDesc.imageType, gmmHelper.getHardwareInfo());
 
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     surfaceState->setAuxiliarySurfacePitch(1u);

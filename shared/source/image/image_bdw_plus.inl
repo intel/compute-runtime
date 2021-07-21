@@ -7,3 +7,8 @@
 
 template <>
 void setFilterMode<Family>(typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo){};
+
+template <>
+bool checkIfArrayNeeded<Family>(ImageType type, const HardwareInfo *hwInfo) {
+    return false;
+};
