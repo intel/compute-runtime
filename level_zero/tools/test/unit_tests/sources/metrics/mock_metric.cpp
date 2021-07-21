@@ -242,13 +242,13 @@ void MetricMultiDeviceContextFixture::openMetricsAdapter() {
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
 
-    EXPECT_CALL(adapter, OpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+    EXPECT_CALL(adapter, OpenMetricsSubDevice(_, _))
+        .Times(2)
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&metricsDevice), Return(TCompletionCode::CC_OK)));
 
     EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+        .Times(2)
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
 
     EXPECT_CALL(adapterGroup, GetAdapter(_))
         .Times(0);

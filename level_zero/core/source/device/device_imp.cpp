@@ -605,7 +605,17 @@ ze_result_t DeviceImp::systemBarrier() { return ZE_RESULT_ERROR_UNSUPPORTED_FEAT
 
 ze_result_t DeviceImp::activateMetricGroups(uint32_t count,
                                             zet_metric_group_handle_t *phMetricGroups) {
-    return metricContext->activateMetricGroupsDeferred(count, phMetricGroups);
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    if (this->isMultiDeviceCapable()) {
+        for (auto subDevice : this->subDevices) {
+            result = subDevice->getMetricContext().activateMetricGroupsDeferred(count, phMetricGroups);
+            if (result != ZE_RESULT_SUCCESS)
+                break;
+        }
+    } else {
+        result = metricContext->activateMetricGroupsDeferred(count, phMetricGroups);
+    }
+    return result;
 }
 
 void *DeviceImp::getExecEnvironment() { return execEnvironment; }

@@ -882,7 +882,9 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenzetContextActiv
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenZetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
+using MultiDeviceMetricEnumerationTest = Test<MetricMultiDeviceContextFixture>;
+
+TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndValidEventBasedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -947,16 +949,129 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenZetContextActiv
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 1u);
 
     // Metric group handle.
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 1u);
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Activate metric group.
-    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndTwoMetricGroupsWithTheSameDomainsWhenzetContextActivateMetricGroupsIsCalledThenReturnsFail) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup0;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams0 = {};
+    metricsConcurrentGroupParams0.MetricSetsCount = 2;
+    metricsConcurrentGroupParams0.SymbolName = "OA";
+    metricsConcurrentGroupParams0.Description = "OA description";
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet0;
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet1;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams0 = {};
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams1 = {};
+    metricsSetParams0.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams0.SymbolName = "Metric set ZERO";
+    metricsSetParams0.ShortName = "Metric set ZERO description";
+    metricsSetParams0.MetricsCount = 1;
+    metricsSetParams1.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetParams1.SymbolName = "Metric set ONE name";
+    metricsSetParams1.ShortName = "Metric set ONE description";
+    metricsSetParams1.MetricsCount = 1;
+
+    // Metrics Discovery:: metric.
+    Mock<IMetric_1_0> metric0;
+    TMetricParams_1_0 metricParams0 = {};
+    metricParams0.SymbolName = "Metric ZERO symbol name";
+    metricParams0.ShortName = "Metric ZERO short name";
+    metricParams0.LongName = "Metric ZERO long name";
+    metricParams0.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams0.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+
+    Mock<IMetric_1_0> metric1;
+    TMetricParams_1_0 metricParams1 = {};
+    metricParams1.SymbolName = "Metric ONE symbol name";
+    metricParams1.ShortName = "Metric ONE short name";
+    metricParams1.LongName = "Metric ONE long name";
+    metricParams1.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams1.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup0));
+
+    EXPECT_CALL(metricsConcurrentGroup0, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams0));
+
+    EXPECT_CALL(metricsConcurrentGroup0, GetMetricSet(_))
+        .Times(2)
+        .WillOnce(Return(&metricsSet0))
+        .WillOnce(Return(&metricsSet1));
+
+    EXPECT_CALL(metricsSet0, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams0));
+
+    EXPECT_CALL(metricsSet1, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams1));
+
+    EXPECT_CALL(metricsSet0, GetMetric(_))
+        .Times(1)
+        .WillOnce(Return(&metric0));
+
+    EXPECT_CALL(metricsSet1, GetMetric(_))
+        .Times(1)
+        .WillOnce(Return(&metric1));
+
+    EXPECT_CALL(metricsSet0, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsSet1, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metric0, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricParams0));
+
+    EXPECT_CALL(metric1, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricParams1));
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 2u);
+
+    // Metric group handle.
+    std::vector<zet_metric_group_handle_t> metricGroupHandles;
+    metricGroupHandles.resize(metricGroupCount);
+
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, metricGroupHandles.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 2u);
+    EXPECT_NE(metricGroupHandles[0], nullptr);
+    EXPECT_NE(metricGroupHandles[1], nullptr);
+
+    zet_metric_group_properties_t properties0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupGetProperties(metricGroupHandles[0], &properties0));
+
+    zet_metric_group_properties_t properties1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupGetProperties(metricGroupHandles[1], &properties1));
+
+    // Activate metric groups.
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 4, metricGroupHandles.data()), ZE_RESULT_ERROR_UNKNOWN);
 }
 
 TEST_F(MetricEnumerationTest, givenValidTimeBasedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
