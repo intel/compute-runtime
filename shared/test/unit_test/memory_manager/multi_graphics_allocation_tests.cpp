@@ -255,6 +255,12 @@ TEST_F(MigrationSyncDataTests, whenMigrationSyncDataExistsAndSetMultiStorageIsCa
     EXPECT_EQ(migrationSyncData, multiGraphicsAllocation.getMigrationSyncData());
 }
 
+TEST(MigrationSyncDataTest, givenEmptyMultiGraphicsAllocationWhenSetMultiStorageIsCalledThenAbortIsCalled) {
+    MultiGraphicsAllocation multiGraphicsAllocation(1);
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getDefaultGraphicsAllocation());
+    EXPECT_THROW(multiGraphicsAllocation.setMultiStorage(true), std::exception);
+}
+
 TEST_F(MigrationSyncDataTests, whenMigrationIsNotStartedThenMigrationIsNotInProgress) {
     EXPECT_FALSE(migrationSyncData->isMigrationInProgress());
 

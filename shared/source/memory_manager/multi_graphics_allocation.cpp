@@ -74,7 +74,9 @@ StackVec<GraphicsAllocation *, 1> const &MultiGraphicsAllocation::getGraphicsAll
 void MultiGraphicsAllocation::setMultiStorage(bool value) {
     isMultiStorage = value;
     if (isMultiStorage && !migrationSyncData) {
-        migrationSyncData = createMigrationSyncDataFunc(getDefaultGraphicsAllocation()->getUnderlyingBufferSize());
+        auto graphicsAllocation = getDefaultGraphicsAllocation();
+        UNRECOVERABLE_IF(!graphicsAllocation);
+        migrationSyncData = createMigrationSyncDataFunc(graphicsAllocation->getUnderlyingBufferSize());
         migrationSyncData->incRefInternal();
     }
 }

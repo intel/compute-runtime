@@ -17,9 +17,6 @@
 #include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
-class MemoryManager;
-class CommandStreamReceiver;
-class MultiGraphicsAllocation;
 void MigrationController::handleMigration(Context &context, CommandStreamReceiver &targetCsr, MemObj *memObj) {
     auto memoryManager = targetCsr.getMemoryManager();
     auto targetRootDeviceIndex = targetCsr.getRootDeviceIndex();
