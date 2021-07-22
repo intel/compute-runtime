@@ -13,12 +13,7 @@ TagAllocatorBase::TagAllocatorBase(const std::vector<uint32_t> &rootDeviceIndice
     : deviceBitfield(deviceBitfield), rootDeviceIndices(rootDeviceIndices), memoryManager(memMngr), tagCount(tagCount), tagSize(tagSize), doNotReleaseNodes(doNotReleaseNodes) {
 
     this->tagSize = alignUp(tagSize, tagAlignment);
-
-    for (auto &index : rootDeviceIndices) {
-        if (index > maxRootDeviceIndex) {
-            maxRootDeviceIndex = index;
-        }
-    }
+    maxRootDeviceIndex = *std::max_element(std::begin(rootDeviceIndices), std::end(rootDeviceIndices));
 }
 
 void TagAllocatorBase::cleanUpResources() {
