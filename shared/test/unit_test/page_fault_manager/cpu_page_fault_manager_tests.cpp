@@ -113,6 +113,42 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocs
     EXPECT_FALSE(pageFaultManager->isAubWritable);
 }
 
+TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintUmdSharedMigration.set(1);
+
+    unifiedMemoryManager = reinterpret_cast<void *>(0x1111);
+    void *unifiedMemoryManager2 = reinterpret_cast<void *>(0x2222);
+    void *cmdQ = reinterpret_cast<void *>(0xFFFF);
+
+    void *alloc1 = reinterpret_cast<void *>(0x1);
+    void *alloc2 = reinterpret_cast<void *>(0x100);
+    void *alloc3 = reinterpret_cast<void *>(0x10000);
+
+    pageFaultManager->insertAllocation(alloc1, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), cmdQ, {});
+    pageFaultManager->insertAllocation(alloc2, 20, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager2), cmdQ, {});
+    pageFaultManager->insertAllocation(alloc3, 30, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), cmdQ, {});
+    EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
+    EXPECT_EQ(pageFaultManager->memoryData.size(), 3u);
+    pageFaultManager->memoryData.at(alloc3).domain = PageFaultManager::AllocationDomain::Gpu;
+
+    testing::internal::CaptureStdout(); // start capturing
+
+    pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager));
+
+    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+
+    std::string expectedString = "UMD transferring shared allocation";
+    uint32_t occurrences = 0u;
+    uint32_t expectedOccurrences = 1u;
+    size_t idx = output.find(expectedString);
+    while (idx != std::string::npos) {
+        occurrences++;
+        idx = output.find(expectedString, idx + 1);
+    }
+    EXPECT_EQ(expectedOccurrences, occurrences);
+}
+
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocsThenAllocationsInNoneDomainAreNotMoved) {
     unifiedMemoryManager = reinterpret_cast<void *>(0x1111);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
@@ -160,6 +196,35 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainThenTrans
     EXPECT_EQ(pageFaultManager->protectedSize, 10u);
     EXPECT_EQ(pageFaultManager->transferToGpuAddress, alloc);
     EXPECT_FALSE(pageFaultManager->isAubWritable);
+}
+
+TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintUmdSharedMigration.set(1);
+
+    void *cmdQ = reinterpret_cast<void *>(0xFFFF);
+
+    void *alloc = reinterpret_cast<void *>(0x1);
+
+    pageFaultManager->insertAllocation(alloc, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), cmdQ, {});
+    EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
+    EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
+
+    testing::internal::CaptureStdout(); // start capturing
+
+    pageFaultManager->moveAllocationToGpuDomain(alloc);
+
+    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+
+    std::string expectedString = "UMD transferring shared allocation";
+    uint32_t occurrences = 0u;
+    uint32_t expectedOccurrences = 1u;
+    size_t idx = output.find(expectedString);
+    while (idx != std::string::npos) {
+        occurrences++;
+        idx = output.find(expectedString, idx + 1);
+    }
+    EXPECT_EQ(expectedOccurrences, occurrences);
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocInGpuDomainWhenMovingToGpuDomainThenNothingIsCalled) {
@@ -295,6 +360,90 @@ TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultThenVerifyPagefaultUn
     EXPECT_EQ(pageFaultManager->allowedMemoryAccessAddress, alloc);
     EXPECT_EQ(pageFaultManager->accessAllowedSize, 10u);
     EXPECT_TRUE(pageFaultManager->isAubWritable);
+}
+
+TEST_F(PageFaultManagerTest, whenVerifyingPagefaultWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintUmdSharedMigration.set(1);
+
+    void *alloc = reinterpret_cast<void *>(0x1);
+
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::handleGpuDomainTransferForHw;
+
+    MemoryProperties memoryProperties{};
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
+    pageFaultManager->insertAllocation(alloc, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), nullptr, memoryProperties);
+
+    pageFaultManager->moveAllocationToGpuDomain(alloc);
+
+    testing::internal::CaptureStdout(); // start capturing
+
+    EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
+    EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
+    EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc);
+    EXPECT_EQ(pageFaultManager->protectedSize, 10u);
+
+    pageFaultManager->verifyPageFault(alloc);
+
+    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+
+    EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
+    EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
+    EXPECT_EQ(pageFaultManager->allowedMemoryAccessAddress, alloc);
+    EXPECT_EQ(pageFaultManager->accessAllowedSize, 10u);
+    EXPECT_TRUE(pageFaultManager->isAubWritable);
+
+    std::string expectedString = "UMD transferring shared allocation";
+    uint32_t occurrences = 0u;
+    uint32_t expectedOccurrences = 1u;
+    size_t idx = output.find(expectedString);
+    while (idx != std::string::npos) {
+        occurrences++;
+        idx = output.find(expectedString, idx + 1);
+    }
+    EXPECT_EQ(expectedOccurrences, occurrences);
+}
+
+TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintUmdSharedMigration.set(1);
+
+    void *alloc = reinterpret_cast<void *>(0x1);
+
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::handleGpuDomainTransferForAubAndTbx;
+
+    MemoryProperties memoryProperties{};
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
+    pageFaultManager->insertAllocation(alloc, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), nullptr, memoryProperties);
+
+    pageFaultManager->moveAllocationToGpuDomain(alloc);
+
+    testing::internal::CaptureStdout(); // start capturing
+
+    EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
+    EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
+    EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc);
+    EXPECT_EQ(pageFaultManager->protectedSize, 10u);
+
+    pageFaultManager->verifyPageFault(alloc);
+
+    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+
+    EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
+    EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
+    EXPECT_EQ(pageFaultManager->allowedMemoryAccessAddress, alloc);
+    EXPECT_EQ(pageFaultManager->accessAllowedSize, 10u);
+    EXPECT_TRUE(pageFaultManager->isAubWritable);
+
+    std::string expectedString = "UMD transferring shared allocation";
+    uint32_t occurrences = 0u;
+    uint32_t expectedOccurrences = 1u;
+    size_t idx = output.find(expectedString);
+    while (idx != std::string::npos) {
+        occurrences++;
+        idx = output.find(expectedString, idx + 1);
+    }
+    EXPECT_EQ(expectedOccurrences, occurrences);
 }
 
 TEST_F(PageFaultManagerTest, givenTbxAndInitialPlacementGpuWhenVerifyingPagefaultThenMemoryIsUnprotectedOnly) {

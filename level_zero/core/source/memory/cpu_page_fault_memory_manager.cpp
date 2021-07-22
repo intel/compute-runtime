@@ -55,6 +55,9 @@ void handleGpuDomainTransferForHwWithHints(NEO::PageFaultManager *pageFaultHandl
             }
         }
         if (migration) {
+            if (NEO::DebugManager.flags.PrintUmdSharedMigration.get()) {
+                printf("UMD transferring shared allocation %llx from GPU to CPU\n", reinterpret_cast<unsigned long long int>(allocPtr));
+            }
             pageFaultHandler->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
         }
     }
