@@ -93,7 +93,18 @@ struct Event : _ze_event_handle_t {
 };
 
 template <typename TagSizeT>
+class KernelTimestampsData : public NEO::TimestampPackets<TagSizeT> {
+  public:
+    uint32_t getPacketsUsed() const { return packetsUsed; }
+    void setPacketsUsed(uint32_t value) { packetsUsed = value; }
+
+  protected:
+    uint32_t packetsUsed = 1;
+};
+
+template <typename TagSizeT>
 struct EventImp : public Event {
+
     EventImp(EventPool *eventPool, int index, Device *device)
         : device(device), index(index), eventPool(eventPool) {}
 
@@ -124,7 +135,7 @@ struct EventImp : public Event {
     size_t getGlobalEndOffset() const override { return NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset(); }
     size_t getSinglePacketSize() const override { return NEO::TimestampPackets<TagSizeT>::getSinglePacketSize(); };
 
-    std::unique_ptr<NEO::TimestampPackets<TagSizeT>[]> kernelTimestampsData;
+    std::unique_ptr<KernelTimestampsData<TagSizeT>[]> kernelTimestampsData;
 
     Device *device;
     int index;

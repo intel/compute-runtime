@@ -223,25 +223,6 @@ uint64_t &TagNode<TagType>::getGlobalEndRef() const {
 }
 
 template <typename TagType>
-void TagNode<TagType>::setPacketsUsed(uint32_t used) {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->setPacketsUsed(used);
-    } else {
-        UNUSED_VARIABLE(used);
-        UNRECOVERABLE_IF(true);
-    }
-}
-
-template <typename TagType>
-uint32_t TagNode<TagType>::getPacketsUsed() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->getPacketsUsed();
-    } else {
-        UNRECOVERABLE_IF(true);
-    }
-}
-
-template <typename TagType>
 size_t TagNode<TagType>::getSinglePacketSize() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
         return TagType::getSinglePacketSize();

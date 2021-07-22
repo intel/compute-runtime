@@ -48,10 +48,10 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreIsProgra
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     TimestampPackets<uint32_t> tag;
-    tag.setPacketsUsed(2);
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
+    mockNode.setPacketsUsed(2);
     auto &cmdStream = mockCmdQ->getCS(0);
 
     TimestampPacketHelper::programSemaphore<FamilyType>(cmdStream, mockNode);
@@ -59,7 +59,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreIsProgra
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
     auto it = hwParser.cmdList.begin();
-    for (uint32_t packetId = 0; packetId < tag.getPacketsUsed(); packetId++) {
+    for (uint32_t packetId = 0; packetId < mockNode.getPacketsUsed(); packetId++) {
         verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode, packetId);
     }
 }
@@ -137,7 +137,7 @@ TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
         EXPECT_EQ(1u, packet.contextEnd);
         EXPECT_EQ(1u, packet.globalEnd);
     }
-    EXPECT_EQ(1u, firstNode->tagForCpuAccess->getPacketsUsed());
+    EXPECT_EQ(1u, firstNode->getPacketsUsed());
 }
 
 TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
@@ -150,7 +150,6 @@ TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
         EXPECT_EQ(1u, packet.contextEnd);
         EXPECT_EQ(1u, packet.globalEnd);
     }
-    EXPECT_EQ(1u, timestampPacketStorage.getPacketsUsed());
 }
 
 HWTEST_F(TimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferredTagPoolSizeThenReturnCorrectValue) {
@@ -421,7 +420,7 @@ HWTEST_F(TimestampPacketTests, whenEstimatingSizeForNodeDependencyThenReturnCorr
     size_t sizeForNodeDependency = 0;
     sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(mockNode);
 
-    size_t expectedSize = mockNode.tagForCpuAccess->getPacketsUsed() * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT);
+    size_t expectedSize = mockNode.getPacketsUsed() * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT);
 
     EXPECT_EQ(expectedSize, sizeForNodeDependency);
 }

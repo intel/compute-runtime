@@ -55,7 +55,6 @@ class TimestampPackets : public TagTypeBase {
             packet.contextEnd = 1u;
             packet.globalEnd = 1u;
         }
-        packetsUsed = 1;
     }
 
     void assignDataToAllTimestamps(uint32_t packetIndex, void *source) {
@@ -72,16 +71,12 @@ class TimestampPackets : public TagTypeBase {
     uint64_t getContextEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].contextEnd); }
     uint64_t getGlobalEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalEnd); }
 
-    void setPacketsUsed(uint32_t used) { packetsUsed = used; }
-    uint32_t getPacketsUsed() const { return packetsUsed; }
-
   protected:
     Packet packets[TimestampPacketSizeControl::preferredPacketCount];
-    uint32_t packetsUsed = 1;
 };
 #pragma pack()
 
-static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 1) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
+static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 class TimestampPacketContainer : public NonCopyableClass {

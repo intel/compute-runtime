@@ -25,7 +25,6 @@ struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
     class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
       public:
         void setTagToReadyState() {
-            auto packetsUsed = getPacketsUsed();
             initialize();
 
             uint32_t zeros[4] = {};
@@ -33,7 +32,6 @@ struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
             for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
                 assignDataToAllTimestamps(i, zeros);
             }
-            setPacketsUsed(packetsUsed);
         }
 
         void setToNonReadyState() {
@@ -553,8 +551,6 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndValue(0));
         EXPECT_ANY_THROW(perfCounterNode.getContextCompleteRef());
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndRef());
-        EXPECT_ANY_THROW(perfCounterNode.setPacketsUsed(0));
-        EXPECT_ANY_THROW(perfCounterNode.getPacketsUsed());
         EXPECT_ANY_THROW(perfCounterNode.getSinglePacketSize());
         EXPECT_ANY_THROW(perfCounterNode.assignDataToAllTimestamps(0, nullptr));
     }
@@ -566,8 +562,6 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(hwTimestampNode.getContextStartOffset());
         EXPECT_ANY_THROW(hwTimestampNode.getContextEndOffset());
         EXPECT_ANY_THROW(hwTimestampNode.getGlobalEndOffset());
-        EXPECT_ANY_THROW(hwTimestampNode.setPacketsUsed(0));
-        EXPECT_ANY_THROW(hwTimestampNode.getPacketsUsed());
         EXPECT_ANY_THROW(hwTimestampNode.getSinglePacketSize());
         EXPECT_ANY_THROW(hwTimestampNode.assignDataToAllTimestamps(0, nullptr));
         EXPECT_ANY_THROW(hwTimestampNode.getQueryHandleRef());

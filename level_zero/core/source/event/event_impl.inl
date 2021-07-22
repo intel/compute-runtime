@@ -15,7 +15,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
     if (eventPool->isEventPoolTimestampFlagSet()) {
         event->setEventTimestampFlag(true);
-        event->kernelTimestampsData = std::make_unique<NEO::TimestampPackets<TagSizeT>[]>(EventPacketsCount::maxKernelSplit);
+        event->kernelTimestampsData = std::make_unique<KernelTimestampsData<TagSizeT>[]>(EventPacketsCount::maxKernelSplit);
     }
 
     auto alloc = eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());

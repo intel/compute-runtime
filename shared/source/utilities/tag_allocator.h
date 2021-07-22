@@ -72,8 +72,8 @@ class TagNodeBase : public NonCopyableOrMovableClass {
     virtual uint64_t &getGlobalEndRef() const = 0;
     virtual uint64_t &getContextCompleteRef() const = 0;
 
-    virtual void setPacketsUsed(uint32_t used) = 0;
-    virtual uint32_t getPacketsUsed() const = 0;
+    void setPacketsUsed(uint32_t used) { packetsUsed = used; };
+    uint32_t getPacketsUsed() const { return packetsUsed; };
 
     virtual size_t getSinglePacketSize() const = 0;
 
@@ -87,6 +87,7 @@ class TagNodeBase : public NonCopyableOrMovableClass {
     MultiGraphicsAllocation *gfxAllocation = nullptr;
     uint64_t gpuAddress = 0;
     std::atomic<uint32_t> refCount{0};
+    uint32_t packetsUsed = 1;
     bool doNotReleaseNodes = false;
     bool profilingCapable = true;
 
@@ -104,6 +105,7 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
 
     void initialize() override {
         tagForCpuAccess->initialize();
+        packetsUsed = 1;
         setProfilingCapable(true);
     }
 
@@ -123,9 +125,6 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
 
     uint64_t &getGlobalEndRef() const override;
     uint64_t &getContextCompleteRef() const override;
-
-    void setPacketsUsed(uint32_t used) override;
-    uint32_t getPacketsUsed() const override;
 
     size_t getSinglePacketSize() const override;
 

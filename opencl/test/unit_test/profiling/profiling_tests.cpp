@@ -1142,9 +1142,9 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
     void addTimestampNodeMultiOsContext(uint32_t globalStart[16], uint32_t globalEnd[16], uint32_t contextStart[16], uint32_t contextEnd[16], uint32_t size) {
         auto node = new MockTagNode<TimestampPackets<uint32_t>>();
         auto timestampPacketStorage = new TimestampPackets<uint32_t>();
-        timestampPacketStorage->setPacketsUsed(size);
+        node->setPacketsUsed(size);
 
-        for (uint32_t i = 0u; i < timestampPacketStorage->getPacketsUsed(); ++i) {
+        for (uint32_t i = 0u; i < node->getPacketsUsed(); ++i) {
             uint32_t values[4] = {contextStart[i], globalStart[i], contextEnd[i], globalEnd[i]};
 
             timestampPacketStorage->assignDataToAllTimestamps(i, values);
