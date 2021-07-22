@@ -613,7 +613,8 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
     const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
                                   GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
-                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY};
+                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                  GraphicsAllocation::AllocationType::SVM_GPU};
 
     MockGraphicsAllocation gfxAllocation;
 
@@ -625,7 +626,8 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
         KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
         pKernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
 
-        if (type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+        if ((type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
+            (type == GraphicsAllocation::AllocationType::SVM_GPU)) {
             EXPECT_EQ(1u, kernelObjsForAuxTranslation.size());
             auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
