@@ -1350,3 +1350,9 @@ HWTEST_F(HwHelperTest, givenRcsOrCcsEnabledWhenQueryingGpgpuEngineCountThenRetur
     hwInfo.featureTable.ftrRcsNode = true;
     EXPECT_EQ(4u, HwHelper::getGpgpuEnginesCount(hwInfo));
 }
+
+using isXeHpCoreOrBelow = IsAtMostProduct<IGFX_XE_HP_SDV>;
+HWTEST2_F(HwHelperTest, givenXeHPAndBelowPlatformWhenCheckingIfAdditionalPipeControlArgsAreRequiredThenReturnFalse, isXeHpCoreOrBelow) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.additionalPipeControlArgsRequired());
+}

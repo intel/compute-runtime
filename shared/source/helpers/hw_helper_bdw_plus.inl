@@ -134,4 +134,9 @@ inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraPropert
 template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return false; }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::additionalPipeControlArgsRequired() const {
+    return false;
+}
+
 } // namespace NEO

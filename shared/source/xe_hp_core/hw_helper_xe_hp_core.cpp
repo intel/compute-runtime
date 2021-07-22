@@ -204,6 +204,11 @@ void MemorySynchronizationCommands<Family>::setCacheFlushExtraProperties(PipeCon
     args.hdcPipelineFlush = true;
 }
 
+template <>
+bool HwHelperHw<Family>::additionalPipeControlArgsRequired() const {
+    return false;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
