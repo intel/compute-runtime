@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,6 +90,9 @@ class StackVec {
     }
 
     StackVec &operator=(const StackVec &rhs) {
+        if (this == &rhs) {
+            return *this;
+        }
         clear();
 
         if (usesDynamicMem()) {
@@ -126,6 +129,10 @@ class StackVec {
     }
 
     StackVec &operator=(StackVec &&rhs) {
+        if (this == &rhs) {
+            return *this;
+        }
+
         clear();
 
         if (rhs.usesDynamicMem()) {
