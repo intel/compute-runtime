@@ -557,19 +557,34 @@ EngineControlContainer &MemoryManager::getRegisteredEngines() {
     return registeredEngines;
 }
 
-bool MemoryManager::isInternalAllocation(GraphicsAllocation::AllocationType allocationType) {
-    if (allocationType == GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER ||
-        allocationType == GraphicsAllocation::AllocationType::RING_BUFFER) {
+bool MemoryManager::isExternalAllocation(GraphicsAllocation::AllocationType allocationType) {
+    if (allocationType == GraphicsAllocation::AllocationType::BUFFER ||
+        allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED ||
+        allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY ||
+        allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR ||
+        allocationType == GraphicsAllocation::AllocationType::FILL_PATTERN ||
+        allocationType == GraphicsAllocation::AllocationType::IMAGE ||
+        allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION ||
+        allocationType == GraphicsAllocation::AllocationType::PIPE ||
+        allocationType == GraphicsAllocation::AllocationType::SHARED_BUFFER ||
+        allocationType == GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE ||
+        allocationType == GraphicsAllocation::AllocationType::SHARED_IMAGE ||
+        allocationType == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY ||
+        allocationType == GraphicsAllocation::AllocationType::SVM_CPU ||
+        allocationType == GraphicsAllocation::AllocationType::SVM_GPU ||
+        allocationType == GraphicsAllocation::AllocationType::SVM_ZERO_COPY ||
+        allocationType == GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY ||
+        allocationType == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
         return true;
     }
     return false;
 }
 
 LocalMemoryUsageBankSelector *MemoryManager::getLocalMemoryUsageBankSelector(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
-    if (isInternalAllocation(allocationType)) {
-        return internalLocalMemoryUsageBankSelector[rootDeviceIndex].get();
+    if (isExternalAllocation(allocationType)) {
+        return externalLocalMemoryUsageBankSelector[rootDeviceIndex].get();
     }
-    return externalLocalMemoryUsageBankSelector[rootDeviceIndex].get();
+    return internalLocalMemoryUsageBankSelector[rootDeviceIndex].get();
 }
 
 EngineControl *MemoryManager::getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver) {

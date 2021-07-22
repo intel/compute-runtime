@@ -210,7 +210,7 @@ class MemoryManager {
     virtual void registerSysMemAlloc(GraphicsAllocation *allocation){};
     virtual void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex){};
 
-    bool isInternalAllocation(GraphicsAllocation::AllocationType allocationType);
+    bool isExternalAllocation(GraphicsAllocation::AllocationType allocationType);
     LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
 
     bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);

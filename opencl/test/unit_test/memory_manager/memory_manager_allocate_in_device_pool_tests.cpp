@@ -603,3 +603,24 @@ TEST(MemoryManagerTest, givenInternalAllocationTypeWhenIsAllocatedInDevicePoolTh
     EXPECT_EQ(0u, memoryManager.externalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getOccupiedMemorySizeForBank(0));
     EXPECT_EQ(0u, memoryManager.internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getOccupiedMemorySizeForBank(0));
 }
+
+TEST(MemoryManagerTest, givenExternalAllocationTypeWhenIsAllocatedInDevicePoolThenIntenalUsageBankSelectorIsUpdated) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    AllocationProperties allocProperties(mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield);
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
+
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(0u, memoryManager.internalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()]->getOccupiedMemorySizeForBank(0));
+
+    if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+        EXPECT_EQ(allocation->getUnderlyingBufferSize(), memoryManager.externalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()]->getOccupiedMemorySizeForBank(0));
+        EXPECT_EQ(memoryManager.getLocalMemoryUsageBankSelector(allocation->getAllocationType(), allocation->getRootDeviceIndex()), memoryManager.externalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()].get());
+    }
+
+    memoryManager.freeGraphicsMemory(allocation);
+
+    EXPECT_EQ(0u, memoryManager.externalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getOccupiedMemorySizeForBank(0));
+    EXPECT_EQ(0u, memoryManager.internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getOccupiedMemorySizeForBank(0));
+}
