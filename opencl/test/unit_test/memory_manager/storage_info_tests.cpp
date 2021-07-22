@@ -348,7 +348,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenD
 
 TEST_F(MultiDeviceStorageInfoTest, givenLeastOccupiedBankAndOtherBitsEnabledInSubDeviceBitfieldWhenCreateStorageInfoThenTakeLeastOccupiedBankAsMemoryBank) {
     AllocationProperties properties{mockRootDeviceIndex, false, 1u, GraphicsAllocation::AllocationType::UNKNOWN, false, singleTileMask};
-    auto leastOccupiedBank = memoryManager->localMemoryUsageBankSelector[properties.rootDeviceIndex]->getLeastOccupiedBank(properties.subDevicesBitfield);
+    auto leastOccupiedBank = memoryManager->getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
     properties.subDevicesBitfield.set(leastOccupiedBank);
     properties.subDevicesBitfield.set(leastOccupiedBank + 1);
     EXPECT_EQ(2u, properties.subDevicesBitfield.count());
@@ -422,7 +422,7 @@ TEST_F(MultiDeviceStorageInfoTest,
                                     allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
 
-    auto leastOccupiedBank = memoryManager->localMemoryUsageBankSelector[properties.rootDeviceIndex]->getLeastOccupiedBank(properties.subDevicesBitfield);
+    auto leastOccupiedBank = memoryManager->getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
     DeviceBitfield allocationMask;
     allocationMask.set(leastOccupiedBank);
 

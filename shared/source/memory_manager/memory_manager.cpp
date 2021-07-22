@@ -49,7 +49,8 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-        localMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(HwHelper::getSubDevicesCount(hwInfo)));
+        internalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(HwHelper::getSubDevicesCount(hwInfo)));
+        externalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(HwHelper::getSubDevicesCount(hwInfo)));
         this->localMemorySupported.push_back(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo));
         this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages && !!DebugManager.flags.Enable64kbpages.get());
 
@@ -212,7 +213,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
         freeAssociatedResourceImpl(*gfxAllocation);
     }
 
-    localMemoryUsageBankSelector[gfxAllocation->getRootDeviceIndex()]->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
+    getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), gfxAllocation->getRootDeviceIndex())->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
     freeGraphicsMemoryImpl(gfxAllocation);
 }
 //if not in use destroy in place
@@ -458,7 +459,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     AllocationStatus status = AllocationStatus::Error;
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
     if (allocation) {
-        localMemoryUsageBankSelector[properties.rootDeviceIndex]->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
+        getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
         this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
     }
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
@@ -554,6 +555,21 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImage(const Allocati
 
 EngineControlContainer &MemoryManager::getRegisteredEngines() {
     return registeredEngines;
+}
+
+bool MemoryManager::isInternalAllocation(GraphicsAllocation::AllocationType allocationType) {
+    if (allocationType == GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER ||
+        allocationType == GraphicsAllocation::AllocationType::RING_BUFFER) {
+        return true;
+    }
+    return false;
+}
+
+LocalMemoryUsageBankSelector *MemoryManager::getLocalMemoryUsageBankSelector(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
+    if (isInternalAllocation(allocationType)) {
+        return internalLocalMemoryUsageBankSelector[rootDeviceIndex].get();
+    }
+    return externalLocalMemoryUsageBankSelector[rootDeviceIndex].get();
 }
 
 EngineControl *MemoryManager::getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver) {

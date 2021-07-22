@@ -38,9 +38,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::createGraphicsAllocation;
     using MemoryManager::createStorageInfoFromProperties;
     using MemoryManager::defaultEngineIndex;
+    using MemoryManager::externalLocalMemoryUsageBankSelector;
     using MemoryManager::getAllocationData;
     using MemoryManager::gfxPartitions;
-    using MemoryManager::localMemoryUsageBankSelector;
+    using MemoryManager::internalLocalMemoryUsageBankSelector;
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::overrideAllocationData;
     using MemoryManager::pageFaultManager;
