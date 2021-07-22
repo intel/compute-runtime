@@ -121,6 +121,7 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
     gtSystemInfo->ThreadCount = this->threadsPerEu * gtSystemInfo->EUCount;
 
+    gtSystemInfo->MaxEuPerSubSlice = gtSystemInfo->MaxEuPerSubSlice != 0 ? gtSystemInfo->MaxEuPerSubSlice : topologyData.maxEuCount;
     gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
     gtSystemInfo->MaxSlicesSupported = topologyData.maxSliceCount;
 

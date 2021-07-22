@@ -617,4 +617,10 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSVal), outHwInfo.gtSystemInfo.MaxSlicesSupported);
 
     EXPECT_EQ(hwInfo.gtSystemInfo.MaxDualSubSlicesSupported, outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
+
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 0;
+
+    ret = hwConfig->configureHwInfoDrm(&hwInfo, &outHwInfo, osInterface.get());
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(8u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
 }
