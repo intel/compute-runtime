@@ -18,6 +18,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -1396,7 +1397,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
     auto startDirect = osContext.isDirectSubmissionAvailable(device.getHardwareInfo(), submitOnInit);
 
     if (startDirect) {
-        if (osContext.getEngineType() == aub_stream::ENGINE_BCS) {
+        if (EngineHelpers::isBcs(osContext.getEngineType())) {
             if (!this->isBlitterDirectSubmissionEnabled()) {
                 blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
                 ret = blitterDirectSubmission->initialize(submitOnInit);
