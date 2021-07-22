@@ -7,7 +7,11 @@
 
 #pragma once
 #include "level_zero/core/source/debugger/debugger_l0.h"
+#include "level_zero/tools/source/debug/eu_thread.h"
+#include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
+
+#include <memory>
 
 struct _zet_debug_session_handle_t {};
 
@@ -51,10 +55,14 @@ struct RootDebugSession : DebugSession {
     RootDebugSession() = delete;
 
   protected:
-    RootDebugSession(const zet_debug_config_t &config, Device *device) : DebugSession(config, device){};
+    RootDebugSession(const zet_debug_config_t &config, Device *device);
 
     virtual bool readModuleDebugArea() = 0;
+    std::vector<ze_device_thread_t> getSingleThreads(ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo);
+
     DebugAreaHeader debugArea;
+
+    std::map<uint64_t, std::unique_ptr<EuThread>> allThreads;
 };
 
 } // namespace L0
