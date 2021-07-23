@@ -20,7 +20,7 @@ using ImageEnqueueCall = std::function<void(MockCommandQueue *, Image *, size_t 
 struct ValidateRegionAndOriginTests : public ::testing::TestWithParam<ImageEnqueueCall> {
     void SetUp() override {
         context.reset(new MockContext());
-        cmdQ.reset(new MockCommandQueue(context.get(), context->getDevice(0), 0));
+        cmdQ.reset(new MockCommandQueue(context.get(), context->getDevice(0), nullptr, false));
     }
 
     static void readImage(MockCommandQueue *cmdQ, Image *image, size_t *origin, size_t *region, int32_t &retVal) {

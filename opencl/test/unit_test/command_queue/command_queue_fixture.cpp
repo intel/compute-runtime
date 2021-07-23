@@ -89,12 +89,14 @@ void CommandQueueHwFixture::TearDown() {
 CommandQueue *CommandQueueFixture::createCommandQueue(
     Context *context,
     ClDevice *device,
-    cl_command_queue_properties properties) {
+    cl_command_queue_properties properties,
+    bool internalUsage) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, properties, 0};
     return new MockCommandQueue(
         context,
         device,
-        props);
+        props,
+        internalUsage);
 }
 
 void CommandQueueFixture::SetUp(
@@ -104,7 +106,8 @@ void CommandQueueFixture::SetUp(
     pCmdQ = createCommandQueue(
         context,
         device,
-        properties);
+        properties,
+        false);
 }
 
 void CommandQueueFixture::TearDown() {

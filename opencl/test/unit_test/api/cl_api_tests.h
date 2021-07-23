@@ -45,7 +45,7 @@ struct ApiFixture {
         pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&testedClDevice, 1), nullptr, nullptr, retVal);
         EXPECT_EQ(retVal, CL_SUCCESS);
 
-        pCommandQueue = new MockCommandQueue(pContext, pDevice, nullptr);
+        pCommandQueue = new MockCommandQueue(pContext, pDevice, nullptr, false);
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pDevice));
 

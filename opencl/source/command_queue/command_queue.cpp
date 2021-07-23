@@ -59,9 +59,6 @@ CommandQueue *CommandQueue::create(Context *context,
     return funcCreate(context, device, properties, internalUsage);
 }
 
-CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties)
-    : CommandQueue(context, device, properties, false) {}
-
 CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage)
     : context(context), device(device) {
     if (context) {

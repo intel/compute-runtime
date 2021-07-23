@@ -64,7 +64,8 @@ struct CommandQueueFixture {
     CommandQueue *createCommandQueue(
         Context *context,
         ClDevice *device,
-        cl_command_queue_properties properties);
+        cl_command_queue_properties properties,
+        bool internalUsage);
 
     CommandQueue *pCmdQ = nullptr;
 };

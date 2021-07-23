@@ -137,7 +137,7 @@ TEST_F(clEnqueueSVMUnmapTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMUnmapT
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     cl_device_id deviceId = pDevice.get();
     auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
-    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr);
+    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr, false);
 
     retVal = clEnqueueSVMUnmap(
         pCommandQueue.get(),              // cl_command_queue command_queue

@@ -1707,7 +1707,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenItIsUnblocke
     pDevice->resetCommandStreamReceiver(csr);
     uint32_t numGrfRequired = 666u;
 
-    auto pCmdQ = std::make_unique<MockCommandQueue>(&mockContext, pClDevice, nullptr);
+    auto pCmdQ = std::make_unique<MockCommandQueue>(&mockContext, pClDevice, nullptr, false);
     auto mockProgram = std::make_unique<MockProgram>(&mockContext, false, toClDeviceVector(*pClDevice));
 
     auto pKernel = MockKernel::create(*pDevice, mockProgram.get(), numGrfRequired);

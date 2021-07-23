@@ -255,7 +255,7 @@ TEST_F(clEnqueueCopyBufferRectTests, givenNonProperDstBufferSizeWhenCallClEnqueu
 TEST_F(clEnqueueCopyBufferRectTests, givenPitchesEqualZeroAndNotZeroRegionWhenCallClEnqueueCopyBufferRectThenPitchIsSetBasedOnRegionAndClSuccessIsReturned) {
     class CommandQueueMock : public MockCommandQueue {
       public:
-        CommandQueueMock(Context *context, ClDevice *device, const cl_queue_properties *props) : MockCommandQueue(context, device, props) {}
+        CommandQueueMock(Context *context, ClDevice *device, const cl_queue_properties *props) : MockCommandQueue(context, device, props, false) {}
         cl_int enqueueCopyBufferRect(Buffer *srcBuffer, Buffer *dstBuffer, const size_t *srcOrigin, const size_t *dstOrigin,
                                      const size_t *region, size_t argSrcRowPitch, size_t argSrcSlicePitch, size_t argDstRowPitch,
                                      size_t argDstSlicePitch, cl_uint numEventsInWaitList,

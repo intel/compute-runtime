@@ -265,7 +265,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenMemObjWhenUnmappingThenSetAubWritableBefor
         }
     };
 
-    MyMockCommandQueue myMockCmdQ(BufferDefaults::context, pClDevice, nullptr);
+    MyMockCommandQueue myMockCmdQ(BufferDefaults::context, pClDevice, nullptr, false);
 
     {
         auto mapPtr = myMockCmdQ.enqueueMapBuffer(buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 8, 0, nullptr, nullptr, retVal);

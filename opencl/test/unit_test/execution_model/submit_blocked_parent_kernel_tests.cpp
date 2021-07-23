@@ -316,7 +316,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
 
-    MockCommandQueue cmdQ(context, device, properties);
+    MockCommandQueue cmdQ(context, device, properties, false);
 
     size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 

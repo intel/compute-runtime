@@ -1032,7 +1032,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel}));
 
-    MockCommandQueue mockCmdQ2(&context2, device2.get(), nullptr);
+    MockCommandQueue mockCmdQ2(&context2, device2.get(), nullptr, false);
     auto &cmdStream = mockCmdQ->getCS(0);
 
     const cl_uint eventsOnWaitlist = 6;

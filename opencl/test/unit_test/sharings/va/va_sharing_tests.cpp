@@ -988,7 +988,7 @@ TEST(VaSharingFunctions, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupp
 TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWhenEnqueueReleaseVAIsCalledThenAllWorkAlreadySubmittedShouldCompleteExecution) {
     struct MockCommandQueueToTestFinish : MockCommandQueue {
         MockCommandQueueToTestFinish(Context *context, ClDevice *device, const cl_queue_properties *props)
-            : MockCommandQueue(context, device, props) {
+            : MockCommandQueue(context, device, props, false) {
         }
         cl_int finish() override {
             finishCalled = true;

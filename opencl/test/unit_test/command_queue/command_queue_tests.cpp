@@ -124,13 +124,13 @@ INSTANTIATE_TEST_CASE_P(CommandQueue,
                         ::testing::ValuesIn(AllCommandQueueProperties));
 
 TEST(CommandQueue, WhenConstructingCommandQueueThenTaskLevelAndTaskCountAreZero) {
-    MockCommandQueue cmdQ(nullptr, nullptr, 0);
+    MockCommandQueue cmdQ(nullptr, nullptr, 0, false);
     EXPECT_EQ(0u, cmdQ.taskLevel);
     EXPECT_EQ(0u, cmdQ.taskCount);
 }
 
 TEST(CommandQueue, WhenConstructingCommandQueueThenQueueFamilyIsNotSelected) {
-    MockCommandQueue cmdQ(nullptr, nullptr, 0);
+    MockCommandQueue cmdQ(nullptr, nullptr, 0, false);
     EXPECT_FALSE(cmdQ.isQueueFamilySelected());
 }
 
@@ -162,7 +162,7 @@ TEST_F(GetTagTest, GivenSetHwTagWhenGettingHwTagThenCorrectTagIsReturned) {
 
 TEST_F(GetTagTest, GivenInitialValueWhenGettingHwTagThenCorrectTagIsReturned) {
     MockContext context;
-    MockCommandQueue commandQueue(&context, pClDevice, 0);
+    MockCommandQueue commandQueue(&context, pClDevice, 0, false);
 
     EXPECT_EQ(initialHardwareTag, commandQueue.getHwTag());
 }
@@ -170,7 +170,7 @@ TEST_F(GetTagTest, GivenInitialValueWhenGettingHwTagThenCorrectTagIsReturned) {
 TEST(CommandQueue, GivenUpdatedCompletionStampWhenGettingCompletionStampThenUpdatedValueIsReturned) {
     MockContext context;
 
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     CompletionStamp cs = {
         cmdQ.taskCount + 100,
@@ -186,7 +186,7 @@ TEST(CommandQueue, GivenUpdatedCompletionStampWhenGettingCompletionStampThenUpda
 TEST(CommandQueue, givenTimeStampWithTaskCountNotReadyStatusWhenupdateFromCompletionStampIsBeingCalledThenQueueTaskCountIsNotUpdated) {
     MockContext context;
 
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     cmdQ.taskCount = 1u;
 
@@ -202,7 +202,7 @@ TEST(CommandQueue, GivenOOQwhenUpdateFromCompletionStampWithTrueIsCalledThenTask
     MockContext context;
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
 
-    MockCommandQueue cmdQ(&context, nullptr, props);
+    MockCommandQueue cmdQ(&context, nullptr, props, false);
     auto oldTL = cmdQ.taskLevel;
 
     CompletionStamp cs = {
@@ -219,7 +219,7 @@ TEST(CommandQueue, GivenOOQwhenUpdateFromCompletionStampWithTrueIsCalledThenTask
 
 TEST(CommandQueue, givenDeviceWhenCreatingCommandQueueThenPickCsrFromDefaultEngine) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0);
+    MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
 
     auto defaultCsr = mockDevice->getDefaultEngine().commandStreamReceiver;
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
@@ -231,7 +231,7 @@ TEST_P(CommandQueueWithBlitOperationsTests, givenDeviceNotSupportingBlitOperatio
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0);
+    MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
     auto cmdType = GetParam();
 
     EXPECT_EQ(nullptr, cmdQ.getBcsCommandStreamReceiver());
@@ -259,7 +259,7 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
     auto subDevice = device->getDeviceById(0);
     auto bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
 
-    MockCommandQueue cmdQ(nullptr, device.get(), 0);
+    MockCommandQueue cmdQ(nullptr, device.get(), 0, false);
     auto cmdType = GetParam();
     auto blitAllowed = cmdQ.blitEnqueueAllowed(cmdType);
 
@@ -282,7 +282,7 @@ INSTANTIATE_TEST_CASE_P(uint32_t,
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = new MockContext;
-    auto cmdQ = new MockCommandQueue(context, mockDevice.get(), 0);
+    auto cmdQ = new MockCommandQueue(context, mockDevice.get(), 0, false);
     auto userEvent = new Event(cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     userEvent->setStatus(CL_COMPLETE);
     userEvent->flushStamp->setStamp(5);
@@ -302,7 +302,7 @@ TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpda
 TEST(CommandQueue, givenCmdQueueBlockedByAbortedVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
     auto context = new MockContext;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto cmdQ = new MockCommandQueue(context, mockDevice.get(), 0);
+    auto cmdQ = new MockCommandQueue(context, mockDevice.get(), 0, false);
 
     auto userEvent = new Event(cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     userEvent->setStatus(-1);
@@ -339,7 +339,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserE
     MockContext context;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    MockCommandQueue cmdQ(&context, mockDevice.get(), 0);
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
     auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.taskLevel = 100u;
 
@@ -354,7 +354,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserE
 
 TEST_F(CommandQueueCommandStreamTest, GivenValidCommandQueueWhenGettingCommandStreamThenValidObjectIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue commandQueue(context.get(), pClDevice, props);
+    MockCommandQueue commandQueue(context.get(), pClDevice, props, false);
 
     auto &cs = commandQueue.getCS(1024);
     EXPECT_NE(nullptr, &cs);
@@ -362,7 +362,7 @@ TEST_F(CommandQueueCommandStreamTest, GivenValidCommandQueueWhenGettingCommandSt
 
 TEST_F(CommandQueueCommandStreamTest, GivenValidCommandStreamWhenGettingGraphicsAllocationThenMaxAvailableSpaceAndUnderlyingBufferSizeAreCorrect) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue commandQueue(context.get(), pClDevice, props);
+    MockCommandQueue commandQueue(context.get(), pClDevice, props, false);
     size_t minSizeRequested = 20;
 
     auto &cs = commandQueue.getCS(minSizeRequested);
@@ -379,7 +379,7 @@ TEST_F(CommandQueueCommandStreamTest, GivenValidCommandStreamWhenGettingGraphics
 
 TEST_F(CommandQueueCommandStreamTest, GivenRequiredSizeWhenGettingCommandStreamThenMaxAvailableSpaceIsEqualOrGreaterThanRequiredSize) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue commandQueue(context.get(), pClDevice, props);
+    MockCommandQueue commandQueue(context.get(), pClDevice, props, false);
 
     size_t requiredSize = 16384;
     const auto &commandStream = commandQueue.getCS(requiredSize);
@@ -389,7 +389,7 @@ TEST_F(CommandQueueCommandStreamTest, GivenRequiredSizeWhenGettingCommandStreamT
 
 TEST_F(CommandQueueCommandStreamTest, WhenGettingCommandStreamWithNewSizeThenMaxAvailableSpaceIsEqualOrGreaterThanNewSize) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue commandQueue(context.get(), pClDevice, props);
+    MockCommandQueue commandQueue(context.get(), pClDevice, props, false);
 
     auto &commandStreamInitial = commandQueue.getCS(1024);
     size_t requiredSize = commandStreamInitial.getMaxAvailableSpace() + 42;
@@ -401,7 +401,7 @@ TEST_F(CommandQueueCommandStreamTest, WhenGettingCommandStreamWithNewSizeThenMax
 
 TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForCommandStreamThenReturnsAllocationFromReusablePool) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto memoryManager = pDevice->getMemoryManager();
     size_t requiredSize = alignUp(100 + CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize, MemoryConstants::pageSize64k);
@@ -420,7 +420,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
 }
 
 TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenCommandStreamIsPutOnTheReusabeList) {
-    auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0);
+    auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
     const auto &commandStream = cmdQ->getCS(100);
     auto graphicsAllocation = commandStream.getGraphicsAllocation();
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
@@ -433,7 +433,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenComm
 
 TEST_F(CommandQueueCommandStreamTest, WhenAskedForNewCommandStreamThenOldHeapIsStoredForReuse) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 
@@ -452,7 +452,7 @@ TEST_F(CommandQueueCommandStreamTest, WhenAskedForNewCommandStreamThenOldHeapIsS
 
 TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenGetCSIsCalledThenCommandStreamAllocationTypeShouldBeSetToCommandBuffer) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     const auto &commandStream = cmdQ.getCS(100);
     auto commandStreamAllocation = commandStream.getGraphicsAllocation();
@@ -512,7 +512,7 @@ struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
 
 TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenValidObjectIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
     EXPECT_NE(nullptr, &indirectHeap);
@@ -520,7 +520,7 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenValidObjectIsRet
 
 HWTEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedForInternalAllocationThenTrueIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
@@ -533,7 +533,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedFor
 
 HWTEST_P(CommandQueueIndirectHeapTest, GivenIndirectHeapWhenGettingAvailableSpaceThenCorrectSizeIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
@@ -546,7 +546,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, GivenIndirectHeapWhenGettingAvailableSpac
 
 TEST_P(CommandQueueIndirectHeapTest, GivenRequiredSizeWhenGettingIndirectHeapThenIndirectHeapHasRequiredSize) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     size_t requiredSize = 16384;
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), requiredSize);
@@ -556,7 +556,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenRequiredSizeWhenGettingIndirectHeapThe
 
 TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapWithNewSizeThenMaxAvailableSpaceIsEqualOrGreaterThanNewSize) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto &indirectHeapInitial = cmdQ.getIndirectHeap(this->GetParam(), 10);
     size_t requiredSize = indirectHeapInitial.getMaxAvailableSpace() + 42;
@@ -574,7 +574,7 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapWithNewSizeThenMaxAv
 
 TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToCacheLine) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
     size_t minHeapSize = 64 * KB;
 
     auto &indirectHeapInitial = cmdQ.getIndirectHeap(this->GetParam(), 2 * minHeapSize + 1);
@@ -591,7 +591,7 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToC
 
 HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationThenAllocationFromReusablePoolIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto memoryManager = pDevice->getMemoryManager();
 
@@ -631,7 +631,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAll
 
 HWTEST_P(CommandQueueIndirectHeapTest, WhenAskedForNewHeapThenOldHeapIsStoredForReuse) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
@@ -654,7 +654,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, WhenAskedForNewHeapThenOldHeapIsStoredFor
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenAskedForNewHeapThenNewAllocationIsAcquiredWithoutStoring) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto memoryManager = pDevice->getMemoryManager();
     auto &csr = pDevice->getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
@@ -676,7 +676,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenA
 }
 
 TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveWhenQueueISDestroyedThenIndirectHeapIsNotOnReuseList) {
-    auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0);
+    auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
     cmdQ->getIndirectHeap(this->GetParam(), 100);
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 
@@ -687,7 +687,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveW
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndirectHeapIsReleasedThenHeapAllocationAndHeapBufferIsSetToNullptr) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 
@@ -710,7 +710,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndir
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocatedWhenIndirectHeapIsReleasedThenIndirectHeapAllocationStaysNull) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     cmdQ.releaseIndirectHeap(this->GetParam());
     auto &csr = pDevice->getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
@@ -720,7 +720,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocatedWhenIn
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocationIsNullThenNothingOnReuseList) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto &ih = cmdQ.getIndirectHeap(this->GetParam(), 0u);
     auto allocation = ih.getGraphicsAllocation();
@@ -740,7 +740,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocat
 
 HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalledThenIndirectHeapAllocationTypeShouldBeSetToInternalHeapForIohAndLinearStreamForOthers) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto heapType = this->GetParam();
@@ -758,7 +758,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCal
 
 TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledThenHeapIsCreated) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     IndirectHeap *indirectHeap = nullptr;
     cmdQ.allocateHeapMemory(this->GetParam(), 100, indirectHeap);
@@ -771,7 +771,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledT
 
 TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledWithAlreadyAllocatedHeapThenGraphicsAllocationIsCreated) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     IndirectHeap heap(nullptr, size_t{100});
 
@@ -795,13 +795,13 @@ using CommandQueueTests = ::testing::Test;
 HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGraphicsAllocationIsReused) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(device.get());
-    std::unique_ptr<CommandQueue> commandQ(new MockCommandQueue(&context, device.get(), 0));
+    std::unique_ptr<CommandQueue> commandQ(new MockCommandQueue(&context, device.get(), 0, false));
     *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = 0;
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
 
     auto commandStreamGraphicsAllocation = commandQ->getCS(0).getGraphicsAllocation();
-    commandQ.reset(new MockCommandQueue(&context, device.get(), 0));
+    commandQ.reset(new MockCommandQueue(&context, device.get(), 0, false));
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     auto commandStreamGraphicsAllocation2 = commandQ->getCS(0).getGraphicsAllocation();
@@ -861,7 +861,7 @@ HWTEST_F(WaitForQueueCompletionTests, whenFinishIsCalledThenCallWaitWithoutQuick
 
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenNoObjectsThenReturnSuccess) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     cl_uint numObjects = 0;
     cl_mem *memObjects = nullptr;
@@ -879,7 +879,7 @@ class MockSharingHandler : public SharingHandler {
 
 TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandlerThenReturnSuccess) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, context.getDevice(0), 0);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
     MockSharingHandler *mockSharingHandler = new MockSharingHandler;
 
     auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
@@ -899,7 +899,7 @@ TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandler
 TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandlerWithEventThenReturnSuccess) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
-    MockCommandQueue cmdQ(&context, mockDevice.get(), 0);
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
     MockSharingHandler *mockSharingHandler = new MockSharingHandler;
 
     auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
@@ -926,7 +926,7 @@ TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandler
 
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     cl_uint numObjects = 1;
     cl_mem *memObjects = nullptr;
@@ -966,7 +966,7 @@ TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenIncorrectArgumentsThenRet
 
 TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenNoObjectsThenReturnSuccess) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     cl_uint numObjects = 0;
     cl_mem *memObjects = nullptr;
@@ -977,7 +977,7 @@ TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenNoObjectsThenReturnSucces
 
 TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     cl_uint numObjects = 1;
     cl_mem *memObjects = nullptr;
@@ -1026,7 +1026,7 @@ TEST(CommandQueue, givenEnqueueAcquireSharedObjectsCallWhenAcquireFailsThenCorre
 
     UltClDeviceFactory deviceFactory{2, 0};
     MockContext context(deviceFactory.rootDevices[rootDeviceIndex]);
-    MockCommandQueue cmdQ(&context, context.getDevice(0), 0);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(&context));
 
     MockSharingHandler *handler = new MockSharingHandler;
@@ -1042,7 +1042,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
     MockProgram program(toClDeviceVector(*pClDevice));
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
-    MockCommandQueue cmdQ(context.get(), pClDevice, 0);
+    MockCommandQueue cmdQ(context.get(), pClDevice, 0, false);
 
     const auto &systemThreadSurfaceAddress = kernel->getAllocatedKernelInfo()->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful;
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress);
@@ -1062,7 +1062,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
     MockProgram program(toClDeviceVector(*pClDevice));
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
-    MockCommandQueue cmdQ(context.get(), pClDevice, 0);
+    MockCommandQueue cmdQ(context.get(), pClDevice, 0, false);
 
     const auto &systemThreadSurfaceAddress = kernel->getAllocatedKernelInfo()->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful;
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress);
@@ -1090,7 +1090,7 @@ struct MockTimestampPacketContainer : TimestampPacketContainer {
 TEST(CommandQueueDestructorTest, whenCommandQueueIsDestroyedThenDestroysTimestampPacketContainerBeforeReleasingContext) {
     auto context = new MockContext;
     EXPECT_EQ(1, context->getRefInternalCount());
-    MockCommandQueue queue(context, context->getDevice(0), nullptr);
+    MockCommandQueue queue(context, context->getDevice(0), nullptr, false);
     queue.timestampPacketContainer.reset(new MockTimestampPacketContainer(*context));
     EXPECT_EQ(2, context->getRefInternalCount());
     context->release();
@@ -1106,7 +1106,7 @@ TEST(CommandQueuePropertiesTests, whenGetEngineIsCalledThenQueueEngineIsReturned
 
 TEST(CommandQueue, GivenCommandQueueWhenEnqueueResourceBarrierCalledThenSuccessReturned) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     cl_int result = cmdQ.enqueueResourceBarrier(
         nullptr,
@@ -1118,7 +1118,7 @@ TEST(CommandQueue, GivenCommandQueueWhenEnqueueResourceBarrierCalledThenSuccessR
 
 TEST(CommandQueue, GivenCommandQueueWhenCheckingIfIsCacheFlushCommandCalledThenFalseReturned) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     bool isCommandCacheFlush = cmdQ.isCacheFlushCommand(0u);
     EXPECT_FALSE(isCommandCacheFlush);
@@ -1126,7 +1126,7 @@ TEST(CommandQueue, GivenCommandQueueWhenCheckingIfIsCacheFlushCommandCalledThenF
 
 TEST(CommandQueue, GivenCommandQueueWhenEnqueueInitDispatchGlobalsCalledThenSuccessReturned) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, nullptr, 0, false);
 
     cl_int result = cmdQ.enqueueInitDispatchGlobals(
         nullptr,
@@ -1147,14 +1147,14 @@ TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestamp
     }
 
     hwInfo->capabilityTable.blitterOperationsSupported = true;
-    MockCommandQueue cmdQ(&context, context.getDevice(0), 0);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
     EXPECT_NE(nullptr, cmdQ.timestampPacketContainer);
 }
 
 TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue) {
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
-    MockCommandQueue queue(&context, context.getDevice(0), 0);
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
     if (!queue.bcsEngine) {
         queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
     }
@@ -1171,7 +1171,7 @@ TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue
 TEST(CommandQueue, givenClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
     MockContext context{};
 
-    MockCommandQueue queue(&context, context.getDevice(0), 0);
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
     if (!queue.bcsEngine) {
         queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
     }
@@ -1313,7 +1313,7 @@ TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenR
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
     MockContext context{};
-    MockCommandQueue queue(&context, context.getDevice(0), 0);
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
     MockImageBase image;
     image.imageDesc.num_mip_levels = 1;
 
@@ -1340,7 +1340,7 @@ TEST(CommandQueue, givenMipMappedImageWhenCallingBlitEnqueueImageAllowedThenCorr
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
     MockContext context{};
-    MockCommandQueue queue(&context, context.getDevice(0), 0);
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
 
     size_t correctRegion[3] = {10u, 10u, 0};
     size_t correctOrigin[3] = {1u, 1u, 0};
@@ -1357,7 +1357,7 @@ TEST(CommandQueue, givenHalfFloatImageWhenCallingBlitEnqueueImageAllowedThenCorr
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
     MockContext context{};
-    MockCommandQueue queue(&context, context.getDevice(0), 0);
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
 
     size_t correctRegion[3] = {10u, 10u, 0};
     size_t correctOrigin[3] = {1u, 1u, 0};
@@ -1374,7 +1374,7 @@ TEST(CommandQueue, givenImageWithDifferentImageTypesWhenCallingBlitEnqueueImageA
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
     MockContext context{};
-    MockCommandQueue queue(&context, context.getDevice(0), 0);
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
 
     size_t correctRegion[3] = {10u, 10u, 0};
     size_t correctOrigin[3] = {1u, 1u, 0};
@@ -1607,7 +1607,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
 
     fillProperties(properties, 0, 0);
     EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular);
-    MockCommandQueue queueRcs(&context, context.getDevice(0), properties);
+    MockCommandQueue queueRcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
     EXPECT_FALSE(queueRcs.isCopyOnly);
     EXPECT_TRUE(queueRcs.isQueueFamilySelected());
@@ -1616,7 +1616,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
 
     fillProperties(properties, 1, 0);
     EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
-    MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
+    MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_TRUE(queueBcs.isQueueFamilySelected());
@@ -1633,7 +1633,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWh
 
     fillProperties(properties, 0, 0);
     EngineControl &defaultEngine = context.getDevice(0)->getDefaultEngine();
-    MockCommandQueue defaultQueue(&context, context.getDevice(0), properties);
+    MockCommandQueue defaultQueue(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(&defaultEngine, &defaultQueue.getGpgpuEngine());
     EXPECT_FALSE(defaultQueue.isCopyOnly);
     EXPECT_TRUE(defaultQueue.isQueueFamilySelected());
@@ -1649,7 +1649,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
 
     fillProperties(properties, 0, 0);
     EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular);
-    MockCommandQueue queueRcs(&context, context.getDevice(0), properties);
+    MockCommandQueue queueRcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
     EXPECT_FALSE(queueRcs.isCopyOnly);
     EXPECT_TRUE(queueRcs.isQueueFamilySelected());
@@ -1658,7 +1658,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
 
     fillProperties(properties, 1, 0);
     EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
-    MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
+    MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
@@ -1674,7 +1674,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQu
 
     fillProperties(properties, 0, 0);
     EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
-    MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
+    MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());

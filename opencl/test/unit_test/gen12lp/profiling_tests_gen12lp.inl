@@ -130,7 +130,7 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQuerie
     EXPECT_EQ(1, MyOSTime::instanceNum);
     MockContext context;
     cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
-    MockCommandQueue cmdQ(&context, device.get(), props);
+    MockCommandQueue cmdQ(&context, device.get(), props, false);
     cmdQ.setProfilingEnabled();
     cmdQ.device = device.get();
 

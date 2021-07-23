@@ -56,7 +56,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         context = new MockContext(device.get());
         kernel = std::make_unique<MockKernelWithInternals>(*device, context);
-        mockCmdQ = new MockCommandQueue(context, device.get(), nullptr);
+        mockCmdQ = new MockCommandQueue(context, device.get(), nullptr, false);
     }
 
     void TearDown() override {

@@ -514,7 +514,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenEventWhenCompleteIsZeroThen
     EXPECT_EQ(1, MyOSTime::instanceNum);
     MockContext context;
     cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
-    MockCommandQueue cmdQ(&context, device.get(), props);
+    MockCommandQueue cmdQ(&context, device.get(), props, false);
     cmdQ.setProfilingEnabled();
     cmdQ.device = device.get();
 
@@ -551,7 +551,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhen
     EXPECT_EQ(1, MyOSTime::instanceNum);
     MockContext context;
     cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
-    MockCommandQueue cmdQ(&context, device.get(), props);
+    MockCommandQueue cmdQ(&context, device.get(), props, false);
     cmdQ.setProfilingEnabled();
     cmdQ.device = device.get();
 
@@ -603,7 +603,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenS
     device->setOSTime(new MyOSTime());
     EXPECT_EQ(1, MyOSTime::instanceNum);
     MockContext context(device.get());
-    MockCommandQueue cmdQ(&context, device.get(), nullptr);
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
     cmdQ.setProfilingEnabled();
     cmdQ.device = device.get();
 
@@ -1170,7 +1170,7 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
     DebugManagerStateRestore restorer;
     MockContext context;
     cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
-    ReleaseableObjectPtr<MockCommandQueue> cmdQ = clUniquePtr(new MockCommandQueue(&context, context.getDevice(0), props));
+    ReleaseableObjectPtr<MockCommandQueue> cmdQ = clUniquePtr(new MockCommandQueue(&context, context.getDevice(0), props, false));
     ReleaseableObjectPtr<MockEvent<MyEvent>> ev = clUniquePtr(new MockEvent<MyEvent>(cmdQ.get(), CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady));
 };
 

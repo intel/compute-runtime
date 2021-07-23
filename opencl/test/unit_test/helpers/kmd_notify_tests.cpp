@@ -23,7 +23,7 @@ struct KmdNotifyTests : public ::testing::Test {
     void SetUp() override {
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
-        cmdQ.reset(new MockCommandQueue(&context, device.get(), nullptr));
+        cmdQ.reset(new MockCommandQueue(&context, device.get(), nullptr, false));
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountToWait;
         cmdQ->getGpgpuCommandStreamReceiver().waitForFlushStamp(flushStampToWait);
         overrideKmdNotifyParams(true, 2, true, 1, false, 0);

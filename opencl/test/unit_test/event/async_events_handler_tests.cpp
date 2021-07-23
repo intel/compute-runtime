@@ -50,7 +50,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
         handler.reset(new MockHandler());
         context = make_releaseable<NiceMock<MockContext>>();
 
-        commandQueue = make_releaseable<MockCommandQueue>(context.get(), context->getDevice(0), nullptr);
+        commandQueue = make_releaseable<MockCommandQueue>(context.get(), context->getDevice(0), nullptr, false);
 
         *(commandQueue->getGpgpuCommandStreamReceiver().getTagAddress()) = 0;
 

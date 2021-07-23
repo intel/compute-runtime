@@ -117,7 +117,7 @@ TEST_F(ContextTest, WhenSettingSpecialQueueThenQueueIsAvailable) {
     auto specialQ = context.getSpecialQueue(0u);
     EXPECT_EQ(specialQ, nullptr);
 
-    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
+    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
     context.setSpecialQueue(cmdQ, 0u);
     specialQ = context.getSpecialQueue(0u);
     EXPECT_NE(specialQ, nullptr);
@@ -142,7 +142,7 @@ TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenCo
     delete cmdQ1;
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ2 = new MockCommandQueue(nullptr, (ClDevice *)devices[0], 0);
+    auto cmdQ2 = new MockCommandQueue(nullptr, (ClDevice *)devices[0], 0, false);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     delete cmdQ2;
@@ -172,7 +172,7 @@ TEST_F(ContextTest, givenCmdQueueWithContextWhenBeingCreatedNextDeletedThenConte
     MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
+    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
     EXPECT_EQ(2, context.getRefInternalCount());
 
     delete cmdQ;
@@ -234,7 +234,7 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextAutoDelet
     MockContext context((ClDevice *)devices[0], true);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
+    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
     context.overrideSpecialQueueAndDecrementRefCount(cmdQ, 0u);
     EXPECT_EQ(1, context.getRefInternalCount());
 
@@ -245,7 +245,7 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextDeletedTh
     MockContext context((ClDevice *)devices[0], true);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
+    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
     context.overrideSpecialQueueAndDecrementRefCount(cmdQ, 0u);
     EXPECT_EQ(1, context.getRefInternalCount());
 

@@ -107,7 +107,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
 
         context->setSharingFunctions(mockSharingFcns);
         context->memoryManager = mockMM.get();
-        cmdQ = new MockCommandQueue(context, context->getDevice(0), 0);
+        cmdQ = new MockCommandQueue(context, context->getDevice(0), 0, false);
         DebugManager.injectFcn = &mockSharingFcns->mockGetDxgiDesc;
 
         mockSharingFcns->mockTexture2dDesc.ArraySize = 1;

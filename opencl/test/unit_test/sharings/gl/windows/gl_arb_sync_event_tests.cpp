@@ -73,7 +73,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
         auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment, 0, device->getDeviceBitfield());
         device->resetCommandStreamReceiver(mockCsr);
         ctx.reset(new MockContext);
-        cmdQ.reset(new MockCommandQueue(ctx.get(), device.get(), nullptr));
+        cmdQ.reset(new MockCommandQueue(ctx.get(), device.get(), nullptr, false));
         sharing = new GlSharingFunctionsMock();
         ctx->setSharingFunctions(sharing);
         sharing->pfnGlArbSyncObjectCleanup = glArbSyncObjectCleanupMockDoNothing;

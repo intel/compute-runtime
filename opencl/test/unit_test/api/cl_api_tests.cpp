@@ -30,7 +30,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
     EXPECT_EQ(CL_SUCCESS, retVal);
     Context *ctxPtr = reinterpret_cast<Context *>(context);
 
-    commandQueue = new MockCommandQueue(context, device, 0);
+    commandQueue = new MockCommandQueue(context, device, 0, false);
 
     program = new MockProgram(ctxPtr, false, toClDeviceVector(*device));
     Program *prgPtr = reinterpret_cast<Program *>(program);

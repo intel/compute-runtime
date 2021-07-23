@@ -809,7 +809,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
         clDevice1.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
 
         MockContext context(&clDevice1);
-        MockCommandQueue cmdQ(&context, &clDevice1, nullptr);
+        MockCommandQueue cmdQ(&context, &clDevice1, nullptr, false);
 
         EXPECT_EQ(nullptr, cmdQ.getBcsCommandStreamReceiver());
     }
