@@ -15,4 +15,5 @@ struct TestTraits<IGFX_XE_HP_CORE> {
     static constexpr bool auxBuiltinsSupported = true;
     static constexpr bool compressionAubsSupported = true;
     static constexpr bool l3ControlSupported = true;
+    static constexpr bool forceNonCoherentSupported = true;
 };
