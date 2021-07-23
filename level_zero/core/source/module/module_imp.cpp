@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -383,6 +384,8 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     }
     this->maxGroupSize = static_cast<uint32_t>(this->translationUnit->device->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
 
+    checkIfPrivateMemoryPerDispatchIsNeeded();
+
     if (debugEnabled) {
         if (device->getSourceLevelDebugger()) {
             for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
@@ -640,6 +643,24 @@ void ModuleImp::verifyDebugCapabilities() {
         }
     }
     debugEnabled = debugCapabilities;
+}
+
+void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
+    size_t modulePrivateMemorySize = 0;
+    for (auto &kernelImmData : this->kernelImmDatas) {
+        if (0 == kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) {
+            continue;
+        }
+        auto kernelPrivateMemorySize = NEO::KernelHelper::getPrivateSurfaceSize(kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize,
+                                                                                this->device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch);
+        modulePrivateMemorySize += kernelPrivateMemorySize;
+    }
+
+    this->allocatePrivateMemoryPerDispatch = false;
+    if (modulePrivateMemorySize > 0U) {
+        auto globalMemorySize = device->getNEODevice()->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().to_ulong()));
+        this->allocatePrivateMemoryPerDispatch = modulePrivateMemorySize > globalMemorySize;
+    }
 }
 
 ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) {

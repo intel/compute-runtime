@@ -259,6 +259,8 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::StreamProperties requiredStreamState{};
     NEO::StreamProperties finalStreamState{};
     CommandsToPatch commandsToPatch{};
+
+    std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

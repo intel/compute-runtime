@@ -41,6 +41,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                                                bool isPredicate,
                                                                                bool isCooperative) {
     const auto kernel = Kernel::fromHandle(hKernel);
+    const auto &kernelDescriptor = kernel->getKernelDescriptor();
     UNRECOVERABLE_IF(kernel == nullptr);
     appendEventForProfiling(hEvent, true);
     const auto functionImmutableData = kernel->getImmutableData();
@@ -55,6 +56,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
 
     kernel->patchGlobalOffset();
+
+    if (kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize != 0U &&
+        nullptr == kernel->getPrivateMemoryGraphicsAllocation()) {
+        auto privateMemoryGraphicsAllocation = kernel->allocatePrivateMemoryGraphicsAllocation();
+        kernel->patchCrossthreadDataWithPrivateAllocation(privateMemoryGraphicsAllocation);
+        this->commandContainer.addToResidencyContainer(privateMemoryGraphicsAllocation);
+        this->ownedPrivateAllocations.push_back(privateMemoryGraphicsAllocation);
+    }
 
     if (!isIndirect) {
         kernel->setGroupCount(pThreadGroupDimensions->groupCountX,

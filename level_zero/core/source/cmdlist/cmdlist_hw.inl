@@ -58,6 +58,10 @@ inline ze_result_t parseErrorCode(NEO::ErrorCode returnValue) {
 template <GFXCORE_FAMILY gfxCoreFamily>
 CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
     clearCommandsToPatch();
+    for (auto alloc : this->ownedPrivateAllocations) {
+        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
+    }
+    this->ownedPrivateAllocations.clear();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -97,6 +101,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         commandContainer.setDirtyStateForAllHeaps(false);
         programThreadArbitrationPolicy(device);
     }
+
+    for (auto alloc : this->ownedPrivateAllocations) {
+        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
+    }
+    this->ownedPrivateAllocations.clear();
 
     return ZE_RESULT_SUCCESS;
 }

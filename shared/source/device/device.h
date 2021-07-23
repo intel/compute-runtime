@@ -121,6 +121,8 @@ class Device : public ReferenceTrackedObject<Device> {
     void initializeRayTracing();
     void reduceMaxMemAllocSize();
 
+    virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
+
   protected:
     Device() = delete;
     Device(ExecutionEnvironment *executionEnvironment);
@@ -145,7 +147,6 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
     MOCKABLE_VIRTUAL SubDevice *createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_stream::EngineType engineType);
-    virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     double getPercentOfGlobalMemoryAvailable() const;
     virtual void createBindlessHeapsHelper() {}
     bool createSubDevices();

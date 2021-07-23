@@ -114,6 +114,10 @@ struct ModuleImp : public Module {
 
     bool isDebugEnabled() const override;
 
+    bool shouldAllocatePrivateMemoryPerDispatch() const override {
+        return allocatePrivateMemoryPerDispatch;
+    }
+
     ModuleTranslationUnit *getTranslationUnit() {
         return this->translationUnit.get();
     }
@@ -121,6 +125,7 @@ struct ModuleImp : public Module {
   protected:
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();
+    void checkIfPrivateMemoryPerDispatchIsNeeded() override;
 
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
@@ -132,6 +137,7 @@ struct ModuleImp : public Module {
     NEO::Linker::RelocatedSymbolsMap symbols;
     bool debugEnabled = false;
     bool isFullyLinked = false;
+    bool allocatePrivateMemoryPerDispatch = true;
     ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};

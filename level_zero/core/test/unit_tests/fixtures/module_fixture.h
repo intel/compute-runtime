@@ -102,6 +102,12 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
             return mockKernelImmData;
         }
+
+        void checkIfPrivateMemoryPerDispatchIsNeeded() override {
+            const_cast<KernelDescriptor &>(kernelImmDatas[0]->getDescriptor()).kernelAttributes.perHwThreadPrivateMemorySize = mockKernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize;
+            ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded();
+        }
+
         MockImmutableData *mockKernelImmData = nullptr;
     };
 

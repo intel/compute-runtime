@@ -686,6 +686,36 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     return ZE_RESULT_SUCCESS;
 }
 
+NEO::GraphicsAllocation *KernelImp::allocatePrivateMemoryGraphicsAllocation() {
+    auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
+    auto neoDevice = module->getDevice()->getNEODevice();
+
+    auto privateSurfaceSize = NEO::KernelHelper::getPrivateSurfaceSize(kernelAttributes.perHwThreadPrivateMemorySize,
+                                                                       neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
+
+    UNRECOVERABLE_IF(privateSurfaceSize == 0);
+    auto privateMemoryGraphicsAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, neoDevice->getDeviceBitfield()});
+
+    UNRECOVERABLE_IF(privateMemoryGraphicsAllocation == nullptr);
+    return privateMemoryGraphicsAllocation;
+}
+
+void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) {
+    auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
+    auto neoDevice = module->getDevice()->getNEODevice();
+
+    ArrayRef<uint8_t> crossThredDataArrayRef = ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize);
+    ArrayRef<uint8_t> surfaceStateHeapArrayRef = ArrayRef<uint8_t>(this->surfaceStateHeapData.get(), this->surfaceStateHeapDataSize);
+
+    patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
+                             static_cast<uintptr_t>(privateMemoryGraphicsAllocation->getGpuAddressToPatch()),
+                             *privateMemoryGraphicsAllocation, kernelImmData->getDescriptor().payloadMappings.implicitArgs.privateMemoryAddress,
+                             *neoDevice, kernelAttributes.flags.useGlobalAtomics);
+
+    this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation);
+}
+
 ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     this->kernelImmData = module->getKernelImmutableData(desc->pKernelName);
     if (this->kernelImmData == nullptr) {
@@ -776,25 +806,9 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
     auto neoDevice = module->getDevice()->getNEODevice();
-    if (kernelAttributes.perHwThreadPrivateMemorySize != 0) {
-        auto privateSurfaceSize = NEO::KernelHelper::getPrivateSurfaceSize(kernelAttributes.perHwThreadPrivateMemorySize,
-                                                                           neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
-
-        UNRECOVERABLE_IF(privateSurfaceSize == 0);
-        this->privateMemoryGraphicsAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-            {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, neoDevice->getDeviceBitfield()});
-
-        UNRECOVERABLE_IF(this->privateMemoryGraphicsAllocation == nullptr);
-
-        ArrayRef<uint8_t> crossThredDataArrayRef = ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize);
-        ArrayRef<uint8_t> surfaceStateHeapArrayRef = ArrayRef<uint8_t>(this->surfaceStateHeapData.get(), this->surfaceStateHeapDataSize);
-
-        patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
-                                 static_cast<uintptr_t>(privateMemoryGraphicsAllocation->getGpuAddressToPatch()),
-                                 *privateMemoryGraphicsAllocation, kernelImmData->getDescriptor().payloadMappings.implicitArgs.privateMemoryAddress,
-                                 *neoDevice, kernelAttributes.flags.useGlobalAtomics);
-
-        this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation);
+    if ((kernelAttributes.perHwThreadPrivateMemorySize != 0U) && (false == module->shouldAllocatePrivateMemoryPerDispatch())) {
+        this->privateMemoryGraphicsAllocation = allocatePrivateMemoryGraphicsAllocation();
+        this->patchCrossthreadDataWithPrivateAllocation(this->privateMemoryGraphicsAllocation);
     }
 
     this->createPrintfBuffer();

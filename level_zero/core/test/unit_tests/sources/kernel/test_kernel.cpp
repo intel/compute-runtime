@@ -571,6 +571,41 @@ HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCo
     EXPECT_EQ(sizeContainerWithoutPrivateMemory + 1u, sizeContainerWithPrivateMemory);
 }
 
+HWTEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMemoryThenPrivateMemoryIsNotAllocated) {
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(
+        testFile.c_str(),
+        size);
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    uint32_t perHwThreadPrivateMemorySizeRequested = std::numeric_limits<uint32_t>::max();
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+    std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
+                                                                      moduleBuildLog,
+                                                                      ModuleType::User,
+                                                                      perHwThreadPrivateMemorySizeRequested,
+                                                                      mockKernelImmData.get());
+    bool result = module->initialize(&moduleDesc, device->getNEODevice());
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(module->shouldAllocatePrivateMemoryPerDispatch());
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    createKernel(kernel.get());
+    EXPECT_EQ(nullptr, kernel->getPrivateMemoryGraphicsAllocation());
+}
+
 class KernelDescriptorRTCallsTrue : public NEO::KernelDescriptor {
     bool hasRTCalls() const override {
         return true;
