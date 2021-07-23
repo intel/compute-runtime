@@ -27,7 +27,7 @@ namespace ult {
 
 using CommandQueueDebugCommandsTest = Test<ActiveDebuggerFixture>;
 
-HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded, IsAtMostGen12lp) {
+HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded, IsAtMostXeHpCore) {
     NEO::MockCompilerEnableGuard mock(true);
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
@@ -74,7 +74,7 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedTwiceThenKernelDebugCommandsAreAddedOnlyOnce, IsAtMostGen12lp) {
+HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedTwiceThenKernelDebugCommandsAreAddedOnlyOnce, IsAtMostXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
