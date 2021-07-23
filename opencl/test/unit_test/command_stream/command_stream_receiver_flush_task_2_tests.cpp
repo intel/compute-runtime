@@ -32,7 +32,7 @@
 
 using namespace NEO;
 
-typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskTests;
+using CommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFlushWhenUnblockedThenDCFlushIsNotAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
@@ -491,7 +491,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
     EXPECT_FALSE(csr.isMadeResident(csr.globalFenceAllocation));
     EXPECT_FALSE(csr.isMadeNonResident(csr.globalFenceAllocation));
 
+    csr.taskCount = 2u;
     flushSmallTask(csr);
+
+    EXPECT_EQ(3u, csr.latestSentTaskCount);
+    EXPECT_EQ(3u, csr.latestFlushedTaskCount);
 
     EXPECT_TRUE(csr.isMadeResident(csr.globalFenceAllocation));
     EXPECT_TRUE(csr.isMadeNonResident(csr.globalFenceAllocation));

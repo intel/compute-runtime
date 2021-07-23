@@ -789,7 +789,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBuffer
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
-                   givenWaitUserFenceFlagAndVmBindAvailableSetWhenDrmCsrFlushedThenExpectTaskCountStoredAsFlushStamp) {
+                   givenWaitUserFenceFlagAndVmBindAvailableSetWhenDrmCsrFlushedThenExpectLatestSentTaskCountStoredAsFlushStamp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
 
@@ -811,7 +811,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
-    testedCsr->taskCount = 160u;
+    testedCsr->latestSentTaskCount = 160u;
     testedCsr->flush(batchBuffer, testedCsr->getResidencyAllocations());
 
     EXPECT_EQ(160u, testedCsr->flushStamp->peekStamp());
@@ -841,7 +841,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 
     DrmAllocation *alloc = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
     auto boHandle = static_cast<FlushStamp>(alloc->getBO()->peekHandle());
-    testedCsr->taskCount = 160u;
+    testedCsr->latestSentTaskCount = 160u;
 
     testedCsr->flush(batchBuffer, testedCsr->getResidencyAllocations());
 
@@ -875,7 +875,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 
     DrmAllocation *alloc = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
     auto boHandle = static_cast<FlushStamp>(alloc->getBO()->peekHandle());
-    testedCsr->taskCount = 160u;
+    testedCsr->latestSentTaskCount = 160u;
 
     testedCsr->flush(batchBuffer, testedCsr->getResidencyAllocations());
 
