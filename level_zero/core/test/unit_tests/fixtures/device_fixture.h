@@ -73,8 +73,8 @@ struct ContextFixture : DeviceFixture {
 };
 
 struct MultipleDevicesWithCustomHwInfo {
-    virtual void SetUp();
-    virtual void TearDown() {}
+    void SetUp();
+    void TearDown() {}
     NEO::HardwareInfo hwInfo;
     const uint32_t numSubslicesPerSlice = 4;
     const uint32_t numEuPerSubslice = 8;
