@@ -17,10 +17,10 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
+#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/test/unit_test/gen_common/matchers.h"
 #include "test.h"
 
 #include "hw_cmds.h"

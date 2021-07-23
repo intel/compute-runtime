@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/test_macros/matchers.h"
 
 #include "test.h"
 
@@ -1524,6 +1525,24 @@ TEST(DebuggerL0, givenAllSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrec
 
     printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
     EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+}
+
+TEST(DebuggerL0, givenSingleThreadsWhenGettingBitmaskThenCorrectBitsAreSet) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t size = 0;
+
+    std::vector<ze_device_thread_t> threads;
+    threads.push_back({0, 0, 0, 3});
+    threads.push_back({0, 0, 1, 0});
+
+    DebuggerL0::getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+
+    auto data = bitmask.get();
+    EXPECT_EQ(1u << 3, data[0]);
+    EXPECT_EQ(1u, data[1]);
+
+    EXPECT_THAT(&data[2], MemoryZeroed(size - 2));
 }
 
 TEST(DebuggerL0, givenBitmaskWithAttentionBitsForSingleThreadWhenGettingThreadsThenSingleCorrectThreadReturned) {
