@@ -1199,6 +1199,8 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
 
     this->flushSmallTask(commandStream, commandStreamStart);
 
+    this->latestFlushedTaskCount = taskCount + 1;
+    this->latestSentTaskCount = taskCount + 1;
     taskCount++;
 }
 
@@ -1288,9 +1290,6 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
     if (globalFenceAllocation) {
         makeResident(*globalFenceAllocation);
     }
-
-    this->latestFlushedTaskCount = taskCount + 1;
-    this->latestSentTaskCount = taskCount + 1;
 
     BatchBuffer batchBuffer{commandStreamTask.getGraphicsAllocation(), commandStreamStartTask, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
                             commandStreamTask.getUsed(), &commandStreamTask, endingCmdPtr, false};

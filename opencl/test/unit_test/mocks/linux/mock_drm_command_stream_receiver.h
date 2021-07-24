@@ -21,7 +21,6 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::flushStamp;
     using CommandStreamReceiver::getTagAddress;
     using CommandStreamReceiver::globalFenceAllocation;
-    using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::makeResident;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;

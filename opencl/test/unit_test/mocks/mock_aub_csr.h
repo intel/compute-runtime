@@ -78,6 +78,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         return this->tagAllocation;
     }
 
+    void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
+        this->latestSentTaskCount = latestSentTaskCount;
+    }
+
     bool flushBatchedSubmissions() override {
         flushBatchedSubmissionsCalled = true;
         return true;
