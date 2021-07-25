@@ -1187,7 +1187,7 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
 }
 
 TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListForEveryEnigneThenItHasImmediateCommandQueueCreated) {
-    auto engines = neoDevice->getEngineGroups();
+    auto &engines = neoDevice->getEngineGroups();
     uint32_t numaAvailableEngineGroups = 0;
     for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
         if (engines[ordinal].size()) {

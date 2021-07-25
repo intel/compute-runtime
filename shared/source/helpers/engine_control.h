@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,6 @@ struct EngineControl {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     OsContext *osContext = nullptr;
 
-    aub_stream::EngineType &getEngineType() { return osContext->getEngineType(); }
+    aub_stream::EngineType &getEngineType() const { return osContext->getEngineType(); }
 };
 } // namespace NEO

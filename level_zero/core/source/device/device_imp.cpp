@@ -139,14 +139,10 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
     NEO::Device *activeDevice = getActiveDevice();
-    auto engines = activeDevice->getEngineGroups();
-
-    uint32_t numEngineGroups = 0;
-    for (uint32_t i = 0; i < engines.size(); i++) {
-        if (engines[i].size() > 0) {
-            numEngineGroups++;
-        }
-    }
+    auto &engineGroups = activeDevice->getEngineGroups();
+    auto numEngineGroups = static_cast<uint32_t>(std::count_if(std::begin(engineGroups), std::end(engineGroups), [](const auto &engines) {
+        return !engines.empty();
+    }));
 
     if (*pCount == 0) {
         *pCount = numEngineGroups;
@@ -158,7 +154,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
          i < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups) && engineGroupCount < *pCount;
          i++) {
 
-        if (engines[i].empty()) {
+        if (engineGroups[i].empty()) {
             continue;
         }
         const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
@@ -182,7 +178,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
         }
         auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
         l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[engineGroupCount], i);
-        pCommandQueueGroupProperties[engineGroupCount].numQueues = static_cast<uint32_t>(engines[i].size());
+        pCommandQueueGroupProperties[engineGroupCount].numQueues = static_cast<uint32_t>(engineGroups[i].size());
         engineGroupCount++;
     }
 
@@ -916,7 +912,7 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
 
 ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
     NEO::Device *activeDevice = getActiveDevice();
-    auto engines = activeDevice->getEngineGroups();
+    const auto &engines = activeDevice->getEngineGroups();
     uint32_t numNonEmptyGroups = 0;
     uint32_t i = 0;
     for (; i < engines.size() && numNonEmptyGroups <= *ordinal; i++) {

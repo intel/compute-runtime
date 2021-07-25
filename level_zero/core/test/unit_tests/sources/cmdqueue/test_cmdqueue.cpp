@@ -887,7 +887,7 @@ TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCa
 
 HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreatingCommandQueueThenCommandQueueIsCreated) {
     ze_command_queue_handle_t commandQueue = {};
-    auto engines = neoDevice->getEngineGroups();
+    auto &engines = neoDevice->getEngineGroups();
     uint32_t numaAvailableEngineGroups = 0;
     for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
         if (engines[ordinal].size()) {
@@ -912,7 +912,7 @@ HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreating
 
 HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBigerThanAvailableEnginesWhenCreatingCommandQueueThenInvalidArgReturned) {
     ze_command_queue_handle_t commandQueue = {};
-    auto engines = neoDevice->getEngineGroups();
+    auto &engines = neoDevice->getEngineGroups();
     uint32_t numaAvailableEngineGroups = 0;
     for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
         if (engines[ordinal].size()) {
