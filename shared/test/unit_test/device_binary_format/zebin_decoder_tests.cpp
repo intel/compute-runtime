@@ -940,6 +940,14 @@ kernels:
         simd_size : 32
         slm_size : 1024
         subgroup_independent_forward_progress : true
+        required_work_group_size:
+          - 8
+          - 2
+          - 1
+        work_group_walk_order_dimensions:
+          - 0
+          - 1
+          - 2 
 ...
 )===";
 
@@ -973,6 +981,12 @@ kernels:
     EXPECT_EQ(32, execEnv.simdSize);
     EXPECT_EQ(1024, execEnv.slmSize);
     EXPECT_TRUE(execEnv.subgroupIndependentForwardProgress);
+    EXPECT_EQ(8, execEnv.requiredWorkGroupSize[0]);
+    EXPECT_EQ(2, execEnv.requiredWorkGroupSize[1]);
+    EXPECT_EQ(1, execEnv.requiredWorkGroupSize[2]);
+    EXPECT_EQ(0, execEnv.workgroupWalkOrderDimensions[0]);
+    EXPECT_EQ(1, execEnv.workgroupWalkOrderDimensions[1]);
+    EXPECT_EQ(2, execEnv.workgroupWalkOrderDimensions[2]);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenUnknownEntryThenEmmitsWarning) {
@@ -1023,6 +1037,32 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read actual_kernel_start_offset from : [true] in context of : some_kernel\n", errors.c_str());
+}
+
+TEST(ReadZeInfoExecutionEnvironment, GivenInvalidLengthForKnownCollectionEntryThenFails) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    execution_env: 
+        required_work_group_size:
+          - 5
+          - 2
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &execEnvNode = *parser.findNodeWithKeyDfs("execution_env");
+    std::string errors;
+    std::string warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv;
+    auto err = NEO::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : wrong size of collection required_work_group_size in context of : some_kernel. Got : 2 expected : 3\n", errors.c_str());
 }
 
 TEST(ReadEnumCheckedArgType, GivenValidStringRepresentationThenParseItCorrectly) {
@@ -3216,6 +3256,14 @@ kernels:
         simd_size : 32
         slm_size : 1024
         subgroup_independent_forward_progress : true
+        required_work_group_size:
+          - 8
+          - 2
+          - 1
+        work_group_walk_order_dimensions:
+          - 0
+          - 1
+          - 2 
 )===";
     NEO::ProgramInfo programInfo;
     ZebinTestData::ValidEmptyProgram zebin;
@@ -3255,6 +3303,12 @@ kernels:
     EXPECT_EQ(32U, kernelDescriptor.kernelAttributes.simdSize);
     EXPECT_EQ(1024U, kernelDescriptor.kernelAttributes.slmInlineSize);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress);
+    EXPECT_EQ(8U, kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
+    EXPECT_EQ(2U, kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
+    EXPECT_EQ(1U, kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
+    EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.workgroupWalkOrder[0]);
+    EXPECT_EQ(1U, kernelDescriptor.kernelAttributes.workgroupWalkOrder[1]);
+    EXPECT_EQ(2U, kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]);
 }
 
 TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenOffsetIsNonZeroThenFail) {
