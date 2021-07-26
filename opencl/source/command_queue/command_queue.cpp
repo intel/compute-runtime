@@ -767,17 +767,16 @@ bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOp
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) {
     const auto &hwInfo = device->getHardwareInfo();
     const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto blitEnqueuImageAllowed = hwHelper.isBlitterForImagesSupported(hwInfo);
+    auto blitEnqueueImageAllowed = hwHelper.isBlitterForImagesSupported(hwInfo);
 
     if (DebugManager.flags.EnableBlitterForReadWriteImage.get() != -1) {
-        blitEnqueuImageAllowed = DebugManager.flags.EnableBlitterForReadWriteImage.get();
+        blitEnqueueImageAllowed = DebugManager.flags.EnableBlitterForReadWriteImage.get();
     }
 
-    blitEnqueuImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
-    blitEnqueuImageAllowed &= !isMipMapped(image.getImageDesc());
-    blitEnqueuImageAllowed &= !(image.getImageFormat().image_channel_data_type == CL_HALF_FLOAT);
+    blitEnqueueImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
+    blitEnqueueImageAllowed &= !isMipMapped(image.getImageDesc());
 
-    return blitEnqueuImageAllowed;
+    return blitEnqueueImageAllowed;
 }
 
 bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue) const {
