@@ -47,6 +47,8 @@ struct DebugSession : _zet_debug_session_handle_t {
     DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device){};
     virtual void startAsyncThread() = 0;
 
+    virtual bool isBindlessSystemRoutine() = 0;
+
     Device *connectedDevice = nullptr;
 };
 
@@ -59,6 +61,7 @@ struct RootDebugSession : DebugSession {
 
     virtual bool readModuleDebugArea() = 0;
     std::vector<ze_device_thread_t> getSingleThreads(ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo);
+    bool isBindlessSystemRoutine() override;
 
     DebugAreaHeader debugArea;
 

@@ -24,7 +24,9 @@ class OsInterfaceWithDebugAttach : public NEO::OSInterface {
 };
 
 struct DebugSessionMock : public L0::RootDebugSession {
+    using L0::RootDebugSession::debugArea;
     using L0::RootDebugSession::getSingleThreads;
+    using L0::RootDebugSession::isBindlessSystemRoutine;
 
     DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : RootDebugSession(config, device), config(config){};
     bool closeConnection() override { return true; }

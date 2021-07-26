@@ -96,4 +96,11 @@ std::vector<ze_device_thread_t> RootDebugSession::getSingleThreads(ze_device_thr
     return threads;
 }
 
+bool RootDebugSession::isBindlessSystemRoutine() {
+    if (debugArea.reserved1 &= 1) {
+        return true;
+    }
+    return false;
+}
+
 } // namespace L0

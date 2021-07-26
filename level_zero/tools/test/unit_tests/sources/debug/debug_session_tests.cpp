@@ -137,5 +137,33 @@ TEST(RootDebugSession, givenAllSlicesWhenGettingSingleThreadsThenCorrectThreadsA
     }
 }
 
+TEST(RootDebugSession, givenBindlessSystemRoutineWhenQueryingIsBindlessThenTrueReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
+
+    debugSession->debugArea.reserved1 = 1u;
+
+    EXPECT_TRUE(debugSession->isBindlessSystemRoutine());
+}
+
+TEST(RootDebugSession, givenBindfulSystemRoutineWhenQueryingIsBindlessThenFalseReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
+
+    debugSession->debugArea.reserved1 = 0u;
+
+    EXPECT_FALSE(debugSession->isBindlessSystemRoutine());
+}
+
 } // namespace ult
 } // namespace L0

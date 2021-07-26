@@ -1298,6 +1298,46 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreate
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
+HWTEST_F(L0DebuggerTest, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.UseBindlessDebugSip.set(1);
+
+    auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                         Vec3<size_t> size) -> NEO::BlitOperationResult {
+        memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
+        return BlitOperationResult::Success;
+    };
+    VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
+        &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
+
+    memoryOperationsHandler->makeResidentCalledCount = 0;
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    auto debugArea = debugger->getModuleDebugArea();
+
+    DebugAreaHeader *header = reinterpret_cast<DebugAreaHeader *>(debugArea->getUnderlyingBuffer());
+    EXPECT_EQ(1u, header->reserved1);
+}
+
+HWTEST_F(L0DebuggerTest, givenBindfulSipWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsNotSet) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.UseBindlessDebugSip.set(0);
+
+    auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                         Vec3<size_t> size) -> NEO::BlitOperationResult {
+        memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
+        return BlitOperationResult::Success;
+    };
+    VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
+        &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
+
+    memoryOperationsHandler->makeResidentCalledCount = 0;
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    auto debugArea = debugger->getModuleDebugArea();
+
+    DebugAreaHeader *header = reinterpret_cast<DebugAreaHeader *>(debugArea->getUnderlyingBuffer());
+    EXPECT_EQ(0u, header->reserved1);
+}
+
 TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverableIsCalled) {
     class MockDebugger : public NEO::Debugger {
       public:
