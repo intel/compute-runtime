@@ -962,29 +962,25 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
 }
 HWTEST_F(BcsTests, givenCommandTypeWhenObtainBlitDirectionIsCalledThenReturnCorrectBlitDirection) {
 
-    std::array<std::pair<uint32_t, BlitterConstants::BlitDirection>, 9> testParams{
-        std::make_pair(CL_COMMAND_WRITE_BUFFER, BlitterConstants::BlitDirection::HostPtrToBuffer),
-        std::make_pair(CL_COMMAND_WRITE_BUFFER_RECT, BlitterConstants::BlitDirection::HostPtrToBuffer),
-        std::make_pair(CL_COMMAND_READ_BUFFER, BlitterConstants::BlitDirection::BufferToHostPtr),
-        std::make_pair(CL_COMMAND_READ_BUFFER_RECT, BlitterConstants::BlitDirection::BufferToHostPtr),
-        std::make_pair(CL_COMMAND_COPY_BUFFER_RECT, BlitterConstants::BlitDirection::BufferToBuffer),
-        std::make_pair(CL_COMMAND_SVM_MEMCPY, BlitterConstants::BlitDirection::BufferToBuffer),
-        std::make_pair(CL_COMMAND_WRITE_IMAGE, BlitterConstants::BlitDirection::HostPtrToImage),
-        std::make_pair(CL_COMMAND_READ_IMAGE, BlitterConstants::BlitDirection::ImageToHostPtr),
-        std::make_pair(CL_COMMAND_COPY_BUFFER, BlitterConstants::BlitDirection::BufferToBuffer)};
+    std::array<std::pair<uint32_t, BlitterConstants::BlitDirection>, 10> testParams = {{{CL_COMMAND_WRITE_BUFFER, BlitterConstants::BlitDirection::HostPtrToBuffer},
+                                                                                        {CL_COMMAND_WRITE_BUFFER_RECT, BlitterConstants::BlitDirection::HostPtrToBuffer},
+                                                                                        {CL_COMMAND_READ_BUFFER, BlitterConstants::BlitDirection::BufferToHostPtr},
+                                                                                        {CL_COMMAND_READ_BUFFER_RECT, BlitterConstants::BlitDirection::BufferToHostPtr},
+                                                                                        {CL_COMMAND_COPY_BUFFER_RECT, BlitterConstants::BlitDirection::BufferToBuffer},
+                                                                                        {CL_COMMAND_SVM_MEMCPY, BlitterConstants::BlitDirection::BufferToBuffer},
+                                                                                        {CL_COMMAND_WRITE_IMAGE, BlitterConstants::BlitDirection::HostPtrToImage},
+                                                                                        {CL_COMMAND_READ_IMAGE, BlitterConstants::BlitDirection::ImageToHostPtr},
+                                                                                        {CL_COMMAND_COPY_BUFFER, BlitterConstants::BlitDirection::BufferToBuffer},
+                                                                                        {CL_COMMAND_COPY_IMAGE, BlitterConstants::BlitDirection::ImageToImage}}};
 
-    for (const auto &params : testParams) {
-        uint32_t commandType;
-        BlitterConstants::BlitDirection expectedBlitDirection;
-        std::tie(commandType, expectedBlitDirection) = params;
-
+    for (const auto &[commandType, expectedBlitDirection] : testParams) {
         auto blitDirection = ClBlitProperties::obtainBlitDirection(commandType);
         EXPECT_EQ(expectedBlitDirection, blitDirection);
     }
 }
 
 HWTEST_F(BcsTests, givenWrongCommandTypeWhenObtainBlitDirectionIsCalledThenExpectThrow) {
-    uint32_t wrongCommandType = CL_COMMAND_COPY_IMAGE;
+    uint32_t wrongCommandType = CL_COMMAND_NDRANGE_KERNEL;
     EXPECT_THROW(ClBlitProperties::obtainBlitDirection(wrongCommandType), std::exception);
 }
 

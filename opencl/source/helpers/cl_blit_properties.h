@@ -22,8 +22,10 @@ struct ClBlitProperties {
 
         auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
         auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
+        BlitProperties blitProperties{};
 
-        if (BlitterConstants::BlitDirection::BufferToBuffer == blitDirection) {
+        if (BlitterConstants::BlitDirection::BufferToBuffer == blitDirection ||
+            BlitterConstants::BlitDirection::ImageToImage == blitDirection) {
             auto dstOffset = builtinOpParams.dstOffset.x;
             auto srcOffset = builtinOpParams.srcOffset.x;
             GraphicsAllocation *dstAllocation = nullptr;
@@ -41,16 +43,21 @@ struct ClBlitProperties {
                 srcOffset += ptrDiff(builtinOpParams.srcPtr, srcAllocation->getGpuAddress());
             }
 
-            return BlitProperties::constructPropertiesForCopyBuffer(dstAllocation,
-                                                                    srcAllocation,
-                                                                    {dstOffset, builtinOpParams.dstOffset.y, builtinOpParams.dstOffset.z},
-                                                                    {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
-                                                                    builtinOpParams.size,
-                                                                    builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
-                                                                    builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
+            blitProperties = BlitProperties::constructPropertiesForCopyBuffer(dstAllocation,
+                                                                              srcAllocation,
+                                                                              {dstOffset, builtinOpParams.dstOffset.y, builtinOpParams.dstOffset.z},
+                                                                              {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
+                                                                              builtinOpParams.size,
+                                                                              builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
+                                                                              builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
+
+            if (BlitterConstants::BlitDirection::ImageToImage == blitDirection) {
+                blitProperties.blitDirection = blitDirection;
+                setBlitPropertiesForImage(blitProperties, builtinOpParams);
+            }
+            return blitProperties;
         }
 
-        BlitProperties blitProperties{};
         GraphicsAllocation *gpuAllocation = nullptr;
         Vec3<size_t> copyOffset = 0;
 
@@ -154,6 +161,8 @@ struct ClBlitProperties {
             return BlitterConstants::BlitDirection::HostPtrToImage;
         case CL_COMMAND_READ_IMAGE:
             return BlitterConstants::BlitDirection::ImageToHostPtr;
+        case CL_COMMAND_COPY_IMAGE:
+            return BlitterConstants::BlitDirection::ImageToImage;
         default:
             UNRECOVERABLE_IF(true);
         }
@@ -187,10 +196,14 @@ struct ClBlitProperties {
         size_t srcSlicePitch = builtinOpParams.srcSlicePitch;
         size_t dstSlicePitch = builtinOpParams.dstSlicePitch;
 
-        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
+        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr ||
+            blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToImage) {
             adjustBlitPropertiesForImage(builtinOpParams.srcMemObj, blitProperties.srcSize, blitProperties.bytesPerPixel,
                                          blitProperties.srcGpuAddress, srcRowPitch, srcSlicePitch);
-        } else {
+        }
+
+        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
+            blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToImage) {
             adjustBlitPropertiesForImage(builtinOpParams.dstMemObj, blitProperties.dstSize, blitProperties.bytesPerPixel,
                                          blitProperties.dstGpuAddress, dstRowPitch, dstSlicePitch);
         }

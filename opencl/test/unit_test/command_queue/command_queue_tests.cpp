@@ -1187,7 +1187,8 @@ TEST(CommandQueue, givenClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectV
     EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY));
     EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE));
     EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
-    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
+    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE_TO_BUFFER));
 }
 
 TEST(CommandQueue, givenRegularClCommandWhenCallingBlitEnqueuePreferredThenReturnCorrectValue) {

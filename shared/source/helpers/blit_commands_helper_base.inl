@@ -339,14 +339,14 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     if (blitProperties.blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
-        blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
+        blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr ||
+        blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToImage) {
         dispatchBlitCommandsRegion(blitProperties, linearStream, rootDeviceEnvironment);
-        return;
+    } else {
+        bool preferCopyBufferRegion = isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment);
+        preferCopyBufferRegion ? dispatchBlitCommandsForBufferRegion(blitProperties, linearStream, rootDeviceEnvironment)
+                               : dispatchBlitCommandsForBufferPerRow(blitProperties, linearStream, rootDeviceEnvironment);
     }
-
-    bool preferCopyBufferRegion = isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment);
-    preferCopyBufferRegion ? dispatchBlitCommandsForBufferRegion(blitProperties, linearStream, rootDeviceEnvironment)
-                           : dispatchBlitCommandsForBufferPerRow(blitProperties, linearStream, rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>

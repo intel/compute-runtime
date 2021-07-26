@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -206,6 +207,60 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenNumberOfPipelineSelectsIsOne)
     enqueueCopyImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
+}
+
+HWTEST_F(EnqueueCopyImageTest, givenDeviceWithBlitterSupportWhenEnqueueCopyImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverrideInvalidEngineWithDefault.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
+
+    auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    size_t srcOrigin[] = {0, 0, 0};
+    size_t dstOrigin[] = {0, 0, 0};
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(context));
+    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(context));
+
+    {
+        size_t region[] = {BlitterConstants::maxBlitWidth + 1, BlitterConstants::maxBlitHeight, 1};
+        EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
+        EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
+        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
+    }
+    {
+        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
+        size_t dstOrigin[] = {10, 10, 10};
+        EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
+        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
+    }
+    {
+        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
+        EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
+        EXPECT_TRUE(mockCmdQ->isBlitEnqueueImageAllowed);
+    }
+    {
+        DebugManager.flags.EnableBlitterForReadWriteImage.set(-1);
+        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
+        EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
+        auto supportExpected = hwHelper.isBlitterForImagesSupported(*hwInfo);
+        EXPECT_EQ(supportExpected, mockCmdQ->isBlitEnqueueImageAllowed);
+    }
+    {
+        DebugManager.flags.EnableBlitterForReadWriteImage.set(0);
+        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
+        EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
+        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
+    }
+    {
+        DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
+        EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
+        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
+    }
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaVfeStateIsSetCorrectly) {

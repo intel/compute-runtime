@@ -1643,6 +1643,37 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     EXPECT_EQ(blitProperties.dstGpuAddress, bltCmd->getDestinationBaseAddress());
 }
 
+HWTEST_F(BcsTests, givenImageToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrectlyProgrammed) {
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
+        GTEST_SKIP();
+    }
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.image_width = 10u;
+    imgDesc.image_height = 12u;
+    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(context.get(), &imgDesc));
+
+    BuiltinOpParams builtinOpParams{};
+    builtinOpParams.srcMemObj = srcImage.get();
+    builtinOpParams.dstMemObj = dstImage.get();
+    builtinOpParams.size = {2, 3, 1};
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToImage,
+                                                                csr,
+                                                                builtinOpParams);
+    blitBuffer(&csr, blitProperties, true, *pDevice);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
+    auto cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
+    auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
+
+    EXPECT_EQ(blitProperties.srcGpuAddress, bltCmd->getSourceBaseAddress());
+    EXPECT_EQ(blitProperties.dstGpuAddress, bltCmd->getDestinationBaseAddress());
+}
+
 HWTEST_F(BcsTests, givenBlitBufferCalledWhenClearColorAllocationIseSetThenItIsMadeResident) {
     MockGraphicsAllocation graphicsAllocation1;
     MockGraphicsAllocation graphicsAllocation2;

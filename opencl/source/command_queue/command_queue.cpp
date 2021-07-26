@@ -733,6 +733,7 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
     case CL_COMMAND_SVM_MEMCPY:
     case CL_COMMAND_READ_IMAGE:
     case CL_COMMAND_WRITE_IMAGE:
+    case CL_COMMAND_COPY_IMAGE:
         return blitterSupported && blitEnqueueAllowed;
     default:
         return false;
