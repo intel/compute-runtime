@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/xe_hp_core/hw_cmds_base.h"
 namespace NEO {
-struct XEHP : public XeHpFamily {
+struct XE_HP_SDV : public XeHpFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;
@@ -24,7 +24,7 @@ struct XEHP : public XeHpFamily {
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
 };
 
-class XEHP_CONFIG : public XEHP {
+class XE_HP_SDV_CONFIG : public XE_HP_SDV {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static void setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile);

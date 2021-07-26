@@ -35,7 +35,7 @@ XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
 
-    XEHP_CONFIG::setupHardwareInfo(&hwInfo, false);
+    XE_HP_SDV_CONFIG::setupHardwareInfo(&hwInfo, false);
     EXPECT_FALSE(featureTable.ftrLocalMemory);
     EXPECT_FALSE(featureTable.ftrFlatPhysCCS);
     EXPECT_FALSE(featureTable.ftrLinearCCS);
@@ -50,7 +50,7 @@ XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
 
-    XEHP_CONFIG::setupHardwareInfo(&hwInfo, true);
+    XE_HP_SDV_CONFIG::setupHardwareInfo(&hwInfo, true);
     EXPECT_TRUE(featureTable.ftrLocalMemory);
     EXPECT_TRUE(featureTable.ftrFlatPhysCCS);
     EXPECT_TRUE(featureTable.ftrLinearCCS);
@@ -71,13 +71,13 @@ XEHPTEST_F(XeHPHwInfoTest, givenAlreadyInitializedHwInfoWhenSetupCalledThenDontO
 
     hwInfo.gtSystemInfo.SliceCount = 0;
 
-    XEHP_CONFIG::setupHardwareInfo(&hwInfo, false);
+    XE_HP_SDV_CONFIG::setupHardwareInfo(&hwInfo, false);
 
     EXPECT_NE(0u, hwInfo.gtSystemInfo.SliceCount);
 
     auto expectedValue = ++hwInfo.gtSystemInfo.SliceCount;
 
-    XEHP_CONFIG::setupHardwareInfo(&hwInfo, false);
+    XE_HP_SDV_CONFIG::setupHardwareInfo(&hwInfo, false);
 
     EXPECT_EQ(expectedValue, hwInfo.gtSystemInfo.SliceCount);
 }

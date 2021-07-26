@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-#ifdef SUPPORT_XEHP
+#ifdef SUPPORT_XE_HP_SDV
 static EnableGfxProductHw<IGFX_XE_HP_SDV> enableGfxProductHwXEHP;
 #endif
 } // namespace NEO

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(SUPPORT_XEHP)
+if(SUPPORT_XE_HP_SDV)
   set(HW_SOURCES_XE_HP_CORE
       ${HW_SOURCES_XE_HP_CORE}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt

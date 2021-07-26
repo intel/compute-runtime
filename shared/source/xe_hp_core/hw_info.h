@@ -6,6 +6,6 @@
  */
 
 #pragma once
-#ifdef SUPPORT_XEHP
+#ifdef SUPPORT_XE_HP_SDV
 #include "hw_info_xehp.h"
 #endif

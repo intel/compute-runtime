@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(TESTS_XEHP)
+if(TESTS_XE_HP_SDV)
   set(IGDRCL_SRCS_tests_xe_hp_core_xehp
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_tests_xehp.inl
@@ -26,6 +26,6 @@ if(TESTS_XEHP)
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_xe_hp_core_xehp})
   add_subdirectories()
-  neo_copy_test_files_with_revision(copy_test_files_xehp_0 xehp 0)
-  add_dependencies(copy_test_files_per_product copy_test_files_xehp_0)
+  neo_copy_test_files_with_revision(copy_test_files_xe_hp_sdv_0 xe_hp_sdv 0)
+  add_dependencies(copy_test_files_per_product copy_test_files_xe_hp_sdv_0)
 endif()

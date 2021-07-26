@@ -53,7 +53,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, Given32bitApplicationWhenPrepareDeviceE
 
     switch (::productFamily) {
     case IGFX_UNKNOWN:
-#ifdef SUPPORT_XEHP
+#ifdef SUPPORT_XE_HP_SDV
     case IGFX_XE_HP_SDV:
 #endif
         EXPECT_FALSE(returnValue);

@@ -926,7 +926,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
                       IGFX_GEN12LP_CORE,          \
                       IGFX_ALDERLAKE_S)
 #endif
-#ifdef TESTS_XEHP
+#ifdef TESTS_XE_HP_SDV
 #define XEHPTEST_F(test_fixture, test_name)                          \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \

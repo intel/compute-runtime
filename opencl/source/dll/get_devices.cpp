@@ -32,7 +32,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
             }
 
             if (is32bit) {
-#ifdef SUPPORT_XEHP
+#ifdef SUPPORT_XE_HP_SDV
                 if (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eProductFamily == IGFX_XE_HP_SDV) {
                     unsupportedDeviceDetected = true;
                 }

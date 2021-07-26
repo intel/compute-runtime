@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-#ifdef SUPPORT_XEHP
+#ifdef SUPPORT_XE_HP_SDV
 #include "shared/source/xe_hp_core/os_agnostic_hw_info_config_xe_hp_core.inl"
 template <>
 int HwInfoConfigHw<IGFX_XE_HP_SDV>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {

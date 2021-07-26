@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-struct XEHP;
+struct XE_HP_SDV;
 
 template <>
 struct HwMapper<IGFX_XE_HP_SDV> {
@@ -18,6 +18,6 @@ struct HwMapper<IGFX_XE_HP_SDV> {
 
     static const char *abbreviation;
     typedef GfxFamilyMapper<static_cast<GFXCORE_FAMILY>(gfxFamily)>::GfxFamily GfxFamily;
-    typedef XEHP GfxProduct;
+    typedef XE_HP_SDV GfxProduct;
 };
 } // namespace NEO

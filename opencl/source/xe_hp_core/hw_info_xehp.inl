@@ -15,13 +15,13 @@
 
 namespace NEO {
 
-const char *HwMapper<IGFX_XE_HP_SDV>::abbreviation = "xehp";
+const char *HwMapper<IGFX_XE_HP_SDV>::abbreviation = "xe_hp_sdv";
 
 bool isSimulationXEHP(unsigned short deviceId) {
     return false;
 };
 
-const PLATFORM XEHP::platform = {
+const PLATFORM XE_HP_SDV::platform = {
     IGFX_XE_HP_SDV,
     PCH_UNKNOWN,
     IGFX_XE_HP_CORE,
@@ -33,7 +33,7 @@ const PLATFORM XEHP::platform = {
     0,             // usRevId_PCH
     GTTYPE_UNDEFINED};
 
-const RuntimeCapabilityTable XEHP::capabilityTable{
+const RuntimeCapabilityTable XE_HP_SDV::capabilityTable{
     EngineDirectSubmissionInitVec{
         {aub_stream::ENGINE_RCS, {true, true, false, true}},
         {aub_stream::ENGINE_CCS, {true, true, false, true}}}, // directSubmissionEngines
@@ -49,7 +49,7 @@ const RuntimeCapabilityTable XEHP::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::XeHP_SDV,       // aubDeviceId
     0,                                                        // extraQuantityThreadsPerEU
     64,                                                       // slmSize
-    sizeof(XEHP::GRF),                                        // grfSize
+    sizeof(XE_HP_SDV::GRF),                                   // grfSize
     36u,                                                      // timestampValidBits
     32u,                                                      // kernelTimestampValidBits
     false,                                                    // blitterOperationsSupported
@@ -83,10 +83,10 @@ const RuntimeCapabilityTable XEHP::capabilityTable{
     true                                                      // fusedEuEnabled
 };
 
-WorkaroundTable XEHP::workaroundTable = {};
-FeatureTable XEHP::featureTable = {};
+WorkaroundTable XE_HP_SDV::workaroundTable = {};
+FeatureTable XE_HP_SDV::featureTable = {};
 
-void XEHP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+void XE_HP_SDV::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
@@ -124,19 +124,19 @@ void XEHP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->waEnablePreemptionGranularityControlByUMD = true;
 };
 
-const HardwareInfo XEHP_CONFIG::hwInfo = {
-    &XEHP::platform,
-    &XEHP::featureTable,
-    &XEHP::workaroundTable,
-    &XEHP_CONFIG::gtSystemInfo,
-    XEHP::capabilityTable,
+const HardwareInfo XE_HP_SDV_CONFIG::hwInfo = {
+    &XE_HP_SDV::platform,
+    &XE_HP_SDV::featureTable,
+    &XE_HP_SDV::workaroundTable,
+    &XE_HP_SDV_CONFIG::gtSystemInfo,
+    XE_HP_SDV::capabilityTable,
 };
-GT_SYSTEM_INFO XEHP_CONFIG::gtSystemInfo = {0};
-void XEHP_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    XEHP_CONFIG::setupHardwareInfoMultiTile(hwInfo, setupFeatureTableAndWorkaroundTable, false);
+GT_SYSTEM_INFO XE_HP_SDV_CONFIG::gtSystemInfo = {0};
+void XE_HP_SDV_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    XE_HP_SDV_CONFIG::setupHardwareInfoMultiTile(hwInfo, setupFeatureTableAndWorkaroundTable, false);
 }
 
-void XEHP_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile) {
+void XE_HP_SDV_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsL3HashModeEnabled = false;
@@ -153,7 +153,7 @@ void XEHP_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFea
     }
 
     if (setupFeatureTableAndWorkaroundTable) {
-        XEHP::setupFeatureAndWorkaroundTable(hwInfo);
+        XE_HP_SDV::setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
 #include "hw_info_config_xehp.inl"
