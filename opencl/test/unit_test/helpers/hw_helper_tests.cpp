@@ -82,6 +82,11 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTimestampPacketAlignmentThenRet
     EXPECT_EQ(expectedAlignment, helper.getTimestampPacketAllocatorAlignment());
 }
 
+HWTEST_F(HwHelperTest, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned) {
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 512u);
+}
+
 HWTEST_F(HwHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
