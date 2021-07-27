@@ -1736,7 +1736,7 @@ TEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationSupportWhen
 
     DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto globalMemSize = device->getSharedDeviceInfo().globalMemSize;
+    auto globalMemSize = std::min(device->getDevice().getGlobalMemorySize(1u), device->getSharedDeviceInfo().globalMemSize);
     device->getDevice().reduceMaxMemAllocSize();
     auto expectedSize = std::min(globalMemSize / 2, hwCaps.maxMemAllocSize);
     expectedSize = std::max(expectedSize, static_cast<uint64_t>(128llu * MB));

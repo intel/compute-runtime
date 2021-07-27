@@ -169,7 +169,7 @@ void Device::initializeCaps() {
 }
 
 void Device::reduceMaxMemAllocSize() {
-    deviceInfo.maxMemAllocSize = deviceInfo.globalMemSize;
+    deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, getGlobalMemorySize(1u));
 
     if (!deviceInfo.sharedSystemAllocationsSupport) {
         deviceInfo.maxMemAllocSize /= 2;
