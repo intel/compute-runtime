@@ -347,13 +347,27 @@ TEST_F(WddmMemoryManagerTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalle
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledWhenAskedToCreateGrahicsAllocationThenValidAllocationIsReturned) {
+TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndSmallSizeWhenAskedToCreateGrahicsAllocationThenValidAllocationIsReturned) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
     AllocationData allocationData;
     allocationData.size = 4096u;
     allocationData.flags.shareable = true;
     auto allocation = memoryManager->allocateShareableMemory(allocationData);
     EXPECT_NE(nullptr, allocation);
+    EXPECT_FALSE(memoryManager->allocateHugeGraphicsMemoryCalled);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndHugeSizeWhenAskedToCreateGrahicsAllocationThenValidAllocationIsReturned) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    AllocationData allocationData;
+    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
+    allocationData.flags.shareable = true;
+    auto allocation = memoryManager->allocateShareableMemory(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_TRUE(memoryManager->allocateHugeGraphicsMemoryCalled);
     memoryManager->freeGraphicsMemory(allocation);
 }
 

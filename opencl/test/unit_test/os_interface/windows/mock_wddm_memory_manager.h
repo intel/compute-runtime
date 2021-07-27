@@ -73,8 +73,14 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         BaseClass::freeGraphicsMemoryImpl(gfxAllocation);
     }
 
+    GraphicsAllocation *allocateHugeGraphicsMemory(const AllocationData &allocationData, bool sharedVirtualAddress) override {
+        allocateHugeGraphicsMemoryCalled = true;
+        return BaseClass::allocateHugeGraphicsMemory(allocationData, sharedVirtualAddress);
+    }
+
     uint32_t freeGraphicsMemoryImplCalled = 0u;
     bool allocationGraphicsMemory64kbCreated = false;
     bool allocateGraphicsMemoryInNonDevicePool = false;
+    bool allocateHugeGraphicsMemoryCalled = false;
 };
 } // namespace NEO
