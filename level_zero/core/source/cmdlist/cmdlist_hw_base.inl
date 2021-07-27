@@ -34,6 +34,32 @@ size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
+                                                                uint32_t numWaitEvents,
+                                                                ze_event_handle_t *phWaitEvents) {
+
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents);
+    if (ret) {
+        return ret;
+    }
+    appendEventForProfiling(hSignalEvent, true);
+
+    if (!hSignalEvent) {
+        if (isCopyOnly()) {
+            NEO::MiFlushArgs args;
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args);
+        } else {
+            NEO::PipeControlArgs args;
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        }
+    } else {
+        appendSignalEventPostWalker(hSignalEvent);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                                                const ze_group_count_t *pThreadGroupDimensions,
                                                                                ze_event_handle_t hEvent,
