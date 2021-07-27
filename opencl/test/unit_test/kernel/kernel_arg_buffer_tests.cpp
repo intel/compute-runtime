@@ -642,6 +642,47 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     }
 }
 
+TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhenFillWithKernelObjsForAuxTranslationIsCalledThenSetKernelObjectsForAuxTranslation) {
+    if (pContext->getSVMAllocsManager() == nullptr) {
+        return;
+    }
+
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
+                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
+                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                  GraphicsAllocation::AllocationType::SVM_GPU};
+
+    MockGraphicsAllocation gfxAllocation;
+    SvmAllocationData allocData(0);
+    allocData.gpuAllocations.addAllocation(&gfxAllocation);
+    allocData.device = &pClDevice->getDevice();
+
+    for (const auto type : allocationTypes) {
+        gfxAllocation.setAllocationType(type);
+
+        pContext->getSVMAllocsManager()->insertSVMAlloc(allocData);
+
+        KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
+        pKernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+
+        if ((gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
+            (gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::SVM_GPU)) {
+            EXPECT_EQ(1u, kernelObjsForAuxTranslation.size());
+            auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
+            EXPECT_NE(nullptr, kernelObj.object);
+            EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
+            kernelObjsForAuxTranslation.erase(kernelObj);
+        } else {
+            EXPECT_EQ(0u, kernelObjsForAuxTranslation.size());
+        }
+
+        pContext->getSVMAllocsManager()->removeSVMAlloc(allocData);
+    }
+}
+
 class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
   public:
     void SetUp() {

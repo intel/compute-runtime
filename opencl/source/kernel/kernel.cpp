@@ -2481,6 +2481,17 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
                 }
             }
         }
+        if (getContext().getSVMAllocsManager()) {
+            for (auto &allocation : getContext().getSVMAllocsManager()->getSVMAllocs()->allocations) {
+                auto gfxAllocation = allocation.second.gpuAllocations.getDefaultGraphicsAllocation();
+                if (gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+                    kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+                }
+                if (gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::SVM_GPU) {
+                    kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+                }
+            }
+        }
     }
 }
 
