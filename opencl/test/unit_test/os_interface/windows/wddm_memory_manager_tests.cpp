@@ -2284,3 +2284,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsC
         EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
     }
 }
+
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
+    MockWddmMemoryManager memoryManager(true, true, *executionEnvironment);
+    uint32_t rootDeviceIndex = 0u;
+    EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.8);
+}

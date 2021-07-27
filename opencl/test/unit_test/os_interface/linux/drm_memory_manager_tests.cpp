@@ -4516,4 +4516,16 @@ TEST_F(DrmMemoryManagerTest, givenCustomAlignmentWhenWddmMemoryManagerIsCreatedT
     }
 }
 
+TEST_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
+    TestedDrmMemoryManager memoryManager(true, false, false, *executionEnvironment);
+    uint32_t rootDeviceIndex = 0u;
+    EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.95);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    uint32_t rootDeviceIndex = 0u;
+    EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.8);
+}
+
 } // namespace NEO

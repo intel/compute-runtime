@@ -646,6 +646,10 @@ uint64_t WddmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
     return getWddm(rootDeviceIndex).getSystemSharedMemory();
 }
 
+double WddmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
+    return 0.8;
+}
+
 AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
     return &mallocRestrictions;
 }

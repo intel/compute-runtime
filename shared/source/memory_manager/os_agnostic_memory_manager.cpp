@@ -499,6 +499,10 @@ uint64_t OsAgnosticMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, u
     return AubHelper::getMemBankSize(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo());
 }
 
+double OsAgnosticMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
+    return 0.8;
+}
+
 void MemoryAllocation::overrideMemoryPool(MemoryPool::Type pool) {
     if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
         this->memoryPool = MemoryPool::LocalMemory;

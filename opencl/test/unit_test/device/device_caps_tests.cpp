@@ -437,12 +437,13 @@ TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceR
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         const auto &sharedCaps = device->getSharedDeviceInfo();
+        const auto memSizePercent = device->getMemoryManager()->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
         if constexpr (is64bit) {
             EXPECT_TRUE(sharedCaps.force32BitAddressess);
         } else {
             EXPECT_FALSE(sharedCaps.force32BitAddressess);
         }
-        auto expectedSize = (cl_ulong)(4 * 0.8 * GB);
+        auto expectedSize = (cl_ulong)(4 * memSizePercent * GB);
         EXPECT_LE(sharedCaps.globalMemSize, expectedSize);
         EXPECT_LE(sharedCaps.maxMemAllocSize, expectedSize);
         EXPECT_LE(caps.maxConstantBufferSize, expectedSize);
@@ -465,13 +466,14 @@ TEST_F(DeviceGetCapsTest, Given32bitAddressingWhenDeviceIsCreatedThenGlobalMemSi
     auto pMemManager = device->getMemoryManager();
     auto enabledOcl21Features = device->areOcl21FeaturesEnabled();
     bool addressing32Bit = is32bit || (is64bit && (enabledOcl21Features == false)) || DebugManager.flags.Force32bitAddressing.get();
+    const auto memSizePercent = pMemManager->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
 
     cl_ulong sharedMem = (cl_ulong)pMemManager->getSystemSharedMemory(0u);
     cl_ulong maxAppAddrSpace = (cl_ulong)pMemManager->getMaxApplicationAddress() + 1ULL;
     cl_ulong memSize = std::min(sharedMem, maxAppAddrSpace);
-    memSize = (cl_ulong)((double)memSize * 0.8);
+    memSize = (cl_ulong)((double)memSize * memSizePercent);
     if (addressing32Bit) {
-        memSize = std::min(memSize, (uint64_t)(4 * GB * 0.8));
+        memSize = std::min(memSize, (uint64_t)(4 * GB * memSizePercent));
     }
     cl_ulong expectedSize = alignDown(memSize, MemoryConstants::pageSize);
 
@@ -487,13 +489,14 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     auto pMemManager = device->getMemoryManager();
     auto enabledOcl21Features = device->areOcl21FeaturesEnabled();
     bool addressing32Bit = is32bit || (is64bit && (enabledOcl21Features == false)) || DebugManager.flags.Force32bitAddressing.get();
+    const auto memSizePercent = pMemManager->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
 
     auto localMem = pMemManager->getLocalMemorySize(0u, static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
     auto maxAppAddrSpace = pMemManager->getMaxApplicationAddress() + 1;
     auto memSize = std::min(localMem, maxAppAddrSpace);
-    memSize = static_cast<cl_ulong>(memSize * 0.8);
+    memSize = static_cast<cl_ulong>(memSize * memSizePercent);
     if (addressing32Bit) {
-        memSize = std::min(memSize, static_cast<cl_ulong>(4 * GB * 0.8));
+        memSize = std::min(memSize, static_cast<cl_ulong>(4 * GB * memSizePercent));
     }
     cl_ulong expectedSize = alignDown(memSize, MemoryConstants::pageSize);
 
@@ -1370,6 +1373,7 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
             return 0;
         };
         uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override { return 0; };
+        double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override { return 0; }
         AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override {
             return {};
         }

@@ -528,7 +528,7 @@ double Device::getPercentOfGlobalMemoryAvailable() const {
     if (DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get() != -1) {
         return 0.01 * static_cast<double>(DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get());
     }
-    return 0.8;
+    return getMemoryManager()->getPercentOfGlobalMemoryAvailable(this->getRootDeviceIndex());
 }
 
 NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {

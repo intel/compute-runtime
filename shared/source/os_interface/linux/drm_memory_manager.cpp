@@ -799,6 +799,13 @@ uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
     return std::min(hostMemorySize, gpuMemorySize);
 }
 
+double DrmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
+    if (isLocalMemorySupported(rootDeviceIndex)) {
+        return 0.95;
+    }
+    return 0.8;
+}
+
 MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
     BufferObject *allocatedBos[maxFragmentsCount];
     uint32_t numberOfBosAllocated = 0;

@@ -1304,10 +1304,9 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
     AllocationStatus populateOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
     void cleanOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
     void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override{};
-    uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override {
-        return 0;
-    };
+    uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override { return 0; };
     uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override { return 0; };
+    double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override { return 0; }
     AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override {
         return {};
     }
