@@ -12,6 +12,7 @@
 #include "shared/source/device/sub_device.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {
@@ -158,10 +159,23 @@ class MockDevice : public RootDevice {
         return isDebuggerActiveReturn;
     }
 
+    void allocateRTDispatchGlobals(uint32_t maxBvhLevels) override {
+        if (rtDispatchGlobalsForceAllocation == true) {
+            rtDispatchGlobals[maxBvhLevels] = new MockGraphicsAllocation();
+        } else {
+            Device::allocateRTDispatchGlobals(maxBvhLevels);
+        }
+    }
+
+    void setRTDispatchGlobalsForceAllocation() {
+        rtDispatchGlobalsForceAllocation = true;
+    }
+
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool isDebuggerActiveParentCall = true;
     bool isDebuggerActiveReturn = false;
+    bool rtDispatchGlobalsForceAllocation = false;
 };
 
 template <>

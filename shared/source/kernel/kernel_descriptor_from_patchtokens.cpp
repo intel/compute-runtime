@@ -482,7 +482,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessEventPoolSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateSyncBuffer);
-
+    populateKernelDescriptorRtDispatchGlobals(dst, src);
     dst.payloadMappings.explicitArgs.resize(src.tokens.kernelArgs.size());
     dst.explicitArgsExtendedMetadata.resize(src.tokens.kernelArgs.size());
 

@@ -13,6 +13,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/local_work_size.h"
 #include "shared/source/helpers/per_thread_data.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
@@ -902,8 +903,18 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                               kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
 
     if (this->usesRayTracing()) {
-        neoDevice->initializeRayTracing();
+        uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
+        neoDevice->initializeRayTracing(bvhLevels);
+        auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(bvhLevels);
+        if (rtDispatchGlobals == nullptr) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
         this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
+        this->residencyContainer.push_back(rtDispatchGlobals);
+
+        NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
+                          this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals,
+                          static_cast<uintptr_t>(rtDispatchGlobals->getGpuAddressToPatch()));
     }
 
     return ZE_RESULT_SUCCESS;

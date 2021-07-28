@@ -123,7 +123,9 @@ class Device : public ReferenceTrackedObject<Device> {
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     GraphicsAllocation *getRTMemoryBackedBuffer() { return rtMemoryBackedBuffer; }
-    void initializeRayTracing();
+    GraphicsAllocation *getRTDispatchGlobals(uint32_t maxBvhLevels);
+    bool rayTracingIsInitialized() const { return rtMemoryBackedBuffer != nullptr; }
+    void initializeRayTracing(uint32_t maxBvhLevels);
 
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
@@ -159,6 +161,8 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual bool genericSubDevicesAllowed();
     bool engineInstancedSubDevicesAllowed();
     void setAsEngineInstanced();
+    MOCKABLE_VIRTUAL void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
+    void finalizeRayTracing();
 
     DeviceInfo deviceInfo = {};
 
@@ -185,7 +189,7 @@ class Device : public ReferenceTrackedObject<Device> {
     uintptr_t specializedDevice = reinterpret_cast<uintptr_t>(nullptr);
 
     GraphicsAllocation *rtMemoryBackedBuffer = nullptr;
-    GraphicsAllocation *rtDispatchGlobals = nullptr;
+    std::vector<GraphicsAllocation *> rtDispatchGlobals;
 };
 
 inline EngineControl &Device::getDefaultEngine() {

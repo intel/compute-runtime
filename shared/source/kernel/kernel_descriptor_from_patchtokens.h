@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ namespace PatchTokenBinary {
 struct KernelFromPatchtokens;
 }
 
+void populateKernelDescriptorRtDispatchGlobals(KernelDescriptor &dst, const PatchTokenBinary::KernelFromPatchtokens &src);
 void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes);
 
 } // namespace NEO

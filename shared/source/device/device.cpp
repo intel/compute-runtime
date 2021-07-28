@@ -42,6 +42,10 @@ Device::~Device() {
         }
     }
 
+    finalizeRayTracing();
+    getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
+    rtMemoryBackedBuffer = nullptr;
+
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
     getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
     rtMemoryBackedBuffer = nullptr;
@@ -587,10 +591,48 @@ EngineControl *Device::getInternalCopyEngine() {
     return nullptr;
 }
 
-void Device::initializeRayTracing() {
+GraphicsAllocation *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
+    if (rtDispatchGlobals.size() == 0) {
+        return nullptr;
+    }
+
+    size_t last = rtDispatchGlobals.size() - 1;
+    if (maxBvhLevels > last) {
+        return nullptr;
+    }
+
+    for (size_t i = last; i >= maxBvhLevels; i--) {
+        if (rtDispatchGlobals[i] != nullptr) {
+            return rtDispatchGlobals[i];
+        }
+
+        if (i == 0) {
+            break;
+        }
+    }
+
+    allocateRTDispatchGlobals(maxBvhLevels);
+    return rtDispatchGlobals[maxBvhLevels];
+}
+
+void Device::initializeRayTracing(uint32_t maxBvhLevels) {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
         rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, GraphicsAllocation::AllocationType::BUFFER, getDeviceBitfield()});
+    }
+
+    while (rtDispatchGlobals.size() <= maxBvhLevels) {
+        rtDispatchGlobals.push_back(nullptr);
+    }
+}
+
+void Device::finalizeRayTracing() {
+    getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
+    rtMemoryBackedBuffer = nullptr;
+
+    for (size_t i = 0; i < rtDispatchGlobals.size(); i++) {
+        getMemoryManager()->freeGraphicsMemory(rtDispatchGlobals[i]);
+        rtDispatchGlobals[i] = nullptr;
     }
 }
 

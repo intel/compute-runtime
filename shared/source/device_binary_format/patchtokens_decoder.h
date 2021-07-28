@@ -132,6 +132,7 @@ struct KernelFromPatchtokens {
         const SPatchAllocateStatelessEventPoolSurface *allocateStatelessEventPoolSurface = nullptr;
         const SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateStatelessDefaultDeviceQueueSurface = nullptr;
         const SPatchAllocateSyncBuffer *allocateSyncBuffer = nullptr;
+        const void *allocateRTGlobalBuffer = nullptr;
         const SPatchItemHeader *inlineVmeSamplerInfo = nullptr;
         const SPatchGtpinFreeGRFInfo *gtpinFreeGrfInfo = nullptr;
         const SPatchStateSIP *stateSip = nullptr;

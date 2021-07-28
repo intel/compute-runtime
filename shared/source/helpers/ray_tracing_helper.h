@@ -20,6 +20,7 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     static constexpr uint32_t hitInfoSize = 64;
     static constexpr uint32_t bvhStackSize = 96;
     static constexpr uint32_t memoryBackedFifoSizePerDss = 8 * KB;
+    static constexpr uint32_t maxBvhLevels = 8;
 
     static size_t getDispatchGlobalSize(const Device &device, uint32_t maxBvhLevel, uint32_t extraBytesLocal, uint32_t extraBytesGlobal) {
         return static_cast<size_t>(alignUp(getRtGlobalsSize(), MemoryConstants::cacheLineSize) +

@@ -249,6 +249,7 @@ struct KernelDescriptor {
             ArgDescPointer deviceSideEnqueueDefaultQueueSurfaceAddress;
             ArgDescPointer systemThreadSurfaceAddress;
             ArgDescPointer syncBufferAddress;
+            ArgDescPointer rtDispatchGlobals;
             CrossThreadDataOffset privateMemorySize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset maxWorkGroupSize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset simdSize = undefined<CrossThreadDataOffset>;
