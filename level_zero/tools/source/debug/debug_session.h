@@ -43,6 +43,35 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     Device *getConnectedDevice() { return connectedDevice; }
 
+    static bool isThreadAll(ze_device_thread_t thread) {
+        return thread.slice == UINT32_MAX && thread.subslice == UINT32_MAX && thread.eu == UINT32_MAX && thread.thread == UINT32_MAX;
+    }
+
+    static bool isSingleThread(ze_device_thread_t thread) {
+        return thread.slice != UINT32_MAX && thread.subslice != UINT32_MAX && thread.eu != UINT32_MAX && thread.thread != UINT32_MAX;
+    }
+
+    static bool areThreadsEqual(ze_device_thread_t thread, ze_device_thread_t thread2) {
+        return thread.slice == thread2.slice && thread.subslice == thread2.subslice && thread.eu == thread2.eu && thread.thread == thread2.thread;
+    }
+
+    static bool checkSingleThreadWithinDeviceThread(ze_device_thread_t checkedThread, ze_device_thread_t thread) {
+        if (DebugSession::isThreadAll(thread)) {
+            return true;
+        }
+
+        bool threadMatch = (thread.thread == checkedThread.thread) || thread.thread == UINT32_MAX;
+        bool euMatch = (thread.eu == checkedThread.eu) || thread.eu == UINT32_MAX;
+        bool subsliceMatch = (thread.subslice == checkedThread.subslice) || thread.subslice == UINT32_MAX;
+        bool sliceMatch = (thread.slice == checkedThread.slice) || thread.slice == UINT32_MAX;
+
+        return threadMatch && euMatch && subsliceMatch && sliceMatch;
+    }
+
+    virtual ze_device_thread_t convertToPhysical(ze_device_thread_t thread, uint32_t &deviceIndex);
+    virtual EuThread::ThreadId convertToThreadId(ze_device_thread_t thread);
+    virtual ze_device_thread_t convertToApi(EuThread::ThreadId threadId);
+
   protected:
     DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device){};
     virtual void startAsyncThread() = 0;

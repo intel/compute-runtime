@@ -13,6 +13,49 @@
 
 namespace L0 {
 
+ze_device_thread_t DebugSession::convertToPhysical(ze_device_thread_t thread, uint32_t &deviceIndex) {
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
+
+    if (connectedDevice->getNEODevice()->isSubDevice()) {
+        deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+    } else if (thread.slice != UINT32_MAX) {
+        deviceIndex = thread.slice / hwInfo.gtSystemInfo.SliceCount;
+        thread.slice = thread.slice % hwInfo.gtSystemInfo.SliceCount;
+    }
+
+    return thread;
+}
+
+EuThread::ThreadId DebugSession::convertToThreadId(ze_device_thread_t thread) {
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
+
+    UNRECOVERABLE_IF(!DebugSession::isSingleThread(thread));
+
+    uint32_t deviceIndex = 0;
+    if (connectedDevice->getNEODevice()->isSubDevice()) {
+        deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+    } else {
+        deviceIndex = thread.slice / hwInfo.gtSystemInfo.SliceCount;
+        thread.slice = thread.slice % hwInfo.gtSystemInfo.SliceCount;
+    }
+
+    EuThread::ThreadId threadId(deviceIndex, thread.slice, thread.subslice, thread.eu, thread.thread);
+    return threadId;
+}
+
+ze_device_thread_t DebugSession::convertToApi(EuThread::ThreadId threadId) {
+    auto hwInfo = connectedDevice->getHwInfo();
+
+    ze_device_thread_t thread = {static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
+
+    if (!connectedDevice->getNEODevice()->isSubDevice()) {
+        thread.slice = thread.slice + static_cast<uint32_t>(threadId.tileIndex * hwInfo.gtSystemInfo.SliceCount);
+    }
+    return thread;
+}
+
 RootDebugSession::RootDebugSession(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
 
     if (connectedDevice) {
