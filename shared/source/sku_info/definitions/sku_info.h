@@ -15,7 +15,7 @@ namespace NEO {
 using BcsInfoMask = std::bitset<1>;
 
 struct FeatureTable : FeatureTableBase {
-    BcsInfoMask ftrBcsInfo = 0;
+    BcsInfoMask ftrBcsInfo = 1;
 };
 
 struct WorkaroundTable : WorkaroundTableBase {};

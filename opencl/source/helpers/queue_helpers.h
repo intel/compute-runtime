@@ -25,7 +25,16 @@ inline void releaseVirtualEvent(CommandQueue &commandQueue) {
 inline void releaseVirtualEvent(DeviceQueue &commandQueue) {
 }
 
-bool isCommandWithoutKernel(uint32_t commandType);
+inline bool isCommandWithoutKernel(uint32_t commandType) {
+    return ((commandType == CL_COMMAND_BARRIER) ||
+            (commandType == CL_COMMAND_MARKER) ||
+            (commandType == CL_COMMAND_MIGRATE_MEM_OBJECTS) ||
+            (commandType == CL_COMMAND_RESOURCE_BARRIER) ||
+            (commandType == CL_COMMAND_SVM_FREE) ||
+            (commandType == CL_COMMAND_SVM_MAP) ||
+            (commandType == CL_COMMAND_SVM_MIGRATE_MEM) ||
+            (commandType == CL_COMMAND_SVM_UNMAP));
+}
 
 template <typename QueueType>
 void retainQueue(cl_command_queue commandQueue, cl_int &retVal) {
