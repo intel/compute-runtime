@@ -28,6 +28,10 @@ Our closed-source driver for Windows is using the same codebase. At this time,
 we do not support compilation of the stack for Windows. It is our long-term
 intention to offer that option.
 
+### Does NEO support Windows Subsystem for Linux (WSL)?
+
+See [WSL.md](https://github.com/intel/compute-runtime/blob/master/WSL.md).
+
 ### Why is the feature set different in latest Windows driver vs. latest NEO on github?
 
 Our Windows release process takes up to several weeks before drivers are available through intel.com
