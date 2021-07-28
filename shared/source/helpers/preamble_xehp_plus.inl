@@ -23,6 +23,12 @@
 namespace NEO {
 
 template <>
+void PreambleHelper<Family>::appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo);
+
+template <>
+bool PreambleHelper<Family>::isSystolicModeConfigurable(const HardwareInfo &hwInfo);
+
+template <>
 void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
                                                    const PipelineSelectArgs &pipelineSelectArgs,
                                                    const HardwareInfo &hwInfo) {
@@ -45,17 +51,13 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits |
-                pipelineSelectMediaSamplerDopClockGateMaskBits |
-                pipelineSelectSystolicModeEnableMaskBits;
+                pipelineSelectMediaSamplerDopClockGateMaskBits;
 
     cmd.setMaskBits(mask);
     cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
     cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
-    cmd.setSystolicModeEnable(pipelineSelectArgs.specialPipelineSelectMode);
 
-    if (DebugManager.flags.OverrideSystolicPipelineSelect.get() != -1) {
-        cmd.setSystolicModeEnable(DebugManager.flags.OverrideSystolicPipelineSelect.get());
-    }
+    appendProgramPipelineSelect(&cmd, pipelineSelectArgs.specialPipelineSelectMode, hwInfo);
 
     *pCmd = cmd;
 
@@ -65,6 +67,25 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
         auto pipeControlBuffer = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
         *pipeControlBuffer = pipeControl;
     }
+}
+
+template <>
+void PreambleHelper<Family>::appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo) {
+    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
+    auto command = static_cast<PIPELINE_SELECT *>(cmd);
+    auto mask = command->getMaskBits();
+
+    if (PreambleHelper<Family>::isSystolicModeConfigurable(hwInfo)) {
+        command->setSystolicModeEnable(isSpecialModeSelected);
+        mask |= pipelineSelectSystolicModeEnableMaskBits;
+    }
+
+    if (DebugManager.flags.OverrideSystolicPipelineSelect.get() != -1) {
+        command->setSystolicModeEnable(DebugManager.flags.OverrideSystolicPipelineSelect.get());
+        mask |= pipelineSelectSystolicModeEnableMaskBits;
+    }
+
+    command->setMaskBits(mask);
 }
 
 template <>

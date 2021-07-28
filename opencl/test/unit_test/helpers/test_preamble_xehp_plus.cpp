@@ -579,3 +579,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPPlusTests, givenSpecificProdu
 
     EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, rssCmd.getCoherencyType());
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleFixture, whenCallingIsSpecialPipelineSelectModeChangedThenReturnCorrectValue) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    bool oldPipelineSelectSpecialMode = true;
+    bool newPipelineSelectSpecialMode = false;
+
+    auto result = PreambleHelper<FamilyType>::isSpecialPipelineSelectModeChanged(oldPipelineSelectSpecialMode, newPipelineSelectSpecialMode, *defaultHwInfo);
+    EXPECT_TRUE(result);
+}

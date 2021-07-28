@@ -77,4 +77,17 @@ size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
     return sizeof(MEDIA_VFE_STATE) + sizeof(PIPE_CONTROL);
 }
 
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo) {}
+
+template <typename GfxFamily>
+bool PreambleHelper<GfxFamily>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
+    return false;
+}
+
+template <typename GfxFamily>
+bool PreambleHelper<GfxFamily>::isSpecialPipelineSelectModeChanged(bool lastSpecialPipelineSelectMode, bool newSpecialPipelineSelectMode,
+                                                                   const HardwareInfo &hwInfo) {
+    return false;
+}
 } // namespace NEO
