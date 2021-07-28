@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -91,4 +92,27 @@ XEHPTEST_F(XeHPPreambleVfeState, whenProgrammingVfeStateThenDoNotAddPipeControlW
     size_t sizeAfter = cs.getUsed();
 
     EXPECT_EQ(sizeBefore, sizeAfter);
+}
+
+XEHPTEST_F(XeHPPreambleVfeState, WhenProgramVFEStateIsCalledThenCorrectCfeStateAddressIsReturned) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    char buffer[64];
+    MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
+    LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
+    uint64_t addressToPatch = 0xC0DEC0DE;
+    uint64_t expectedAddress = 0xDEC0C0;
+
+    auto pCfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<FamilyType>::programVfeState(pCfeCmd, *defaultHwInfo, 1024u, addressToPatch,
+                                                10u, AdditionalKernelExecInfo::NotApplicable,
+                                                emptyProperties);
+    EXPECT_GE(reinterpret_cast<uintptr_t>(pCfeCmd), reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()));
+    EXPECT_LT(reinterpret_cast<uintptr_t>(pCfeCmd), reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()) + preambleStream.getUsed());
+
+    auto &cfeCmd = *reinterpret_cast<CFE_STATE *>(pCfeCmd);
+    EXPECT_EQ(10u, cfeCmd.getMaximumNumberOfThreads());
+    EXPECT_EQ(1u, cfeCmd.getNumberOfWalkers());
+    EXPECT_EQ(expectedAddress, cfeCmd.getScratchSpaceBuffer());
 }
