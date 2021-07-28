@@ -38,14 +38,21 @@ void StateComputeModeProperties::clearIsDirty() {
 }
 
 void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableOverdispatch, const HardwareInfo &hwInfo) {
+    clearIsDirty();
+
+    this->disableOverdispatch.set(disableOverdispatch ? 1 : 0);
 }
 
 void FrontEndProperties::setProperties(const FrontEndProperties &properties) {
+    clearIsDirty();
+
+    disableOverdispatch.set(properties.disableOverdispatch.value);
 }
 
 bool FrontEndProperties::isDirty() {
-    return false;
+    return disableOverdispatch.isDirty;
 }
 
 void FrontEndProperties::clearIsDirty() {
+    disableOverdispatch.isDirty = false;
 }

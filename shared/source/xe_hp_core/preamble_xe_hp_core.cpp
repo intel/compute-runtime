@@ -19,8 +19,10 @@ namespace NEO {
 template <>
 void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, uint32_t additionalKernelExecInfo, void *cmd) {
     auto command = static_cast<typename Family::CFE_STATE *>(cmd);
-    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
+    command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
+
+    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     if (helper.getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
         command->setComputeOverdispatchDisable(true);
     }
