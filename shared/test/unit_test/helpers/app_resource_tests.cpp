@@ -20,24 +20,15 @@
 
 #include "test.h"
 
-using MockExecutionEnvironmentGmmTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
+using MockExecutionEnvironmentTagTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
 
 using namespace NEO;
 
-struct GmmAppResourceWinTests : public MockExecutionEnvironmentGmmTest {
+struct AppResourceTests : public MockExecutionEnvironmentTagTest {
     void SetUp() override {
         MockExecutionEnvironmentGmmFixture::SetUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         localPlatformDevice = rootDeviceEnvironment->getMutableHardwareInfo();
-    }
-
-    template <typename TGMM_RESCREATE_PARAMS>
-    static auto getResourceTagGMM(TGMM_RESCREATE_PARAMS &src) {
-        if constexpr (AppResourceDefines::has_ResourceTag<std::decay_t<decltype(src)>>) {
-            return &src.ResourceTag;
-        } else {
-            return nullptr;
-        }
     }
 
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
@@ -45,12 +36,12 @@ struct GmmAppResourceWinTests : public MockExecutionEnvironmentGmmTest {
     const DeviceBitfield singleTileMask{static_cast<uint32_t>(1u << 2)};
 };
 
-TEST_F(GmmAppResourceWinTests, givenIncorrectGraphicsAllocationTypeWhenGettingResourceTagThenNOTFOUNDIsReturned) {
+TEST_F(AppResourceTests, givenIncorrectGraphicsAllocationTypeWhenGettingResourceTagThenNOTFOUNDIsReturned) {
     auto tag = AppResourceHelper::getResourceTagStr(static_cast<GraphicsAllocation::AllocationType>(999));
     EXPECT_STREQ(tag, "NOTFOUND");
 }
 
-TEST_F(GmmAppResourceWinTests, givenGraphicsAllocationTypeWhenGettingResourceTagThenForEveryDefinedTypeProperTagExist) {
+TEST_F(AppResourceTests, givenGraphicsAllocationTypeWhenGettingResourceTagThenForEveryDefinedTypeProperTagExist) {
     auto firstTypeIdx = static_cast<int>(GraphicsAllocation::AllocationType::UNKNOWN);
     auto lastTypeIdx = static_cast<int>(GraphicsAllocation::AllocationType::COUNT);
 
@@ -60,30 +51,6 @@ TEST_F(GmmAppResourceWinTests, givenGraphicsAllocationTypeWhenGettingResourceTag
 
         EXPECT_LE(strlen(tag), AppResourceDefines::maxStrLen);
         EXPECT_STRNE(tag, "NOTFOUND");
-    }
-}
-
-TEST_F(GmmAppResourceWinTests, givenStorageInfoCreatedFromPropertiesWhenEnableResourceTagsThenGmmResourceTagIsSet) {
-    if (!AppResourceDefines::resourceTagSupport) {
-        GTEST_SKIP();
-    }
-    DebugManagerStateRestore restorer;
-    MockMemoryManager mockMemoryManager(*executionEnvironment);
-
-    auto firstTypeIdx = static_cast<int>(GraphicsAllocation::AllocationType::UNKNOWN);
-    auto lastTypeIdx = static_cast<int>(GraphicsAllocation::AllocationType::COUNT);
-    DebugManager.flags.EnableResourceTags.set(true);
-
-    for (int typeIdx = firstTypeIdx; typeIdx != lastTypeIdx; typeIdx++) {
-        auto allocationType = static_cast<GraphicsAllocation::AllocationType>(typeIdx);
-
-        AllocationProperties properties{mockRootDeviceIndex, false, 1u, allocationType, false, singleTileMask};
-        auto storageInfo = mockMemoryManager.createStorageInfoFromProperties(properties);
-        auto expectedSize = (AppResourceDefines::maxStrLen + 1) * sizeof(char);
-
-        EXPECT_EQ(expectedSize, sizeof(storageInfo.resourceTag));
-        auto tag = AppResourceHelper::getResourceTagStr(properties.allocationType);
-        EXPECT_STREQ(storageInfo.resourceTag, tag);
     }
 }
 
@@ -143,9 +110,6 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(GraphicsAlloc
 class AllocationTypeTagString : public ::testing::TestWithParam<AllocationTypeTagTestCase> {};
 
 TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageInfoThenCorrectTagIsReturned) {
-    if (!AppResourceDefines::resourceTagSupport) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore restorer;
     StorageInfo storageInfo = {};
     auto input = GetParam();

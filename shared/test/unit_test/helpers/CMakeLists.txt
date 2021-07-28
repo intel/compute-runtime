@@ -6,6 +6,7 @@
 
 set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_math_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers_tests.cpp

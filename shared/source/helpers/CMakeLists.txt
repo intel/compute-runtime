@@ -12,6 +12,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_defines.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation.h
@@ -138,16 +139,6 @@ if(SUPPORT_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_xehp_and_later.inl
-  )
-endif()
-
-if(WIN32)
-  list(APPEND NEO_CORE_HELPERS
-       ${CMAKE_CURRENT_SOURCE_DIR}/windows/app_resource_helper.cpp
-  )
-else()
-  list(APPEND NEO_CORE_HELPERS
-       ${CMAKE_CURRENT_SOURCE_DIR}/linux/app_resource_helper.cpp
   )
 endif()
 

@@ -14,11 +14,9 @@
 namespace NEO {
 
 void AppResourceHelper::copyResourceTagStr(char *dst, GraphicsAllocation::AllocationType type, size_t size) {
-    if constexpr (AppResourceDefines::resourceTagSupport) {
-        if (DebugManager.flags.EnableResourceTags.get()) {
-            auto tag = getResourceTagStr(type);
-            strcpy_s(dst, size, tag);
-        }
+    if (DebugManager.flags.EnableResourceTags.get()) {
+        auto tag = getResourceTagStr(type);
+        strcpy_s(dst, size, tag);
     }
 }
 
