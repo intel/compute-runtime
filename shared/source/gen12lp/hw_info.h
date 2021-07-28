@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,4 +17,7 @@
 #endif
 #ifdef SUPPORT_ADLS
 #include "hw_info_adls.h"
+#endif
+#ifdef SUPPORT_ADLP
+#include "hw_info_adlp.h"
 #endif

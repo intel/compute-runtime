@@ -8,7 +8,7 @@
 #include "shared/source/gen12lp/helpers_gen12lp.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/gen12lp/helpers_gen12lp.inl"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
@@ -44,10 +44,6 @@ uint64_t getPPGTTAdditionalBits(GraphicsAllocation *graphicsAllocation) {
 }
 
 void adjustAubGTTData(const CommandStreamReceiver &commandStreamReceiver, AubGTTData &data) {}
-
-void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
-                                       const PipelineSelectArgs &pipelineSelectArgs,
-                                       const HardwareInfo &hwInfo) {}
 
 bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);

@@ -24,6 +24,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/ocl_elf.h
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices.inl
+    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices_additional.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
@@ -110,10 +111,13 @@ set(RUNTIME_GENX_CPP_FILES
 macro(macro_for_each_platform)
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     foreach(BRANCH ${BRANCH_DIR_LIST})
-      set(SRC_FILE ${NEO_SOURCE_DIR}/opencl/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp)
-      if(EXISTS ${SRC_FILE})
-        list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
-      endif()
+      foreach(SRC_FILE ${NEO_SOURCE_DIR}/opencl/source${BRANCH}${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
+                ${NEO_SOURCE_DIR}/opencl/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
+        )
+        if(EXISTS ${SRC_FILE})
+          list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
+        endif()
+      endforeach()
     endforeach()
   endforeach()
 endmacro()

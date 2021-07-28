@@ -48,7 +48,7 @@ target_link_libraries(igdrcl_${target_name} ${NEO_STATICALLY_LINKED_LIBRARIES_MO
 set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 target_include_directories(igdrcl_${target_name} PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
-                           ${NEO_SOURCE_DIR}/opencl/source/dll/linux/devices${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_DIRECTORY}/dll/linux/devices${BRANCH_DIR_SUFFIX}
                            ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen_common${BRANCH_DIR_SUFFIX}
                            ${CMAKE_CURRENT_SOURCE_DIR}
 )

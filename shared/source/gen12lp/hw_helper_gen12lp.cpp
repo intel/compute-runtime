@@ -94,7 +94,8 @@ uint32_t HwHelperHw<Family>::getHwRevIdFromStepping(uint32_t stepping, const Har
         case REVISION_C:
             return 0x4;
         }
-    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_S) {
+    } else if ((hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_S) ||
+               (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_P)) {
         switch (stepping) {
         case REVISION_A0:
             return 0x0;
@@ -125,7 +126,8 @@ uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) 
         case 0x4:
             return REVISION_C;
         }
-    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_S) {
+    } else if ((hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_S) ||
+               (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_P)) {
         switch (hwInfo.platform.usRevId) {
         case 0x0:
             return REVISION_A0;

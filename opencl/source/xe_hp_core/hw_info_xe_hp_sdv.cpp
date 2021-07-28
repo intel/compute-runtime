@@ -163,5 +163,5 @@ void XE_HP_SDV_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool set
         XE_HP_SDV::setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
-#include "hw_info_config_xehp.inl"
+#include "hw_info_setup_xehp.inl"
 } // namespace NEO

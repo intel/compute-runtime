@@ -926,6 +926,16 @@ extern GFXCORE_FAMILY renderCoreFamily;
                       IGFX_GEN12LP_CORE,          \
                       IGFX_ALDERLAKE_S)
 #endif
+#ifdef TESTS_ADLP
+#define ADLPTEST_F(test_fixture, test_name)                          \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN12LP_CORE, IGFX_ALDERLAKE_P)
+#define ADLPTEST_P(test_suite_name, test_name)    \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_GEN12LP_CORE,          \
+                      IGFX_ALDERLAKE_P)
+#endif
 #ifdef TESTS_XE_HP_SDV
 #define XEHPTEST_F(test_fixture, test_name)                          \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
@@ -1119,3 +1129,4 @@ using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
 using IsXEHP = IsProduct<IGFX_XE_HP_SDV>;
+using IsADLP = IsProduct<IGFX_ALDERLAKE_P>;

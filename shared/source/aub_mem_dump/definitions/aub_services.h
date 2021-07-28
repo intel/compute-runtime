@@ -104,6 +104,7 @@ struct CmdServicesMemTraceVersion {
             Dg1 = 30,
             Adls = 37,
             XeHP_SDV = 29,
+            Adlp = 38,
         };
     };
     struct RecordingMethodValues {
