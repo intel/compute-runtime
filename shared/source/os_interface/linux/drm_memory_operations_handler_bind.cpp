@@ -110,23 +110,24 @@ std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerIfUsed()
     return std::unique_lock<std::mutex>();
 }
 
-void DrmMemoryOperationsHandlerBind::evictUnusedAllocations() {
+void DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bool waitForCompletion) {
     auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
 
     std::lock_guard<std::mutex> lock(mutex);
     auto allocLock = memoryManager->acquireAllocLock();
 
-    this->evictUnusedAllocationsImpl(memoryManager->getSysMemAllocs());
-    this->evictUnusedAllocationsImpl(memoryManager->getLocalMemAllocs(this->rootDeviceIndex));
+    this->evictUnusedAllocationsImpl(memoryManager->getSysMemAllocs(), waitForCompletion);
+    this->evictUnusedAllocationsImpl(memoryManager->getLocalMemAllocs(this->rootDeviceIndex), waitForCompletion);
 }
 
-void DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction) {
+void DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion) {
     const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
     std::vector<GraphicsAllocation *> evictCandidates;
 
     for (auto subdeviceIndex = 0u; subdeviceIndex < HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()); subdeviceIndex++) {
         for (auto &allocation : allocationsForEviction) {
             bool evict = true;
+
             for (const auto &engine : engines) {
                 if (this->rootDeviceIndex == engine.commandStreamReceiver->getRootDeviceIndex() &&
                     engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {
@@ -134,6 +135,11 @@ void DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<Grap
                         evict = false;
                         break;
                     }
+
+                    if (waitForCompletion) {
+                        engine.commandStreamReceiver->waitForCompletionWithTimeout(false, 0, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
+                    }
+
                     if (allocation->isUsedByOsContext(engine.osContext->getContextId()) &&
                         allocation->getTaskCount(engine.osContext->getContextId()) > *engine.commandStreamReceiver->getTagAddress()) {
                         evict = false;

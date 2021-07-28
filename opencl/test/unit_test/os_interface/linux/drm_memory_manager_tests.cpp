@@ -876,10 +876,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
     ioctlResExt.no.push_back(2);
+    ioctlResExt.no.push_back(3);
     mock->ioctl_res_ext = &ioctlResExt;
     mock->errnoValue = EFAULT;
     mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.execbuffer2 = 2;
+    mock->ioctl_expected.execbuffer2 = 3;
 
     MemoryManager::AllocationStatus result = memoryManager->populateOsHandles(storage, rootDeviceIndex);
 
@@ -911,10 +912,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
     ioctlResExt.no.push_back(2);
+    ioctlResExt.no.push_back(3);
     mock->ioctl_res_ext = &ioctlResExt;
     mock->errnoValue = EFAULT;
     mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.execbuffer2 = 2;
+    mock->ioctl_expected.execbuffer2 = 3;
     mock->ioctl_expected.gemClose = 1;
 
     AllocationData allocationData;
@@ -955,10 +957,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
     ioctlResExt.no.push_back(2);
+    ioctlResExt.no.push_back(3);
     mock->ioctl_res_ext = &ioctlResExt;
     mock->errnoValue = 0;
     mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.execbuffer2 = 2;
+    mock->ioctl_expected.execbuffer2 = 3;
 
     AllocationData allocationData;
     allocationData.size = 13u;
@@ -990,10 +993,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
     ioctlResExt.no.push_back(2);
+    ioctlResExt.no.push_back(3);
     mock->ioctl_res_ext = &ioctlResExt;
     mock->errnoValue = 0;
     mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.execbuffer2 = 2;
+    mock->ioctl_expected.execbuffer2 = 3;
 
     AllocationData allocationData;
     allocationData.size = 13u;
@@ -1028,10 +1032,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
     ioctlResExt.no.push_back(2);
+    ioctlResExt.no.push_back(3);
     mock->ioctl_res_ext = &ioctlResExt;
     mock->errnoValue = ENOMEM;
     mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.execbuffer2 = 2;
+    mock->ioctl_expected.execbuffer2 = 3;
 
     MemoryManager::AllocationStatus result = memoryManager->populateOsHandles(storage, rootDeviceIndex);
 
@@ -3552,10 +3557,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 
     DrmMockCustom::IoctlResExt ioctlResExt = {2, -1};
     ioctlResExt.no.push_back(3);
+    ioctlResExt.no.push_back(4);
     mock->ioctl_res_ext = &ioctlResExt;
     mock->errnoValue = EFAULT;
     mock->ioctl_expected.gemUserptr = 2;
-    mock->ioctl_expected.execbuffer2 = 2;
+    mock->ioctl_expected.execbuffer2 = 3;
 
     OsHandleStorage handleStorage;
     OsHandleLinux handle1;
@@ -3603,10 +3609,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 
     DrmMockCustom::IoctlResExt ioctlResExt = {2, -1};
     ioctlResExt.no.push_back(3);
+    ioctlResExt.no.push_back(4);
     mock->ioctl_res_ext = &ioctlResExt;
     mock->errnoValue = EFAULT;
     mock->ioctl_expected.gemUserptr = 2;
-    mock->ioctl_expected.execbuffer2 = 2;
+    mock->ioctl_expected.execbuffer2 = 3;
 
     OsHandleStorage handleStorage;
     OsHandleLinux handle1;

@@ -577,10 +577,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
+            flushHandler(batchBuffer, this->getResidencyAllocations());
             if (updateTag) {
                 this->latestFlushedTaskCount = this->taskCount + 1;
             }
-            flushHandler(batchBuffer, this->getResidencyAllocations());
         } else {
             auto commandBuffer = new CommandBuffer(device);
             commandBuffer->batchBuffer = batchBuffer;

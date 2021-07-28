@@ -26,7 +26,7 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
     void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) override;
     std::unique_lock<std::mutex> lockHandlerIfUsed() override;
 
-    void evictUnusedAllocations() override;
+    void evictUnusedAllocations(bool waitForCompletion) override;
 
   protected:
     std::unordered_set<GraphicsAllocation *> residency;

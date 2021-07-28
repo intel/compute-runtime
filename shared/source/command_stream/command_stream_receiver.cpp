@@ -83,10 +83,10 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 }
 
 bool CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    this->latestFlushedTaskCount = taskCount + 1;
     this->latestSentTaskCount = taskCount + 1;
 
     auto ret = this->flush(batchBuffer, allocationsForResidency);
+    this->latestFlushedTaskCount = taskCount + 1;
     taskCount++;
 
     return ret;

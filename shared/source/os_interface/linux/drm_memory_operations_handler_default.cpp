@@ -64,7 +64,7 @@ std::unique_lock<std::mutex> DrmMemoryOperationsHandlerDefault::lockHandlerIfUse
     return std::unique_lock<std::mutex>();
 }
 
-void DrmMemoryOperationsHandlerDefault::evictUnusedAllocations() {
+void DrmMemoryOperationsHandlerDefault::evictUnusedAllocations(bool waitForCompletion) {
 }
 
 } // namespace NEO

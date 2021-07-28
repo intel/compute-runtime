@@ -85,7 +85,7 @@ TEST_F(DrmBufferObjectTest, WhenCallingExecThenReturnIsCorrect) {
 }
 
 TEST_F(DrmBufferObjectTest, GivenInvalidParamsWhenCallingExecThenEfaultIsReturned) {
-    mock->ioctl_expected.total = 2;
+    mock->ioctl_expected.total = 3;
     mock->ioctl_res = -1;
     mock->errnoValue = EFAULT;
     drm_i915_gem_exec_object2 execObjectsStorage = {};
@@ -144,7 +144,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWh
 TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
 
-    mock->ioctl_expected.total = 2;
+    mock->ioctl_expected.total = 3;
     mock->ioctl_res = -1;
     this->mock->errnoValue = EINVAL;
 
@@ -160,7 +160,7 @@ TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
 TEST_F(DrmBufferObjectTest, whenExecFailsThenValidateHostPtrFails) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
 
-    mock->ioctl_expected.total = 2;
+    mock->ioctl_expected.total = 3;
     mock->ioctl_res = -1;
     this->mock->errnoValue = EINVAL;
 
