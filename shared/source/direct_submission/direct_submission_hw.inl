@@ -95,6 +95,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     workloadModeOneStoreAddress = static_cast<volatile void *>(&semaphoreData->DiagnosticModeCounter);
     *static_cast<volatile uint32_t *>(workloadModeOneStoreAddress) = 0u;
 
+    this->gpuVaForMiFlush = this->semaphoreGpuVa + 2 * MemoryConstants::cacheLineSize;
+
     auto ret = makeResourcesResident(allocations);
 
     return ret && allocateOsResources();
@@ -172,7 +174,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     void *flushPtr = ringCommandStream.getSpace(0);
-    Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo);
+    Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo, gpuVaForMiFlush);
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
@@ -312,7 +314,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     //mode 2 does not dispatch any commands
 
     if (!disableCacheFlush) {
-        Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo);
+        Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo, gpuVaForMiFlush);
     }
 
     if (!disableMonitorFence) {

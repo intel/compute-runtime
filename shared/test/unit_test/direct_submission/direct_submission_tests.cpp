@@ -371,7 +371,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     LinearStream parseDispatch;
     uint8_t buffer[256];
     parseDispatch.replaceBuffer(buffer, 256);
-    RenderDispatcher<FamilyType>::dispatchCacheFlush(parseDispatch, *directSubmission.hwInfo);
+    RenderDispatcher<FamilyType>::dispatchCacheFlush(parseDispatch, *directSubmission.hwInfo, 0ull);
     auto expectedPipeControl = static_cast<PIPE_CONTROL *>(parseDispatch.getCpuBase());
     for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
@@ -510,7 +510,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchFlushSectionThen
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
 
-    Dispatcher::dispatchCacheFlush(directSubmission.ringCommandStream, *directSubmission.hwInfo);
+    Dispatcher::dispatchCacheFlush(directSubmission.ringCommandStream, *directSubmission.hwInfo, 0ull);
     EXPECT_EQ(Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo), directSubmission.ringCommandStream.getUsed());
 }
 

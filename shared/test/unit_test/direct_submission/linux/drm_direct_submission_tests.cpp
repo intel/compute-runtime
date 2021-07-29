@@ -278,34 +278,3 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlusZeroAnd
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
 }
-
-HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherWhenHandleNewResourceThenDoNotFlushTlb) {
-    using MI_FLUSH = typename FamilyType::MI_FLUSH_DW;
-    using Dispatcher = BlitterDispatcher<FamilyType>;
-
-    auto osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(),
-                                                      0u, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup,
-                                                      false);
-    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
-
-    bool ret = directSubmission.allocateResources();
-    EXPECT_TRUE(ret);
-
-    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
-    drm->setNewResourceBound(true);
-
-    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
-
-    directSubmission.handleNewResourcesSubmission();
-
-    HardwareParse hwParse;
-    hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-    hwParse.findHardwareCommands<FamilyType>();
-    auto *miFlush = hwParse.getCommand<MI_FLUSH>();
-    EXPECT_EQ(miFlush, nullptr);
-    EXPECT_TRUE(drm->getNewResourceBound());
-
-    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
-}

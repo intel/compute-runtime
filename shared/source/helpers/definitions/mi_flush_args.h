@@ -12,6 +12,7 @@ struct MiFlushArgs {
     bool timeStampOperation = false;
     bool commandWithPostSync = false;
     bool notifyEnable = false;
+    bool tlbFlush = false;
 
     MiFlushArgs() = default;
 };

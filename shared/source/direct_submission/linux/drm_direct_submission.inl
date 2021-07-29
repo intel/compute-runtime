@@ -109,7 +109,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleNewResourcesSubmission() {
     if (isNewResourceHandleNeeded()) {
-        Dispatcher::dispatchTlbFlush(this->ringCommandStream);
+        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush);
     }
 
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);

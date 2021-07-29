@@ -714,6 +714,7 @@ void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, u
         miFlush.setImmediateData(immediateData);
     }
     miFlush.setNotifyEnable(args.notifyEnable);
+    miFlush.setTlbInvalidate(args.tlbFlush);
     appendMiFlushDw(&miFlush);
     *miFlushDwCmd = miFlush;
 }

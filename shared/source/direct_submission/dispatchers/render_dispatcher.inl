@@ -49,12 +49,12 @@ inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareInf
 }
 
 template <typename GfxFamily>
-inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo) {
+inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address) {
     MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(cmdBuffer);
 }
 
 template <typename GfxFamily>
-inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer) {
+inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address) {
     PipeControlArgs args(false);
     args.tlbInvalidation = true;
     args.pipeControlFlushEnable = true;

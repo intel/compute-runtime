@@ -127,6 +127,7 @@ class DirectSubmissionHw {
     std::unique_ptr<DirectSubmissionDiagnosticsCollector> diagnostic;
 
     uint64_t semaphoreGpuVa = 0u;
+    uint64_t gpuVaForMiFlush = 0u;
 
     Device &device;
     OsContext &osContext;

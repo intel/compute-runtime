@@ -96,7 +96,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForCacheFlushCmdSizeThenRetu
 HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeControlWithProperFields) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    RenderDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, hardwareInfo);
+    RenderDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, hardwareInfo, 0ull);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);

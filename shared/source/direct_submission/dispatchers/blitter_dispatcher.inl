@@ -41,13 +41,16 @@ inline size_t BlitterDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareIn
 }
 
 template <typename GfxFamily>
-inline void BlitterDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo) {
-    MiFlushArgs args;
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, 0ull, 0ull, args);
+inline void BlitterDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address) {
+    dispatchTlbFlush(cmdBuffer, address);
 }
 
 template <typename GfxFamily>
-inline void BlitterDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer) {
+inline void BlitterDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address) {
+    MiFlushArgs args;
+    args.tlbFlush = true;
+    args.commandWithPostSync = true;
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, address, 0ull, args);
 }
 
 template <typename GfxFamily>
@@ -58,7 +61,8 @@ inline size_t BlitterDispatcher<GfxFamily>::getSizeCacheFlush(const HardwareInfo
 
 template <typename GfxFamily>
 inline size_t BlitterDispatcher<GfxFamily>::getSizeTlbFlush() {
-    return 0u;
+    size_t size = EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+    return size;
 }
 
 } // namespace NEO
