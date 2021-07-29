@@ -7,6 +7,10 @@
 
 #include "shared/source/helpers/blit_commands_helper.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/surface.h"
 
@@ -159,6 +163,49 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
     // wait for NDR before NonAuxToAux
     blitPropertiesContainer[numObjects].csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.cacheFlushNodes);
     blitPropertiesContainer[numObjects].csrDependencies.timestampPacketContainer.push_back(&kernelTimestamps);
+}
+
+BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                       Vec3<size_t> size) {
+    auto memoryBanks = memory->storageInfo.getMemoryBanks();
+    return blitMemoryToAllocationBanks(device, memory, offset, hostPtr, size, memoryBanks);
+}
+
+BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                            Vec3<size_t> size, DeviceBitfield memoryBanks) {
+    const auto &hwInfo = device.getHardwareInfo();
+    auto isBlitterRequired = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isBlitCopyRequiredForLocalMemory(hwInfo, *memory);
+    if (!hwInfo.capabilityTable.blitterOperationsSupported && !isBlitterRequired) {
+        return BlitOperationResult::Unsupported;
+    }
+
+    UNRECOVERABLE_IF(memoryBanks.none());
+
+    auto pRootDevice = device.getRootDevice();
+
+    for (uint8_t tileId = 0u; tileId < 4u; tileId++) {
+        if (!memoryBanks.test(tileId)) {
+            continue;
+        }
+
+        UNRECOVERABLE_IF(!pRootDevice->getDeviceBitfield().test(tileId));
+        auto pDeviceForBlit = pRootDevice->getDeviceById(tileId);
+
+        auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
+        auto &bcsEngine = pDeviceForBlit->getEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), EngineUsage::Regular);
+        bcsEngine.osContext->ensureContextInitialized();
+        bcsEngine.commandStreamReceiver->initDirectSubmission(*pDeviceForBlit, *bcsEngine.osContext);
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(
+            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                            *bcsEngine.commandStreamReceiver, memory, nullptr,
+                                                            hostPtr,
+                                                            (memory->getGpuAddress() + offset),
+                                                            0, 0, 0, size, 0, 0, 0, 0));
+        bcsEngine.commandStreamReceiver->blitBuffer(blitPropertiesContainer, true, false, *pDeviceForBlit);
+    }
+
+    return BlitOperationResult::Success;
 }
 
 } // namespace NEO
