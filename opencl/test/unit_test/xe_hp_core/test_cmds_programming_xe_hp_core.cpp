@@ -42,35 +42,3 @@ XE_HP_CORE_TEST_F(CmdsProgrammingTestsXeHpCore, givenL1CachingOverrideWhenStateB
 
     memoryManager->freeGraphicsMemory(allocation);
 }
-
-XE_HP_CORE_TEST_F(CmdsProgrammingTestsXeHpCore, givenInterfaceDescriptorDataWhenBSteppingIsDetectedThenTGBatchSizeIsEqualTo3) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
-    INTERFACE_DESCRIPTOR_DATA iddArg;
-    iddArg = FamilyType::cmdInitInterfaceDescriptorData;
-
-    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = REVISION_B;
-
-    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, pDevice->getHardwareInfo());
-    EXPECT_EQ(3u, iddArg.getThreadGroupDispatchSize());
-}
-
-using PreambleCfeState = PreambleFixture;
-
-XE_HP_CORE_TEST_F(PreambleCfeState, givenXehpBSteppingWhenCfeIsProgrammedThenOverdispatchIsDisabled) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-
-    auto backup = defaultHwInfo->platform.usRevId;
-    defaultHwInfo->platform.usRevId = REVISION_B;
-
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
-    StreamProperties streamProperties{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, AdditionalKernelExecInfo::NotApplicable, streamProperties);
-    parseCommands<FamilyType>(linearStream);
-    auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), cfeStateIt);
-    auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
-
-    EXPECT_TRUE(cfeState->getComputeOverdispatchDisable());
-    defaultHwInfo->platform.usRevId = backup;
-}

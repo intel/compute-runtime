@@ -551,13 +551,23 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
     INTERFACE_DESCRIPTOR_DATA iddArg;
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t forceThreadGroupDispatchSize = -1;
-    const uint32_t defaultThreadGroupDispatchSize = iddArg.getThreadGroupDispatchSize();
+    auto hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
 
-    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, pDevice->getHardwareInfo());
-    EXPECT_EQ(defaultThreadGroupDispatchSize, iddArg.getThreadGroupDispatchSize());
+    uint32_t revisions[] = {REVISION_A0, REVISION_B};
+    for (auto revision : revisions) {
+        hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(revision, hwInfo);
+        EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, hwInfo);
+
+        if (hwHelper.isDisableOverdispatchAvailable(hwInfo)) {
+            EXPECT_EQ(3u, iddArg.getThreadGroupDispatchSize());
+        } else {
+            EXPECT_EQ(0u, iddArg.getThreadGroupDispatchSize());
+        }
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDataWhenForceThreadGroupDispatchSizeVariableIsSetThenThreadGroupDispatchSizeIsChanged) {

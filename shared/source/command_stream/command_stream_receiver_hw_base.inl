@@ -933,10 +933,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto engineGroupType = hwHelper.getEngineGroupType(getOsContext().getEngineType(), hwInfo);
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
+        auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo) &&
+                                   (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
         StreamProperties streamProperties{};
         streamProperties.frontEndState.setProperties(lastKernelExecutionType == KernelExecutionType::Concurrent,
-                                                     dispatchFlags.additionalKernelExecInfo == AdditionalKernelExecInfo::DisableOverdispatch,
-                                                     hwInfo);
+                                                     disableOverdispatch, hwInfo);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, hwInfo, requiredScratchSize, getScratchPatchAddress(),
             maxFrontEndThreads, lastAdditionalKernelExecInfo, streamProperties);

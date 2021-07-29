@@ -559,7 +559,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     UnifiedMemoryControls unifiedMemoryControls{};
     bool isUnifiedMemorySyncRequired = true;
     bool debugEnabled = false;
-    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
 
     uint32_t *maxWorkGroupSizeForCrossThreadData = &Kernel::dummyPatchLocation;
     uint32_t maxKernelWorkGroupSize = 0;

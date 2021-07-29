@@ -298,3 +298,12 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreWhenIsBlitterForImagesSup
     auto &helper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_TRUE(helper.isBlitterForImagesSupported(hwInfo));
 }
+
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_FALSE(hwHelper.isDisableOverdispatchAvailable(hwInfo));
+
+    hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_TRUE(hwHelper.isDisableOverdispatchAvailable(hwInfo));
+}

@@ -2007,14 +2007,17 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
+    auto &hwInfo = device->getHwInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo);
+
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), false, device->getHwInfo());
+        requiredStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), disableOverdispatch, device->getHwInfo());
         finalStreamState = requiredStreamState;
         containsAnyKernel = true;
     }
 
-    auto &hwInfo = device->getHwInfo();
-    finalStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), false, hwInfo);
+    finalStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), disableOverdispatch, hwInfo);
     if (finalStreamState.frontEndState.isDirty()) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
         auto pVfeState = new VFE_STATE_TYPE;
@@ -2025,7 +2028,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
     auto &neoDevice = *device->getNEODevice();
-    auto threadArbitrationPolicy = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily).getDefaultThreadArbitrationPolicy();
+    auto threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
     finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, threadArbitrationPolicy);
 
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(neoDevice, *commandContainer.getCommandStream(), true);

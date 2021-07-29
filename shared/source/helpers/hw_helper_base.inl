@@ -462,7 +462,7 @@ inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const Hardwa
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::additionalKernelExecInfoSupported(const HardwareInfo &hwInfo) const {
+bool HwHelperHw<GfxFamily>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return false;
 }
 

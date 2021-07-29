@@ -22,11 +22,6 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
 
     command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
 
-    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (helper.getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
-        command->setComputeOverdispatchDisable(true);
-    }
-
     if (DebugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
         command->setComputeOverdispatchDisable(DebugManager.flags.CFEComputeOverdispatchDisable.get());
     }
