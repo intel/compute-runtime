@@ -6,8 +6,8 @@
 
 set(NEO_CORE_SRCS_tests_program
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/program_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_info_from_patchtokens_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/program_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_initialization_tests.cpp
 )
 

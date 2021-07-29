@@ -5,8 +5,8 @@
 #
 
 target_sources(${TARGET_NAME} PRIVATE
-               ${CMAKE_CURRENT_SOURCE_DIR}/base_object_utils.h
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/base_object_utils.h
                ${CMAKE_CURRENT_SOURCE_DIR}/const_stringref_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/containers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/containers_tests_helpers.h
