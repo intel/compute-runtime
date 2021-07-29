@@ -19,7 +19,7 @@ bool TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
     auto engines = HwHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);
     for (const auto &engine : engines) {
         if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
-            return true;
+            return pHardwareInfo->capabilityTable.blitterOperationsSupported;
         }
     }
     return false;
