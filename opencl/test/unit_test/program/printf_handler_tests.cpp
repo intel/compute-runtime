@@ -14,6 +14,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/program/printf_handler.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -70,6 +71,45 @@ TEST_F(PrintfHandlerTests, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenG
 
     delete pProgram;
     delete device;
+}
+
+HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedForAuxTranslation) {
+    REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+
+    DebugManagerStateRestore restore;
+
+    for (auto enable : {false, true}) {
+        DebugManager.flags.EnableStatelessCompression.set(enable);
+
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        MockContext context;
+
+        auto kernelInfo = std::make_unique<MockKernelInfo>();
+        kernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
+
+        auto program = std::make_unique<MockProgram>(&context, false, toClDeviceVector(*device));
+
+        uint64_t crossThread[10];
+        auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
+        kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
+
+        MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.get());
+        std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+        printfHandler->prepareDispatch(multiDispatchInfo);
+        EXPECT_NE(nullptr, printfHandler->getSurface());
+
+        printfHandler->printEnqueueOutput();
+
+        auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getSelectorCopyEngine()), EngineUsage::Regular);
+        auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
+
+        if (enable) {
+            EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+            EXPECT_EQ(AuxTranslationDirection::AuxToNonAux, bcsCsr->receivedBlitProperties[0].auxTranslationDirection);
+        } else {
+            EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
+        }
+    }
 }
 
 HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePrintfObjectAfterMove) {

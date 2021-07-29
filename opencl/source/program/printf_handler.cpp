@@ -76,6 +76,15 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 }
 
 void PrintfHandler::printEnqueueOutput() {
+    if (DebugManager.flags.EnableStatelessCompression.get()) {
+        auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(device.getHardwareInfo(), device.getSelectorCopyEngine()), EngineUsage::Regular);
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(
+            BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
+                                                                 printfSurface, bcsEngine.commandStreamReceiver->getClearColorAllocation()));
+        bcsEngine.commandStreamReceiver->blitBuffer(blitPropertiesContainer, true, false, device.getDevice());
+    }
+
     PrintFormatter printFormatter(reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer()), static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize()),
                                   kernel->is32Bit(),
                                   kernel->getDescriptor().kernelAttributes.flags.usesStringMapForPrintf ? &kernel->getDescriptor().kernelMetadata.printfStringsMap : nullptr);

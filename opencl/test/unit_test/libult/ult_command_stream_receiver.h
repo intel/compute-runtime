@@ -219,6 +219,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
         blitBufferCalled++;
+        receivedBlitProperties = blitPropertiesContainer;
         return CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitPropertiesContainer, blocking, profilingEnabled, device);
     }
 
@@ -285,6 +286,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t createPerDssBackedBufferCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
+    BlitPropertiesContainer receivedBlitProperties = {};
 
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
