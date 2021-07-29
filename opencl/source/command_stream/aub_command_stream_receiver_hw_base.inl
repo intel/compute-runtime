@@ -783,10 +783,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
 
 template <typename GfxFamily>
 AubSubCaptureStatus AUBCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
-    std::string kernelName = dispatchInfo.peekMainKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName;
+    auto &kernelName = dispatchInfo.peekMainKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName;
     auto status = subCaptureManager->checkAndActivateSubCapture(kernelName);
     if (status.isActive) {
-        std::string subCaptureFile = subCaptureManager->getSubCaptureFileName(kernelName);
+        auto &subCaptureFile = subCaptureManager->getSubCaptureFileName(kernelName);
         auto isReopened = reopenFile(subCaptureFile);
         if (isReopened) {
             dumpAubNonWritable = true;
