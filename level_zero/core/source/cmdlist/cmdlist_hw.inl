@@ -829,7 +829,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstPtrAlloc, srcPtrAlloc, {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0}, 0, 0, 0, 0, clearColorAllocation);
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstPtrAlloc, srcPtrAlloc, {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0}, 0, 0, 0, 0, clearColorAllocation);
     commandContainer.addToResidencyContainer(dstPtrAlloc);
     commandContainer.addToResidencyContainer(srcPtrAlloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
@@ -862,9 +862,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
 
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstAlloc, srcAlloc,
-                                                                                dstPtrOffset, srcPtrOffset, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation);
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc, srcAlloc,
+                                                                          dstPtrOffset, srcPtrOffset, copySize, srcRowPitch, srcSlicePitch,
+                                                                          dstRowPitch, dstSlicePitch, clearColorAllocation);
     commandContainer.addToResidencyContainer(dstAlloc);
     commandContainer.addToResidencyContainer(srcAlloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
@@ -899,9 +899,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
 
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dst, src,
-                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation);
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dst, src,
+                                                                          dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                          dstRowPitch, dstSlicePitch, clearColorAllocation);
     blitProperties.bytesPerPixel = bytesPerPixel;
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;

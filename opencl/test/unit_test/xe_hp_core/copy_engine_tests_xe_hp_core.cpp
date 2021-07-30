@@ -67,9 +67,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenCompressedBufferWhenProgrammingBltCo
     uint32_t compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
 
     {
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -89,9 +89,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenCompressedBufferWhenProgrammingBltCo
 
     {
         auto offset = csr->commandStream.getUsed();
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
@@ -125,9 +125,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagSetWhenCompressionEnabledTh
     bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled = false;
 
     {
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -147,9 +147,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagSetWhenCompressionEnabledTh
 
     {
         auto offset = csr->commandStream.getUsed();
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
@@ -176,9 +176,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                           buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                     0, 0, {1, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
     blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -205,9 +205,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                           buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                     0, 0, {1, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
     blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -281,8 +281,8 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, given2dBlitCommandWhenDispatchingThenSetV
     size_t offset = 0;
     {
         // 1D
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(allocation, allocation,
-                                                                               0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+                                                                         0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
         blitBuffer(csr, blitProperties, false, clDevice->getDevice());
 
         HardwareParse hwParser;
@@ -305,8 +305,8 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, given2dBlitCommandWhenDispatchingThenSetV
 
     {
         // 2D
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(allocation, allocation,
-                                                                               0, 0, {(2 * BlitterConstants::maxBlitWidth) + 1, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+                                                                         0, 0, {(2 * BlitterConstants::maxBlitWidth) + 1, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
         blitBuffer(csr, blitProperties, false, clDevice->getDevice());
 
         HardwareParse hwParser;
@@ -339,9 +339,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     EXPECT_FALSE(MemoryPool::isSystemMemoryPool(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getMemoryPool()));
 
     {
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -357,9 +357,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
 
     {
         auto offset = csr->commandStream.getUsed();
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -393,9 +393,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     EXPECT_FALSE(MemoryPool::isSystemMemoryPool(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getMemoryPool()));
 
     {
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -415,9 +415,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
 
     {
         auto offset = csr->commandStream.getUsed();
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -452,9 +452,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
 
     DebugManager.flags.OverrideBlitterTargetMemory.set(0u);
     {
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -470,9 +470,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     DebugManager.flags.OverrideBlitterTargetMemory.set(1u);
     {
         auto offset = csr->commandStream.getUsed();
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -489,9 +489,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     DebugManager.flags.OverrideBlitterTargetMemory.set(2u);
     {
         auto offset = csr->commandStream.getUsed();
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -522,9 +522,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandAndRe
     EXPECT_FALSE(MemoryPool::isSystemMemoryPool(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getMemoryPool()));
 
     {
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 
@@ -540,9 +540,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandAndRe
 
     {
         auto offset = csr->commandStream.getUsed();
-        auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                               0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                         0, 0, {2048, 1, 1}, 0, 0, 0, 0, csr->getClearColorAllocation());
 
         blitBuffer(csr, blitProperties, true, clDevice->getDevice());
 

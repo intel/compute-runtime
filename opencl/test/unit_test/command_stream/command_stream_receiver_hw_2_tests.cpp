@@ -691,8 +691,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
             // Buffer to Buffer
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
-            auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(graphicsAllocation1,
-                                                                                   graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
+            auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1,
+                                                                             graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
 
             blitBuffer(&csr, blitProperties, true, *pDevice);
 
@@ -1092,9 +1092,9 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                 // Buffer to Buffer
                 HardwareParse hwParser;
                 auto offset = csr.commandStream.getUsed();
-                auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(graphicsAllocation1,
-                                                                                       graphicsAllocation2,
-                                                                                       {buffer1Offset, 0, 0}, {buffer2Offset, 0, 0}, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
+                auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1,
+                                                                                 graphicsAllocation2,
+                                                                                 {buffer1Offset, 0, 0}, {buffer2Offset, 0, 0}, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
 
                 blitBuffer(&csr, blitProperties, true, *pDevice);
 
@@ -1683,8 +1683,8 @@ HWTEST_F(BcsTests, givenBlitBufferCalledWhenClearColorAllocationIseSetThenItIsMa
     csr.storeMakeResidentAllocations = true;
     Vec3<size_t> copySize = {1, 1, 1};
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(&graphicsAllocation1,
-                                                                           &graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, &clearColorAllocation);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&graphicsAllocation1,
+                                                                     &graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, &clearColorAllocation);
     blitBuffer(&csr, blitProperties, false, *pDevice);
     auto iter = csr.makeResidentAllocations.find(&clearColorAllocation);
     ASSERT_NE(iter, csr.makeResidentAllocations.end());

@@ -93,10 +93,10 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
     };
 }
 
-BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
-                                                                Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
-                                                                size_t srcRowPitch, size_t srcSlicePitch,
-                                                                size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation) {
+BlitProperties BlitProperties::constructPropertiesForCopy(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
+                                                          Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
+                                                          size_t srcRowPitch, size_t srcSlicePitch,
+                                                          size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation) {
     copySize.y = copySize.y ? copySize.y : 1;
     copySize.z = copySize.z ? copySize.z : 1;
 

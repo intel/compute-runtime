@@ -83,9 +83,9 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForBuffe
     size_t dstRowPitch = 2;
     size_t dstSlicePitch = 3;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstAlloc.get(), srcAlloc.get(),
-                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation.get());
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
+                                                                          dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                          dstRowPitch, dstSlicePitch, clearColorAllocation.get());
 
     EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::BufferToBuffer);
     EXPECT_EQ(blitProperties.dstAllocation, dstAlloc.get());
@@ -122,9 +122,9 @@ TEST(BlitCommandsHelperTest, GivenCopySizeYAndZEqual0WhenConstructingPropertiesF
     size_t dstRowPitch = 2;
     size_t dstSlicePitch = 3;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstAlloc.get(), srcAlloc.get(),
-                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation.get());
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
+                                                                          dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                          dstRowPitch, dstSlicePitch, clearColorAllocation.get());
     Vec3<size_t> expectedSize{copySize.x, 1, 1};
     EXPECT_EQ(blitProperties.copySize, expectedSize);
 }
@@ -428,9 +428,9 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     size_t dstRowPitch = dstSize.x;
     size_t dstSlicePitch = dstSize.y;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(&dstAlloc, &srcAlloc,
-                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, &clearColorAllocation);
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
+                                                                          dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                          dstRowPitch, dstSlicePitch, &clearColorAllocation);
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));

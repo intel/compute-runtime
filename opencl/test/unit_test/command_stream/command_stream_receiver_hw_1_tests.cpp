@@ -1264,16 +1264,16 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     size_t buffer2SlicePitch = std::get<0>(GetParam()).srcSlicePitch;
     auto allocation = buffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(allocation,                   //dstAllocation
-                                                                           allocation,                   //srcAllocation
-                                                                           buffer1Offset,                //dstOffset
-                                                                           buffer2Offset,                //srcOffset
-                                                                           bltSize,                      //copySize
-                                                                           buffer1RowPitch,              //srcRowPitch
-                                                                           buffer1SlicePitch,            //srcSlicePitch
-                                                                           buffer2RowPitch,              //dstRowPitch
-                                                                           buffer2SlicePitch,            //dstSlicePitch
-                                                                           csr.getClearColorAllocation() //clearColorAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation,                   //dstAllocation
+                                                                     allocation,                   //srcAllocation
+                                                                     buffer1Offset,                //dstOffset
+                                                                     buffer2Offset,                //srcOffset
+                                                                     bltSize,                      //copySize
+                                                                     buffer1RowPitch,              //srcRowPitch
+                                                                     buffer1SlicePitch,            //srcSlicePitch
+                                                                     buffer2RowPitch,              //dstRowPitch
+                                                                     buffer2SlicePitch,            //dstSlicePitch
+                                                                     csr.getClearColorAllocation() //clearColorAllocation
     );
     blitBuffer(&csr, blitProperties, true, *pDevice);
 
