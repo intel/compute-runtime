@@ -257,7 +257,7 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
     std::unique_ptr<OsContext> bcsOsContext;
 
     auto subDevice = device->getDeviceById(0);
-    auto bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
 
     MockCommandQueue cmdQ(nullptr, device.get(), 0, false);
     auto cmdType = GetParam();
