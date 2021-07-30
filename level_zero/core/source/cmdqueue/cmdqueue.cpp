@@ -42,6 +42,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
     returnValue = buffers.initialize(device, totalCmdBufferSize);
     if (returnValue == ZE_RESULT_SUCCESS) {
         NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();
+        UNRECOVERABLE_IF(bufferAllocation == nullptr);
         commandStream = new NEO::LinearStream(bufferAllocation->getUnderlyingBuffer(),
                                               defaultQueueCmdBufferSize);
         UNRECOVERABLE_IF(commandStream == nullptr);
