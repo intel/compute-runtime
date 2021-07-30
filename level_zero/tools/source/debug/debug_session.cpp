@@ -56,7 +56,7 @@ ze_device_thread_t DebugSession::convertToApi(EuThread::ThreadId threadId) {
     return thread;
 }
 
-RootDebugSession::RootDebugSession(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
+DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device) {
 
     if (connectedDevice) {
         auto hwInfo = connectedDevice->getHwInfo();
@@ -83,7 +83,7 @@ RootDebugSession::RootDebugSession(const zet_debug_config_t &config, Device *dev
     }
 }
 
-std::vector<ze_device_thread_t> RootDebugSession::getSingleThreads(ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo) {
+std::vector<ze_device_thread_t> DebugSession::getSingleThreads(ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo) {
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
@@ -139,7 +139,7 @@ std::vector<ze_device_thread_t> RootDebugSession::getSingleThreads(ze_device_thr
     return threads;
 }
 
-bool RootDebugSession::isBindlessSystemRoutine() {
+bool DebugSession::isBindlessSystemRoutine() {
     if (debugArea.reserved1 &= 1) {
         return true;
     }

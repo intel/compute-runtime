@@ -156,7 +156,7 @@ TEST(DebugSession, givenThreadWhenCheckSingleThreadWithinDeviceThreadCalledThenT
     EXPECT_FALSE(DebugSession::checkSingleThreadWithinDeviceThread(thread, thread2));
 }
 
-TEST(RootDebugSession, givenSingleThreadWhenGettingSingleThreadsThenCorrectThreadIsReturned) {
+TEST(DebugSession, givenSingleThreadWhenGettingSingleThreadsThenCorrectThreadIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -177,7 +177,7 @@ TEST(RootDebugSession, givenSingleThreadWhenGettingSingleThreadsThenCorrectThrea
     EXPECT_EQ(3u, threads[0].thread);
 }
 
-TEST(RootDebugSession, givenAllThreadsWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
+TEST(DebugSession, givenAllThreadsWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -202,7 +202,7 @@ TEST(RootDebugSession, givenAllThreadsWhenGettingSingleThreadsThenCorrectThreads
     }
 }
 
-TEST(RootDebugSession, givenAllEUsWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
+TEST(DebugSession, givenAllEUsWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -227,7 +227,7 @@ TEST(RootDebugSession, givenAllEUsWhenGettingSingleThreadsThenCorrectThreadsAreR
     }
 }
 
-TEST(RootDebugSession, givenAllSubslicesWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
+TEST(DebugSession, givenAllSubslicesWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -251,7 +251,7 @@ TEST(RootDebugSession, givenAllSubslicesWhenGettingSingleThreadsThenCorrectThrea
     }
 }
 
-TEST(RootDebugSession, givenAllSlicesWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
+TEST(DebugSession, givenAllSlicesWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -275,7 +275,7 @@ TEST(RootDebugSession, givenAllSlicesWhenGettingSingleThreadsThenCorrectThreadsA
     }
 }
 
-TEST(RootDebugSession, givenBindlessSystemRoutineWhenQueryingIsBindlessThenTrueReturned) {
+TEST(DebugSession, givenBindlessSystemRoutineWhenQueryingIsBindlessThenTrueReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -289,7 +289,7 @@ TEST(RootDebugSession, givenBindlessSystemRoutineWhenQueryingIsBindlessThenTrueR
     EXPECT_TRUE(debugSession->isBindlessSystemRoutine());
 }
 
-TEST(RootDebugSession, givenBindfulSystemRoutineWhenQueryingIsBindlessThenFalseReturned) {
+TEST(DebugSession, givenBindfulSystemRoutineWhenQueryingIsBindlessThenFalseReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -303,7 +303,7 @@ TEST(RootDebugSession, givenBindfulSystemRoutineWhenQueryingIsBindlessThenFalseR
     EXPECT_FALSE(debugSession->isBindlessSystemRoutine());
 }
 
-TEST(RootDebugSession, givenApiThreadAndSingleTileWhenConvertingThenCorrectValuesReturned) {
+TEST(DebugSession, givenApiThreadAndSingleTileWhenConvertingThenCorrectValuesReturned) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
