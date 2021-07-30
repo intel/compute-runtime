@@ -132,7 +132,6 @@ class HwHelper {
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const PRODUCT_FAMILY productFamily) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual bool isCopyOnlyEngineType(EngineGroupType type) const = 0;
-    virtual void adjustAddressWidthForCanonize(uint32_t &addressWidth) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
@@ -354,8 +353,6 @@ class HwHelperHw : public HwHelper {
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
 
     bool isCopyOnlyEngineType(EngineGroupType type) const override;
-
-    void adjustAddressWidthForCanonize(uint32_t &addressWidth) const override;
 
     bool isSipWANeeded(const HardwareInfo &hwInfo) const override;
 
