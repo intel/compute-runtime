@@ -130,9 +130,12 @@ void PciImp::pciGetStaticFields() {
         pciProperties.address.device = 0;
         pciProperties.address.function = 0;
     } else {
-        sscanf(bdf.c_str(), "%04x:%02x:%02x.%d",
-               &pciProperties.address.domain, &pciProperties.address.bus,
-               &pciProperties.address.device, &pciProperties.address.function);
+        int domain = -1, bus = -1, device = -1, function = -1;
+        sscanf(bdf.c_str(), "%04x:%02x:%02x.%d", &domain, &bus, &device, &function);
+        pciProperties.address.domain = static_cast<uint32_t>(domain);
+        pciProperties.address.bus = static_cast<uint32_t>(bus);
+        pciProperties.address.device = static_cast<uint32_t>(device);
+        pciProperties.address.function = static_cast<uint32_t>(function);
     }
 
     int32_t maxLinkWidth = -1;
