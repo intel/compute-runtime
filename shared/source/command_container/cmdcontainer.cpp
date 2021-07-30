@@ -222,7 +222,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
 
 void CommandContainer::allocateNextCommandBuffer() {
     size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
-    AllocationProperties properties{0u,
+    AllocationProperties properties{device->getRootDeviceIndex(),
                                     true /* allocateMemory*/,
                                     alignedSize,
                                     GraphicsAllocation::AllocationType::COMMAND_BUFFER,
