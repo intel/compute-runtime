@@ -16,8 +16,17 @@
 using namespace NEO;
 
 TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8AndBarriersWhenComputeCalledThenLocalGroupComputedCorrectly) {
-    //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, hardwareInfo, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface
-    WorkSizeInfo wsInfo(256, 1u, 8, 0u, defaultHwInfo.get(), 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256,                 // maxWorkGroupSize
+                        1u,                  // hasBariers
+                        8,                   // simdSize
+                        0u,                  // slmTotalSize
+                        defaultHwInfo.get(), // hardwareInfo
+                        32u,                 // numThreadsPerSubSlice
+                        0u,                  // localMemorySize
+                        false,               // imgUsed
+                        false                // yTiledSurface
+    );
+
     uint32_t workDim = 3;
     size_t workGroup[3] = {10000, 10000, 10000};
     size_t workGroupSize[3];
@@ -34,6 +43,20 @@ TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8AndBarriersWhenComputeCal
     EXPECT_EQ(workGroupSize[0], 50u);
     EXPECT_EQ(workGroupSize[1], 4u);
     EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenSmallerLocalMemSizeThanSlmTotalSizeThenExceptionIsThrown) {
+    EXPECT_THROW(WorkSizeInfo wsInfo(256,                 // maxWorkGroupSize
+                                     1u,                  // hasBariers
+                                     8,                   // simdSize
+                                     128u,                // slmTotalSize
+                                     defaultHwInfo.get(), // hardwareInfo
+                                     32u,                 // numThreadsPerSubSlice
+                                     64u,                 // localMemorySize
+                                     false,               // imgUsed
+                                     false                // yTiledSurface
+                                     ),
+                 std::exception);
 }
 
 TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8AndNoBarriersWhenComputeCalledThenLocalGroupComputedCorrectly) {
