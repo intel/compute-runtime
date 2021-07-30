@@ -212,7 +212,7 @@ HWTEST_F(EnqueueWriteImageTest, givenDeviceWithBlitterSupportWhenEnqueueWriteIma
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(1);
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
@@ -231,14 +231,14 @@ HWTEST_F(EnqueueWriteImageTest, givenDeviceWithBlitterSupportWhenEnqueueWriteIma
         EXPECT_TRUE(mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {
-        DebugManager.flags.EnableBlitterForReadWriteImage.set(-1);
+        DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueWriteImageHelper<>::enqueueWriteImage(mockCmdQ.get(), image.get(), CL_FALSE, origin, region);
         auto supportExpected = hwHelper.isBlitterForImagesSupported(*hwInfo);
         EXPECT_EQ(supportExpected, mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {
-        DebugManager.flags.EnableBlitterForReadWriteImage.set(0);
+        DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(0);
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueWriteImageHelper<>::enqueueWriteImage(mockCmdQ.get(), image.get(), CL_FALSE, origin, region);
         EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);

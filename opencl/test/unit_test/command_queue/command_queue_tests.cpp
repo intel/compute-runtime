@@ -1312,7 +1312,7 @@ TEST(CommandQueue, givenNotLocalToLocalSvmCopyCommandWhenCallingBlitEnqueuePrefe
 
 TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
     MockImageBase image;
@@ -1339,7 +1339,7 @@ TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenR
 
 TEST(CommandQueue, givenMipMappedImageWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
 
@@ -1356,7 +1356,7 @@ TEST(CommandQueue, givenMipMappedImageWhenCallingBlitEnqueueImageAllowedThenCorr
 
 TEST(CommandQueue, givenImageWithDifferentImageTypesWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
 
