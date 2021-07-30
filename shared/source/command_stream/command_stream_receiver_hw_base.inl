@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -38,7 +39,12 @@
 namespace NEO {
 
 template <typename GfxFamily>
-CommandStreamReceiverHw<GfxFamily>::~CommandStreamReceiverHw() = default;
+CommandStreamReceiverHw<GfxFamily>::~CommandStreamReceiverHw() {
+    auto directSubmissionController = executionEnvironment.getDirectSubmissionController();
+    if (directSubmissionController) {
+        directSubmissionController->unregisterDirectSubmission(this);
+    }
+}
 
 template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment,
@@ -1391,6 +1397,15 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const 
 }
 
 template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission() {
+    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+        this->blitterDirectSubmission->stopRingBuffer();
+    } else {
+        this->directSubmission->stopRingBuffer();
+    }
+}
+
+template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &device, OsContext &osContext) {
     bool ret = true;
 
@@ -1398,15 +1413,18 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
     auto startDirect = osContext.isDirectSubmissionAvailable(device.getHardwareInfo(), submitOnInit);
 
     if (startDirect) {
-        if (EngineHelpers::isBcs(osContext.getEngineType())) {
-            if (!this->isBlitterDirectSubmissionEnabled()) {
+        if (!this->isBlitterDirectSubmissionEnabled() && !this->isDirectSubmissionEnabled()) {
+            if (EngineHelpers::isBcs(osContext.getEngineType())) {
                 blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
                 ret = blitterDirectSubmission->initialize(submitOnInit);
-            }
-        } else {
-            if (!this->isDirectSubmissionEnabled()) {
+
+            } else {
                 directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(device, osContext);
                 ret = directSubmission->initialize(submitOnInit);
+            }
+            auto directSubmissionController = executionEnvironment.getDirectSubmissionController();
+            if (directSubmissionController) {
+                directSubmissionController->registerDirectSubmission(this);
             }
         }
         osContext.setDirectSubmissionActive();

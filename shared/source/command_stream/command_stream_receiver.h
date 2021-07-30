@@ -241,6 +241,8 @@ class CommandStreamReceiver {
         return false;
     }
 
+    virtual void stopDirectSubmission() {}
+
     bool isStaticWorkPartitioningEnabled() const {
         return staticWorkPartitioningEnabled;
     }

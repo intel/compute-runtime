@@ -40,8 +40,6 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
             this->currentTagData.tagValue++;
         }
         this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
-        auto bb = static_cast<DrmAllocation *>(this->ringBuffer)->getBO();
-        bb->wait(-1);
     }
     this->deallocateResources();
 }
@@ -66,12 +64,15 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 
     this->handleResidency();
 
+    auto currentBase = this->ringCommandStream.getGraphicsAllocation()->getGpuAddress();
+    auto offset = ptrDiff(gpuAddress, currentBase);
+
     bool ret = false;
     uint32_t drmContextId = 0u;
     for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {
         if (osContextLinux->getDeviceBitfield().test(drmIterator)) {
             ret |= !!bb->exec(static_cast<uint32_t>(size),
-                              0,
+                              offset,
                               execFlags,
                               false,
                               &this->osContext,

@@ -36,6 +36,8 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
 };
 
 struct MockExecutionEnvironment : ExecutionEnvironment {
+    using ExecutionEnvironment::directSubmissionController;
+
     ~MockExecutionEnvironment() override = default;
     MockExecutionEnvironment() : MockExecutionEnvironment(defaultHwInfo.get()) {}
     MockExecutionEnvironment(const HardwareInfo *hwInfo) : MockExecutionEnvironment(hwInfo, true, 1u) {

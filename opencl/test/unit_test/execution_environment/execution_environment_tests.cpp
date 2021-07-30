@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
+#include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -159,6 +160,24 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported(device->getRootDeviceIndex()));
 }
 
+TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetWhenGetDirectSubmissionControllerThenNotNull) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDirectSubmissionController.set(1);
+
+    auto controller = platform()->peekExecutionEnvironment()->getDirectSubmissionController();
+
+    EXPECT_NE(controller, nullptr);
+}
+
+TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenGetDirectSubmissionControllerThenNull) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDirectSubmissionController.set(0);
+
+    auto controller = platform()->peekExecutionEnvironment()->getDirectSubmissionController();
+
+    EXPECT_EQ(controller, nullptr);
+}
+
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
@@ -167,6 +186,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInfo>) +
                                                   sizeof(std::vector<RootDeviceEnvironment>) +
                                                   sizeof(std::unique_ptr<OsEnvironment>) +
+                                                  sizeof(std::unique_ptr<DirectSubmissionController>) +
                                                   sizeof(bool) +
                                                   (is64bit ? 23 : 15),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
@@ -174,8 +194,11 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInf
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     uint32_t destructorId = 0u;
 
-    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 7> {
+    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 8> {
         MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
+    };
+    struct DirectSubmissionControllerMock : public DestructorCounted<DirectSubmissionController, 7> {
+        DirectSubmissionControllerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct GmmHelperMock : public DestructorCounted<GmmHelper, 6> {
         GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, nullptr, hwInfo) {}
@@ -212,9 +235,10 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->rootDeviceEnvironments[0]->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->debugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
+    executionEnvironment->directSubmissionController = std::make_unique<DirectSubmissionControllerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(8u, destructorId);
+    EXPECT_EQ(9u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMemoryManager) {

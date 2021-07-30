@@ -53,7 +53,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
     void programEndingCmd(LinearStream &commandStream, Device &device, void **patchLocation, bool directSubmissionEnabled);
     void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary);
+
     static void alignToCacheLine(LinearStream &commandStream);
+    static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 
     size_t getRequiredStateBaseAddressSize(const Device &device) const;
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device);
@@ -119,6 +121,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return blitterDirectSubmission.get() != nullptr;
     }
 
+    void stopDirectSubmission() override;
+
     virtual bool isKmdWaitModeActive() { return true; }
 
     bool initDirectSubmission(Device &device, OsContext &osContext) override;
@@ -156,8 +160,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     uint64_t getScratchPatchAddress();
     void createScratchSpaceController();
-
-    static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 
     bool detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const;
     bool checkPlatformSupportsNewResourceImplicitFlush() const;

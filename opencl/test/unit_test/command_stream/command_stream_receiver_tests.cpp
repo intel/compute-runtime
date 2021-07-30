@@ -28,6 +28,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
+#include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 
 #include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -392,6 +393,37 @@ struct InitDirectSubmissionFixture {
 };
 
 using InitDirectSubmissionTest = Test<InitDirectSubmissionFixture>;
+
+HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenInitDirectSubmissionThenCsrIsRegistered) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDirectSubmissionController.set(1);
+
+    auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
+
+    auto controller = static_cast<DirectSubmissionControllerMock *>(device->executionEnvironment->getDirectSubmissionController());
+    controller->keepControlling.store(false);
+    EXPECT_EQ(controller->directSubmissions.size(), 0u);
+
+    osContext->ensureContextInitialized();
+    osContext->setDefaultContext(true);
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
+
+    bool ret = csr->initDirectSubmission(*device, *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+
+    EXPECT_EQ(controller->directSubmissions.size(), 1u);
+    EXPECT_TRUE(controller->directSubmissions.find(csr.get()) != controller->directSubmissions.end());
+
+    csr.reset();
+    EXPECT_EQ(controller->directSubmissions.size(), 0u);
+}
 
 HWTEST_F(InitDirectSubmissionTest, whenDirectSubmissionEnabledOnRcsThenExpectFeatureAvailable) {
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());

@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/affinity_mask.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -78,6 +79,20 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 
         MemoryManager::maxOsContextCount += static_cast<uint32_t>(osContextCount * subDevicesCount + hasRootCsr);
     }
+}
+
+DirectSubmissionController *ExecutionEnvironment::getDirectSubmissionController() {
+    auto initializeDirectSubmissionController = false;
+
+    if (DebugManager.flags.EnableDirectSubmissionController.get() != -1) {
+        initializeDirectSubmissionController = DebugManager.flags.EnableDirectSubmissionController.get();
+    }
+
+    if (initializeDirectSubmissionController && this->directSubmissionController == nullptr) {
+        this->directSubmissionController = std::make_unique<DirectSubmissionController>();
+    }
+
+    return directSubmissionController.get();
 }
 
 void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices) {

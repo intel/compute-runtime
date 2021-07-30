@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -181,10 +182,17 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
         Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, false);
     }
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
+
+    auto bytesToPad = Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer();
+    CommandStreamReceiverHw<GfxFamily>::emitNoop(ringCommandStream, bytesToPad);
+    CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(ringCommandStream);
+
     cpuCachelineFlush(flushPtr, getSizeEnd());
 
     semaphoreData->QueueWorkCount = currentQueueWorkCount;
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
+
+    this->ringStart = false;
 
     return true;
 }
@@ -242,7 +250,9 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSwitchRingBuffer
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd() {
     size_t size = Dispatcher::getSizeStopCommandBuffer() +
-                  Dispatcher::getSizeCacheFlush(*hwInfo);
+                  Dispatcher::getSizeCacheFlush(*hwInfo) +
+                  (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
+                  MemoryConstants::cacheLineSize;
     if (disableMonitorFence) {
         size += Dispatcher::getSizeMonitorFence(*hwInfo);
     }
@@ -332,6 +342,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     //for now workloads requiring cache coherency are not supported
     UNRECOVERABLE_IF(batchBuffer.requiresCoherency);
 
+    this->startRingBuffer();
+
     size_t dispatchSize = getSizeDispatch();
     size_t cycleSize = getSizeSwitchRingBufferSection();
     size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd();
@@ -348,24 +360,15 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     void *currentPosition = dispatchWorkloadSection(batchBuffer);
 
-    if (ringStart) {
-        cpuCachelineFlush(currentPosition, dispatchSize);
-        handleResidency();
-    }
+    cpuCachelineFlush(currentPosition, dispatchSize);
+    handleResidency();
 
     //unblock GPU
     semaphoreData->QueueWorkCount = currentQueueWorkCount;
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
     currentQueueWorkCount++;
     DirectSubmissionDiagnostics::diagnosticModeOneSubmit(diagnostic.get());
-    //when ring buffer is not started at init or being restarted
-    if (!ringStart) {
-        size_t submitSize = dispatchSize;
-        if (buffersSwitched) {
-            submitSize = cycleSize;
-        }
-        ringStart = submit(startGpuVa, submitSize);
-    }
+
     uint64_t flushValue = updateTagValue();
     flushStamp.setStamp(flushValue);
 
