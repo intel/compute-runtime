@@ -60,3 +60,4 @@ constexpr uint64_t gigaUnitTransferToUnitTransfer = 1000 * 1000 * 1000;
 
 constexpr int32_t memoryBusWidth = 128; // bus width in bits
 constexpr int32_t numMemoryChannels = 8;
+#define BITS(x, at, width) (((x) >> (at)) & ((1 << (width)) - 1))

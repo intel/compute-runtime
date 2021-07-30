@@ -152,13 +152,12 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
     return result;
 }
 
-// Parse PCIe configuration space to see if resizable Bar is supported
-bool LinuxPciImp::resizableBarSupported() {
+uint32_t LinuxPciImp::getRebarCapabilityPos() {
     uint32_t pos = PCI_CFG_SPACE_SIZE;
     uint32_t header = 0;
 
     if (!configMemory) {
-        return false;
+        return 0;
     }
 
     // Minimum 8 bytes per capability. Hence maximum capabilities that
@@ -167,24 +166,89 @@ bool LinuxPciImp::resizableBarSupported() {
     auto loopCount = (PCI_CFG_SPACE_EXP_SIZE - PCI_CFG_SPACE_SIZE) / 8;
     header = getDwordFromConfig(pos);
     if (!header) {
-        return false;
+        return 0;
     }
 
     while (loopCount-- > 0) {
         if (PCI_EXT_CAP_ID(header) == PCI_EXT_CAP_ID_REBAR) {
-            return true;
+            return pos;
         }
         pos = PCI_EXT_CAP_NEXT(header);
         if (pos < PCI_CFG_SPACE_SIZE) {
-            return false;
+            return 0;
         }
         header = getDwordFromConfig(pos);
     }
-    return false;
+    return 0;
 }
 
-bool LinuxPciImp::resizableBarEnabled() {
-    return false;
+// Parse PCIe configuration space to see if resizable Bar is supported
+bool LinuxPciImp::resizableBarSupported() {
+    return (getRebarCapabilityPos() > 0);
+}
+
+bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
+    bool isBarResizable = false;
+    uint32_t capabilityRegister = 0, controlRegister = 0;
+    uint32_t nBars = 1;
+    auto rebarCapabilityPos = getRebarCapabilityPos();
+
+    // If resizable Bar is not supported then return false.
+    if (!rebarCapabilityPos) {
+        return false;
+    }
+
+    // As per PCI spec, resizable BAR's capability structure's 52 byte length could be represented as:
+    // --------------------------------------------------------------
+    // | byte offset    |   Description of register                 |
+    // -------------------------------------------------------------|
+    // | +000h          |   PCI Express Extended Capability Header  |
+    // -------------------------------------------------------------|
+    // | +004h          |   Resizable BAR Capability Register (0)   |
+    // -------------------------------------------------------------|
+    // | +008h          |   Resizable BAR Control Register (0)      |
+    // -------------------------------------------------------------|
+    // | +00Ch          |   Resizable BAR Capability Register (1)   |
+    // -------------------------------------------------------------|
+    // | +010h          |   Resizable BAR Control Register (1)      |
+    // -------------------------------------------------------------|
+    // | +014h          |   ---                                     |
+    // -------------------------------------------------------------|
+
+    // Only first Control register(at offset 008h, as shown above), could tell about number of resizable Bars
+    controlRegister = getDwordFromConfig(rebarCapabilityPos + PCI_REBAR_CTRL);
+    nBars = BITS(controlRegister, 5, 3); // control register's bits 5,6 and 7 contain number of resizable bars information
+    for (auto barNumber = 0u; barNumber < nBars; barNumber++) {
+        uint32_t barId = 0;
+        controlRegister = getDwordFromConfig(rebarCapabilityPos + PCI_REBAR_CTRL);
+        barId = BITS(controlRegister, 0, 3); // Control register's bit 0,1,2 tells the index of bar
+        if (barId == barIndex) {
+            isBarResizable = true;
+            break;
+        }
+        rebarCapabilityPos += 8;
+    }
+
+    if (isBarResizable == false) {
+        return false;
+    }
+
+    capabilityRegister = getDwordFromConfig(rebarCapabilityPos + PCI_REBAR_CAP);
+    // Capability register's bit 4 to 31 indicates supported Bar sizes.
+    // In possibleBarSizes, position of each set bit indicates supported bar size. Example,  if set bit
+    // position of possibleBarSizes is from 0 to n, then this indicates BAR size from 2^0 MB to 2^n MB
+    auto possibleBarSizes = (capabilityRegister & PCI_REBAR_CAP_SIZES) >> 4; // First 4 bits are reserved
+    uint32_t largestPossibleBarSize = 0;
+    while (possibleBarSizes >>= 1) { // most significant set bit position of possibleBarSizes would tell larget possible bar size
+        largestPossibleBarSize++;
+    }
+
+    // Control register's bit 8 to 13 indicates current BAR size in encoded form.
+    // Example, real value of current size could be 2^currentSize MB
+    auto currentSize = BITS(controlRegister, 8, 6);
+
+    // If current size is equal to larget possible BAR size, it indicates resizable BAR is enabled.
+    return (currentSize == largestPossibleBarSize);
 }
 
 ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {

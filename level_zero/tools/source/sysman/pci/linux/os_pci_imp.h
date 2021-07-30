@@ -25,7 +25,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     ze_result_t getState(zes_pci_state_t *state) override;
     ze_result_t getProperties(zes_pci_properties_t *properties) override;
     bool resizableBarSupported() override;
-    bool resizableBarEnabled() override;
+    bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     LinuxPciImp() = default;
     LinuxPciImp(OsSysman *pOsSysman);
@@ -51,6 +51,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
         return configMemory[pos] | (configMemory[pos + 1] << 8) |
                (configMemory[pos + 2] << 16) | (configMemory[pos + 3] << 24);
     }
+    uint32_t getRebarCapabilityPos();
 };
 
 } // namespace L0

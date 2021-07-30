@@ -190,7 +190,7 @@ bool WddmPciImp::resizableBarSupported() {
     return supported;
 }
 
-bool WddmPciImp::resizableBarEnabled() {
+bool WddmPciImp::resizableBarEnabled(uint32_t barIndex) {
     uint32_t valueSmall = 0;
     bool enabled = false;
     KmdSysman::RequestProperty request;

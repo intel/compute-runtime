@@ -301,13 +301,16 @@ void testSysmanPci(ze_device_handle_t &device) {
     if (verbose) {
         std::cout << "Bar count = " << count << std::endl;
     }
+
     std::vector<zes_pci_bar_properties_t> pciBarProps(count);
-    zes_pci_bar_properties_1_2_t props1_2 = {};
-    memset(&props1_2, 0, sizeof(zes_pci_bar_properties_1_2_t));
+    std::vector<zes_pci_bar_properties_1_2_t> pciBarExtProps(count);
     for (uint32_t i = 0; i < count; i++) {
-        pciBarProps[i].pNext = static_cast<void *>(&props1_2);
-        pciBarProps[i].stype = ZES_STRUCTURE_TYPE_PCI_BAR_PROPERTIES_1_2;
+        pciBarExtProps[i].stype = ZES_STRUCTURE_TYPE_PCI_BAR_PROPERTIES_1_2;
+        pciBarExtProps[i].pNext = nullptr;
+        pciBarProps[i].stype = ZES_STRUCTURE_TYPE_PCI_BAR_PROPERTIES;
+        pciBarProps[i].pNext = static_cast<void *>(&pciBarExtProps[i]);
     }
+
     VALIDATECALL(zesDevicePciGetBars(device, &count, pciBarProps.data()));
     if (verbose) {
         for (uint32_t i = 0; i < count; i++) {
@@ -315,8 +318,8 @@ void testSysmanPci(ze_device_handle_t &device) {
             std::cout << "pciBarProps.index = " << std::hex << pciBarProps[i].index << std::endl;
             std::cout << "pciBarProps.base = " << std::hex << pciBarProps[i].base << std::endl;
             std::cout << "pciBarProps.size = " << std::hex << pciBarProps[i].size << std::endl;
-            std::cout << "pci_bar_properties_1_2_t.resizableBarSupported = " << static_cast<uint32_t>(props1_2.resizableBarSupported) << std::endl;
-            std::cout << "pci_bar_properties_1_2_t.resizableBarEnabled = " << static_cast<uint32_t>(props1_2.resizableBarEnabled) << std::endl;
+            std::cout << "pci_bar_properties_1_2_t.resizableBarSupported = " << static_cast<uint32_t>(pciBarExtProps[i].resizableBarSupported) << std::endl;
+            std::cout << "pci_bar_properties_1_2_t.resizableBarEnabled = " << static_cast<uint32_t>(pciBarExtProps[i].resizableBarEnabled) << std::endl;
         }
     }
 }
