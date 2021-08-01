@@ -32,10 +32,7 @@ struct BlitXE_HP_CORETests : public ::testing::Test {
         DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
         DebugManager.flags.EnableLocalMemory.set(true);
 
-        HardwareInfo hwInfo = *defaultHwInfo;
-        hwInfo.featureTable.ftrBcsInfo = 1;
-
-        clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     }
 
     uint32_t blitBuffer(CommandStreamReceiver *csr, const BlitProperties &blitProperties, bool blocking, Device &device) {

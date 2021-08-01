@@ -111,6 +111,7 @@ struct DeviceImp : public Device {
     ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) override;
     ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override;
     NEO::Device *getActiveDevice() const;
+    void getDeviceMemoryName(std::string &memoryName);
 
     bool toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &deviceIndex);
     bool toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t deviceIndex);

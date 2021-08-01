@@ -193,9 +193,4 @@ inline bool HwHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_
     return true;
 }
 
-template <typename GfxFamily>
-std::string HwHelperHw<GfxFamily>::getDeviceMemoryName() const {
-    return "HBM";
-}
-
 } // namespace NEO
