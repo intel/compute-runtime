@@ -44,7 +44,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     case GraphicsAllocation::AllocationType::KERNEL_ISA:
     case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
     case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA: {
-        auto placeIsaOnMultiTile = true;
+        auto placeIsaOnMultiTile = (properties.subDevicesBitfield.count() != 1);
 
         if (executionEnvironment.isDebuggingEnabled() &&
             executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->debugger.get()) {
@@ -60,7 +60,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.tileInstanced = true;
         } else {
             storageInfo.cloningOfPageTables = true;
-            storageInfo.memoryBanks = 0x1;
+            storageInfo.memoryBanks = preferredTile;
             storageInfo.tileInstanced = false;
         }
     } break;

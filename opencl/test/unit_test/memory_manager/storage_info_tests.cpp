@@ -71,17 +71,17 @@ TEST_F(MultiDeviceStorageInfoTest, givenDefaultFlagForMultiTileIsaPlacementWhenC
         AllocationProperties properties{mockRootDeviceIndex, false, 0u, isaTypes[i], false, false, singleTileMask};
 
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-        EXPECT_FALSE(storageInfo.cloningOfPageTables);
-        EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
+        EXPECT_TRUE(storageInfo.cloningOfPageTables);
+        EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
         EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
-        EXPECT_TRUE(storageInfo.tileInstanced);
+        EXPECT_FALSE(storageInfo.tileInstanced);
 
         properties.flags.multiOsContextCapable = true;
         auto storageInfo2 = memoryManager->createStorageInfoFromProperties(properties);
-        EXPECT_FALSE(storageInfo2.cloningOfPageTables);
-        EXPECT_EQ(allTilesMask, storageInfo2.memoryBanks);
+        EXPECT_TRUE(storageInfo2.cloningOfPageTables);
+        EXPECT_EQ(singleTileMask, storageInfo2.memoryBanks);
         EXPECT_EQ(allTilesMask, storageInfo2.pageTablesVisibility);
-        EXPECT_TRUE(storageInfo2.tileInstanced);
+        EXPECT_FALSE(storageInfo2.tileInstanced);
     }
 }
 
@@ -95,14 +95,14 @@ TEST_F(MultiDeviceStorageInfoTest, givenDisabledFlagForMultiTileIsaPlacementWhen
         AllocationProperties properties{mockRootDeviceIndex, false, 0u, isaTypes[i], false, false, singleTileMask};
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
         EXPECT_TRUE(storageInfo.cloningOfPageTables);
-        EXPECT_EQ(0x1lu, storageInfo.memoryBanks.to_ulong());
+        EXPECT_EQ(singleTileMask, storageInfo.memoryBanks.to_ulong());
         EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
         EXPECT_FALSE(storageInfo.tileInstanced);
 
         properties.flags.multiOsContextCapable = true;
         auto storageInfo2 = memoryManager->createStorageInfoFromProperties(properties);
         EXPECT_TRUE(storageInfo2.cloningOfPageTables);
-        EXPECT_EQ(0x1lu, storageInfo2.memoryBanks.to_ulong());
+        EXPECT_EQ(singleTileMask, storageInfo2.memoryBanks.to_ulong());
         EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
         EXPECT_FALSE(storageInfo2.tileInstanced);
     }
