@@ -91,6 +91,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     requiredStreamState = {};
     finalStreamState = requiredStreamState;
     containsAnyKernel = false;
+    containsCooperativeKernelsFlag = false;
     clearCommandsToPatch();
     commandListSLMEnabled = false;
 

@@ -15,6 +15,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 namespace ult {
@@ -391,6 +393,42 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
 
         commandQueue->destroy();
     }
+}
+
+HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNonCooperativeKernelsWhenExecuteCommandListsIsCalledThenErrorIsReturned, IsSklOrAbove) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+
+    auto pCommandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
+    pCommandQueue->initialize(false, false);
+
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    ze_group_count_t threadGroupDimensions{1, 1, 1};
+    auto pCommandListWithCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandListWithCooperativeKernels->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, false, false, true);
+
+    auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandListWithNonCooperativeKernels->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, false, false, false);
+
+    {
+        ze_command_list_handle_t commandLists[] = {pCommandListWithCooperativeKernels->toHandle(),
+                                                   pCommandListWithNonCooperativeKernels->toHandle()};
+        auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, result);
+    }
+    {
+        ze_command_list_handle_t commandLists[] = {pCommandListWithNonCooperativeKernels->toHandle(),
+                                                   pCommandListWithCooperativeKernels->toHandle()};
+        auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, result);
+    }
+    pCommandQueue->destroy();
 }
 
 template <typename FamilyType>

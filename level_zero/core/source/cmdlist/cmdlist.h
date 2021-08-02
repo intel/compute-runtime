@@ -207,6 +207,9 @@ struct CommandList : _ze_command_list_handle_t {
     bool isInternal() const {
         return internalUsage;
     }
+    bool containsCooperativeKernels() const {
+        return containsCooperativeKernelsFlag;
+    }
 
     enum CommandListType : uint32_t {
         TYPE_REGULAR = 0u,
@@ -252,6 +255,7 @@ struct CommandList : _ze_command_list_handle_t {
     UnifiedMemoryControls unifiedMemoryControls;
     bool indirectAllocationsAllowed = false;
     bool internalUsage = false;
+    bool containsCooperativeKernelsFlag = false;
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize);
     bool containsStatelessUncachedResource = false;

@@ -75,9 +75,15 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto lockCSR = csr->obtainUniqueOwnership();
 
+    auto commandListsContainCooperativeKernels = CommandList::fromHandle(phCommandLists[0])->containsCooperativeKernels();
+
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         if (peekIsCopyOnlyCommandQueue() != commandList->isCopyOnly()) {
+            return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
+        }
+
+        if (commandListsContainCooperativeKernels != commandList->containsCooperativeKernels()) {
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
     }

@@ -827,5 +827,16 @@ HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingComma
     EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
 }
 
+HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectValueIsReturned, TestPlatforms) {
+    for (auto testValue : ::testing::Bool()) {
+        MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+        commandList.initialize(device, NEO::EngineGroupType::Compute, 0u);
+        commandList.containsCooperativeKernelsFlag = testValue;
+        EXPECT_EQ(testValue, commandList.containsCooperativeKernels());
+        commandList.reset();
+        EXPECT_FALSE(commandList.containsCooperativeKernels());
+    }
+}
+
 } // namespace ult
 } // namespace L0

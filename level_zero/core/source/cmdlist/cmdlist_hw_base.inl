@@ -120,6 +120,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         this->indirectAllocationsAllowed = true;
     }
 
+    if (!containsAnyKernel) {
+        containsCooperativeKernelsFlag = isCooperative;
+    } else if (containsCooperativeKernelsFlag != isCooperative) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     if (kernel->usesSyncBuffer()) {
         auto retVal = (isCooperative
                            ? programSyncBuffer(*kernel, *device->getNEODevice(), pThreadGroupDimensions)
