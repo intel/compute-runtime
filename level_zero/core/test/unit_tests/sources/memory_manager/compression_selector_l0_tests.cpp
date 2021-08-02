@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "test.h"
 
@@ -20,7 +21,7 @@ TEST(CompressionSelectorL0Tests, GivenDefaultDebugFlagWhenProvidingUsmAllocation
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
-    EXPECT_FALSE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties));
+    EXPECT_FALSE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties, *defaultHwInfo));
 }
 
 TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocationThenExpectCompressionDisabled) {
@@ -33,7 +34,7 @@ TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocatio
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
-    EXPECT_FALSE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties));
+    EXPECT_FALSE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties, *defaultHwInfo));
 }
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocationThenExpectCompressionEnabled) {
@@ -46,7 +47,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocation
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
-    EXPECT_TRUE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties));
+    EXPECT_TRUE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties, *defaultHwInfo));
 }
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingSvmGpuAllocationThenExpectCompressionEnabled) {
@@ -58,7 +59,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingSvmGpuAllocat
                                     GraphicsAllocation::AllocationType::SVM_GPU,
                                     deviceBitfield);
 
-    EXPECT_TRUE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties));
+    EXPECT_TRUE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties, *defaultHwInfo));
 }
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingOtherAllocationThenExpectCompressionDisabled) {
@@ -70,7 +71,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingOtherAllocati
                                     GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
                                     deviceBitfield);
 
-    EXPECT_FALSE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties));
+    EXPECT_FALSE(NEO::CompressionSelector::preferRenderCompressedBuffer(properties, *defaultHwInfo));
 }
 
 } // namespace ult

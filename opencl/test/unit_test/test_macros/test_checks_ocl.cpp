@@ -51,5 +51,5 @@ bool TestChecks::supportsAuxResolves() {
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
 
     auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    return clHwHelper.requiresAuxResolves(kernelInfo);
+    return clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo);
 }

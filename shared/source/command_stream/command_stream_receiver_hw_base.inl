@@ -1345,7 +1345,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isAdditionalPipeControlNeeded() 
 }
 
 template <typename GfxFamily>
-inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompressionState(bool auxTranslationRequired) const {
+inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const {
     return MemoryCompressionState::NotApplicable;
 }
 

@@ -30,7 +30,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
         arg.as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = accessedUsingStatelessAddressingMode;
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(std::move(arg));
 
-        EXPECT_EQ(accessedUsingStatelessAddressingMode, clHwHelper.requiresAuxResolves(kernelInfo));
+        EXPECT_EQ(accessedUsingStatelessAddressingMode, clHwHelper.requiresAuxResolves(kernelInfo, hardwareInfo));
     }
 }
 
@@ -116,7 +116,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCo
 
     const size_t sizesToCheck[] = {128, 256, 512, 1023, 1024, 1025};
     for (size_t size : sizesToCheck) {
-        EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(size));
+        EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(size, *defaultHwInfo));
     }
 }
 

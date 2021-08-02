@@ -67,10 +67,11 @@ class HwHelper {
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
     virtual bool preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const = 0;
-    virtual bool isBufferSizeSuitableForRenderCompression(const size_t size) const = 0;
+    virtual bool isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
+    virtual bool allowStatelessCompression(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
@@ -233,7 +234,7 @@ class HwHelperHw : public HwHelper {
 
     bool hvAlign4Required() const override;
 
-    bool isBufferSizeSuitableForRenderCompression(const size_t size) const override;
+    bool isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const override;
 
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
 
@@ -322,6 +323,8 @@ class HwHelperHw : public HwHelper {
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const override;
 
     bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
+
+    bool allowStatelessCompression(const HardwareInfo &hwInfo) const override;
 
     bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
 

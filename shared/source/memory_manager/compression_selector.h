@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 namespace NEO {
 class CompressionSelector {
   public:
-    static bool preferRenderCompressedBuffer(const AllocationProperties &properties);
+    static bool preferRenderCompressedBuffer(const AllocationProperties &properties, const HardwareInfo &hwInfo);
 };
 
 } // namespace NEO

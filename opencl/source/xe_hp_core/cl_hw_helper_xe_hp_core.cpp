@@ -26,8 +26,8 @@ void populateFactoryTable<ClHwHelperHw<Family>>() {
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) const {
-    if (DebugManager.flags.EnableStatelessCompression.get()) {
+bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const HardwareInfo &hwInfo) const {
+    if (HwHelperHw<Family>::get().allowStatelessCompression(hwInfo)) {
         return false;
     } else {
         return !argAsPtr.isPureStateful();
@@ -35,8 +35,8 @@ bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) co
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
-    if (DebugManager.flags.EnableStatelessCompression.get()) {
+bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const HardwareInfo &hwInfo) const {
+    if (HwHelperHw<Family>::get().allowStatelessCompression(hwInfo)) {
         return false;
     } else {
         return hasStatelessAccessToBuffer(kernelInfo);

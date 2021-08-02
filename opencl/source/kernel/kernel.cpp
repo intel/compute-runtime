@@ -261,7 +261,7 @@ cl_int Kernel::initialize() {
     patchBlocksSimdSize();
 
     auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auxTranslationRequired = HwHelper::renderCompressedBuffersSupported(hwInfo) && clHwHelper.requiresAuxResolves(kernelInfo);
+    auxTranslationRequired = HwHelper::renderCompressedBuffersSupported(hwInfo) && clHwHelper.requiresAuxResolves(kernelInfo, hwInfo);
     if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
         auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
     }
@@ -895,7 +895,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
         }
         disableL3 = (argIndex == 0);
     } else if (svmAlloc && svmAlloc->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
-               clHwHelper.requiresNonAuxMode(argAsPtr)) {
+               clHwHelper.requiresNonAuxMode(argAsPtr, hwInfo)) {
         forceNonAuxMode = true;
     }
 
@@ -1401,7 +1401,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
             }
             disableL3 = (argIndex == 0);
         } else if (graphicsAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
-                   clHwHelper.requiresNonAuxMode(argAsPtr)) {
+                   clHwHelper.requiresNonAuxMode(argAsPtr, hwInfo)) {
             forceNonAuxMode = true;
         }
 
@@ -2468,7 +2468,8 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
             }
         }
     }
-    if (DebugManager.flags.EnableStatelessCompression.get()) {
+    auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    if (hwHelper.allowStatelessCompression(getDevice().getHardwareInfo())) {
         for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
             if ((gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
                 (gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::SVM_GPU)) {
@@ -2788,7 +2789,8 @@ bool Kernel::requiresLimitedWorkgroupSize() const {
 }
 
 void Kernel::updateAuxTranslationRequired() {
-    if (DebugManager.flags.EnableStatelessCompression.get()) {
+    auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    if (hwHelper.allowStatelessCompression(getDevice().getHardwareInfo())) {
         if (hasDirectStatelessAccessToHostMemory() || hasIndirectStatelessAccessToHostMemory()) {
             setAuxTranslationRequired(true);
         }

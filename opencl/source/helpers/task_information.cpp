@@ -215,7 +215,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
 
-    auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired());
+    auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired(), commandQueue.getDevice().getHardwareInfo());
 
     DispatchFlags dispatchFlags(
         {},                                                                               //csrDependencies

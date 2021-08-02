@@ -61,7 +61,6 @@ DECLARE_DEBUG_VARIABLE(bool, ZebinIgnoreIcbeVersion, false, "Ignore IGC\'s ICBE 
 DECLARE_DEBUG_VARIABLE(bool, UseExternalAllocatorForSshAndDsh, false, "Use 32 bit external Allocator for ssh and dsh in Level Zero")
 DECLARE_DEBUG_VARIABLE(bool, UseBindlessDebugSip, false, "Use bindless debug system routine")
 DECLARE_DEBUG_VARIABLE(bool, CleanStateInPreamble, false, "Ensures clean state in preamble.")
-DECLARE_DEBUG_VARIABLE(bool, EnableStatelessCompression, false, "Enable E2EC in SBA for all stateless accesses")
 DECLARE_DEBUG_VARIABLE(bool, EnableStatelessCompressionWithUnifiedMemory, false, "Enable stateless compression with unified memory")
 DECLARE_DEBUG_VARIABLE(bool, UseClearColorAllocationForBlitter, false, "false: disable (default), true: enable. If set then clear color allocation for blitter operations is created.")
 DECLARE_DEBUG_VARIABLE(bool, EnableMultiGpuAtomicsOptimization, true, "Enable multi GPU atomics optimization")
@@ -152,6 +151,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceExecutionTile, -1, "-1: default, 0+: given 
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampPacketSize, -1, "-1: default, >0: size in bytes. 4 and 8 supported for experiments")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkGroupCount, -1, "-1: default, >0: Max WG size")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdQueueSynchronousMode, -1, "Overrides all command queues synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
+DECLARE_DEBUG_VARIABLE(int64_t, EnableStatelessCompression, -1, "-1: default, 0: disable, 1: Enable E2EC in SBA for all stateless accesses")
 DECLARE_DEBUG_VARIABLE(bool, EnableFlushTaskSubmission, false, "true: driver uses csr flushTask for immediate submissions, false: driver uses legacy executeCommandList path")
 
 /*LOGGING FLAGS*/

@@ -32,9 +32,10 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 }
 
 template <>
-MemoryCompressionState CommandStreamReceiverHw<Family>::getMemoryCompressionState(bool auxTranslationRequired) const {
+MemoryCompressionState CommandStreamReceiverHw<Family>::getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const {
     auto memoryCompressionState = MemoryCompressionState::NotApplicable;
-    if (DebugManager.flags.EnableStatelessCompression.get()) {
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (hwHelper.allowStatelessCompression(hwInfo)) {
         memoryCompressionState = auxTranslationRequired ? MemoryCompressionState::Disabled : MemoryCompressionState::Enabled;
     }
     return memoryCompressionState;

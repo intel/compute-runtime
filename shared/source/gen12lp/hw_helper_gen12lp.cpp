@@ -137,7 +137,7 @@ uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) 
 }
 
 template <>
-bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size) const {
+bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const {
     return false;
 }
 

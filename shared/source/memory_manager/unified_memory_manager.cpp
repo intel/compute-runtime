@@ -502,7 +502,9 @@ GraphicsAllocation::AllocationType SVMAllocsManager::getGraphicsAllocationType(c
         if (unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined) {
             allocationType = GraphicsAllocation::AllocationType::WRITE_COMBINED;
         } else {
-            if (DebugManager.flags.EnableStatelessCompression.get()) {
+            UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
+            auto &hwHelper = HwHelper::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eRenderCoreFamily);
+            if (hwHelper.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
                 allocationType = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
             } else {
                 allocationType = GraphicsAllocation::AllocationType::BUFFER;

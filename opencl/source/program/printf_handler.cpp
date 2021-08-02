@@ -76,7 +76,8 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 }
 
 void PrintfHandler::printEnqueueOutput() {
-    if (DebugManager.flags.EnableStatelessCompression.get()) {
+    auto &helper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+    if (helper.allowStatelessCompression(device.getHardwareInfo())) {
         auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(device.getHardwareInfo(), device.getSelectorCopyEngine()), EngineUsage::Regular);
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(

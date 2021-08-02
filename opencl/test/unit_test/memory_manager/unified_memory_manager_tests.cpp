@@ -193,7 +193,10 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateUnif
     FailMemoryManager failMemoryManager(executionEnvironment);
     svmManager->memoryManager = &failMemoryManager;
 
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = &device->getDevice();
     auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
@@ -256,7 +259,10 @@ TEST_F(SVMMemoryAllocatorTest, givenNoWriteCombinedFlagwhenDeviceAllocationIsCre
     if (is32bit) {
         GTEST_SKIP();
     }
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = &device->getDevice();
     unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = false;
     auto allocationSize = 4096u;
     auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
@@ -394,7 +400,10 @@ TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIs
     DebugManagerStateRestore restore;
     DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
 
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = &device->getDevice();
     auto allocationSize = 4096u;
     auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
@@ -798,7 +807,11 @@ struct ShareableUnifiedMemoryManagerPropertiesTest : public ::testing::Test {
 };
 
 TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropertyFlagThenShareableAllocationPropertyFlagIsSet) {
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = &device->getDevice();
     unifiedMemoryProperties.allocationFlags.flags.shareable = 1;
 
     auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
@@ -1131,6 +1144,7 @@ class TestCommandQueueHw : public CommandQueueHw<GfxFamily> {
 HWTEST_F(UnfiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenWriteBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY,
                                                                       mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
+    unifiedMemoryProperties.device = &mockContext.getDevice(0)->getDevice();
     auto deviceMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
     auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(deviceMemory);
     GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
@@ -1158,6 +1172,7 @@ HWTEST_F(UnfiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenWriteBufferThenCp
 HWTEST_F(UnfiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenReadBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY,
                                                                       mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
+    unifiedMemoryProperties.device = &mockContext.getDevice(0)->getDevice();
     auto deviceMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
     auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(deviceMemory);
     GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
@@ -1245,7 +1260,7 @@ TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocati
     auto device = mockContext.getDevice(0u);
     auto allocationsManager = mockContext.getSVMAllocsManager();
 
-    for (auto enable : {false, true}) {
+    for (auto enable : {-1, 0, 1}) {
         DebugManager.flags.EnableStatelessCompression.set(enable);
 
         auto deviceMemAllocPtr = clDeviceMemAllocINTEL(&mockContext, device, nullptr, 2048, 0, &retVal);
@@ -1255,7 +1270,7 @@ TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocati
         auto deviceMemAlloc = allocationsManager->getSVMAllocs()->get(deviceMemAllocPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, deviceMemAlloc);
 
-        if (enable) {
+        if (enable > 0) {
             EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, deviceMemAlloc->getAllocationType());
         } else {
             EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, deviceMemAlloc->getAllocationType());

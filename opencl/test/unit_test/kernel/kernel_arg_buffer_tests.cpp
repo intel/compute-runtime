@@ -443,6 +443,7 @@ TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHa
     EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 
     auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
+    deviceProperties.device = &pClDevice->getDevice();
     auto unifiedDeviceMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
     EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 

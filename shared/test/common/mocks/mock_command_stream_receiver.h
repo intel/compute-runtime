@@ -54,7 +54,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
 
-    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
+    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const override {
         return MemoryCompressionState::NotApplicable;
     };
 

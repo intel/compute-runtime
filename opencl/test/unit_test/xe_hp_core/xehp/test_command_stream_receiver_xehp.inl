@@ -126,13 +126,13 @@ XEHPTEST_F(CommandStreamReceiverHwTestWithLocalMemory, givenEnableStatelessCompr
 
     DebugManager.flags.EnableStatelessCompression.set(0);
     for (bool auxTranslationRequired : {false, true}) {
-        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
+        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired, pDevice->getHardwareInfo());
         EXPECT_EQ(MemoryCompressionState::NotApplicable, memoryCompressionState);
     }
 
     DebugManager.flags.EnableStatelessCompression.set(1);
     for (bool auxTranslationRequired : {false, true}) {
-        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
+        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired, pDevice->getHardwareInfo());
         if (auxTranslationRequired) {
             EXPECT_EQ(MemoryCompressionState::Disabled, memoryCompressionState);
         } else {

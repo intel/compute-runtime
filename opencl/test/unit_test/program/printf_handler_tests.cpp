@@ -78,7 +78,7 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
 
     DebugManagerStateRestore restore;
 
-    for (auto enable : {false, true}) {
+    for (auto enable : {-1, 0, 1}) {
         DebugManager.flags.EnableStatelessCompression.set(enable);
 
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -103,7 +103,7 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
         auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getSelectorCopyEngine()), EngineUsage::Regular);
         auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
 
-        if (enable) {
+        if (enable > 0) {
             EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
             EXPECT_EQ(AuxTranslationDirection::AuxToNonAux, bcsCsr->receivedBlitProperties[0].auxTranslationDirection);
         } else {

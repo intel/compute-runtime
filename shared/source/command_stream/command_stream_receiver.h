@@ -204,7 +204,7 @@ class CommandStreamReceiver {
 
     virtual bool isMultiOsContextCapable() const = 0;
 
-    virtual MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const = 0;
+    virtual MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const = 0;
 
     void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
         this->latestSentTaskCount = latestSentTaskCount;

@@ -23,20 +23,20 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenKernelArgumentIsNotP
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
     }
 }
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableStatelessCompression.set(true);
+    DebugManager.flags.EnableStatelessCompression.set(1);
 
     auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_FALSE(clHwHelper.requiresNonAuxMode(argAsPtr));
+        EXPECT_FALSE(clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
     }
 }
 
@@ -47,18 +47,18 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXE_HP_COREThenAuxTranslationIsReq
         KernelInfo kernelInfo{};
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_EQ(!isPureStateful, clHwHelper.requiresAuxResolves(kernelInfo));
+        EXPECT_EQ(!isPureStateful, clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
     }
 }
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXE_HP_COREWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableStatelessCompression.set(true);
+    DebugManager.flags.EnableStatelessCompression.set(1);
 
     auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
     KernelInfo kernelInfo{};
 
-    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo));
+    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
 }
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForRenderCompression) {
@@ -69,7 +69,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableSta
 
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
     for (size_t size : sizesToCheck) {
-        EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(size));
+        EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(size, *defaultHwInfo));
     }
 }
 

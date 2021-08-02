@@ -412,7 +412,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.uncacheable = properties.flags.uncacheable;
     allocationData.flags.flushL3 =
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
-    allocationData.flags.preferRenderCompressed = CompressionSelector::preferRenderCompressedBuffer(properties);
+    allocationData.flags.preferRenderCompressed = CompressionSelector::preferRenderCompressedBuffer(properties, *hwInfo);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
 
     if (properties.allocationType == GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA) {

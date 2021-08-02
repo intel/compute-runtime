@@ -109,7 +109,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     bool isMultiOsContextCapable() const override;
 
-    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override;
+    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const override;
 
     bool isDirectSubmissionEnabled() const override {
         return directSubmission.get() != nullptr;

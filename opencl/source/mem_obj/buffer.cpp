@@ -190,7 +190,7 @@ Buffer *Buffer::create(Context *context,
             *context,
             HwHelper::renderCompressedBuffersSupported(*hwInfo),
             memoryManager->isLocalMemorySupported(rootDeviceIndex),
-            HwHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForRenderCompression(size));
+            HwHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForRenderCompression(size, *hwInfo));
 
         if (ptr) {
             if (!memoryProperties.flags.useHostPtr) {

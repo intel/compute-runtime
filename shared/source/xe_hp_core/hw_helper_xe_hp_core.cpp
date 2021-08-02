@@ -139,8 +139,8 @@ bool HwHelperHw<Family>::isSipWANeeded(const HardwareInfo &hwInfo) const {
 }
 
 template <>
-bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size) const {
-    if (DebugManager.flags.EnableStatelessCompression.get()) {
+bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const {
+    if (allowStatelessCompression(hwInfo)) {
         return true;
     } else {
         return size > KB;
