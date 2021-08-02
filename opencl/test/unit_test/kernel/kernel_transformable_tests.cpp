@@ -209,8 +209,6 @@ HWTEST_F(KernelTransformableTest, givenKernelWithImages2dAndTwoTransformableSamp
     EXPECT_FALSE(secondSurfaceState->getSurfaceArray());
 }
 
-HWTEST_EXCLUDE_PRODUCT(KernelTransformableTest, givenKernelWithImages2dAndTwoTransformableSamplersWhenAnyArgIsResetThenImagesAreNotTransformed, IGFX_XE_HP_SDV);
-
 HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTransformableSamplersWhenChangeSamplerToNontransformableThenImagesAreTransformedTo3d) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;

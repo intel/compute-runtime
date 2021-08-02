@@ -110,14 +110,6 @@ HWTEST_F(ImageSurfaceStateTests, givenGmmWhenSetAuxParamsForCCSThenAuxiliarySurf
 HWTEST_F(ImageSurfaceStateTests, givenHwInfoAndSurfaceStateWhenCheckIfArrayNeededThenFalseReturned) {
     EXPECT_FALSE(checkIfArrayNeeded<FamilyType>(ImageType::Image2D, &pDevice->getHardwareInfo()));
 }
-HWTEST_EXCLUDE_PRODUCT(ImageSurfaceStateTests, givenHwInfoAndSurfaceStateWhenCheckIfArrayNeededThenFalseReturned, IGFX_XE_HP_SDV);
-
-HWTEST2_F(ImageSurfaceStateTests, givenHwInfoAndSurfaceStateWhenSurfaceTypeIsNotSurface2DThenCheckIfArrayReturnFalse, IsXeHpCore) {
-    EXPECT_FALSE(checkIfArrayNeeded<FamilyType>(ImageType::Image1D, &pDevice->getHardwareInfo()));
-}
-HWTEST2_F(ImageSurfaceStateTests, givenHwInfoWhenSurface2DThenCheckIfArrayReturnTrue, IsXeHpCore) {
-    EXPECT_TRUE(checkIfArrayNeeded<FamilyType>(ImageType::Image2D, &pDevice->getHardwareInfo()));
-}
 
 HWTEST_F(ImageSurfaceStateTests, givenImage2DTypeWhenCheckIfArrayNeededReturnsTureThenArrayFlagIsSet) {
     if (!checkIfArrayNeeded<FamilyType>(ImageType::Image2D, &pDevice->getHardwareInfo())) {
