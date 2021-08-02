@@ -24,10 +24,15 @@ namespace L0 {
 CommandQueueAllocatorFn commandQueueFactory[IGFX_MAX_PRODUCT] = {};
 
 CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
-    : device(device), csr(csr), desc(*desc) {
+    : desc(*desc), device(device), csr(csr) {
     int overrideCmdQueueSyncMode = NEO::DebugManager.flags.OverrideCmdQueueSynchronousMode.get();
     if (overrideCmdQueueSyncMode != -1) {
         this->desc.mode = static_cast<ze_command_queue_mode_t>(overrideCmdQueueSyncMode);
+    }
+
+    int overrideUseKmdWaitFunction = NEO::DebugManager.flags.OverrideUseKmdWaitFunction.get();
+    if (overrideUseKmdWaitFunction != -1) {
+        useKmdWaitFunction = !!(overrideUseKmdWaitFunction);
     }
 }
 
@@ -79,9 +84,10 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
 }
 
 ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
-    if (timeout == std::numeric_limits<uint64_t>::max()) {
+    if ((timeout == std::numeric_limits<uint64_t>::max()) && useKmdWaitFunction) {
         auto &waitPair = buffers.getCurrentFlushStamp();
         csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, false);
+        postSyncOperations();
         return ZE_RESULT_SUCCESS;
     } else {
         return synchronizeByPollingForTaskCount(timeout);
@@ -101,11 +107,7 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
         return ZE_RESULT_NOT_READY;
     }
 
-    printFunctionsPrintfOutput();
-
-    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::DebugManager.flags.DebuggerLogBitmask.get()) {
-        device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());
-    }
+    postSyncOperations();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -116,6 +118,14 @@ void CommandQueueImp::printFunctionsPrintfOutput() {
         this->printfFunctionContainer[i]->printPrintfOutput();
     }
     this->printfFunctionContainer.clear();
+}
+
+void CommandQueueImp::postSyncOperations() {
+    printFunctionsPrintfOutput();
+
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::DebugManager.flags.DebuggerLogBitmask.get()) {
+        device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());
+    }
 }
 
 CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,

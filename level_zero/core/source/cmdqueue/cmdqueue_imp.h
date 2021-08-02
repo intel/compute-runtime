@@ -89,15 +89,21 @@ struct CommandQueueImp : public CommandQueue {
 
     void printFunctionsPrintfOutput();
 
-    Device *device = nullptr;
-    NEO::CommandStreamReceiver *csr = nullptr;
-    ze_command_queue_desc_t desc;
-    NEO::LinearStream *commandStream = nullptr;
-    std::atomic<uint32_t> taskCount{0};
-    std::vector<Kernel *> printfFunctionContainer;
-    bool gpgpuEnabled = false;
+    void postSyncOperations();
+
     CommandBufferManager buffers;
     NEO::HeapContainer heapContainer;
+    ze_command_queue_desc_t desc;
+    std::vector<Kernel *> printfFunctionContainer;
+
+    Device *device = nullptr;
+    NEO::CommandStreamReceiver *csr = nullptr;
+    NEO::LinearStream *commandStream = nullptr;
+
+    std::atomic<uint32_t> taskCount{0};
+
+    bool gpgpuEnabled = false;
+    bool useKmdWaitFunction = false;
 };
 
 } // namespace L0

@@ -1397,37 +1397,77 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
 
 using CommandQueueSynchronizeTest = Test<ContextFixture>;
 
+template <typename GfxFamily>
+struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
+    ~SynchronizeCsr() override {
+        delete tagAddress;
+    }
+
+    SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
+        : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
+        tagAddress = new uint32_t;
+    }
+
+    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+        waitForComplitionCalledTimes++;
+        return true;
+    }
+
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+        waitForTaskCountWithKmdNotifyFallbackCalled++;
+        NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
+    }
+
+    volatile uint32_t *getTagAddress() const override {
+        return tagAddress;
+    }
+
+    uint32_t *tagAddress;
+    uint32_t waitForComplitionCalledTimes = 0;
+    uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
+};
+
 HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
-    struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<FamilyType> {
-        ~SynchronizeCsr() override {
-            delete tagAddress;
-        }
+    auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                          device->getNEODevice()->getDeviceBitfield()));
 
-        SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
-            : NEO::UltCommandStreamReceiver<FamilyType>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
-            tagAddress = new uint32_t;
-        }
+    ze_command_queue_desc_t desc = {};
+    ze_command_queue_handle_t commandQueue = {};
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, commandQueue);
 
-        bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
-            waitForComplitionCalledTimes++;
-            return true;
-        }
+    CommandQueue *queue = reinterpret_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
+    queue->csr = csr.get();
 
-        void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
-            waitForTaskCountWithKmdNotifyFallbackCalled++;
-            NEO::UltCommandStreamReceiver<FamilyType>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
-        }
+    uint64_t timeout = 10;
+    bool enableTimeoutExpected = true;
+    int64_t timeoutMicrosecondsExpected = timeout;
 
-        volatile uint32_t *getTagAddress() const override {
-            return tagAddress;
-        }
-        uint32_t *tagAddress;
-        uint32_t waitForComplitionCalledTimes = 0;
-        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
-    };
+    queue->synchronize(timeout);
 
-    auto csr = std::unique_ptr<SynchronizeCsr>(new SynchronizeCsr(*device->getNEODevice()->getExecutionEnvironment(),
-                                                                  device->getNEODevice()->getDeviceBitfield()));
+    EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+
+    timeout = std::numeric_limits<uint64_t>::max();
+    enableTimeoutExpected = false;
+    timeoutMicrosecondsExpected = NEO::TimeoutControls::maxTimeout;
+
+    queue->synchronize(timeout);
+
+    EXPECT_EQ(2u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.OverrideUseKmdWaitFunction.set(1);
+
+    auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                          device->getNEODevice()->getDeviceBitfield()));
+
     ze_command_queue_desc_t desc = {};
     ze_command_queue_handle_t commandQueue = {};
     ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
