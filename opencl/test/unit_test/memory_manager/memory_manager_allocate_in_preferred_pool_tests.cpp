@@ -800,7 +800,7 @@ HWTEST_F(GetAllocationDataTestHw, givenSemaphoreBufferAllocationWhenGetAllocatio
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 0x1000u, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_FALSE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.allocateMemory);
     EXPECT_FALSE(allocData.flags.allow32Bit);
     EXPECT_FALSE(allocData.flags.allow64kbPages);
