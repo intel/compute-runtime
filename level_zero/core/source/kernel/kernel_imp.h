@@ -150,6 +150,9 @@ struct KernelImp : Kernel {
         return privateMemoryGraphicsAllocation;
     }
 
+    ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) override;
+    uint32_t getSchedulingHintExp();
+
   protected:
     KernelImp() = default;
 
@@ -203,6 +206,8 @@ struct KernelImp : Kernel {
     ze_cache_config_flags_t cacheConfigFlags = 0u;
 
     bool kernelHasIndirectAccess = true;
+
+    uint32_t schedulingHintExpFlag = 0u;
 };
 
 } // namespace L0

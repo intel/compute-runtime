@@ -227,3 +227,10 @@ zeKernelSetCacheConfig(
     ze_cache_config_flags_t flags) {
     return L0::Kernel::fromHandle(hKernel)->setCacheConfig(flags);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelSchedulingHintExp(
+    ze_kernel_handle_t hKernel,
+    ze_scheduling_hint_exp_desc_t *pHint) {
+    return L0::Kernel::fromHandle(hKernel)->setSchedulingHintExp(pHint);
+}

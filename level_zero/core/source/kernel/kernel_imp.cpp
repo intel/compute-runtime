@@ -721,11 +721,15 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     auto isaAllocation = this->kernelImmData->getIsaGraphicsAllocation();
+
+    auto neoDevice = module->getDevice()->getNEODevice();
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    this->schedulingHintExpFlag = hwHelper.getDefaultThreadArbitrationPolicy();
+
     if (this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap != nullptr &&
         isaAllocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL) {
-        auto neoDevice = module->getDevice()->getNEODevice();
-        auto &hwInfo = neoDevice->getHardwareInfo();
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
                                                               *neoDevice,
                                                               isaAllocation,
@@ -803,7 +807,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     residencyContainer.resize(this->kernelArgHandlers.size(), nullptr);
 
     auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
-    auto neoDevice = module->getDevice()->getNEODevice();
     if ((kernelAttributes.perHwThreadPrivateMemorySize != 0U) && (false == module->shouldAllocatePrivateMemoryPerDispatch())) {
         this->privateMemoryGraphicsAllocation = allocatePrivateMemoryGraphicsAllocation();
         this->patchCrossthreadDataWithPrivateAllocation(this->privateMemoryGraphicsAllocation);
@@ -947,6 +950,18 @@ ze_result_t KernelImp::setCacheConfig(ze_cache_config_flags_t flags) {
 
 NEO::GraphicsAllocation *KernelImp::getIsaAllocation() const {
     return getImmutableData()->getIsaGraphicsAllocation();
+}
+
+ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) {
+    this->schedulingHintExpFlag = pHint->flags;
+    return ZE_RESULT_SUCCESS;
+}
+
+uint32_t KernelImp::getSchedulingHintExp() {
+    if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        this->schedulingHintExpFlag = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
+    }
+    return this->schedulingHintExpFlag;
 }
 
 } // namespace L0

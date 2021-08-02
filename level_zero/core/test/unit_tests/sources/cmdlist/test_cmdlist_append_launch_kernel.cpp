@@ -121,6 +121,43 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAll
     ASSERT_FALSE(commandList->hasIndirectAllocationsAllowed());
 }
 
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionTheSameFlagIsUsedToSetCmdListThreadArbitrationPolicy) {
+    createKernel();
+    ze_scheduling_hint_exp_desc_t *pHint = new ze_scheduling_hint_exp_desc_t;
+    pHint->pNext = nullptr;
+    pHint->flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN;
+    kernel->setSchedulingHintExp(pHint);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(commandList->threadArbitrationPolicy, pHint->flags);
+    delete (pHint);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionAndOverrideThreadArbitrationPolicyThenTheLatterIsUsedToSetCmdListThreadArbitrationPolicy) {
+    createKernel();
+    ze_scheduling_hint_exp_desc_t *pHint = new ze_scheduling_hint_exp_desc_t;
+    pHint->pNext = nullptr;
+    pHint->flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN;
+    kernel->setSchedulingHintExp(pHint);
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverrideThreadArbitrationPolicy.set(0);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(commandList->threadArbitrationPolicy, 0u);
+    delete (pHint);
+}
+
 HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelThenBbEndIsAddedAndNewCmdBufferAllocated) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     createKernel();
