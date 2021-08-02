@@ -1773,6 +1773,36 @@ TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesRelea
     EXPECT_TRUE(deviceImp->resourcesReleased);
 }
 
+TEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlagsThenCooperativeKernelsAreSupported) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
+                                                                                              rootDeviceIndex);
+    Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    uint32_t count = 0;
+    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    std::vector<ze_command_queue_group_properties_t> properties(count);
+    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    NEO::EngineGroupType engineGroupTypes[] = {NEO::EngineGroupType::RenderCompute, NEO::EngineGroupType::Compute};
+    for (auto engineGroupType : engineGroupTypes) {
+        auto groupOrdinal = static_cast<size_t>(engineGroupType);
+        if (groupOrdinal >= count) {
+            continue;
+        }
+        auto expectedValue = hwHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo.platform.eProductFamily);
+        auto actualValue = NEO::isValueSet(properties[groupOrdinal].flags, ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
+        EXPECT_EQ(expectedValue, actualValue);
+    }
+}
+
 TEST(DevicePropertyFlagIsIntegratedTest, givenIntegratedDeviceThenCorrectDevicePropertyFlagSet) {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
