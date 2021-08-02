@@ -86,10 +86,6 @@ struct Event : _ze_event_handle_t {
 
     bool isEventTimestampFlagSet() { return isTimestampEvent; }
 
-    static bool isTimeoutInfinite(uint64_t timeout) {
-        return timeout == std::numeric_limits<uint64_t>::max();
-    }
-
   protected:
     uint64_t gpuAddress;
     NEO::GraphicsAllocation *allocation = nullptr;

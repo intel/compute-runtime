@@ -488,10 +488,6 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAn
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(EventSynchronizeTest, givenEventTreatUint64MaxAsInfiniteTimeout) {
-    EXPECT_TRUE(L0::Event::isTimeoutInfinite(UINT64_MAX));
-}
-
 using EventAubCsrTest = Test<DeviceFixture>;
 
 HWTEST_F(EventAubCsrTest, givenCallToEventHostSynchronizeWithAubModeCsrReturnsSuccess) {

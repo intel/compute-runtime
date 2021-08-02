@@ -189,7 +189,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
         NEO::WaitUtils::waitFunction(nullptr, 0u);
 
-        if (isTimeoutInfinite(timeout)) {
+        if (timeout == std::numeric_limits<uint32_t>::max()) {
             continue;
         }
 
