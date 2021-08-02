@@ -292,3 +292,9 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreHelperWhenCheckDirectSubm
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
     EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 5, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
 }
+
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreWhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {
+    const auto &hwInfo = *defaultHwInfo;
+    auto &helper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_TRUE(helper.isBlitterForImagesSupported(hwInfo));
+}
