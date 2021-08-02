@@ -23,8 +23,12 @@ TEST(DrmMapperTests, GivenBcsWhenGettingEngineNodeMapThenExecBltIsReturned) {
     EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS), expected);
 }
 
-TEST(DrmMapperTests, GivenCcsWhenGettingEngineNodeMapThenExceptionIsThrown) {
-    EXPECT_THROW(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS), std::exception);
+TEST(DrmMapperTests, GivenCcsWhenGettingEngineNodeMapThenReturnDefault) {
+    unsigned int expected = I915_EXEC_DEFAULT;
+    EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS), expected);
+    EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS1), expected);
+    EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS2), expected);
+    EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS3), expected);
 }
 
 TEST(DrmMapperTests, GivenVcsWhenGettingEngineNodeMapThenExceptionIsThrown) {

@@ -112,6 +112,8 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpWhenKernelIsaIsBelowThresholdAn
     Vec3<size_t> offset{0, 0, 0};
     DispatchInfo dispatchInfo{pClDevice, &kernel, 1, gws, elws, offset};
 
+    auto maxWgSize = pClDevice->getSharedDeviceInfo().maxWorkGroupSize;
+
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_EQ(64u, expectedLws.x * expectedLws.y * expectedLws.z);
@@ -122,8 +124,8 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpWhenKernelIsaIsBelowThresholdAn
 
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
-        EXPECT_EQ(512u, expectedLws.x * expectedLws.y * expectedLws.z);
-        EXPECT_EQ(512u, expectedLws.x);
+        EXPECT_EQ(maxWgSize, expectedLws.x * expectedLws.y * expectedLws.z);
+        EXPECT_EQ(maxWgSize, expectedLws.x);
     }
 
     mockKernel.mockKernel->slmTotalSize = 0u;
@@ -131,8 +133,8 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpWhenKernelIsaIsBelowThresholdAn
 
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
-        EXPECT_EQ(512u, expectedLws.x * expectedLws.y * expectedLws.z);
-        EXPECT_EQ(512u, expectedLws.x);
+        EXPECT_EQ(maxWgSize, expectedLws.x * expectedLws.y * expectedLws.z);
+        EXPECT_EQ(maxWgSize, expectedLws.x);
     }
 
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 0u;
@@ -140,8 +142,8 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpWhenKernelIsaIsBelowThresholdAn
     pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = REVISION_B;
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
-        EXPECT_EQ(512u, expectedLws.x * expectedLws.y * expectedLws.z);
-        EXPECT_EQ(512u, expectedLws.x);
+        EXPECT_EQ(maxWgSize, expectedLws.x * expectedLws.y * expectedLws.z);
+        EXPECT_EQ(maxWgSize, expectedLws.x);
     }
 }
 
@@ -158,9 +160,14 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, givenSmallKernelAndGwsThatIsNotDivisabl
     Vec3<size_t> offset{0, 0, 0};
     DispatchInfo dispatchInfo{pClDevice, &kernel, 1, gws, elws, offset};
 
+    auto maxWgSize = pClDevice->getSharedDeviceInfo().maxWorkGroupSize;
+
     {
-        auto expectedLws = computeWorkgroupSize(dispatchInfo);
-        EXPECT_EQ(344u, expectedLws.x * expectedLws.y * expectedLws.z);
-        EXPECT_EQ(344u, expectedLws.x);
+        auto calculatedLws = computeWorkgroupSize(dispatchInfo);
+
+        auto expectedLws = (maxWgSize < 344) ? 8u : 344u;
+
+        EXPECT_EQ(expectedLws, calculatedLws.x * calculatedLws.y * calculatedLws.z);
+        EXPECT_EQ(expectedLws, calculatedLws.x);
     }
 }

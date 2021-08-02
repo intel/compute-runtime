@@ -139,4 +139,9 @@ bool HwHelperHw<GfxFamily>::additionalPipeControlArgsRequired() const {
     return false;
 }
 
+template <typename GfxFamily>
+std::string HwHelperHw<GfxFamily>::getDeviceMemoryName() const {
+    return "DDR";
+}
+
 } // namespace NEO

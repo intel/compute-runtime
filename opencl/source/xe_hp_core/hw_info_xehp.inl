@@ -150,6 +150,13 @@ void XE_HP_SDV_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool set
         gtSysInfo->MaxEuPerSubSlice = 40;
         gtSysInfo->MaxSlicesSupported = 1;
         gtSysInfo->MaxSubSlicesSupported = 1;
+
+        gtSysInfo->L3BankCount = 1;
+
+        gtSysInfo->CCSInfo.IsValid = true;
+        gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
+
+        hwInfo->featureTable.ftrBcsInfo = 1;
     }
 
     if (setupFeatureTableAndWorkaroundTable) {
