@@ -283,13 +283,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         }
 
         auto &hwInfo = device->getNEODevice()->getHardwareInfo();
-        size_t estimatedSizeRequired =
-            NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packetsToReset + sizeof(MI_BATCH_BUFFER_END);
-        if (commandContainer.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
-            auto bbEnd = commandContainer.getCommandStream()->template getSpaceForCmd<MI_BATCH_BUFFER_END>();
-            *bbEnd = GfxFamily::cmdInitBatchBufferEnd;
-            commandContainer.allocateNextCommandBuffer();
-        }
+        increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packetsToReset);
 
         for (uint32_t i = 0u; i < packetsToReset; i++) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
@@ -1971,6 +1965,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reserveSpace(size_t size, void
         *ptr = commandContainer.getCommandStream()->getSpace(size);
     }
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::increaseCommandStreamSpace(size_t commandSize) {
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+    size_t estimatedSizeRequired = commandSize + sizeof(MI_BATCH_BUFFER_END);
+    if (commandContainer.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
+        auto bbEnd = commandContainer.getCommandStream()->template getSpaceForCmd<MI_BATCH_BUFFER_END>();
+        *bbEnd = GfxFamily::cmdInitBatchBufferEnd;
+        commandContainer.allocateNextCommandBuffer();
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
