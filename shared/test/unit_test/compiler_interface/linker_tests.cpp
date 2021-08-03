@@ -604,10 +604,20 @@ TEST(LinkerInputTests, WhenDecodingElfGlobalDataRelocationsThenCorrectRelocation
     reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
     reloc2.symbolName = "symbol2";
     reloc2.symbolSectionIndex = 2;
-    reloc2.symbolTableIndex = 0;
+    reloc2.symbolTableIndex = 1;
     reloc2.targetSectionIndex = 1;
 
     elf64.relocations.emplace_back(reloc2);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc3;
+    reloc3.offset = 0;
+    reloc3.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc3.symbolName = "symbol3";
+    reloc3.symbolSectionIndex = 0;
+    reloc3.symbolTableIndex = 2;
+    reloc3.targetSectionIndex = 1;
+
+    elf64.relocations.emplace_back(reloc3);
 
     NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
 
@@ -616,7 +626,7 @@ TEST(LinkerInputTests, WhenDecodingElfGlobalDataRelocationsThenCorrectRelocation
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
 
     auto relocations = linkerInput.getDataRelocations();
-    ASSERT_EQ(2u, relocations.size());
+    ASSERT_EQ(3u, relocations.size());
 
     EXPECT_EQ(64u, relocations[0].offset);
     EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[0].relocationSegment);
@@ -629,6 +639,12 @@ TEST(LinkerInputTests, WhenDecodingElfGlobalDataRelocationsThenCorrectRelocation
     EXPECT_EQ("symbol2", relocations[1].symbolName);
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocations[1].symbolSegment);
     EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[1].type);
+
+    EXPECT_EQ(0u, relocations[2].offset);
+    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[2].relocationSegment);
+    EXPECT_EQ("symbol3", relocations[2].symbolName);
+    EXPECT_EQ(NEO::SegmentType::Instructions, relocations[2].symbolSegment);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[2].type);
 }
 
 TEST(LinkerInputTests, WhenDecodingElfConstantDataRelocationsThenCorrectRelocationsAreAdded) {
@@ -719,14 +735,14 @@ TEST(LinkerInputTests, GivenUnsupportedDataSegmentWhenDecodingElfDataRelocationT
     ASSERT_EQ(0u, relocations.size());
 }
 
-TEST(LinkerInputTests, GivenUnsupportedSymbolSegmentWhenDecodingElfDataRelocationThenNoRelocationsAreAddedAndDebugBreakIsCalled) {
+TEST(LinkerInputTests, GivenUnsupportedSymbolSegmentWhenDecodingElfDataRelocationThenNoRelocationsAreAdded) {
     NEO::LinkerInput linkerInput = {};
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
     elf64.elfFileHeader = &header;
 
     std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
+    sectionNames[0] = ".unknown_section";
     sectionNames[1] = ".data";
     sectionNames[2] = ".data.const";
 

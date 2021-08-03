@@ -136,7 +136,6 @@ bool LinkerInput::decodeRelocationTable(const void *data, uint32_t numEntries, u
 
 void LinkerInput::addDataRelocationInfo(const RelocationInfo &relocationInfo) {
     DEBUG_BREAK_IF((relocationInfo.relocationSegment != SegmentType::GlobalConstants) && (relocationInfo.relocationSegment != SegmentType::GlobalVariables));
-    DEBUG_BREAK_IF((relocationInfo.symbolSegment != SegmentType::GlobalConstants) && (relocationInfo.symbolSegment != SegmentType::GlobalVariables));
     DEBUG_BREAK_IF(relocationInfo.type == LinkerInput::RelocationInfo::Type::AddressHigh);
     this->traits.requiresPatchingOfGlobalVariablesBuffer |= (relocationInfo.relocationSegment == SegmentType::GlobalVariables);
     this->traits.requiresPatchingOfGlobalConstantsBuffer |= (relocationInfo.relocationSegment == SegmentType::GlobalConstants);
@@ -190,17 +189,12 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
         } else if (nameRef.startsWith(NEO::Elf::SpecialSectionNames::data.data())) {
             auto symbolSectionName = elf.getSectionName(reloc.symbolSectionIndex);
             auto symbolSegment = getSegmentForSection(symbolSectionName);
-
-            if (symbolSegment == NEO::SegmentType::GlobalConstants || symbolSegment == NEO::SegmentType::GlobalVariables) {
-                relocationInfo.symbolSegment = symbolSegment;
-                auto relocationSegment = getSegmentForSection(nameRef);
-
-                if (relocationSegment == NEO::SegmentType::GlobalConstants || relocationSegment == NEO::SegmentType::GlobalVariables) {
-                    relocationInfo.relocationSegment = relocationSegment;
-                    this->addDataRelocationInfo(relocationInfo);
-                }
-            } else {
-                DEBUG_BREAK_IF(true);
+            relocationInfo.symbolSegment = symbolSegment;
+            auto relocationSegment = getSegmentForSection(nameRef);
+            if (symbolSegment != NEO::SegmentType::Unknown &&
+                (relocationSegment == NEO::SegmentType::GlobalConstants || relocationSegment == NEO::SegmentType::GlobalVariables)) {
+                relocationInfo.relocationSegment = relocationSegment;
+                this->addDataRelocationInfo(relocationInfo);
             }
         }
     }
