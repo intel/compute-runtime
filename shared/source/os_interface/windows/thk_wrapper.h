@@ -96,6 +96,11 @@ class ThkWrapper {
         return *this;
     }
 
+    ThkWrapper &operator=(Func func) {
+        mFunc = func;
+        return *this;
+    }
+
     // This operator overload is for implicit casting ThkWrapper struct to Function Pointer in GetPfn methods like GetEscapePfn() or for comparing against NULL function pointer
     operator Func() const {
         return mFunc;
