@@ -31,14 +31,6 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
                 unsupportedDeviceDetected = true;
             }
 
-            if (is32bit) {
-#ifdef SUPPORT_XE_HP_SDV
-                if (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eProductFamily == IGFX_XE_HP_SDV) {
-                    unsupportedDeviceDetected = true;
-                }
-#endif
-            }
-
             if (unsupportedDeviceDetected) {
                 executionEnvironment.rootDeviceEnvironments.erase(executionEnvironment.rootDeviceEnvironments.begin() + i);
             } else {

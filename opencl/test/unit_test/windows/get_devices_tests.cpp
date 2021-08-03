@@ -42,28 +42,6 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, whenPrepareDeviceEnvironmentsIsCalledTh
     EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
 }
 
-HWTEST_F(PrepareDeviceEnvironmentsTests, Given32bitApplicationWhenPrepareDeviceEnvironmentsIsCalledThenFalseIsReturned) {
-    REQUIRE_32BIT_OR_SKIP();
-    DebugManagerStateRestore restore;
-    DebugManager.flags.NodeOrdinal.set(0); // Dont disable RCS
-
-    NEO::ExecutionEnvironment executionEnviornment;
-
-    auto returnValue = NEO::prepareDeviceEnvironments(executionEnviornment);
-
-    switch (::productFamily) {
-    case IGFX_UNKNOWN:
-#ifdef SUPPORT_XE_HP_SDV
-    case IGFX_XE_HP_SDV:
-#endif
-        EXPECT_FALSE(returnValue);
-        break;
-    default:
-        EXPECT_TRUE(returnValue);
-        break;
-    }
-}
-
 HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializingThenReturnFalse) {
     REQUIRE_64BIT_OR_SKIP();
 
