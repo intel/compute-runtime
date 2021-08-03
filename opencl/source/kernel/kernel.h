@@ -613,14 +613,14 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         std::unique_ptr<TimestampPacketContainer> kernelStandardTimestamps;
         std::unique_ptr<TimestampPacketContainer> kernelSubdeviceTimestamps;
         TunningStatus status;
-        bool singleSubdevicePrefered = false;
+        bool singleSubdevicePreferred = false;
     };
 
     bool hasTunningFinished(KernelSubmissionData &submissionData);
     bool hasRunFinished(TimestampPacketContainer *timestampContainer);
 
     std::unordered_map<KernelConfig, KernelSubmissionData, KernelConfigHash> kernelSubmissionMap;
-    bool singleSubdevicePreferedInCurrentEnqueue = false;
+    bool singleSubdevicePreferredInCurrentEnqueue = false;
 
     bool kernelHasIndirectAccess = true;
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;

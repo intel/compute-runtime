@@ -1102,7 +1102,7 @@ void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, c
     }
 
     if (performTunning == TunningType::SIMPLE) {
-        this->singleSubdevicePreferedInCurrentEnqueue = !this->kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
+        this->singleSubdevicePreferredInCurrentEnqueue = !this->kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
 
     } else if (performTunning == TunningType::FULL) {
         KernelConfig config{gws, lws, offsets};
@@ -1115,14 +1115,14 @@ void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, c
             submissionData.status = TunningStatus::STANDARD_TUNNING_IN_PROGRESS;
             submissionData.kernelStandardTimestamps->assignAndIncrementNodesRefCounts(*timestampContainer);
             this->kernelSubmissionMap[config] = std::move(submissionData);
-            this->singleSubdevicePreferedInCurrentEnqueue = false;
+            this->singleSubdevicePreferredInCurrentEnqueue = false;
             return;
         }
 
         auto &submissionData = submissionDataIt->second;
 
         if (submissionData.status == TunningStatus::TUNNING_DONE) {
-            this->singleSubdevicePreferedInCurrentEnqueue = submissionData.singleSubdevicePrefered;
+            this->singleSubdevicePreferredInCurrentEnqueue = submissionData.singleSubdevicePreferred;
         }
 
         if (submissionData.status == TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS) {
@@ -1130,16 +1130,16 @@ void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, c
                 submissionData.status = TunningStatus::TUNNING_DONE;
                 submissionData.kernelStandardTimestamps.reset();
                 submissionData.kernelSubdeviceTimestamps.reset();
-                this->singleSubdevicePreferedInCurrentEnqueue = submissionData.singleSubdevicePrefered;
+                this->singleSubdevicePreferredInCurrentEnqueue = submissionData.singleSubdevicePreferred;
             } else {
-                this->singleSubdevicePreferedInCurrentEnqueue = false;
+                this->singleSubdevicePreferredInCurrentEnqueue = false;
             }
         }
 
         if (submissionData.status == TunningStatus::STANDARD_TUNNING_IN_PROGRESS) {
             submissionData.status = TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS;
             submissionData.kernelSubdeviceTimestamps->assignAndIncrementNodesRefCounts(*timestampContainer);
-            this->singleSubdevicePreferedInCurrentEnqueue = true;
+            this->singleSubdevicePreferredInCurrentEnqueue = true;
         }
     }
 }
@@ -1159,7 +1159,7 @@ bool Kernel::hasTunningFinished(KernelSubmissionData &submissionData) {
     Event::getBoundaryTimestampValues(submissionData.kernelSubdeviceTimestamps.get(), globalStartTS, globalEndTS);
     auto subdeviceTSDiff = globalEndTS - globalStartTS;
 
-    submissionData.singleSubdevicePrefered = standardTSDiff > subdeviceTSDiff;
+    submissionData.singleSubdevicePreferred = standardTSDiff > subdeviceTSDiff;
 
     return true;
 }
@@ -1176,7 +1176,7 @@ bool Kernel::hasRunFinished(TimestampPacketContainer *timestampContainer) {
 }
 
 bool Kernel::isSingleSubdevicePreferred() const {
-    return this->singleSubdevicePreferedInCurrentEnqueue;
+    return this->singleSubdevicePreferredInCurrentEnqueue;
 }
 
 void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {

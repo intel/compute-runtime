@@ -1941,21 +1941,21 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::STANDARD_TUNNING_IN_PROGRESS);
-    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
     mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &subdeviceContainer);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
-    EXPECT_TRUE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+    EXPECT_TRUE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
     mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
-    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
     uint32_t data[4] = {static_cast<uint32_t>(container.getNode(0u)->getContextStartValue(0)),
                         static_cast<uint32_t>(container.getNode(0u)->getGlobalStartValue(0)),
@@ -1968,7 +1968,7 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
-    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
     data[0] = static_cast<uint32_t>(subdeviceContainer.getNode(0u)->getContextStartValue(0));
     data[1] = static_cast<uint32_t>(subdeviceContainer.getNode(0u)->getGlobalStartValue(0));
@@ -1984,7 +1984,7 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_NE(result->second.kernelStandardTimestamps.get(), nullptr);
     EXPECT_NE(result->second.kernelSubdeviceTimestamps.get(), nullptr);
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
-    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
     data[0] = static_cast<uint32_t>(subdeviceContainer.getNode(1u)->getContextStartValue(0));
     data[1] = static_cast<uint32_t>(subdeviceContainer.getNode(1u)->getGlobalStartValue(0));
@@ -2000,13 +2000,13 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.kernelStandardTimestamps.get(), nullptr);
     EXPECT_EQ(result->second.kernelSubdeviceTimestamps.get(), nullptr);
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::TUNNING_DONE);
-    EXPECT_EQ(result->second.singleSubdevicePrefered, mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+    EXPECT_EQ(result->second.singleSubdevicePreferred, mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
     mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::TUNNING_DONE);
-    EXPECT_EQ(result->second.singleSubdevicePrefered, mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+    EXPECT_EQ(result->second.singleSubdevicePreferred, mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 }
 
 HWTEST_F(KernelResidencyTest, givenSimpleKernelTunningAndNoAtomicsWhenPerformTunningThenSingleSubdeviceIsPreferred) {

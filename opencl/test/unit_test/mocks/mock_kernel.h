@@ -125,7 +125,7 @@ class MockKernel : public Kernel {
     using Kernel::patchWithImplicitSurface;
     using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
-    using Kernel::singleSubdevicePreferedInCurrentEnqueue;
+    using Kernel::singleSubdevicePreferredInCurrentEnqueue;
     using Kernel::svmAllocationsRequireCacheFlush;
     using Kernel::threadArbitrationPolicy;
     using Kernel::unifiedMemoryControls;
