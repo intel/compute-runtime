@@ -100,6 +100,10 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
     auto taskCountToWait = getTaskCount();
     bool enableTimeout = true;
     int64_t timeoutMicroseconds = static_cast<int64_t>(timeout);
+    if (timeout == std::numeric_limits<uint64_t>::max()) {
+        enableTimeout = false;
+        timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
+    }
 
     csr->waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, this->taskCount);
 

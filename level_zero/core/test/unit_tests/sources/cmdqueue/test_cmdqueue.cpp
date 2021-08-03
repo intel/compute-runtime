@@ -1435,6 +1435,7 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     }
 
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+        enableTimeoutSet = enableTimeout;
         waitForComplitionCalledTimes++;
         return true;
     }
@@ -1451,6 +1452,7 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     uint32_t *tagAddress;
     uint32_t waitForComplitionCalledTimes = 0;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
+    bool enableTimeoutSet = false;
 };
 
 HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
@@ -1467,22 +1469,22 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
     queue->csr = csr.get();
 
     uint64_t timeout = 10;
-    bool enableTimeoutExpected = true;
     int64_t timeoutMicrosecondsExpected = timeout;
 
     queue->synchronize(timeout);
 
     EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
     EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_TRUE(csr->enableTimeoutSet);
 
     timeout = std::numeric_limits<uint64_t>::max();
-    enableTimeoutExpected = false;
     timeoutMicrosecondsExpected = NEO::TimeoutControls::maxTimeout;
 
     queue->synchronize(timeout);
 
     EXPECT_EQ(2u, csr->waitForComplitionCalledTimes);
     EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_FALSE(csr->enableTimeoutSet);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
@@ -1511,6 +1513,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
 
     EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
     EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_TRUE(csr->enableTimeoutSet);
 
     timeout = std::numeric_limits<uint64_t>::max();
     enableTimeoutExpected = false;
@@ -1520,6 +1523,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
 
     EXPECT_EQ(2u, csr->waitForComplitionCalledTimes);
     EXPECT_EQ(1u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_FALSE(csr->enableTimeoutSet);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
