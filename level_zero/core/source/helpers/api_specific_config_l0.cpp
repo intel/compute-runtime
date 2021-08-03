@@ -9,6 +9,10 @@
 #include "shared/source/helpers/api_specific_config.h"
 
 namespace NEO {
+bool ApiSpecificConfig::isStatelessCompressionSupported() {
+    return false;
+}
+
 bool ApiSpecificConfig::getHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }

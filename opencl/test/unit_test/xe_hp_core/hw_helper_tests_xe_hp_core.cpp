@@ -61,6 +61,46 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXE_HP_COREWhenEnableStatelessComp
     EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
 }
 
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenRevisionIsAtLeastBThenAllowStatelessCompression) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.CreateMultipleSubDevices.set(1);
+
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    auto hwInfo = *defaultHwInfo;
+
+    for (auto revision : {REVISION_A0, REVISION_A1, REVISION_B}) {
+        hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(revision, hwInfo);
+        if (revision < REVISION_B) {
+            EXPECT_FALSE(hwHelper.allowStatelessCompression(hwInfo));
+        } else {
+            EXPECT_TRUE(hwHelper.allowStatelessCompression(hwInfo));
+        }
+    }
+}
+
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenCreateMultipleSubDevicesThenDontAllowStatelessCompression) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_FALSE(hwHelper.allowStatelessCompression(hwInfo));
+}
+
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenCreateMultipleSubDevicesAndEnableMultitileCompressionThenAllowStatelessCompression) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    DebugManager.flags.EnableMultiTileCompression.set(1);
+
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_TRUE(hwHelper.allowStatelessCompression(hwInfo));
+}
+
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForRenderCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);

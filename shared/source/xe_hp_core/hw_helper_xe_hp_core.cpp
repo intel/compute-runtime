@@ -10,6 +10,7 @@
 
 using Family = NEO::XeHpFamily;
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/extra_allocation_data_xehp_plus.inl"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
@@ -118,6 +119,23 @@ inline bool HwHelperHw<Family>::allowRenderCompression(const HardwareInfo &hwInf
         return false;
     }
 
+    return true;
+}
+
+template <>
+inline bool HwHelperHw<Family>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
+    if (!NEO::ApiSpecificConfig::isStatelessCompressionSupported()) {
+        return false;
+    }
+    if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
+        return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
+    }
+    if (HwHelper::getSubDevicesCount(&hwInfo) > 1) {
+        return DebugManager.flags.EnableMultiTileCompression.get() > 0 ? true : false;
+    }
+    if (hwInfo.platform.usRevId < getHwRevIdFromStepping(REVISION_B, hwInfo)) {
+        return false;
+    }
     return true;
 }
 

@@ -635,6 +635,11 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
 }
 
+TEST_F(DeviceTest, whenCheckingIfStatelessCompressionIsSupportedThenReturnFalse) {
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(hwHelper.allowStatelessCompression(*defaultHwInfo));
+}
+
 struct DeviceHwInfoTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = new NEO::ExecutionEnvironment();

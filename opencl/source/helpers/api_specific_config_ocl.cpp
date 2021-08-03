@@ -9,9 +9,14 @@
 #include "shared/source/helpers/api_specific_config.h"
 
 namespace NEO {
+bool ApiSpecificConfig::isStatelessCompressionSupported() {
+    return true;
+}
+
 bool ApiSpecificConfig::getHeapConfiguration() {
     return false;
 }
+
 bool ApiSpecificConfig::getBindlessConfiguration() {
     if (DebugManager.flags.UseBindlessMode.get() != -1) {
         return DebugManager.flags.UseBindlessMode.get();
@@ -19,6 +24,7 @@ bool ApiSpecificConfig::getBindlessConfiguration() {
         return false;
     }
 }
+
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::OCL;
 }

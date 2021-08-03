@@ -19,4 +19,8 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingAUBPrefixByApiTypeL0IsReturned) {
     EXPECT_EQ(0, strcmp("l0_", ApiSpecificConfig::getAubPrefixForSpecificApi()));
 }
 
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfStatelessCompressionIsSupportedThenReturnFalse) {
+    EXPECT_FALSE(ApiSpecificConfig::isStatelessCompressionSupported());
+}
+
 } // namespace NEO
