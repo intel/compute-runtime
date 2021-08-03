@@ -24,6 +24,7 @@ class OsInterfaceWithDebugAttach : public NEO::OSInterface {
 };
 
 struct DebugSessionMock : public L0::DebugSession {
+    using L0::DebugSession::allThreads;
     using L0::DebugSession::debugArea;
     using L0::DebugSession::getSingleThreads;
     using L0::DebugSession::isBindlessSystemRoutine;

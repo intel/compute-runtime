@@ -328,6 +328,46 @@ TEST(DebugSession, givenApiThreadAndSingleTileWhenConvertingThenCorrectValuesRet
     EXPECT_EQ(convertedThread.slice, thread.slice);
 }
 
+TEST(DebugSession, givenAllStoppedThreadsWhenAreRequestedThreadsStoppedCalledThenTrueReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        sessionMock->allThreads[thread]->stopThread();
+    }
+
+    ze_device_thread_t apiThread = {0, 0, 0, UINT32_MAX};
+    EXPECT_TRUE(sessionMock->areRequestedThreadsStopped(apiThread));
+}
+
+TEST(DebugSession, givenSomeStoppedThreadsWhenAreRequestedThreadsStoppedCalledThenFalseReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        if (i % 2) {
+            sessionMock->allThreads[thread]->stopThread();
+        }
+    }
+
+    ze_device_thread_t apiThread = {0, 0, 0, UINT32_MAX};
+    EXPECT_FALSE(sessionMock->areRequestedThreadsStopped(apiThread));
+}
+
 using DebugSessionMultiTile = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(DebugSessionMultiTile, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValueReturned) {

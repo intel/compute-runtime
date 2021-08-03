@@ -139,6 +139,25 @@ std::vector<ze_device_thread_t> DebugSession::getSingleThreads(ze_device_thread_
     return threads;
 }
 
+bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
+    auto hwInfo = connectedDevice->getHwInfo();
+    uint32_t deviceIndex = 0;
+    auto physicalThread = convertToPhysical(thread, deviceIndex);
+    auto singleThreads = getSingleThreads(physicalThread, hwInfo);
+    bool requestedThreadsStopped = true;
+
+    for (auto &thread : singleThreads) {
+        EuThread::ThreadId threadId = {deviceIndex, thread.slice, thread.subslice, thread.eu, thread.thread};
+
+        if (allThreads[threadId]->isStopped()) {
+            continue;
+        }
+        requestedThreadsStopped = false;
+    }
+
+    return requestedThreadsStopped;
+}
+
 bool DebugSession::isBindlessSystemRoutine() {
     if (debugArea.reserved1 &= 1) {
         return true;
