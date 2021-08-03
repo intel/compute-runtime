@@ -625,6 +625,9 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
 }
 
 HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableWalkerPartition.set(1);
+
     class MyCsrMock : public MockCsrHw2<FamilyType> {
         using MockCsrHw2<FamilyType>::MockCsrHw2;
 
@@ -663,6 +666,29 @@ HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutin
     EXPECT_TRUE(csr.expectedGAWasMadeResident);
 
     commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerPartitionIsDisabledThenWorkPartitionAllocationIsNotCreated) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableWalkerPartition.set(0);
+
+    class MyCsrMock : public MockCsrHw2<FamilyType> {
+        using MockCsrHw2<FamilyType>::MockCsrHw2;
+
+      public:
+        void makeResident(GraphicsAllocation &graphicsAllocation) override {
+            if (expectedGa == &graphicsAllocation) {
+                expectedGAWasMadeResident = true;
+            }
+        }
+        GraphicsAllocation *expectedGa = nullptr;
+        bool expectedGAWasMadeResident = false;
+    };
+    MyCsrMock csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.createWorkPartitionAllocation(*neoDevice);
+    auto workPartitionAllocation = csr.getWorkPartitionAllocation();
+    EXPECT_EQ(nullptr, workPartitionAllocation);
 }
 
 using CommandQueueIndirectAllocations = Test<ModuleFixture>;

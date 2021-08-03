@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
@@ -51,7 +52,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     }
     internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
 
-    if (deviceBitfield.count() > 1 && DebugManager.flags.EnableStaticPartitioning.get() != 0) {
+    if (deviceBitfield.count() > 1 && DebugManager.flags.EnableStaticPartitioning.get() != 0 && NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, true)) {
         this->staticWorkPartitioningEnabled = true;
     }
 }
