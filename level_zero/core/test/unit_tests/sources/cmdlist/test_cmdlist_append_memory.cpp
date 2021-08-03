@@ -352,7 +352,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopy
     eventDesc.wait = 0;
 
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
     EXPECT_GT(commandList.appendMemoryCopyBlitCalledTimes, 1u);

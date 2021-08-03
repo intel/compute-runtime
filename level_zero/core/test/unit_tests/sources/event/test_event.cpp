@@ -127,7 +127,7 @@ TEST_F(EventPoolCreate, GivenEventPoolThenAllocationContainsAtLeast16Bytes) {
               minAllocationSize);
 }
 
-TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelTimestamps) {
+HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelTimestamps) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -136,7 +136,7 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelT
     ASSERT_NE(nullptr, eventPool);
     uint32_t maxKernelSplit = 3;
     uint32_t packetsSize = maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount *
-                           static_cast<uint32_t>(NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+                           static_cast<uint32_t>(NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize());
     uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, 4 * MemoryConstants::cacheLineSize));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }

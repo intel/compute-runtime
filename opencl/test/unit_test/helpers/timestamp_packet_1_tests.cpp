@@ -109,7 +109,7 @@ TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedThenMov
     EXPECT_EQ(1u, node1.returnCalls);
 }
 
-TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
+HWTEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(executionEnvironment);
     MockTagAllocator<MockTimestampPacketStorage> allocator(0, &memoryManager, 1);
@@ -125,7 +125,7 @@ TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
         packet.globalEnd = i++;
     }
 
-    setTagToReadyState(firstNode);
+    setTagToReadyState<FamilyType>(firstNode);
     allocator.returnTag(firstNode);
 
     auto secondNode = allocator.getTag();
@@ -230,7 +230,7 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAlloc
     EXPECT_EQ(1u, csr.getPreferredTagPoolSize());
 
     auto tag = csr.getTimestampPacketAllocator()->getTag();
-    setTagToReadyState(tag);
+    setTagToReadyState<FamilyType>(tag);
 
     EXPECT_FALSE(tag->canBeReleased());
 }
@@ -525,8 +525,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(0));
 
     EXPECT_NE(node1, node2);
-    setTagToReadyState(node1);
-    setTagToReadyState(node2);
+    setTagToReadyState<FamilyType>(node1);
+    setTagToReadyState<FamilyType>(node2);
 
     clReleaseEvent(event2);
     EXPECT_EQ(0u, mockTagAllocator->returnedToFreePoolNodes.size()); // nothing returned. cmdQ owns node2

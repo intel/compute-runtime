@@ -1919,6 +1919,7 @@ TEST(KernelConfigTests, givenTwoKernelConfigsWhenCompareThenResultsAreCorrect) {
 }
 
 HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenKernelConfigDataIsTracked) {
+    using TimestampPacketType = typename FamilyType::TimestampPacketType;
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableKernelTunning.set(2u);
 
@@ -1957,9 +1958,9 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
     EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
-    uint32_t data[4] = {static_cast<uint32_t>(container.getNode(0u)->getContextStartValue(0)),
-                        static_cast<uint32_t>(container.getNode(0u)->getGlobalStartValue(0)),
-                        2, 2};
+    TimestampPacketType data[4] = {static_cast<TimestampPacketType>(container.getNode(0u)->getContextStartValue(0)),
+                                   static_cast<TimestampPacketType>(container.getNode(0u)->getGlobalStartValue(0)),
+                                   2, 2};
 
     container.getNode(0u)->assignDataToAllTimestamps(0, data);
 
@@ -1970,8 +1971,8 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
     EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
-    data[0] = static_cast<uint32_t>(subdeviceContainer.getNode(0u)->getContextStartValue(0));
-    data[1] = static_cast<uint32_t>(subdeviceContainer.getNode(0u)->getGlobalStartValue(0));
+    data[0] = static_cast<TimestampPacketType>(subdeviceContainer.getNode(0u)->getContextStartValue(0));
+    data[1] = static_cast<TimestampPacketType>(subdeviceContainer.getNode(0u)->getGlobalStartValue(0));
     data[2] = 2;
     data[3] = 2;
 
@@ -1986,8 +1987,8 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
     EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 
-    data[0] = static_cast<uint32_t>(subdeviceContainer.getNode(1u)->getContextStartValue(0));
-    data[1] = static_cast<uint32_t>(subdeviceContainer.getNode(1u)->getGlobalStartValue(0));
+    data[0] = static_cast<TimestampPacketType>(subdeviceContainer.getNode(1u)->getContextStartValue(0));
+    data[1] = static_cast<TimestampPacketType>(subdeviceContainer.getNode(1u)->getGlobalStartValue(0));
     data[2] = 2;
     data[3] = 2;
 

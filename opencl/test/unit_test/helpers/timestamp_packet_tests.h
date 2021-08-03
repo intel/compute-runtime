@@ -25,11 +25,12 @@ struct TimestampPacketSimpleTests : public ::testing::Test {
         using TimestampPackets<uint32_t>::packets;
     };
 
+    template <typename FamilyType>
     void setTagToReadyState(TagNodeBase *tagNode) {
         auto packetsUsed = tagNode->getPacketsUsed();
         tagNode->initialize();
 
-        uint32_t zeros[4] = {};
+        typename FamilyType::TimestampPacketType zeros[4] = {};
 
         for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
             tagNode->assignDataToAllTimestamps(i, zeros);

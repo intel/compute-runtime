@@ -294,7 +294,7 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
     template <typename FamilyType>
     using AubWithTbx = CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>>;
 
-    template <typename CsrT, typename... Args>
+    template <typename CsrT, typename FamilyType, typename... Args>
     bool isTimestampPacketNodeReleasable(Args &&...args) {
         CsrT csr(std::forward<Args>(args)...);
         auto hwInfo = csr.peekExecutionEnvironment().rootDeviceEnvironments[0]->getHardwareInfo();
@@ -305,7 +305,7 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
         auto allocator = csr.getTimestampPacketAllocator();
         auto tag = allocator->getTag();
 
-        uint32_t zeros[4] = {};
+        typename FamilyType::TimestampPacketType zeros[4] = {};
 
         for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
             tag->assignDataToAllTimestamps(i, zeros);
@@ -342,10 +342,17 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
 };
 
 HWTEST_F(CommandStreamReceiverTagTests, givenCsrTypeWhenCreatingTimestampPacketAllocatorThenSetDefaultCompletionCheckType) {
-    EXPECT_TRUE(isTimestampPacketNodeReleasable<CommandStreamReceiverHw<FamilyType>>(*executionEnvironment, 0, 1));
-    EXPECT_FALSE(isTimestampPacketNodeReleasable<AUBCommandStreamReceiverHw<FamilyType>>(fileName, false, *executionEnvironment, 0, 1));
-    EXPECT_FALSE(isTimestampPacketNodeReleasable<AubWithHw<FamilyType>>(fileName, *executionEnvironment, 0, 1));
-    EXPECT_FALSE(isTimestampPacketNodeReleasable<AubWithTbx<FamilyType>>(fileName, *executionEnvironment, 0, 1));
+    bool result = isTimestampPacketNodeReleasable<CommandStreamReceiverHw<FamilyType>, FamilyType>(*executionEnvironment, 0, 1);
+    EXPECT_TRUE(result);
+
+    result = isTimestampPacketNodeReleasable<AUBCommandStreamReceiverHw<FamilyType>, FamilyType>(fileName, false, *executionEnvironment, 0, 1);
+    EXPECT_FALSE(result);
+
+    result = isTimestampPacketNodeReleasable<AubWithHw<FamilyType>, FamilyType>(fileName, *executionEnvironment, 0, 1);
+    EXPECT_FALSE(result);
+
+    result = isTimestampPacketNodeReleasable<AubWithTbx<FamilyType>, FamilyType>(fileName, *executionEnvironment, 0, 1);
+    EXPECT_FALSE(result);
 }
 
 HWTEST_F(CommandStreamReceiverTagTests, givenCsrTypeWhenAskingForTagPoolSizeThenReturnOneForAubTbxMode) {
