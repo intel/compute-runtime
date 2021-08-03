@@ -10,8 +10,8 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
-#include "opencl/source/command_queue/gpgpu_walker_bdw_plus.inl"
-#include "opencl/source/command_queue/hardware_interface_bdw_plus.inl"
+#include "opencl/source/command_queue/gpgpu_walker_bdw_and_later.inl"
+#include "opencl/source/command_queue/hardware_interface_bdw_and_later.inl"
 
 namespace NEO {
 

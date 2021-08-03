@@ -7,7 +7,7 @@
 
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
-#include "shared/source/helpers/preamble_bdw_plus.inl"
+#include "shared/source/helpers/preamble_bdw_and_later.inl"
 
 #include "reg_configs_common.h"
 

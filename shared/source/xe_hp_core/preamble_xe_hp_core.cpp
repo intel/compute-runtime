@@ -13,7 +13,7 @@ using Family = XeHpFamily;
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/preamble_xehp_plus.inl"
+#include "shared/source/helpers/preamble_xehp_and_later.inl"
 namespace NEO {
 
 template <>

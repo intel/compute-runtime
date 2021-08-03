@@ -10,7 +10,7 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_hw_helper_base.inl"
-#include "opencl/source/helpers/cl_hw_helper_xehp_plus.inl"
+#include "opencl/source/helpers/cl_hw_helper_xehp_and_later.inl"
 
 #include "hw_cmds.h"
 

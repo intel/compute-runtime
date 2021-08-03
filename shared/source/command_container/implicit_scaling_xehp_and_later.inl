@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/command_container/walker_partition_xehp_plus.h"
+#include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
 
 namespace NEO {

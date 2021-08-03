@@ -47,11 +47,11 @@ set(IGDRCL_SRCS_tests_helpers
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_helpers
-       ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_hw_tests_xehp_plus.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_plus.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xehp_plus.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xehp_plus.cpp
-       ${NEO_SOURCE_DIR}/shared/test/common/helpers/unit_test_helper_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_hw_tests_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xehp_and_later.cpp
+       ${NEO_SOURCE_DIR}/shared/test/common/helpers/unit_test_helper_xehp_and_later.inl
   )
 endif()
 

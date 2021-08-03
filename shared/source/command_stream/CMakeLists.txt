@@ -13,8 +13,8 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_bdw_plus.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tgllp_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_definitions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.h
@@ -50,10 +50,10 @@ set(NEO_CORE_COMMAND_STREAM
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_STREAM
-       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_plus.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_plus.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_and_later.h
   )
 endif()
 

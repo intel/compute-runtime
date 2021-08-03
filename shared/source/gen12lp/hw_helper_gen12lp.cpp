@@ -13,8 +13,8 @@ using Family = NEO::TGLLPFamily;
 #include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_base.inl"
-#include "shared/source/helpers/hw_helper_bdw_plus.inl"
-#include "shared/source/helpers/hw_helper_tgllp_plus.inl"
+#include "shared/source/helpers/hw_helper_bdw_and_later.inl"
+#include "shared/source/helpers/hw_helper_tgllp_and_later.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include "engine_node.h"

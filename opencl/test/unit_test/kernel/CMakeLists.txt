@@ -34,7 +34,7 @@ set(IGDRCL_SRCS_tests_kernel
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_kernel
-       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_plus_tests.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_and_later_tests.inl
   )
 endif()
 

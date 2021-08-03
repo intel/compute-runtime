@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/preamble_bdw_plus.inl"
+#include "shared/source/helpers/preamble_bdw_and_later.inl"
 
 #include "pipe_control_args.h"
 #include "reg_configs_common.h"

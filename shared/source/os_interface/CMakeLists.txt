@@ -24,7 +24,7 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment.h
@@ -41,7 +41,7 @@ set(NEO_CORE_OS_INTERFACE
 )
 
 if(SUPPORT_XEHP_AND_LATER)
-  list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_xehp_plus.inl)
+  list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_xehp_and_later.inl)
 endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE ${NEO_CORE_OS_INTERFACE})

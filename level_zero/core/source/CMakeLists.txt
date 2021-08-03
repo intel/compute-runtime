@@ -55,7 +55,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/helpers/properties_parser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers${BRANCH_DIR_SUFFIX}/hw_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_skl_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_skl_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel.cpp
@@ -91,8 +91,8 @@ set(L0_RUNTIME_SOURCES
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
-       ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_xe_hp_core_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_xe_hp_core_and_later.inl
   )
 endif()
 

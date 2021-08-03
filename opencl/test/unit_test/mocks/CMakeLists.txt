@@ -64,7 +64,7 @@ set(IGDRCL_SRCS_tests_mocks
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_mocks
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_scratch_space_controller_xehp_plus.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_scratch_space_controller_xehp_and_later.h
   )
 endif()
 

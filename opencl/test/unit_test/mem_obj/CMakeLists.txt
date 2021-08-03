@@ -28,7 +28,7 @@ set(IGDRCL_SRCS_tests_mem_obj
     ${CMAKE_CURRENT_SOURCE_DIR}/image_set_arg_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_snorm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_tgllp_plus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_tgllp_and_later.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_tiled_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_transfer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_validate_tests.cpp
@@ -45,8 +45,8 @@ set(IGDRCL_SRCS_tests_mem_obj
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_mem_obj
-       ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests_xehp_plus.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_xehp_and_later.cpp
   )
 endif()
 

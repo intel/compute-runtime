@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/aub/aub_helper_bdw_plus.inl"
+#include "shared/source/aub/aub_helper_bdw_and_later.inl"
 #include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "shared/source/aub_mem_dump/aub_mem_dump.inl"
 #include "shared/source/gen8/aub_mapper.h"

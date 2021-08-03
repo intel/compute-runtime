@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/command_container/walker_partition_xehp_plus.h"
+#include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"

@@ -7,7 +7,7 @@
 
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
-#include "opencl/test/unit_test/kernel/cache_flush_xehp_plus_tests.inl"
+#include "opencl/test/unit_test/kernel/cache_flush_xehp_and_later_tests.inl"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"

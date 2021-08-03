@@ -9,10 +9,10 @@ set(RUNTIME_SRCS_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/per_dss_backed_buffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_impl.cpp
@@ -22,9 +22,9 @@ set(RUNTIME_SRCS_COMMAND_STREAM
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_COMMAND_STREAM
-       ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_xehp_and_later.inl
   )
 endif()
 

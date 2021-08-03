@@ -11,7 +11,7 @@
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mi_arb.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_walker.inl"
-#include "shared/test/common/cmd_parse/cmd_parse_l3_control_xehp_plus.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_l3_control_xehp_and_later.inl"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.inl"
 

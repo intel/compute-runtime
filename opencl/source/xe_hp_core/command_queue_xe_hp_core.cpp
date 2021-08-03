@@ -19,7 +19,7 @@ using Family = XeHpFamily;
 static auto gfxCore = IGFX_XE_HP_CORE;
 } // namespace NEO
 
-#include "opencl/source/command_queue/command_queue_hw_xehp_plus.inl"
+#include "opencl/source/command_queue/command_queue_hw_xehp_and_later.inl"
 
 namespace NEO {
 template <>

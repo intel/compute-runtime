@@ -9,7 +9,7 @@
 #include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw_bdw_plus.inl"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw_bdw_and_later.inl"
 
 namespace NEO {
 

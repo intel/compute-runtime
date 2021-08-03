@@ -9,7 +9,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
 using Family = NEO::XeHpFamily;
-#include "shared/test/common/helpers/unit_test_helper_xehp_plus.inl"
+#include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"
 
 namespace NEO {
 template <>

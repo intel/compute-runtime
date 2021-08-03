@@ -12,11 +12,11 @@ using Family = NEO::XeHpFamily;
 
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/extra_allocation_data_xehp_plus.inl"
+#include "shared/source/helpers/extra_allocation_data_xehp_and_later.inl"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_base.inl"
-#include "shared/source/helpers/hw_helper_tgllp_plus.inl"
-#include "shared/source/helpers/hw_helper_xehp_plus.inl"
+#include "shared/source/helpers/hw_helper_tgllp_and_later.inl"
+#include "shared/source/helpers/hw_helper_xehp_and_later.inl"
 
 namespace NEO {
 template <>

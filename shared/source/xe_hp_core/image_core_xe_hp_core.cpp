@@ -14,7 +14,7 @@ namespace NEO {
 using Family = XeHpFamily;
 
 // clang-format off
-#include "shared/source/image/image_bdw_plus.inl"
-#include "shared/source/image/image_skl_plus.inl"
+#include "shared/source/image/image_bdw_and_later.inl"
+#include "shared/source/image/image_skl_and_later.inl"
 // clang-format on
 } // namespace NEO

@@ -11,7 +11,7 @@ target_sources(${TARGET_NAME} PRIVATE
 
 if(TESTS_XEHP_AND_LATER)
   target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controler_xehp_plus_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controler_xehp_and_later_tests.cpp
   )
 endif()
 

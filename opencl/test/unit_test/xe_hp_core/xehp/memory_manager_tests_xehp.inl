@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/memory_manager/memory_manager_tests_xehp_plus.h"
+#include "opencl/test/unit_test/memory_manager/memory_manager_tests_xehp_and_later.h"
 #include "test.h"
 
 using namespace NEO;

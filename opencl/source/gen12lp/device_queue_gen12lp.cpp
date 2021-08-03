@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/device_queue/device_queue_hw.h"
-#include "opencl/source/device_queue/device_queue_hw_bdw_plus.inl"
+#include "opencl/source/device_queue/device_queue_hw_bdw_and_later.inl"
 #include "opencl/source/device_queue/device_queue_hw_profiling.inl"
 
 namespace NEO {

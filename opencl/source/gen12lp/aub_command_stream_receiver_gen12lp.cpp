@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/source/memory_manager/memory_pool.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw_bdw_plus.inl"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw_bdw_and_later.inl"
 
 namespace NEO {
 typedef TGLLPFamily Family;

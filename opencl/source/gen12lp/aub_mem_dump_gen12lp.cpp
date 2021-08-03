@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/aub/aub_helper_bdw_plus.inl"
+#include "shared/source/aub/aub_helper_bdw_and_later.inl"
 #include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "shared/source/aub_mem_dump/aub_mem_dump.inl"
 #include "shared/source/gen12lp/aub_mapper.h"

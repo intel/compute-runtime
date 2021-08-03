@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/command_stream/scratch_space_controller_xehp_plus.h"
+#include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"

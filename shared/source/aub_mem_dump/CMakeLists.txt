@@ -24,7 +24,7 @@ endif()
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_AUB_MEM_DUMP
-       ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_xehp_and_later.inl
   )
 endif()
 

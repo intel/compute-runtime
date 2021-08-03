@@ -11,7 +11,7 @@ target_sources(${TARGET_NAME} PRIVATE
 
 if(TESTS_XEHP_AND_LATER)
   target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xehp_plus.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xehp_and_later.cpp
   )
 endif()
 

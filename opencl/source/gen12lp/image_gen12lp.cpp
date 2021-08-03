@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
 }
 
 // clang-format off
-#include "opencl/source/mem_obj/image_tgllp_plus.inl"
+#include "opencl/source/mem_obj/image_tgllp_and_later.inl"
 #include "opencl/source/mem_obj/image_factory_init.inl"
 // clang-format on
 } // namespace NEO

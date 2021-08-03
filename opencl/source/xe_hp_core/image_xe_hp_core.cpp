@@ -19,11 +19,11 @@ static auto gfxCore = IGFX_XE_HP_CORE;
 
 } // namespace NEO
 
-#include "opencl/source/mem_obj/image_xehp_plus.inl"
+#include "opencl/source/mem_obj/image_xehp_and_later.inl"
 
 namespace NEO {
 // clang-format off
-#include "opencl/source/mem_obj/image_tgllp_plus.inl"
+#include "opencl/source/mem_obj/image_tgllp_and_later.inl"
 #include "opencl/source/mem_obj/image_factory_init.inl"
 // clang-format on
 } // namespace NEO

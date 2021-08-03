@@ -8,4 +8,4 @@
 #include "shared/source/xe_hp_core/hw_cmds.h"
 using GenStruct = NEO::XeHpCore;
 using GenGfxFamily = NEO::XeHpFamily;
-#include "shared/test/common/cmd_parse/cmd_parse_xehp_plus.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_xehp_and_later.inl"

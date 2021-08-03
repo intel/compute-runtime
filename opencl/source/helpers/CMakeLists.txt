@@ -15,7 +15,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/convert_color.h
     ${CMAKE_CURRENT_SOURCE_DIR}/destructor_callbacks.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.cpp
@@ -29,7 +29,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/helper_options.cpp
@@ -56,13 +56,13 @@ set(RUNTIME_SRCS_HELPERS_BASE
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_HELPERS_BASE
-       ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_xehp_and_later.inl
   )
 endif()
 
 set(RUNTIME_SRCS_HELPERS_WINDOWS
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks_tgllp_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_properties_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper.h
 )

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/aub/aub_helper_xehp_plus.inl"
+#include "shared/source/aub/aub_helper_xehp_and_later.inl"
 
 #include "aub_mem_dump.h"
 
@@ -17,4 +17,4 @@ constexpr static auto deviceValue = AubMemDump::DeviceValues::XeHP_SDV;
 template class AubHelperHw<Family>;
 } // namespace NEO
 
-#include "shared/source/aub_mem_dump/aub_mem_dump_xehp_plus.inl"
+#include "shared/source/aub_mem_dump/aub_mem_dump_xehp_and_later.inl"

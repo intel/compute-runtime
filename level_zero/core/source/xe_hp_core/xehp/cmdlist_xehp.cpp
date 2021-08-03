@@ -7,7 +7,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
-#include "level_zero/core/source/cmdlist/cmdlist_hw_xehp_plus.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_xehp_and_later.inl"
 
 #include "cmdlist_extended.inl"
 

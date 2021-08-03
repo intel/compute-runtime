@@ -13,7 +13,7 @@ set(IGDRCL_SRCS_tests_sampler
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_sampler
-       ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_xehp_and_later.cpp
   )
 endif()
 

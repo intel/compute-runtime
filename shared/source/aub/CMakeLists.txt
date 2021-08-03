@@ -12,7 +12,7 @@ set(NEO_CORE_AUB
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_add_mmio.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/aub_helper_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_mapper_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_stream_provider.h
@@ -22,7 +22,7 @@ set(NEO_CORE_AUB
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_AUB
-       ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_xehp_and_later.inl
   )
 endif()
 

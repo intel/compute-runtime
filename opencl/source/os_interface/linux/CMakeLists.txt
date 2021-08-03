@@ -12,7 +12,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_metrics_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.cpp
@@ -21,7 +21,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_OS_INTERFACE_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later.inl
   )
 endif()
 

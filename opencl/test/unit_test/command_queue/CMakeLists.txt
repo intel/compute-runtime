@@ -87,17 +87,17 @@ set(IGDRCL_SRCS_tests_command_queue
     ${CMAKE_CURRENT_SOURCE_DIR}/ooq_task_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/read_write_buffer_cpu_copy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sync_buffer_handler_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_plus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_and_later.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/work_group_size_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/zero_size_enqueue_tests.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_command_queue
-       ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_xehp_plus.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_xehp_plus.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_resource_barier_tests_xehp_plus.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_resource_barier_tests_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_and_later.cpp
   )
 endif()
 

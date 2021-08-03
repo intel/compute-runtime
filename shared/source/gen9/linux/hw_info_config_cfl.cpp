@@ -8,7 +8,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
-#include "shared/source/os_interface/hw_info_config_bdw_plus.inl"
+#include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
 
 namespace NEO {
 

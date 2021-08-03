@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/preemption.h"
-#include "shared/source/helpers/cache_flush_xehp_plus.inl"
+#include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"

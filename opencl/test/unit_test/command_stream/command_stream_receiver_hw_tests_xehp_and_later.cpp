@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
-#include "shared/source/command_stream/scratch_space_controller_xehp_plus.h"
+#include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
@@ -35,7 +35,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/mocks/mock_scratch_space_controller_xehp_plus.h"
+#include "opencl/test/unit_test/mocks/mock_scratch_space_controller_xehp_and_later.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "test.h"
 

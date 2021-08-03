@@ -26,7 +26,7 @@ void populateFactoryTable<TbxCommandStreamReceiverHw<Family>>() {
     tbxCommandStreamReceiverFactory[gfxCore] = TbxCommandStreamReceiverHw<Family>::create;
 }
 
-#include "opencl/source/command_stream/tbx_command_stream_receiver_xehp_plus.inl"
+#include "opencl/source/command_stream/tbx_command_stream_receiver_xehp_and_later.inl"
 
 template class TbxCommandStreamReceiverHw<Family>;
 template class CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<Family>>;

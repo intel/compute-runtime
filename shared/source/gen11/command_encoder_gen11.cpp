@@ -12,9 +12,9 @@
 using Family = NEO::ICLFamily;
 
 #include "shared/source/command_container/command_encoder.inl"
-#include "shared/source/command_container/command_encoder_bdw_plus.inl"
-#include "shared/source/command_container/encode_compute_mode_bdw_plus.inl"
-#include "shared/source/command_container/image_surface_state/compression_params_bdw_plus.inl"
+#include "shared/source/command_container/command_encoder_bdw_and_later.inl"
+#include "shared/source/command_container/encode_compute_mode_bdw_and_later.inl"
+#include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"
 
 namespace NEO {
 

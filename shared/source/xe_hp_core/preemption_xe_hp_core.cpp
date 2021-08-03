@@ -12,7 +12,7 @@ namespace NEO {
 
 using GfxFamily = XeHpFamily;
 
-#include "shared/source/command_stream/preemption_xehp_plus.inl"
+#include "shared/source/command_stream/preemption_xehp_and_later.inl"
 
 template void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream, PreemptionMode newPreemptionMode,
                                                             PreemptionMode oldPreemptionMode, GraphicsAllocation *preemptionCsr);

@@ -20,7 +20,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/bindless_heaps_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush.inl
@@ -58,10 +58,10 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_to_icllp.inl
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/hw_helper_extended.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tgllp_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/hw_info_extended.cpp
@@ -84,7 +84,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/populate_factory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/preamble_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/preamble_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper.h
@@ -95,8 +95,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address.h
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw_plus.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_icllp_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_icllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_skl.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/state_compute_mode_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
@@ -120,12 +120,12 @@ set(NEO_CORE_HELPERS
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
-       ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/extra_allocation_data_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xehp_plus.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/extra_allocation_data_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_xehp_and_later.inl
   )
 endif()
 

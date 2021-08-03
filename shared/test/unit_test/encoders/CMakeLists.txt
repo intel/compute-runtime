@@ -22,13 +22,13 @@ target_sources(${TARGET_NAME} PRIVATE
 
 if(TESTS_XEHP_AND_LATER)
   target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_xehp_plus.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_xehp_plus.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_grf_mode_xe_hp_plus.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_math_xehp_plus.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_media_interface_descriptor_xehp_plus.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_mi_flush_dw_xehp_plus.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xehp_plus.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_grf_mode_xe_hp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_math_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_media_interface_descriptor_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_mi_flush_dw_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xehp_and_later.cpp
   )
 endif()
 

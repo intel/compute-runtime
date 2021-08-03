@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/preamble_bdw_plus.inl"
+#include "shared/source/helpers/preamble_bdw_and_later.inl"
 
 namespace NEO {
 

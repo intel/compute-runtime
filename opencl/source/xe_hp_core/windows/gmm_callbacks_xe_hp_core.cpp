@@ -7,7 +7,7 @@
 
 #include "shared/source/xe_hp_core/hw_cmds.h"
 
-#include "opencl/source/helpers/windows/gmm_callbacks_tgllp_plus.inl"
+#include "opencl/source/helpers/windows/gmm_callbacks_tgllp_and_later.inl"
 
 namespace NEO {
 template struct DeviceCallbacks<XeHpFamily>;

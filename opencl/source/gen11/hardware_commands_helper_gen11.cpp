@@ -10,7 +10,7 @@
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/hardware_commands_helper_base.inl"
-#include "opencl/source/helpers/hardware_commands_helper_bdw_plus.inl"
+#include "opencl/source/helpers/hardware_commands_helper_bdw_and_later.inl"
 
 namespace NEO {
 using FamilyType = ICLFamily;

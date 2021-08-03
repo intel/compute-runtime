@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/state_base_address_xehp_plus.inl"
+#include "shared/source/helpers/state_base_address_xehp_and_later.inl"
 
 namespace NEO {
 

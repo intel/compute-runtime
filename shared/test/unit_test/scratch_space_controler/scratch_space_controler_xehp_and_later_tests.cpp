@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/command_stream/scratch_space_controller_xehp_plus.h"
+#include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

@@ -5,11 +5,11 @@
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver_hw_bdw_plus.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_bdw_and_later.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gen11/reg_configs.h"
-#include "shared/source/helpers/blit_commands_helper_bdw_plus.inl"
+#include "shared/source/helpers/blit_commands_helper_bdw_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {
