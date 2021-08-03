@@ -569,6 +569,25 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
     executionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
 
+TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmMemoryManagerThenHostPtrValidationIsDisabled) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableHostPtrValidation.set(0);
+    DebugManager.flags.EnableGemCloseWorker.set(0);
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.forceOsAgnosticMemoryManager = false;
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
+
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);
+    EXPECT_NE(nullptr, drmMemoryManager.get());
+    EXPECT_FALSE(static_cast<DrmMemoryManager *>(drmMemoryManager.get())->isValidateHostMemoryEnabled());
+    executionEnvironment.memoryManager = std::move(drmMemoryManager);
+}
+
 TEST(OsInterfaceTests, givenOsInterfaceWhenEnableLocalMemoryIsSpecifiedThenItIsSetToTrueOn64Bit) {
     EXPECT_TRUE(OSInterface::osEnableLocalMemory);
 }

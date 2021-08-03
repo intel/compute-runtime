@@ -252,6 +252,7 @@ DECLARE_DEBUG_VARIABLE(bool, EngineInstancedSubDevices, false, "Create subdevice
 DECLARE_DEBUG_VARIABLE(int32_t, EnableKernelTunning, -1, "Perform a tunning of enqueue kernel, -1:default(disabled), 0:disable, 1:enable simple kernel tunning, 2:enable full kernel tunning")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOMmapCreate, -1, "Create BOs using mmap, -1:default, 0:disable(GEM_USERPTR), 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableGemCloseWorker, -1, "Use asynchronous gem object closing, -1:default, 0:disable, 1:enable")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrValidation, -1, "Validate BO from GEM_USERPTR, -1:default(enable), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_motion_estimation extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelAdvancedVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_advanced_motion_estimation extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterOperationsSupport, -1, "-1: default, 0: disable, 1: enable")

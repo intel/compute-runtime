@@ -1023,9 +1023,15 @@ void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
 }
 
 std::unique_ptr<MemoryManager> DrmMemoryManager::create(ExecutionEnvironment &executionEnvironment) {
+    bool validateHostPtr = true;
+
+    if (DebugManager.flags.EnableHostPtrValidation.get() != -1) {
+        validateHostPtr = DebugManager.flags.EnableHostPtrValidation.get();
+    }
+
     return std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerActive,
                                               DebugManager.flags.EnableForcePin.get(),
-                                              true,
+                                              validateHostPtr,
                                               executionEnvironment);
 }
 
