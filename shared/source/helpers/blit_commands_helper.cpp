@@ -192,17 +192,21 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         auto pDeviceForBlit = pRootDevice->getDeviceById(tileId);
 
         auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
-        auto &bcsEngine = pDeviceForBlit->getEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), EngineUsage::Regular);
-        bcsEngine.osContext->ensureContextInitialized();
-        bcsEngine.commandStreamReceiver->initDirectSubmission(*pDeviceForBlit, *bcsEngine.osContext);
+        auto bcsEngine = pDeviceForBlit->tryGetEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), EngineUsage::Regular);
+        if (!bcsEngine) {
+            return BlitOperationResult::Unsupported;
+        }
+
+        bcsEngine->osContext->ensureContextInitialized();
+        bcsEngine->commandStreamReceiver->initDirectSubmission(*pDeviceForBlit, *bcsEngine->osContext);
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
             BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                            *bcsEngine.commandStreamReceiver, memory, nullptr,
+                                                            *bcsEngine->commandStreamReceiver, memory, nullptr,
                                                             hostPtr,
                                                             (memory->getGpuAddress() + offset),
                                                             0, 0, 0, size, 0, 0, 0, 0));
-        bcsEngine.commandStreamReceiver->blitBuffer(blitPropertiesContainer, true, false, *pDeviceForBlit);
+        bcsEngine->commandStreamReceiver->blitBuffer(blitPropertiesContainer, true, false, *pDeviceForBlit);
     }
 
     return BlitOperationResult::Success;
