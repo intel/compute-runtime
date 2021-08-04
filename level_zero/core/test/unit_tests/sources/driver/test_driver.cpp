@@ -34,8 +34,23 @@ TEST(zeInit, whenCallingZeInitThenInitializeOnDriverIsCalled) {
 
     auto result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
     EXPECT_EQ(1u, driver.initCalledCount);
+}
+
+TEST(zeInit, whenCallingZeInitWithNoFlagsThenInitializeOnDriverIsCalled) {
+    Mock<Driver> driver;
+
+    auto result = zeInit(0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+}
+
+TEST(zeInit, whenCallingZeInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCalled) {
+    Mock<Driver> driver;
+
+    auto result = zeInit(ZE_INIT_FLAG_VPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+    EXPECT_EQ(0u, driver.initCalledCount);
 }
 
 using DriverVersionTest = Test<DeviceFixture>;

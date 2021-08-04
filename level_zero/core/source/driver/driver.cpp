@@ -115,6 +115,10 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandle
 static DriverImp driverImp;
 Driver *Driver::driver = &driverImp;
 
-ze_result_t init(ze_init_flags_t flags) { return Driver::get()->driverInit(flags); }
-
+ze_result_t init(ze_init_flags_t flags) {
+    if (flags && !(flags & ZE_INIT_FLAG_GPU_ONLY))
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    else
+        return Driver::get()->driverInit(flags);
+}
 } // namespace L0
