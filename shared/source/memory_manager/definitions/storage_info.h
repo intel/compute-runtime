@@ -19,6 +19,7 @@ struct StorageInfo {
     uint32_t getNumBanks() const;
     DeviceBitfield memoryBanks;
     DeviceBitfield pageTablesVisibility;
+    DeviceBitfield subDeviceBitfield;
     bool cloningOfPageTables = true;
     bool tileInstanced = false;
     bool multiStorage = false;
