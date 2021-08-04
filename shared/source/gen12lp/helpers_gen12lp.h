@@ -38,6 +38,10 @@ void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
 bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo);
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo);
 bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo);
+inline void adjustPlatformForProductFamily(PLATFORM &platform, GFXCORE_FAMILY newCoreFamily) {
+    platform.eRenderCoreFamily = IGFX_GEN12LP_CORE;
+    platform.eDisplayCoreFamily = IGFX_GEN12LP_CORE;
+}
 
 } // namespace Gen12LPHelpers
 } // namespace NEO

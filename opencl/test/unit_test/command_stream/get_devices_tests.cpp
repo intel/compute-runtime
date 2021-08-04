@@ -46,7 +46,8 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
     DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
     for (int productFamilyIndex = 0; productFamilyIndex < IGFX_MAX_PRODUCT; productFamilyIndex++) {
         const char *hwPrefix = hardwarePrefix[productFamilyIndex];
-        if (hwPrefix == nullptr) {
+        auto hwInfoConfig = hwInfoConfigFactory[productFamilyIndex];
+        if (hwPrefix == nullptr || hwInfoConfig == nullptr) {
             continue;
         }
         const std::string productFamily(hwPrefix);
@@ -117,7 +118,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseProductFamilyOverrideFlagS
     PRODUCT_FAMILY productFamily;
 
     for (int productFamilyIndex = 0; productFamilyIndex < IGFX_MAX_PRODUCT; productFamilyIndex++) {
-        if (hardwarePrefix[productFamilyIndex]) {
+        if (hardwarePrefix[productFamilyIndex] && hwInfoConfigFactory[productFamilyIndex]) {
             hwPrefix = hardwarePrefix[productFamilyIndex];
             productFamily = static_cast<PRODUCT_FAMILY>(productFamilyIndex);
             break;

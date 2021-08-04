@@ -4,6 +4,24 @@
 # SPDX-License-Identifier: MIT
 #
 
+macro(macro_for_each_platform)
+  string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
+
+  foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
+    foreach(BRANCH ${BRANCH_DIR_LIST})
+      foreach(BRANCH_FILENAME_SUFFIX ${BRANCH_DIR_LIST})
+        string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH_FILENAME_SUFFIX}")
+        string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
+
+        set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}enable_hw_info_config_${PLATFORM_IT_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
+        if(EXISTS ${SRC_FILE})
+          list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+        endif()
+      endforeach()
+    endforeach()
+  endforeach()
+endmacro()
+
 macro(macro_for_each_gen)
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     foreach(BRANCH ${BRANCH_DIR_LIST})
@@ -17,7 +35,7 @@ macro(macro_for_each_gen)
       endif()
       string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH_DIR}")
       string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
-      foreach(SRC_IT "enable_hw_info_config_" "enable_" "enable_family_full_core_")
+      foreach(SRC_IT "enable_" "enable_family_full_core_")
         set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}${SRC_IT}${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
         if(EXISTS ${SRC_FILE})
           list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
@@ -29,6 +47,8 @@ macro(macro_for_each_gen)
       endforeach()
     endforeach()
   endforeach()
+
+  apply_macro_for_each_platform()
 endmacro()
 
 apply_macro_for_each_gen("TESTED")
