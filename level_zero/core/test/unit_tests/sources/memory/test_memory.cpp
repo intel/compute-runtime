@@ -1735,6 +1735,91 @@ TEST_F(MultipleDevicePeerAllocationTest,
 }
 
 TEST_F(MultipleDevicePeerAllocationTest,
+       whenPeerAllocationForDeviceAllocationIsRequestedThenPeerAllocationIsAddedToDeviceMapAndRemovedWhenAllocationIsFreed) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(true);
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uintptr_t peerGpuAddress = 0u;
+    auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    EXPECT_NE(peerAlloc, nullptr);
+
+    DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
+    {
+        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
+        EXPECT_NE(iter, deviceImp1->peerAllocations.allocations.end());
+    }
+
+    result = context->freeMem(ptr);
+
+    {
+        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
+        EXPECT_EQ(iter, deviceImp1->peerAllocations.allocations.end());
+    }
+
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MultipleDevicePeerAllocationTest,
+       whenPeerAllocationForDeviceAllocationIsRequestedThenPeerAllocationIsAddedToDeviceMapAndReturnedWhenLookingForPeerAllocationAgain) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(true);
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uintptr_t peerGpuAddress = 0u;
+    auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+
+    DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
+    EXPECT_EQ(0u, deviceImp1->peerAllocations.allocations.size());
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    EXPECT_NE(peerAlloc, nullptr);
+    EXPECT_EQ(1u, deviceImp1->peerAllocations.allocations.size());
+
+    {
+        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
+        EXPECT_NE(iter, deviceImp1->peerAllocations.allocations.end());
+    }
+
+    uintptr_t peerGpuAddress2 = 0u;
+    peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress2);
+    EXPECT_NE(peerAlloc, nullptr);
+    EXPECT_EQ(1u, deviceImp1->peerAllocations.allocations.size());
+    EXPECT_EQ(peerGpuAddress, peerGpuAddress2);
+
+    result = context->freeMem(ptr);
+
+    {
+        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
+        EXPECT_EQ(iter, deviceImp1->peerAllocations.allocations.end());
+    }
+
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MultipleDevicePeerAllocationTest,
        whenPeerAllocationForDeviceAllocationIsRequestedWithoutPassingPeerGpuAddressParameterThenPeerAllocationIsReturned) {
     DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];

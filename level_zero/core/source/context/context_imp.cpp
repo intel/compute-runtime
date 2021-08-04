@@ -265,6 +265,7 @@ ze_result_t ContextImp::freeMem(const void *ptr) {
             auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
             auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
             this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr);
+            deviceImp->peerAllocations.allocations.erase(iter);
         }
     }
 
