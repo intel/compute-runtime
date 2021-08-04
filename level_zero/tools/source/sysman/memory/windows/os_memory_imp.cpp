@@ -7,6 +7,35 @@
 
 #include "sysman/memory/windows/os_memory_imp.h"
 
+template <typename I>
+std::string intToHex(I w, size_t hexLength = sizeof(I) << 1) {
+    static const char *digits = "0123456789ABCDEF";
+    std::string retString(hexLength, '0');
+    constexpr uint32_t intSize = sizeof(uint32_t);
+    for (size_t i = 0, j = (hexLength - 1) * intSize; i < hexLength; ++i, j -= intSize)
+        retString[i] = digits[(w >> j) & 0x0f];
+    return (std::string("0x") + retString);
+}
+
+std::wstring toWString(std::string str) {
+    std::wstring wsTmp(str.begin(), str.end());
+    return wsTmp;
+}
+
+std::wstring constructCounterStr(std::wstring object, std::wstring counter, LUID luid, uint32_t index) {
+    std::wstring fstr = L"\\";
+    fstr += object;
+    fstr += L"(luid_";
+    fstr += toWString(intToHex((long)luid.HighPart));
+    fstr += L"_";
+    fstr += toWString(intToHex((unsigned long)luid.LowPart));
+    fstr += L"_phys_";
+    fstr += std::to_wstring(index);
+    fstr += L")\\";
+    fstr += counter;
+    return fstr;
+}
+
 namespace L0 {
 bool WddmMemoryImp::isMemoryModuleSupported() {
     uint32_t value = 0;
@@ -176,16 +205,24 @@ ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
     memcpy_s(&valueLarge, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
     pState->size = valueLarge;
 
-    request.requestId = KmdSysman::Requests::Memory::CurrentFreeMemorySize;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
+    if (!pdhInitialized) {
+        if (pdhOpenQuery && pdhOpenQuery(NULL, NULL, &gpuQuery) == ERROR_SUCCESS) {
+            pdhInitialized = true;
+        }
     }
 
-    memcpy_s(&valueLarge, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
-    pState->free = valueLarge;
+    if (!pdhCounterAdded && pdhAddEnglishCounterW && pKmdSysManager->GetWddmAccess()) {
+        std::wstring counterStr = constructCounterStr(L"GPU Adapter Memory", L"Dedicated Usage", pKmdSysManager->GetWddmAccess()->getAdapterLuid(), 0);
+        pdhCounterAdded = (pdhAddEnglishCounterW(gpuQuery, counterStr.c_str(), NULL, &dedicatedUsage) == ERROR_SUCCESS);
+    }
+
+    if (pdhCounterAdded && pdhCollectQueryData && pdhGetFormattedCounterValue) {
+        PDH_FMT_COUNTERVALUE counterVal;
+        pdhCollectQueryData(gpuQuery);
+        pdhGetFormattedCounterValue(dedicatedUsage, PDH_FMT_LARGE, NULL, &counterVal);
+        valueLarge = counterVal.largeValue;
+        pState->free = pState->size - valueLarge;
+    }
 
     return ZE_RESULT_SUCCESS;
 }
@@ -194,6 +231,25 @@ WddmMemoryImp::WddmMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
     pDevice = pWddmSysmanImp->getDeviceHandle();
+
+    hGetProcPDH = LoadLibrary(L"C:\\Windows\\System32\\pdh.dll");
+
+    if (hGetProcPDH) {
+        pdhOpenQuery = reinterpret_cast<fn_PdhOpenQueryW>(GetProcAddress(hGetProcPDH, "PdhOpenQueryW"));
+        pdhAddEnglishCounterW = reinterpret_cast<fn_PdhAddEnglishCounterW>(GetProcAddress(hGetProcPDH, "PdhAddEnglishCounterW"));
+        pdhCollectQueryData = reinterpret_cast<fn_PdhCollectQueryData>(GetProcAddress(hGetProcPDH, "PdhCollectQueryData"));
+        pdhGetFormattedCounterValue = reinterpret_cast<fn_PdhGetFormattedCounterValue>(GetProcAddress(hGetProcPDH, "PdhGetFormattedCounterValue"));
+        pdhCloseQuery = reinterpret_cast<fn_PdhCloseQuery>(GetProcAddress(hGetProcPDH, "PdhCloseQuery"));
+    }
+}
+
+WddmMemoryImp::~WddmMemoryImp() {
+    if (pdhInitialized && pdhCloseQuery) {
+        pdhCloseQuery(gpuQuery);
+    }
+    if (hGetProcPDH) {
+        FreeLibrary(hGetProcPDH);
+    }
 }
 
 OsMemory *OsMemory::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
