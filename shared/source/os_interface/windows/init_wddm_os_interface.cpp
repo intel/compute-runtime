@@ -19,8 +19,9 @@ bool initWddmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t root
                          std::unique_ptr<OSInterface> &dstOsInterface, std::unique_ptr<MemoryOperationsHandler> &dstMemoryOpsHandler) {
     UNRECOVERABLE_IF(hwDeviceId->getDriverModelType() != DriverModelType::WDDM);
     auto hwDeviceIdWddm = std::unique_ptr<HwDeviceIdWddm>(reinterpret_cast<HwDeviceIdWddm *>(hwDeviceId.release()));
-    auto wddm(Wddm::createWddm(std::move(hwDeviceIdWddm), *rootDeviceEnv));
+    NEO::Wddm *wddm = Wddm::createWddm(std::move(hwDeviceIdWddm), *rootDeviceEnv);
     if (!wddm->init()) {
+        delete wddm;
         return false;
     }
     dstMemoryOpsHandler = std::make_unique<WddmMemoryOperationsHandler>(wddm);
