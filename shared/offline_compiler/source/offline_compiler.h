@@ -43,14 +43,10 @@ class OfflineCompiler {
         INVALID_FILE = -5151,
         PRINT_USAGE = -5152,
     };
-    enum QueryOption {
-        QUERY_OCL_DRIVER_VERSION = 0,
-        QUERY_NEO_REVISION = 1,
-        QUERY_LAST,
-    };
+
+    static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
 
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper);
-    static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     int build();
     std::string &getBuildLog();
     void printUsage();
@@ -87,7 +83,6 @@ class OfflineCompiler {
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
-    int performQuery();
     void setStatelessToStatefullBufferOffsetFlag();
     void resolveExtraSettings();
     void parseDebugSettings();
@@ -131,8 +126,6 @@ class OfflineCompiler {
     bool inputFileSpirV = false;
     bool outputNoSuffix = false;
     bool forceStatelessToStatefulOptimization = false;
-    bool queryInvoke = false;
-    int queryOption = QUERY_LAST;
 
     std::vector<uint8_t> elfBinary;
     char *genBinary = nullptr;
