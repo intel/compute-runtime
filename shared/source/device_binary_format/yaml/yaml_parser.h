@@ -236,6 +236,18 @@ struct Line {
 };
 static_assert(sizeof(Line) == 12, "");
 
+template <typename T, typename It>
+inline bool reserveBasedOnEstimates(T &container, It beg, It end, It pos) {
+    if ((container.size() < container.capacity()) || (pos == beg)) {
+        return false;
+    }
+    DEBUG_BREAK_IF((beg > end) || (pos < beg));
+    auto normalizedPosInv = float(end - beg) / float(pos - beg);
+    auto estimatedTotalElements = static_cast<size_t>(container.size() * normalizedPosInv);
+    container.reserve(estimatedTotalElements);
+    return true;
+}
+
 using TokensCache = StackVec<Token, 2048>;
 using LinesCache = StackVec<Line, 512>;
 
@@ -243,18 +255,18 @@ std::string constructYamlError(size_t lineNumber, const char *lineBeg, const cha
 
 bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens, std::string &outErrReason, std::string &outWarning);
 
-using NodeId = uint16_t;
+using NodeId = uint32_t;
 static constexpr NodeId invalidNodeID = std::numeric_limits<NodeId>::max();
 
-struct Node {
+struct alignas(32) Node {
     TokenId key = invalidTokenId;
     TokenId value = invalidTokenId;
-    uint32_t indent = 0;
     NodeId id = invalidNodeID;
     NodeId parentId = invalidNodeID;
     NodeId firstChildId = invalidNodeID;
     NodeId lastChildId = invalidNodeID;
     NodeId nextSiblingId = invalidNodeID;
+    uint16_t indent = 0;
     uint16_t numChildren = 0U;
 
     Node() = default;
@@ -262,7 +274,7 @@ struct Node {
     explicit Node(uint32_t indent) : indent(indent) {
     }
 };
-static_assert(sizeof(Node) == 24, "");
+static_assert(sizeof(Node) == 32, "");
 using NodesCache = StackVec<Node, 512>;
 
 constexpr bool isUnused(Line::LineType lineType) {

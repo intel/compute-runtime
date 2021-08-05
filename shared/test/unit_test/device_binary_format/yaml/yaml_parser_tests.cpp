@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2886,4 +2886,38 @@ kernels:
             EXPECT_EQ(0U, argIndex);
         }
     }
+}
+
+TEST(ReserveBasedOnEstimates, WhenContainerNotFullThenDontGrow) {
+    StackVec<int, 7> container;
+    size_t beg = 0U;
+    size_t pos = 10U;
+    size_t end = 1000U;
+    bool reservedAdditionalMem = reserveBasedOnEstimates(container, beg, end, pos);
+    EXPECT_FALSE(reservedAdditionalMem);
+    EXPECT_EQ(7U, container.capacity());
+}
+
+TEST(ReserveBasedOnEstimates, WhenContainerFullButPosIsBegThenDontGrow) {
+    StackVec<int, 7> container;
+    container.resize(7U);
+    ASSERT_EQ(container.capacity(), container.size());
+    size_t beg = 0U;
+    size_t pos = 0U;
+    size_t end = 1000U;
+    bool reservedAdditionalMem = reserveBasedOnEstimates(container, beg, end, pos);
+    EXPECT_FALSE(reservedAdditionalMem);
+    EXPECT_EQ(7U, container.capacity());
+}
+
+TEST(ReserveBasedOnEstimates, WhenContainerFullThenGrowBasedOnPos) {
+    StackVec<int, 7> container;
+    container.resize(7U);
+    ASSERT_EQ(container.capacity(), container.size());
+    size_t beg = 0U;
+    size_t pos = 25U;
+    size_t end = 1000U;
+    bool reservedAdditionalMem = reserveBasedOnEstimates(container, beg, end, pos);
+    EXPECT_TRUE(reservedAdditionalMem);
+    EXPECT_EQ(280U, container.capacity());
 }

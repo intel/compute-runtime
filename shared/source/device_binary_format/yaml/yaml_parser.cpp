@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ std::string constructYamlError(size_t lineNumber, const char *lineBeg, const cha
 }
 
 inline Node &addNode(NodesCache &outNodes, Node &parent) {
+    UNRECOVERABLE_IF(outNodes.size() >= outNodes.capacity()); // resize must not grow
     parent.firstChildId = static_cast<NodeId>(outNodes.size());
     parent.lastChildId = static_cast<NodeId>(outNodes.size());
     outNodes.resize(outNodes.size() + 1);
@@ -33,6 +34,7 @@ inline Node &addNode(NodesCache &outNodes, Node &parent) {
 }
 
 inline Node &addNode(NodesCache &outNodes, Node &prevSibling, Node &parent) {
+    UNRECOVERABLE_IF(outNodes.size() >= outNodes.capacity()); // resize must not grow
     prevSibling.nextSiblingId = static_cast<NodeId>(outNodes.size());
     outNodes.resize(outNodes.size() + 1);
     auto &curr = *outNodes.rbegin();
@@ -116,6 +118,7 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
     context.isParsingIdent = true;
 
     while (context.pos < context.end) {
+        reserveBasedOnEstimates(outTokens, text.begin(), text.end(), context.pos);
         switch (context.pos[0]) {
         case ' ':
             context.lineIndent += context.isParsingIdent ? 1 : 0;
@@ -149,6 +152,7 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
             break;
         }
         case '\n': {
+            reserveBasedOnEstimates(outLines, text.begin(), text.end(), context.pos);
             if (false == tokenizeEndLine(text, outLines, outTokens, outErrReason, outWarning, context)) {
                 return false;
             }
@@ -245,6 +249,7 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
 }
 
 void finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes, std::string &outErrReason, std::string &outWarning) {
+    outNodes.reserve(outNodes.size() + 1);
     auto &node = outNodes[nodeId];
     if (invalidTokenId != node.key) {
         return;
@@ -290,14 +295,17 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
             ++lineId;
             continue;
         }
+        reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0), static_cast<TokenId>(tokens.size()), lines[lineId].first);
 
         auto currLineIndent = lines[lineId].indent;
         if (currLineIndent == outNodes.rbegin()->indent) {
+            outNodes.reserve(outNodes.size() + 1);
             auto &prev = *outNodes.rbegin();
             auto &parent = outNodes[*nesting.rbegin()];
             auto &curr = addNode(outNodes, prev, parent);
             curr.indent = currLineIndent;
         } else if (currLineIndent > outNodes.rbegin()->indent) {
+            outNodes.reserve(outNodes.size() + 1);
             auto &parent = *outNodes.rbegin();
             auto &curr = addNode(outNodes, parent);
             curr.indent = currLineIndent;
@@ -313,6 +321,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 outErrReason = constructYamlError(lineId, tokens[lines[lineId].first].pos, tokens[lines[lineId].first].pos + 1, "Invalid indentation");
                 return false;
             } else {
+                outNodes.reserve(outNodes.size() + 1);
                 auto &prev = outNodes[*nesting.rbegin()];
                 auto &parent = outNodes[prev.parentId];
                 auto &curr = addNode(outNodes, prev, parent);
