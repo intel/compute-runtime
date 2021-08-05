@@ -4457,7 +4457,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
     }
 
     auto pDevice = pContext->getDevice(0);
-    bool allowUnrestrictedSize = (flags & CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
+    bool allowUnrestrictedSize = (flags & CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) || DebugManager.flags.AllowUnrestrictedSize.get();
 
     if ((size == 0) ||
         (!allowUnrestrictedSize && (size > pDevice->getSharedDeviceInfo().maxMemAllocSize))) {

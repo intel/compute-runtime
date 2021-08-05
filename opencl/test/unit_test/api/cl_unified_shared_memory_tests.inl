@@ -1041,6 +1041,49 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
     }
 }
 
+TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndDebugFlagSetWhenCreateAllocationThenSuccesIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllowUnrestrictedSize.set(1);
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    auto allocationSize = static_cast<size_t>(mockContext.getDevice(0u)->getSharedDeviceInfo().maxMemAllocSize) + 1;
+    auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext.getDevice(0u)->getMemoryManager());
+    memoryManager->turnOnFakingBigAllocations();
+    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+        GTEST_SKIP();
+    }
+
+    {
+        auto unfiedMemoryAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), 0, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unfiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    {
+        auto unfiedMemoryAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), 0, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unfiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    {
+        auto unfiedMemoryAllocation = clHostMemAllocINTEL(&mockContext, 0, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unfiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+}
+
 TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeWhenCreateAllocationThenErrorIsReturned) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;

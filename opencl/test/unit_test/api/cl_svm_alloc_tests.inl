@@ -223,6 +223,15 @@ TEST_F(clSVMAllocTests, givenUnrestrictedFlagWhenCreatingSvmAllocThenAllowSizeBi
     }
 
     {
+        // debug flag + not allowed size
+        DebugManagerStateRestore restorer;
+        DebugManager.flags.AllowUnrestrictedSize.set(1);
+        svmPtr = clSVMAlloc(pContext, 0, notAllowedSize, 0);
+        EXPECT_NE(nullptr, svmPtr);
+        clSVMFree(pContext, svmPtr);
+    }
+
+    {
         // unrestricted size flag + allowed size
         svmPtr = clSVMAlloc(pContext, flags, allowedSize, 0);
         EXPECT_NE(nullptr, svmPtr);

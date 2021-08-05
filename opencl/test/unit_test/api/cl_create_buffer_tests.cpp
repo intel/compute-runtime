@@ -278,6 +278,26 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnres
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndDebugFlagSetWhenCreatingBufferThenClSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllowUnrestrictedSize.set(1);
+    auto pDevice = pContext->getDevice(0);
+    size_t size = static_cast<size_t>(pDevice->getDevice().getDeviceInfo().maxMemAllocSize) + 1;
+    auto memoryManager = static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->turnOnFakingBigAllocations();
+
+    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto buffer = clCreateBuffer(pContext, 0, size, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatingBufferThenNullIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;
