@@ -428,6 +428,22 @@ zeGetEventProcAddrTable(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetEventExpProcAddrTable(
+    ze_api_version_t version,
+    ze_event_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    pDdiTable->pfnQueryTimestampsExp = zeEventQueryTimestampsExp;
+
+    return result;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetImageProcAddrTable(
     ze_api_version_t version,
     ze_image_dditable_t *pDdiTable) {

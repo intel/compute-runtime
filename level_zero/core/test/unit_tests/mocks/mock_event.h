@@ -50,6 +50,7 @@ struct Mock<Event> : public Event {
     MOCK_METHOD0(queryStatus, ze_result_t());
     MOCK_METHOD0(reset, ze_result_t());
     MOCK_METHOD1(queryKernelTimestamp, ze_result_t(ze_kernel_timestamp_result_t *dstptr));
+    MOCK_METHOD3(queryTimestampsExp, ze_result_t(::L0::Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps));
 
     // Fake an allocation for event memory
     alignas(16) uint32_t memory = -1;

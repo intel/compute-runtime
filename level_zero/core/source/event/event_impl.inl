@@ -251,6 +251,49 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
 }
 
 template <typename TagSizeT>
+ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) {
+    uint32_t timestampPacket = 0;
+    uint64_t globalStartTs, globalEndTs, contextStartTs, contextEndTs;
+    globalStartTs = globalEndTs = contextStartTs = contextEndTs = Event::STATE_INITIAL;
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    bool isStaticPartitioning = true;
+
+    if (NEO::DebugManager.flags.EnableStaticPartitioning.get() == 0) {
+        isStaticPartitioning = false;
+    }
+
+    if (deviceImp->isSubdevice || !isStaticPartitioning) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if ((*pCount == 0) ||
+        (*pCount > kernelTimestampsData[timestampPacket].getPacketsUsed())) {
+        *pCount = this->getPacketsInUse();
+        return ZE_RESULT_SUCCESS;
+    }
+
+    for (auto packetId = 0u; packetId < *pCount; packetId++) {
+        ze_kernel_timestamp_result_t &result = *(pTimestamps + packetId);
+
+        auto queryTsEventAssignFunc = [&](uint64_t &timestampFieldForWriting, uint64_t &timestampFieldToCopy) {
+            memcpy_s(&timestampFieldForWriting, sizeof(uint64_t), static_cast<void *>(&timestampFieldToCopy), sizeof(uint64_t));
+        };
+
+        globalStartTs = kernelTimestampsData[timestampPacket].getGlobalStartValue(packetId);
+        contextStartTs = kernelTimestampsData[timestampPacket].getContextStartValue(packetId);
+        contextEndTs = kernelTimestampsData[timestampPacket].getContextEndValue(packetId);
+        globalEndTs = kernelTimestampsData[timestampPacket].getGlobalEndValue(packetId);
+
+        queryTsEventAssignFunc(result.global.kernelStart, globalStartTs);
+        queryTsEventAssignFunc(result.context.kernelStart, contextStartTs);
+        queryTsEventAssignFunc(result.global.kernelEnd, globalEndTs);
+        queryTsEventAssignFunc(result.context.kernelEnd, contextEndTs);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <typename TagSizeT>
 void EventImp<TagSizeT>::resetPackets() {
     for (uint32_t i = 0; i < kernelCount; i++) {
         kernelTimestampsData[i].setPacketsUsed(1);

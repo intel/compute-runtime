@@ -7,6 +7,7 @@
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/kernel/kernel.h"
 
@@ -38,6 +39,15 @@ zeImageViewCreateExp(
     ze_image_handle_t hImage,
     ze_image_handle_t *phImageView) {
     return L0::Image::fromHandle(hImage)->createView(L0::Device::fromHandle(hDevice), desc, phImageView);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeEventQueryTimestampsExp(
+    ze_event_handle_t hEvent,
+    ze_device_handle_t hDevice,
+    uint32_t *pCount,
+    ze_kernel_timestamp_result_t *pTimestamps) {
+    return L0::Event::fromHandle(hEvent)->queryTimestampsExp(L0::Device::fromHandle(hDevice), pCount, pTimestamps);
 }
 
 #if defined(__cplusplus)

@@ -37,6 +37,7 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t queryStatus() = 0;
     virtual ze_result_t reset() = 0;
     virtual ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) = 0;
+    virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) = 0;
     enum State : uint32_t {
         STATE_SIGNALED = 0u,
         STATE_CLEARED = static_cast<uint32_t>(-1),
@@ -119,6 +120,7 @@ struct EventImp : public Event {
     ze_result_t reset() override;
 
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
+    ze_result_t queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override;
 
     NEO::GraphicsAllocation &getAllocation(Device *device) override;
 

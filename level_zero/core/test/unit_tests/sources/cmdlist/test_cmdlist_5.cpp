@@ -58,6 +58,9 @@ class MockEvent : public ::L0::Event {
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override {
         return ZE_RESULT_SUCCESS;
     };
+    ze_result_t queryTimestampsExp(L0::Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override {
+        return ZE_RESULT_SUCCESS;
+    };
 
     size_t getTimestampSizeInDw() const override {
         return 1;

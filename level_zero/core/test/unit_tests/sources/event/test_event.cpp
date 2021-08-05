@@ -654,6 +654,75 @@ TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrec
     EXPECT_EQ(1u, event->kernelCount);
 }
 
+TEST_F(TimestampEventCreate, givenpCountZeroCallingQueryTimestampExpThenpCountSetProperly) {
+    uint32_t pCount = 0;
+    auto result = event->queryTimestampsExp(device, &pCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(0u, pCount);
+}
+
+TEST_F(TimestampEventCreate, givenpCountLargerThanSupportedWhenCallingQueryTimestampExpThenpCountSetProperly) {
+    uint32_t pCount = 10;
+    event->setPacketsInUse(2u);
+    auto result = event->queryTimestampsExp(device, &pCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, pCount);
+}
+
+TEST_F(TimestampEventCreate, givenEventWithStaticPartitionOffThenQueryTimestampExpReturnsUnsupported) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.EnableStaticPartitioning.set(0);
+
+    uint32_t pCount = 0;
+    auto result = event->queryTimestampsExp(device, &pCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+using EventQueryTimestampExpWithSubDevice = Test<MultiDeviceFixture>;
+
+TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithSubDeviceThenReturnsUnsupported) {
+    std::unique_ptr<L0::EventPool> eventPool;
+    std::unique_ptr<L0::EventImp<uint32_t>> event;
+
+    uint32_t deviceCount = 1;
+    ze_device_handle_t rootDeviceHandle;
+
+    ze_result_t result = zeDeviceGet(driverHandle.get(), &deviceCount, &rootDeviceHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    deviceCount = 0;
+    result = zeDeviceGetSubDevices(rootDeviceHandle, &deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(deviceCount >= 2);
+
+    auto subDeviceHandle = std::make_unique<ze_device_handle_t[]>(deviceCount);
+    result = zeDeviceGetSubDevices(rootDeviceHandle, &deviceCount, subDeviceHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+    eventDesc.wait = 0;
+
+    auto subdevice = L0::Device::fromHandle(subDeviceHandle[0]);
+    eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 1, &subDeviceHandle[0], &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+    event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, subdevice)));
+    ASSERT_NE(nullptr, event);
+
+    uint32_t pCount = 0;
+    result = event->queryTimestampsExp(subdevice, &pCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
 HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
     class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
       public:
@@ -674,6 +743,46 @@ HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryK
     EXPECT_EQ(data.contextEnd, result.context.kernelEnd);
     EXPECT_EQ(data.globalStart, result.global.kernelStart);
     EXPECT_EQ(data.globalEnd, result.global.kernelEnd);
+}
+
+TEST_F(TimestampEventCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSet) {
+    class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
+      public:
+        using typename TimestampPackets<uint32_t>::Packet;
+    };
+
+    typename MockTimestampPackets32::Packet packetData[2];
+    event->setPacketsInUse(2u);
+
+    packetData[0].contextStart = 1u;
+    packetData[0].contextEnd = 2u;
+    packetData[0].globalStart = 3u;
+    packetData[0].globalEnd = 4u;
+
+    packetData[1].contextStart = 5u;
+    packetData[1].contextEnd = 6u;
+    packetData[1].globalStart = 7u;
+    packetData[1].globalEnd = 8u;
+
+    event->hostAddress = packetData;
+
+    ze_kernel_timestamp_result_t results[2];
+    uint32_t pCount = 2;
+
+    for (uint32_t packetId = 0; packetId < pCount; packetId++) {
+        event->kernelTimestampsData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
+        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    }
+
+    auto result = event->queryTimestampsExp(device, &pCount, results);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (uint32_t i = 0; i < pCount; i++) {
+        EXPECT_EQ(packetData[i].contextStart, results[i].context.kernelStart);
+        EXPECT_EQ(packetData[i].contextEnd, results[i].context.kernelEnd);
+        EXPECT_EQ(packetData[i].globalStart, results[i].global.kernelStart);
+        EXPECT_EQ(packetData[i].globalEnd, results[i].global.kernelEnd);
+    }
 }
 
 HWTEST_EXCLUDE_PRODUCT(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet, IGFX_GEN12LP_CORE);
