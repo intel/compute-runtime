@@ -11,6 +11,7 @@
 
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "CL/cl_ext_intel.h"
@@ -332,5 +333,51 @@ TEST_F(MemoryPropertiesHelperTests, givenMemFlagsWithFlagsAndPropertiesWhenParsi
         EXPECT_TRUE(MemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
                                                                   MemoryPropertiesHelper::ObjType::UNKNOWN, context));
         EXPECT_EQ(testInput.expectedResult, flags);
+    }
+}
+
+TEST_F(MemoryPropertiesHelperTests, WhenAdjustingDeviceBitfieldThenCorrectBitfieldIsReturned) {
+    UltClDeviceFactory deviceFactory{2, 4};
+    auto memoryPropertiesRootDevice0 = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &deviceFactory.rootDevices[0]->getDevice());
+    auto memoryPropertiesRootDevice0Tile0 = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &deviceFactory.subDevices[0]->getDevice());
+    auto memoryPropertiesRootDevice0Tile1 = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &deviceFactory.subDevices[1]->getDevice());
+    auto memoryPropertiesRootDevice1 = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &deviceFactory.rootDevices[1]->getDevice());
+    auto memoryPropertiesRootDevice1Tile0 = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &deviceFactory.subDevices[4]->getDevice());
+    auto memoryPropertiesRootDevice1Tile1 = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &deviceFactory.subDevices[5]->getDevice());
+
+    DeviceBitfield devicesInContextBitfield0001{0b1};
+    DeviceBitfield devicesInContextBitfield0101{0b101};
+    DeviceBitfield devicesInContextBitfield1010{0b1010};
+    DeviceBitfield devicesInContextBitfield1111{0b1111};
+
+    MemoryProperties memoryPropertiesToProcess[] = {
+        memoryPropertiesRootDevice0, memoryPropertiesRootDevice0Tile0, memoryPropertiesRootDevice0Tile1,
+        memoryPropertiesRootDevice1, memoryPropertiesRootDevice1Tile0, memoryPropertiesRootDevice1Tile1};
+
+    DeviceBitfield devicesInContextBitfields[] = {devicesInContextBitfield0001, devicesInContextBitfield0101,
+                                                  devicesInContextBitfield1010, devicesInContextBitfield1111};
+    uint32_t rootDevicesToProcess[] = {0, 1, 2};
+
+    EXPECT_EQ(0b1u, MemoryPropertiesHelper::adjustDeviceBitfield(0, memoryPropertiesRootDevice0Tile0, devicesInContextBitfield1111).to_ulong());
+    EXPECT_EQ(0b10u, MemoryPropertiesHelper::adjustDeviceBitfield(0, memoryPropertiesRootDevice0Tile1, devicesInContextBitfield1111).to_ulong());
+    EXPECT_EQ(0b1111u, MemoryPropertiesHelper::adjustDeviceBitfield(1, memoryPropertiesRootDevice0Tile0, devicesInContextBitfield1111).to_ulong());
+    EXPECT_EQ(0b1111u, MemoryPropertiesHelper::adjustDeviceBitfield(1, memoryPropertiesRootDevice0Tile1, devicesInContextBitfield1111).to_ulong());
+
+    EXPECT_EQ(0b101u, MemoryPropertiesHelper::adjustDeviceBitfield(0, memoryPropertiesRootDevice0, devicesInContextBitfield0101).to_ulong());
+    EXPECT_EQ(0b1010u, MemoryPropertiesHelper::adjustDeviceBitfield(0, memoryPropertiesRootDevice0, devicesInContextBitfield1010).to_ulong());
+    EXPECT_EQ(0b1111u, MemoryPropertiesHelper::adjustDeviceBitfield(0, memoryPropertiesRootDevice0, devicesInContextBitfield1111).to_ulong());
+
+    for (auto processedRootDevice : rootDevicesToProcess) {
+        for (auto devicesInContextBitfield : devicesInContextBitfields) {
+            for (auto &memoryProperties : memoryPropertiesToProcess) {
+                auto expectedDeviceBitfield = devicesInContextBitfield;
+                if (processedRootDevice == memoryProperties.pDevice->getRootDeviceIndex()) {
+                    expectedDeviceBitfield &= memoryProperties.pDevice->getDeviceBitfield();
+                }
+                auto adjustedDeviceBitfield = MemoryPropertiesHelper::adjustDeviceBitfield(
+                    processedRootDevice, memoryProperties, devicesInContextBitfield);
+                EXPECT_EQ(expectedDeviceBitfield, adjustedDeviceBitfield);
+            }
+        }
     }
 }

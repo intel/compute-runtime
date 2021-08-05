@@ -85,7 +85,9 @@ MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags fla
         memoryProperties.flags.resource48Bit = true;
     }
 
-    addExtraMemoryProperties(memoryProperties, flags, flagsIntel, pDevice);
+    memoryProperties.pDevice = pDevice;
+
+    addExtraMemoryProperties(memoryProperties, flags, flagsIntel);
 
     return memoryProperties;
 }
@@ -108,6 +110,14 @@ void MemoryPropertiesHelper::fillCachePolicyInProperties(AllocationProperties &a
     allocationProperties.flags.flushL3RequiredForRead = cacheFlushRequired;
     allocationProperties.flags.flushL3RequiredForWrite = cacheFlushRequired;
     allocationProperties.cacheRegion = cacheRegion;
+}
+
+DeviceBitfield MemoryPropertiesHelper::adjustDeviceBitfield(uint32_t rootDeviceIndex, const MemoryProperties &memoryProperties,
+                                                            DeviceBitfield deviceBitfieldIn) {
+    if (rootDeviceIndex == memoryProperties.pDevice->getRootDeviceIndex()) {
+        return deviceBitfieldIn & memoryProperties.pDevice->getDeviceBitfield();
+    }
+    return deviceBitfieldIn;
 }
 
 } // namespace NEO

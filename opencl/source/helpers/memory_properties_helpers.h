@@ -25,8 +25,7 @@ class MemoryPropertiesHelper {
         IMAGE,
     };
 
-    static void addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel,
-                                         const Device *pDevice);
+    static void addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel);
 
     static MemoryProperties createMemoryProperties(cl_mem_flags flags, cl_mem_flags_intel flagsIntel,
                                                    cl_mem_alloc_flags_intel allocflags, const Device *pDevice);
