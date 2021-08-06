@@ -34,19 +34,19 @@ namespace NEO {
 struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
     void SetUp() override {
         MockExecutionEnvironmentGmmFixture::SetUp();
-        rootDeviceEnvironemnt = executionEnvironment->rootDeviceEnvironments[0].get();
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
         gdi = new MockGdi();
         osEnvironment->gdi.reset(gdi);
         executionEnvironment->osEnvironment.reset(osEnvironment);
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironemnt));
-        rootDeviceEnvironemnt->osInterface = std::make_unique<OSInterface>();
-        rootDeviceEnvironemnt->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
-        rootDeviceEnvironemnt->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        osInterface = rootDeviceEnvironemnt->osInterface.get();
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+        rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        osInterface = rootDeviceEnvironment->osInterface.get();
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
-        auto hwInfo = rootDeviceEnvironemnt->getHardwareInfo();
+        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, 1u, engine, preemptionMode,
                                                    false);
@@ -56,7 +56,7 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
 
     WddmMock *wddm = nullptr;
     OSInterface *osInterface;
-    RootDeviceEnvironment *rootDeviceEnvironemnt = nullptr;
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     std::unique_ptr<OsContextWin> osContext;
 
     MockGdi *gdi = nullptr;

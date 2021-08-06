@@ -814,7 +814,7 @@ TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
     gdi->createAllocation2 = FailingCreateAllocation::mockCreateAllocation2;
 
     void *fakePtr = reinterpret_cast<void *>(0x123);
-    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironemnt->getGmmClientContext(), fakePtr, 100, 0, false);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), fakePtr, 100, 0, false);
     WddmAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, fakePtr, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     allocation.setDefaultGmm(gmm.get());
 
