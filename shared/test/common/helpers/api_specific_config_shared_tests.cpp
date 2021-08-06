@@ -10,7 +10,7 @@
 
 namespace NEO {
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
-    return false;
+    return ApiSpecificConfig::ApiType::OCL == ApiSpecificConfig::getApiType();
 }
 bool ApiSpecificConfig::getHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
