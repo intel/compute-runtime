@@ -18,7 +18,7 @@ if(WIN32)
                  ${NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS}
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/dll/create_command_stream.cpp
-                 ${NEO_SOURCE_DIR}/opencl/source/dll${BRANCH_DIR_SUFFIX}/get_devices.cpp
+                 ${NEO_SOURCE_DIR}/opencl/source/dll/get_devices.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/dll/windows/os_interface.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
