@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -503,11 +503,6 @@ uint32_t BinaryDecoder::readStructFields(const std::vector<std::string> &patchLi
 }
 
 int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
-    if (args[args.size() - 1] == "-help") {
-        printHelp();
-        return -1;
-    }
-
     for (size_t argIndex = 2; argIndex < args.size(); ++argIndex) {
         const auto &currArg = args[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < args.size());
@@ -521,6 +516,9 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         } else if ("-dump" == currArg && hasMoreArgs) {
             pathToDump = args[++argIndex];
             addSlash(pathToDump);
+        } else if ("--help" == currArg) {
+            showHelp = true;
+            return 0;
         } else if ("-ignore_isa_padding" == currArg) {
             ignoreIsaPadding = true;
         } else if ("-q" == currArg) {
@@ -528,13 +526,11 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
             iga->setMessagePrinter(argHelper->getPrinterRef());
         } else {
             argHelper->printf("Unknown argument %s\n", currArg.c_str());
-            printHelp();
             return -1;
         }
     }
     if (binaryFile.find(".bin") == std::string::npos) {
         argHelper->printf(".bin extension is expected for binary file.\n");
-        printHelp();
         return -1;
     }
     if (false == iga->isKnownPlatform()) {

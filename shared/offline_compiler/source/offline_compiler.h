@@ -41,7 +41,6 @@ class OfflineCompiler {
         INVALID_PROGRAM = -44,
         INVALID_COMMAND_LINE = -5150,
         INVALID_FILE = -5151,
-        PRINT_USAGE = -5152,
     };
 
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
@@ -126,8 +125,8 @@ class OfflineCompiler {
     std::string internalOptions;
     std::string sourceCode;
     std::string buildLog;
-    bool dumpFiles = true;
 
+    bool dumpFiles = true;
     bool useLlvmText = false;
     bool useLlvmBc = false;
     bool useCppFile = false;
@@ -138,13 +137,14 @@ class OfflineCompiler {
     bool inputFileSpirV = false;
     bool outputNoSuffix = false;
     bool forceStatelessToStatefulOptimization = false;
+    bool isSpirV = false;
+    bool showHelp = false;
 
     std::vector<uint8_t> elfBinary;
     char *genBinary = nullptr;
     size_t genBinarySize = 0;
     char *irBinary = nullptr;
     size_t irBinarySize = 0;
-    bool isSpirV = false;
     char *debugDataBinary = nullptr;
     size_t debugDataBinarySize = 0;
     struct buildInfo;

@@ -272,3 +272,37 @@ __kernel void k(){
     EXPECT_EQ(sourcesLen[0], sourceSection->data.size());
     EXPECT_STREQ(headerB, reinterpret_cast<const char *>(headerBSection->data.begin()));
 }
+
+TEST(OclocApiTests, GivenHelpParameterWhenDecodingThenHelpMsgIsPrintedAndSuccessIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "disasm",
+        "--help"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_FALSE(output.empty());
+    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+}
+
+TEST(OclocApiTests, GivenHelpParameterWhenEncodingThenHelpMsgIsPrintedAndSuccessIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "asm",
+        "--help"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_FALSE(output.empty());
+    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+}

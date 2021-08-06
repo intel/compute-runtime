@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,9 @@ class BinaryDecoder {
     int decode();
     int validateInput(const std::vector<std::string> &args);
 
+    bool showHelp = false;
+    void printHelp();
+
   protected:
     OclocArgHelper *argHelper = nullptr;
     bool ignoreIsaPadding = false;
@@ -54,7 +57,6 @@ class BinaryDecoder {
     const void *getDevBinary();
     std::vector<std::string> loadPatchList();
     void parseTokens();
-    void printHelp();
     int processBinary(const void *&ptr, std::ostream &ptmFile);
     void processKernel(const void *&ptr, std::ostream &ptmFile);
     void readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile);

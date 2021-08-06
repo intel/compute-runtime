@@ -583,9 +583,8 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionThenBuildDoesNotOccur) {
     testing::internal::CaptureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_STRNE("", output.c_str());
-    EXPECT_EQ(OfflineCompiler::ErrorCode::PRINT_USAGE, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
 
     delete pOfflineCompiler;
 }

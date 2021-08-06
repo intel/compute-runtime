@@ -89,6 +89,12 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
         } else if (numArgs > 1 && ConstStringRef("disasm") == allArgs[1]) {
             BinaryDecoder disasm(helper.get());
             int retVal = disasm.validateInput(allArgs);
+
+            if (disasm.showHelp) {
+                disasm.printHelp();
+                return retVal;
+            }
+
             if (retVal == 0) {
                 return disasm.decode();
             } else {
@@ -97,6 +103,12 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
         } else if (numArgs > 1 && ConstStringRef("asm") == allArgs[1]) {
             BinaryEncoder assembler(helper.get());
             int retVal = assembler.validateInput(allArgs);
+
+            if (assembler.showHelp) {
+                assembler.printHelp();
+                return retVal;
+            }
+
             if (retVal == 0) {
                 return assembler.encode();
             } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -305,11 +305,6 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
 }
 
 int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
-    if ("-help" == args[args.size() - 1]) {
-        printHelp();
-        return -1;
-    }
-
     for (size_t argIndex = 2; argIndex < args.size(); ++argIndex) {
         const auto &currArg = args[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < args.size());
@@ -320,6 +315,9 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
             iga->setProductFamily(getProductFamilyFromDeviceName(args[++argIndex]));
         } else if ("-out" == currArg && hasMoreArgs) {
             elfName = args[++argIndex];
+        } else if ("--help" == currArg) {
+            showHelp = true;
+            return 0;
         } else if ("-ignore_isa_padding" == currArg) {
             ignoreIsaPadding = true;
         } else if ("-q" == currArg) {
@@ -327,7 +325,6 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
             iga->setMessagePrinter(argHelper->getPrinterRef());
         } else {
             argHelper->printf("Unknown argument %s\n", currArg.c_str());
-            printHelp();
             return -1;
         }
     }
@@ -340,7 +337,6 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
     }
     if (elfName.find(".bin") == std::string::npos) {
         argHelper->printf(".bin extension is expected for binary file.\n");
-        printHelp();
         return -1;
     }
 
