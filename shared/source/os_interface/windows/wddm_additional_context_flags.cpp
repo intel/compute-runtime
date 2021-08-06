@@ -10,4 +10,5 @@
 namespace NEO {
 void Wddm::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext, const HardwareInfo &hwInfo) {
 }
+
 } // namespace NEO

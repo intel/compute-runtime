@@ -58,6 +58,7 @@ class Gmm {
     void setupImageResourceParams(ImageInfo &imgInfo);
     bool extraMemoryFlagsRequired();
     void applyExtraMemoryFlags(const StorageInfo &storageInfo);
+    void applyDebugOverrides();
     GmmClientContext *clientContext = nullptr;
 };
 } // namespace NEO

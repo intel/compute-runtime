@@ -155,6 +155,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkGroupCount, -1, "-1: default, >0:
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdQueueSynchronousMode, -1, "Overrides all command queues synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStatelessCompression, -1, "-1: default, 0: disable, 1: Enable E2EC in SBA for all stateless accesses")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiTileCompression, -1, "-1: default, 0: disable, 1: enable, Enables compression in multi tile scenarios.")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmResourceUsageField, -1, "-1: default, >=0: gmm.resourceParams.Usage is set to this value")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

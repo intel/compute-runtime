@@ -35,6 +35,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     size_t getRenderPitch() override { return rowPitch; }
 
+    uint64_t getDriverProtectionBits() override { return driverProtectionBits; }
+
     uint32_t getNumSamples() override { return mockResourceCreateParams.MSAA.NumSamples; }
 
     uint32_t getQPitch() override { return qPitch; }
@@ -97,6 +99,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     using GmmResourceInfo::clientContext;
     using GmmResourceInfo::createResourceInfo;
 
+    uint64_t driverProtectionBits = 0;
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
     SurfaceFormatInfo tempSurface{};

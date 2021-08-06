@@ -61,12 +61,14 @@ Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t aligned
     applyAuxFlagsForBuffer(preferRenderCompressed);
     applyMemoryFlags(systemMemoryPool, storageInfo);
     applyAppResource(storageInfo);
+    applyDebugOverrides();
 
     gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &resourceParams));
 }
 
 Gmm::Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm) : clientContext(clientContext) {
     gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, inputGmm));
+    applyDebugOverrides();
 }
 
 Gmm::~Gmm() = default;
@@ -76,6 +78,7 @@ Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, Storage
     setupImageResourceParams(inputOutputImgInfo);
     applyMemoryFlags(!inputOutputImgInfo.useLocalMemory, storageInfo);
     applyAppResource(storageInfo);
+    applyDebugOverrides();
 
     this->gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &this->resourceParams));
     UNRECOVERABLE_IF(this->gmmResourceInfo == nullptr);
@@ -121,6 +124,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
     resourceParams.NoGfxMemory = 1; // dont allocate, only query for params
 
     resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE;
+
     resourceParams.Format = imgInfo.surfaceFormat->GMMSurfaceFormat;
     resourceParams.Flags.Gpu.Texture = 1;
     resourceParams.BaseWidth64 = imageWidth;
@@ -372,6 +376,12 @@ void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) {
             resourceParams.MultiTileArch.LocalMemPreferredSet = static_cast<uint8_t>(tileSelected);
             resourceParams.MultiTileArch.LocalMemEligibilitySet = static_cast<uint8_t>(tileSelected);
         }
+    }
+}
+
+void Gmm::applyDebugOverrides() {
+    if (-1 != DebugManager.flags.OverrideGmmResourceUsageField.get()) {
+        resourceParams.Usage = static_cast<GMM_RESOURCE_USAGE_TYPE>(DebugManager.flags.OverrideGmmResourceUsageField.get());
     }
 }
 } // namespace NEO

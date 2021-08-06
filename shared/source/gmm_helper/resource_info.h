@@ -33,6 +33,8 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL size_t getRenderPitch() { return static_cast<size_t>(resourceInfo->GetRenderPitch()); }
 
+    MOCKABLE_VIRTUAL uint64_t getDriverProtectionBits();
+
     MOCKABLE_VIRTUAL uint32_t getNumSamples() { return resourceInfo->GetNumSamples(); }
 
     MOCKABLE_VIRTUAL uint32_t getQPitch() { return resourceInfo->GetQPitch(); }

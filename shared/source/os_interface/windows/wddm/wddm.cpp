@@ -431,12 +431,15 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     MapGPUVA.hPagingQueue = pagingQueue;
     MapGPUVA.hAllocation = handle;
     MapGPUVA.Protection = protectionType;
+
     MapGPUVA.SizeInPages = size / MemoryConstants::pageSize;
     MapGPUVA.OffsetInPages = 0;
 
     MapGPUVA.BaseAddress = preferredAddress;
     MapGPUVA.MinimumAddress = minimumAddress;
     MapGPUVA.MaximumAddress = maximumAddress;
+
+    applyAdditionalMapGPUVAFields(MapGPUVA, gmm);
 
     NTSTATUS status = getGdi()->mapGpuVirtualAddress(&MapGPUVA);
     gpuPtr = GmmHelper::canonize(MapGPUVA.VirtualAddress);
