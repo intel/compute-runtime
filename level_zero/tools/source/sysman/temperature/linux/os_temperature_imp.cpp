@@ -138,7 +138,6 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
         break;
     default:
         *pTemperature = 0;
-        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         break;
     }
 

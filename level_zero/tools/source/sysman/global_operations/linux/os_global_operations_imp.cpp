@@ -84,21 +84,19 @@ void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPE
 
 void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
     std::string strVal;
+    std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
     ze_result_t result = pFsAccess->read(agamaVersionFile, strVal);
-    if (ZE_RESULT_SUCCESS == result) {
-        std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
-        return;
-    } else if ((result != ZE_RESULT_ERROR_NOT_AVAILABLE) && (result != ZE_RESULT_SUCCESS)) {
-        std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
-        return;
-    } else {
-        result = pFsAccess->read(srcVersionFile, strVal);
-        if (ZE_RESULT_SUCCESS != result) {
-            std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+    if (ZE_RESULT_SUCCESS != result) {
+        if (ZE_RESULT_ERROR_NOT_AVAILABLE != result) {
             return;
         }
-        std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
+        result = pFsAccess->read(srcVersionFile, strVal);
+        if (ZE_RESULT_SUCCESS != result) {
+            return;
+        }
     }
+    std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
+    return;
 }
 
 static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSysfsAccess, const ::pid_t pid, std::vector<int> &deviceFds) {
