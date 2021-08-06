@@ -41,7 +41,7 @@ macro(macro_for_each_platform)
 
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     foreach(BRANCH ${BRANCH_DIR_LIST})
-      set(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.inl")
+      set(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.cpp")
       set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_FILE})
       if(EXISTS ${SRC_FILE})
         list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})

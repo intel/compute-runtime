@@ -5,15 +5,7 @@
  *
  */
 
-#ifdef SUPPORT_ICLLP
-#include "hw_info_icllp.inl"
-#endif
-#ifdef SUPPORT_LKF
-#include "hw_info_lkf.inl"
-#endif
-#ifdef SUPPORT_EHL
-#include "hw_info_ehl.inl"
-#endif
+#include "shared/source/gen11/hw_info_gen11.h"
 
 namespace NEO {
 const char *GfxFamilyMapper<IGFX_GEN11_CORE>::name = "Gen11";

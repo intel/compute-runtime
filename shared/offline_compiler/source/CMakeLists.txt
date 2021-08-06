@@ -110,7 +110,7 @@ set(RUNTIME_GENX_CPP_FILES
 macro(macro_for_each_platform)
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     foreach(BRANCH ${BRANCH_DIR_LIST})
-      set(SRC_FILE ${NEO_SOURCE_DIR}/opencl/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.inl)
+      set(SRC_FILE ${NEO_SOURCE_DIR}/opencl/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
         list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
       endif()

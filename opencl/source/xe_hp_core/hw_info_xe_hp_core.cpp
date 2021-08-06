@@ -5,9 +5,7 @@
  *
  */
 
-#ifdef SUPPORT_XE_HP_SDV
-#include "hw_info_xehp.inl"
-#endif
+#include "shared/source/xe_hp_core/hw_info_xe_hp_core.h"
 
 namespace NEO {
 const char *GfxFamilyMapper<IGFX_XE_HP_CORE>::name = "XE_HP_CORE";

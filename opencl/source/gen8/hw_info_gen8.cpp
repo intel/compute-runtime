@@ -5,9 +5,7 @@
  *
  */
 
-#ifdef SUPPORT_BDW
-#include "hw_info_bdw.inl"
-#endif
+#include "shared/source/gen8/hw_info_gen8.h"
 
 namespace NEO {
 const char *GfxFamilyMapper<IGFX_GEN8_CORE>::name = "Gen8";
