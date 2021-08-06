@@ -55,7 +55,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t alignment,
                                      void **ptr) {
 
-    bool relaxedSizeAllowed = false;
+    bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
     if (hostDesc->pNext) {
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(hostDesc->pNext);
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
@@ -102,7 +102,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    bool relaxedSizeAllowed = false;
+    bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
     if (deviceDesc->pNext) {
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
@@ -178,7 +178,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                        size_t size,
                                        size_t alignment,
                                        void **ptr) {
-    bool relaxedSizeAllowed = false;
+    bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
     if (deviceDesc->pNext) {
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
