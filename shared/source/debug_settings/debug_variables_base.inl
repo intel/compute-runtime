@@ -70,6 +70,7 @@ DECLARE_DEBUG_VARIABLE(bool, UseImmDataWriteModeOnPostSyncOperation, false, "Use
 DECLARE_DEBUG_VARIABLE(bool, DisableTimestampEvents, false, "Timestamp info will not be reported and events will only perform regular synchronization functions")
 DECLARE_DEBUG_VARIABLE(bool, EnableResourceTags, false, "Enable resource tagging in GMM")
 DECLARE_DEBUG_VARIABLE(bool, EnableFlushTaskSubmission, false, "true: driver uses csr flushTask for immediate submissions, false: driver uses legacy executeCommandList path")
+DECLARE_DEBUG_VARIABLE(bool, DoNotFreeResources, false, "true: driver stops freeing resources")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "DeviceId selected for testing")
 DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "-1: disable, 0+: tile mask, each bit corresponds to tile")

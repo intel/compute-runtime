@@ -728,6 +728,9 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
+    if (DebugManager.flags.DoNotFreeResources.get()) {
+        return;
+    }
     DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(gfxAllocation);
     this->unregisterAllocation(gfxAllocation);
 

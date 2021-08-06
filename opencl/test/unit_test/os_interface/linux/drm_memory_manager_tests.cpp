@@ -4468,6 +4468,16 @@ TEST_F(DrmMemoryManagerTest, whenWddmMemoryManagerIsCreatedThenAlignmentSelector
     EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
 }
 
+TEST_F(DrmMemoryManagerTest, whenDebugFlagToNotFreeResourcesIsSpecifiedThenFreeIsNotDoingAnything) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DoNotFreeResources.set(true);
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    size_t sizeIn = 1024llu;
+    uint64_t gpuAddress = 0x1337llu;
+    DrmAllocation stackDrmAllocation(0u, GraphicsAllocation::AllocationType::BUFFER, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::System64KBPages);
+    memoryManager.freeGraphicsMemoryImpl(&stackDrmAllocation);
+}
+
 TEST_F(DrmMemoryManagerTest, given2MbPagesDisabledWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
