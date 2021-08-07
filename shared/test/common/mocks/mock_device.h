@@ -91,10 +91,6 @@ class MockDevice : public RootDevice {
         }
     }
 
-    size_t getMaxParameterSizeFromIGC() const override {
-        return maxParameterSizeFromIGC;
-    }
-
     const char *getProductAbbrev() const;
 
     template <typename T>
@@ -157,7 +153,6 @@ class MockDevice : public RootDevice {
 
     bool isDebuggerActiveParentCall = true;
     bool isDebuggerActiveReturn = false;
-    size_t maxParameterSizeFromIGC = 0u;
 };
 
 template <>

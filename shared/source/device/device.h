@@ -146,7 +146,6 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
     MOCKABLE_VIRTUAL SubDevice *createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_stream::EngineType engineType);
-    virtual size_t getMaxParameterSizeFromIGC() const;
     double getPercentOfGlobalMemoryAvailable() const;
     virtual void createBindlessHeapsHelper() {}
     bool createSubDevices();
