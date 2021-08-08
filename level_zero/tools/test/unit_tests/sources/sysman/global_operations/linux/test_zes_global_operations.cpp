@@ -235,6 +235,51 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInfor
     ASSERT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesDeviceProcessesGetState(device, &count, nullptr));
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingNullDirThenFailureIsReturned) {
+    uint32_t count = 0;
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillOnce(::testing::Return(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceProcessesGetState(device, &count, nullptr));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenFailureIsReturnedEvenwithFaultyClient) {
+    uint32_t count = 0;
+    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getScannedDirPidEntires));
+    EXPECT_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
+        .WillOnce(::testing::Return(ZE_RESULT_ERROR_UNKNOWN));
+    EXPECT_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
+        .WillOnce(::testing::Return(ZE_RESULT_ERROR_UNKNOWN));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesDeviceProcessesGetState(device, &count, nullptr));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingBusyDirForEnginesReadThenFailureIsReturnedEvenwithFaultyClient) {
+    uint32_t count = 0;
+    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getScannedDirPidEntires));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesDeviceProcessesGetState(device, &count, nullptr));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingBusyDirForEnginesThenFailureIsReturnedEvenwithFaultyClient) {
+    uint32_t count = 0;
+    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getScannedDir4Entries));
+    EXPECT_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
+        .WillOnce(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getValUnsignedLongCreatedBytesSuccess))
+        .WillOnce(::testing::Return(ZE_RESULT_ERROR_UNKNOWN));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesDeviceProcessesGetState(device, &count, nullptr));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileReadingInvalidBufferObjectsThenErrorIsReturned) {
+    uint32_t count = 0;
+    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getScannedDirPidEntiresForClients));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesDeviceProcessesGetState(device, &count, nullptr));
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileReadingExistingMemoryFileThenCorrectValueIsReturned) {
     uint64_t memSize = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysfsAccess->read("clients/6/total_device_memory_buffer_objects/created_bytes", memSize));

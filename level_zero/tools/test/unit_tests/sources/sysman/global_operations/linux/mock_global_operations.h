@@ -38,10 +38,13 @@ const std::string clientId4("7");
 const std::string clientId5("8");
 const std::string clientId6("10");
 const std::string clientId7("11");
+const std::string clientId8("12");
+const std::string clientId9("13");
 const std::string engine0("0");
 const std::string engine1("1");
 const std::string engine2("2");
 const std::string engine3("3");
+const std::string engine6("6");
 const std::string driverVersion("5.0.0-37-generic SMP mod_unload");
 const std::string srcVersion("5.0.0-37");
 const std::string ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
@@ -94,9 +97,14 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
             val = pid6;
         } else if (file.compare("clients/11/pid") == 0) {
             val = pid7;
+        } else if (file.compare("clients/12/pid") == 0) {
+            val = pid7;
+        } else if (file.compare("clients/13/pid") == 0) {
+            val = pid7;
         } else if ((file.compare("clients/4/busy/0") == 0) || (file.compare("clients/4/busy/3") == 0) ||
                    (file.compare("clients/5/busy/1") == 0) || (file.compare("clients/6/busy/0") == 0) ||
-                   (file.compare("clients/8/busy/1") == 0) || (file.compare("clients/8/busy/0") == 0)) {
+                   (file.compare("clients/8/busy/1") == 0) || (file.compare("clients/8/busy/0") == 0) ||
+                   (file.compare("clients/13/busy/6") == 0)) {
             val = engineTimeSpent;
         } else if ((file.compare("clients/4/busy/1") == 0) || (file.compare("clients/4/busy/2") == 0) ||
                    (file.compare("clients/5/busy/0") == 0) || (file.compare("clients/5/busy/2") == 0) ||
@@ -121,6 +129,8 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
             return ZE_RESULT_ERROR_UNKNOWN;
         } else if (file.compare("clients/7/total_device_memory_buffer_objects/imported_bytes") == 0) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        } else if (file.compare("clients/13/total_device_memory_buffer_objects/imported_bytes") == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -199,6 +209,24 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
             list.push_back(engine3);
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getScannedDirPidEntires(const std::string path, std::vector<std::string> &list) {
+        if (path.compare(clientsDir) == 0) {
+            list.push_back(clientId8);
+        } else if (path.compare("clients/12/busy") == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getScannedDirPidEntiresForClients(const std::string path, std::vector<std::string> &list) {
+        if (path.compare(clientsDir) == 0) {
+            list.push_back(clientId9);
+        } else if (path.compare("clients/13/busy") == 0) {
+            list.push_back(engine6);
         }
         return ZE_RESULT_SUCCESS;
     }
