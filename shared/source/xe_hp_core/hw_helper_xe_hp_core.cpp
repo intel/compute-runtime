@@ -189,7 +189,7 @@ std::string HwHelperHw<Family>::getExtensions() const {
 
 template <>
 bool HwHelperHw<Family>::isBlitterForImagesSupported(const HardwareInfo &hwInfo) const {
-    return true;
+    return false;
 }
 
 template <>

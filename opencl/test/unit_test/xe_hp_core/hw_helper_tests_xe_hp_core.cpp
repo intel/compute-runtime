@@ -336,7 +336,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, WhenGettingDeviceIpVersionThenMakeCorr
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreWhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {
     const auto &hwInfo = *defaultHwInfo;
     auto &helper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_TRUE(helper.isBlitterForImagesSupported(hwInfo));
+    EXPECT_FALSE(helper.isBlitterForImagesSupported(hwInfo));
 }
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
