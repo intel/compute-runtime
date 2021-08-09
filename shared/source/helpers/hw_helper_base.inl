@@ -622,6 +622,10 @@ bool HwHelperHw<GfxFamily>::isCopyOnlyEngineType(EngineGroupType type) const {
 }
 
 template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::adjustAddressWidthForCanonize(uint32_t &addressWidth) const {
+}
+
+template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isSipWANeeded(const HardwareInfo &hwInfo) const {
     return false;
 }
