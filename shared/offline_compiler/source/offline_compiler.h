@@ -51,6 +51,18 @@ class OfflineCompiler {
     std::string &getBuildLog();
     void printUsage();
 
+    static constexpr ConstStringRef queryHelp =
+        "Depending on <query_option> will generate file\n"
+        "(with a name adequate to <query_option>)\n"
+        "containing either driver version or NEO revision hash.\n\n"
+        "Usage: ocloc query <query_option>\n\n"
+        "Supported query options:\n"
+        "  OCL_DRIVER_VERSION  ; returns driver version\n"
+        "  NEO_REVISION        ; returns NEO revision hash\n\n"
+        "Examples:\n"
+        "  Extract driver version\n"
+        "    ocloc query OCL_DRIVER_VERSION\n";
+
     OfflineCompiler &operator=(const OfflineCompiler &) = delete;
     OfflineCompiler(const OfflineCompiler &) = delete;
     MOCKABLE_VIRTUAL ~OfflineCompiler();

@@ -106,6 +106,10 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
     return pOffCompiler;
 }
 
+void printQueryHelp(OclocArgHelper *helper) {
+    helper->printf(OfflineCompiler::queryHelp.data());
+}
+
 int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
     if (allArgs.size() != 3) {
         helper->printf("Error: Invalid command line. Expected ocloc query <argument>");
@@ -121,6 +125,8 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
     } else if (Queries::queryOCLDriverVersion == arg) {
         auto driverVersion = NEO::getOclDriverVersion();
         helper->saveOutput(Queries::queryOCLDriverVersion.data(), driverVersion.c_str(), driverVersion.size() + 1);
+    } else if ("--help" == arg) {
+        printQueryHelp(helper);
     } else {
         helper->printf("Error: Invalid command line. Uknown argument %s.", arg.c_str());
         retVal = INVALID_COMMAND_LINE;
