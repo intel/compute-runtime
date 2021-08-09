@@ -420,6 +420,10 @@ int Drm::queryVmId(uint32_t drmContextId, uint32_t &vmId) {
     return retVal;
 }
 
+std::unique_lock<std::mutex> Drm::lockBindFenceMutex() {
+    return std::unique_lock<std::mutex>(this->bindFenceMutex);
+}
+
 int Drm::getEuTotal(int &euTotal) {
     return getParamIoctl(I915_PARAM_EU_TOTAL, &euTotal);
 }

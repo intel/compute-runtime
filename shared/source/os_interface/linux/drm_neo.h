@@ -230,6 +230,8 @@ class Drm : public DriverModel {
 
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
 
+    std::unique_lock<std::mutex> lockBindFenceMutex();
+
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
@@ -275,6 +277,7 @@ class Drm : public DriverModel {
     TopologyMap topologyMap;
     std::unordered_map<unsigned long, std::pair<long long, uint64_t>> ioctlStatistics;
 
+    std::mutex bindFenceMutex;
     std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;
     std::array<uint64_t, EngineLimits::maxHandleCount> fenceVal;
     StackVec<uint32_t, size_t(ResourceClass::MaxSize)> classHandles;
