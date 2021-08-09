@@ -32,6 +32,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     using BaseClass::requiredScratchSize;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAddress;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAllocation;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::taskCount;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::useNotifyEnableForPostSync;
 

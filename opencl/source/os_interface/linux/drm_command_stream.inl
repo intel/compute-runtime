@@ -116,7 +116,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
     }
 
     if (isUserFenceWaitActive()) {
-        this->flushStamp->setStamp(taskCount);
+        this->flushStamp->setStamp(latestSentTaskCount);
     } else {
         this->flushStamp->setStamp(bb->peekHandle());
     }
