@@ -19,6 +19,20 @@ bool AILConfiguration::initProcessExecutableName() {
         std::wcstombs(processFilename, processFilenameW, MAX_PATH);
     }
 
+    std::string_view pathView(processFilename);
+
+    auto lastPosition = pathView.find_last_of("\\");
+
+    pathView.remove_prefix(lastPosition + 1u);
+
+    lastPosition = pathView.find(".exe");
+
+    if (lastPosition != std::string_view::npos) {
+        pathView.remove_suffix(pathView.size() - lastPosition);
+    }
+
+    processName = pathView;
+
     return status;
 }
 } // namespace NEO

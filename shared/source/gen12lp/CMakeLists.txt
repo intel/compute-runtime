@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,3 +17,5 @@ else()
 endif()
 
 set_property(GLOBAL PROPERTY SHARED_SRCS_ADDITIONAL_FILES_GEN12LP ${SHARED_SRCS_ADDITIONAL_FILES_GEN12LP})
+
+add_subdirectories()

@@ -60,6 +60,11 @@ macro(macro_for_each_platform)
         endif()
       endforeach()
 
+      set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ail${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_IT_LOWER}/ail_configuration_${PLATFORM_IT_LOWER}.cpp)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${SRC_FILE})
+      endif()
+
       set(SRC_FILE "${CORE_GENX_PREFIX}/os_agnostic_hw_info_config_${PLATFORM_IT_LOWER}.inl")
       if(EXISTS ${SRC_FILE})
         list(APPEND CORE_SRCS_${GEN_TYPE}_H_BASE ${SRC_FILE})

@@ -64,6 +64,9 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             hardwareInfo->platform.usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }
 
+        [[maybe_unused]] bool result = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAilConfiguration();
+        DEBUG_BREAK_IF(!result);
+
         auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
         if (csrType > 0) {
             auto &hwHelper = HwHelper::get(hardwareInfo->platform.eRenderCoreFamily);

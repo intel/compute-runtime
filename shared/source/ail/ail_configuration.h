@@ -12,7 +12,9 @@
 #pragma once
 
 namespace NEO {
+
 enum class AILEnumeration : uint32_t {
+    DISABLE_COMPRESSION,
     AIL_MAX_OPTIONS_COUNT
 };
 
