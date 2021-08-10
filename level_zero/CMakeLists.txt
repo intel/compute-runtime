@@ -115,11 +115,6 @@ if(BUILD_WITH_L0)
   # Option to disable tests
   option(${PROJECT_NAME}_BUILD_TESTS "Build unit tests." ON)
 
-  if(SKIP_UNIT_TESTS)
-    set(SKIP_L0_UNIT_TESTS TRUE)
-    set(SKIP_L0_BLACK_BOX_TESTS TRUE)
-  endif()
-
   # Copy third_party_binaries to output BIN folder
   add_custom_target(copy_third_party_files)
   set_target_properties(copy_third_party_files PROPERTIES FOLDER ${TARGET_NAME_L0})
