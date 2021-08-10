@@ -23,5 +23,9 @@ std::string engineTypeToStringAdditional(aub_stream::EngineType engineType) {
     return "Unknown";
 }
 
+aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputType, const HardwareInfo &hwInfo) {
+    return inputType;
+}
+
 } // namespace EngineHelpers
 } // namespace NEO

@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -30,6 +31,7 @@
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_tile_fixture.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
@@ -1683,4 +1685,230 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
     ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
     EXPECT_TRUE(osContext.isInitialized());
+}
+
+TEST_F(MultiTileFixture, givenSubDeviceWhenQueueIsCreatedThenItContainsProperDevice) {
+    auto tile0 = platform()->getClDevice(0)->getDeviceById(0);
+
+    const cl_device_id deviceId = tile0;
+    auto returnStatus = CL_SUCCESS;
+    auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, &returnStatus);
+    EXPECT_EQ(CL_SUCCESS, returnStatus);
+    EXPECT_NE(nullptr, context);
+
+    auto commandQueue = clCreateCommandQueueWithProperties(context, tile0, nullptr, &returnStatus);
+    EXPECT_EQ(CL_SUCCESS, returnStatus);
+    EXPECT_NE(nullptr, commandQueue);
+
+    auto neoQueue = castToObject<CommandQueue>(commandQueue);
+    EXPECT_EQ(&tile0->getDevice(), &neoQueue->getDevice());
+
+    clReleaseCommandQueue(commandQueue);
+    clReleaseContext(context);
+}
+
+TEST_F(MultiTileFixture, givenTile1WhenQueueIsCreatedThenItContainsTile1Device) {
+    auto tile1 = platform()->getClDevice(0)->getDeviceById(1);
+
+    const cl_device_id deviceId = tile1;
+    auto returnStatus = CL_SUCCESS;
+    auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, &returnStatus);
+    EXPECT_EQ(CL_SUCCESS, returnStatus);
+    EXPECT_NE(nullptr, context);
+
+    auto commandQueue = clCreateCommandQueueWithProperties(context, tile1, nullptr, &returnStatus);
+    EXPECT_EQ(CL_SUCCESS, returnStatus);
+    EXPECT_NE(nullptr, commandQueue);
+
+    auto neoQueue = castToObject<CommandQueue>(commandQueue);
+    EXPECT_EQ(&tile1->getDevice(), &neoQueue->getDevice());
+
+    clReleaseCommandQueue(commandQueue);
+    clReleaseContext(context);
+}
+
+struct CopyOnlyQueueTests : ::testing::Test {
+    void SetUp() override {
+        typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, *defaultHwInfo);
+
+        auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
+        if (device->engineGroups[static_cast<uint32_t>(EngineGroupType::Copy)].empty()) {
+            GTEST_SKIP();
+        }
+        device->engineGroups.clear();
+        device->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
+        device->engines.clear();
+
+        device->createEngine(0, typeUsageRcs);
+        device->createEngine(1, typeUsageBcs);
+        bcsEngine = &device->getEngines().back();
+
+        clDevice = std::make_unique<MockClDevice>(device);
+
+        context = std::make_unique<MockContext>(clDevice.get());
+
+        properties[1] = device->getIndexOfNonEmptyEngineGroup(EngineGroupType::Copy);
+    }
+
+    EngineTypeUsage typeUsageBcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular};
+    EngineTypeUsage typeUsageRcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular};
+
+    std::unique_ptr<MockClDevice> clDevice{};
+    std::unique_ptr<MockContext> context{};
+    std::unique_ptr<MockCommandQueue> queue{};
+    const EngineControl *bcsEngine = nullptr;
+
+    cl_queue_properties properties[5] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0, 0};
+};
+
+TEST_F(CopyOnlyQueueTests, givenBcsSelectedWhenCreatingCommandQueueThenItIsCopyOnly) {
+    MockCommandQueue queue{context.get(), clDevice.get(), properties, false};
+    EXPECT_EQ(bcsEngine->commandStreamReceiver, queue.getBcsCommandStreamReceiver());
+    EXPECT_NE(nullptr, queue.timestampPacketContainer);
+    EXPECT_TRUE(queue.isCopyOnly);
+}
+
+HWTEST_F(CopyOnlyQueueTests, givenBcsSelectedWhenEnqueuingCopyThenBcsIsUsed) {
+    auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(context.get())};
+    auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(context.get())};
+    MockCommandQueueHw<FamilyType> queue{context.get(), clDevice.get(), properties};
+    auto commandStream = &bcsEngine->commandStreamReceiver->getCS(1024);
+
+    auto usedCommandStream = commandStream->getUsed();
+    cl_int retVal = queue.enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(usedCommandStream, commandStream->getUsed());
+}
+
+HWTEST_F(CopyOnlyQueueTests, givenBlitterEnabledWhenCreatingBcsCommandQueueThenReturnSuccess) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+
+    cl_int retVal{};
+    auto commandQueue = clCreateCommandQueueWithProperties(context.get(), clDevice.get(), properties, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, commandQueue);
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandQueue(commandQueue));
+}
+
+using MultiEngineQueueHwTests = ::testing::Test;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWhenQueueIsCreatedThenSelectValidEngine) {
+    initPlatform();
+    HardwareInfo localHwInfo = *defaultHwInfo;
+
+    localHwInfo.featureTable.ftrCCSNode = true;
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    MockContext context(device.get());
+    context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+
+    bool ccsFound = false;
+    for (auto &engine : device->engines) {
+        if (engine.osContext->getEngineType() == aub_stream::EngineType::ENGINE_CCS) {
+            ccsFound = true;
+            break;
+        }
+    }
+
+    struct CommandQueueTestValues {
+        CommandQueueTestValues() = delete;
+        CommandQueueTestValues(cl_queue_properties engineFamily, cl_queue_properties engineIndex, aub_stream::EngineType expectedEngine)
+            : expectedEngine(expectedEngine) {
+            properties[1] = engineFamily;
+            properties[3] = engineIndex;
+        };
+
+        cl_command_queue clCommandQueue = nullptr;
+        CommandQueue *commandQueueObj = nullptr;
+        cl_queue_properties properties[5] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0, 0};
+        aub_stream::EngineType expectedEngine;
+    };
+    auto addTestValueIfAvailable = [&](std::vector<CommandQueueTestValues> &vec, EngineGroupType engineGroup, cl_queue_properties queueIndex, aub_stream::EngineType engineType, bool csEnabled) {
+        if (csEnabled) {
+            const auto familyIndex = device->getDevice().getIndexOfNonEmptyEngineGroup(engineGroup);
+            vec.push_back(CommandQueueTestValues(static_cast<cl_queue_properties>(familyIndex), queueIndex, engineType));
+        }
+    };
+    auto retVal = CL_SUCCESS;
+    const auto &ccsInstances = localHwInfo.gtSystemInfo.CCSInfo.Instances.Bits;
+    std::vector<CommandQueueTestValues> commandQueueTestValues;
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::RenderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getHardwareInfo()), true);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 0, aub_stream::ENGINE_CCS, ccsFound);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 1, aub_stream::ENGINE_CCS1, ccsInstances.CCS1Enabled);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 2, aub_stream::ENGINE_CCS2, ccsInstances.CCS2Enabled);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 3, aub_stream::ENGINE_CCS3, ccsInstances.CCS3Enabled);
+
+    for (auto &commandQueueTestValue : commandQueueTestValues) {
+        if (commandQueueTestValue.properties[1] >= HwHelper::getGpgpuEnginesCount(device->getHardwareInfo())) {
+            continue;
+        }
+        commandQueueTestValue.clCommandQueue = clCreateCommandQueueWithProperties(&context, device.get(),
+                                                                                  &commandQueueTestValue.properties[0], &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        commandQueueTestValue.commandQueueObj = castToObject<CommandQueue>(commandQueueTestValue.clCommandQueue);
+
+        auto &cmdQueueEngine = commandQueueTestValue.commandQueueObj->getGpgpuCommandStreamReceiver().getOsContext().getEngineType();
+        EXPECT_EQ(commandQueueTestValue.expectedEngine, cmdQueueEngine);
+
+        clReleaseCommandQueue(commandQueueTestValue.commandQueueObj);
+    }
+}
+
+TEST_F(MultiTileFixture, givenDefaultContextWithRootDeviceWhenQueueIsCreatedThenQueueIsMultiEngine) {
+    auto rootDevice = platform()->getClDevice(0);
+    MockContext context(rootDevice);
+    context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+
+    auto rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
+
+    MockCommandQueue queue(&context, rootDevice, nullptr, false);
+    ASSERT_NE(nullptr, queue.gpgpuEngine);
+    EXPECT_EQ(rootCsr->isMultiOsContextCapable(), queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
+    EXPECT_EQ(rootCsr, queue.gpgpuEngine->commandStreamReceiver);
+}
+
+TEST_F(MultiTileFixture, givenDefaultContextWithSubdeviceWhenQueueIsCreatedThenQueueIsNotMultiEngine) {
+    auto subdevice = platform()->getClDevice(0)->getDeviceById(0);
+    MockContext context(subdevice);
+    context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+
+    MockCommandQueue queue(&context, subdevice, nullptr, false);
+    ASSERT_NE(nullptr, queue.gpgpuEngine);
+    EXPECT_FALSE(queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
+}
+
+TEST_F(MultiTileFixture, givenUnrestrictiveContextWithRootDeviceWhenQueueIsCreatedThenQueueIsMultiEngine) {
+    auto rootDevice = platform()->getClDevice(0);
+    MockContext context(rootDevice);
+    context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+
+    auto rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
+
+    MockCommandQueue queue(&context, rootDevice, nullptr, false);
+    ASSERT_NE(nullptr, queue.gpgpuEngine);
+    EXPECT_EQ(rootCsr->isMultiOsContextCapable(), queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
+    EXPECT_EQ(rootCsr, queue.gpgpuEngine->commandStreamReceiver);
+}
+
+TEST_F(MultiTileFixture, givenNotDefaultContextWithRootDeviceAndTileIdMaskWhenQueueIsCreatedThenQueueIsMultiEngine) {
+    auto rootClDevice = platform()->getClDevice(0);
+    auto rootDevice = static_cast<RootDevice *>(&rootClDevice->getDevice());
+    MockContext context(rootClDevice);
+    context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+
+    auto rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
+
+    MockCommandQueue queue(&context, rootClDevice, nullptr, false);
+    ASSERT_NE(nullptr, queue.gpgpuEngine);
+    EXPECT_EQ(rootCsr->isMultiOsContextCapable(), queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
+    EXPECT_EQ(rootCsr, queue.gpgpuEngine->commandStreamReceiver);
 }

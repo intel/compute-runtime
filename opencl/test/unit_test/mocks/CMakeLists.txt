@@ -62,6 +62,12 @@ set(IGDRCL_SRCS_tests_mocks
     ${NEO_CORE_tests_compiler_mocks}
 )
 
+if(TESTS_XEHP_PLUS)
+  list(APPEND IGDRCL_SRCS_tests_mocks
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_scratch_space_controller_xehp_plus.h
+  )
+endif()
+
 if(WIN32)
   file(GLOB IGDRCL_SRC_tests_mock_wddm "${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm2[0-9]\.*")
   list(APPEND IGDRCL_SRCS_tests_mocks

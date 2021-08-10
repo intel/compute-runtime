@@ -37,6 +37,7 @@ set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_root_device_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/multi_tile_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/one_mip_level_image_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.h

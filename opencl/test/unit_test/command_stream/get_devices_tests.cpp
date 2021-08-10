@@ -192,4 +192,20 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
         }
     }
 }
+
+TEST(MultiDeviceTests, givenCreateMultipleRootDevicesAndLimitAmountOfReturnedDevicesFlagWhenClGetDeviceIdsIsCalledThenLowerValueIsReturned) {
+    platformsImpl->clear();
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = true;
+    ultHwConfig.forceOsAgnosticMemoryManager = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    DebugManager.flags.LimitAmountOfReturnedDevices.set(1);
+    cl_uint numDevices = 0;
+
+    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numDevices);
+}
 } // namespace NEO

@@ -32,6 +32,7 @@ bool isCcs(aub_stream::EngineType engineType);
 bool isBcs(aub_stream::EngineType engineType);
 aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, SelectorCopyEngine &selectorCopyEngine, bool internalUsage = false);
 void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine);
+aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputType, const HardwareInfo &hwInfo);
 
 std::string engineTypeToString(aub_stream::EngineType engineType);
 std::string engineTypeToStringAdditional(aub_stream::EngineType engineType);

@@ -29,6 +29,7 @@ set(IGDRCL_SRCS_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_receiver_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_devices_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_ocl_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator_tests.cpp
@@ -40,6 +41,17 @@ set(IGDRCL_SRCS_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
 )
+
+if(TESTS_XEHP_PLUS)
+  list(APPEND IGDRCL_SRCS_tests_command_stream
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_flush_task_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_tests_xehp_plus.cpp
+  )
+endif()
 
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_command_stream})
 add_subdirectories()
