@@ -118,7 +118,6 @@ class Device : public ReferenceTrackedObject<Device> {
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     GraphicsAllocation *getRTMemoryBackedBuffer() { return rtMemoryBackedBuffer; }
     void initializeRayTracing();
-    void reduceMaxMemAllocSize();
 
     virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
 

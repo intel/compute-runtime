@@ -25,4 +25,9 @@ bool ApiSpecificConfig::getBindlessConfiguration() {
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::OCL;
 }
+
+uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {
+    return maxAllocSize / 2;
+}
+
 } // namespace NEO

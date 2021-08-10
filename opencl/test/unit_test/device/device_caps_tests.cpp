@@ -1731,23 +1731,3 @@ HWTEST_F(DeviceGetCapsTest, givenDSSCountEqualZeroWhenDeviceCreatedThenMaxEuPerD
 
     EXPECT_EQ(device->sharedDeviceInfo.maxNumEUsPerSubSlice, device->sharedDeviceInfo.maxNumEUsPerDualSubSlice);
 }
-
-TEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationSupportWhenReduceMaxMemAllocSizeThenValidValueIsSet) {
-    HardwareCapabilities hwCaps = {0};
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&hwCaps, *defaultHwInfo);
-    DebugManagerStateRestore dbgRestorer;
-
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto globalMemSize = std::min(device->getDevice().getGlobalMemorySize(1u), device->getSharedDeviceInfo().globalMemSize);
-    device->getDevice().reduceMaxMemAllocSize();
-    auto expectedSize = std::min(globalMemSize / 2, hwCaps.maxMemAllocSize);
-    expectedSize = std::max(expectedSize, static_cast<uint64_t>(128llu * MB));
-    EXPECT_EQ(device->getSharedDeviceInfo().maxMemAllocSize, expectedSize);
-
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
-    device.reset(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    device->getDevice().reduceMaxMemAllocSize();
-    EXPECT_EQ(device->getSharedDeviceInfo().maxMemAllocSize, globalMemSize);
-}

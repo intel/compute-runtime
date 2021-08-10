@@ -7,6 +7,7 @@
 
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -72,6 +73,7 @@ void Device::initializeCaps() {
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
 
     if (!deviceInfo.sharedSystemAllocationsSupport) {
+        deviceInfo.maxMemAllocSize = ApiSpecificConfig::getReducedMaxAllocSize(deviceInfo.maxMemAllocSize);
         deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
     }
 
@@ -166,18 +168,6 @@ void Device::initializeCaps() {
     deviceName << " [0x" << std::hex << std::setw(4) << std::setfill('0') << hwInfo.platform.usDeviceID << "]";
 
     deviceInfo.name = deviceName.str();
-}
-
-void Device::reduceMaxMemAllocSize() {
-    deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, getGlobalMemorySize(1u));
-
-    if (!deviceInfo.sharedSystemAllocationsSupport) {
-        deviceInfo.maxMemAllocSize /= 2;
-        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
-    }
-
-    // OpenCL 1.2 requires 128MB minimum
-    deviceInfo.maxMemAllocSize = std::max(deviceInfo.maxMemAllocSize, static_cast<uint64_t>(128llu * MB));
 }
 
 } // namespace NEO

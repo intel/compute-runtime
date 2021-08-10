@@ -32,4 +32,9 @@ ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
 const char *ApiSpecificConfig::getAubPrefixForSpecificApi() {
     return "ocl_";
 }
+
+uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {
+    return maxAllocSize / 2;
+}
+
 } // namespace NEO

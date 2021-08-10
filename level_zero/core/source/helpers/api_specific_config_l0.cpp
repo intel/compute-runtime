@@ -33,4 +33,8 @@ const char *ApiSpecificConfig::getAubPrefixForSpecificApi() {
     return "l0_";
 }
 
+uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {
+    return maxAllocSize;
+}
+
 } // namespace NEO

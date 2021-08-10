@@ -15,12 +15,16 @@ TEST(ApiSpecificConfigOclTests, WhenGettingApiTypeThenCorrectTypeIsReturned) {
     EXPECT_EQ(ApiSpecificConfig::OCL, ApiSpecificConfig::getApiType());
 }
 
-TEST(ApiSpecificConfigL0Tests, WhenGettingAUBPrefixByApiTypeOCLIsReturned) {
+TEST(ApiSpecificConfigOclTests, WhenGettingAUBPrefixByApiTypeOCLIsReturned) {
     EXPECT_EQ(0, strcmp("ocl_", ApiSpecificConfig::getAubPrefixForSpecificApi()));
 }
 
-TEST(ApiSpecificConfigL0Tests, WhenCheckingIfStatelessCompressionIsSupportedThenReturnTrue) {
+TEST(ApiSpecificConfigOclTests, WhenCheckingIfStatelessCompressionIsSupportedThenReturnTrue) {
     EXPECT_TRUE(ApiSpecificConfig::isStatelessCompressionSupported());
+}
+
+TEST(ApiSpecificConfigOclTests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeThenReturnHalfOfThat) {
+    EXPECT_EQ(512u, ApiSpecificConfig::getReducedMaxAllocSize(1024));
 }
 
 } // namespace NEO

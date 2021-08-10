@@ -5,6 +5,8 @@
  *
  */
 
+#include <cstdint>
+
 #pragma once
 namespace NEO {
 struct ApiSpecificConfig {
@@ -15,5 +17,6 @@ struct ApiSpecificConfig {
     static bool getBindlessConfiguration();
     static ApiType getApiType();
     static const char *getAubPrefixForSpecificApi();
+    static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);
 };
 } // namespace NEO
