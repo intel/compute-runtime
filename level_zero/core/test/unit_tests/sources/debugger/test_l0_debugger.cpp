@@ -30,6 +30,12 @@ namespace ult {
 
 using L0DebuggerTest = Test<L0DebuggerHwFixture>;
 
+struct Deleter {
+    void operator()(CommandQueueImp *cmdQ) {
+        cmdQ->destroy();
+    }
+};
+
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsLegacyThenFalseIsReturned) {
     EXPECT_FALSE(neoDevice->getDebugger()->isLegacy());
 }
@@ -441,12 +447,6 @@ using IsSklOrAbove = IsAtLeastProduct<IGFX_SKYLAKE>;
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, IsSklOrAbove) {
     ze_command_queue_desc_t queueDesc = {};
 
-    struct Deleter {
-        void operator()(CommandQueueImp *cmdQ) {
-            cmdQ->destroy();
-        }
-    };
-
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
     commandQueue->initialize(false, false);
 
@@ -821,12 +821,6 @@ HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledCom
 
 HWTEST2_F(L0DebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsSklOrAbove) {
     ze_command_queue_desc_t queueDesc = {};
-
-    struct Deleter {
-        void operator()(CommandQueueImp *cmdQ) {
-            cmdQ->destroy();
-        }
-    };
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
     commandQueue->initialize(false, true);
