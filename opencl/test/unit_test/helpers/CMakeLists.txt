@@ -45,6 +45,16 @@ set(IGDRCL_SRCS_tests_helpers
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.inl
 )
 
+if(TESTS_XEHP_PLUS)
+  list(APPEND IGDRCL_SRCS_tests_helpers
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_hw_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xehp_plus.cpp
+       ${NEO_SOURCE_DIR}/shared/test/common/helpers/unit_test_helper_xehp_plus.inl
+  )
+endif()
+
 get_property(NEO_CORE_PREAMBLE_TESTS GLOBAL PROPERTY NEO_CORE_PREAMBLE_TESTS)
 
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_helpers})

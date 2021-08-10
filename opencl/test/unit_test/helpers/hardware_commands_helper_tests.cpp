@@ -1301,3 +1301,91 @@ HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocations
     clReleaseMemObject(bufferLocallyUncached);
     clReleaseMemObject(bufferRegular);
 }
+
+using HardwareCommandsTestXeHpPlus = HardwareCommandsTest;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpPlus, givenIndirectHeapNotAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenOffsetZeroIsReturned) {
+    auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    IndirectHeap indirectHeap(nonInternalAllocation, false);
+
+    auto expectedOffset = is64bit ? 0u : indirectHeap.getHeapGpuBase();
+
+    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
+    auto offset = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
+        indirectHeap,
+        *mockKernelWithInternal->mockKernel,
+        false,
+        nullptr,
+        sizeCrossThreadData);
+    EXPECT_EQ(expectedOffset, offset);
+    pDevice->getMemoryManager()->freeGraphicsMemory(nonInternalAllocation);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpPlus, givenIndirectHeapAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenHeapBaseOffsetIsReturned) {
+    auto internalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP, pDevice->getDeviceBitfield()));
+    IndirectHeap indirectHeap(internalAllocation, true);
+    auto expectedOffset = is64bit ? internalAllocation->getGpuAddressToPatch() : 0u;
+
+    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
+    auto offset = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
+        indirectHeap,
+        *mockKernelWithInternal->mockKernel,
+        false,
+        nullptr,
+        sizeCrossThreadData);
+    EXPECT_EQ(expectedOffset, offset);
+
+    pDevice->getMemoryManager()->freeGraphicsMemory(internalAllocation);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpPlus, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataOffsetsAreMoved) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
+
+    MockContext context;
+
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    auto kernelInfo = std::make_unique<KernelInfo>();
+
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
+
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    indirectHeap.getSpace(128u);
+
+    PatchInfoData patchInfoData1 = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
+    PatchInfoData patchInfoData2 = {0xcccccccc, 0, PatchInfoAllocationType::IndirectObjectHeap, 0xdddddddd, 0, PatchInfoAllocationType::Default};
+
+    kernel->getPatchInfoDataList().push_back(patchInfoData1);
+    kernel->getPatchInfoDataList().push_back(patchInfoData2);
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
+    auto offsetCrossThreadData = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
+        indirectHeap,
+        *kernel,
+        false,
+        nullptr,
+        sizeCrossThreadData);
+
+    auto expectedOffsetRelativeToIohBase = 128u;
+    auto iohBaseAddress = is64bit ? 0u : indirectHeap.getHeapGpuBase();
+
+    ASSERT_NE(0u, offsetCrossThreadData);
+    EXPECT_EQ(iohBaseAddress + expectedOffsetRelativeToIohBase, offsetCrossThreadData);
+
+    ASSERT_EQ(2u, kernel->getPatchInfoDataList().size());
+    EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
+    EXPECT_EQ(0u, kernel->getPatchInfoDataList()[0].sourceAllocationOffset);
+    EXPECT_EQ(PatchInfoAllocationType::KernelArg, kernel->getPatchInfoDataList()[0].sourceType);
+    EXPECT_NE(0xbbbbbbbb, kernel->getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_EQ(indirectHeap.getGraphicsAllocation()->getGpuAddress(), kernel->getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_NE(0u, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
+    EXPECT_EQ(expectedOffsetRelativeToIohBase, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
+    EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpPlus, whenGetSizeRequiredForCacheFlushIsCalledThenExceptionIsThrown) {
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
+
+    EXPECT_ANY_THROW(HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, nullptr, 0));
+}

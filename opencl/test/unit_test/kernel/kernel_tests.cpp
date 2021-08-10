@@ -3222,3 +3222,39 @@ HWTEST_F(KernelLargeGrfTests, GivenLargeGrfWhenGettingMaxWorkGroupSizeThenCorrec
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, kernel.maxKernelWorkGroupSize);
     }
 }
+
+HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsCreatedThenConstantMemorySurfaceStateIsPatchedWithMocs, IsAtLeastXeHpCore) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+
+    pKernelInfo->setGlobalConstantsSurface(8, 0, 0);
+
+    char buffer[MemoryConstants::pageSize64k];
+    GraphicsAllocation gfxAlloc(0, GraphicsAllocation::AllocationType::CONSTANT_SURFACE, buffer,
+                                MemoryConstants::pageSize64k, (osHandle)8, MemoryPool::MemoryNull, mockMaxOsContextCount);
+
+    MockContext context(pClDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    program.setConstantSurface(&gfxAlloc);
+
+    // create kernel
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
+
+    // setup surface state heap
+    char surfaceStateHeap[0x80];
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
+
+    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
+        ptrOffset(pKernel->getSurfaceStateHeap(),
+                  pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful));
+    auto actualMocs = surfaceState->getMemoryObjectControlState();
+    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+
+    EXPECT_EQ(expectedMocs, actualMocs);
+
+    program.setConstantSurface(nullptr);
+}
