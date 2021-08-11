@@ -682,7 +682,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             printUsage();
             retVal = PRINT_USAGE;
         } else if (("-revision_id" == currArg) && hasMoreArgs) {
-            revisionId = std::stoi(argv[argIndex + 1]);
+            revisionId = std::stoi(argv[argIndex + 1], nullptr, 0);
             argIndex++;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
@@ -942,7 +942,7 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   --help                        Print this usage message.
 
-  -revision_id <revision_id>    Target stepping.
+  -revision_id <revision_id>    Target stepping. Can be decimal or hexadecimal value.
 
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
