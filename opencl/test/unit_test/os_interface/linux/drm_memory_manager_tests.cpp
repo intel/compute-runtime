@@ -1096,7 +1096,7 @@ TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAlloc
 
     allocationData.size = MemoryConstants::pageSize;
     allocationData.flags.shareable = true;
-    auto allocation = memoryManager->allocateShareableMemory(allocationData);
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(0u, allocation->getGpuAddress());
 

@@ -99,7 +99,7 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
-    GraphicsAllocation *allocateShareableMemory(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override;
     GraphicsAllocation *createSharedUnifiedMemoryAllocation(const AllocationData &allocationData);

@@ -402,6 +402,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     allocationData.flags.shareable = properties.flags.shareable;
+    allocationData.flags.isUSMDeviceMemory = properties.flags.isUSMDeviceAllocation;
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;
     allocationData.flags.allow32Bit = allow32Bit;
@@ -501,8 +502,8 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
         return allocateGraphicsMemoryForImage(allocationData);
     }
-    if (allocationData.flags.shareable) {
-        return allocateShareableMemory(allocationData);
+    if (allocationData.flags.shareable || allocationData.flags.isUSMDeviceMemory) {
+        return allocateMemoryByKMD(allocationData);
     }
     if (useNonSvmHostPtrAlloc(allocationData.type, allocationData.rootDeviceIndex) || isNonSvmBuffer(allocationData.hostPtr, allocationData.type, allocationData.rootDeviceIndex)) {
         auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);

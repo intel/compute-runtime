@@ -69,7 +69,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr;
     using DrmMemoryManager::allocateGraphicsMemoryWithAlignment;
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
-    using DrmMemoryManager::allocateShareableMemory;
+    using DrmMemoryManager::allocateMemoryByKMD;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::createAllocWithAlignment;
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;

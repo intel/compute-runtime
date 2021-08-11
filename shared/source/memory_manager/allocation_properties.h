@@ -103,7 +103,8 @@ struct AllocationData {
             uint32_t isUSMHostAllocation : 1;
             uint32_t use32BitFrontWindow : 1;
             uint32_t crossRootDeviceAccess : 1;
-            uint32_t reserved : 17;
+            uint32_t isUSMDeviceMemory : 1;
+            uint32_t reserved : 16;
         } flags;
         uint32_t allFlags = 0;
     };

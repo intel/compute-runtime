@@ -506,6 +506,7 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     AllocationInfo.PrivateDriverDataSize = static_cast<uint32_t>(gmm->gmmResourceInfo->peekHandleSize());
     CreateAllocation.NumAllocations = 1;
     CreateAllocation.Flags.CreateShared = outSharedHandle ? TRUE : FALSE;
+    CreateAllocation.Flags.NtSecuritySharing = outSharedHandle ? TRUE : FALSE;
     CreateAllocation.Flags.CreateResource = outSharedHandle || alignedCpuPtr ? TRUE : FALSE;
     CreateAllocation.pAllocationInfo2 = &AllocationInfo;
     CreateAllocation.hDevice = device;

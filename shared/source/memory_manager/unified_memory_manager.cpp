@@ -195,14 +195,15 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                                  false,
                                                  multiStorageAllocation,
                                                  deviceBitfield};
+    unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
-    unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
     unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
 
-    if (memoryProperties.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
+    if (memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+        unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
+    } else if (memoryProperties.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
         unifiedMemoryProperties.flags.isUSMHostAllocation = true;
-        unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;
     }
 
     GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);

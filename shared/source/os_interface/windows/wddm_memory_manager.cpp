@@ -61,7 +61,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     initialized = true;
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateShareableMemory(const AllocationData &allocationData) {
+GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
     if (allocationData.size > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd)) {
         return allocateHugeGraphicsMemory(allocationData, false);
     }

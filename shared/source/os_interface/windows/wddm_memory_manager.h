@@ -79,7 +79,7 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
-    GraphicsAllocation *allocateShareableMemory(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override { return nullptr; }
 
@@ -98,7 +98,7 @@ class WddmMemoryManager : public MemoryManager {
 
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
     static bool validateAllocation(WddmAllocation *alloc);
-    bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr);
+    MOCKABLE_VIRTUAL bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr);
     bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool mapGpuVaForOneHandleAllocation(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, const void *requiredGpuPtr);

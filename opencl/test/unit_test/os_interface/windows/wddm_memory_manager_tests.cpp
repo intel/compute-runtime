@@ -157,6 +157,22 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+class MockCreateWddmAllocationMemoryManager : public MockWddmMemoryManager {
+  public:
+    MockCreateWddmAllocationMemoryManager(NEO::ExecutionEnvironment &execEnv) : MockWddmMemoryManager(execEnv) {}
+    bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr) override {
+        return false;
+    }
+};
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryFailedThenNullptrFromAllocateMemoryByKMDIsReturned) {
+    memoryManager.reset(new MockCreateWddmAllocationMemoryManager(*executionEnvironment));
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize;
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_EQ(nullptr, allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
     AllocationData allocationData;
@@ -353,7 +369,7 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndSmallSizeWhenAskedTo
     AllocationData allocationData;
     allocationData.size = 4096u;
     allocationData.flags.shareable = true;
-    auto allocation = memoryManager->allocateShareableMemory(allocationData);
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_FALSE(memoryManager->allocateHugeGraphicsMemoryCalled);
     memoryManager->freeGraphicsMemory(allocation);
@@ -365,7 +381,7 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndHugeSizeWhenAskedToC
     AllocationData allocationData;
     allocationData.size = 2ULL * MemoryConstants::pageSize64k;
     allocationData.flags.shareable = true;
-    auto allocation = memoryManager->allocateShareableMemory(allocationData);
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_TRUE(memoryManager->allocateHugeGraphicsMemoryCalled);
     memoryManager->freeGraphicsMemory(allocation);

@@ -23,7 +23,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateGraphicsMemoryWithAlignment;
     using BaseClass::allocateGraphicsMemoryWithGpuVa;
     using BaseClass::allocateGraphicsMemoryWithProperties;
-    using BaseClass::allocateShareableMemory;
+    using BaseClass::allocateMemoryByKMD;
     using BaseClass::createGraphicsAllocation;
     using BaseClass::createWddmAllocation;
     using BaseClass::getWddm;

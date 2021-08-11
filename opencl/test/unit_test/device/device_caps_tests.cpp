@@ -1388,7 +1388,7 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
         GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override { return nullptr; };
 
         GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
-        GraphicsAllocation *allocateShareableMemory(const AllocationData &allocationData) override { return nullptr; };
+        GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override { return nullptr; };
         void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return nullptr; };
         void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override{};
     };

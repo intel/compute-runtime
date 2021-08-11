@@ -593,7 +593,6 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenSharedUnifiedM
 
 TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWhenSharedUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
     MockCommandQueue cmdQ;
-
     std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x8)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
@@ -608,17 +607,19 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWh
 }
 
 TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContextFlagTrueThenProperPropertiesArePassedToMemoryManager) {
+    MockCommandQueue cmdQ;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     MockExecutionEnvironment executionEnvironment;
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+    memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
     std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xf)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     svmManager->multiOsContextSupport = true;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
 
     EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
     EXPECT_TRUE(memoryManager->multiStorageResourcePassed);
@@ -628,6 +629,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContext
 }
 
 TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContextFlagFalseThenLowestSubDevicePassedToMemoryManager) {
+    MockCommandQueue cmdQ;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     DebugManager.flags.OverrideLeastOccupiedBank.set(1);
@@ -635,12 +637,13 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContext
     MockExecutionEnvironment executionEnvironment;
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+    memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
     std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xE)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     svmManager->multiOsContextSupport = false;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
 
     auto expectedSubDevices = unifiedMemoryProperties.subdeviceBitfields.at(mockRootDeviceIndex);
     expectedSubDevices.reset();
@@ -653,18 +656,64 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContext
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST(UnifiedMemoryTest, givenDeviceBitfieldWithSingleBitsSetWhenMultiOsContextFlagTrueThenProperPropertiesArePassedToMemoryManager) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(1);
+TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContextFlagTrueAndDeviceMemoryThenProperPropertiesArePassedToMemoryManager) {
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
     MockExecutionEnvironment executionEnvironment;
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
 
     std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xf)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = &device->getDevice();
+    svmManager->multiOsContextSupport = true;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+
+    EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
+    EXPECT_TRUE(memoryManager->multiStorageResourcePassed);
+    EXPECT_EQ(unifiedMemoryProperties.subdeviceBitfields.at(mockRootDeviceIndex), memoryManager->subDevicesBitfieldPassed);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST(UnifiedMemoryTest, givenDeviceBitfieldWithTwoBitsSetWhenMultiOsContextFlagTrueAndDeviceMemoryThenProperPropertiesArePassedToMemoryManager) {
+    MockContext mockContext;
+    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    MockExecutionEnvironment executionEnvironment;
+    auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x6)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    auto device = mockContext.getDevice(0u);
+    unifiedMemoryProperties.device = &device->getDevice();
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+
+    EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
+    EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
+    auto expectedSubDevices = unifiedMemoryProperties.subdeviceBitfields.at(mockRootDeviceIndex);
+    expectedSubDevices.reset();
+    expectedSubDevices.set(1);
+    EXPECT_EQ(expectedSubDevices, memoryManager->subDevicesBitfieldPassed);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST(UnifiedMemoryTest, givenDeviceBitfieldWithSingleBitsSetWhenMultiOsContextFlagTrueThenProperPropertiesArePassedToMemoryManager) {
+    MockCommandQueue cmdQ;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(1);
+    MockExecutionEnvironment executionEnvironment;
+    auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+    memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
+
+    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     svmManager->multiOsContextSupport = true;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
 
     EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
     EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
@@ -674,11 +723,12 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithSingleBitsSetWhenMultiOsContextFl
 }
 
 TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWhenDeviceUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
+    MockCommandQueue cmdQ;
     std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x8)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
 
     EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
     EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
