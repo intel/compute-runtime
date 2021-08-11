@@ -14,14 +14,14 @@
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
-OsContext::OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice)
+OsContext::OsContext(uint32_t contextId, const EngineDescriptor &engineDescriptor)
     : contextId(contextId),
-      deviceBitfield(deviceBitfield),
-      preemptionMode(preemptionMode),
-      numSupportedDevices(static_cast<uint32_t>(deviceBitfield.count())),
-      engineType(typeUsage.first),
-      engineUsage(typeUsage.second),
-      rootDevice(rootDevice) {}
+      deviceBitfield(engineDescriptor.deviceBitfield),
+      preemptionMode(engineDescriptor.preemptionMode),
+      numSupportedDevices(static_cast<uint32_t>(engineDescriptor.deviceBitfield.count())),
+      engineType(engineDescriptor.engineTypeUsage.first),
+      engineUsage(engineDescriptor.engineTypeUsage.second),
+      rootDevice(engineDescriptor.isRootDevice) {}
 
 bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) const {
     if (DebugManager.flags.DeferOsContextInitialization.get() == 0) {

@@ -8,6 +8,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
@@ -517,11 +518,11 @@ HWTEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenCallingMakeResidentThenUs
     auto multiGraphicsAllocation = timestampPacketAllocator.gfxAllocations[0].get();
 
     auto rootCsr0 = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*executionEnvironment, 0, 1)));
-    auto osContext0 = testMemoryManager->createAndRegisterOsContext(rootCsr0.get(), {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, 1, PreemptionMode::Disabled, true);
+    auto osContext0 = testMemoryManager->createAndRegisterOsContext(rootCsr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, true));
     rootCsr0->setupContext(*osContext0);
 
     auto rootCsr1 = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*executionEnvironment, 1, 1)));
-    auto osContext1 = testMemoryManager->createAndRegisterOsContext(rootCsr1.get(), {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, 1, PreemptionMode::Disabled, true);
+    auto osContext1 = testMemoryManager->createAndRegisterOsContext(rootCsr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, true));
     rootCsr1->setupContext(*osContext1);
 
     rootCsr0->storeMakeResidentAllocations = true;

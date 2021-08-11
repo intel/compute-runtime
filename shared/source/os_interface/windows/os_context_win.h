@@ -25,8 +25,7 @@ class OsContextWin : public OsContext {
     OsContextWin() = delete;
     ~OsContextWin() override;
 
-    OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                 EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
+    OsContextWin(Wddm &wddm, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
     D3DKMT_HANDLE getWddmContextHandle() const { return wddmContextHandle; }
     void setWddmContextHandle(D3DKMT_HANDLE wddmContextHandle) { this->wddmContextHandle = wddmContextHandle; }
@@ -34,8 +33,7 @@ class OsContextWin : public OsContext {
     void setHwQueue(HardwareQueue hardwareQueue) { this->hardwareQueue = hardwareQueue; }
     Wddm *getWddm() const { return &wddm; }
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
+    static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
   protected:
     void initializeContext() override;

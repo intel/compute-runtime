@@ -62,11 +62,9 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     auto defaultEngineType = getChosenEngineType(hwInfo);
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(),
-                                                                    EngineTypeUsage{defaultEngineType, EngineUsage::Regular},
-                                                                    getDeviceBitfield(),
-                                                                    preemptionMode,
-                                                                    true);
+    EngineDescriptor engineDescriptor(EngineTypeUsage{defaultEngineType, EngineUsage::Regular}, getDeviceBitfield(), preemptionMode, true);
+
+    auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), engineDescriptor);
 
     osContext->ensureContextInitialized();
     rootCommandStreamReceiver->setupContext(*osContext);

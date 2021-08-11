@@ -262,13 +262,10 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
 }
 
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
-                                                     EngineTypeUsage typeUsage,
-                                                     DeviceBitfield deviceBitfield,
-                                                     PreemptionMode preemptionMode,
-                                                     bool rootDevice) {
+                                                     const EngineDescriptor &engineDescriptor) {
     auto contextId = ++latestContextId;
     auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->osInterface.get(),
-                                       contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
+                                       contextId, engineDescriptor);
     osContext->incRefInternal();
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);

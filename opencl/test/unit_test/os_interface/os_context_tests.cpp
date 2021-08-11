@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
@@ -16,7 +17,7 @@
 using namespace NEO;
 
 TEST(OSContext, whenCreatingDefaultOsContextThenExpectInitializedAlways) {
-    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    OsContext *osContext = OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_FALSE(osContext->isLowPriority());
     EXPECT_FALSE(osContext->isInternalEngine());
     EXPECT_FALSE(osContext->isRootDevice());
@@ -24,7 +25,10 @@ TEST(OSContext, whenCreatingDefaultOsContextThenExpectInitializedAlways) {
 }
 
 TEST(OSContext, givenInternalAndRootDeviceAreTrueWhenCreatingDefaultOsContextThenExpectGettersTrue) {
-    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Internal}, PreemptionMode::Disabled, true);
+    auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Internal});
+    descriptor.isRootDevice = true;
+
+    OsContext *osContext = OsContext::create(nullptr, 0, descriptor);
     EXPECT_FALSE(osContext->isLowPriority());
     EXPECT_TRUE(osContext->isInternalEngine());
     EXPECT_TRUE(osContext->isRootDevice());
@@ -32,7 +36,10 @@ TEST(OSContext, givenInternalAndRootDeviceAreTrueWhenCreatingDefaultOsContextThe
 }
 
 TEST(OSContext, givenLowPriorityAndRootDeviceAreTrueWhenCreatingDefaultOsContextThenExpectGettersTrue) {
-    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::LowPriority}, PreemptionMode::Disabled, true);
+    auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority});
+    descriptor.isRootDevice = true;
+
+    OsContext *osContext = OsContext::create(nullptr, 0, descriptor);
     EXPECT_TRUE(osContext->isLowPriority());
     EXPECT_FALSE(osContext->isInternalEngine());
     EXPECT_TRUE(osContext->isRootDevice());
@@ -40,7 +47,7 @@ TEST(OSContext, givenLowPriorityAndRootDeviceAreTrueWhenCreatingDefaultOsContext
 }
 
 TEST(OSContext, givenOsContextCreatedDefaultIsFalseWhenSettingTrueThenFlagTrueReturned) {
-    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    OsContext *osContext = OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_FALSE(osContext->isDefaultContext());
     osContext->setDefaultContext(true);
     EXPECT_TRUE(osContext->isDefaultContext());
@@ -55,7 +62,7 @@ struct DeferredOsContextCreationTests : ::testing::Test {
 
     std::unique_ptr<OsContext> createOsContext(EngineTypeUsage engineTypeUsage, bool defaultEngine) {
         OSInterface *osInterface = device->getRootDeviceEnvironment().osInterface.get();
-        std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, 0, 0, engineTypeUsage, PreemptionMode::Disabled, false)};
+        std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, 0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage))};
         EXPECT_FALSE(osContext->isInitialized());
         return osContext;
     }
@@ -135,10 +142,7 @@ TEST_F(DeferredOsContextCreationTests, givenBlitterEngineWhenCreatingOsContextTh
 TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipleTimesWhenOsContextIsCreatedThenInitializeOnlyOnce) {
     struct MyOsContext : OsContext {
         MyOsContext(uint32_t contextId,
-                    DeviceBitfield deviceBitfield,
-                    EngineTypeUsage typeUsage,
-                    PreemptionMode preemptionMode,
-                    bool rootDevice) : OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice) {}
+                    const EngineDescriptor &engineDescriptor) : OsContext(contextId, engineDescriptor) {}
 
         void initializeContext() override {
             initializeContextCalled++;
@@ -147,7 +151,7 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipl
         size_t initializeContextCalled = 0u;
     };
 
-    MyOsContext osContext{0, 0, engineTypeUsageRegular, PreemptionMode::Disabled, false};
+    MyOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsageRegular)};
     EXPECT_FALSE(osContext.isInitialized());
 
     osContext.ensureContextInitialized();

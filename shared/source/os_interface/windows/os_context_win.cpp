@@ -13,17 +13,15 @@
 
 namespace NEO {
 
-OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                                EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice) {
+OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
     if (osInterface) {
-        return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
+        return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), contextId, engineDescriptor);
     }
-    return new OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
+    return new OsContext(contextId, engineDescriptor);
 }
 
-OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                           EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice)
-    : OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice),
+OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+    : OsContext(contextId, engineDescriptor),
       wddm(wddm),
       residencyController(wddm, contextId) {}
 

@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
 #include "test.h"
@@ -42,7 +43,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         ASSERT_NE(nullptr, hwInfo);
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, engine, preemptionMode, false);
+        osContext = std::make_unique<OsContextWin>(*wddm, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
     }
 

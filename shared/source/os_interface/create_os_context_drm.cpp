@@ -10,9 +10,8 @@
 
 namespace NEO {
 
-OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice) {
-    return OsContextLinux::create(osInterface, contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
+OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
+    return OsContextLinux::create(osInterface, contextId, engineDescriptor);
 }
 
 } // namespace NEO

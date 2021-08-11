@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/helpers/common_types.h"
+
 #include "engine_node.h"
 
 #include <atomic>
@@ -26,6 +29,17 @@ enum class EngineUsage : uint32_t {
 };
 
 using EngineTypeUsage = std::pair<aub_stream::EngineType, EngineUsage>;
+
+struct EngineDescriptor {
+    EngineDescriptor() = delete;
+    constexpr EngineDescriptor(EngineTypeUsage engineTypeUsage, DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool isRootDevice)
+        : engineTypeUsage(engineTypeUsage), deviceBitfield(deviceBitfield), preemptionMode(preemptionMode), isRootDevice(isRootDevice) {}
+
+    EngineTypeUsage engineTypeUsage;
+    DeviceBitfield deviceBitfield;
+    PreemptionMode preemptionMode;
+    bool isRootDevice;
+};
 
 namespace EngineHelpers {
 bool isCcs(aub_stream::EngineType engineType);

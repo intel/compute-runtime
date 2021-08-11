@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
@@ -80,9 +81,8 @@ TEST(WddmMemoryManager, WhenWddmMemoryManagerIsCreatedThenItIsNonAssignable) {
 
 TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
     MockWddmAllocation allocation;
-    MockOsContext osContext(1u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular},
-                            PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
-                            false);
+    MockOsContext osContext(1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                             PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
     EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(1u));
@@ -412,9 +412,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm2);
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    OsContext *osContext = memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[1],
-                                                                     deviceBitfield, PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
-                                                                     false);
+    OsContext *osContext = memoryManager->createAndRegisterOsContext(csr.get(),
+                                                                     EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[1],
+                                                                                                                  PreemptionHelper::getDefaultPreemptionMode(*hwInfo), deviceBitfield));
     osContext->ensureContextInitialized();
     ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
 
@@ -447,9 +447,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm2);
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[1],
-                                              deviceBitfield, PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
-                                              false);
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[1],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(*hwInfo), deviceBitfield));
     ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0u, 32, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}));
@@ -1708,12 +1707,12 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenC
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 0u, 1));
     std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u, 2));
     std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u, 3));
-    memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 1,
-                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false);
-    memoryManager->createAndRegisterOsContext(csr1.get(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 2,
-                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false);
-    memoryManager->createAndRegisterOsContext(csr2.get(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 3,
-                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false);
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), 1));
+    memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), 2));
+    memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), 3));
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 
@@ -1732,12 +1731,12 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithE
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 0u, 1));
     std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u, 2));
     std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u, 3));
-    memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 1,
-                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false);
-    memoryManager->createAndRegisterOsContext(csr1.get(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 2,
-                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false);
-    memoryManager->createAndRegisterOsContext(csr2.get(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 3,
-                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false);
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), 1));
+    memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), 2));
+    memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), 3));
     auto osContext = static_cast<OsContextWin *>(memoryManager->getRegisteredEngines()[1].osContext);
     osContext->getResidencyController().setMemoryBudgetExhausted();
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
@@ -1983,7 +1982,8 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
 
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(executionEnvironment);
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 1, preemptionMode, false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                                                            preemptionMode));
     csr->setupContext(*osContext);
 
     auto tagAllocator = csr->getEventPerfCountAllocator(100);

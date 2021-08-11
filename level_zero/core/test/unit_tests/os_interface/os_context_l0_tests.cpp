@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
@@ -23,7 +24,7 @@ struct DeferredOsContextCreationL0Tests : ::testing::Test {
 
     std::unique_ptr<OsContext> createOsContext(EngineTypeUsage engineTypeUsage, bool defaultEngine) {
         OSInterface *osInterface = device->getRootDeviceEnvironment().osInterface.get();
-        std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, 0, 0, engineTypeUsage, PreemptionMode::Disabled, false)};
+        std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, 0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage))};
         EXPECT_FALSE(osContext->isInitialized());
         return osContext;
     }

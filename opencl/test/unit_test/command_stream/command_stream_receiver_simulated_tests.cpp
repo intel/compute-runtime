@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
@@ -77,10 +78,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
 
     DeviceBitfield deviceBitfield(0b100);
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, deviceBitfield);
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular},
-                                                                                    deviceBitfield,
-                                                                                    PreemptionMode::Disabled,
-                                                                                    false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
     csr->setupContext(*osContext);
     auto bank = csr->getMemoryBank(&allocation);
     EXPECT_EQ(MemoryBanks::getBankForLocalMemory(2), bank);
@@ -99,10 +97,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
 
     DeviceBitfield deviceBitfield(1);
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, deviceBitfield);
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular},
-                                                                                    deviceBitfield,
-                                                                                    PreemptionMode::Disabled,
-                                                                                    false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
     auto banksBitfield = csr->getMemoryBanksBitfield(&allocation);
     EXPECT_TRUE(banksBitfield.none());
@@ -122,10 +117,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
 
     DeviceBitfield deviceBitfield(0x1u);
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, deviceBitfield);
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular},
-                                                                                    deviceBitfield,
-                                                                                    PreemptionMode::Disabled,
-                                                                                    false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
     EXPECT_FALSE(csr->isMultiOsContextCapable());
 
@@ -150,10 +142,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryCloneableAllocationWithMan
     DeviceBitfield deviceBitfield(1);
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, deviceBitfield);
     EXPECT_FALSE(csr->isMultiOsContextCapable());
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular},
-                                                                                    deviceBitfield,
-                                                                                    PreemptionMode::Disabled,
-                                                                                    false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
     if (csr->localMemoryEnabled) {
@@ -178,10 +167,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
     MockSimulatedCsrHw<FamilyType> csr(executionEnvironment, 0, deviceBitfield);
     csr.multiOsContextCapable = true;
     EXPECT_TRUE(csr.isMultiOsContextCapable());
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular},
-                                                                                    deviceBitfield,
-                                                                                    PreemptionMode::Disabled,
-                                                                                    false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
     csr.setupContext(*osContext);
 
     if (csr.localMemoryEnabled) {
@@ -205,9 +191,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, deviceBitfield);
     auto deviceIndex = 2u;
 
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular},
-                                                                                    deviceBitfield, PreemptionMode::Disabled,
-                                                                                    false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
     csr->setupContext(*osContext);
     auto banksBitfield = csr->getMemoryBanksBitfield(&allocation);
     EXPECT_EQ(1u, banksBitfield.count());
@@ -321,7 +305,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSimulatedCommandStreamReceiverWhenClo
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr->aubManager = mockManager.get();
-    MockOsContext osContext(0, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
@@ -341,7 +325,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedAllocationWhenCloningPageTa
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr->aubManager = mockManager.get();
-    MockOsContext osContext(0, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
@@ -369,7 +353,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWhenWriteMemor
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr->aubManager = mockManager.get();
-    MockOsContext osContext(0, 0b11, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
@@ -395,7 +379,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr->aubManager = mockManager.get();
-    MockOsContext osContext(0, 0b11, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     firstMockHardwareContext->storeAllocationParams = true;
@@ -432,7 +416,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWithMissingMem
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr->aubManager = mockManager.get();
-    MockOsContext osContext(0, 0b11, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
@@ -469,7 +453,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr->aubManager = mockManager.get();
 
-    MockOsContext osContext(0, 0b1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
     csr->setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());

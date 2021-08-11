@@ -327,11 +327,10 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     }
 
     bool lowPriority = (engineTypeUsage.second == EngineUsage::LowPriority);
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
-                                                                                     engineTypeUsage,
-                                                                                     getDeviceBitfield(),
-                                                                                     preemptionMode,
-                                                                                     false);
+
+    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
+
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
         osContext->ensureContextInitialized();
     }

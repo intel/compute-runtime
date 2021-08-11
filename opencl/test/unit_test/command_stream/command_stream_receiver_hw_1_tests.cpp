@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -579,7 +580,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
     uint8_t memory[1 * KB];
     auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(),
                                                             pDevice->getDeviceBitfield());
-    MockOsContext osContext{0, 8, EngineTypeUsage{aub_stream::ENGINE_CCS, EngineUsage::Regular}, PreemptionMode::Disabled, false};
+    MockOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}, DeviceBitfield(0))};
     mockCsr->setupContext(osContext);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};

@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
@@ -214,8 +215,8 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
     void SetUp() override {
         PerformanceCountersMetricsLibraryFixture::SetUp();
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        osContext = std::make_unique<MockOsContext>(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                                                    PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
+        osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         queue->getGpgpuCommandStreamReceiver().setupContext(*osContext);
     }
 

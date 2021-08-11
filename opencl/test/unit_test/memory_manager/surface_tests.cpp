@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/source/platform/platform.h"
@@ -68,9 +69,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     auto csr = std::make_unique<MockCsr<FamilyType>>(execStamp, *executionEnvironment, 0, deviceBitfield);
     auto hwInfo = *defaultHwInfo;
     auto engine = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), engine, deviceBitfield,
-                                                                                     PreemptionHelper::getDefaultPreemptionMode(hwInfo),
-                                                                                     false);
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(engine, PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
     csr->setupContext(*osContext);
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,

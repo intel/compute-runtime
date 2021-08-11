@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 
 #include <atomic>
 #include <memory>
@@ -23,7 +24,8 @@ struct DirectSubmissionFixture : public DeviceFixture {
         DeviceFixture::SetUp();
         DeviceFactory::prepareDeviceEnvironments(*pDevice->getExecutionEnvironment());
 
-        osContext.reset(OsContext::create(nullptr, 0u, pDevice->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, false));
+        osContext.reset(OsContext::create(nullptr, 0u,
+                                          EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     }
 
     std::unique_ptr<OsContext> osContext;

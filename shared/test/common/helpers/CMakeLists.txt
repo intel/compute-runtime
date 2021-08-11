@@ -15,6 +15,7 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/default_hw_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/default_hw_info.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_flags_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine_descriptor_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/hw_helper_extended_tests.cpp

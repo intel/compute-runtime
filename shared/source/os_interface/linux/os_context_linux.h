@@ -18,8 +18,7 @@ class OsContextLinux : public OsContext {
   public:
     OsContextLinux() = delete;
     ~OsContextLinux() override;
-    OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                   EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
+    OsContextLinux(Drm &drm, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
     unsigned int getEngineFlag() const { return engineFlag; }
     const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }
@@ -27,8 +26,7 @@ class OsContextLinux : public OsContext {
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
     Drm &getDrm() const;
     void waitForPagingFence();
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
+    static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
   protected:
     void initializeContext() override;

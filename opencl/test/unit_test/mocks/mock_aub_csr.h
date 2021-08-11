@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/platform/platform.h"
@@ -204,10 +205,8 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, rootDeviceIndex, deviceBitfield);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
-                                                                                     EngineTypeUsage{getChosenEngineType(*defaultHwInfo), EngineUsage::Regular},
-                                                                                     deviceBitfield,
-                                                                                     PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
-                                                                                     false);
+                                                                                     EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::Regular},
+                                                                                                                                  PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     commandStreamReceiver->setupContext(*osContext);
 
     if (createTagAllocation) {
