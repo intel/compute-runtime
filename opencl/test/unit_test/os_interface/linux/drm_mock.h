@@ -150,6 +150,7 @@ class DrmMock : public Drm {
     bool allowDebugAttachCallBase = false;
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
 
+    uint64_t receivedContextCreateExtensions = 0;
     uint32_t receivedContextCreateFlags = 0;
     uint32_t receivedCreateContextId = 0;
     uint32_t receivedDestroyContextId = 0;

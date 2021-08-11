@@ -377,26 +377,6 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
     ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
 }
 
-uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested) {
-    drm_i915_gem_context_create_ext gcc = {};
-
-    this->appendDrmContextFlags(gcc, isSpecialContextRequested);
-
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
-    UNRECOVERABLE_IF(retVal != 0);
-
-    if (drmVmId > 0) {
-        drm_i915_gem_context_param param{};
-        param.ctx_id = gcc.ctx_id;
-        param.value = drmVmId;
-        param.param = I915_CONTEXT_PARAM_VM;
-        retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &param);
-        UNRECOVERABLE_IF(retVal != 0);
-    }
-
-    return gcc.ctx_id;
-}
-
 void Drm::destroyDrmContext(uint32_t drmContextId) {
     drm_i915_gem_context_destroy destroy = {};
     destroy.ctx_id = drmContextId;
