@@ -60,7 +60,6 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         if (testMode == TestMode::AubTestsWithTbx) {
             auto tbxCsr = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
             EXPECT_TRUE(tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length));
-
             csr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
         }
 
@@ -76,7 +75,6 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         if (testMode == TestMode::AubTestsWithTbx) {
             auto tbxCsr = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
             EXPECT_TRUE(tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length));
-
             csr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
         }
 

@@ -37,7 +37,6 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
 
 GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
     auto hwInfoAddressWidth = Math::log2(hwInfo->capabilityTable.gpuAddressSpace + 1);
-    HwHelper::get(hwInfo->platform.eRenderCoreFamily).adjustAddressWidthForCanonize(hwInfoAddressWidth);
     GmmHelper::addressWidth = std::max(hwInfoAddressWidth, static_cast<uint32_t>(48));
 
     gmmClientContext = GmmHelper::createGmmContextWrapperFunc(osInterface, const_cast<HardwareInfo *>(pHwInfo));

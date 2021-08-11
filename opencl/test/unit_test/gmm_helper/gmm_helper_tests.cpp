@@ -351,18 +351,9 @@ TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValu
     EXPECT_EQ(imgInfo.rowPitch, expectedRowPitch);
 }
 
-struct GmmTestsCanonize : public GmmTests {
-    void SetUp() override {
-        uint32_t addressWidth = 48u;
-        HwHelper::get(renderCoreFamily).adjustAddressWidthForCanonize(addressWidth);
-        if (addressWidth != 48u) {
-            GTEST_SKIP();
-        }
-        GmmTests::SetUp();
-    }
-};
+using GmmCanonizeTests = GmmTests;
 
-TEST_F(GmmTestsCanonize, WhenCanonizingThenCorrectAddressIsReturned) {
+TEST_F(GmmCanonizeTests, WhenCanonizingThenCorrectAddressIsReturned) {
     auto hwInfo = *defaultHwInfo;
 
     // 48 bit - canonize to 48 bit
@@ -385,7 +376,7 @@ TEST_F(GmmTestsCanonize, WhenCanonizingThenCorrectAddressIsReturned) {
     EXPECT_EQ(GmmHelper::canonize(testAddr2), goodAddr2);
 }
 
-TEST_F(GmmTestsCanonize, WhenDecanonizingThenCorrectAddressIsReturned) {
+TEST_F(GmmCanonizeTests, WhenDecanonizingThenCorrectAddressIsReturned) {
     auto hwInfo = *defaultHwInfo;
 
     // 48 bit - decanonize to 48 bit
