@@ -29,6 +29,10 @@ int HwInfoConfigHw<IGFX_XE_HP_SDV>::configureHardwareCustom(HardwareInfo *hwInfo
 
     enableBlitterOperationsSupport(hwInfo);
 
+    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
+    kmdNotifyProperties.enableKmdNotify = true;
+    kmdNotifyProperties.delayKmdNotifyMicroseconds = 20;
+
     return 0;
 }
 
