@@ -118,7 +118,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/pipe_control_args.cpp
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xehp_plus.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_plus.inl

@@ -28,7 +28,7 @@ set(RUNTIME_SRCS_MEM_OBJ
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/image_ext.inl
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_MEM_OBJ
        ${CMAKE_CURRENT_SOURCE_DIR}/image_xehp_plus.inl
   )

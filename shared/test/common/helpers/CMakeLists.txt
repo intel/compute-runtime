@@ -36,7 +36,7 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/variable_backup.h
 )
 
-if(TESTS_XEHP_PLUS)
+if(TESTS_XEHP_AND_LATER)
   list(APPEND NEO_CORE_HELPERS_TESTS
        ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_xehp_plus.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_xehp_plus.inl

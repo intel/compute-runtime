@@ -89,7 +89,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler/sampler_imp.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_plus.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_xe_hp_core_plus.inl

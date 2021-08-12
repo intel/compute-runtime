@@ -48,7 +48,7 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_STREAM
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_xehp_plus.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xehp_plus.inl

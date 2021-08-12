@@ -54,7 +54,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/validators.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_HELPERS_BASE
        ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_xehp_plus.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_xehp_plus.inl

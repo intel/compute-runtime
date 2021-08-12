@@ -92,7 +92,7 @@ set(IGDRCL_SRCS_tests_command_queue
     ${CMAKE_CURRENT_SOURCE_DIR}/zero_size_enqueue_tests.cpp
 )
 
-if(TESTS_XEHP_PLUS)
+if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_command_queue
        ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_xehp_plus.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_xehp_plus.cpp

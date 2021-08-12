@@ -19,7 +19,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_OS_INTERFACE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_plus.inl
   )

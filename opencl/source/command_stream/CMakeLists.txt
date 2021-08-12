@@ -20,7 +20,7 @@ set(RUNTIME_SRCS_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/command_stream_receiver_simulated_hw.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_COMMAND_STREAM
        ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_xehp_plus.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_xehp_plus.inl

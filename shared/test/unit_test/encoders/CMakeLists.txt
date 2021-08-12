@@ -20,7 +20,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling.cpp
 )
 
-if(TESTS_XEHP_PLUS)
+if(TESTS_XEHP_AND_LATER)
   target_sources(${TARGET_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_xehp_plus.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_xehp_plus.cpp

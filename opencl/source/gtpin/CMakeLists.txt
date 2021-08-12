@@ -20,7 +20,7 @@ if(NOT DISABLED_GTPIN_SUPPORT)
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_defs.h
   )
 
-  if(SUPPORT_XEHP_PLUS)
+  if(SUPPORT_XEHP_AND_LATER)
     list(APPEND RUNTIME_SRCS_GTPIN
          ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper_xehp_plus.inl
     )

@@ -17,7 +17,7 @@ set(NEO_CORE_COMMAND_CONTAINER
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_raytracing_xehp_plus.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xehp_plus.inl

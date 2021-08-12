@@ -20,7 +20,7 @@ set(NEO_CORE_AUB
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_AUB
        ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_xehp_plus.inl
   )

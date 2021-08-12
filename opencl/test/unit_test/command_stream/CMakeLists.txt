@@ -42,7 +42,7 @@ set(IGDRCL_SRCS_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
 )
 
-if(TESTS_XEHP_PLUS)
+if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_command_stream
        ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_tests_xehp_plus.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_flush_task_tests_xehp_plus.cpp

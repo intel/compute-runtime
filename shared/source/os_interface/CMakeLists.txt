@@ -40,7 +40,7 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_common.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_xehp_plus.inl)
 endif()
 

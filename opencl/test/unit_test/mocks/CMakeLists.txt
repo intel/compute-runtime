@@ -62,7 +62,7 @@ set(IGDRCL_SRCS_tests_mocks
     ${NEO_CORE_tests_compiler_mocks}
 )
 
-if(TESTS_XEHP_PLUS)
+if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_scratch_space_controller_xehp_plus.h
   )

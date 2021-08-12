@@ -45,7 +45,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.h
 )
 
-if(SUPPORT_XEHP_PLUS)
+if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_COMMAND_QUEUE
        ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_xehp_plus.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_xehp_plus.inl

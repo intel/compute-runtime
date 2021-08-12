@@ -43,7 +43,7 @@ set(IGDRCL_SRCS_tests_mem_obj
     ${CMAKE_CURRENT_SOURCE_DIR}/zero_copy_tests.cpp
 )
 
-if(TESTS_XEHP_PLUS)
+if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_mem_obj
        ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests_xehp_plus.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_xehp_plus.cpp

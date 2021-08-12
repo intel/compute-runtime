@@ -21,7 +21,7 @@ set(NEO_SHARED_TESTS_CMD_PARSE
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.inl
 )
 
-if(TESTS_XEHP_PLUS)
+if(TESTS_XEHP_AND_LATER)
   list(APPEND NEO_SHARED_TESTS_CMD_PARSE
        ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_xehp_plus.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_l3_control_xehp_plus.inl

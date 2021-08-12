@@ -45,7 +45,7 @@ set(IGDRCL_SRCS_tests_helpers
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.inl
 )
 
-if(TESTS_XEHP_PLUS)
+if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_helpers
        ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_hw_tests_xehp_plus.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_plus.cpp
