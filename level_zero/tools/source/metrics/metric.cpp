@@ -25,7 +25,7 @@ struct MetricGroupDomains {
 
   public:
     MetricGroupDomains(MetricContext &metricContext);
-    ze_result_t activateDeferred(const uint32_t count, zet_metric_group_handle_t *phMetricGroups);
+    ze_result_t activateDeferred(const uint32_t subDeviceIndex, const uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activate();
     ze_result_t deactivate();
     bool isActivated(const zet_metric_group_handle_t hMetricGroup);
@@ -180,7 +180,7 @@ MetricContextImp::activateMetricGroupsDeferred(const uint32_t count,
 
     // Activation: postpone until zetMetricStreamerOpen or zeCommandQueueExecuteCommandLists
     // Deactivation: execute immediately.
-    return phMetricGroups ? metricGroupDomains.activateDeferred(count, phMetricGroups)
+    return phMetricGroups ? metricGroupDomains.activateDeferred(subDeviceIndex, count, phMetricGroups)
                           : metricGroupDomains.deactivate();
 }
 
@@ -269,18 +269,24 @@ bool MetricContext::isMetricApiAvailable() {
 MetricGroupDomains::MetricGroupDomains(MetricContext &metricContext)
     : metricsLibrary(metricContext.getMetricsLibrary()) {}
 
-ze_result_t MetricGroupDomains::activateDeferred(const uint32_t count,
+ze_result_t MetricGroupDomains::activateDeferred(const uint32_t subDeviceIndex,
+                                                 const uint32_t count,
                                                  zet_metric_group_handle_t *phMetricGroups) {
     // For each metric group:
     for (uint32_t i = 0; i < count; ++i) {
         DEBUG_BREAK_IF(!phMetricGroups[i]);
 
+        zet_metric_group_handle_t handle = phMetricGroups[i];
+        auto pMetricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(handle));
+        if (pMetricGroupImp->getMetricGroups().size() > 0) {
+            handle = pMetricGroupImp->getMetricGroups()[subDeviceIndex];
+        }
+
         // Try to associate it with a domain (oa, ...).
-        if (!activateMetricGroupDeferred(phMetricGroups[i])) {
+        if (!activateMetricGroupDeferred(handle)) {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     }
-
     return ZE_RESULT_SUCCESS;
 }
 
