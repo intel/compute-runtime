@@ -45,7 +45,6 @@ ze_result_t MetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDat
 }
 
 ze_result_t MetricStreamerImp::close() {
-
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (metricStreamers.size() > 0) {
 
@@ -59,8 +58,10 @@ ze_result_t MetricStreamerImp::close() {
         }
 
         // Delete metric streamer aggregator.
-        if (result == ZE_RESULT_SUCCESS)
+        if (result == ZE_RESULT_SUCCESS) {
+            detachEvent();
             delete this;
+        }
     } else {
 
         result = stopMeasurements();
@@ -79,10 +80,7 @@ ze_result_t MetricStreamerImp::close() {
             // (to activate metric sets and to read context switch reports).
             metricsLibrary.release();
 
-            // Release notification event.
-            if (pNotificationEvent != nullptr) {
-                pNotificationEvent->metricStreamer = nullptr;
-            }
+            detachEvent();
 
             // Delete metric streamer.
             delete this;
@@ -103,8 +101,7 @@ ze_result_t MetricStreamerImp::initialize(ze_device_handle_t hDevice,
 }
 
 ze_result_t MetricStreamerImp::startMeasurements(uint32_t &notifyEveryNReports,
-                                                 uint32_t &samplingPeriodNs,
-                                                 ze_event_handle_t hNotificationEvent) {
+                                                 uint32_t &samplingPeriodNs) {
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
     uint32_t requestedOaBufferSize = getOaBufferSize(notifyEveryNReports);
 
@@ -116,13 +113,22 @@ ze_result_t MetricStreamerImp::startMeasurements(uint32_t &notifyEveryNReports,
         notifyEveryNReports = getNotifyEveryNReports(requestedOaBufferSize);
     }
 
+    return result;
+}
+
+void MetricStreamerImp::attachEvent(ze_event_handle_t hNotificationEvent) {
     // Associate notification event with metric streamer.
     pNotificationEvent = Event::fromHandle(hNotificationEvent);
     if (pNotificationEvent != nullptr) {
         pNotificationEvent->metricStreamer = this;
     }
+}
 
-    return result;
+void MetricStreamerImp::detachEvent() {
+    // Release notification event.
+    if (pNotificationEvent != nullptr) {
+        pNotificationEvent->metricStreamer = nullptr;
+    }
 }
 
 ze_result_t MetricStreamerImp::stopMeasurements() {
@@ -150,6 +156,16 @@ uint32_t MetricStreamerImp::getNotifyEveryNReports(const uint32_t oaBufferSize) 
 
 Event::State MetricStreamerImp::getNotificationState() {
 
+    if (metricStreamers.size() > 0) {
+        for (auto metricStreamer : metricStreamers) {
+            // Return Signalled if report is available on any subdevice.
+            if (MetricStreamer::fromHandle(metricStreamer)->getNotificationState() == Event::State::STATE_SIGNALED) {
+                return Event::State::STATE_SIGNALED;
+            }
+        }
+        return Event::State::STATE_INITIAL;
+    }
+
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
     bool reportsReady = metricGroup->waitForReports(0) == ZE_RESULT_SUCCESS;
 
@@ -172,8 +188,7 @@ uint32_t MetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCount)
 }
 
 ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_handle_t hMetricGroup,
-                                          zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent,
-                                          zet_metric_streamer_handle_t *phMetricStreamer) {
+                                          zet_metric_streamer_desc_t &desc, zet_metric_streamer_handle_t *phMetricStreamer) {
     auto &metricContext = pDevice->getMetricContext();
 
     *phMetricStreamer = nullptr;
@@ -212,7 +227,7 @@ ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_hand
     pMetricStreamer->initialize(pDevice->toHandle(), hMetricGroup);
 
     const ze_result_t result = pMetricStreamer->startMeasurements(
-        desc.notifyEveryNReports, desc.samplingPeriod, hNotificationEvent);
+        desc.notifyEveryNReports, desc.samplingPeriod);
     if (result == ZE_RESULT_SUCCESS) {
         metricContext.setMetricStreamer(pMetricStreamer);
     } else {
@@ -245,7 +260,7 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
         for (uint32_t i = 0; i < subDeviceCount; i++) {
 
             auto metricGroupsSubDevice = metricGroupRootDevice->getMetricGroups()[i];
-            result = openForDevice(deviceImp->subDevices[i], metricGroupsSubDevice, desc, hNotificationEvent, &metricStreamers[i]);
+            result = openForDevice(deviceImp->subDevices[i], metricGroupsSubDevice, desc, &metricStreamers[i]);
             if (result != ZE_RESULT_SUCCESS) {
                 for (uint32_t j = 0; j < i; j++) {
                     auto metricStreamerSubDevice = MetricStreamer::fromHandle(metricStreamers[j]);
@@ -259,7 +274,12 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
         *phMetricStreamer = pMetricStreamer->toHandle();
 
     } else {
-        result = openForDevice(pDevice, hMetricGroup, desc, hNotificationEvent, phMetricStreamer);
+        result = openForDevice(pDevice, hMetricGroup, desc, phMetricStreamer);
+    }
+
+    if (result == ZE_RESULT_SUCCESS) {
+        MetricStreamerImp *metImp = static_cast<MetricStreamerImp *>(MetricStreamer::fromHandle(*phMetricStreamer));
+        metImp->attachEvent(hNotificationEvent);
     }
 
     return result;
