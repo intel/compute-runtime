@@ -41,6 +41,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isLowPriority() const { return engineUsage == EngineUsage::LowPriority; }
     bool isInternalEngine() const { return engineUsage == EngineUsage::Internal; }
     bool isRootDevice() const { return rootDevice; }
+    bool isEngineInstanced() const { return engineInstancedDevice; }
     virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const { return false; }
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContext(bool value) { defaultContext = value; }

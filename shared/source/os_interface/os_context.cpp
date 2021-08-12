@@ -21,7 +21,8 @@ OsContext::OsContext(uint32_t contextId, const EngineDescriptor &engineDescripto
       numSupportedDevices(static_cast<uint32_t>(engineDescriptor.deviceBitfield.count())),
       engineType(engineDescriptor.engineTypeUsage.first),
       engineUsage(engineDescriptor.engineTypeUsage.second),
-      rootDevice(engineDescriptor.isRootDevice) {}
+      rootDevice(engineDescriptor.isRootDevice),
+      engineInstancedDevice(engineDescriptor.isEngineInstanced) {}
 
 bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) const {
     if (DebugManager.flags.DeferOsContextInitialization.get() == 0) {

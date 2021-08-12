@@ -32,13 +32,14 @@ using EngineTypeUsage = std::pair<aub_stream::EngineType, EngineUsage>;
 
 struct EngineDescriptor {
     EngineDescriptor() = delete;
-    constexpr EngineDescriptor(EngineTypeUsage engineTypeUsage, DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool isRootDevice)
-        : engineTypeUsage(engineTypeUsage), deviceBitfield(deviceBitfield), preemptionMode(preemptionMode), isRootDevice(isRootDevice) {}
+    constexpr EngineDescriptor(EngineTypeUsage engineTypeUsage, DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool isRootDevice, bool isEngineInstanced)
+        : engineTypeUsage(engineTypeUsage), deviceBitfield(deviceBitfield), preemptionMode(preemptionMode), isRootDevice(isRootDevice), isEngineInstanced(isEngineInstanced) {}
 
     EngineTypeUsage engineTypeUsage;
     DeviceBitfield deviceBitfield;
     PreemptionMode preemptionMode;
     bool isRootDevice;
+    bool isEngineInstanced;
 };
 
 namespace EngineHelpers {

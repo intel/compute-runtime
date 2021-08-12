@@ -311,6 +311,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     const auto engineUsage = engineTypeUsage.second;
     const auto defaultEngineType = getChosenEngineType(hwInfo);
     const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::Regular;
+    const bool createAsEngineInstanced = engineInstanced && EngineHelpers::isCcs(engineType);
 
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver = createCommandStreamReceiver();
     if (!commandStreamReceiver) {
@@ -328,7 +329,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
     bool lowPriority = (engineTypeUsage.second == EngineUsage::LowPriority);
 
-    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
+    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, createAsEngineInstanced);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {

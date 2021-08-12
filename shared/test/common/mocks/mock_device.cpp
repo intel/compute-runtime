@@ -31,7 +31,7 @@ MockDevice::MockDevice()
     commandStreamReceivers.resize(1);
     commandStreamReceivers[0].reset(commandStreamReceiver);
 
-    EngineDescriptor engineDescriptor = {EngineTypeUsage{aub_stream::ENGINE_CCS, EngineUsage::Regular}, this->getDeviceBitfield(), PreemptionMode::Disabled, true};
+    EngineDescriptor engineDescriptor = {EngineTypeUsage{aub_stream::ENGINE_CCS, EngineUsage::Regular}, this->getDeviceBitfield(), PreemptionMode::Disabled, true, false};
 
     OsContext *osContext = getMemoryManager()->createAndRegisterOsContext(commandStreamReceiver, engineDescriptor);
     commandStreamReceiver->setupContext(*osContext);

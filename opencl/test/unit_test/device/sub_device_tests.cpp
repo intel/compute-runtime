@@ -369,6 +369,8 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
                 return false;
             }
 
+            EXPECT_EQ(EngineHelpers::isCcs(engine.getEngineType()), engine.osContext->isEngineInstanced());
+
             auto osContext = engine.osContext;
 
             if ((engine.getEngineType() == engineType) &&
