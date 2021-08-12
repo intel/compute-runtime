@@ -9,7 +9,8 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_query_imp.h"
 
 namespace L0 {
@@ -44,29 +45,48 @@ ze_result_t MetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDat
 }
 
 ze_result_t MetricStreamerImp::close() {
-    const auto result = stopMeasurements();
-    if (result == ZE_RESULT_SUCCESS) {
 
-        auto device = Device::fromHandle(hDevice);
-        auto &metricContext = device->getMetricContext();
-        auto &metricsLibrary = metricContext.getMetricsLibrary();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    if (metricStreamers.size() > 0) {
 
-        // Clear metric streamer reference in context.
-        // Another metric streamer instance or query can be used.
-        metricContext.setMetricStreamer(nullptr);
+        for (auto metricStreamerHandle : metricStreamers) {
+            auto metricStreamer = MetricStreamer::fromHandle(metricStreamerHandle);
+            auto tmpResult = metricStreamer->close();
 
-        // Close metrics library (if was used to generate streamer's marker gpu commands).
-        // It will allow metric query to use Linux Tbs stream exclusively
-        // (to activate metric sets and to read context switch reports).
-        metricsLibrary.release();
-
-        // Release notification event.
-        if (pNotificationEvent != nullptr) {
-            pNotificationEvent->metricStreamer = nullptr;
+            // Hold the first error result.
+            if (result == ZE_RESULT_SUCCESS)
+                result = tmpResult;
         }
 
-        // Delete metric streamer.
-        delete this;
+        // Delete metric streamer aggregator.
+        if (result == ZE_RESULT_SUCCESS)
+            delete this;
+    } else {
+
+        result = stopMeasurements();
+        if (result == ZE_RESULT_SUCCESS) {
+
+            auto device = Device::fromHandle(hDevice);
+            auto &metricContext = device->getMetricContext();
+            auto &metricsLibrary = metricContext.getMetricsLibrary();
+
+            // Clear metric streamer reference in context.
+            // Another metric streamer instance or query can be used.
+            metricContext.setMetricStreamer(nullptr);
+
+            // Close metrics library (if was used to generate streamer's marker gpu commands).
+            // It will allow metric query to use Linux Tbs stream exclusively
+            // (to activate metric sets and to read context switch reports).
+            metricsLibrary.release();
+
+            // Release notification event.
+            if (pNotificationEvent != nullptr) {
+                pNotificationEvent->metricStreamer = nullptr;
+            }
+
+            // Delete metric streamer.
+            delete this;
+        }
     }
     return result;
 }
@@ -138,6 +158,10 @@ Event::State MetricStreamerImp::getNotificationState() {
                : Event::State::STATE_INITIAL;
 }
 
+std::vector<zet_metric_streamer_handle_t> &MetricStreamerImp::getMetricStreamers() {
+    return metricStreamers;
+}
+
 uint32_t MetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCount) const {
     DEBUG_BREAK_IF(rawReportSize == 0);
     uint32_t maxOaBufferReportCount = oaBufferSize / rawReportSize;
@@ -147,10 +171,9 @@ uint32_t MetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCount)
                                                    : maxReportCount * rawReportSize;
 }
 
-ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                                 zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent,
-                                 zet_metric_streamer_handle_t *phMetricStreamer) {
-    auto pDevice = Device::fromHandle(hDevice);
+ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_handle_t hMetricGroup,
+                                          zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent,
+                                          zet_metric_streamer_handle_t *phMetricStreamer) {
     auto &metricContext = pDevice->getMetricContext();
 
     *phMetricStreamer = nullptr;
@@ -186,7 +209,7 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
 
     auto pMetricStreamer = new MetricStreamerImp();
     UNRECOVERABLE_IF(pMetricStreamer == nullptr);
-    pMetricStreamer->initialize(hDevice, hMetricGroup);
+    pMetricStreamer->initialize(pDevice->toHandle(), hMetricGroup);
 
     const ze_result_t result = pMetricStreamer->startMeasurements(
         desc.notifyEveryNReports, desc.samplingPeriod, hNotificationEvent);
@@ -200,6 +223,46 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
 
     *phMetricStreamer = pMetricStreamer->toHandle();
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                                 zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent,
+                                 zet_metric_streamer_handle_t *phMetricStreamer) {
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto pDevice = Device::fromHandle(hDevice);
+
+    if (pDevice->isMultiDeviceCapable()) {
+        const auto deviceImp = static_cast<const DeviceImp *>(pDevice);
+        const uint32_t subDeviceCount = deviceImp->numSubDevices;
+        auto pMetricStreamer = new MetricStreamerImp();
+        UNRECOVERABLE_IF(pMetricStreamer == nullptr);
+
+        auto &metricStreamers = pMetricStreamer->getMetricStreamers();
+        metricStreamers.resize(subDeviceCount);
+        auto metricGroupRootDevice = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
+
+        for (uint32_t i = 0; i < subDeviceCount; i++) {
+
+            auto metricGroupsSubDevice = metricGroupRootDevice->getMetricGroups()[i];
+            result = openForDevice(deviceImp->subDevices[i], metricGroupsSubDevice, desc, hNotificationEvent, &metricStreamers[i]);
+            if (result != ZE_RESULT_SUCCESS) {
+                for (uint32_t j = 0; j < i; j++) {
+                    auto metricStreamerSubDevice = MetricStreamer::fromHandle(metricStreamers[j]);
+                    delete metricStreamerSubDevice;
+                }
+                delete pMetricStreamer;
+                return result;
+            }
+        }
+
+        *phMetricStreamer = pMetricStreamer->toHandle();
+
+    } else {
+        result = openForDevice(pDevice, hMetricGroup, desc, hNotificationEvent, phMetricStreamer);
+    }
+
+    return result;
 }
 
 } // namespace L0

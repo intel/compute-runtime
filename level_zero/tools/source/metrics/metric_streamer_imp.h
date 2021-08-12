@@ -22,6 +22,7 @@ struct MetricStreamerImp : MetricStreamer {
     ze_result_t initialize(ze_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup);
     ze_result_t startMeasurements(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs, ze_event_handle_t hNotificationEvent);
     Event::State getNotificationState() override;
+    std::vector<zet_metric_streamer_handle_t> &getMetricStreamers();
 
   protected:
     ze_result_t stopMeasurements();
@@ -34,6 +35,7 @@ struct MetricStreamerImp : MetricStreamer {
     Event *pNotificationEvent = nullptr;
     uint32_t rawReportSize = 0;
     uint32_t oaBufferSize = 0;
+    std::vector<zet_metric_streamer_handle_t> metricStreamers;
 };
 
 } // namespace L0

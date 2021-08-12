@@ -220,5 +220,10 @@ class MetricMultiDeviceContextFixture : public MultiDeviceFixture {
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
 };
 
+class MetricStreamerMultiDeviceContextFixture : public MetricMultiDeviceContextFixture {
+  public:
+    void cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer);
+};
+
 } // namespace ult
 } // namespace L0

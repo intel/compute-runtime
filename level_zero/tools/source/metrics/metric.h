@@ -107,7 +107,9 @@ struct MetricStreamer : _zet_metric_streamer_handle_t {
     virtual ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize,
                                  uint8_t *pRawData) = 0;
     virtual ze_result_t close() = 0;
-
+    static ze_result_t openForDevice(Device *pDevice, zet_metric_group_handle_t hMetricGroup,
+                                     zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent,
+                                     zet_metric_streamer_handle_t *phMetricStreamer);
     static ze_result_t open(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                             zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent, zet_metric_streamer_handle_t *phMetricStreamer);
     static MetricStreamer *fromHandle(zet_metric_streamer_handle_t handle) {

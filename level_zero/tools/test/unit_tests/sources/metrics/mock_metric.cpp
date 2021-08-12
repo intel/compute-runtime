@@ -10,6 +10,8 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
+#include "level_zero/tools/source/metrics/metric_streamer_imp.h"
+
 using namespace MetricsLibraryApi;
 
 using ::testing::_;
@@ -280,6 +282,26 @@ void MetricMultiDeviceContextFixture::openMetricsAdapterGroup() {
     EXPECT_CALL(adapter, CloseMetricsDevice(_))
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
+}
+
+void MetricStreamerMultiDeviceContextFixture::cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer) {
+
+    MetricStreamerImp *pStreamerImp = static_cast<MetricStreamerImp *>(MetricStreamer::fromHandle(hStreamer));
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+
+    for (size_t index = 0; index < deviceImp.subDevices.size(); index++) {
+        zet_metric_streamer_handle_t metricStreamerSubDeviceHandle = pStreamerImp->getMetricStreamers()[index];
+        MetricStreamerImp *pStreamerSubDevImp = static_cast<MetricStreamerImp *>(MetricStreamer::fromHandle(metricStreamerSubDeviceHandle));
+        auto device = deviceImp.subDevices[index];
+        auto &metricContext = device->getMetricContext();
+        auto &metricsLibrary = metricContext.getMetricsLibrary();
+        metricContext.setMetricStreamer(nullptr);
+        metricsLibrary.release();
+        delete pStreamerSubDevImp;
+    }
+    auto &metricContext = devices[0]->getMetricContext();
+    metricContext.setMetricStreamer(nullptr);
+    delete pStreamerImp;
 }
 
 Mock<MetricsLibrary>::Mock(::L0::MetricContext &metricContext) : MetricsLibrary(metricContext) {
