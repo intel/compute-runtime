@@ -29,9 +29,9 @@
 
 using namespace NEO;
 
-typedef ::testing::Test XeHPPlusBufferTests;
+typedef ::testing::Test XeHPAndLaterBufferTests;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeDefaultWhenBufferIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(1);
     initPlatform();
@@ -63,7 +63,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeDefaultWhenBuf
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenDebugFlagSetWhenProgramingSurfaceStateThenForceCompressionFormat) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgramingSurfaceStateThenForceCompressionFormat) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore restorer;
@@ -96,7 +96,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenDebugFlagSetWhenProgramin
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeDefaultWhenBufferIsWritableThenFlipPartialFlagsToFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsWritableThenFlipPartialFlagsToFalse) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     initPlatform();
@@ -126,7 +126,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeDefaultWhenBuf
     EXPECT_FALSE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeUnrestrictiveWhenBufferIsWritableThenFlipPartialFlagsToFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeUnrestrictiveWhenBufferIsWritableThenFlipPartialFlagsToFalse) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     initPlatform();
@@ -156,7 +156,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeUnrestrictiveW
     EXPECT_FALSE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeDefaultWhenBufferIsNotWritableThenRemainPartialFlagsToTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsNotWritableThenRemainPartialFlagsToTrue) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
@@ -184,7 +184,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeDefaultWhenBuf
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeSpecializedWhenBufferIsWritableThenRemainPartialFlagsToTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeSpecializedWhenBufferIsWritableThenRemainPartialFlagsToTrue) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
     context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
@@ -212,7 +212,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenContextTypeSpecializedWhe
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenDebugFlagForMultiTileSupportWhenSurfaceStateIsSetThenValuesMatch) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagForMultiTileSupportWhenSurfaceStateIsSetThenValuesMatch) {
     DebugManagerStateRestore restore;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
@@ -248,7 +248,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenDebugFlagForMultiTileSupp
     EXPECT_EQ(1u, surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenNullContextWhenBufferAllocationIsNullThenRemainPartialFlagsToTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenNullContextWhenBufferAllocationIsNullThenRemainPartialFlagsToTrue) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
@@ -267,7 +267,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenNullContextWhenBufferAllo
     alignedFree(ptr);
 }
 
-struct MultiGpuGlobalAtomicsBufferTest : public XeHPPlusBufferTests,
+struct MultiGpuGlobalAtomicsBufferTest : public XeHPAndLaterBufferTests,
                                          public ::testing::WithParamInterface<std::tuple<unsigned int, unsigned int, bool, bool, bool>> {
 };
 
@@ -361,7 +361,7 @@ INSTANTIATE_TEST_CASE_P(MultiGpuGlobalAtomicsBufferTest,
                             ::testing::Bool(),
                             ::testing::Bool()));
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferAllocationInDeviceMemoryWhenStatelessCompressionIsEnabledThenSetSurfaceStateWithCompressionSettings) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatelessCompressionIsEnabledThenSetSurfaceStateWithCompressionSettings) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
     DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
@@ -397,7 +397,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferAllocationInDeviceM
     EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), surfaceState.getCompressionFormat());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferAllocationInHostMemoryWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
@@ -427,7 +427,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferAllocationInHostMem
     EXPECT_EQ(0u, surfaceState.getCompressionFormat());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferAllocationWithoutGraphicsAllocationWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocationWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
@@ -459,7 +459,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferAllocationWithoutGr
     EXPECT_EQ(0u, surfaceState.getCompressionFormat());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenDebugVariableForcingL1CachingWhenBufferSurfaceStateIsSetThenItIsCachedInL1) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugVariableForcingL1CachingWhenBufferSurfaceStateIsSetThenItIsCachedInL1) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceL1Caching.set(1u);
     MockContext context;
@@ -483,7 +483,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenDebugVariableForcingL1Cac
     EXPECT_EQ(expectedMocs, actualMocs);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenDebugVariableForcingL1CachingDisabledWhenBufferSurfaceStateIsSetThenItIsCachedInL3) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugVariableForcingL1CachingDisabledWhenBufferSurfaceStateIsSetThenItIsCachedInL3) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceL1Caching.set(0u);
     MockContext context;
@@ -507,7 +507,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenDebugVariableForcingL1Cac
     EXPECT_EQ(expectedMocs, actualMocs);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferWhenArgumentIsConstAndAuxModeIsOnThenL3DisabledPolicyIsChoosen) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferWhenArgumentIsConstAndAuxModeIsOnThenL3DisabledPolicyIsChoosen) {
     MockContext context;
     const auto size = MemoryConstants::pageSize;
     const auto flags = CL_MEM_READ_ONLY;
@@ -529,7 +529,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferWhenArgumentIsConst
     EXPECT_EQ(expectedMocs, actualMocs);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlignedToCachelineThenL1CacheShouldBeOn) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlignedToCachelineThenL1CacheShouldBeOn) {
     MockContext context;
 
     auto size = MemoryConstants::pageSize;
@@ -549,7 +549,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenBufferSetSurfaceThatMemor
     alignedFree(ptr);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusBufferTests, givenAlignedCacheableNonReadOnlyBufferThenChooseOclBufferPolicy) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenAlignedCacheableNonReadOnlyBufferThenChooseOclBufferPolicy) {
     MockContext context;
     const auto size = MemoryConstants::pageSize;
     const auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);

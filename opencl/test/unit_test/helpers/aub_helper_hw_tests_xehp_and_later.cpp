@@ -14,21 +14,21 @@
 
 using namespace NEO;
 
-using AubHelperHwTestXeHPPlus = Test<ClDeviceFixture>;
+using AubHelperHwTestXeHPAndLater = Test<ClDeviceFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPPlus, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel4IsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPAndLater, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel4IsReturned) {
     AubHelperHw<FamilyType> aubHelper(true);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TracePpgttLevel4, aubHelper.getDataHintForPml4Entry());
 }
-HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPPlus, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel3IsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPAndLater, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel3IsReturned) {
     AubHelperHw<FamilyType> aubHelper(true);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TracePpgttLevel3, aubHelper.getDataHintForPdpEntry());
 }
-HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPPlus, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel2IsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPAndLater, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel2IsReturned) {
     AubHelperHw<FamilyType> aubHelper(true);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TracePpgttLevel2, aubHelper.getDataHintForPdEntry());
 }
-HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPPlus, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel1IsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPAndLater, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel1IsReturned) {
     AubHelperHw<FamilyType> aubHelper(true);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TracePpgttLevel1, aubHelper.getDataHintForPtEntry());
 }

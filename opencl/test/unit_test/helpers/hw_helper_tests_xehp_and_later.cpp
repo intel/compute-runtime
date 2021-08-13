@@ -20,14 +20,14 @@
 #include "engine_node.h"
 #include "pipe_control_args.h"
 
-using HwHelperTestXeHPPlus = HwHelperTest;
+using HwHelperTestXeHPAndLater = HwHelperTest;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, WhenGettingMaxBarriersPerSliceThen32IsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenGettingMaxBarriersPerSliceThen32IsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, whenCapabilityCoherencyFlagSetTrueThenOverrideToFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, whenCapabilityCoherencyFlagSetTrueThenOverrideToFalse) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = true;
@@ -35,7 +35,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, whenCapabilityCoherencyFlagSe
     EXPECT_FALSE(coherency);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenHwHelperWhenGetGpuTimeStampInNSIsCalledThenOnlyLow32BitsFromTimeStampAreUsedAndCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGetGpuTimeStampInNSIsCalledThenOnlyLow32BitsFromTimeStampAreUsedAndCorrectValueIsReturned) {
 
     auto &helper = HwHelper::get(renderCoreFamily);
     auto timeStamp = 0x00ff'ffff'ffff;
@@ -45,7 +45,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenHwHelperWhenGetGpuTimeSt
     EXPECT_EQ(result, helper.getGpuTimeStampInNS(timeStamp, frequency));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, GivenNoCcsNodeThenDefaultEngineTypeIsRcs) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, GivenNoCcsNodeThenDefaultEngineTypeIsRcs) {
     hardwareInfo.featureTable.ftrCCSNode = false;
 
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -56,7 +56,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, GivenNoCcsNodeThenDefaultEngi
     EXPECT_EQ(expectedEngine, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, GiveCcsNodeThenDefaultEngineTypeIsCcs) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, GiveCcsNodeThenDefaultEngineTypeIsCcs) {
     hardwareInfo.featureTable.ftrCCSNode = true;
 
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -64,7 +64,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, GiveCcsNodeThenDefaultEngineT
     EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenXeHPPlusPlatformWhenSetupHardwareCapabilitiesIsCalledThenThenSpecificImplementationIsUsed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenSetupHardwareCapabilitiesIsCalledThenThenSpecificImplementationIsUsed) {
     hardwareInfo.featureTable.ftrLocalMemory = true;
 
     HardwareCapabilities hwCaps = {0};
@@ -76,31 +76,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenXeHPPlusPlatformWhenSetu
     EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenXeHPPlusPlatformWithLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWithLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
     hardwareInfo.featureTable.ftrLocalMemory = true;
 
     auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
     EXPECT_TRUE(helper.isLocalMemoryEnabled(hardwareInfo));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenXeHPPlusPlatformWithoutLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenFalseIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWithoutLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenFalseIsReturned) {
     hardwareInfo.featureTable.ftrLocalMemory = false;
 
     auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
     EXPECT_FALSE(helper.isLocalMemoryEnabled(hardwareInfo));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenXeHPPlusPlatformWhenCheckingIfHvAlign4IsRequiredThenReturnFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenCheckingIfHvAlign4IsRequiredThenReturnFalse) {
     auto &helper = HwHelperHw<FamilyType>::get();
     EXPECT_FALSE(helper.hvAlign4Required());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenXeHPPlusPlatformWhenCheckTimestampPacketWriteThenReturnTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenCheckTimestampPacketWriteThenReturnTrue) {
     auto &hwHelper = HwHelperHw<FamilyType>::get();
     EXPECT_TRUE(hwHelper.timestampPacketWriteSupported());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenAllFlagsSetWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEnginesAndOneBcsEngine) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenAllFlagsSetWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEnginesAndOneBcsEngine) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
@@ -127,7 +127,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenAllFlagsSetWhenGetGpgpuE
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[8].first);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenBcsDisabledWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEngines) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenBcsDisabledWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEngines) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 0;
@@ -149,7 +149,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenBcsDisabledWhenGetGpgpuE
     EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[6].first);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenCcsDisabledWhenGetGpgpuEnginesThenReturnRcsAndOneBcsEngine) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenCcsDisabledWhenGetGpgpuEnginesThenReturnRcsAndOneBcsEngine) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 1;
@@ -169,7 +169,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenCcsDisabledWhenGetGpgpuE
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[4].first);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenCcsDisabledAndNumberOfCcsEnabledWhenGetGpgpuEnginesThenReturnRcsAndOneBcsEngine) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenCcsDisabledAndNumberOfCcsEnabledWhenGetGpgpuEnginesThenReturnRcsAndOneBcsEngine) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 1;
@@ -189,7 +189,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenCcsDisabledAndNumberOfCc
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[4].first);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned) {
     DebugManagerStateRestore restore;
 
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -219,7 +219,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenVariousCachesRequestProp
     EXPECT_EQ(expectedMocsForL3andL1on, mocsIndex);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenStoreRegMemCommandWhenAdjustingThenSetRemapEnabled) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenStoreRegMemCommandWhenAdjustingThenSetRemapEnabled) {
     typename FamilyType::MI_STORE_REGISTER_MEM_CMD storeRegMem = {};
 
     storeRegMem.setMmioRemapEnable(false);
@@ -229,9 +229,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenStoreRegMemCommandWhenAd
     EXPECT_TRUE(storeRegMem.getMmioRemapEnable());
 }
 
-using PipeControlHelperTestsXeHPPlus = ::testing::Test;
+using PipeControlHelperTestsXeHPAndLater = ::testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, WhenAddingPipeControlWAThenCorrectCommandsAreProgrammed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, WhenAddingPipeControlWAThenCorrectCommandsAreProgrammed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     uint8_t buffer[128];
@@ -277,13 +277,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, WhenAddingPipeContr
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, WhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, WhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
     EXPECT_EQ(0u, UltMemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, WhenSettingExtraPipeControlPropertiesThenCorrectValuesAreSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, WhenSettingExtraPipeControlPropertiesThenCorrectValuesAreSet) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     for (auto ftrLocalMemory : ::testing::Bool()) {
@@ -301,14 +301,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, WhenSettingExtraPip
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, whenSettingCacheFlushExtraFieldsThenExpectHdcFlushSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, whenSettingCacheFlushExtraFieldsThenExpectHdcFlushSet) {
     PipeControlArgs args;
 
     MemorySynchronizationCommands<FamilyType>::setCacheFlushExtraProperties(args);
     EXPECT_TRUE(args.hdcPipelineFlush);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, givenRequestedCacheFlushesWhenProgrammingPipeControlThenFlushHdc) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenRequestedCacheFlushesWhenProgrammingPipeControlThenFlushHdc) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     uint32_t buffer[sizeof(PIPE_CONTROL) * 2] = {};
@@ -324,7 +324,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, givenRequestedCache
     EXPECT_TRUE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, givenDebugVariableSetWhenProgrammingPipeControlThenFlushHdc) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenDebugVariableSetWhenProgrammingPipeControlThenFlushHdc) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
     DebugManager.flags.FlushAllCaches.set(true);
@@ -340,7 +340,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, givenDebugVariableS
     EXPECT_TRUE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, givenDebugDisableCacheFlushWhenProgrammingPipeControlWithCacheFlushThenExpectDebugOverrideFlushHdc) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenDebugDisableCacheFlushWhenProgrammingPipeControlWithCacheFlushThenExpectDebugOverrideFlushHdc) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
     DebugManager.flags.DoNotFlushCaches.set(true);
@@ -358,17 +358,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPPlus, givenDebugDisableCa
     EXPECT_FALSE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenHwHelperXeCoreWhenGettingGlobalTimeStampBitsThen32IsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperXeCoreWhenGettingGlobalTimeStampBitsThen32IsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(helper.getGlobalTimeStampBits(), 32U);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenHwHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(helper.getPlanarYuvMaxHeight(), 16128u);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, WhenIsPipeControlWArequiredIsCalledThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenIsPipeControlWArequiredIsCalledThenCorrectValueIsReturned) {
     auto hwInfo = pDevice->getHardwareInfo();
     for (auto ftrLocalMemory : ::testing::Bool()) {
         hwInfo.featureTable.ftrLocalMemory = ftrLocalMemory;
@@ -378,7 +378,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, WhenIsPipeControlWArequiredIs
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, whenGettingPreferenceForSmallKernelsThenCertainThresholdIsTested) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, whenGettingPreferenceForSmallKernelsThenCertainThresholdIsTested) {
     DebugManagerStateRestore restorer;
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_TRUE(helper.preferSmallWorkgroupSizeForKernel(512u, this->pClDevice->getHardwareInfo()));
@@ -395,7 +395,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, whenGettingPreferenceForSmall
     EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(0u, this->pClDevice->getHardwareInfo()));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPPlus, givenHwHelperWhenGettingBindlessSurfaceExtendedMessageDescriptorValueThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGettingBindlessSurfaceExtendedMessageDescriptorValueThenCorrectValueIsReturned) {
     auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     auto value = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(0x200);
 

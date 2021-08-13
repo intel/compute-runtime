@@ -13,11 +13,11 @@
 
 namespace NEO {
 
-class ScratchSpaceControllerXeHPPlus : public ScratchSpaceController {
+class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
   public:
-    ScratchSpaceControllerXeHPPlus(uint32_t rootDeviceIndex,
-                                   ExecutionEnvironment &environment,
-                                   InternalAllocationStorage &allocationStorage);
+    ScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
+                                       ExecutionEnvironment &environment,
+                                       InternalAllocationStorage &allocationStorage);
     void setNewSshPtr(void *newSsh, bool &cfeDirty, bool changeId);
 
     void setRequiredScratchSpace(void *sshBaseAddress,

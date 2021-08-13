@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-struct XeHPPlusTbxCommandStreamReceiverTests : ClDeviceFixture, ::testing::Test {
+struct XeHPAndLaterTbxCommandStreamReceiverTests : ClDeviceFixture, ::testing::Test {
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
@@ -46,7 +46,7 @@ struct MockTbxCommandStreamReceiverHw : TbxCommandStreamReceiverHw<FamilyType> {
     uint32_t deviceIndex = 0u;
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenNullPtrGraphicsAlloctionWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenNullPtrGraphicsAlloctionWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
     setUpImpl<FamilyType>();
     auto tbxCsr = std::make_unique<MockTbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     GraphicsAllocation *allocation = nullptr;
@@ -55,7 +55,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenNullPtr
     EXPECT_EQ(3u, bits);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenGraphicsAlloctionWithNonLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenGraphicsAlloctionWithNonLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
     setUpImpl<FamilyType>();
     auto tbxCsr = std::make_unique<MockTbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockGraphicsAllocation allocation(nullptr, 0);
@@ -64,7 +64,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenGraphic
     EXPECT_EQ(3u, bits);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenGraphicsAlloctionWithLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenGraphicsAlloctionWithLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
     setUpImpl<FamilyType>();
     auto tbxCsr = std::make_unique<MockTbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockGraphicsAllocation allocation(nullptr, 0);
@@ -74,7 +74,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenGraphic
     EXPECT_EQ(3u | (1 << 11), bits);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenLocalBitIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenLocalBitIsReturned) {
     setUpImpl<FamilyType>();
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
@@ -87,7 +87,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenAubDump
     EXPECT_EQ(3u | (1 << 11), bits);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenLocalMemoryFeatureWhenGetGTTDataIsCalledThenLocalMemoryIsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenLocalMemoryFeatureWhenGetGTTDataIsCalledThenLocalMemoryIsSet) {
     setUpImpl<FamilyType>();
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableLocalMemory.set(1);
@@ -102,7 +102,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenLocalMe
     EXPECT_TRUE(data.localMemory);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenLocalMemoryEnabledWhenGetMemoryBankForGttIsCalledThenCorrectBankForDeviceIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenLocalMemoryEnabledWhenGetMemoryBankForGttIsCalledThenCorrectBankForDeviceIsReturned) {
     setUpImpl<FamilyType>();
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableLocalMemory.set(1);
@@ -127,7 +127,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, givenLocalMe
     EXPECT_EQ(MemoryBanks::getBankForLocalMemory(3), bank);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedThenItHasCorrectBankSzieAndNumberOfBanks) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedThenItHasCorrectBankSzieAndNumberOfBanks) {
     setUpImpl<FamilyType>();
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
     auto tbxCsr = std::make_unique<MockTbxCommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
@@ -138,7 +138,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, whenPhysical
     EXPECT_EQ(1u, allocator->getNumberOfBanks());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedFor4TilesThenItHasCorrectBankSzieAndNumberOfBanks) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedFor4TilesThenItHasCorrectBankSzieAndNumberOfBanks) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     setUpImpl<FamilyType>();
@@ -151,7 +151,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, whenPhysical
     EXPECT_EQ(4u, allocator->getNumberOfBanks());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTbxCommandStreamReceiverTests, whenAskedForPollForCompletionParametersThenReturnCorrectValues) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, whenAskedForPollForCompletionParametersThenReturnCorrectValues) {
     setUpImpl<FamilyType>();
     class MyMockTbxHw : public TbxCommandStreamReceiverHw<FamilyType> {
       public:

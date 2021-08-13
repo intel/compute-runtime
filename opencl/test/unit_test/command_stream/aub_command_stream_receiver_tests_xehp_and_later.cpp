@@ -34,7 +34,7 @@
 
 using namespace NEO;
 
-struct XeHPPlusAubCommandStreamReceiverTests : ClDeviceFixture, ::testing::Test {
+struct XeHPAndLaterAubCommandStreamReceiverTests : ClDeviceFixture, ::testing::Test {
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
@@ -52,16 +52,16 @@ struct XeHPPlusAubCommandStreamReceiverTests : ClDeviceFixture, ::testing::Test 
 };
 
 template <typename FamilyType>
-class MockAubCsrXeHPPlus : public AUBCommandStreamReceiverHw<FamilyType> {
+class MockAubCsrXeHPAndLater : public AUBCommandStreamReceiverHw<FamilyType> {
   public:
     using AUBCommandStreamReceiverHw<FamilyType>::getAddressSpace;
     using CommandStreamReceiverHw<FamilyType>::localMemoryEnabled;
     using CommandStreamReceiverSimulatedHw<FamilyType>::createPhysicalAddressAllocator;
 
-    MockAubCsrXeHPPlus(const std::string &fileName,
-                       bool standalone, ExecutionEnvironment &executionEnvironment,
-                       uint32_t rootDeviceIndex,
-                       const DeviceBitfield deviceBitfield)
+    MockAubCsrXeHPAndLater(const std::string &fileName,
+                           bool standalone, ExecutionEnvironment &executionEnvironment,
+                           uint32_t rootDeviceIndex,
+                           const DeviceBitfield deviceBitfield)
         : AUBCommandStreamReceiverHw<FamilyType>(fileName, standalone, executionEnvironment, rootDeviceIndex, deviceBitfield) {}
 
     uint32_t getDeviceIndex() const override {
@@ -71,7 +71,7 @@ class MockAubCsrXeHPPlus : public AUBCommandStreamReceiverHw<FamilyType> {
     uint32_t deviceIndex = 0u;
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGUCWorkQueueItemHeaderIsCalledThenAppropriateValueDependingOnEngineTypeIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGUCWorkQueueItemHeaderIsCalledThenAppropriateValueDependingOnEngineTypeIsReturned) {
     setUpImpl<FamilyType>();
 
     MockOsContext rcsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
@@ -93,7 +93,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubComm
     EXPECT_EQ(0x00030001u, aubCsr->getGUCWorkQueueItemHeader());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenGraphicsAlloctionWithNonLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenGraphicsAlloctionWithNonLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
     setUpImpl<FamilyType>();
 
     DebugManagerStateRestore debugRestorer;
@@ -106,7 +106,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenGraphic
     EXPECT_EQ(3u, bits);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenGraphicsAlloctionWithLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenGraphicsAlloctionWithLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
     setUpImpl<FamilyType>();
 
     DebugManagerStateRestore debugRestorer;
@@ -120,7 +120,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenGraphic
     EXPECT_EQ(3u | (1 << 11), bits);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenLocalBitIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryPoolWhenGetPPGTTAdditionalBitsIsCalledThenLocalBitIsReturned) {
     setUpImpl<FamilyType>();
 
     DebugManagerStateRestore debugRestorer;
@@ -134,13 +134,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubDump
     EXPECT_EQ(3u | (1 << 11), bits);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryEnabledWhenGetAddressSpaceIsCalledThenTraceLocalIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryEnabledWhenGetAddressSpaceIsCalledThenTraceLocalIsReturned) {
     setUpImpl<FamilyType>();
 
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
-    std::unique_ptr<MockAubCsrXeHPPlus<FamilyType>> aubCsr(new MockAubCsrXeHPPlus<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
     aubCsr->stream = stream.get();
 
@@ -149,13 +149,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubDump
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryDisabledWhenGetAddressSpaceIsCalledThenTraceNonlocalIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryDisabledWhenGetAddressSpaceIsCalledThenTraceNonlocalIsReturned) {
     setUpImpl<FamilyType>();
 
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.AUBDumpForceAllToLocalMemory.set(false);
 
-    std::unique_ptr<MockAubCsrXeHPPlus<FamilyType>> aubCsr(new MockAubCsrXeHPPlus<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
     aubCsr->stream = stream.get();
 
@@ -164,7 +164,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubDump
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, addressSpace);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
     setUpImpl<FamilyType>();
 
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
@@ -179,7 +179,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenCCSEnab
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0xB234, 0xA0000000u)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenRCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenRCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
     setUpImpl<FamilyType>();
 
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
@@ -194,10 +194,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenRCSEnab
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0xB134, 0xA0000000u)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenLocaLMemoryBitWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceLocalIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenLocaLMemoryBitWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceLocalIsReturned) {
     setUpImpl<FamilyType>();
 
-    std::unique_ptr<MockAubCsrXeHPPlus<FamilyType>> aubCsr(new MockAubCsrXeHPPlus<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
     aubCsr->stream = stream.get();
 
@@ -206,10 +206,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenLocaLMe
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenLocalMemoryEnabledWhenGetMemoryBankForGttIsCalledThenCorrectBankForDeviceIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenLocalMemoryEnabledWhenGetMemoryBankForGttIsCalledThenCorrectBankForDeviceIsReturned) {
     setUpImpl<FamilyType>();
 
-    std::unique_ptr<MockAubCsrXeHPPlus<FamilyType>> aubCsr(new MockAubCsrXeHPPlus<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     aubCsr->localMemoryEnabled = true;
 
     auto bank = aubCsr->getMemoryBankForGtt();
@@ -228,10 +228,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenLocalMe
     EXPECT_EQ(MemoryBanks::getBankForLocalMemory(3), bank);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedThenItHasCorrectBankSzieAndNumberOfBanks) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedThenItHasCorrectBankSzieAndNumberOfBanks) {
     setUpImpl<FamilyType>();
 
-    std::unique_ptr<MockAubCsrXeHPPlus<FamilyType>> aubCsr(new MockAubCsrXeHPPlus<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
     auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo()));
     auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
@@ -240,12 +240,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, whenPhysical
     EXPECT_EQ(1u, allocator->getNumberOfBanks());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedWith4TileConfigThenItHasCorrectBankSzieAndNumberOfBanks) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedWith4TileConfigThenItHasCorrectBankSzieAndNumberOfBanks) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     setUpImpl<FamilyType>();
 
-    std::unique_ptr<MockAubCsrXeHPPlus<FamilyType>> aubCsr(new MockAubCsrXeHPPlus<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
     auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo()));
     auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
@@ -254,7 +254,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, whenPhysical
     EXPECT_EQ(4u, allocator->getNumberOfBanks());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitEngineMMIOIsCalledForGivenEngineTypeThenCorrespondingMmiosAreInitialized) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitEngineMMIOIsCalledForGivenEngineTypeThenCorrespondingMmiosAreInitialized) {
     setUpImpl<FamilyType>();
 
     DebugManagerStateRestore debugRestorer;
@@ -321,7 +321,7 @@ static void checkCcsEngineMMIO(aub_stream::EngineType engineType, uint32_t mmioB
     EXPECT_EQ(mmioList[16], MMIOPair(0x0000B234, 0xA0000000));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenCcsEngineMmioListForSpecificCcsInstanceIsReadThenItIsInitializedWithProperValues) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenCcsEngineMmioListForSpecificCcsInstanceIsReadThenItIsInitializedWithProperValues) {
     setUpImpl<FamilyType>();
 
     checkCcsEngineMMIO<FamilyType>(aub_stream::ENGINE_CCS, 0x1a000);
@@ -330,7 +330,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubComm
     checkCcsEngineMMIO<FamilyType>(aub_stream::ENGINE_CCS3, 0x26000);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRcsEngineMmioListIsReadThenItIsInitializedWithProperValues) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRcsEngineMmioListIsReadThenItIsInitializedWithProperValues) {
     setUpImpl<FamilyType>();
 
     auto &mmioList = *AUBFamilyMapper<FamilyType>::perEngineMMIO[aub_stream::ENGINE_RCS];
@@ -364,15 +364,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests, givenAubComm
     EXPECT_EQ(mmioList[21], MMIOPair(0x0000B134, 0xA0000000));
 }
 
-using XeHPPlusAubCommandStreamReceiverTests2 = HwHelperTest;
+using XeHPAndLaterAubCommandStreamReceiverTests2 = HwHelperTest;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusAubCommandStreamReceiverTests2, givenLocalMemoryEnabledInCSRWhenGetGTTDataIsCalledThenLocalMemoryIsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests2, givenLocalMemoryEnabledInCSRWhenGetGTTDataIsCalledThenLocalMemoryIsSet) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableLocalMemory.set(1);
     hardwareInfo.featureTable.ftrLocalMemory = true;
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
-    std::unique_ptr<MockAubCsrXeHPPlus<FamilyType>> aubCsr(std::make_unique<MockAubCsrXeHPPlus<FamilyType>>("", true, *device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield()));
+    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(std::make_unique<MockAubCsrXeHPAndLater<FamilyType>>("", true, *device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield()));
     EXPECT_TRUE(aubCsr->localMemoryEnabled);
 
     AubGTTData data = {false, false};

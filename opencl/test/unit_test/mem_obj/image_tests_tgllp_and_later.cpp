@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-struct ImageTestsTgllPlus : ClDeviceFixture, testing::Test {
+struct ImageTestsTgllAndLater : ClDeviceFixture, testing::Test {
     void SetUp() override {
         ClDeviceFixture::SetUp();
         context = std::make_unique<MockContext>(pClDevice);
@@ -30,8 +30,8 @@ struct ImageTestsTgllPlus : ClDeviceFixture, testing::Test {
     std::unique_ptr<Image> srcImage{};
 };
 
-using TgllpPlusMatcher = IsAtLeastProduct<IGFX_TIGERLAKE_LP>;
-HWTEST2_F(ImageTestsTgllPlus, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField, TgllpPlusMatcher) {
+using TgllpAndLaterMatcher = IsAtLeastProduct<IGFX_TIGERLAKE_LP>;
+HWTEST2_F(ImageTestsTgllAndLater, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField, TgllpAndLaterMatcher) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState{};
     auto &gpuFlags = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu;

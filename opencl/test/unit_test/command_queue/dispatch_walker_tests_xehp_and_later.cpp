@@ -38,7 +38,7 @@ using namespace NEO;
 
 using WalkerDispatchTest = ::testing::Test;
 
-struct XeHPPlusDispatchWalkerBasicFixture : public LinearStreamFixture {
+struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
     void SetUp() override {
         LinearStreamFixture::SetUp();
         memset(globalOffsets, 0, sizeof(globalOffsets));
@@ -83,9 +83,9 @@ struct XeHPPlusDispatchWalkerBasicFixture : public LinearStreamFixture {
     std::unique_ptr<MockKernelWithInternals> kernel;
 };
 
-using XeHPPlusDispatchWalkerBasicTest = Test<XeHPPlusDispatchWalkerBasicFixture>;
+using XeHPAndLaterDispatchWalkerBasicTest = Test<XeHPAndLaterDispatchWalkerBasicFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWorkDimOneThenLocalWorkSizeEqualsLocalXDim) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimOneThenLocalWorkSizeEqualsLocalXDim) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -104,7 +104,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWorkDimOneThen
     EXPECT_EQ(0u, computeWalker->getWalkOrder());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWorkDimTwoThenLocalWorkSizeEqualsProductLocalXandYDim) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimTwoThenLocalWorkSizeEqualsProductLocalXandYDim) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -124,7 +124,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWorkDimTwoThen
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWorkDimThreeThenLocalWorkSizeEqualsProductLocalXandYandZDim) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimThreeThenLocalWorkSizeEqualsProductLocalXandYandZDim) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -145,7 +145,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWorkDimThreeTh
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimOneWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOneWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -169,7 +169,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimOneWhe
     EXPECT_EQ(4u, computeWalker->getWalkOrder());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimTwoWhenOnlyYIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTwoWhenOnlyYIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -194,7 +194,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimTwoWhe
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkThreeTwoWhenOnlyZIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThreeTwoWhenOnlyZIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -219,7 +219,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkThreeTwoW
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDifferentSIMDsizesWhenLocalIdsGeneratedThenMessageSizeIsSetToProperValue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDifferentSIMDsizesWhenLocalIdsGeneratedThenMessageSizeIsSetToProperValue) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -242,7 +242,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDifferentSIMD
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimTwoWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTwoWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
 
@@ -267,7 +267,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimTwoWhe
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -291,7 +291,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeW
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsAndNoLocalIdsUsedThenExpectNoGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsAndNoLocalIdsUsedThenExpectNoGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -313,7 +313,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeW
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeWhenNotAskHwForLocalIdsAndLocalIdsUsedThenExpectNoGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenNotAskHwForLocalIdsAndLocalIdsUsedThenExpectNoGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -335,7 +335,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeW
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimOneWhenAskForInlineDataAndNoLocalIdsPresentThenExpectOnlyInlineFieldSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOneWhenAskForInlineDataAndNoLocalIdsPresentThenExpectOnlyInlineFieldSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -352,7 +352,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimOneWhe
     EXPECT_EQ(1u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimOneWhenAskForInlineDataAndLocalIdsPresentThenExpectInlineAndDoNotExpectEmitLocalIdFieldSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOneWhenAskForInlineDataAndLocalIdsPresentThenExpectInlineAndDoNotExpectEmitLocalIdFieldSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -372,7 +372,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimOneWhe
     EXPECT_EQ(1u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeWhenAskForInlineDataAndLocalIdsPresentThenDoNotExpectEmitLocalIdFieldSetButExpectInlineSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskForInlineDataAndLocalIdsPresentThenDoNotExpectEmitLocalIdFieldSetButExpectInlineSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -391,7 +391,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeW
     EXPECT_EQ(1u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsAndInlineDataThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsAndInlineDataThenExpectGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -416,7 +416,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenWorkDimThreeW
     EXPECT_EQ(5u, computeWalker->getWalkOrder());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchingThenProgramPostSyncData) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchingThenProgramPostSyncData) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     MockKernelWithInternals kernel1(*device);
@@ -469,7 +469,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenTimestampPack
     EXPECT_EQ(contextStartAddress, secondWalker->getPostSync().getDestinationAddress());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     DebugManager.flags.EnableTimestampPacket.set(true);
 
@@ -499,7 +499,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDebugVariable
     EXPECT_EQ(expectedMocs, postSyncData.getMocs());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDebugVariableEnabledWhenMocsValueIsOverwrittenThenPostSyncContainsProperSetting) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenMocsValueIsOverwrittenThenPostSyncContainsProperSetting) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     auto mocsValue = 8u;
     DebugManager.flags.EnableTimestampPacket.set(true);
@@ -525,7 +525,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDebugVariable
     EXPECT_EQ(mocsValue, postSyncData.getMocs());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddEnoughSpace) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddEnoughSpace) {
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
     MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
@@ -542,7 +542,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenTimestampPack
     EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + 0);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {
     DebugManager.flags.UseImmDataWriteModeOnPostSyncOperation.set(true);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -565,7 +565,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDebugVariable
     EXPECT_EQ(0x2'0000'0002u, postSyncData.getImmediateData());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenSystolicIsProgrammed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenSystolicIsProgrammed) {
     DebugManager.flags.OverrideSystolicInComputeWalker.set(true);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -583,7 +583,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenDebugVariable
     EXPECT_TRUE(walker->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenAutoLocalIdsGenerationEnabledWhenDispatchMeetCriteriaThenExpectNoLocalIdsAndProperIsaAddress) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocalIdsGenerationEnabledWhenDispatchMeetCriteriaThenExpectNoLocalIdsAndProperIsaAddress) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
@@ -646,7 +646,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenAutoLocalIdsG
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenLocalIdsUsedThenDoNotExpectCrossThreadDataInWalkerEmitLocalFieldSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenLocalIdsUsedThenDoNotExpectCrossThreadDataInWalkerEmitLocalFieldSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
@@ -719,7 +719,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDat
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenExecutionMaskWithoutReminderWhenProgrammingWalkerThenSetValidNumberOfBitsInMask) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenExecutionMaskWithoutReminderWhenProgrammingWalkerThenSetValidNumberOfBitsInMask) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -750,7 +750,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenExecutionMask
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenLocalIdsUsedAndCrossThreadIsTwoGrfsThenExpectFirstCrossThreadDataInWalkerSecondInPayloadWithPerThread) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenLocalIdsUsedAndCrossThreadIsTwoGrfsThenExpectFirstCrossThreadDataInWalkerSecondInPayloadWithPerThread) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -817,7 +817,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDat
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenNoLocalIdsUsedThenExpectCrossThreadDataInWalkerAndNoEmitLocalFieldSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenNoLocalIdsUsedThenExpectCrossThreadDataInWalkerAndNoEmitLocalFieldSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -867,7 +867,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDat
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenNoLocalIdsUsedAndCrossThreadIsTwoGrfsThenExpectFirstCrossThreadDataInWalkerSecondInPayload) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenNoLocalIdsUsedAndCrossThreadIsTwoGrfsThenExpectFirstCrossThreadDataInWalkerSecondInPayload) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -922,7 +922,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDat
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenAllChannelsActiveWithWorkDimOneDimensionThenHwGenerationIsEnabledWithOverwrittenWalkOrder) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAllChannelsActiveWithWorkDimOneDimensionThenHwGenerationIsEnabledWithOverwrittenWalkOrder) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     DebugManager.flags.EnableHwGenerationLocalIds.set(true);
@@ -959,7 +959,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenAllChannelsAc
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDataAndHwLocalIdsGenerationEnabledWhenLocalIdsUsedThenExpectCrossThreadDataInWalkerAndEmitFields) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataAndHwLocalIdsGenerationEnabledWhenLocalIdsUsedThenExpectCrossThreadDataInWalkerAndEmitFields) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
@@ -1013,7 +1013,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDat
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDataAndHwLocalIdsGenerationEnabledWhenLocalIdsNotUsedThenExpectCrossThreadDataInWalkerAndNoHwLocalIdGeneration) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataAndHwLocalIdsGenerationEnabledWhenLocalIdsNotUsedThenExpectCrossThreadDataInWalkerAndNoHwLocalIdGeneration) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
@@ -1066,7 +1066,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenPassInlineDat
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
     DebugManager.flags.EnableWalkerPartition.set(1u);
     UltClDeviceFactory deviceFactory{1, 2};
     MockClDevice *device = deviceFactory.rootDevices[0];
@@ -1120,7 +1120,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWalkerPartitio
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWalkerPartitionIsDisabledThenSizeIsProperlyEstimated) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPartitionIsDisabledThenSizeIsProperlyEstimated) {
     DebugManager.flags.EnableWalkerPartition.set(0u);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
@@ -1138,7 +1138,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenWalkerPartitio
     EXPECT_EQ(returnedSize, baseSize);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
     DebugManager.flags.EnableWalkerPartition.set(1u);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -1159,7 +1159,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenQueueIsMultiEn
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerIsCalledThenWalkerPartitionLogicIsExecuted) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledThenWalkerPartitionLogicIsExecuted) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1177,7 +1177,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerI
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerIsCalledAndForceSynchronizeWalkerInWpariModeThenWalkerPartitionLogicIsExecuted) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledAndForceSynchronizeWalkerInWpariModeThenWalkerPartitionLogicIsExecuted) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1196,7 +1196,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerI
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenKernelThatPrefersSingleSubdeviceWhenProgramWalkerThenPartitioningIsNotUsed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelThatPrefersSingleSubdeviceWhenProgramWalkerThenPartitioningIsNotUsed) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1219,7 +1219,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenKernelThatPre
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithPartitionLogicDisabledThenWalkerPartitionLogicIsNotExecuted) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithPartitionLogicDisabledThenWalkerPartitionLogicIsNotExecuted) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1237,7 +1237,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerI
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenQueueIsCreatedWithMultiEngineSupportAndEnqueueIsDoneThenWalkerIsPartitioned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsCreatedWithMultiEngineSupportAndEnqueueIsDoneThenWalkerIsPartitioned) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1257,7 +1257,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenQueueIsCreated
     EXPECT_EQ(64u, computeWalker->getPartitionSize());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithDebugRegistryOverridesThenWalkerContainsProperParameters) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithDebugRegistryOverridesThenWalkerContainsProperParameters) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1280,7 +1280,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerI
     EXPECT_EQ(expectedPartitionCount, static_cast<unsigned int>(DebugManager.flags.ExperimentalSetWalkerPartitionCount.get()));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithDebugRegistryOverridesToPartitionCountOneThenProgramProperParameters) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithDebugRegistryOverridesToPartitionCountOneThenProgramProperParameters) {
     DebugManager.flags.EnableWalkerPartition.set(1u);
     DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(1u);
     DebugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
@@ -1298,7 +1298,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenProgramWalkerI
     EXPECT_FALSE(computeWalker->getWorkloadPartitionEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenThereIsNoLocalMemorySupportThenDoNotPartition) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenThereIsNoLocalMemorySupportThenDoNotPartition) {
     DebugManager.flags.EnableWalkerPartition.set(1u);
     DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
     DebugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
@@ -1317,7 +1317,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenThereIsNoLocal
     EXPECT_FALSE(computeWalker->getWorkloadPartitionEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenEnqueueIsBlockedOnUserEventThenDoNotPartition) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenEnqueueIsBlockedOnUserEventThenDoNotPartition) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1344,7 +1344,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenEnqueueIsBlock
     clReleaseEvent(userEvent);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenDispatchProfilingCalledThenDoNothing) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenDispatchProfilingCalledThenDoNothing) {
     MockCommandQueue cmdQ(context.get(), device.get(), nullptr, false);
 
     auto &cmdStream = cmdQ.getCS(0);
@@ -1360,7 +1360,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, whenDispatchProfil
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenOpenClWhenEnqueuePartitionWalkerThenExpectNoNativeCrossTileSyncCleanup) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhenEnqueuePartitionWalkerThenExpectNoNativeCrossTileSyncCleanup) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     if (!OSInterface::osEnableLocalMemory) {
@@ -1384,7 +1384,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusDispatchWalkerBasicTest, givenOpenClWhenEnq
     EXPECT_EQ(0u, storeDataImmList.size());
 }
 
-using NonDefaultPlatformGpuWalkerTest = XeHPPlusDispatchWalkerBasicTest;
+using NonDefaultPlatformGpuWalkerTest = XeHPAndLaterDispatchWalkerBasicTest;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, NonDefaultPlatformGpuWalkerTest, givenNonDefaultPlatformWhenSetupTimestampPacketThenGmmHelperIsTakenFromNonDefaultPlatform) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

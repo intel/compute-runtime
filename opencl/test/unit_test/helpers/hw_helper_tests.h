@@ -25,7 +25,7 @@ struct ComputeSlmTestInput {
     uint32_t slmSize;
 };
 
-constexpr ComputeSlmTestInput computeSlmValuesXeHPPlusTestsInput[] = {
+constexpr ComputeSlmTestInput computeSlmValuesXeHPAndLaterTestsInput[] = {
     {0, 0 * KB},
     {1, 0 * KB + 1},
     {1, 1 * KB},

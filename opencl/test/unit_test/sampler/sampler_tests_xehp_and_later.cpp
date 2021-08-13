@@ -18,9 +18,9 @@
 
 using namespace NEO;
 
-using XeHPPlusSamplerTest = Test<ClDeviceFixture>;
+using XeHPAndLaterSamplerTest = Test<ClDeviceFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusSamplerTest, GivenDefaultThenLowQualityFilterIsDisabled) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterSamplerTest, GivenDefaultThenLowQualityFilterIsDisabled) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());

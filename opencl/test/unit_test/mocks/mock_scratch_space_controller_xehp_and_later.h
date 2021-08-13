@@ -9,19 +9,19 @@
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 
 namespace NEO {
-struct MockScratchSpaceControllerXeHPPlus : public ScratchSpaceControllerXeHPPlus {
-    using ScratchSpaceControllerXeHPPlus::computeUnitsUsedForScratch;
-    using ScratchSpaceControllerXeHPPlus::getOffsetToSurfaceState;
-    using ScratchSpaceControllerXeHPPlus::perThreadScratchSize;
-    using ScratchSpaceControllerXeHPPlus::privateScratchAllocation;
-    using ScratchSpaceControllerXeHPPlus::privateScratchSizeBytes;
-    using ScratchSpaceControllerXeHPPlus::scratchAllocation;
-    using ScratchSpaceControllerXeHPPlus::scratchSizeBytes;
-    using ScratchSpaceControllerXeHPPlus::ScratchSpaceControllerXeHPPlus;
-    using ScratchSpaceControllerXeHPPlus::singleSurfaceStateSize;
-    using ScratchSpaceControllerXeHPPlus::slotId;
-    using ScratchSpaceControllerXeHPPlus::stateSlotsCount;
-    using ScratchSpaceControllerXeHPPlus::surfaceStateHeap;
-    using ScratchSpaceControllerXeHPPlus::updateSlots;
+struct MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHPAndLater {
+    using ScratchSpaceControllerXeHPAndLater::computeUnitsUsedForScratch;
+    using ScratchSpaceControllerXeHPAndLater::getOffsetToSurfaceState;
+    using ScratchSpaceControllerXeHPAndLater::perThreadScratchSize;
+    using ScratchSpaceControllerXeHPAndLater::privateScratchAllocation;
+    using ScratchSpaceControllerXeHPAndLater::privateScratchSizeBytes;
+    using ScratchSpaceControllerXeHPAndLater::scratchAllocation;
+    using ScratchSpaceControllerXeHPAndLater::scratchSizeBytes;
+    using ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater;
+    using ScratchSpaceControllerXeHPAndLater::singleSurfaceStateSize;
+    using ScratchSpaceControllerXeHPAndLater::slotId;
+    using ScratchSpaceControllerXeHPAndLater::stateSlotsCount;
+    using ScratchSpaceControllerXeHPAndLater::surfaceStateHeap;
+    using ScratchSpaceControllerXeHPAndLater::updateSlots;
 };
 } // namespace NEO

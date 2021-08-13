@@ -10,9 +10,9 @@
 
 using namespace NEO;
 
-using XeHPPlusEncodeMiFlushDWTest = Test<CommandEncodeStatesFixture>;
+using XeHPAndLaterEncodeMiFlushDWTest = Test<CommandEncodeStatesFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
     LinearStream linearStream(buffer, sizeof(buffer));

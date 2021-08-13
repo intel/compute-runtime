@@ -116,7 +116,7 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEng
 XEHPTEST_F(HwHelperTestsXeHP, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto &hwInfo = pDevice->getHardwareInfo();
 
-    for (auto &testInput : computeSlmValuesXeHPPlusTestsInput) {
+    for (auto &testInput : computeSlmValuesXeHPAndLaterTestsInput) {
         EXPECT_EQ(testInput.expected, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, testInput.slmSize));
     }
 }

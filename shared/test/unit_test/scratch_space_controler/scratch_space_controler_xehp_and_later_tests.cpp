@@ -16,18 +16,18 @@
 
 using namespace NEO;
 
-class MockScratchSpaceControllerXeHPPlus : public ScratchSpaceControllerXeHPPlus {
+class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHPAndLater {
   public:
-    using ScratchSpaceControllerXeHPPlus::bindlessSS;
-    using ScratchSpaceControllerXeHPPlus::scratchAllocation;
-    using ScratchSpaceControllerXeHPPlus::singleSurfaceStateSize;
+    using ScratchSpaceControllerXeHPAndLater::bindlessSS;
+    using ScratchSpaceControllerXeHPAndLater::scratchAllocation;
+    using ScratchSpaceControllerXeHPAndLater::singleSurfaceStateSize;
 
-    MockScratchSpaceControllerXeHPPlus(uint32_t rootDeviceIndex,
-                                       ExecutionEnvironment &environment,
-                                       InternalAllocationStorage &allocationStorage) : ScratchSpaceControllerXeHPPlus(rootDeviceIndex, environment, allocationStorage) {
+    MockScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
+                                           ExecutionEnvironment &environment,
+                                           InternalAllocationStorage &allocationStorage) : ScratchSpaceControllerXeHPAndLater(rootDeviceIndex, environment, allocationStorage) {
         scratchAllocation = &alloc;
     }
-    ~MockScratchSpaceControllerXeHPPlus() override {
+    ~MockScratchSpaceControllerXeHPAndLater() override {
         scratchAllocation = nullptr;
     }
     void programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) override {
@@ -58,9 +58,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenBindlessModeOnWhenGetPa
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
     ExecutionEnvironment *execEnv = static_cast<ExecutionEnvironment *>(pDevice->getExecutionEnvironment());
-    std::unique_ptr<MockScratchSpaceControllerXeHPPlus> scratchController = std::make_unique<MockScratchSpaceControllerXeHPPlus>(pDevice->getRootDeviceIndex(),
-                                                                                                                                 *execEnv,
-                                                                                                                                 *csr.getInternalAllocationStorage());
+    std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
+                                                                                                                                         *execEnv,
+                                                                                                                                         *csr.getInternalAllocationStorage());
     uint64_t bindlessOffset = 0x4000;
     scratchController->bindlessSS.surfaceStateOffset = bindlessOffset;
     EXPECT_EQ(scratchController->getScratchPatchAddress(), bindlessOffset);
@@ -74,9 +74,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenDirtyScratchAllocationO
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
     ExecutionEnvironment *execEnv = static_cast<ExecutionEnvironment *>(pDevice->getExecutionEnvironment());
-    std::unique_ptr<MockScratchSpaceControllerXeHPPlus> scratchController = std::make_unique<MockScratchSpaceControllerXeHPPlus>(pDevice->getRootDeviceIndex(),
-                                                                                                                                 *execEnv,
-                                                                                                                                 *csr.getInternalAllocationStorage());
+    std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
+                                                                                                                                         *execEnv,
+                                                                                                                                         *csr.getInternalAllocationStorage());
     auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
@@ -94,9 +94,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenNotDirtyScratchAllocati
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
     ExecutionEnvironment *execEnv = static_cast<ExecutionEnvironment *>(pDevice->getExecutionEnvironment());
-    std::unique_ptr<MockScratchSpaceControllerXeHPPlus> scratchController = std::make_unique<MockScratchSpaceControllerXeHPPlus>(pDevice->getRootDeviceIndex(),
-                                                                                                                                 *execEnv,
-                                                                                                                                 *csr.getInternalAllocationStorage());
+    std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
+                                                                                                                                         *execEnv,
+                                                                                                                                         *csr.getInternalAllocationStorage());
     auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
@@ -116,9 +116,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenPrivateScratchEnabledWh
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
     ExecutionEnvironment *execEnv = static_cast<ExecutionEnvironment *>(pDevice->getExecutionEnvironment());
-    std::unique_ptr<MockScratchSpaceControllerXeHPPlus> scratchController = std::make_unique<MockScratchSpaceControllerXeHPPlus>(pDevice->getRootDeviceIndex(),
-                                                                                                                                 *execEnv,
-                                                                                                                                 *csr.getInternalAllocationStorage());
+    std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
+                                                                                                                                         *execEnv,
+                                                                                                                                         *csr.getInternalAllocationStorage());
     auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
@@ -138,9 +138,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenPrivateScratchDisabledW
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
     ExecutionEnvironment *execEnv = static_cast<ExecutionEnvironment *>(pDevice->getExecutionEnvironment());
-    std::unique_ptr<MockScratchSpaceControllerXeHPPlus> scratchController = std::make_unique<MockScratchSpaceControllerXeHPPlus>(pDevice->getRootDeviceIndex(),
-                                                                                                                                 *execEnv,
-                                                                                                                                 *csr.getInternalAllocationStorage());
+    std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
+                                                                                                                                         *execEnv,
+                                                                                                                                         *csr.getInternalAllocationStorage());
     auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;

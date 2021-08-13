@@ -604,9 +604,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
     EXPECT_EQ(forceThreadGroupDispatchSize, iddArg.getThreadGroupDispatchSize());
 }
 
-using WalkerThreadTestXeHPPlus = WalkerThreadTest;
+using WalkerThreadTestXeHPAndLater = WalkerThreadTest;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -640,7 +640,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenStartWorkGroupWhenIn
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenNoStartWorkGroupWhenIndirectIsTrueThenExpectNoStartGroupAndThreadDimensionsProgramming) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenNoStartWorkGroupWhenIndirectIsTrueThenExpectNoStartGroupAndThreadDimensionsProgramming) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -674,7 +674,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenNoStartWorkGroupWhen
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenSimdSizeOneWhenWorkGroupSmallerThanSimdThenExpectSimdSizeAsMaxAndExecutionMaskFull) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenSimdSizeOneWhenWorkGroupSmallerThanSimdThenExpectSimdSizeAsMaxAndExecutionMaskFull) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -710,7 +710,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenSimdSizeOneWhenWorkG
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenStartWorkGroupWhenWorkGroupSmallerThanSimdThenExpectStartGroupAndExecutionMaskNotFull) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWhenWorkGroupSmallerThanSimdThenExpectStartGroupAndExecutionMaskNotFull) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -745,7 +745,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenStartWorkGroupWhenWo
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenLocalIdGenerationByHwWhenNoLocalIdsPresentThenExpectNoEmitAndGenerateLocalIds) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenNoLocalIdsPresentThenExpectNoEmitAndGenerateLocalIds) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -778,7 +778,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenLocalIdGenerationByH
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenLocalIdGenerationByHwWhenLocalIdsPresentThenExpectEmitAndGenerateLocalIds) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenLocalIdsPresentThenExpectEmitAndGenerateLocalIds) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -813,7 +813,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, givenLocalIdGenerationByH
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, WhenInlineDataIsTrueThenExpectInlineDataProgramming) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenInlineDataIsTrueThenExpectInlineDataProgramming) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -847,7 +847,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, WhenInlineDataIsTrueThenE
     EXPECT_TRUE(walkerCmd.getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPPlus, WhenExecutionMaskNotZeroThenExpectOverrideExecutionMaskCalculation) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenExecutionMaskNotZeroThenExpectOverrideExecutionMaskCalculation) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;

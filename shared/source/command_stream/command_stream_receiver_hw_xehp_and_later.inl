@@ -78,7 +78,7 @@ void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &com
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController() {
-    scratchSpaceController = std::make_unique<ScratchSpaceControllerXeHPPlus>(this->rootDeviceIndex, executionEnvironment, *internalAllocationStorage.get());
+    scratchSpaceController = std::make_unique<ScratchSpaceControllerXeHPAndLater>(this->rootDeviceIndex, executionEnvironment, *internalAllocationStorage.get());
 }
 
 template <typename GfxFamily>

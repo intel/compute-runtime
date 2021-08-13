@@ -14,9 +14,9 @@
 
 using namespace NEO;
 
-using XeHPPlusCommandEncoderMathTest = Test<DeviceFixture>;
+using XeHPAndLaterCommandEncoderMathTest = Test<DeviceFixture>;
 
-HWTEST2_F(XeHPPlusCommandEncoderMathTest, WhenAppendsAGreaterThanThenPredicateCorrectlySetAndRemapEnabled, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterCommandEncoderMathTest, WhenAppendsAGreaterThanThenPredicateCorrectlySetAndRemapEnabled, IsAtLeastXeHpCore) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;

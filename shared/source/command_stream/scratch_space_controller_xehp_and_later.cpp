@@ -21,9 +21,9 @@
 #include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
-ScratchSpaceControllerXeHPPlus::ScratchSpaceControllerXeHPPlus(uint32_t rootDeviceIndex,
-                                                               ExecutionEnvironment &environment,
-                                                               InternalAllocationStorage &allocationStorage)
+ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
+                                                                       ExecutionEnvironment &environment,
+                                                                       InternalAllocationStorage &allocationStorage)
     : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
     auto &hwHelper = HwHelper::get(environment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
     singleSurfaceStateSize = hwHelper.getRenderSurfaceStateSize();
@@ -31,11 +31,11 @@ ScratchSpaceControllerXeHPPlus::ScratchSpaceControllerXeHPPlus(uint32_t rootDevi
         privateScratchSpaceSupported = !!DebugManager.flags.EnablePrivateScratchSlot1.get();
     }
     if (privateScratchSpaceSupported) {
-        ScratchSpaceControllerXeHPPlus::stateSlotsCount *= 2;
+        ScratchSpaceControllerXeHPAndLater::stateSlotsCount *= 2;
     }
 }
 
-void ScratchSpaceControllerXeHPPlus::setNewSshPtr(void *newSsh, bool &cfeDirty, bool changeId) {
+void ScratchSpaceControllerXeHPAndLater::setNewSshPtr(void *newSsh, bool &cfeDirty, bool changeId) {
     if (surfaceStateHeap != newSsh) {
         surfaceStateHeap = static_cast<char *>(newSsh);
         if (scratchAllocation == nullptr) {
@@ -50,14 +50,14 @@ void ScratchSpaceControllerXeHPPlus::setNewSshPtr(void *newSsh, bool &cfeDirty, 
     }
 }
 
-void ScratchSpaceControllerXeHPPlus::setRequiredScratchSpace(void *sshBaseAddress,
-                                                             uint32_t offset,
-                                                             uint32_t requiredPerThreadScratchSize,
-                                                             uint32_t requiredPerThreadPrivateScratchSize,
-                                                             uint32_t currentTaskCount,
-                                                             OsContext &osContext,
-                                                             bool &stateBaseAddressDirty,
-                                                             bool &vfeStateDirty) {
+void ScratchSpaceControllerXeHPAndLater::setRequiredScratchSpace(void *sshBaseAddress,
+                                                                 uint32_t offset,
+                                                                 uint32_t requiredPerThreadScratchSize,
+                                                                 uint32_t requiredPerThreadPrivateScratchSize,
+                                                                 uint32_t currentTaskCount,
+                                                                 OsContext &osContext,
+                                                                 bool &stateBaseAddressDirty,
+                                                                 bool &vfeStateDirty) {
     setNewSshPtr(sshBaseAddress, vfeStateDirty, offset == 0 ? true : false);
     bool scratchSurfaceDirty;
     prepareScratchAllocation(requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
@@ -68,7 +68,7 @@ void ScratchSpaceControllerXeHPPlus::setRequiredScratchSpace(void *sshBaseAddres
     }
 }
 
-void ScratchSpaceControllerXeHPPlus::programSurfaceState() {
+void ScratchSpaceControllerXeHPAndLater::programSurfaceState() {
     if (updateSlots) {
         slotId++;
     }
@@ -79,7 +79,7 @@ void ScratchSpaceControllerXeHPPlus::programSurfaceState() {
     programSurfaceStateAtPtr(surfaceStateForScratchAllocation);
 }
 
-void ScratchSpaceControllerXeHPPlus::programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) {
+void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) {
     auto &hwHelper = HwHelper::get(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
     uint64_t scratchAllocationAddress = 0u;
     if (scratchAllocation) {
@@ -103,10 +103,10 @@ void ScratchSpaceControllerXeHPPlus::programSurfaceStateAtPtr(void *surfaceState
     }
 }
 
-uint64_t ScratchSpaceControllerXeHPPlus::calculateNewGSH() {
+uint64_t ScratchSpaceControllerXeHPAndLater::calculateNewGSH() {
     return 0u;
 }
-uint64_t ScratchSpaceControllerXeHPPlus::getScratchPatchAddress() {
+uint64_t ScratchSpaceControllerXeHPAndLater::getScratchPatchAddress() {
     uint64_t scratchAddress = 0u;
     if (scratchAllocation || privateScratchAllocation) {
         if (ApiSpecificConfig::getBindlessConfiguration()) {
@@ -118,7 +118,7 @@ uint64_t ScratchSpaceControllerXeHPPlus::getScratchPatchAddress() {
     return scratchAddress;
 }
 
-size_t ScratchSpaceControllerXeHPPlus::getOffsetToSurfaceState(uint32_t requiredSlotCount) const {
+size_t ScratchSpaceControllerXeHPAndLater::getOffsetToSurfaceState(uint32_t requiredSlotCount) const {
     auto offset = requiredSlotCount * singleSurfaceStateSize;
     if (privateScratchSpaceSupported) {
         offset *= 2;
@@ -126,19 +126,19 @@ size_t ScratchSpaceControllerXeHPPlus::getOffsetToSurfaceState(uint32_t required
     return offset;
 }
 
-void ScratchSpaceControllerXeHPPlus::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
+void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
     if (heapType == IndirectHeap::SURFACE_STATE) {
         indirectHeap->getSpace(getOffsetToSurfaceState(stateSlotsCount));
     }
 }
-void ScratchSpaceControllerXeHPPlus::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
-                                                                           uint32_t requiredPerThreadScratchSize,
-                                                                           uint32_t requiredPerThreadPrivateScratchSize,
-                                                                           uint32_t currentTaskCount,
-                                                                           OsContext &osContext,
-                                                                           bool &stateBaseAddressDirty,
-                                                                           bool &vfeStateDirty,
-                                                                           NEO::CommandStreamReceiver *csr) {
+void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
+                                                                               uint32_t requiredPerThreadScratchSize,
+                                                                               uint32_t requiredPerThreadPrivateScratchSize,
+                                                                               uint32_t currentTaskCount,
+                                                                               OsContext &osContext,
+                                                                               bool &stateBaseAddressDirty,
+                                                                               bool &vfeStateDirty,
+                                                                               NEO::CommandStreamReceiver *csr) {
     bool scratchSurfaceDirty;
     prepareScratchAllocation(requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
@@ -149,13 +149,13 @@ void ScratchSpaceControllerXeHPPlus::programBindlessSurfaceStateForScratch(Bindl
     csr->makeResident(*bindlessSS.heapAllocation);
 }
 
-void ScratchSpaceControllerXeHPPlus::prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
-                                                              uint32_t requiredPerThreadPrivateScratchSize,
-                                                              uint32_t currentTaskCount,
-                                                              OsContext &osContext,
-                                                              bool &stateBaseAddressDirty,
-                                                              bool &scratchSurfaceDirty,
-                                                              bool &vfeStateDirty) {
+void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
+                                                                  uint32_t requiredPerThreadPrivateScratchSize,
+                                                                  uint32_t currentTaskCount,
+                                                                  OsContext &osContext,
+                                                                  bool &stateBaseAddressDirty,
+                                                                  bool &scratchSurfaceDirty,
+                                                                  bool &vfeStateDirty) {
     uint32_t requiredPerThreadScratchSizeAlignedUp = alignUp(requiredPerThreadScratchSize, 64);
     size_t requiredScratchSizeInBytes = requiredPerThreadScratchSizeAlignedUp * computeUnitsUsedForScratch;
     scratchSurfaceDirty = false;
@@ -188,14 +188,14 @@ void ScratchSpaceControllerXeHPPlus::prepareScratchAllocation(uint32_t requiredP
     }
 }
 
-void ScratchSpaceControllerXeHPPlus::programHeaps(HeapContainer &heapContainer,
-                                                  uint32_t scratchSlot,
-                                                  uint32_t requiredPerThreadScratchSize,
-                                                  uint32_t requiredPerThreadPrivateScratchSize,
-                                                  uint32_t currentTaskCount,
-                                                  OsContext &osContext,
-                                                  bool &stateBaseAddressDirty,
-                                                  bool &vfeStateDirty) {
+void ScratchSpaceControllerXeHPAndLater::programHeaps(HeapContainer &heapContainer,
+                                                      uint32_t scratchSlot,
+                                                      uint32_t requiredPerThreadScratchSize,
+                                                      uint32_t requiredPerThreadPrivateScratchSize,
+                                                      uint32_t currentTaskCount,
+                                                      OsContext &osContext,
+                                                      bool &stateBaseAddressDirty,
+                                                      bool &vfeStateDirty) {
     sshOffset = scratchSlot;
     updateSlots = false;
     setRequiredScratchSpace(heapContainer[0]->getUnderlyingBuffer(), sshOffset, requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, vfeStateDirty);

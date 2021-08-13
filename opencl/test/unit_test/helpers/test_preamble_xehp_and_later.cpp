@@ -22,8 +22,8 @@
 
 using namespace NEO;
 
-using ThreadArbitrationXeHPPlus = PreambleFixture;
-HWCMDTEST_F(IGFX_XE_HP_CORE, ThreadArbitrationXeHPPlus, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
+using ThreadArbitrationXeHPAndLater = PreambleFixture;
+HWCMDTEST_F(IGFX_XE_HP_CORE, ThreadArbitrationXeHPAndLater, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
     LinearStream &cs = linearStream;
 
     PreambleHelper<FamilyType>::programThreadArbitration(&cs, ThreadArbitrationPolicy::RoundRobin);
@@ -32,8 +32,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ThreadArbitrationXeHPPlus, givenPolicyWhenThreadArb
     EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
-using ProgramPipelineXeHPPlus = PreambleFixture;
-HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPPlus, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded) {
+using ProgramPipelineXeHPAndLater = PreambleFixture;
+HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPAndLater, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     DebugManagerStateRestore stateRestore;
@@ -51,7 +51,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPPlus, whenCleanStateInPreambleIs
     EXPECT_EQ(2u, numPipelineSelect);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPPlus, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.OverrideSystolicPipelineSelect.set(1);
@@ -70,8 +70,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPPlus, givenDebugVariableWhenProg
     EXPECT_TRUE(cmd->getSystolicModeEnable());
 }
 
-using PreemptionWatermarkXeHPPlus = PreambleFixture;
-HWCMDTEST_F(IGFX_XE_HP_CORE, PreemptionWatermarkXeHPPlus, givenPreambleThenPreambleWorkAroundsIsNotProgrammed) {
+using PreemptionWatermarkXeHPAndLater = PreambleFixture;
+HWCMDTEST_F(IGFX_XE_HP_CORE, PreemptionWatermarkXeHPAndLater, givenPreambleThenPreambleWorkAroundsIsNotProgrammed) {
     PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, *defaultHwInfo);
 
     parseCommands<FamilyType>(linearStream);
@@ -89,8 +89,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreemptionWatermarkXeHPPlus, givenPreambleThenPream
     EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 }
 
-struct KernelCommandsXeHPPlus : public PreambleVfeState,
-                                public ClDeviceFixture {
+struct KernelCommandsXeHPAndLater : public PreambleVfeState,
+                                    public ClDeviceFixture {
     void SetUp() override {
         PreambleVfeState::SetUp();
         ClDeviceFixture::SetUp();
@@ -107,7 +107,7 @@ struct KernelCommandsXeHPPlus : public PreambleVfeState,
     KernelInfo kernelInfo;
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPPlus, whenKernelSizeIsRequiredThenReturnZero) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPAndLater, whenKernelSizeIsRequiredThenReturnZero) {
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
 
     size_t expectedSize = 0;
@@ -115,28 +115,28 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPPlus, whenKernelSizeIsRequiredThe
     EXPECT_EQ(expectedSize, actualSize);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPPlus, whenPipeControlForWaIsRequiredThenReturnFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPAndLater, whenPipeControlForWaIsRequiredThenReturnFalse) {
     auto &hwInfo = pDevice->getHardwareInfo();
     EXPECT_EQ(UnitTestHelper<FamilyType>::isPipeControlWArequired(hwInfo), MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPPlus, whenMediaInterfaceDescriptorLoadIsRequiredThenDoNotProgramNonExistingCommand) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPAndLater, whenMediaInterfaceDescriptorLoadIsRequiredThenDoNotProgramNonExistingCommand) {
     size_t expectedSize = 0;
     EXPECT_EQ(expectedSize, linearStream.getUsed());
     HardwareCommandsHelper<FamilyType>::sendMediaInterfaceDescriptorLoad(linearStream, 0, 0);
     EXPECT_EQ(expectedSize, linearStream.getUsed());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPPlus, whenMediaStateFlushIsRequiredThenDoNotProgramNonExistingCommand) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPAndLater, whenMediaStateFlushIsRequiredThenDoNotProgramNonExistingCommand) {
     size_t expectedSize = 0;
     EXPECT_EQ(expectedSize, linearStream.getUsed());
     HardwareCommandsHelper<FamilyType>::sendMediaStateFlush(linearStream, 0);
     EXPECT_EQ(expectedSize, linearStream.getUsed());
 }
 
-using PreambleCfeStateXeHPPlus = PreambleFixture;
+using PreambleCfeStateXeHPAndLater = PreambleFixture;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPPlus, givenScratchEnabledWhenPreambleCfeStateIsProgrammedThenCheckMaxThreadsAddressFieldsAreProgrammed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenScratchEnabledWhenPreambleCfeStateIsProgrammedThenCheckMaxThreadsAddressFieldsAreProgrammed) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
@@ -157,7 +157,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPPlus, givenScratchEnabledWhenPr
     EXPECT_EQ(expectedAddress, address);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPPlus, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(linearStream.getSpace(sizeof(CFE_STATE)));
@@ -180,7 +180,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPPlus, givenNotSetDebugFlagWhenP
     EXPECT_EQ(overDispatchControl, static_cast<uint32_t>(cfeState->getOverDispatchControl()));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPPlus, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     uint32_t expectedValue1 = 1u;
@@ -509,7 +509,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenL1Ind
     EXPECT_EQ(expectedMocs, actualMocs);
 }
 
-using StateBaseAddressXeHPPlusTests = XeHpCommandStreamReceiverFlushTaskTests;
+using StateBaseAddressXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;
 
 struct CompressionParamsSupportedMatcher {
     template <PRODUCT_FAMILY productFamily>
@@ -521,7 +521,7 @@ struct CompressionParamsSupportedMatcher {
     }
 };
 
-HWTEST2_F(StateBaseAddressXeHPPlusTests, givenMemoryCompressionEnabledWhenAppendingSbaThenEnableStatelessCompressionForAllStatelessAccesses, CompressionParamsSupportedMatcher) {
+HWTEST2_F(StateBaseAddressXeHPAndLaterTests, givenMemoryCompressionEnabledWhenAppendingSbaThenEnableStatelessCompressionForAllStatelessAccesses, CompressionParamsSupportedMatcher) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
@@ -541,7 +541,7 @@ HWTEST2_F(StateBaseAddressXeHPPlusTests, givenMemoryCompressionEnabledWhenAppend
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, StateBaseAddressXeHPPlusTests, givenNonZeroInternalHeapBaseAddressWhenSettingIsDisabledThenExpectCommandValueZero) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, StateBaseAddressXeHPAndLaterTests, givenNonZeroInternalHeapBaseAddressWhenSettingIsDisabledThenExpectCommandValueZero) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
@@ -556,9 +556,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StateBaseAddressXeHPPlusTests, givenNonZeroInternal
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-using RenderSurfaceStateXeHPPlusTests = XeHpCommandStreamReceiverFlushTaskTests;
+using RenderSurfaceStateXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPPlusTests, givenSpecificProductFamilyWhenAppendingRssThenProgramGpuCoherency) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenSpecificProductFamilyWhenAppendingRssThenProgramGpuCoherency) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
     AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield());

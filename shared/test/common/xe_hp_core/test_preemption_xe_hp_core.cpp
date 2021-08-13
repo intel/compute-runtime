@@ -10,7 +10,7 @@
 
 using namespace NEO;
 
-HWTEST_EXCLUDE_PRODUCT(XeHPPlusPreemptionTests, GivenDebuggerUsedWhenProgrammingStateSipThenStateSipIsAdded, IGFX_XE_HP_CORE);
+HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenProgrammingStateSipThenStateSipIsAdded, IGFX_XE_HP_CORE);
 
 template <>
 PreemptionTestHwDetails GetPreemptionTestHwDetails<XeHpFamily>() {

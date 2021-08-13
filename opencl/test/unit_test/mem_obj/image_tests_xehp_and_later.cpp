@@ -27,9 +27,9 @@
 
 using namespace NEO;
 
-using XeHPPlusImageTests = ::testing::Test;
+using XeHPAndLaterImageTests = ::testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeDefaultWhenImageIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(1);
     initPlatform();
@@ -68,7 +68,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeDefaultWhenImag
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeDefaultWhenImageIsWritableThenFlipPartialFlagsToFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsWritableThenFlipPartialFlagsToFalse) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     initPlatform();
@@ -105,7 +105,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeDefaultWhenImag
     EXPECT_FALSE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenDebugFlagForMultiTileSupportWhenSurfaceStateIsProgrammedThenItHasDesiredValues) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenDebugFlagForMultiTileSupportWhenSurfaceStateIsProgrammedThenItHasDesiredValues) {
     DebugManagerStateRestore restorer;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
@@ -148,7 +148,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenDebugFlagForMultiTileSuppo
     EXPECT_EQ(1u, surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeUnrestrictiveWhenImageIsWritableThenFlipPartialFlagsToFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeUnrestrictiveWhenImageIsWritableThenFlipPartialFlagsToFalse) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     initPlatform();
@@ -185,7 +185,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeUnrestrictiveWh
     EXPECT_FALSE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeDefaultWhenImageIsNotWritableThenRemainPartialFlagsToTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsNotWritableThenRemainPartialFlagsToTrue) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
@@ -220,7 +220,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeDefaultWhenImag
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeSpecializedWhenImageIsWritableThenRemainPartialFlagsToTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeSpecializedWhenImageIsWritableThenRemainPartialFlagsToTrue) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
     context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
@@ -255,7 +255,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenContextTypeSpecializedWhen
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-struct MultiGpuGlobalAtomicsImageTest : public XeHPPlusImageTests,
+struct MultiGpuGlobalAtomicsImageTest : public XeHPAndLaterImageTests,
                                         public ::testing::WithParamInterface<std::tuple<unsigned int, unsigned int, ContextType, bool, bool>> {
 };
 
@@ -319,7 +319,7 @@ INSTANTIATE_TEST_CASE_P(MultiGpuGlobalAtomicsImageTest,
                             ::testing::Bool(),
                             ::testing::Bool()));
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, WhenAppendingSurfaceStateParamsThenDoNothing) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, WhenAppendingSurfaceStateParamsThenDoNothing) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));
@@ -334,7 +334,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, WhenAppendingSurfaceStateParams
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenCompressionEnabledWhenAppendingSurfaceStateParamsThenProgramCompressionFormat) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionEnabledWhenAppendingSurfaceStateParamsThenProgramCompressionFormat) {
     MockContext context;
     auto mockGmmClient = static_cast<MockGmmClientContext *>(context.getDevice(0)->getRootDeviceEnvironment().getGmmClientContext());
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
@@ -359,7 +359,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenCompressionEnabledWhenAppe
     EXPECT_EQ(image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), mockGmmClient->capturedFormat);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenCompressionWhenAppendingImageFromBufferThenTwoIsSetAsCompressionFormat) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferThenTwoIsSetAsCompressionFormat) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
 
@@ -399,7 +399,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenCompressionWhenAppendingIm
     clReleaseMemObject(imageDesc.mem_object);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusImageTests, givenImageFromBufferWhenSettingSurfaceStateThenPickCompressionFormatFromDebugVariable) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThenPickCompressionFormatFromDebugVariable) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
 
@@ -450,7 +450,7 @@ struct CompressionParamsSupportedMatcher {
     }
 };
 
-HWTEST2_F(XeHPPlusImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMCSThenProgramAuxFieldsForCcs, CompressionParamsSupportedMatcher) {
+HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMCSThenProgramAuxFieldsForCcs, CompressionParamsSupportedMatcher) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
@@ -480,7 +480,7 @@ HWTEST2_F(XeHPPlusImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAux
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
 }
 
-HWTEST2_F(ImageClearColorFixture, givenImageForXeHPPlusWhenClearColorParametersAreSetThenClearColorSurfaceInSurfaceStateIsSet, CompressionParamsSupportedMatcher) {
+HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenClearColorParametersAreSetThenClearColorSurfaceInSurfaceStateIsSet, CompressionParamsSupportedMatcher) {
     this->setUpImpl<FamilyType>();
     auto surfaceState = this->getSurfaceState<FamilyType>();
 
@@ -510,7 +510,7 @@ struct CompressionClearColorAddressMatcher {
     }
 };
 
-HWTEST2_F(ImageClearColorFixture, givenImageForXeHPPlusWhenCanonicalAddresForClearColorIsUsedThenItsConvertedToNonCanonicalForm, CompressionClearColorAddressMatcher) {
+HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenCanonicalAddresForClearColorIsUsedThenItsConvertedToNonCanonicalForm, CompressionClearColorAddressMatcher) {
     this->setUpImpl<FamilyType>();
     auto surfaceState = this->getSurfaceState<FamilyType>();
 
@@ -528,7 +528,7 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPPlusWhenCanonicalAddresForCle
     EXPECT_EQ(GmmHelper::decanonize(canonicalAddress), nonCanonicalAddress);
 }
 
-HWTEST2_F(XeHPPlusImageTests, givenMediaCompressionWhenAppendingNewAllocationThenNotZeroIsSetAsCompressionType, CompressionParamsSupportedMatcher) {
+HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocationThenNotZeroIsSetAsCompressionType, CompressionParamsSupportedMatcher) {
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto hwInfo = defaultHwInfo.get();
@@ -554,7 +554,7 @@ HWTEST2_F(XeHPPlusImageTests, givenMediaCompressionWhenAppendingNewAllocationThe
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
 
-HWTEST2_F(XeHPPlusImageTests, givenRenderCompressionWhenAppendingNewAllocationThenNotZeroIsSetAsCompressionType, CompressionParamsSupportedMatcher) {
+HWTEST2_F(XeHPAndLaterImageTests, givenRenderCompressionWhenAppendingNewAllocationThenNotZeroIsSetAsCompressionType, CompressionParamsSupportedMatcher) {
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto hwInfo = defaultHwInfo.get();
@@ -592,7 +592,7 @@ HWTEST2_F(XeHPPlusImageTests, givenRenderCompressionWhenAppendingNewAllocationTh
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }
 
-HWTEST2_F(XeHPPlusImageTests, givenNoCompressionWhenProgramingImageSurfaceStateThenCompressionIsDisabled, CompressionParamsSupportedMatcher) {
+HWTEST2_F(XeHPAndLaterImageTests, givenNoCompressionWhenProgramingImageSurfaceStateThenCompressionIsDisabled, CompressionParamsSupportedMatcher) {
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
@@ -608,7 +608,7 @@ HWTEST2_F(XeHPPlusImageTests, givenNoCompressionWhenProgramingImageSurfaceStateT
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
 
-struct XeHPPlusImageHelperTests : ::testing::Test {
+struct XeHPAndLaterImageHelperTests : ::testing::Test {
     void SetUp() override {
         context = std::make_unique<MockContext>();
         image.reset(ImageHelper<Image2dDefaults>::create(context.get()));
@@ -623,7 +623,7 @@ struct XeHPPlusImageHelperTests : ::testing::Test {
     uint8_t mockCompressionFormat = 3u;
 };
 
-HWTEST2_F(XeHPPlusImageHelperTests, givenMediaCompressedImageWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction, CompressionParamsSupportedMatcher) {
+HWTEST2_F(XeHPAndLaterImageHelperTests, givenMediaCompressedImageWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction, CompressionParamsSupportedMatcher) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE rss{};
     platformsImpl->clear();
@@ -642,7 +642,7 @@ HWTEST2_F(XeHPPlusImageHelperTests, givenMediaCompressedImageWhenAppendingSurfac
     EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
 }
 
-HWTEST2_F(XeHPPlusImageHelperTests, givenNotMediaCompressedImageWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction, CompressionParamsSupportedMatcher) {
+HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction, CompressionParamsSupportedMatcher) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE rss{};
     platformsImpl->clear();

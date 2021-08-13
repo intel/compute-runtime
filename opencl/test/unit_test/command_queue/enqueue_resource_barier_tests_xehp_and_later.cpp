@@ -32,9 +32,9 @@ class MockCommandQueueWithCacheFlush : public MockCommandQueueHw<GfxFamily> {
     bool commandRequireCacheFlush = false;
 };
 
-using EnqueueResourceBarrierTestXeHpCorePlus = EnqueueHandlerTest;
+using EnqueueResourceBarrierTestXeHpCoreAndLater = EnqueueHandlerTest;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCorePlus, GivenCommandStreamWithoutKernelAndTimestampPacketEnabledWhenEnqueuedResourceBarrierWithEventThenTimestampAddedToEvent) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCoreAndLater, GivenCommandStreamWithoutKernelAndTimestampPacketEnabledWhenEnqueuedResourceBarrierWithEventThenTimestampAddedToEvent) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableTimestampPacket.set(1);
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -78,7 +78,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCorePlus, GivenComman
     eventObj->release();
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCorePlus, GivenCommandStreamWithoutKernelAndTimestampPacketDisabledWhenEnqueuedResourceBarrierWithEventThenTimestampNotAddedToEvent) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCoreAndLater, GivenCommandStreamWithoutKernelAndTimestampPacketDisabledWhenEnqueuedResourceBarrierWithEventThenTimestampNotAddedToEvent) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableTimestampPacket.set(0);
     static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver())->timestampPacketWriteEnabled = false;

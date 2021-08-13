@@ -17,9 +17,9 @@
 
 using namespace NEO;
 
-using XeHPPlusPreemptionTests = DevicePreemptionTests;
+using XeHPAndLaterPreemptionTests = DevicePreemptionTests;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmdIsNotAddedToStream) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmdIsNotAddedToStream) {
     size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
     EXPECT_EQ(0U, requiredSize);
 
@@ -28,12 +28,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, whenProgramStateSipIsCalle
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, WhenProgrammingThenWaHasExpectedSize) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingThenWaHasExpectedSize) {
     size_t expectedSize = 0;
     EXPECT_EQ(expectedSize, PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, WhenProgrammingThenWaNotApplied) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingThenWaNotApplied) {
     size_t usedSize = 0;
 
     auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
@@ -46,7 +46,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, WhenProgrammingThenWaNotAp
     EXPECT_EQ(usedSize, cmdStream.getUsed());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, givenInterfaceDescriptorDataWhenMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToDisable) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, givenInterfaceDescriptorDataWhenMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToDisable) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     INTERFACE_DESCRIPTOR_DATA iddArg;
@@ -58,7 +58,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, givenInterfaceDescriptorDa
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_DISABLE, iddArg.getThreadPreemptionDisable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, givenInterfaceDescriptorDataWhenNoMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToEnable) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, givenInterfaceDescriptorDataWhenNoMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToEnable) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     INTERFACE_DESCRIPTOR_DATA iddArg;
@@ -80,7 +80,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, givenInterfaceDescriptorDa
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_ENABLE, iddArg.getThreadPreemptionDisable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, WhenProgrammingPreemptionThenExpectLoadRegisterCommandRemapFlagEnabled) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingPreemptionThenExpectLoadRegisterCommandRemapFlagEnabled) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     const size_t bufferSize = 128;
@@ -93,7 +93,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, WhenProgrammingPreemptionT
     EXPECT_TRUE(lriCommand->getMmioRemapEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusPreemptionTests, GivenDebuggerUsedWhenProgrammingStateSipThenStateSipIsAdded) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenProgrammingStateSipThenStateSipIsAdded) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     device->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
 

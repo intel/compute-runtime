@@ -15,7 +15,7 @@
 using namespace NEO;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueBlockedVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueBlockedVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
     cl_uint workDim = 1;
@@ -51,7 +51,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueBlocked
     pCmdQ->releaseVirtualEvent();
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueBlockedNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueBlockedNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
     cl_uint workDim = 1;
@@ -87,7 +87,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueBlocked
     pCmdQ->releaseVirtualEvent();
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
@@ -111,7 +111,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKern
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
@@ -135,7 +135,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueNonVmeK
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKernelTwiceThenProgramPipelineSelectOnce) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueVmeKernelTwiceThenProgramPipelineSelectOnce) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
@@ -151,7 +151,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKern
     EXPECT_EQ(1u, numCommands);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueNonVmeKernelTwiceThenProgramPipelineSelectOnce) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueNonVmeKernelTwiceThenProgramPipelineSelectOnce) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
@@ -166,7 +166,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueNonVmeK
     EXPECT_EQ(1u, numCommands);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKernelAfterNonVmeKernelThenProgramPipelineSelectionAndMediaSamplerTwice) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueVmeKernelAfterNonVmeKernelThenProgramPipelineSelectionAndMediaSamplerTwice) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
@@ -200,7 +200,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKern
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueNonVmeKernelAfterVmeKernelThenProgramProgramPipelineSelectionAndMediaSamplerTwice) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueNonVmeKernelAfterVmeKernelThenProgramProgramPipelineSelectionAndMediaSamplerTwice) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
@@ -233,7 +233,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueNonVmeK
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKernelThenVmeSubslicesConfigDoesntChangeToFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueVmeKernelThenVmeSubslicesConfigDoesntChangeToFalse) {
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     csr->lastVmeSubslicesConfig = true;
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
@@ -248,7 +248,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKern
     EXPECT_TRUE(csr->lastVmeSubslicesConfig);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusCsrWhenEnqueueVmeKernelThenVmeSubslicesConfigDoesntChangeToTrue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueVmeKernelThenVmeSubslicesConfigDoesntChangeToTrue) {
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     csr->lastVmeSubslicesConfig = false;
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
@@ -275,7 +275,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, WhenGettingCmdSizeForVmeThenZeroIs
     EXPECT_EQ(0u, csr->getCmdSizeForMediaSampler(true));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusWhenEnqueueSystolicKernelThenPipelineSelectEnablesSystolicMode) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterWhenEnqueueSystolicKernelThenPipelineSelectEnablesSystolicMode) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -299,7 +299,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusWhenEnqueueSystolicKe
     EXPECT_TRUE(pCmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusWhenEnqueueNonSystolicKernelThenPipelineSelectDisablesSystolicMode) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterWhenEnqueueNonSystolicKernelThenPipelineSelectDisablesSystolicMode) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -323,7 +323,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusWhenEnqueueNonSystoli
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusWhenEnqueueTwoSystolicKernelsThenPipelineSelectEnablesSystolicModeOnce) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterWhenEnqueueTwoSystolicKernelsThenPipelineSelectEnablesSystolicModeOnce) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -355,7 +355,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusWhenEnqueueTwoSystoli
     EXPECT_TRUE(pCmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPPlusWhenEnqueueTwoKernelsThenPipelineSelectEnablesSystolicModeWhenNeeded) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterWhenEnqueueTwoKernelsThenPipelineSelectEnablesSystolicModeWhenNeeded) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
     MockKernelWithInternals mockKernel(*pClDevice, context);

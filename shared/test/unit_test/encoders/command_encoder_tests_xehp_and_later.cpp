@@ -13,13 +13,13 @@
 
 using namespace NEO;
 
-using XeHPPlusHardwareCommandsTest = testing::Test;
+using XeHPAndLaterHardwareCommandsTest = testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusHardwareCommandsTest, givenXeHPPlusPlatformWhenDoBindingTablePrefetchIsCalledThenReturnsFalse) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenXeHPAndLaterPlatformWhenDoBindingTablePrefetchIsCalledThenReturnsFalse) {
     EXPECT_FALSE(EncodeSurfaceState<FamilyType>::doBindingTablePrefetch());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusHardwareCommandsTest, GivenXeHPPlusPlatformWhenSetCoherencyTypeIsCalledThenOnlyEncodingSupportedIsSingleGpuCoherent) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, GivenXeHPAndLaterPlatformWhenSetCoherencyTypeIsCalledThenOnlyEncodingSupportedIsSingleGpuCoherent) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using COHERENCY_TYPE = typename RENDER_SURFACE_STATE::COHERENCY_TYPE;
 
@@ -30,20 +30,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusHardwareCommandsTest, GivenXeHPPlusPlatform
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusHardwareCommandsTest, givenXeHPPlusPlatformWhenGetAdditionalPipelineSelectSizeIsCalledThenZeroIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenXeHPAndLaterPlatformWhenGetAdditionalPipelineSelectSizeIsCalledThenZeroIsReturned) {
     MockDevice device;
     EXPECT_EQ(0u, EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device));
 }
 
-using XeHPPlusCommandEncoderTest = Test<DeviceFixture>;
+using XeHPAndLaterCommandEncoderTest = Test<DeviceFixture>;
 
-HWTEST2_F(XeHPPlusCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
     auto container = CommandContainer();
     size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
     EXPECT_EQ(size, 104ul);
 }
 
-HWTEST2_F(XeHPPlusCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
     auto container = CommandContainer();
     container.setHeapDirty(HeapType::SURFACE_STATE);
     size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);

@@ -15,9 +15,9 @@
 #include "opencl/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 #include "test.h"
 
-using XeHPPlusMockSimulatedCsrHwTests = Test<ClDeviceFixture>;
+using XeHPAndLaterMockSimulatedCsrHwTests = Test<ClDeviceFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenLmemIsInitializedAndLmemCfgMmioIsWritten) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenLmemIsInitializedAndLmemCfgMmioIsWritten) {
     std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     csrSimulatedCommonHw->localMemoryEnabled = true;
 
@@ -29,7 +29,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenLocalMemoryEn
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000cf58, 0x80000000u)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenLmemIsInitializedAndLmemCfgMmioIsWritten) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenLmemIsInitializedAndLmemCfgMmioIsWritten) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
@@ -43,7 +43,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAUBDumpForceA
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000cf58, 0x80000000u)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenMOCSRegistersAreConfigured) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenMOCSRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
@@ -117,7 +117,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAubCommandStr
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x000040FC, 0x00000038)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenLNCFRegistersAreConfigured) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenLNCFRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
@@ -159,7 +159,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAubCommandStr
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B09C, 0x00300010)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenPerfMmioRegistersAreConfigured) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenPerfMmioRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
@@ -172,7 +172,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAubCommandStr
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00008708, 0x00000000)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenTRTTRegistersAreConfigured) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenTRTTRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
@@ -189,7 +189,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusMockSimulatedCsrHwTests, givenAubCommandStr
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00004DFC, 0x00000000)));
 }
 
-class XeHPPlusTileRangeRegisterTest : public ClDeviceFixture, public ::testing::Test {
+class XeHPAndLaterTileRangeRegisterTest : public ClDeviceFixture, public ::testing::Test {
   public:
     template <typename FamilyType>
     void setUpImpl() {
@@ -234,7 +234,7 @@ class XeHPPlusTileRangeRegisterTest : public ClDeviceFixture, public ::testing::
     }
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTileRangeRegisterTest, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
     setUpImpl<FamilyType>();
     std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     csrSimulatedCommonHw->localMemoryEnabled = true;
@@ -246,7 +246,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTileRangeRegisterTest, givenLocalMemoryEnab
     checkMMIOs(stream->mmioList, 1, 32);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTileRangeRegisterTest, givenLocalMemoryEnabledAnd4TileConfigWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemoryEnabledAnd4TileConfigWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     setUpImpl<FamilyType>();
@@ -260,7 +260,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTileRangeRegisterTest, givenLocalMemoryEnab
     checkMMIOs(stream->mmioList, 4, 32);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPPlusTileRangeRegisterTest, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
     setUpImpl<FamilyType>();
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
