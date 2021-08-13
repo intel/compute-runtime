@@ -11,9 +11,15 @@
 
 #include "igfxfmid.h"
 
+#include <memory>
+#include <vector>
+
+namespace NEO {
+struct HardwareInfo;
+}
+
 namespace L0 {
 
-struct HardwareInfo;
 struct Event;
 struct Device;
 struct EventPool;
@@ -25,6 +31,9 @@ class L0HwHelper {
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
 
     virtual bool isResumeWARequired() = 0;
+
+    virtual void getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const = 0;
+    virtual std::vector<ze_device_thread_t> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const = 0;
 
   protected:
     L0HwHelper() = default;
@@ -42,6 +51,8 @@ class L0HwHelperHw : public L0HwHelper {
     L0HwHelperHw() = default;
 
     bool isResumeWARequired() override;
+    void getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const override;
+    std::vector<ze_device_thread_t> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const override;
 };
 
 } // namespace L0

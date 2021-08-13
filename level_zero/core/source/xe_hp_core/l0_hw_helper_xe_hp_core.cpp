@@ -27,6 +27,10 @@ bool L0HwHelperHw<Family>::isResumeWARequired() {
     return true;
 }
 
+// clang-format off
+#include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_plus.inl"
+// clang-format on
+
 template class L0HwHelperHw<Family>;
 
 } // namespace L0
