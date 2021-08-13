@@ -163,7 +163,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGettingProper
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingStateThenCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingStateThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
     auto handles = get_memory_handles(memoryHandleComponentCount);
 

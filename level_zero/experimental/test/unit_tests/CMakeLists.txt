@@ -8,6 +8,8 @@ link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
 set(TARGET_NAME ${TARGET_NAME_L0}_exp_tests)
 
+include(${NEO_SOURCE_DIR}/cmake/setup_ult_global_flags.cmake)
+
 function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)
   set(L0_TESTED_PRODUCT_FAMILIES ${ALL_TESTED_PRODUCT_FAMILY})
   string(REPLACE ";" "," L0_TESTED_PRODUCT_FAMILIES
