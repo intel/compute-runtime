@@ -75,15 +75,6 @@ bool LinkerInput::decodeExportedFunctionsSymbolTable(const void *data, uint32_t 
             DEBUG_BREAK_IF(true);
             this->valid = false;
             return false;
-        case vISA::S_UNDEF:
-            if (this->undefinedSymbolsAllowed) {
-                symbols.erase(symbolEntryIt->s_name);
-                break;
-            } else {
-                DEBUG_BREAK_IF(true);
-                this->valid = false;
-                return false;
-            }
         case vISA::S_GLOBAL_VAR:
             symbolInfo.segment = SegmentType::GlobalVariables;
             traits.exportsGlobalVariables = true;

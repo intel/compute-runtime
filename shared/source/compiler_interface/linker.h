@@ -135,8 +135,6 @@ struct LinkerInput {
         return valid;
     }
 
-    bool undefinedSymbolsAllowed = false;
-
   protected:
     Traits traits;
     SymbolMap symbols;

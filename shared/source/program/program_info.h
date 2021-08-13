@@ -42,7 +42,6 @@ struct ProgramInfo {
     std::vector<KernelInfo *> kernelInfos;
     Elf::Elf<Elf::EI_CLASS_64> decodedElf;
     uint32_t grfSize = 32U;
-    bool levelZeroDynamicLinkProgram = false;
 };
 
 size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo);
