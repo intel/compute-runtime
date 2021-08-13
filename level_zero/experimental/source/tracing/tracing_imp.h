@@ -127,7 +127,7 @@ struct APITracerContextImp : APITracerContext {
 
     ze_bool_t testForTracerArrayReferences(tracer_array_t *tracerArray);
     size_t testAndFreeRetiredTracers();
-    int updateTracerArrays();
+    size_t updateTracerArrays();
 
     std::list<ThreadPrivateTracerData *> threadTracerDataList;
     std::mutex threadTracerDataListMutex;

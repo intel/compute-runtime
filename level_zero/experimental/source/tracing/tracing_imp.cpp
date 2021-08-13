@@ -172,7 +172,7 @@ size_t APITracerContextImp::testAndFreeRetiredTracers() {
     return this->retiringTracerArrayList.size();
 }
 
-int APITracerContextImp::updateTracerArrays() {
+size_t APITracerContextImp::updateTracerArrays() {
     tracer_array_t *newTracerArray;
     size_t newTracerArrayCount = this->enabledTracerImpList.size();
 
@@ -211,9 +211,7 @@ int APITracerContextImp::updateTracerArrays() {
     // from this thread to the tracing threads.
     //
     activeTracerArray.store(newTracerArray, std::memory_order_release);
-    testAndFreeRetiredTracers();
-
-    return 0;
+    return testAndFreeRetiredTracers();
 }
 
 ze_result_t APITracerContextImp::enableTracingImp(struct APITracerImp *tracerImp, ze_bool_t enable) {
@@ -233,13 +231,14 @@ ze_result_t APITracerContextImp::enableTracingImp(struct APITracerImp *tracerImp
         if (!enable) {
             enabledTracerImpList.remove(tracerImp);
             tracerImp->tracingState = disabledWaitingState;
-            updateTracerArrays();
+            if (updateTracerArrays() == 0)
+                tracerImp->tracingState = disabledState;
         }
         result = ZE_RESULT_SUCCESS;
         break;
 
     case disabledWaitingState:
-        result = ZE_RESULT_ERROR_UNINITIALIZED;
+        result = ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
         break;
 
     default:
@@ -273,7 +272,7 @@ ze_result_t APITracerContextImp::finalizeDisableImpTracingWait(struct APITracerI
         break;
 
     case enabledState:
-        result = ZE_RESULT_ERROR_UNINITIALIZED;
+        result = ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
         break;
 
     case disabledWaitingState:
