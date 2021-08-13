@@ -21,8 +21,9 @@ struct StateComputeModeProperties {
 
 struct FrontEndProperties {
     StreamProperty disableOverdispatch{};
+    StreamProperty singleSliceDispatchCcsMode{};
 
-    void setProperties(bool isCooperativeKernel, bool disableOverdispatch, const HardwareInfo &hwInfo);
+    void setProperties(bool isCooperativeKernel, bool disableOverdispatch, bool engineInstancedDevice, const HardwareInfo &hwInfo);
     void setProperties(const FrontEndProperties &properties);
     bool isDirty();
     void clearIsDirty();

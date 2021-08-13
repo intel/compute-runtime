@@ -2158,17 +2158,16 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo);
 
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), disableOverdispatch, device->getHwInfo());
+        requiredStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), disableOverdispatch, false, device->getHwInfo());
         finalStreamState = requiredStreamState;
         containsAnyKernel = true;
     }
 
-    finalStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), disableOverdispatch, hwInfo);
+    finalStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), disableOverdispatch, false, hwInfo);
     if (finalStreamState.frontEndState.isDirty()) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
         auto pVfeState = new VFE_STATE_TYPE;
-        NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(),
-                                                        NEO::AdditionalKernelExecInfo::NotApplicable, finalStreamState);
+        NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
         commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
     }
 

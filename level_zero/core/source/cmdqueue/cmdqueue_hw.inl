@@ -336,6 +336,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         if (!isCopyOnlyCommandQueue) {
             auto &requiredStreamState = commandList->getRequiredStreamState();
             streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
+            streamProperties.frontEndState.singleSliceDispatchCcsMode.value = csr->getOsContext().isEngineInstanced();
             auto programVfe = streamProperties.frontEndState.isDirty();
             if (frontEndStateDirty) {
                 programVfe = true;
@@ -346,6 +347,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             }
             auto &finalStreamState = commandList->getFinalStreamState();
             streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
+            streamProperties.frontEndState.singleSliceDispatchCcsMode.value = csr->getOsContext().isEngineInstanced();
         }
 
         patchCommands(*commandList, scratchSpaceController->getScratchPatchAddress());
@@ -437,7 +439,6 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
                                                     perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
-                                                    NEO::AdditionalKernelExecInfo::NotApplicable,
                                                     streamProperties);
     csr->setMediaVFEStateDirty(false);
 }

@@ -23,6 +23,7 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
 std::vector<StreamProperty *> getAllFrontEndProperties(FrontEndProperties &properties) {
     std::vector<StreamProperty *> allProperties;
     allProperties.push_back(&properties.disableOverdispatch);
+    allProperties.push_back(&properties.singleSliceDispatchCcsMode);
     return allProperties;
 }
 
@@ -32,8 +33,11 @@ using namespace NEO;
 
 TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectValueIsSet) {
     StreamProperties properties;
-    for (auto disableOverdispatch : ::testing::Bool()) {
-        properties.frontEndState.setProperties(false, disableOverdispatch, *defaultHwInfo);
-        EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
+    for (auto isEngineInstanced : ::testing::Bool()) {
+        for (auto disableOverdispatch : ::testing::Bool()) {
+            properties.frontEndState.setProperties(false, disableOverdispatch, isEngineInstanced, *defaultHwInfo);
+            EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
+            EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
+        }
     }
 }

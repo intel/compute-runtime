@@ -135,8 +135,7 @@ void DeviceQueueHw<GfxFamily>::addMediaStateClearCmds() {
 
     auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&slbCS, device->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<GfxFamily>::programVfeState(pVfeState, device->getHardwareInfo(), 0u, 0, device->getSharedDeviceInfo().maxFrontEndThreads,
-                                               AdditionalKernelExecInfo::NotApplicable, emptyProperties);
+    PreambleHelper<GfxFamily>::programVfeState(pVfeState, device->getHardwareInfo(), 0u, 0, device->getSharedDeviceInfo().maxFrontEndThreads, emptyProperties);
 }
 
 template <typename GfxFamily>

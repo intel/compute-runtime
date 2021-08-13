@@ -9,14 +9,18 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "test.h"
 
 using namespace NEO;
 
@@ -693,6 +697,33 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle2rdLevelDeviceOnlyW
     EXPECT_EQ(1u, rootDevice->getDeviceBitfield().count());
 
     EXPECT_TRUE(hasEngineInstancedEngines(rootDevice, engineType));
+}
+
+HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(0));
+    auto defaultEngine = subDevice->getDefaultEngine();
+    EXPECT_TRUE(defaultEngine.osContext->isEngineInstanced());
+
+    char buffer[64] = {};
+    MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
+    LinearStream linearStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(defaultEngine.commandStreamReceiver);
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    csr->programVFEState(linearStream, dispatchFlags, 1);
+
+    auto cfeState = reinterpret_cast<CFE_STATE *>(buffer);
+    EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
 }
 
 TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) {

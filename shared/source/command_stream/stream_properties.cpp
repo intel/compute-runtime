@@ -37,22 +37,25 @@ void StateComputeModeProperties::clearIsDirty() {
     largeGrfMode.isDirty = false;
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableOverdispatch, const HardwareInfo &hwInfo) {
+void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableOverdispatch, bool engineInstancedDevice, const HardwareInfo &hwInfo) {
     clearIsDirty();
 
-    this->disableOverdispatch.set(disableOverdispatch ? 1 : 0);
+    this->disableOverdispatch.set(disableOverdispatch);
+    this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
 }
 
 void FrontEndProperties::setProperties(const FrontEndProperties &properties) {
     clearIsDirty();
 
     disableOverdispatch.set(properties.disableOverdispatch.value);
+    singleSliceDispatchCcsMode.set(properties.singleSliceDispatchCcsMode.value);
 }
 
 bool FrontEndProperties::isDirty() {
-    return disableOverdispatch.isDirty;
+    return disableOverdispatch.isDirty || singleSliceDispatchCcsMode.isDirty;
 }
 
 void FrontEndProperties::clearIsDirty() {
     disableOverdispatch.isDirty = false;
+    singleSliceDispatchCcsMode.isDirty = false;
 }

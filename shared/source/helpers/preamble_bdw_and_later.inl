@@ -42,7 +42,6 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
                                                 uint32_t scratchSize,
                                                 uint64_t scratchAddress,
                                                 uint32_t maxFrontEndThreads,
-                                                uint32_t additionalExecInfo,
                                                 const StreamProperties &streamProperties) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
@@ -59,7 +58,7 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     cmd.setScratchSpaceBasePointerHigh(highAddress);
 
     programAdditionalFieldsInVfeState(&cmd, hwInfo);
-    appendProgramVFEState(hwInfo, streamProperties, additionalExecInfo, &cmd);
+    appendProgramVFEState(hwInfo, streamProperties, &cmd);
     *pMediaVfeState = cmd;
 }
 

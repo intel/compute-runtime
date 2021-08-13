@@ -17,10 +17,11 @@ using Family = XeHpFamily;
 namespace NEO {
 
 template <>
-void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, uint32_t additionalKernelExecInfo, void *cmd) {
+void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {
     auto command = static_cast<typename Family::CFE_STATE *>(cmd);
 
     command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
+    command->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value);
 
     if (DebugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
         command->setComputeOverdispatchDisable(DebugManager.flags.CFEComputeOverdispatchDisable.get());

@@ -48,6 +48,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::programPerDssBackedBuffer;
     using BaseClass::programPreamble;
     using BaseClass::programStateSip;
+    using BaseClass::programVFEState;
     using BaseClass::requiresInstructionCacheFlush;
     using BaseClass::rootDeviceIndex;
     using BaseClass::sshState;

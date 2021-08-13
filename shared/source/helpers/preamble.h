@@ -40,7 +40,7 @@ struct PreambleHelper {
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType);
-    static void appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, uint32_t additionalKernelExecInfo, void *cmd);
+    static void appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd);
     static void *getSpaceForVfeState(LinearStream *pCommandStream,
                                      const HardwareInfo &hwInfo,
                                      EngineGroupType engineGroupType);
@@ -49,7 +49,6 @@ struct PreambleHelper {
                                 uint32_t scratchSize,
                                 uint64_t scratchAddress,
                                 uint32_t maxFrontEndThreads,
-                                uint32_t additionalExecInfo,
                                 const StreamProperties &streamProperties);
     static uint64_t getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState);
     static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo);

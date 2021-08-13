@@ -135,12 +135,18 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
 
     uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
 
+    CFE_STATE *cfeStateCmd = nullptr;
+
     auto &commandsToPatch = commandList.getCommandsToPatch();
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
         case CommandList::CommandToPatch::FrontEndState:
-            reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand)->setScratchSpaceBuffer(lowScratchAddress);
-            *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
+            cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
+
+            cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
+            cfeStateCmd->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value);
+
+            *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
             break;
         default:
             UNRECOVERABLE_IF(true);

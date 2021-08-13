@@ -937,10 +937,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
                                    (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
         StreamProperties streamProperties{};
         streamProperties.frontEndState.setProperties(lastKernelExecutionType == KernelExecutionType::Concurrent,
-                                                     disableOverdispatch, hwInfo);
+                                                     disableOverdispatch, osContext->isEngineInstanced(), hwInfo);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, hwInfo, requiredScratchSize, getScratchPatchAddress(),
-            maxFrontEndThreads, lastAdditionalKernelExecInfo, streamProperties);
+            maxFrontEndThreads, streamProperties);
         auto commandOffset = PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(&csr, pVfeState);
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {

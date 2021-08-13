@@ -80,7 +80,7 @@ uint32_t PreambleHelper<Family>::getUrbEntryAllocationSize() {
     return 0u;
 }
 template <>
-void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, uint32_t additionalKernelExecInfo, void *cmd);
+void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd);
 
 template <>
 void *PreambleHelper<Family>::getSpaceForVfeState(LinearStream *pCommandStream,
@@ -96,7 +96,6 @@ void PreambleHelper<Family>::programVfeState(void *pVfeState,
                                              uint32_t scratchSize,
                                              uint64_t scratchAddress,
                                              uint32_t maxFrontEndThreads,
-                                             uint32_t additionalKernelExecInfo,
                                              const StreamProperties &streamProperties) {
     using CFE_STATE = typename Family::CFE_STATE;
 
@@ -108,7 +107,7 @@ void PreambleHelper<Family>::programVfeState(void *pVfeState,
     uint32_t lowAddress = uint32_t(0xFFFFFFFF & scratchAddress);
     cmd.setScratchSpaceBuffer(lowAddress);
     cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
-    appendProgramVFEState(hwInfo, streamProperties, additionalKernelExecInfo, &cmd);
+    appendProgramVFEState(hwInfo, streamProperties, &cmd);
 
     if (DebugManager.flags.CFENumberOfWalkers.get() != -1) {
         cmd.setNumberOfWalkers(DebugManager.flags.CFENumberOfWalkers.get());

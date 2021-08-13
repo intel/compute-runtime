@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -1130,6 +1131,100 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
     ASSERT_EQ(1u, GSBAStates.size());
+
+    commandQueue->destroy();
+}
+
+struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.EngineInstancedSubDevices.set(true);
+    }
+
+    bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
+        DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
+
+        auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+        executionEnvironment->prepareRootDeviceEnvironments(1);
+
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
+        hwInfo->featureTable.ftrCCSNode = (numCcs > 0);
+        HwHelper::get(hwInfo->platform.eRenderCoreFamily).adjustDefaultEngineType(hwInfo);
+
+        if (!multiCcsDevice(*hwInfo, numCcs)) {
+            return false;
+        }
+        executionEnvironment->parseAffinityMask();
+        deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, numGenericSubDevices, *executionEnvironment.release());
+        rootDevice = deviceFactory->rootDevices[0];
+        EXPECT_NE(nullptr, rootDevice);
+
+        return true;
+    }
+
+    bool multiCcsDevice(const HardwareInfo &hwInfo, uint32_t expectedNumCcs) {
+        auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+
+        uint32_t numCcs = 0;
+
+        for (auto &engine : gpgpuEngines) {
+            if (EngineHelpers::isCcs(engine.first) && (engine.second == EngineUsage::Regular)) {
+                numCcs++;
+            }
+        }
+
+        return (numCcs == expectedNumCcs);
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<NEO::UltDeviceFactory> deviceFactory;
+    MockDevice *rootDevice = nullptr;
+};
+
+HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecutingThenEnableSingleSliceDispatch, IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(0));
+    auto defaultEngine = subDevice->getDefaultEngine();
+    EXPECT_TRUE(defaultEngine.osContext->isEngineInstanced());
+
+    std::vector<std::unique_ptr<NEO::Device>> devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(subDevice));
+
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+
+    auto l0Device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, returnValue));
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
+    auto commandListHandle = commandList->toHandle();
+
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    GenCmdList cmdList;
+    FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream->getCpuBase(), commandQueue->commandStream->getUsed());
+
+    auto cfeStates = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
+
+    EXPECT_NE(0u, cfeStates.size());
+
+    for (auto &cmd : cfeStates) {
+        auto cfeState = reinterpret_cast<CFE_STATE *>(*cmd);
+        EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
+    }
 
     commandQueue->destroy();
 }

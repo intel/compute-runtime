@@ -110,9 +110,7 @@ GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsC
     LinearStream &cs = linearStream;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                                AdditionalKernelExecInfo::NotApplicable,
-                                                emptyProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u, emptyProperties);
 
     parseCommands<FamilyType>(cs);
 
@@ -132,9 +130,7 @@ GEN9TEST_F(PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCo
     LinearStream &cs = linearStream;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                                AdditionalKernelExecInfo::NotApplicable,
-                                                emptyProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u, emptyProperties);
 
     parseCommands<FamilyType>(cs);
 
