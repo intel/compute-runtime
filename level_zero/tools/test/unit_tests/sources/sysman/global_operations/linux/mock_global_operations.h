@@ -231,14 +231,6 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t mockDeviceOpSuccess(const std::string device) {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t mockDeviceOpFailure(const std::string device) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
     bool mockIsMyDeviceFile(const std::string dev) {
         if (dev.compare(mockDeviceName) == 0) {
             return true;
@@ -314,10 +306,6 @@ struct Mock<GlobalOperationsProcfsAccess> : public GlobalOperationsProcfsAccess 
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getMockFileNameReturnError(const ::pid_t pid, const int fd, std::string &val) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
     bool mockIsAlive(const ::pid_t pid) {
         if (pid == ourDevicePid) {
             return true;
@@ -377,42 +365,6 @@ struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getValWedgedFileNotFound(const std::string file, uint32_t &val) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getValWedgedFileInsufficientPermissions(const std::string file, uint32_t &val) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    }
-
-    ze_result_t getValSrcFileNotAvaliable(const std::string file, std::string &val) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getValNotAvaliable(const std::string file, std::string &val) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getValErrorUnkown(const std::string file, std::string &val) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    ze_result_t getValPermissionDenied(const std::string file, std::string &val) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    }
-
-    ze_result_t getPermissionDenied(const std::string file) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    }
-
-    ze_result_t getSuccess(const std::string file) {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t writeSuccess(const std::string file, const std::string val) {
         return ZE_RESULT_SUCCESS;
     }
 
