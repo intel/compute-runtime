@@ -17,28 +17,52 @@ namespace L0 {
 
 ze_result_t MetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDataSize,
                                         uint8_t *pRawData) {
-    DEBUG_BREAK_IF(rawReportSize == 0);
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
-    auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
+    if (metricStreamers.size() > 0) {
+        auto pMetricStreamer = MetricStreamer::fromHandle(metricStreamers[0]);
+        // Return required size if requested.
+        if (*pRawDataSize == 0) {
+            *pRawDataSize = static_cast<MetricStreamerImp *>(pMetricStreamer)->getRequiredBufferSize(maxReportCount) * metricStreamers.size();
+            return ZE_RESULT_SUCCESS;
+        }
 
-    // Return required size if requested.
-    if (*pRawDataSize == 0) {
-        *pRawDataSize = getRequiredBufferSize(maxReportCount);
-        return ZE_RESULT_SUCCESS;
-    }
+        size_t sizePerSubDevice = *pRawDataSize / metricStreamers.size();
+        DEBUG_BREAK_IF(sizePerSubDevice == 0);
+        *pRawDataSize = 0;
+        for (auto metricStreamerHandle : metricStreamers) {
 
-    // User is expected to allocate space.
-    if (pRawData == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
+            size_t readSize = sizePerSubDevice;
+            pMetricStreamer = MetricStreamer::fromHandle(metricStreamerHandle);
+            result = pMetricStreamer->readData(maxReportCount, &readSize, pRawData + *pRawDataSize);
+            // Return at first error.
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
+            *pRawDataSize += readSize;
+        }
+    } else {
 
-    // Retrieve the number of reports that fit into the buffer.
-    uint32_t reportCount = static_cast<uint32_t>(*pRawDataSize / rawReportSize);
+        DEBUG_BREAK_IF(rawReportSize == 0);
+        auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
 
-    // Read streamer data.
-    const ze_result_t result = metricGroup->readIoStream(reportCount, *pRawData);
-    if (result == ZE_RESULT_SUCCESS) {
-        *pRawDataSize = reportCount * rawReportSize;
+        // Return required size if requested.
+        if (*pRawDataSize == 0) {
+            *pRawDataSize = getRequiredBufferSize(maxReportCount);
+            return ZE_RESULT_SUCCESS;
+        }
+
+        // User is expected to allocate space.
+        DEBUG_BREAK_IF(pRawData == nullptr);
+
+        // Retrieve the number of reports that fit into the buffer.
+        uint32_t reportCount = static_cast<uint32_t>(*pRawDataSize / rawReportSize);
+
+        // Read streamer data.
+        result = metricGroup->readIoStream(reportCount, *pRawData);
+        if (result == ZE_RESULT_SUCCESS) {
+            *pRawDataSize = reportCount * rawReportSize;
+        }
     }
 
     return result;
