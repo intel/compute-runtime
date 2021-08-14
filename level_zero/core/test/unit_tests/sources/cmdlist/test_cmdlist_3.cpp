@@ -246,8 +246,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingHostMemor
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
 
-    void *src_buffer = reinterpret_cast<void *>(0x1234);
-    void *dst_buffer = reinterpret_cast<void *>(0x2345);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
     uint32_t height = 16;
 
@@ -268,8 +268,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingHostMemor
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                 src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+    result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                 srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -308,12 +308,12 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMem
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
 
-    void *src_buffer = nullptr;
-    void *dst_buffer = nullptr;
+    void *srcBuffer = nullptr;
+    void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &src_buffer);
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &srcBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dst_buffer);
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     uint32_t width = 16;
@@ -336,8 +336,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMem
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                 src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+    result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                 srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -365,8 +365,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMem
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    context->freeMem(src_buffer);
-    context->freeMem(dst_buffer);
+    context->freeMem(srcBuffer);
+    context->freeMem(dstBuffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsNotFound, PlatformSupport) {
@@ -376,9 +376,9 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
 
-    void *dst_buffer = nullptr;
+    void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dst_buffer);
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -397,7 +397,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
     events.push_back(event1.get());
 
     int one = 1;
-    result = commandList->appendMemoryFill(dst_buffer, reinterpret_cast<void *>(&one), sizeof(one), 4096u,
+    result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -426,7 +426,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    context->freeMem(dst_buffer);
+    context->freeMem(dstBuffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, PlatformSupport) {
@@ -436,10 +436,10 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWit
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
 
-    void *dst_buffer = nullptr;
+    void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &dst_buffer);
+    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -458,7 +458,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWit
     events.push_back(event1.get());
 
     int one = 1;
-    result = commandList->appendMemoryFill(dst_buffer, reinterpret_cast<void *>(&one), sizeof(one), 4096u,
+    result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -490,7 +490,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWit
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    context->freeMem(dst_buffer);
+    context->freeMem(dstBuffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, PlatformSupport) {
@@ -500,9 +500,9 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
 
-    void *dst_buffer = nullptr;
+    void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
+    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -522,7 +522,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
     events.push_back(event1.get());
 
     int one = 1;
-    result = commandList->appendMemoryFill(dst_buffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
+    result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -551,7 +551,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    context->freeMem(dst_buffer);
+    context->freeMem(dstBuffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsAddedAndPCDueToSignalEventIsAddedWithDCFlush, PlatformSupport) {
@@ -562,9 +562,9 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
 
-    void *dst_buffer = nullptr;
+    void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
+    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -584,7 +584,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     events.push_back(event1.get());
 
     int one = 1;
-    result = commandList->appendMemoryFill(dst_buffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
+    result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -606,7 +606,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
     EXPECT_TRUE(cmd->getDcFlushEnable());
 
-    context->freeMem(dst_buffer);
+    context->freeMem(dstBuffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsNotAddedAndPCDueToSignalEventIsAddedWithOutDCFlush, PlatformSupport) {
@@ -617,9 +617,9 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
 
-    void *dst_buffer = nullptr;
+    void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
+    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -639,7 +639,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     events.push_back(event1.get());
 
     int one = 1;
-    result = commandList->appendMemoryFill(dst_buffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
+    result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -658,7 +658,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
     EXPECT_FALSE(cmd->getDcFlushEnable());
 
-    context->freeMem(dst_buffer);
+    context->freeMem(dstBuffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, Platforms) {
@@ -667,8 +667,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndWa
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, result));
 
-    void *src_buffer = reinterpret_cast<void *>(0x1234);
-    void *dst_buffer = reinterpret_cast<void *>(0x2345);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
     uint32_t height = 16;
 
@@ -689,8 +689,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndWa
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                 src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+    result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                 srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -700,8 +700,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndIn
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, result));
 
-    void *src_buffer = reinterpret_cast<void *>(0x1234);
-    void *dst_buffer = reinterpret_cast<void *>(0x2345);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
     uint32_t height = 16;
 
@@ -722,8 +722,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndIn
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                 src_buffer, &sr, width, 0, events[0], 1u, nullptr);
+    result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                 srcBuffer, &sr, width, 0, events[0], 1u, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -743,8 +743,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
     EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
-    void *src_buffer = reinterpret_cast<void *>(0x1234);
-    void *dst_buffer = reinterpret_cast<void *>(0x2345);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
     uint32_t height = 16;
 
@@ -765,8 +765,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList0->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                  src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+    result = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                  srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -786,8 +786,8 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSigna
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
     EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
-    void *src_buffer = reinterpret_cast<void *>(0x1234);
-    void *dst_buffer = reinterpret_cast<void *>(0x2345);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
     uint32_t height = 16;
 
@@ -810,8 +810,8 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSigna
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
 
     for (auto i = 0; i < 2000; i++) {
-        ret = commandList0->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                   src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+        ret = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                   srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
     }
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
@@ -832,8 +832,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
     EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
-    void *src_buffer = reinterpret_cast<void *>(0x1234);
-    void *dst_buffer = reinterpret_cast<void *>(0x2345);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
     uint32_t height = 16;
 
@@ -854,8 +854,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    auto result = commandList0->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                       src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+    auto result = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                       srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -997,8 +997,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
     EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
-    void *src_buffer = reinterpret_cast<void *>(0x1234);
-    void *dst_buffer = reinterpret_cast<void *>(0x2345);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
     uint32_t height = 16;
 
@@ -1019,8 +1019,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList0->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                  src_buffer, &sr, width, 0, events[0], 1u, nullptr);
+    result = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                  srcBuffer, &sr, width, 0, events[0], 1u, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
