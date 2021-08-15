@@ -1484,13 +1484,13 @@ TEST(DebuggerL0, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBi
     printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
     EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
 
-    DebuggerL0::getAttentionBitmaskForThread(hwInfo.gtSystemInfo.MaxSlicesSupported - 1, subslice, 5, 0, hwInfo, bitmask, size);
+    DebuggerL0::getAttentionBitmaskForThread(hwInfo.gtSystemInfo.MaxSlicesSupported - 1, subslice, 4, 0, hwInfo, bitmask, size);
     data = expectedBitmask.get();
     memset(expectedBitmask.get(), 0, size);
 
     data = ptrOffset(data, (hwInfo.gtSystemInfo.MaxSlicesSupported - 1) * threadsSizePerSlice);
     data = ptrOffset(data, subslice * threadsSizePerSubSlice);
-    data = ptrOffset(data, 5 * bytesPerEu);
+    data = ptrOffset(data, 4 * bytesPerEu);
     data[0] = 1;
 
     printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);

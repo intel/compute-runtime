@@ -147,9 +147,9 @@ void XE_HP_SDV_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool set
         gtSysInfo->SliceCount = 2;
         gtSysInfo->SubSliceCount = 8;
         gtSysInfo->EUCount = 40;
-        gtSysInfo->MaxEuPerSubSlice = 40;
-        gtSysInfo->MaxSlicesSupported = 1;
-        gtSysInfo->MaxSubSlicesSupported = 1;
+        gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
+        gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
+        gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
 
         gtSysInfo->L3BankCount = 1;
 
