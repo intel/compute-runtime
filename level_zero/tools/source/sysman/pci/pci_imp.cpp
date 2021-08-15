@@ -25,7 +25,7 @@ namespace L0 {
 //
 int64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt) {
     double pcieSpeedWithEnc;
-    if ((maxLinkSpeedInGt == PciLinkSpeeds::Pci16_0GigatransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::Pci8_0GigatransfersPerSecond)) {
+    if ((maxLinkSpeedInGt == PciLinkSpeeds::Pci32_0GigatransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::Pci16_0GigatransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::Pci8_0GigatransfersPerSecond)) {
         pcieSpeedWithEnc = maxLinkSpeedInGt * 1000 * 128 / 130;
     } else if ((maxLinkSpeedInGt == PciLinkSpeeds::Pci5_0GigatransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::Pci2_5GigatransfersPerSecond)) {
         pcieSpeedWithEnc = maxLinkSpeedInGt * 1000 * 8 / 10;

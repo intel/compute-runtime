@@ -506,6 +506,8 @@ TEST_F(ZesPciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {
 // maxLinkSpeedInGt * convertGigabitToMegabit * Encoding * convertMegabitsPerSecondToBytesPerSecond;
 
 TEST_F(ZesPciFixture, WhenConvertingLinkSpeedFromGigatransfersPerSecondToBytesPerSecondThenResultIsCorrect) {
+    int64_t speedPci320 = convertPcieSpeedFromGTsToBs(PciLinkSpeeds::Pci32_0GigatransfersPerSecond);
+    EXPECT_EQ(speedPci320, static_cast<int64_t>(PciLinkSpeeds::Pci32_0GigatransfersPerSecond * convertMegabitsPerSecondToBytesPerSecond * convertGigabitToMegabit * encodingGen3andAbove));
     int64_t speedPci160 = convertPcieSpeedFromGTsToBs(PciLinkSpeeds::Pci16_0GigatransfersPerSecond);
     EXPECT_EQ(speedPci160, static_cast<int64_t>(PciLinkSpeeds::Pci16_0GigatransfersPerSecond * convertMegabitsPerSecondToBytesPerSecond * convertGigabitToMegabit * encodingGen3andAbove));
     int64_t speedPci80 = convertPcieSpeedFromGTsToBs(PciLinkSpeeds::Pci8_0GigatransfersPerSecond);
@@ -515,7 +517,6 @@ TEST_F(ZesPciFixture, WhenConvertingLinkSpeedFromGigatransfersPerSecondToBytesPe
     int64_t speedPci25 = convertPcieSpeedFromGTsToBs(PciLinkSpeeds::Pci2_5GigatransfersPerSecond);
     EXPECT_EQ(speedPci25, static_cast<int64_t>(PciLinkSpeeds::Pci2_5GigatransfersPerSecond * convertMegabitsPerSecondToBytesPerSecond * convertGigabitToMegabit * encodingGen1Gen2));
     EXPECT_EQ(0, convertPcieSpeedFromGTsToBs(0.0));
-    EXPECT_EQ(0, convertPcieSpeedFromGTsToBs(PciLinkSpeeds::Pci32_0GigatransfersPerSecond));
 }
 
 } // namespace ult

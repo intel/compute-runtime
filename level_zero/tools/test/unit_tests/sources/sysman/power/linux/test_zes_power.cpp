@@ -184,6 +184,29 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     }
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesThenHwmonInterfaceExistAndMinLimitIsUnknown) {
+
+    EXPECT_CALL(*pSysfsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(0), Return(ZE_RESULT_SUCCESS)))
+        .WillRepeatedly(DoDefault());
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init();
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_properties_t properties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.defaultLimit, -1);
+        EXPECT_EQ(properties.maxLimit, static_cast<int32_t>(mockMaxPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.minLimit, -1);
+    }
+}
+
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenHwmonInterfaceExistThenValidPowerReadingsRetrieved) {
     auto handles = getPowerHandles(powerHandleComponentCount);
 

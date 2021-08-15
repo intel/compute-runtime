@@ -47,7 +47,7 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     }
 
     result = pSysfsAccess->read(i915HwmonDir + "/" + minPowerLimit, val);
-    if (ZE_RESULT_SUCCESS == result) {
+    if (ZE_RESULT_SUCCESS == result && val != 0) {
         pProperties->minLimit = static_cast<int32_t>(val / milliFactor); // need to convert from microwatt to milliwatt
     }
 

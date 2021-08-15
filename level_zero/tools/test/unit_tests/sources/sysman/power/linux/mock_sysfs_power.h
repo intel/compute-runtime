@@ -38,7 +38,7 @@ const std::string maxPowerLimit("power_max_limit");
 constexpr uint64_t expectedEnergyCounter = 123456785u;
 constexpr uint32_t mockDefaultPowerLimitVal = 300000000;
 constexpr uint32_t mockMaxPowerLimitVal = 490000000;
-constexpr uint32_t mockMinPowerLimitVal = 0;
+constexpr uint32_t mockMinPowerLimitVal = 10;
 class PowerSysfsAccess : public SysfsAccess {};
 
 template <>
