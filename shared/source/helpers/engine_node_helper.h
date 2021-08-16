@@ -25,6 +25,7 @@ enum class EngineUsage : uint32_t {
     Regular,
     LowPriority,
     Internal,
+    Cooperative,
 
     EngineUsageCount,
 };

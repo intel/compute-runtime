@@ -1567,7 +1567,7 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
             return result;
         }
 
-        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const override {
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
             switch (engineType) {
             case aub_stream::ENGINE_RCS:
                 return EngineGroupType::RenderCompute;
@@ -1850,7 +1850,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 3, aub_stream::ENGINE_CCS3, ccsInstances.CCS3Enabled);
 
     for (auto &commandQueueTestValue : commandQueueTestValues) {
-        if (commandQueueTestValue.properties[1] >= HwHelper::getGpgpuEnginesCount(device->getHardwareInfo())) {
+        if (commandQueueTestValue.properties[1] >= device->getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {
             continue;
         }
         commandQueueTestValue.clCommandQueue = clCreateCommandQueueWithProperties(&context, device.get(),

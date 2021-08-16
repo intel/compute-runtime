@@ -1815,7 +1815,7 @@ TEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlagsT
         if (groupOrdinal >= count) {
             continue;
         }
-        auto expectedValue = hwHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo.platform.eProductFamily);
+        auto expectedValue = hwHelper.isCooperativeDispatchSupported(engineGroupType);
         auto actualValue = NEO::isValueSet(properties[groupOrdinal].flags, ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
         EXPECT_EQ(expectedValue, actualValue);
     }

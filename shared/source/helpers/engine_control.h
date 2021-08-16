@@ -23,5 +23,6 @@ struct EngineControl {
     OsContext *osContext = nullptr;
 
     aub_stream::EngineType &getEngineType() const { return osContext->getEngineType(); }
+    EngineUsage getEngineUsage() const { return osContext->getEngineUsage(); }
 };
 } // namespace NEO

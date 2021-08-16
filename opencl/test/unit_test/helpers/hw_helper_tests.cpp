@@ -1155,8 +1155,8 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForIsaSystemMemoryPlacementThenRet
 
 TEST_F(HwHelperTest, givenInvalidEngineTypeWhenGettingEngineGroupTypeThenThrow) {
     HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    EXPECT_ANY_THROW(hwHelper.getEngineGroupType(aub_stream::EngineType::NUM_ENGINES, hardwareInfo));
-    EXPECT_ANY_THROW(hwHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_VECS, hardwareInfo));
+    EXPECT_ANY_THROW(hwHelper.getEngineGroupType(aub_stream::EngineType::NUM_ENGINES, EngineUsage::Regular, hardwareInfo));
+    EXPECT_ANY_THROW(hwHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_VECS, EngineUsage::Regular, hardwareInfo));
 }
 
 HWTEST2_F(HwInfoConfigCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, IsAtLeastGen12lp) {
@@ -1341,22 +1341,6 @@ HWTEST_F(HwHelperTest, whenSetRenderCompressedFlagThenProperFlagSet) {
 
     hwHelper.applyRenderCompressionFlag(*gmm, 0);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
-}
-
-HWTEST_F(HwHelperTest, givenRcsOrCcsEnabledWhenQueryingGpgpuEngineCountThenReturnCorrectValue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 3;
-    hwInfo.featureTable.ftrRcsNode = false;
-    hwInfo.featureTable.ftrCCSNode = false;
-
-    EXPECT_EQ(0u, HwHelper::getGpgpuEnginesCount(hwInfo));
-
-    hwInfo.featureTable.ftrCCSNode = true;
-    EXPECT_EQ(3u, HwHelper::getGpgpuEnginesCount(hwInfo));
-
-    hwInfo.featureTable.ftrRcsNode = true;
-    EXPECT_EQ(4u, HwHelper::getGpgpuEnginesCount(hwInfo));
 }
 
 using isXeHpCoreOrBelow = IsAtMostProduct<IGFX_XE_HP_SDV>;

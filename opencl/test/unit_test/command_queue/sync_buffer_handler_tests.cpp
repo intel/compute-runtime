@@ -91,8 +91,9 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     bool isCooperativeDispatchSupported() {
-        auto engineGroupType = hwHelper->getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(), hardwareInfo);
-        return hwHelper->isCooperativeDispatchSupported(engineGroupType, commandQueue->getDevice().getHardwareInfo().platform.eProductFamily);
+        auto engineGroupType = hwHelper->getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
+                                                            commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+        return hwHelper->isCooperativeDispatchSupported(engineGroupType);
     }
 
     const cl_uint workDim = 1;

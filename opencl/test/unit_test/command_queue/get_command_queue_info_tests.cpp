@@ -135,7 +135,8 @@ TEST_F(GetCommandQueueFamilyInfoTests, givenQueueFamilyNotSelectedWhenGettingFam
 
     const auto &hwInfo = context.getDevice(0)->getHardwareInfo();
     const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    const auto engineGroupType = hwHelper.getEngineGroupType(context.getDevice(0)->getDefaultEngine().getEngineType(), hwInfo);
+    const auto engineGroupType = hwHelper.getEngineGroupType(context.getDevice(0)->getDefaultEngine().getEngineType(),
+                                                             context.getDevice(0)->getDefaultEngine().getEngineUsage(), hwInfo);
     const auto expectedFamilyIndex = context.getDevice(0)->getDevice().getIndexOfNonEmptyEngineGroup(engineGroupType);
 
     cl_uint familyIndex{};

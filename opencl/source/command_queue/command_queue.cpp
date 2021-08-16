@@ -608,7 +608,7 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
     } else {
         const auto &hwInfo = device->getHardwareInfo();
         const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        const auto engineGroupType = hwHelper.getEngineGroupType(gpgpuEngine->getEngineType(), hwInfo);
+        const auto engineGroupType = hwHelper.getEngineGroupType(gpgpuEngine->getEngineType(), gpgpuEngine->getEngineUsage(), hwInfo);
         const auto familyIndex = device->getDevice().getIndexOfNonEmptyEngineGroup(engineGroupType);
         return static_cast<cl_uint>(familyIndex);
     }
@@ -843,7 +843,8 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                 auto queueFamily = getDevice().getNonEmptyEngineGroup(selectedQueueFamilyIndex);
                 const auto &engine = queueFamily->at(selectedQueueIndex);
                 auto engineType = engine.getEngineType();
-                this->overrideEngine(engineType);
+                auto engineUsage = engine.getEngineUsage();
+                this->overrideEngine(engineType, engineUsage);
                 this->queueCapabilities = getClDevice().getDeviceInfo().queueFamilyProperties[selectedQueueFamilyIndex].capabilities;
                 this->queueFamilyIndex = selectedQueueFamilyIndex;
                 this->queueIndexWithinFamily = selectedQueueIndex;
@@ -853,10 +854,10 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
     requiresCacheFlushAfterWalker = device && (device->getDeviceInfo().parentDevice != nullptr);
 }
 
-void CommandQueue::overrideEngine(aub_stream::EngineType engineType) {
+void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
     const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
     const HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engineType, hwInfo);
+    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engineType, engineUsage, hwInfo);
     const bool isEngineCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroupType);
 
     if (isEngineCopyOnly) {

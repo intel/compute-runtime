@@ -300,7 +300,7 @@ bool Device::createEngines() {
 void Device::addEngineToEngineGroup(EngineControl &engine) {
     const HardwareInfo &hardwareInfo = this->getHardwareInfo();
     const HwHelper &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engine.getEngineType(), hardwareInfo);
+    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hardwareInfo);
 
     if (!hwHelper.isSubDeviceEngineSupported(hardwareInfo, getDeviceBitfield(), engine.getEngineType())) {
         return;
@@ -455,12 +455,12 @@ size_t Device::getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) co
 
 EngineControl *Device::tryGetEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
     for (auto &engine : engines) {
-        if (engine.osContext->getEngineType() == engineType &&
-            engine.osContext->isLowPriority() == (engineUsage == EngineUsage::LowPriority) &&
-            engine.osContext->isInternalEngine() == (engineUsage == EngineUsage::Internal)) {
+        if ((engine.getEngineType() == engineType) &&
+            (engine.getEngineUsage() == engineUsage)) {
             return &engine;
         }
     }
+
     if (DebugManager.flags.OverrideInvalidEngineWithDefault.get()) {
         return &engines[0];
     }

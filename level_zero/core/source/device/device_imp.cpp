@@ -165,7 +165,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
             pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
                                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
                                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS;
-            if (hwHelper.isCooperativeDispatchSupported(static_cast<NEO::EngineGroupType>(i), hardwareInfo.platform.eProductFamily)) {
+            if (hwHelper.isCooperativeDispatchSupported(static_cast<NEO::EngineGroupType>(i))) {
                 pCommandQueueGroupProperties[engineGroupCount].flags |= ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS;
             }
             pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = std::numeric_limits<size_t>::max();

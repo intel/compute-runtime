@@ -689,7 +689,7 @@ class MockHwHelper : public HwHelperHw<GfxFamily> {
         return result;
     }
 
-    EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const override {
+    EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
         switch (engineType) {
         case aub_stream::ENGINE_RCS:
             return EngineGroupType::RenderCompute;

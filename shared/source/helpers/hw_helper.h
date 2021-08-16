@@ -88,7 +88,7 @@ class HwHelper {
                                                 bool forceNonAuxMode,
                                                 bool useL1Cache) = 0;
     virtual const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const = 0;
-    virtual EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const = 0;
+    virtual EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const = 0;
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
     virtual const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
@@ -126,7 +126,7 @@ class HwHelper {
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
-    virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const PRODUCT_FAMILY productFamily) const = 0;
+    virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual bool isCopyOnlyEngineType(EngineGroupType type) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
@@ -134,6 +134,7 @@ class HwHelper {
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isNewResidencyModelSupported() const = 0;
+    virtual bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual uint32_t getDefaultRevisionId(const HardwareInfo &hwInfo) const = 0;
@@ -152,7 +153,6 @@ class HwHelper {
     virtual bool additionalPipeControlArgsRequired() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
-    static uint32_t getGpgpuEnginesCount(const HardwareInfo &hwInfo);
     static uint32_t getCopyEnginesCount(const HardwareInfo &hwInfo);
 
   protected:
@@ -257,7 +257,7 @@ class HwHelperHw : public HwHelper {
 
     const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override;
 
-    EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const override;
+    EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override;
 
     const StackVec<size_t, 3> getDeviceSubGroupSizes() const override;
 
@@ -335,13 +335,15 @@ class HwHelperHw : public HwHelper {
 
     bool packedFormatsSupported() const override;
 
-    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const PRODUCT_FAMILY productFamily) const override;
+    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType) const override;
 
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 
     bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const override;
 
     bool isNewResidencyModelSupported() const override;
+
+    bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
 
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
 

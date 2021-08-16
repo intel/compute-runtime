@@ -937,7 +937,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         }
         auto &hwInfo = peekHwInfo();
         auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        auto engineGroupType = hwHelper.getEngineGroupType(getOsContext().getEngineType(), hwInfo);
+        auto engineGroupType = hwHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
         auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo) &&
                                    (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);

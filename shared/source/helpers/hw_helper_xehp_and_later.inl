@@ -93,7 +93,7 @@ const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(co
 };
 
 template <typename GfxFamily>
-EngineGroupType HwHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const {
+EngineGroupType HwHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     if (engineType == aub_stream::ENGINE_RCS) {
         return EngineGroupType::RenderCompute;
     }

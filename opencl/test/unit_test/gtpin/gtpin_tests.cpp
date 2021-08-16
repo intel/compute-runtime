@@ -942,13 +942,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     size_t localWorkSize[3] = {1, 1, 1};
     CommandQueue *commandQueue = nullptr;
     WithCastToInternal(cmdQ, &commandQueue);
-    auto &hwInfo = pDevice->getDevice().getHardwareInfo();
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto engineGroupType = hwHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(), hwInfo);
-    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getDevice().getHardwareInfo().platform.eProductFamily)) {
-        commandQueue->getGpgpuEngine().osContext = commandQueue->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
-    }
-    size_t n = pKernel1->getMaxWorkGroupCount(workDim, localWorkSize, commandQueue);
+    size_t n = 100;
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 

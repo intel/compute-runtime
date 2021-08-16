@@ -65,17 +65,4 @@ uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
     }
 }
 
-uint32_t HwHelper::getGpgpuEnginesCount(const HardwareInfo &hwInfo) {
-    uint32_t enginesCount = 0;
-
-    if (hwInfo.featureTable.ftrCCSNode) {
-        enginesCount += hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-    }
-
-    if (hwInfo.featureTable.ftrRcsNode) {
-        enginesCount += 1;
-    }
-
-    return enginesCount;
-}
 } // namespace NEO

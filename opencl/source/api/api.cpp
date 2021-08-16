@@ -5932,18 +5932,27 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
 
     auto &device = pCommandQueue->getClDevice();
     auto rootDeviceIndex = device.getRootDeviceIndex();
-    auto &hardwareInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto engineGroupType = hwHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(), hardwareInfo);
-    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo.platform.eProductFamily)) {
-        retVal = CL_INVALID_COMMAND_QUEUE;
-        return retVal;
-    }
 
     pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     size_t globalWorkSize[3];
     for (size_t i = 0; i < workDim; i++) {
         globalWorkSize[i] = workgroupCount[i] * localWorkSize[i];
+    }
+
+    if (pKernel->usesSyncBuffer()) {
+        if (pKernel->getExecutionType() != KernelExecutionType::Concurrent) {
+            retVal = CL_INVALID_KERNEL;
+            return retVal;
+        }
+
+        auto &hardwareInfo = device.getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        auto engineGroupType = hwHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
+                                                           pCommandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+        if (!hwHelper.isCooperativeDispatchSupported(engineGroupType)) {
+            retVal = CL_INVALID_COMMAND_QUEUE;
+            return retVal;
+        }
     }
 
     if (pKernel->getExecutionType() == KernelExecutionType::Concurrent) {
@@ -5958,18 +5967,13 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
     }
 
-    if (pKernel->usesSyncBuffer()) {
-        if (pKernel->getExecutionType() != KernelExecutionType::Concurrent) {
-            retVal = CL_INVALID_KERNEL;
-            return retVal;
-        }
-
-        device.getDevice().allocateSyncBufferHandler();
-    }
-
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         return retVal;
+    }
+
+    if (pKernel->usesSyncBuffer()) {
+        device.getDevice().allocateSyncBufferHandler();
     }
 
     TakeOwnershipWrapper<MultiDeviceKernel> kernelOwnership(*pMultiDeviceKernel, gtpinIsGTPinInitialized());
