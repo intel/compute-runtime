@@ -257,6 +257,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;
+    std::vector<NEO::GraphicsAllocation *> patternAllocations;
 
     NEO::StreamProperties requiredStreamState{};
     NEO::StreamProperties finalStreamState{};

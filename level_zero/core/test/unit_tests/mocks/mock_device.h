@@ -273,6 +273,12 @@ struct Mock<Device> : public Device {
     }
 
     void removeDebugSession() override {}
+
+    NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::GraphicsAllocation::AllocationType type) override {
+        return nullptr;
+    }
+
+    void storeReusableAllocation(NEO::GraphicsAllocation &alloc) override {}
 };
 
 template <>

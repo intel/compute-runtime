@@ -424,6 +424,62 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateMemoryFromHostPtrThenVal
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DeviceTest, givenNonEmptyAllocationsListWhenRequestingAllocationSmallerOrEqualInSizeThenAllocationFromListIsReturned) {
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    constexpr auto dataSize = 1024u;
+    auto data = std::make_unique<int[]>(dataSize);
+
+    constexpr auto allocationSize = sizeof(int) * dataSize;
+
+    auto allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
+                                                                                                           allocationSize,
+                                                                                                           NEO::GraphicsAllocation::AllocationType::FILL_PATTERN,
+                                                                                                           neoDevice->getDeviceBitfield()});
+    device->storeReusableAllocation(*allocation);
+    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    auto obtaindedAllocation = device->obtainReusableAllocation(dataSize, NEO::GraphicsAllocation::AllocationType::FILL_PATTERN);
+    EXPECT_TRUE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_NE(nullptr, obtaindedAllocation);
+    EXPECT_EQ(allocation, obtaindedAllocation);
+    neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DeviceTest, givenNonEmptyAllocationsListWhenRequestingAllocationBiggerInSizeThenNullptrIsReturned) {
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    constexpr auto dataSize = 1024u;
+    auto data = std::make_unique<int[]>(dataSize);
+
+    constexpr auto allocationSize = sizeof(int) * dataSize;
+
+    auto allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
+                                                                                                           allocationSize,
+                                                                                                           NEO::GraphicsAllocation::AllocationType::FILL_PATTERN,
+                                                                                                           neoDevice->getDeviceBitfield()});
+    device->storeReusableAllocation(*allocation);
+    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    auto obtaindedAllocation = device->obtainReusableAllocation(4 * dataSize + 1u, NEO::GraphicsAllocation::AllocationType::FILL_PATTERN);
+    EXPECT_EQ(nullptr, obtaindedAllocation);
+    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+}
+
+TEST_F(DeviceTest, givenNonEmptyAllocationsListAndUnproperAllocationTypeWhenRequestingAllocationThenNullptrIsReturned) {
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    constexpr auto dataSize = 1024u;
+    auto data = std::make_unique<int[]>(dataSize);
+
+    constexpr auto allocationSize = sizeof(int) * dataSize;
+
+    auto allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
+                                                                                                           allocationSize,
+                                                                                                           NEO::GraphicsAllocation::AllocationType::BUFFER,
+                                                                                                           neoDevice->getDeviceBitfield()});
+    device->storeReusableAllocation(*allocation);
+    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    auto obtaindedAllocation = device->obtainReusableAllocation(4 * dataSize + 1u, NEO::GraphicsAllocation::AllocationType::FILL_PATTERN);
+    EXPECT_EQ(nullptr, obtaindedAllocation);
+    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+}
+
 struct DeviceHostPointerTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = new NEO::ExecutionEnvironment();

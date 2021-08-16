@@ -800,6 +800,7 @@ void DeviceImp::releaseResources() {
     metricContext.reset();
     builtins.reset();
     cacheReservation.reset();
+    allocationsForReuse.freeAllGraphicsAllocations(neoDevice);
 
     if (getSourceLevelDebugger()) {
         getSourceLevelDebugger()->notifyDeviceDestruction();
@@ -916,6 +917,18 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
     }
 
     return allocation;
+}
+
+NEO::GraphicsAllocation *DeviceImp::obtainReusableAllocation(size_t requiredSize, NEO::GraphicsAllocation::AllocationType type) {
+    auto alloc = allocationsForReuse.detachAllocation(requiredSize, nullptr, nullptr, type);
+    if (alloc == nullptr)
+        return nullptr;
+    else
+        return alloc.release();
+}
+
+void DeviceImp::storeReusableAllocation(NEO::GraphicsAllocation &alloc) {
+    allocationsForReuse.pushFrontOne(alloc);
 }
 
 ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) {

@@ -64,6 +64,10 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
         device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
     }
     this->ownedPrivateAllocations.clear();
+    for (auto &patternAlloc : this->patternAllocations) {
+        device->storeReusableAllocation(*patternAlloc);
+    }
+    this->patternAllocations.clear();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1468,16 +1472,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
         uint32_t patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / middleElSize);
 
-        auto patternGfxAlloc = getAllocationFromHostPtrMap(pattern, patternAllocationSize);
+        auto patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::GraphicsAllocation::AllocationType::FILL_PATTERN);
         if (patternGfxAlloc == nullptr) {
             patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
                                                                                                                    patternAllocationSize,
                                                                                                                    NEO::GraphicsAllocation::AllocationType::FILL_PATTERN,
                                                                                                                    device->getNEODevice()->getDeviceBitfield()});
-            hostPtrMap.insert(std::make_pair(pattern, patternGfxAlloc));
         }
         void *patternGfxAllocPtr = patternGfxAlloc->getUnderlyingBuffer();
-
+        patternAllocations.push_back(patternGfxAlloc);
         uint64_t patternAllocPtr = reinterpret_cast<uintptr_t>(patternGfxAllocPtr);
         uint64_t patternAllocOffset = 0;
         uint64_t patternSizeToCopy = patternSize;

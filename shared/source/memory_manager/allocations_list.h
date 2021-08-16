@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,9 @@ class CommandStreamReceiver;
 class AllocationsList : public IDList<GraphicsAllocation, true, true> {
   public:
     AllocationsList(AllocationUsage allocationUsage);
-    std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver &commandStreamReceiver, GraphicsAllocation::AllocationType allocationType);
+    AllocationsList();
+    std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, GraphicsAllocation::AllocationType allocationType);
+    void freeAllGraphicsAllocations(Device *neoDevice);
 
   private:
     GraphicsAllocation *detachAllocationImpl(GraphicsAllocation *, void *);

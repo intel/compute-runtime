@@ -98,6 +98,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGettingAllocInRangeThenAlloc
     size_t allocSize = 0x1000;
     NEO::MockGraphicsAllocation alloc(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
     commandList->hostPtrMap.insert(std::make_pair(cpuPtr, &alloc));
+    EXPECT_EQ(commandList->getHostPtrMap().size(), 1u);
 
     auto newBufferPtr = ptrOffset(cpuPtr, 0x10);
     auto newBufferSize = allocSize - 0x20;
@@ -114,6 +115,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenSizeIsOutOfRangeThenNullPtrR
     size_t allocSize = 0x1000;
     NEO::MockGraphicsAllocation alloc(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
     commandList->hostPtrMap.insert(std::make_pair(cpuPtr, &alloc));
+    EXPECT_EQ(commandList->getHostPtrMap().size(), 1u);
 
     auto newBufferPtr = ptrOffset(cpuPtr, 0x10);
     auto newBufferSize = allocSize + 0x20;
@@ -130,6 +132,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrIsOutOfRangeThenNullPtrRe
     size_t allocSize = 0x1000;
     NEO::MockGraphicsAllocation alloc(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
     commandList->hostPtrMap.insert(std::make_pair(cpuPtr, &alloc));
+    EXPECT_EQ(commandList->getHostPtrMap().size(), 1u);
 
     auto newBufferPtr = reinterpret_cast<const void *>(gpuAddress - 0x100);
     auto newBufferSize = allocSize - 0x200;
@@ -146,6 +149,8 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGetHostPtrAllocCalledThenCor
     size_t allocSize = 0x1000;
     NEO::MockGraphicsAllocation alloc(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
     commandList->hostPtrMap.insert(std::make_pair(cpuPtr, &alloc));
+    EXPECT_EQ(commandList->getHostPtrMap().size(), 1u);
+
     size_t expectedOffset = 0x10;
     auto newBufferPtr = ptrOffset(cpuPtr, expectedOffset);
     auto newBufferSize = allocSize - 0x20;
@@ -162,6 +167,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrIsInMapThenAllocationRetu
     size_t allocSize = 0x1000;
     NEO::MockGraphicsAllocation alloc(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
     commandList->hostPtrMap.insert(std::make_pair(cpuPtr, &alloc));
+    EXPECT_EQ(commandList->getHostPtrMap().size(), 1u);
 
     auto newBufferPtr = cpuPtr;
     auto newBufferSize = allocSize - 0x20;
@@ -178,6 +184,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrIsInMapButWithBiggerSizeT
     size_t allocSize = 0x1000;
     NEO::MockGraphicsAllocation alloc(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
     commandList->hostPtrMap.insert(std::make_pair(cpuPtr, &alloc));
+    EXPECT_EQ(commandList->getHostPtrMap().size(), 1u);
 
     auto newBufferPtr = cpuPtr;
     auto newBufferSize = allocSize + 0x20;
@@ -194,6 +201,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrLowerThanAnyInMapThenNull
     size_t allocSize = 0x1000;
     NEO::MockGraphicsAllocation alloc(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
     commandList->hostPtrMap.insert(std::make_pair(cpuPtr, &alloc));
+    EXPECT_EQ(commandList->getHostPtrMap().size(), 1u);
 
     auto newBufferPtr = reinterpret_cast<const void *>(gpuAddress - 0x10);
     auto newBufferSize = allocSize - 0x20;

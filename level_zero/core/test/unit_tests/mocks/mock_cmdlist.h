@@ -51,6 +51,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::hostPtrMap;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
+    using BaseClass::patternAllocations;
     using BaseClass::requiredStreamState;
     using BaseClass::unifiedMemoryControls;
     using BaseClass::updateStreamProperties;

@@ -133,6 +133,8 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) = 0;
     virtual ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) = 0;
     virtual ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) = 0;
+    virtual NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::GraphicsAllocation::AllocationType type) = 0;
+    virtual void storeReusableAllocation(NEO::GraphicsAllocation &alloc) = 0;
 };
 
 } // namespace L0

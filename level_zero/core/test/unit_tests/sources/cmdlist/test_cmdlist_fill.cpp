@@ -139,7 +139,7 @@ HWTEST2_F(AppendFillFixture,
 }
 
 HWTEST2_F(AppendFillFixture,
-          givenTwoCallsToAppendMemoryFillWithSamePatternThenAllocationIsAddedtoHostPtrMapOnlyOnce, Platforms) {
+          givenTwoCallsToAppendMemoryFillWithSamePatternThenAllocationIsCreatedForEachCall, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
@@ -147,21 +147,21 @@ HWTEST2_F(AppendFillFixture,
 
     ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 4, allocSize, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    size_t hostPtrMapSize = commandList->getHostPtrMap().size();
-    EXPECT_EQ(hostPtrMapSize, 1u);
+    size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
+    EXPECT_EQ(patternAllocationsVectorSize, 1u);
 
     uint8_t *newDstPtr = new uint8_t[allocSize];
     result = commandList->appendMemoryFill(newDstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    size_t newHostPtrMapSize = commandList->getHostPtrMap().size();
+    size_t newPatternAllocationsVectorSize = commandList->patternAllocations.size();
 
-    EXPECT_EQ(hostPtrMapSize, newHostPtrMapSize);
+    EXPECT_GT(newPatternAllocationsVectorSize, patternAllocationsVectorSize);
 
     delete[] newDstPtr;
 }
 
 HWTEST2_F(AppendFillFixture,
-          givenTwoCallsToAppendMemoryFillWithDifferentPatternsThenHostPtrSizeIncrementsByOne, Platforms) {
+          givenTwoCallsToAppendMemoryFillWithDifferentPatternsThenAllocationIsCreatedForEachPattern, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
@@ -169,15 +169,15 @@ HWTEST2_F(AppendFillFixture,
 
     ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 4, allocSize, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    size_t hostPtrMapSize = commandList->getHostPtrMap().size();
-    EXPECT_EQ(hostPtrMapSize, 1u);
+    size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
+    EXPECT_EQ(patternAllocationsVectorSize, 1u);
 
     uint8_t newPattern[patternSize] = {1, 2, 3, 4};
     result = commandList->appendMemoryFill(dstPtr, newPattern, patternSize, allocSize, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    size_t newHostPtrMapSize = commandList->getHostPtrMap().size();
+    size_t newPatternAllocationsVectorSize = commandList->patternAllocations.size();
 
-    EXPECT_EQ(hostPtrMapSize + 1u, newHostPtrMapSize);
+    EXPECT_EQ(patternAllocationsVectorSize + 1u, newPatternAllocationsVectorSize);
 }
 
 HWTEST2_F(AppendFillFixture,
