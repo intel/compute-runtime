@@ -738,6 +738,8 @@ const TopologyMap &Drm::getTopologyMap() {
 }
 
 int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
+    UNRECOVERABLE_IF(isVmBindAvailable());
+
     drm_i915_gem_wait wait = {};
     wait.bo_handle = waitHandle;
     wait.timeout_ns = timeout;

@@ -998,7 +998,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 
-    EXPECT_EQ(1u, mock->isVmBindAvailableCall.called);
+    EXPECT_EQ(2u, mock->isVmBindAvailableCall.called);
     EXPECT_EQ(0u, mock->waitUserFenceCall.called);
 }
 
@@ -1022,12 +1022,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait);
+    EXPECT_ANY_THROW(testedCsr->waitForFlushStamp(handleToWait));
 
-    EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 
-    EXPECT_EQ(1u, mock->isVmBindAvailableCall.called);
+    EXPECT_EQ(2u, mock->isVmBindAvailableCall.called);
     EXPECT_EQ(0u, mock->waitUserFenceCall.called);
 }
 
