@@ -37,7 +37,6 @@ struct PreambleHelper {
     static void programPipelineSelect(LinearStream *pCommandStream,
                                       const PipelineSelectArgs &pipelineSelectArgs,
                                       const HardwareInfo &hwInfo);
-    static void appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo);
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType);
@@ -60,9 +59,6 @@ struct PreambleHelper {
     static void programSemaphoreDelay(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static bool isL3Configurable(const HardwareInfo &hwInfo);
-    static bool isSystolicModeConfigurable(const HardwareInfo &hwInfo);
-    static bool isSpecialPipelineSelectModeChanged(bool lastSpecialPipelineSelectMode, bool newSpecialPipelineSelectMode,
-                                                   const HardwareInfo &hwInfo);
     static size_t getAdditionalCommandsSize(const Device &device);
     static size_t getThreadArbitrationCommandsSize();
     static size_t getVFECommandsSize();

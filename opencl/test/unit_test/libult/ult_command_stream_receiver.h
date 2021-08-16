@@ -84,7 +84,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
     using BaseClass::CommandStreamReceiver::lastSentThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::lastSentUseGlobalAtomics;
-    using BaseClass::CommandStreamReceiver::lastSpecialPipelineSelectMode;
     using BaseClass::CommandStreamReceiver::lastVmeSubslicesConfig;
     using BaseClass::CommandStreamReceiver::latestFlushedTaskCount;
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;
