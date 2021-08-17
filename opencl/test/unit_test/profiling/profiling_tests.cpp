@@ -181,7 +181,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfolingWhenWa
     clReleaseEvent(event);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNonBlockedEnqueueIsExecutedThenSubmittedTimestampHasGPUTime) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNonBlockedEnqueueIsExecutedThenSubmittedTimestampDoesntHaveGPUTime) {
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -203,8 +203,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNo
     auto mockEvent = static_cast<MockEvent<Event> *>(event);
     EXPECT_NE(0u, mockEvent->queueTimeStamp.GPUTimeStamp);
     EXPECT_NE(0u, mockEvent->queueTimeStamp.CPUTimeinNS);
-    EXPECT_LT(mockEvent->queueTimeStamp.GPUTimeStamp, mockEvent->submitTimeStamp.GPUTimeStamp);
     EXPECT_LT(mockEvent->queueTimeStamp.CPUTimeinNS, mockEvent->submitTimeStamp.CPUTimeinNS);
+    EXPECT_EQ(0u, mockEvent->submitTimeStamp.GPUTimeStamp);
 
     clReleaseEvent(event);
 }

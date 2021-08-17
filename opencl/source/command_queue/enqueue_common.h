@@ -812,7 +812,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     TimeStampData submitTimeStamp = {};
     if (isProfilingEnabled() && eventBuilder.getEvent()) {
-        this->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
+        this->getDevice().getOSTime()->getCpuTime(&submitTimeStamp.CPUTimeinNS);
         eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
 
         auto hwTimestampNode = eventBuilder.getEvent()->getHwTimeStampNode();
