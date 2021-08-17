@@ -1736,8 +1736,9 @@ struct CopyOnlyQueueTests : ::testing::Test {
         if (device->engineGroups[static_cast<uint32_t>(EngineGroupType::Copy)].empty()) {
             GTEST_SKIP();
         }
-        device->engineGroups.clear();
-        device->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
+        for (auto &engineGroup : device->engineGroups) {
+            engineGroup.clear();
+        }
         device->engines.clear();
 
         device->createEngine(0, typeUsageRcs);

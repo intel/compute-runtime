@@ -273,8 +273,6 @@ bool Device::createEngines() {
     auto &hwInfo = getHardwareInfo();
     auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
-    this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
-
     uint32_t deviceCsrIndex = 0;
     for (auto &engine : gpgpuEngines) {
         if (engineSupported(engine) && !createEngine(deviceCsrIndex++, engine)) {
@@ -410,7 +408,7 @@ bool Device::isDebuggerActive() const {
 
 const std::vector<EngineControl> *Device::getNonEmptyEngineGroup(size_t index) const {
     auto nonEmptyGroupIndex = 0u;
-    for (auto groupIndex = 0u; groupIndex < engineGroups.size(); groupIndex++) {
+    for (auto groupIndex = 0u; groupIndex < CommonConstants::engineGroupCount; groupIndex++) {
         const std::vector<EngineControl> *currentGroup = &engineGroups[groupIndex];
         if (currentGroup->empty()) {
             continue;
@@ -427,7 +425,7 @@ const std::vector<EngineControl> *Device::getNonEmptyEngineGroup(size_t index) c
 
 size_t Device::getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) const {
     const auto groupIndex = static_cast<size_t>(engineGroupType);
-    UNRECOVERABLE_IF(groupIndex >= engineGroups.size());
+    UNRECOVERABLE_IF(groupIndex >= CommonConstants::engineGroupCount);
     UNRECOVERABLE_IF(engineGroups[groupIndex].empty());
 
     size_t result = 0u;

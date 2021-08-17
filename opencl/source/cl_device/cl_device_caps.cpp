@@ -375,9 +375,9 @@ void ClDevice::initializeCaps() {
         }
     }
 
-    const std::vector<std::vector<EngineControl>> &queueFamilies = this->getDevice().getEngineGroups();
-    for (size_t queueFamilyIndex = 0u; queueFamilyIndex < queueFamilies.size(); queueFamilyIndex++) {
-        const std::vector<EngineControl> &enginesInFamily = queueFamilies.at(queueFamilyIndex);
+    const auto &queueFamilies = this->getDevice().getEngineGroups();
+    for (size_t queueFamilyIndex = 0u; queueFamilyIndex < CommonConstants::engineGroupCount; queueFamilyIndex++) {
+        const std::vector<EngineControl> &enginesInFamily = queueFamilies[queueFamilyIndex];
         if (enginesInFamily.size() > 0) {
             const auto engineGroupType = static_cast<EngineGroupType>(queueFamilyIndex);
             cl_queue_family_properties_intel properties = {};

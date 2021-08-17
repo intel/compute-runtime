@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/source/helpers/common_types.h"
 
+#include "engine_group_types.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -86,4 +88,5 @@ namespace CommonConstants {
 constexpr uint32_t unspecifiedDeviceIndex = std::numeric_limits<uint32_t>::max();
 constexpr uint32_t invalidStepping = std::numeric_limits<uint32_t>::max();
 constexpr uint32_t maximalSimdSize = 32;
+constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups);
 } // namespace CommonConstants

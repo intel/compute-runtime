@@ -33,6 +33,9 @@ struct SelectorCopyEngine : NonCopyableOrMovableClass {
 
 class Device : public ReferenceTrackedObject<Device> {
   public:
+    using EngineGroupT = std::vector<EngineControl>;
+    using EngineGroupsT = EngineGroupT[CommonConstants::engineGroupCount];
+
     Device &operator=(const Device &) = delete;
     Device(const Device &) = delete;
     ~Device() override;
@@ -56,7 +59,7 @@ class Device : public ReferenceTrackedObject<Device> {
     const DeviceInfo &getDeviceInfo() const;
     EngineControl *tryGetEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);
     EngineControl &getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);
-    std::vector<std::vector<EngineControl>> &getEngineGroups() {
+    EngineGroupsT &getEngineGroups() {
         return this->engineGroups;
     }
     const std::vector<EngineControl> *getNonEmptyEngineGroup(size_t index) const;
@@ -161,7 +164,7 @@ class Device : public ReferenceTrackedObject<Device> {
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;
-    std::vector<std::vector<EngineControl>> engineGroups;
+    EngineGroupsT engineGroups;
     std::vector<SubDevice *> subdevices;
 
     PreemptionMode preemptionMode;

@@ -522,10 +522,9 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, givenValidFamilyAndIndexSelectedWh
 }
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, givenInvalidQueueFamilySelectedWhenCreatingQueueThenFail) {
-    const auto &families = castToObject<ClDevice>(testedClDevice)->getDevice().getEngineGroups();
     cl_queue_properties queueProperties[] = {
         CL_QUEUE_FAMILY_INTEL,
-        families.size(),
+        CommonConstants::engineGroupCount,
         CL_QUEUE_INDEX_INTEL,
         0,
         0,

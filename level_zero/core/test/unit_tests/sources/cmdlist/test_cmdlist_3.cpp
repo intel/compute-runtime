@@ -1146,7 +1146,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
 TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListForCopyEnigneThenItHasImmediateCommandQueueCreated) {
     auto &engines = neoDevice->getEngineGroups();
     uint32_t numaAvailableEngineGroups = 0;
-    for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
+    for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {
         if (engines[ordinal].size()) {
             numaAvailableEngineGroups++;
         }

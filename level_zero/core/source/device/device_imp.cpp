@@ -154,13 +154,12 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
     auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     *pCount = std::min(numEngineGroups, *pCount);
-    for (uint32_t i = 0, engineGroupCount = 0;
-         i < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups) && engineGroupCount < *pCount;
-         i++) {
+    for (uint32_t i = 0, engineGroupCount = 0; engineGroupCount < *pCount; i++) {
 
         if (engineGroups[i].empty()) {
             continue;
         }
+
         if (i == static_cast<uint32_t>(NEO::EngineGroupType::RenderCompute)) {
             pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
                                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
@@ -892,7 +891,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
 }
 
 ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) {
-    if (ordinal >= static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups)) {
+    if (ordinal >= CommonConstants::engineGroupCount) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     uint32_t engineGroupIndex = ordinal;
@@ -926,7 +925,7 @@ ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
     const auto &engines = activeDevice->getEngineGroups();
     uint32_t numNonEmptyGroups = 0;
     uint32_t i = 0;
-    for (; i < engines.size() && numNonEmptyGroups <= *ordinal; i++) {
+    for (; i < CommonConstants::engineGroupCount && numNonEmptyGroups <= *ordinal; i++) {
         if (!engines[i].empty()) {
             numNonEmptyGroups++;
         }

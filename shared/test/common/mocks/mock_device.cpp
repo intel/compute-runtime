@@ -37,7 +37,6 @@ MockDevice::MockDevice()
     commandStreamReceiver->setupContext(*osContext);
     this->engines.resize(1);
     this->engines[0] = {commandStreamReceiver, osContext};
-    this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
     initializeCaps();
 }
 
@@ -49,7 +48,6 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
     : RootDevice(executionEnvironment, rootDeviceIndex) {
     UltDeviceFactory::initializeMemoryManager(*executionEnvironment);
     this->osTime = MockOSTime::create();
-    this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
     auto &hwInfo = getHardwareInfo();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
     initializeCaps();

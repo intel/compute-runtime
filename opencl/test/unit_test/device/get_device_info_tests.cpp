@@ -727,7 +727,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThen
     size_t paramRetSize{};
     cl_int retVal{};
 
-    cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+    cl_queue_family_properties_intel families[CommonConstants::engineGroupCount];
     retVal = clDevice.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
@@ -748,7 +748,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenRet
     size_t paramRetSize{};
     cl_int retVal{};
 
-    cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+    cl_queue_family_properties_intel families[CommonConstants::engineGroupCount];
     retVal = clDevice.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
@@ -781,7 +781,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
 
     // subdevice 0
     {
-        cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+        cl_queue_family_properties_intel families[CommonConstants::engineGroupCount];
         retVal = clDevice0.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
@@ -797,7 +797,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
 
     // subdevice 1
     {
-        cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+        cl_queue_family_properties_intel families[CommonConstants::engineGroupCount];
         retVal = clDevice1.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(1u, paramRetSize / sizeof(cl_queue_family_properties_intel));
@@ -821,7 +821,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenDeviceRootDeviceWhenInitializingCaps
     size_t paramRetSize{};
     cl_int retVal{};
 
-    cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+    cl_queue_family_properties_intel families[CommonConstants::engineGroupCount];
     retVal = clDevice.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, paramRetSize / sizeof(cl_queue_family_properties_intel));
