@@ -100,7 +100,7 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
 
         printfHandler->printEnqueueOutput();
 
-        auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
+        auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
         auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
 
         if (enable > 0) {

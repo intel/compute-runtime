@@ -78,7 +78,7 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 void PrintfHandler::printEnqueueOutput() {
     auto &helper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
     if (helper.allowStatelessCompression(device.getHardwareInfo())) {
-        auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(device.getHardwareInfo(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);
+        auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(device.getHardwareInfo(), device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
             BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,

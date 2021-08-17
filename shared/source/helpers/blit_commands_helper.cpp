@@ -192,7 +192,8 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         auto pDeviceForBlit = pRootDevice->getDeviceById(tileId);
 
         auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
-        auto bcsEngine = pDeviceForBlit->tryGetEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine, true), EngineUsage::Regular);
+        auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
+        auto bcsEngine = pDeviceForBlit->tryGetEngine(EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, true), EngineUsage::Regular);
         if (!bcsEngine) {
             return BlitOperationResult::Unsupported;
         }

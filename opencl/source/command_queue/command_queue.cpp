@@ -85,7 +85,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         if (bcsAllowed) {
             auto &neoDevice = device->getDeviceById(0)->getDevice();
             auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
-            auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine, internalUsage);
+            auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
             bcsEngine = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
         }
     }
