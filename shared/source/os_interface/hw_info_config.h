@@ -44,6 +44,8 @@ class HwInfoConfig {
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
     virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
+    virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
+
     uint32_t threadsPerEu;
 };
 
@@ -70,6 +72,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
     void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) override;
+    bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

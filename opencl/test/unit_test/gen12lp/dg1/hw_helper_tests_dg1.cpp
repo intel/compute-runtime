@@ -93,12 +93,6 @@ DG1TEST_F(HwHelperTestDg1, givenDg1WhenSteppingB0ThenIntegerDivisionEmulationIsN
     EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }
 
-DG1TEST_F(HwHelperTestDg1, givenDg1WhenObtainingBlitterPreferenceThenReturnFalse) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    EXPECT_FALSE(helper.obtainBlitterPreference(hardwareInfo));
-}
-
 DG1TEST_F(HwHelperTestDg1, givenDg1WhenGettingLocalMemoryAccessModeThenReturnCpuAccessDefault) {
     struct MockHwHelper : HwHelperHw<FamilyType> {
         using HwHelper::getDefaultLocalMemoryAccessMode;

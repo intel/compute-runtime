@@ -50,11 +50,6 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
     return false;
 }
 
-template <typename Family>
-bool HwHelperHw<Family>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
 template <typename GfxFamily>
 const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     return {

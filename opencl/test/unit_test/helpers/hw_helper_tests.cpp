@@ -1131,7 +1131,7 @@ HWTEST2_F(HwInfoConfigCommonTest, givenBlitterPreferenceWhenEnablingBlitterOpera
 
     hwInfoConfig->configureHardwareCustom(&hardwareInfo, nullptr);
 
-    const auto expectedBlitterSupport = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).obtainBlitterPreference(hardwareInfo);
+    const auto expectedBlitterSupport = hwInfoConfig->obtainBlitterPreference(hardwareInfo);
     EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 

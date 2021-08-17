@@ -42,7 +42,7 @@ void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwar
 
 template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hwInfo) {
-    hwInfo->capabilityTable.blitterOperationsSupported = HwHelper::get(hwInfo->platform.eRenderCoreFamily).obtainBlitterPreference(*hwInfo);
+    hwInfo->capabilityTable.blitterOperationsSupported = obtainBlitterPreference(*hwInfo);
 
     if (DebugManager.flags.EnableBlitterOperationsSupport.get() != -1) {
         hwInfo->capabilityTable.blitterOperationsSupported = !!DebugManager.flags.EnableBlitterOperationsSupport.get();

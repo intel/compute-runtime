@@ -90,6 +90,11 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroup(const HardwareI
 template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {}
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
@@ -165,6 +170,11 @@ HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoTh
     initialHwInfo.featureTable.ftrL3IACoherency = true;
     hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
+}
+
+HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingObtainBlitterPreferenceThenFalseIsReturned) {
+    bool ret = hwConfig.obtainBlitterPreference(outHwInfo);
+    EXPECT_FALSE(ret);
 }
 
 } // namespace NEO

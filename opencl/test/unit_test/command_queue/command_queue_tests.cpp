@@ -12,6 +12,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -1144,7 +1145,7 @@ TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestamp
 
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
-    if (!HwHelper::get(hwInfo->platform.eDisplayCoreFamily).obtainBlitterPreference(*hwInfo)) {
+    if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->obtainBlitterPreference(*defaultHwInfo.get())) {
         GTEST_SKIP();
     }
 

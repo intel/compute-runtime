@@ -32,4 +32,9 @@ uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const Ha
     return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
 } // namespace NEO

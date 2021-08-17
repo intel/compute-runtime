@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -77,4 +78,11 @@ DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWor
 DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
     const HardwareInfo &hardwareInfo = DG1::hwInfo;
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
+}
+
+DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingBlitterPreferenceThenReturnFalse) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const auto &hardwareInfo = DG1::hwInfo;
+
+    EXPECT_FALSE(hwInfoConfig.obtainBlitterPreference(hardwareInfo));
 }

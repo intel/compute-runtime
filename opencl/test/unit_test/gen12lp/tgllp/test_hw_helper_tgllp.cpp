@@ -81,12 +81,6 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIsWorka
     }
 }
 
-TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenObtainingBlitterPreferenceThenReturnFalse) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    EXPECT_FALSE(helper.obtainBlitterPreference(hardwareInfo));
-}
-
 TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenGettingLocalMemoryAccessModeThenReturnCpuAccessDefault) {
     struct MockHwHelper : HwHelperHw<FamilyType> {
         using HwHelper::getDefaultLocalMemoryAccessMode;

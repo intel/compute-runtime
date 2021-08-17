@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
@@ -163,4 +164,11 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenPrepareDevice
         EXPECT_EQ(memoryOperationHandlers.end(), memoryOperationHandlers.find(memoryOperationInterface));
         memoryOperationHandlers.insert(memoryOperationInterface);
     }
+}
+
+TGLLPTEST_F(TgllpHwInfo, givenTgllpWhenObtainingBlitterPreferenceThenReturnFalse) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const auto &hardwareInfo = *defaultHwInfo;
+
+    EXPECT_FALSE(hwInfoConfig.obtainBlitterPreference(hardwareInfo));
 }

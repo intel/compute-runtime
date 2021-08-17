@@ -111,6 +111,11 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroup(const HardwareI
 
 template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
+    return false;
+}
 } // namespace NEO
 
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
@@ -625,4 +630,9 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
     ret = hwConfig->configureHwInfoDrm(&hwInfo, &outHwInfo, osInterface.get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(8u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
+}
+
+HWTEST_F(HwInfoConfigTestLinuxDummy, givenHardwareInfoWhenCallingObtainBlitterPreferenceThenFalseIsReturned) {
+    bool ret = hwConfig.obtainBlitterPreference(outHwInfo);
+    EXPECT_FALSE(ret);
 }

@@ -64,11 +64,6 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
     return true;
 }
 
-template <typename Family>
-bool HwHelperHw<Family>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
 template <typename GfxFamily>
 const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
