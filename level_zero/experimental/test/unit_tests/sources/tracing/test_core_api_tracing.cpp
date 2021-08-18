@@ -150,7 +150,7 @@ TEST(zeAPITracingCoreTestsNoSetup, WhenCreateTracerAndNoZetInitThenReturnFailure
     ze_result_t result;
 
     zet_tracer_exp_handle_t APITracerHandle;
-    zet_tracer_exp_desc_t tracer_desc;
+    zet_tracer_exp_desc_t tracer_desc = {};
 
     result = zetTracerExpCreate(nullptr, &tracer_desc, &APITracerHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
@@ -160,7 +160,7 @@ TEST_F(zeAPITracingCoreTests, WhenCreateTracerAndsetCallbacksAndEnableTracingAnd
     ze_result_t result;
 
     zet_tracer_exp_handle_t APITracerHandle;
-    zet_tracer_exp_desc_t tracer_desc;
+    zet_tracer_exp_desc_t tracer_desc = {};
 
     result = zetTracerExpCreate(nullptr, &tracer_desc, &APITracerHandle);
 
