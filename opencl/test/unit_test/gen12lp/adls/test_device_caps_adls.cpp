@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,9 @@ using namespace NEO;
 using AdlsUsDeviceIdTest = Test<ClDeviceFixture>;
 
 ADLSTEST_F(AdlsUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
-    unsigned short adlsSimulationIds[2] = {
+    unsigned short adlsSimulationIds[3] = {
         0x4680,
+        0x4690,
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;
