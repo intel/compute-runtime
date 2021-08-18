@@ -103,7 +103,6 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryStatus() {
     uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
     uint32_t queryVal = Event::STATE_CLEARED;
-    ze_result_t retVal;
 
     if (metricStreamer != nullptr) {
         *hostAddr = metricStreamer->getNotificationState();
@@ -113,13 +112,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         return queryStatusKernelTimestamp();
     }
     memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
-    retVal = (queryVal == Event::STATE_CLEARED) ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
-
-    if (retVal == ZE_RESULT_NOT_READY) {
-        return retVal;
-    }
-
-    return retVal;
+    return (queryVal == Event::STATE_CLEARED) ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
 }
 
 template <typename TagSizeT>
@@ -138,7 +131,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
     };
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelTimestampsData[i].getPacketsUsed();
-        for (uint32_t i = 0; i < packetsToSet; i++) {
+        for (uint32_t j = 0; j < packetsToSet; j++) {
             eventTsSetFunc(baseAddr + NEO::TimestampPackets<TagSizeT>::getContextStartOffset());
             eventTsSetFunc(baseAddr + NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset());
             eventTsSetFunc(baseAddr + NEO::TimestampPackets<TagSizeT>::getContextEndOffset());
