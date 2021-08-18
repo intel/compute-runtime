@@ -4,6 +4,12 @@
 %global build_id xxx
 %global neo_source_dir %{nil}
 
+%if "%{neo_source_dir}" != ""
+%global neo_build_extra_opts -DNEO_SOURCE_DIR=%neo_source_dir
+%else
+%global neo_build_extra_opts %{nil}
+%endif
+
 %define _source_payload w5T16.xzdio
 %define _binary_payload w5T16.xzdio
 
@@ -41,13 +47,12 @@ exposing hardware capabilities to applications.
 %build
 mkdir build
 cd build
-cmake .. \
+%cmake .. %neo_build_extra_opts \
    -DNEO_VERSION_BUILD=%{build_id} \
    -DCMAKE_BUILD_TYPE=Release \
    -DSKIP_UNIT_TESTS=1 \
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DL0_INSTALL_UDEV_RULES=1 \
-   -DNEO_SOURCE_DIR=%neo_source_dir \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/
 %make_build
 

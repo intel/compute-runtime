@@ -87,14 +87,5 @@ cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc%{?name_suf
 /usr/share/doc/intel-ocloc%{?name_suffix}/copyright
 
 %changelog
-* Wed May 6 2020 Pavel Androniychuk <pavel.androniychuk@intel.com> - 20.17.16650
-- Update spec files to pull version automatically.
-
-* Tue Apr 28 2020 Jacek Danecki <jacek.danecki@intel.com> - 20.16.16582-1
-- Update to 20.16.16582
-
-* Tue Mar 03 2020 Jacek Danecki <jacek.danecki@intel.com> - 20.08.15750-1
-- Update to 20.08.15750
-
-* Wed Nov 20 2019 Pavel Androniychuk <pavel.androniychuk@intel.com> - 19.43.14583
-- Initial spec file
+* Mon Sep 13 2021 Compute-Runtime-Automation <compute-runtime@intel.com>
+- Initial spec file for SLES 15.3

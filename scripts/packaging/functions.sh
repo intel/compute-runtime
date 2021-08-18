@@ -9,8 +9,8 @@
 set -ex
 
 get_api_version() {
-    API_VERSION="0"
-    API_VERSION_SRC="master"
+    API_VERSION="${API_VERSION:-0}"
+    API_VERSION_SRC="${API_VERSION_SRC:-master}"
     API_DEB_MODEL_LINK=""
     API_RPM_MODEL_LINK=""
     if [ "${COMPONENT_MODEL}" != "ci" ]; then

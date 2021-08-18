@@ -42,7 +42,7 @@ Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to con
 mkdir build
 cd build
 cmake .. \
-   -DNEO_VERSION_BUILD=$(ver) \
+   -DNEO_VERSION_BUILD=%{ver} \
    -DCMAKE_BUILD_TYPE=Release \
    -DBUILD_WITH_L0=0 \
    -DSKIP_UNIT_TESTS=1 \

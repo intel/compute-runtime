@@ -10,42 +10,33 @@ set -ex
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_DIR="$( cd "$( dirname "${DIR}/../../../../" )" && pwd )"
-
 BUILD_DIR="${REPO_DIR}/../build_opencl"
-
-BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
 
 ENABLE_OPENCL="${ENABLE_OPENCL:-1}"
 if [ "${ENABLE_OPENCL}" == "0" ]; then
     exit 0
 fi
 
-LOG_CCACHE_STATS="${LOG_CCACHE_STATS:-0}"
-
 BUILD_SRPM="${BUILD_SRPM:-1}"
 BUILD_RPM="${BUILD_RPM:-1}"
-BUILD_NUMBER="${BUILD_NUMBER:-1}"
-BUILD_VERSION="${BUILD_VERSION:-dev-build}"
 
-CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
-
-export PACKAGING_DIR="$REPO_DIR/scripts/packaging/opencl/${OS_TYPE}"
-export SPEC_SRC="$PACKAGING_DIR/SPECS/opencl.spec"
-export SPEC="$BUILD_DIR/SPECS/opencl.spec"
-export COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/copyright"
-
-BRANCH_TYPE=`cat ${REPO_DIR}/.branch`
-[ -z "$BRANCH_TYPE" ] && BRANCH_TYPE='master'
+export BUILD_ID="${BUILD_ID:-1}"
+export CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
 
 (
 if [ "${BUILD_SRPM}" == "1" ]; then
+    BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
+    PACKAGING_DIR="$REPO_DIR/scripts/packaging/opencl/${OS_TYPE}"
+    SPEC_SRC="$PACKAGING_DIR/SPECS/opencl.spec"
+    SPEC="$BUILD_DIR/SPECS/opencl.spec"
+    COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/copyright"
+
     build_args=()
     if [ "${CMAKE_BUILD_TYPE}" == "Debug" ]; then
         export CFLAGS=" "
         export CXXFLAGS=" "
         export FFLAGS=" "
         build_args+=(--define 'name_suffix -debug')
-        build_args+=(--define 'is_debug 1')
     fi
 
     source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/functions.sh"
@@ -82,6 +73,8 @@ fi
 )
 
 if [ "${BUILD_RPM}" == "1" ]; then
+  LOG_CCACHE_STATS="${LOG_CCACHE_STATS:-0}"
+
   rm -rf $BUILD_DIR
   mkdir -p $BUILD_DIR/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 

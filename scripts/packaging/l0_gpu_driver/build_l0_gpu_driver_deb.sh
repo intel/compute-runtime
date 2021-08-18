@@ -23,9 +23,8 @@ fi
 
 LOG_CCACHE_STATS="${LOG_CCACHE_STATS:-0}"
 
-BUILD_ID="${BUILD_ID:-1}"
-CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
-DO_NOT_RUN_AUB_TESTS="${DO_NOT_RUN_AUB_TESTS:-FALSE}"
+export BUILD_ID="${BUILD_ID:-1}"
+export CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
 
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/functions.sh"
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/l0_gpu_driver.sh"
