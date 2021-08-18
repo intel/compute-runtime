@@ -44,7 +44,6 @@ enum class LocalMemoryAccessMode {
 
 class HwHelper {
   public:
-    using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
     virtual uint32_t getBindingTableStateSurfaceStatePointer(const void *pBindingTable, uint32_t index) = 0;
     virtual size_t getBindingTableStateSize() const = 0;

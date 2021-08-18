@@ -261,21 +261,36 @@ bool Device::createDeviceImpl() {
     return true;
 }
 
-bool Device::engineSupported(const EngineTypeUsage &engineTypeUsage) const {
-    if (engineInstanced) {
-        return (EngineHelpers::isBcs(engineTypeUsage.first) || (engineTypeUsage.first == this->engineInstancedType));
+void Device::translateToEngineInstanced(EngineInstancesContainer &engineInstancesContainer) {
+    EngineInstancesContainer newEngines;
+
+    for (auto &engine : engineInstancesContainer) {
+        if (EngineHelpers::isBcs(engine.first) || (engine.first == this->engineInstancedType) || (engine.second != EngineUsage::Regular)) {
+            newEngines.push_back(engine);
+        } else {
+            continue;
+        }
+
+        // Override non-Regular (internal, low priority, ..) to engineInstancedType
+        if (newEngines.rbegin()->second != EngineUsage::Regular && !EngineHelpers::isBcs(newEngines.rbegin()->first)) {
+            newEngines.rbegin()->first = this->engineInstancedType;
+        }
     }
 
-    return true;
+    std::swap(newEngines, engineInstancesContainer);
 }
 
 bool Device::createEngines() {
     auto &hwInfo = getHardwareInfo();
     auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
+    if (engineInstanced) {
+        translateToEngineInstanced(gpgpuEngines);
+    }
+
     uint32_t deviceCsrIndex = 0;
     for (auto &engine : gpgpuEngines) {
-        if (engineSupported(engine) && !createEngine(deviceCsrIndex++, engine)) {
+        if (!createEngine(deviceCsrIndex++, engine)) {
             return false;
         }
     }
@@ -307,7 +322,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     const auto &hwInfo = getHardwareInfo();
     const auto engineType = engineTypeUsage.first;
     const auto engineUsage = engineTypeUsage.second;
-    const auto defaultEngineType = getChosenEngineType(hwInfo);
+    const auto defaultEngineType = engineInstanced ? this->engineInstancedType : getChosenEngineType(hwInfo);
     const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::Regular;
     const bool createAsEngineInstanced = engineInstanced && EngineHelpers::isCcs(engineType);
 

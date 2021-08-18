@@ -366,7 +366,14 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
 
     template <typename MockDeviceT>
     bool hasEngineInstancedEngines(MockDeviceT *device, aub_stream::EngineType engineType) {
-        bool ccsFound = false;
+        bool regularCcsFound = false;
+        bool internalCcsFound = false;
+        bool lowPriorityCcsFound = false;
+
+        OsContext *defaultOsContext = device->getDefaultEngine().osContext;
+        EXPECT_EQ(engineType, defaultOsContext->getEngineType());
+        EXPECT_EQ(EngineUsage::Regular, defaultOsContext->getEngineUsage());
+        EXPECT_TRUE(defaultOsContext->isDefaultContext());
 
         for (auto &engine : device->engines) {
             if ((engine.getEngineType() != engineType) && !EngineHelpers::isBcs(engine.getEngineType())) {
@@ -377,17 +384,25 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
 
             auto osContext = engine.osContext;
 
-            if ((engine.getEngineType() == engineType) &&
-                osContext->isDefaultContext() &&
-                osContext->isRegular() &&
-                !osContext->isLowPriority() &&
-                !osContext->isInternalEngine()) {
-                EXPECT_FALSE(ccsFound);
-                ccsFound = true;
+            if (engine.getEngineType() == engineType) {
+                if (osContext->isRegular()) {
+                    EXPECT_FALSE(regularCcsFound);
+                    regularCcsFound = true;
+                } else if (osContext->isLowPriority()) {
+                    EXPECT_FALSE(lowPriorityCcsFound);
+                    lowPriorityCcsFound = true;
+                } else if (osContext->isInternalEngine()) {
+                    EXPECT_FALSE(internalCcsFound);
+                    internalCcsFound = true;
+                } else {
+                    EXPECT_TRUE(false);
+                }
+            } else if (!EngineHelpers::isBcs(engine.getEngineType())) {
+                EXPECT_TRUE(false);
             }
         }
 
-        return ccsFound;
+        return (regularCcsFound && internalCcsFound && lowPriorityCcsFound);
     }
 
     DebugManagerStateRestore restorer;

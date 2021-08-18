@@ -1552,8 +1552,8 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
     template <typename GfxFamily, int rcsCount, int ccsCount, int bcsCount>
     class MockHwHelper : public HwHelperHw<GfxFamily> {
       public:
-        const HwHelper::EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
-            HwHelper::EngineInstancesContainer result{};
+        const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+            EngineInstancesContainer result{};
             for (int i = 0; i < rcsCount; i++) {
                 result.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
             }

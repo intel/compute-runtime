@@ -51,7 +51,7 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 }
 
 template <typename GfxFamily>
-const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     return {
         {aub_stream::ENGINE_RCS, EngineUsage::Regular},
         {aub_stream::ENGINE_RCS, EngineUsage::LowPriority},

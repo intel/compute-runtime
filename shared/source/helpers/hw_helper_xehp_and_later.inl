@@ -65,7 +65,7 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 }
 
 template <typename GfxFamily>
-const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
 
     EngineInstancesContainer engines;

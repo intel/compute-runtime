@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "engine_node.h"
 
@@ -29,6 +30,7 @@ enum class EngineUsage : uint32_t {
 };
 
 using EngineTypeUsage = std::pair<aub_stream::EngineType, EngineUsage>;
+using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
 
 struct EngineDescriptor {
     EngineDescriptor() = delete;

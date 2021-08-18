@@ -678,8 +678,8 @@ TEST(GetDeviceInfo, WhenQueryingGenericAddressSpaceSupportThenProperValueIsRetur
 template <typename GfxFamily, int ccsCount, int bcsCount>
 class MockHwHelper : public HwHelperHw<GfxFamily> {
   public:
-    const HwHelper::EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
-        HwHelper::EngineInstancesContainer result{};
+    const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+        EngineInstancesContainer result{};
         for (int i = 0; i < ccsCount; i++) {
             result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
         }

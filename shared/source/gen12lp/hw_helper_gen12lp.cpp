@@ -181,7 +181,7 @@ uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
-const HwHelper::EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
 
     EngineInstancesContainer engines = {
