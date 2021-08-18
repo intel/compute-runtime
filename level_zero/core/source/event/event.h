@@ -67,6 +67,7 @@ struct Event : _ze_event_handle_t {
     virtual size_t getGlobalEndOffset() const = 0;
     virtual size_t getSinglePacketSize() const = 0;
     virtual size_t getTimestampSizeInDw() const = 0;
+    virtual ze_result_t hostEventSetValue(uint32_t eventValue) = 0;
     void *hostAddress = nullptr;
     uint32_t kernelCount = 1u;
     ze_event_scope_flags_t signalScope = 0u;
@@ -136,6 +137,7 @@ struct EventImp : public Event {
     size_t getGlobalStartOffset() const override { return NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset(); }
     size_t getGlobalEndOffset() const override { return NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset(); }
     size_t getSinglePacketSize() const override { return NEO::TimestampPackets<TagSizeT>::getSinglePacketSize(); };
+    ze_result_t hostEventSetValue(uint32_t eventValue) override;
 
     std::unique_ptr<KernelTimestampsData<TagSizeT>[]> kernelTimestampsData;
 
@@ -146,7 +148,6 @@ struct EventImp : public Event {
   protected:
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusKernelTimestamp();
-    ze_result_t hostEventSetValue(uint32_t eventValue);
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
     void assignTimestampData(void *address);
 };
@@ -169,6 +170,8 @@ struct EventPool : _ze_event_pool_handle_t {
     virtual NEO::MultiGraphicsAllocation &getAllocation() { return *eventPoolAllocations; }
 
     virtual uint32_t getEventSize() = 0;
+    virtual void setEventSize(uint32_t) = 0;
+    virtual void setEventAlignment(uint32_t) = 0;
 
     bool isEventPoolTimestampFlagSet() {
         if (NEO::DebugManager.flags.DisableTimestampEvents.get()) {
@@ -209,6 +212,8 @@ struct EventPoolImp : public EventPool {
     ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) override;
 
     uint32_t getEventSize() override { return eventSize; }
+    void setEventSize(uint32_t size) override { eventSize = size; }
+    void setEventAlignment(uint32_t alignment) override { eventAlignment = alignment; }
     size_t getNumEvents() { return numEvents; }
 
     Device *getDevice() override { return devices[0]; }
@@ -217,6 +222,7 @@ struct EventPoolImp : public EventPool {
     std::vector<Device *> devices;
     ContextImp *context = nullptr;
     size_t numEvents;
+    bool isImportedIpcPool = false;
 
   protected:
     uint32_t eventAlignment = 0;

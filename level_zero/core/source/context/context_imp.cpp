@@ -431,11 +431,9 @@ ze_result_t ContextImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
     Device *device = this->devices.begin()->second;
     auto neoDevice = device->getNEODevice();
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
-    const uint32_t eventAlignment = 4 * MemoryConstants::cacheLineSize;
-    uint32_t eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets *
-                                                           NEO::TimestampPackets<uint32_t>::getSinglePacketSize(),
-                                                       eventAlignment));
-
+    auto &hwHelper = device->getHwHelper();
+    const uint32_t eventAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
+    uint32_t eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment));
     size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       alignedSize,
@@ -460,6 +458,9 @@ ze_result_t ContextImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
     eventPool->eventPoolAllocations->addAllocation(alloc);
     eventPool->eventPoolPtr = reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
     eventPool->devices.push_back(device);
+    eventPool->isImportedIpcPool = true;
+    eventPool->setEventSize(eventSize);
+    eventPool->setEventAlignment(eventAlignment);
 
     *phEventPool = eventPool;
 

@@ -15,6 +15,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
@@ -254,7 +255,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNum
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsCreated) {
+TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsCreatedAndEventSizesAreTheSame) {
     uint32_t numEvents = 4;
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -275,6 +276,9 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsC
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     L0::EventPool *ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
+
+    EXPECT_EQ(ipcEventPool->getEventSize(), eventPool->getEventSize());
+
     res = ipcEventPool->closeIpcHandle();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
@@ -485,6 +489,61 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAn
     *hostAddr = Event::STATE_SIGNALED;
     ze_result_t result = event->hostSynchronize(10);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+using EventPoolIPCEventResetTests = Test<DeviceFixture>;
+
+TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIpcFlagThenEventsInNewPoolAreNotReset) {
+    std::unique_ptr<L0::EventPoolImp> eventPool = nullptr;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPool = std::unique_ptr<L0::EventPoolImp>(static_cast<L0::EventPoolImp *>(L0::EventPool::create(driverHandle.get(),
+                                                                                                        context,
+                                                                                                        0,
+                                                                                                        nullptr,
+                                                                                                        &eventPoolDesc)));
+    EXPECT_NE(nullptr, eventPool);
+
+    std::unique_ptr<L0::EventImp<uint32_t>> event0;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+    eventDesc.wait = 0;
+    event0 = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
+                                                                                                                       &eventDesc,
+                                                                                                                       device)));
+    EXPECT_NE(nullptr, event0);
+
+    uint32_t *hostAddr = static_cast<uint32_t *>(event0->getHostAddress());
+    EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
+
+    // change state
+    event0->hostEventSetValue(Event::STATE_SIGNALED);
+    hostAddr = static_cast<uint32_t *>(event0->getHostAddress());
+    EXPECT_EQ(*hostAddr, Event::STATE_SIGNALED);
+
+    // create an event from the pool with the same index as event0, but this time, since isImportedIpcPool is true, no reset should happen
+    eventPool->isImportedIpcPool = true;
+    std::unique_ptr<L0::EventImp<uint32_t>> event1;
+    event1 = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
+                                                                                                                       &eventDesc,
+                                                                                                                       device)));
+    EXPECT_NE(nullptr, event1);
+
+    uint32_t *hostAddr1 = static_cast<uint32_t *>(event1->getHostAddress());
+    EXPECT_EQ(*hostAddr1, Event::STATE_SIGNALED);
+
+    // create another event from the pool with the same index, but this time, since isImportedIpcPool is false, reset should happen
+    eventPool->isImportedIpcPool = false;
+    std::unique_ptr<L0::EventImp<uint32_t>> event2;
+    event2 = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
+                                                                                                                       &eventDesc,
+                                                                                                                       device)));
+    EXPECT_NE(nullptr, event2);
+
+    uint32_t *hostAddr2 = static_cast<uint32_t *>(event2->getHostAddress());
+    EXPECT_EQ(*hostAddr2, Event::STATE_INITIAL);
 }
 
 using EventAubCsrTest = Test<DeviceFixture>;

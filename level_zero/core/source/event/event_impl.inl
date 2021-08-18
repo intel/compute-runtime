@@ -25,7 +25,13 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
     event->csr = static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver;
-    event->reset();
+
+    EventPoolImp *EventPoolImp = static_cast<struct EventPoolImp *>(eventPool);
+    // do not reset even if it has been imported, since event pool
+    // might have been imported after events being already signaled
+    if (EventPoolImp->isImportedIpcPool == false) {
+        event->reset();
+    }
 
     return event;
 }

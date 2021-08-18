@@ -62,6 +62,10 @@ class MockEvent : public ::L0::Event {
         return ZE_RESULT_SUCCESS;
     };
 
+    ze_result_t hostEventSetValue(uint32_t eventValue) override {
+        return ZE_RESULT_SUCCESS;
+    }
+
     size_t getTimestampSizeInDw() const override {
         return 1;
     }
