@@ -2794,5 +2794,87 @@ TEST_F(SharedAllocMultiDeviceTests, whenAllocatinSharedMemoryWithNonNullDeviceIn
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
+struct MemAllocMultiSubDeviceTests : public ::testing::Test {
+    void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
+        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        auto executionEnvironment = new NEO::ExecutionEnvironment;
+        auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+        driverHandle = std::make_unique<DriverHandleImp>();
+        ze_result_t res = driverHandle->initialize(std::move(devices));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerSharedAllocMultiDeviceMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
+
+        context = std::make_unique<ContextMultiDeviceMock>(driverHandle.get());
+        EXPECT_NE(context, nullptr);
+
+        for (uint32_t i = 0; i < numRootDevices; i++) {
+            auto device = driverHandle->devices[i];
+            context->getDevices().insert(std::make_pair(device->toHandle(), device));
+            auto neoDevice = device->getNEODevice();
+            context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+        }
+    }
+
+    void TearDown() override {
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        delete currSvmAllocsManager;
+    }
+
+    DebugManagerStateRestore restorer;
+    NEO::SVMAllocsManager *prevSvmAllocsManager;
+    SVMAllocsManagerSharedAllocMultiDeviceMock *currSvmAllocsManager;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+    std::unique_ptr<ContextMultiDeviceMock> context;
+    const uint32_t numSubDevices = 2u;
+    const uint32_t numRootDevices = 1u;
+};
+
+TEST_F(MemAllocMultiSubDeviceTests, whenAllocatingDeviceMemorySubDeviceMemorySizeUsedWhenImplicitScalingDisabled) {
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = nullptr;
+    size_t size = driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize;
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
+    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
+    relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
+    deviceDesc.pNext = &relaxedSizeDesc;
+
+    DebugManager.flags.EnableWalkerPartition.set(0);
+
+    ze_result_t res = context->allocDeviceMem(driverHandle->devices[0]->toHandle(), &deviceDesc, size, 0u, &ptr);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_UNSUPPORTED_SIZE);
+
+    DebugManager.flags.EnableWalkerPartition.set(1);
+
+    res = context->allocDeviceMem(driverHandle->devices[0]->toHandle(), &deviceDesc, size, 0u, &ptr);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+}
+
+TEST_F(MemAllocMultiSubDeviceTests, whenAllocatingSharedMemorySubDeviceMemorySizeUsedWhenImplicitScalingDisabled) {
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *ptr = nullptr;
+    size_t size = driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize;
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
+    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
+    relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
+    deviceDesc.pNext = &relaxedSizeDesc;
+
+    DebugManager.flags.EnableWalkerPartition.set(0);
+
+    ze_result_t res = context->allocSharedMem(driverHandle->devices[0]->toHandle(), &deviceDesc, &hostDesc, size, 0u, &ptr);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_UNSUPPORTED_SIZE);
+
+    DebugManager.flags.EnableWalkerPartition.set(1);
+
+    res = context->allocSharedMem(driverHandle->devices[0]->toHandle(), &deviceDesc, &hostDesc, size, 0u, &ptr);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+}
+
 } // namespace ult
 } // namespace L0

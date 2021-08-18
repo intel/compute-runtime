@@ -8,6 +8,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/device/sub_device.h"
@@ -275,7 +276,12 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(&hwInfo);
     pMemProperties->maxBusWidth = deviceInfo.addressBits;
-    pMemProperties->totalSize = deviceInfo.globalMemSize;
+    if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(this->getNEODevice()->getDeviceBitfield(), true) ||
+        this->numSubDevices == 0) {
+        pMemProperties->totalSize = deviceInfo.globalMemSize;
+    } else {
+        pMemProperties->totalSize = deviceInfo.globalMemSize / this->numSubDevices;
+    }
 
     return ZE_RESULT_SUCCESS;
 }

@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
@@ -135,17 +136,26 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         return ZE_RESULT_SUCCESS;
     }
 
+    neoDevice = this->driverHandle->devices[0]->getNEODevice();
+
     if (lookupTable.relaxedSizeAllowed == false &&
-        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().maxMemAllocSize)) {
+        (size > neoDevice->getDeviceInfo().maxMemAllocSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
 
-    if (lookupTable.relaxedSizeAllowed &&
-        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize)) {
+    uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
+
+    uint32_t numSubDevices = neoDevice->getNumSubDevices();
+    if ((!(NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true))) && (numSubDevices > 1)) {
+        globalMemSize = globalMemSize / numSubDevices;
+    }
+    if (lookupTable.relaxedSizeAllowed && (size > globalMemSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
+
+    neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
 
@@ -186,20 +196,27 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         }
     }
 
-    if (relaxedSizeAllowed == false &&
-        (size > this->devices.begin()->second->getNEODevice()->getDeviceInfo().maxMemAllocSize)) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-    }
-
-    if (relaxedSizeAllowed &&
-        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize)) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-    }
-
     auto neoDevice = this->devices.begin()->second->getNEODevice();
+    if (relaxedSizeAllowed == false &&
+        (size > neoDevice->getDeviceInfo().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
 
+    neoDevice = this->driverHandle->devices[0]->getNEODevice();
+    uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
+
+    uint32_t numSubDevices = neoDevice->getNumSubDevices();
+    if ((!(NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true))) && (numSubDevices > 1)) {
+        globalMemSize = globalMemSize / numSubDevices;
+    }
+    if (relaxedSizeAllowed &&
+        (size > globalMemSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
+    neoDevice = this->devices.begin()->second->getNEODevice();
     auto deviceBitfields = this->deviceBitfields;
     NEO::Device *unifiedMemoryPropertiesDevice = nullptr;
     if (hDevice) {

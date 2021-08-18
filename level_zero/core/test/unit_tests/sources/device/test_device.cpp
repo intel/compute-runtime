@@ -1201,6 +1201,24 @@ struct MultipleDevicesTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
+TEST_F(MultipleDevicesTest, whenCallingGetMemoryPropertiesWithSubDevicesThenCorrectSizeReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    uint32_t count = 1;
+
+    DebugManager.flags.EnableWalkerPartition.set(0);
+    ze_device_memory_properties_t memProperties = {};
+    ze_result_t res = device0->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    EXPECT_EQ(memProperties.totalSize, device0->getNEODevice()->getDeviceInfo().globalMemSize / numSubDevices);
+
+    DebugManager.flags.EnableWalkerPartition.set(1);
+    res = device0->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    EXPECT_EQ(memProperties.totalSize, device0->getNEODevice()->getDeviceInfo().globalMemSize);
+}
+
 TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
 
