@@ -906,7 +906,7 @@ TEST_P(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringT
 
     GraphicsAllocation graphicsAllocation(0, input.type, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
-    auto result = fileLogger.getAllocationTypeString(&graphicsAllocation);
+    auto result = getAllocationTypeString(&graphicsAllocation);
 
     EXPECT_STREQ(result, input.str);
 }
@@ -922,7 +922,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
 
     GraphicsAllocation graphicsAllocation(0, static_cast<GraphicsAllocation::AllocationType>(999), nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
-    auto result = fileLogger.getAllocationTypeString(&graphicsAllocation);
+    auto result = getAllocationTypeString(&graphicsAllocation);
 
     EXPECT_STREQ(result, "ILLEGAL_VALUE");
 }
@@ -937,20 +937,26 @@ TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenS
     for (uint32_t i = 0; i < static_cast<uint32_t>(GraphicsAllocation::AllocationType::COUNT); i++) {
         graphicsAllocation.setAllocationType(static_cast<GraphicsAllocation::AllocationType>(i));
 
-        auto result = fileLogger.getAllocationTypeString(&graphicsAllocation);
+        auto result = getAllocationTypeString(&graphicsAllocation);
 
         EXPECT_STRNE(result, "ILLEGAL_VALUE");
     }
 }
 
-TEST(AllocationTypeLoggingSingle, givenDisabledDebugFunctionalityWhenGettingGraphicsAllocationTypeThenNullptrReturned) {
+TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenFunctionIsCalledThenProperAllocationTypeIsPrinted) {
     std::string testFile = "testfile";
     DebugVariables flags;
-    FullyDisabledFileLogger fileLogger(testFile, flags);
+    flags.LogAllocationType.set(1);
 
-    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    auto result = fileLogger.getAllocationTypeString(&graphicsAllocation);
+    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
-    EXPECT_STREQ(result, nullptr);
+    testing::internal::CaptureStdout();
+    fileLogger.logAllocation(&graphicsAllocation);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";
+
+    EXPECT_STREQ(output.c_str(), expectedOutput.c_str());
 }

@@ -172,6 +172,7 @@ DECLARE_DEBUG_VARIABLE(bool, LogPatchTokens, false, "Enables logging patch token
 DECLARE_DEBUG_VARIABLE(bool, LogTaskCounts, false, "Enables logging taskCounts and taskLevels to file")
 DECLARE_DEBUG_VARIABLE(bool, LogAlignedAllocations, false, "Logs alignedMalloc and alignedFree allocations")
 DECLARE_DEBUG_VARIABLE(bool, LogAllocationMemoryPool, false, "Logs memory pool for allocations")
+DECLARE_DEBUG_VARIABLE(bool, LogAllocationType, false, "Logs allocation type to sdout")
 DECLARE_DEBUG_VARIABLE(bool, LogMemoryObject, false, "Logs memory object ptrs, sizes and operations")
 DECLARE_DEBUG_VARIABLE(bool, LogWaitingForCompletion, false, "Logs waiting for completion")
 DECLARE_DEBUG_VARIABLE(bool, ResidencyDebugEnable, false, "enables debug messages and checks for Residency Model")

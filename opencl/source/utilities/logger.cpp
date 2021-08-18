@@ -35,6 +35,7 @@ FileLogger<DebugLevel>::FileLogger(std::string filename, const DebugVariables &f
     dumpKernelArgsEnabled = flags.DumpKernelArgs.get();
     logApiCalls = flags.LogApiCalls.get();
     logAllocationMemoryPool = flags.LogAllocationMemoryPool.get();
+    logAllocationType = flags.LogAllocationType.get();
 }
 
 template <DebugFunctionalityLevel DebugLevel>
@@ -86,6 +87,10 @@ void FileLogger<DebugLevel>::logApiCall(const char *function, bool enter, int32_
 
 template <DebugFunctionalityLevel DebugLevel>
 void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAllocation) {
+    if (logAllocationType) {
+        printDebugString(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
+    }
+
     if (false == enabled()) {
         return;
     }
@@ -244,12 +249,7 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const MultiDispatchInfo *multiDispat
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation const *graphicsAllocation) {
-    if (false == enabled()) {
-        return nullptr;
-    }
-
+const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation) {
     auto type = graphicsAllocation->getAllocationType();
 
     switch (type) {

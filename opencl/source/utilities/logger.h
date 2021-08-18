@@ -20,6 +20,8 @@ namespace NEO {
 class Kernel;
 struct MultiDispatchInfo;
 
+const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
+
 template <DebugFunctionalityLevel DebugLevel>
 class FileLogger {
   public:
@@ -137,7 +139,6 @@ class FileLogger {
         logFileName = filename;
     }
 
-    const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
     bool peekLogApiCalls() { return logApiCalls; }
 
   protected:
@@ -147,6 +148,7 @@ class FileLogger {
     bool dumpKernelArgsEnabled = false;
     bool logApiCalls = false;
     bool logAllocationMemoryPool = false;
+    bool logAllocationType = false;
 
     // Required for variadic template with 0 args passed
     void printInputs(std::stringstream &ss) {}
