@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 # Level Zero in Linux distributions
 
-## Centos* 7, 8, Stream, Red Hat Enterprise Linux* 7
+## Centos* 7, Centos* 8, Centos* 8 Stream, Red Hat Enterprise Linux* 7
 
 ```
 yum install yum-plugin-copr
@@ -16,7 +16,7 @@ yum copr enable jdanecki/intel-opencl
 yum install level-zero intel-level-zero-gpu
 ```
 
-## Fedora* 33, 34, rawhide, Red Hat Enterprise Linux* 8, Mageia* 8
+## Fedora* 33, 34, 35, rawhide (36), Centos* 9 Stream, Red Hat Enterprise Linux* 8, Mageia* 8
 
 ```
 dnf install dnf-plugins-core
@@ -39,6 +39,13 @@ zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/
 zypper install level-zero intel-level-zero-gpu
 ```
 
+## OpenSUSE Leap 15.3
+
+```
+zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/repo/opensuse-leap-15.3/jdanecki-intel-opencl-opensuse-leap-15.3.repo
+zypper install level-zero intel-level-zero-gpu
+```
+
 ## OpenSUSE tumbleweed
 
 ```
@@ -46,7 +53,7 @@ zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/
 zypper install level-zero intel-level-zero-gpu
 ```
 
-## Ubuntu* ppa for 18.04, 20.04, 20.10, 21.04
+## Ubuntu* ppa for 18.04, 20.04, 21.04
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl

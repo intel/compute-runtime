@@ -16,18 +16,12 @@ SPDX-License-Identifier: MIT
 pacman -S intel-compute-runtime
 ```
 
-## Centos* 7, 8, Stream, Red Hat Enterprise Linux* 7
+## Centos* 7, Centos* 8, Centos* 8 Stream, Red Hat Enterprise Linux* 7
 
 ```
 yum install yum-plugin-copr
 yum copr enable jdanecki/intel-opencl
 yum install intel-opencl
-```
-
-## Clear Linux
-
-```
-swupd bundle-add computer-vision-basic
 ```
 
 ## Exherbo Linux*
@@ -36,7 +30,7 @@ swupd bundle-add computer-vision-basic
 cave resolve --execute intel-compute-runtime
 ```
 
-## Fedora* 33, 34, rawhide, Red Hat Enterprise Linux* 8, Mageia* 8
+## Fedora* 33, 34, 35, rawhide (36), Centos* 9 Stream, Red Hat Enterprise Linux* 8, Mageia* 8
 
 ```
 dnf install dnf-plugins-core
@@ -51,7 +45,6 @@ dnf install dnf-plugins-core
 dnf copr enable jdanecki/intel-opencl mageia-cauldron-x86_64
 dnf install intel-opencl
 ```
-
 
 ## Gentoo*, Funtoo*
 
@@ -73,6 +66,13 @@ zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/
 zypper install intel-opencl
 ```
 
+## OpenSUSE Leap 15.3
+
+```
+zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/repo/opensuse-leap-15.3/jdanecki-intel-opencl-opensuse-leap-15.3.repo
+zypper install intel-opencl
+```
+
 ## OpenSUSE tumbleweed
 
 ```
@@ -86,7 +86,7 @@ zypper install intel-opencl
 ipoldek install intel-gmmlib intel-graphics-compiler intel-compute-runtime
 ```
 
-## Ubuntu* ppa for 18.04, 20.04, 20.10, 21.04
+## Ubuntu* ppa for 18.04, 20.04, 21.04
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl
@@ -94,7 +94,7 @@ apt update
 apt install intel-opencl-icd
 ```
 
-## Ubuntu* 20.04, 20.10, 21.04
+## Ubuntu* 20.04, 21.04
 
 ```
 apt install intel-opencl-icd
