@@ -247,6 +247,12 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInfor
     EXPECT_EQ(processes[2].sharedSize, sharedMemSize4);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileCountValueIsProvidedThenFailureIsReturned) {
+    uint32_t count = 2;
+
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesDeviceProcessesGetState(device, &count, nullptr));
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingFaultyClientFileThenFailureIsReturned) {
     uint32_t count = 0;
     ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
