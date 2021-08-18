@@ -42,6 +42,10 @@ const std::vector<char> &SipKernel::getStateSaveAreaHeader() const {
 
 SipKernelType SipKernel::getSipKernelType(Device &device) {
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    return getSipKernelType(device, debuggingEnabled);
+}
+
+SipKernelType SipKernel::getSipKernelType(Device &device, bool debuggingEnabled) {
     auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
     return hwHelper.getSipKernelType(debuggingEnabled);
 }
@@ -141,6 +145,11 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
         return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
     }
     return device.getBuiltIns()->getSipKernel(sipType, device);
+}
+
+const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device) {
+    auto debugSipType = SipKernel::getSipKernelType(device, true);
+    return device.getBuiltIns()->getSipKernel(debugSipType, true, device);
 }
 
 } // namespace NEO

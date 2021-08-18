@@ -17,7 +17,7 @@ class MockBuiltins : public NEO::BuiltIns {
     MockBuiltins() : BuiltIns() {
         allocation.reset(new NEO::MockGraphicsAllocation());
     }
-    const NEO::SipKernel &getSipKernel(NEO::SipKernelType type, NEO::Device &device) override;
+    const NEO::SipKernel &getSipKernel(NEO::SipKernelType type, bool bindlessSip, NEO::Device &device) override;
     std::unique_ptr<NEO::SipKernel> sipKernel;
     std::unique_ptr<NEO::MockGraphicsAllocation> allocation;
     std::vector<char> stateSaveAreaHeader{'s', 's', 'a', 'h'};

@@ -12,7 +12,7 @@
 namespace L0 {
 namespace ult {
 
-const NEO::SipKernel &MockBuiltins::getSipKernel(NEO::SipKernelType type, NEO::Device &device) {
+const NEO::SipKernel &MockBuiltins::getSipKernel(NEO::SipKernelType type, bool bindlessSip, NEO::Device &device) {
     if (!(sipKernel && sipKernel->getType() == type)) {
         sipKernel.reset(new NEO::SipKernel(type, allocation.get(), stateSaveAreaHeader));
     }

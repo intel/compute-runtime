@@ -67,4 +67,14 @@ TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThenCorrectSipKernelIsReturn
     EXPECT_EQ(SipKernelType::DbgCsr, sipKernel.getType());
 }
 
+TEST(DebugBindlessSip, givenBindlessDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice);
+
+    EXPECT_NE(nullptr, &sipKernel);
+    EXPECT_LE(SipKernelType::DbgCsr, sipKernel.getType());
+    EXPECT_FALSE(sipKernel.getStateSaveAreaHeader().empty());
+}
 } // namespace SipKernelTests

@@ -133,7 +133,7 @@ class CompilerInterface {
                                                const TranslationInput &input,
                                                TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, bool bindlessSip, std::vector<char> &retBinary,
                                                                      std::vector<char> &stateSaveAreaHeader);
 
   protected:

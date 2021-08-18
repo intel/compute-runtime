@@ -31,6 +31,10 @@ BuiltIns::BuiltIns() {
 BuiltIns::~BuiltIns() = default;
 
 const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
+    return getSipKernel(type, false, device);
+}
+
+const SipKernel &BuiltIns::getSipKernel(SipKernelType type, bool bindlessSip, Device &device) {
     uint32_t kernelId = static_cast<uint32_t>(type);
     UNRECOVERABLE_IF(kernelId >= static_cast<uint32_t>(SipKernelType::COUNT));
     auto &sipBuiltIn = this->sipKernels[kernelId];
@@ -41,7 +45,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         auto compilerInteface = device.getCompilerInterface();
         UNRECOVERABLE_IF(compilerInteface == nullptr);
 
-        auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
+        auto ret = compilerInteface->getSipKernelBinary(device, type, bindlessSip, sipBinary, stateSaveAreaHeader);
 
         UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);

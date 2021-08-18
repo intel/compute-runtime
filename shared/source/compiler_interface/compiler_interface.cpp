@@ -300,7 +300,7 @@ TranslationOutput::ErrorCode CompilerInterface::createLibrary(
     return TranslationOutput::ErrorCode::Success;
 }
 
-TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, bool bindlessSip, std::vector<char> &retBinary,
                                                                    std::vector<char> &stateSaveAreaHeader) {
     if (false == isIgcAvailable()) {
         return TranslationOutput::ErrorCode::CompilerNotAvailable;
@@ -325,7 +325,7 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
     }
 
     auto deviceCtx = getIgcDeviceCtx(device);
-    bool bindlessSip = debugSip ? DebugManager.flags.UseBindlessDebugSip.get() : false;
+    bindlessSip |= debugSip ? DebugManager.flags.UseBindlessDebugSip.get() : false;
 
     auto systemRoutineBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();
     auto stateSaveAreaBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();

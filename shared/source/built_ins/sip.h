@@ -39,7 +39,9 @@ class SipKernel {
     static void freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager);
 
     static const SipKernel &getSipKernel(Device &device);
+    static const SipKernel &getBindlessDebugSipKernel(Device &device);
     static SipKernelType getSipKernelType(Device &device);
+    static SipKernelType getSipKernelType(Device &device, bool debuggingEnable);
 
     static const size_t maxDbgSurfaceSize;
     static SipClassType classType;
