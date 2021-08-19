@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/residency.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/program_initialization.h"
@@ -2769,7 +2770,7 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
     bool mapped = memoryManager->mapAuxGpuVA(&allocation);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getHardwareInfo();
 
-    EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo), mapped);
+    EXPECT_EQ(HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo), mapped);
 }
 
 TEST(MemoryManagerTest, givenDebugModuleAreaAllocationTypeWhenCallingGetAllocationDataThenUse32BitFrontWindowsIsSet) {

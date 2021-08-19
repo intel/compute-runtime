@@ -9,8 +9,8 @@
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/unified/unified_image.h"
-#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/os_interface/raii_hw_info_config.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_mocks.h"
 
@@ -96,8 +96,8 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenPassedFormatWhenCreatingU
     EXPECT_EQ(GFX3DSTATE_SURFACEFORMAT_R16G16_FLOAT, image->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat);
 }
 
-template <typename GfxFamily, bool pageTableManagerSupported>
-class MockHwHelper : public HwHelperHw<GfxFamily> {
+template <bool pageTableManagerSupported>
+class MockHwInfoConfig : public HwInfoConfigHw<IGFX_UNKNOWN> {
   public:
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override {
         return pageTableManagerSupported;
@@ -128,8 +128,8 @@ struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryMan
 HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPageTableManagerWhenCreatingUnifiedImageThenSetCorrespondingFieldInGmmAndDoNotUsePageTableManager) {
     MemoryManagerReturningCompressedAllocations memoryManager{};
     VariableBackup<MemoryManager *> memoryManagerBackup{&this->context->memoryManager, &memoryManager};
-    using HwHelperNotSupportingPageTableManager = MockHwHelper<FamilyType, false>;
-    RAIIHwHelperFactory<HwHelperNotSupportingPageTableManager> hwHelperBackup{this->context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily};
+    using HwInfoConfigNotSupportingPageTableManager = MockHwInfoConfig<false>;
+    RAIIHwInfoConfigFactory<HwInfoConfigNotSupportingPageTableManager> hwInfoConfigBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
 
     cl_mem_flags flags{};
     cl_int retVal{};
@@ -145,8 +145,8 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPag
 HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndPageTableManagerWhenCreatingUnifiedImageThenSetCorrespondingFieldInGmmBasedOnAuxGpuVaMappingResult) {
     MemoryManagerReturningCompressedAllocations memoryManager{};
     VariableBackup<MemoryManager *> memoryManagerBackup{&this->context->memoryManager, &memoryManager};
-    using HwHelperSupportingPageTableManager = MockHwHelper<FamilyType, true>;
-    RAIIHwHelperFactory<HwHelperSupportingPageTableManager> hwHelperBackup{this->context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily};
+    using HwInfoConfigNotSupportingPageTableManager = MockHwInfoConfig<true>;
+    RAIIHwInfoConfigFactory<HwInfoConfigNotSupportingPageTableManager> hwInfoConfigBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
 
     cl_mem_flags flags{};
     cl_int retVal{};

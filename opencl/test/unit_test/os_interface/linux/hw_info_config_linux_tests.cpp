@@ -116,6 +116,11 @@ template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
     return false;
 }
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
 } // namespace NEO
 
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
@@ -634,5 +639,10 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
 
 HWTEST_F(HwInfoConfigTestLinuxDummy, givenHardwareInfoWhenCallingObtainBlitterPreferenceThenFalseIsReturned) {
     bool ret = hwConfig.obtainBlitterPreference(outHwInfo);
+    EXPECT_FALSE(ret);
+}
+
+HWTEST_F(HwInfoConfigTestLinuxDummy, givenHardwareInfoWhenCallingIsPageTableManagerSupportedThenFalseIsReturned) {
+    bool ret = hwConfig.isPageTableManagerSupported(outHwInfo);
     EXPECT_FALSE(ret);
 }

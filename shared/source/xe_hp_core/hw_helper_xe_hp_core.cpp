@@ -48,11 +48,6 @@ inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInf
 }
 
 template <>
-bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool HwHelperHw<Family>::isNewResidencyModelSupported() const {
     return true;
 }

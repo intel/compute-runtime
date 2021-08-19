@@ -91,26 +91,6 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpPlatformWhenSetupHardwareCapabili
     EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    hardwareInfo.capabilityTable.ftrRenderCompressedBuffers = false;
-    hardwareInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_FALSE(helper.isPageTableManagerSupported(hardwareInfo));
-
-    hardwareInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    hardwareInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_TRUE(helper.isPageTableManagerSupported(hardwareInfo));
-
-    hardwareInfo.capabilityTable.ftrRenderCompressedBuffers = false;
-    hardwareInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(helper.isPageTableManagerSupported(hardwareInfo));
-
-    hardwareInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    hardwareInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(helper.isPageTableManagerSupported(hardwareInfo));
-}
-
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCompressionPreferenceThenReturnCorrectValue) {
     auto &helper = HwHelper::get(renderCoreFamily);
 

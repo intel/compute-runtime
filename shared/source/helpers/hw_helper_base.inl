@@ -82,11 +82,6 @@ const AubMemDump::LrcaHelper &HwHelperHw<Family>::getCsTraits(aub_stream::Engine
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename Family>
 bool HwHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
     return false;
 }

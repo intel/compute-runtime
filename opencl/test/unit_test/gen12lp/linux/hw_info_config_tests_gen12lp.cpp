@@ -15,9 +15,9 @@
 
 using namespace NEO;
 
-using HwInfoConfigTestWindowsGen12lp = HwInfoConfigTestLinux;
+using HwInfoConfigTestLinuxGen12lp = HwInfoConfigTestLinux;
 
-GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
+GEN12LPTEST_F(HwInfoConfigTestLinuxGen12lp, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     PLATFORM *testPlatform = &outHwInfo.platform;
@@ -27,4 +27,24 @@ GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenGen12LpProductWhenAdjustPlatf
 
     EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eRenderCoreFamily);
     EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eDisplayCoreFamily);
+}
+
+GEN12LPTEST_F(HwInfoConfigTestLinuxGen12lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+
+    outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
+    EXPECT_FALSE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+
+    outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
+    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+
+    outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
+    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+
+    outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
+    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
 }

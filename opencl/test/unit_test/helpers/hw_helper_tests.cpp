@@ -184,11 +184,6 @@ HWTEST2_F(HwHelperTest, givenHwHelperWhenGettingThreadsPerEUConfigsThenNoConfigs
     EXPECT_EQ(0U, configs.size());
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenAskedForPageTableManagerSupportThenReturnCorrectValue) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(helper.isPageTableManagerSupported(hardwareInfo), UnitTestHelper<FamilyType>::isPageTableManagerSupported(hardwareInfo));
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGetGpuTimeStampInNSIsCalledThenCorrectValueIsReturned) {
 
     auto &helper = HwHelper::get(renderCoreFamily);

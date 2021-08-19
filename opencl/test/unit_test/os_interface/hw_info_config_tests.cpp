@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -152,4 +153,9 @@ HWTEST_F(HwInfoConfigTest, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupW
     bool ret = hwInfoConfig->isMaxThreadsForWorkgroupWARequired(pInHwInfo);
 
     EXPECT_FALSE(ret);
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedForPageTableManagerSupportThenReturnCorrectValue) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_EQ(hwInfoConfig.isPageTableManagerSupported(pInHwInfo), UnitTestHelper<FamilyType>::isPageTableManagerSupported(pInHwInfo));
 }

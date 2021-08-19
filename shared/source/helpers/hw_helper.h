@@ -60,7 +60,6 @@ class HwHelper {
     virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
     virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
@@ -237,8 +236,6 @@ class HwHelperHw : public HwHelper {
     bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override;
 
     bool timestampPacketWriteSupported() const override;
-
-    bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
 
     bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override;
 

@@ -9,6 +9,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -95,6 +96,11 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::obtainBlitterPreference(const HardwareInfo &h
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
@@ -174,6 +180,11 @@ HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoTh
 
 HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingObtainBlitterPreferenceThenFalseIsReturned) {
     bool ret = hwConfig.obtainBlitterPreference(outHwInfo);
+    EXPECT_FALSE(ret);
+}
+
+HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsPageTableManagerSupportedThenFalseIsReturned) {
+    bool ret = hwConfig.isPageTableManagerSupported(outHwInfo);
     EXPECT_FALSE(ret);
 }
 

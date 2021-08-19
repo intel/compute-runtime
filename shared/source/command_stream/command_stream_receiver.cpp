@@ -24,6 +24,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpuintrinsics.h"
@@ -665,7 +666,7 @@ bool CommandStreamReceiver::needsPageTableManager(aub_stream::EngineType engineT
     if (rootDeviceEnvironment->pageTableManager.get() != nullptr) {
         return false;
     }
-    return HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo);
+    return HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
 }
 
 void CommandStreamReceiver::printDeviceIndex() {

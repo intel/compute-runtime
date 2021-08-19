@@ -70,11 +70,6 @@ bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const 
 }
 
 template <>
-bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
-    return hwInfo.capabilityTable.ftrRenderCompressedBuffers || hwInfo.capabilityTable.ftrRenderCompressedImages;
-}
-
-template <>
 uint32_t HwHelperHw<Family>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
         switch (stepping) {

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
+
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
@@ -541,9 +543,9 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedWithUnifiedAuxSur
 
     auto glTexture = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_WRITE_ONLY, GL_SRGB8_ALPHA8, 0, textureId, &retVal));
 
-    auto hwInfo = clContext->getDevice(0)->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
+    const auto &hwInfo = clContext->getDevice(0)->getHardwareInfo();
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    uint32_t expectedMapAuxGpuVaCalls = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, tempMM->mapAuxGpuVACalled);
 }

@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -1487,7 +1488,7 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndNonEx
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
-    bool supportsPageTableManager = HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo);
+    bool supportsPageTableManager = HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
     EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());
 
     EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager(defaultEngineType));

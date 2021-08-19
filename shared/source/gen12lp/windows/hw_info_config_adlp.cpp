@@ -11,6 +11,9 @@
 #include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
 
 namespace NEO {
+constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
+
+#include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 
 template <>
 void HwInfoConfigHw<IGFX_ALDERLAKE_P>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
