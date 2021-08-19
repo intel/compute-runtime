@@ -59,7 +59,7 @@ void ScratchSpaceControllerXeHPAndLater::setRequiredScratchSpace(void *sshBaseAd
                                                                  bool &stateBaseAddressDirty,
                                                                  bool &vfeStateDirty) {
     setNewSshPtr(sshBaseAddress, vfeStateDirty, offset == 0 ? true : false);
-    bool scratchSurfaceDirty;
+    bool scratchSurfaceDirty = false;
     prepareScratchAllocation(requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
         vfeStateDirty = true;
@@ -131,6 +131,7 @@ void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType
         indirectHeap->getSpace(getOffsetToSurfaceState(stateSlotsCount));
     }
 }
+
 void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                                                uint32_t requiredPerThreadScratchSize,
                                                                                uint32_t requiredPerThreadPrivateScratchSize,
@@ -139,7 +140,7 @@ void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(B
                                                                                bool &stateBaseAddressDirty,
                                                                                bool &vfeStateDirty,
                                                                                NEO::CommandStreamReceiver *csr) {
-    bool scratchSurfaceDirty;
+    bool scratchSurfaceDirty = false;
     prepareScratchAllocation(requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
         bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (privateScratchSpaceSupported ? 2 : 1), scratchAllocation, BindlessHeapsHelper::SCRATCH_SSH);
