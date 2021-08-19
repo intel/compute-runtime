@@ -63,22 +63,29 @@ void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPa
         dst.globalVariables.initData = NEO::PatchTokenBinary::getInlineData(surface);
     }
 
+    constexpr ConstStringRef globalConstantsSymbolName = "globalConstants";
+    constexpr ConstStringRef globalVariablesSymbolName = "globalVariables";
+
     if (false == (src.programScopeTokens.constantPointer.empty() && src.programScopeTokens.globalPointer.empty() && (src.programScopeTokens.symbolTable == nullptr))) {
         UNRECOVERABLE_IF((src.header->GPUPointerSizeInBytes != 4) && (src.header->GPUPointerSizeInBytes != 8));
         dst.prepareLinkerInputStorage();
         dst.linkerInput->setPointerSize((src.header->GPUPointerSizeInBytes == 4) ? LinkerInput::Traits::PointerSize::Ptr32bit : LinkerInput::Traits::PointerSize::Ptr64bit);
+
+        dst.linkerInput->addSymbol(globalConstantsSymbolName.data(), {0U, 8U, SegmentType::GlobalConstants});
+        dst.linkerInput->addSymbol(globalVariablesSymbolName.data(), {0U, 8U, SegmentType::GlobalVariables});
     }
 
     for (const auto &globalConstantPointerToken : src.programScopeTokens.constantPointer) {
         NEO::LinkerInput::RelocationInfo relocInfo = {};
         relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
         relocInfo.offset = readMisalignedUint64(&globalConstantPointerToken->ConstantPointerOffset);
-        relocInfo.symbolSegment = NEO::SegmentType::GlobalConstants;
-        if (globalConstantPointerToken->BufferType != iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER) {
-            UNRECOVERABLE_IF(globalConstantPointerToken->BufferType != iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER);
-            relocInfo.symbolSegment = NEO::SegmentType::GlobalVariables;
-        }
         relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocInfo.symbolName = std::string(globalConstantsSymbolName);
+        if (iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER != globalConstantPointerToken->BufferType) {
+            UNRECOVERABLE_IF(iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER != globalConstantPointerToken->BufferType);
+            relocInfo.symbolName = std::string(globalVariablesSymbolName);
+        }
+
         dst.linkerInput->addDataRelocationInfo(relocInfo);
     }
 
@@ -86,12 +93,13 @@ void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPa
         NEO::LinkerInput::RelocationInfo relocInfo = {};
         relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
         relocInfo.offset = readMisalignedUint64(&globalVariablePointerToken->GlobalPointerOffset);
-        relocInfo.symbolSegment = NEO::SegmentType::GlobalVariables;
-        if (globalVariablePointerToken->BufferType != iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER) {
-            UNRECOVERABLE_IF(globalVariablePointerToken->BufferType != iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER);
-            relocInfo.symbolSegment = NEO::SegmentType::GlobalConstants;
-        }
         relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocInfo.symbolName = std::string(globalVariablesSymbolName);
+        if (iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER != globalVariablePointerToken->BufferType) {
+            UNRECOVERABLE_IF(iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER != globalVariablePointerToken->BufferType);
+            relocInfo.symbolName = std::string(globalConstantsSymbolName);
+        }
+
         dst.linkerInput->addDataRelocationInfo(relocInfo);
     }
 

@@ -459,11 +459,19 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
     EXPECT_EQ(nullptr, prog->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
     ProgramInfo programInfo;
     programInfo.prepareLinkerInputStorage();
+
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
-    relocInfo.symbolSegment = NEO::SegmentType::GlobalConstants;
     relocInfo.offset = 0U;
     relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocInfo.symbolName = "GlobalConstantPointer";
+
+    NEO::SymbolInfo symbol = {};
+    symbol.offset = 0U;
+    symbol.size = 8U;
+    symbol.segment = NEO::SegmentType::GlobalConstants;
+
+    programInfo.linkerInput->addSymbol("GlobalConstantPointer", symbol);
     programInfo.linkerInput->addDataRelocationInfo(relocInfo);
     programInfo.linkerInput->setPointerSize(LinkerInput::Traits::PointerSize::Ptr32bit);
 
@@ -499,10 +507,17 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPoi
     ProgramInfo programInfo;
     programInfo.prepareLinkerInputStorage();
     NEO::LinkerInput::RelocationInfo relocInfo;
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
-    relocInfo.symbolSegment = NEO::SegmentType::GlobalVariables;
     relocInfo.offset = 0U;
     relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+    relocInfo.symbolName = "GlobalVariablePointer";
+
+    NEO::SymbolInfo symbol = {};
+    symbol.offset = 0U;
+    symbol.size = 8U;
+    symbol.segment = NEO::SegmentType::GlobalVariables;
+
+    programInfo.linkerInput->addSymbol("GlobalVariablePointer", symbol);
     programInfo.linkerInput->addDataRelocationInfo(relocInfo);
     programInfo.linkerInput->setPointerSize(LinkerInput::Traits::PointerSize::Ptr32bit);
 

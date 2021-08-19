@@ -73,9 +73,10 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalConstants
     ASSERT_EQ(1U, programInfo.linkerInput->getDataRelocations().size());
     auto relocation = programInfo.linkerInput->getDataRelocations()[0];
     EXPECT_EQ(programFromTokens.programScopeTokens.constantPointer[0]->ConstantPointerOffset, relocation.offset);
-    EXPECT_TRUE(relocation.symbolName.empty());
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocation.relocationSegment);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocation.symbolSegment);
+    auto symbol = programInfo.linkerInput->getSymbols().find(relocation.symbolName);
+    EXPECT_TRUE(symbol != programInfo.linkerInput->getSymbols().end());
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, symbol->second.segment);
     EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocation.type);
 }
 
@@ -88,9 +89,10 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalVariables
     ASSERT_EQ(1U, programInfo.linkerInput->getDataRelocations().size());
     auto relocation = programInfo.linkerInput->getDataRelocations()[0];
     EXPECT_EQ(NEO::readMisalignedUint64(&programFromTokens.programScopeTokens.globalPointer[0]->GlobalPointerOffset), relocation.offset);
-    EXPECT_TRUE(relocation.symbolName.empty());
     EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocation.relocationSegment);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocation.symbolSegment);
+    auto symbol = programInfo.linkerInput->getSymbols().find(relocation.symbolName);
+    EXPECT_TRUE(symbol != programInfo.linkerInput->getSymbols().end());
+    EXPECT_EQ(NEO::SegmentType::GlobalVariables, symbol->second.segment);
     EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocation.type);
 }
 
@@ -118,16 +120,19 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresMixedGlobalVarA
 
     ASSERT_NE(nullptr, relocationGlobalConst);
     EXPECT_EQ(NEO::readMisalignedUint64(&programFromTokens.programScopeTokens.constantPointer[0]->ConstantPointerOffset), relocationGlobalConst->offset);
-    EXPECT_TRUE(relocationGlobalConst->symbolName.empty());
+    EXPECT_FALSE(relocationGlobalConst->symbolName.empty());
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocationGlobalConst->relocationSegment);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocationGlobalConst->symbolSegment);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocationGlobalConst->type);
+    auto symbol1 = programInfo.linkerInput->getSymbols().find(relocationGlobalConst->symbolName);
+    EXPECT_TRUE(symbol1 != programInfo.linkerInput->getSymbols().end());
+    EXPECT_EQ(NEO::SegmentType::GlobalVariables, symbol1->second.segment);
 
     ASSERT_NE(nullptr, relocationGlobalVar);
     EXPECT_EQ(NEO::readMisalignedUint64(&programFromTokens.programScopeTokens.globalPointer[0]->GlobalPointerOffset), relocationGlobalVar->offset);
-    EXPECT_TRUE(relocationGlobalVar->symbolName.empty());
+    EXPECT_FALSE(relocationGlobalVar->symbolName.empty());
     EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocationGlobalVar->relocationSegment);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocationGlobalVar->symbolSegment);
+    auto symbol2 = programInfo.linkerInput->getSymbols().find(relocationGlobalVar->symbolName);
+    EXPECT_TRUE(symbol2 != programInfo.linkerInput->getSymbols().end());
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, symbol2->second.segment);
     EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocationGlobalVar->type);
 }
 

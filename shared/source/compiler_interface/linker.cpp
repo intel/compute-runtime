@@ -118,7 +118,6 @@ bool LinkerInput::decodeRelocationTable(const void *data, uint32_t numEntries, u
         RelocationInfo relocInfo{};
         relocInfo.offset = relocEntryIt->r_offset;
         relocInfo.symbolName = relocEntryIt->r_symbol;
-        relocInfo.symbolSegment = SegmentType::Unknown;
         relocInfo.relocationSegment = SegmentType::Instructions;
         switch (relocEntryIt->r_type) {
         default:
@@ -145,7 +144,6 @@ bool LinkerInput::decodeRelocationTable(const void *data, uint32_t numEntries, u
 
 void LinkerInput::addDataRelocationInfo(const RelocationInfo &relocationInfo) {
     DEBUG_BREAK_IF((relocationInfo.relocationSegment != SegmentType::GlobalConstants) && (relocationInfo.relocationSegment != SegmentType::GlobalVariables));
-    DEBUG_BREAK_IF(relocationInfo.type == LinkerInput::RelocationInfo::Type::AddressHigh);
     this->traits.requiresPatchingOfGlobalVariablesBuffer |= (relocationInfo.relocationSegment == SegmentType::GlobalVariables);
     this->traits.requiresPatchingOfGlobalConstantsBuffer |= (relocationInfo.relocationSegment == SegmentType::GlobalConstants);
     this->dataRelocations.push_back(relocationInfo);
@@ -161,7 +159,6 @@ void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uin
 
     auto &outRelocInfo = relocations[instructionsSegmentId];
 
-    relocationInfo.symbolSegment = SegmentType::Unknown;
     relocationInfo.relocationSegment = SegmentType::Instructions;
 
     outRelocInfo.push_back(std::move(relocationInfo));
@@ -198,7 +195,6 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
         } else if (nameRef.startsWith(NEO::Elf::SpecialSectionNames::data.data())) {
             auto symbolSectionName = elf.getSectionName(reloc.symbolSectionIndex);
             auto symbolSegment = getSegmentForSection(symbolSectionName);
-            relocationInfo.symbolSegment = symbolSegment;
             auto relocationSegment = getSegmentForSection(nameRef);
             if (symbolSegment != NEO::SegmentType::Unknown &&
                 (relocationSegment == NEO::SegmentType::GlobalConstants || relocationSegment == NEO::SegmentType::GlobalVariables)) {
@@ -331,45 +327,27 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
                                GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
                                std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
                                const void *constantsInitData, const void *variablesInitData) {
-    if (false == (data.getTraits().requiresPatchingOfGlobalConstantsBuffer || data.getTraits().requiresPatchingOfGlobalVariablesBuffer)) {
-        return;
-    }
-
     for (const auto &relocation : data.getDataRelocations()) {
-        const SegmentInfo *src = nullptr;
+        auto symbolIt = relocatedSymbols.find(relocation.symbolName);
+        if (symbolIt == relocatedSymbols.end()) {
+            outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
+            continue;
+        }
+        uint64_t srcGpuAddressAs64Bit = symbolIt->second.gpuAddress;
+
         GraphicsAllocation *dst = nullptr;
         const void *initData = nullptr;
-        switch (relocation.symbolSegment) {
-        default:
-            outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
-            continue;
-        case SegmentType::GlobalVariables:
-            src = &globalVariablesSegInfo;
-            break;
-        case SegmentType::GlobalConstants:
-            src = &globalConstantsSegInfo;
-            break;
-        }
-        switch (relocation.relocationSegment) {
-        default:
-            outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
-            continue;
-        case SegmentType::GlobalVariables:
+        if (SegmentType::GlobalVariables == relocation.relocationSegment) {
             dst = globalVariablesSeg;
             initData = variablesInitData;
-            break;
-        case SegmentType::GlobalConstants:
+        } else if (SegmentType::GlobalConstants == relocation.relocationSegment) {
             dst = globalConstantsSeg;
             initData = constantsInitData;
-            break;
-        }
-
-        UNRECOVERABLE_IF(nullptr == dst);
-
-        if (RelocationInfo::Type::AddressHigh == relocation.type) {
+        } else {
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
             continue;
         }
+        UNRECOVERABLE_IF(nullptr == dst);
 
         auto relocType = (LinkerInput::Traits::PointerSize::Ptr32bit == data.getTraits().pointerSize) ? RelocationInfo::Type::AddressLow : relocation.type;
         bool invalidOffset = relocation.offset + addressSizeInBytes(relocType) > dst->getUnderlyingBufferSize();
@@ -379,20 +357,21 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
             continue;
         }
 
-        UNRECOVERABLE_IF((RelocationInfo::Type::Address != relocType) && (RelocationInfo::Type::AddressLow != relocType));
-        uint64_t gpuAddressAs64bit = src->gpuAddress;
-        uint32_t patchSize = (RelocationInfo::Type::AddressLow == relocType) ? 4 : sizeof(uintptr_t);
-        uint64_t incrementValue = (RelocationInfo::Type::AddressLow == relocType)
-                                      ? static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff)
-                                      : gpuAddressAs64bit;
-
-        if (initData) {
-            if (patchSize == sizeof(uint64_t)) {
-                patchIncrement<uint64_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
-            } else {
-                UNRECOVERABLE_IF(patchSize != sizeof(uint32_t));
-                patchIncrement<uint32_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
-            }
+        uint64_t incrementValue = 0U;
+        switch (relocType) {
+        default:
+            UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocType);
+            incrementValue = srcGpuAddressAs64Bit;
+            patchIncrement<uint64_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
+            break;
+        case RelocationInfo::Type::AddressLow:
+            incrementValue = srcGpuAddressAs64Bit & 0xffffffff;
+            patchIncrement<uint32_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
+            break;
+        case RelocationInfo::Type::AddressHigh:
+            incrementValue = (srcGpuAddressAs64Bit >> 32) & 0xffffffff;
+            patchIncrement<uint32_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
+            break;
         }
     }
 }
@@ -416,7 +395,7 @@ std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unres
                     errorStream << " (aka " << instructionsSegmentsNames[unresExtern.instructionsSegmentId] << ")";
                 }
             } else {
-                errorStream << " address of segment #" << asString(unresExtern.unresolvedRelocation.symbolSegment) << " at offset " << unresExtern.unresolvedRelocation.offset
+                errorStream << " symbol #" << unresExtern.unresolvedRelocation.symbolName << " at offset " << unresExtern.unresolvedRelocation.offset
                             << " in data segment #" << asString(unresExtern.unresolvedRelocation.relocationSegment);
             }
             errorStream << "\n";

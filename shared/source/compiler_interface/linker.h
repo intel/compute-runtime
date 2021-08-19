@@ -88,7 +88,6 @@ struct LinkerInput {
         uint64_t offset = std::numeric_limits<uint64_t>::max();
         Type type = Type::Unknown;
         SegmentType relocationSegment = SegmentType::Unknown;
-        SegmentType symbolSegment = SegmentType::Unknown;
     };
     using SectionNameToSegmentIdMap = std::unordered_map<std::string, uint32_t>;
     using Relocations = std::vector<RelocationInfo>;
@@ -117,6 +116,10 @@ struct LinkerInput {
 
     const SymbolMap &getSymbols() const {
         return symbols;
+    }
+
+    void addSymbol(const std::string &symbolName, const SymbolInfo &symbolInfo) {
+        symbols.emplace(std::make_pair(symbolName, symbolInfo));
     }
 
     const RelocationsPerInstSegment &getRelocationsInInstructionSegments() const {
