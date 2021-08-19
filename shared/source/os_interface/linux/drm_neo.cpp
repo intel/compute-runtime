@@ -202,39 +202,41 @@ int Drm::ioctl(unsigned long request, void *arg) {
         std::chrono::steady_clock::time_point start;
         std::chrono::steady_clock::time_point end;
 
-        if (measureTime) {
-            start = std::chrono::steady_clock::now();
-        }
-
         auto printIoctl = DebugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
             printf("IOCTL %s called\n", IoctlHelper::getIoctlString(request).c_str());
         }
 
+        if (measureTime) {
+            start = std::chrono::steady_clock::now();
+        }
         ret = SysCalls::ioctl(getFileDescriptor(), request, arg);
 
         returnedErrno = errno;
 
-        if (printIoctl) {
-            printf("IOCTL %s returns %d, errno %d(%s)\n", IoctlHelper::getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
-        }
-
         if (measureTime) {
             end = std::chrono::steady_clock::now();
-            auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+            long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-            std::pair<long long, uint64_t> ioctlData{};
+            IoctlStatisticsEntry ioctlData{};
             auto ioctlDataIt = this->ioctlStatistics.find(request);
             if (ioctlDataIt != this->ioctlStatistics.end()) {
                 ioctlData = ioctlDataIt->second;
             }
 
-            ioctlData.first += elapsedTime;
-            ioctlData.second++;
+            ioctlData.totalTime += elapsedTime;
+            ioctlData.count++;
+            ioctlData.minTime = std::min(ioctlData.minTime, elapsedTime);
+            ioctlData.maxTime = std::max(ioctlData.maxTime, elapsedTime);
 
             this->ioctlStatistics[request] = ioctlData;
         }
+
+        if (printIoctl) {
+            printf("IOCTL %s returns %d, errno %d(%s)\n", IoctlHelper::getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+        }
+
     } while (ret == -1 && (returnedErrno == EINTR || returnedErrno == EAGAIN || returnedErrno == EBUSY));
     SYSTEM_LEAVE(request);
     return ret;
@@ -599,9 +601,15 @@ void Drm::printIoctlStatistics() {
     }
 
     printf("\n--- Ioctls statistics ---\n");
-    printf("%40s %15s %10s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl\n");
+    printf("%41s %15s %10s %20s %20s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl", "Min", "Max\n");
     for (const auto &ioctlData : this->ioctlStatistics) {
-        printf("%40s %15llu %10lu %20f\n", IoctlHelper::getIoctlString(ioctlData.first).c_str(), ioctlData.second.first, static_cast<unsigned long>(ioctlData.second.second), ioctlData.second.first / static_cast<double>(ioctlData.second.second));
+        printf("%41s %15llu %10lu %20f %20lld %20lld\n",
+               IoctlHelper::getIoctlString(ioctlData.first).c_str(),
+               ioctlData.second.totalTime,
+               static_cast<unsigned long>(ioctlData.second.count),
+               ioctlData.second.totalTime / static_cast<double>(ioctlData.second.count),
+               ioctlData.second.minTime,
+               ioctlData.second.maxTime);
     }
     printf("\n");
 }

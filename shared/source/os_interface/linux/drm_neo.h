@@ -26,6 +26,7 @@
 #include <array>
 #include <cerrno>
 #include <fcntl.h>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -275,7 +276,13 @@ class Drm : public DriverModel {
     ADAPTER_BDF adapterBDF{};
 
     TopologyMap topologyMap;
-    std::unordered_map<unsigned long, std::pair<long long, uint64_t>> ioctlStatistics;
+    struct IoctlStatisticsEntry {
+        long long totalTime = 0;
+        uint64_t count = 0;
+        long long minTime = std::numeric_limits<long long>::max();
+        long long maxTime = 0;
+    };
+    std::unordered_map<unsigned long, IoctlStatisticsEntry> ioctlStatistics;
 
     std::mutex bindFenceMutex;
     std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;

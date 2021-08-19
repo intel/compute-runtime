@@ -30,6 +30,7 @@
 #include "os_inc.h"
 
 #include <string>
+#include <string_view>
 
 namespace Os {
 extern const char *dxcoreDllName;
@@ -199,6 +200,9 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     };
     ::testing::internal::CaptureStdout();
 
+    constexpr long long initialMin = std::numeric_limits<long long>::max();
+    constexpr long long initialMax = 0;
+
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = static_cast<DrmMock *>(DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]).release());
@@ -212,70 +216,109 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     uint32_t contextId = 1u;
 
     drm->getEuTotal(euTotal);
-    EXPECT_EQ(drm->ioctlStatistics.size(), 1u);
+    EXPECT_EQ(1u, drm->ioctlStatistics.size());
 
     drm->getEuTotal(euTotal);
-    EXPECT_EQ(drm->ioctlStatistics.size(), 1u);
+    EXPECT_EQ(1u, drm->ioctlStatistics.size());
 
     drm->setLowPriorityContextParam(contextId);
-    EXPECT_EQ(drm->ioctlStatistics.size(), 2u);
+    EXPECT_EQ(2u, drm->ioctlStatistics.size());
 
     auto euTotalData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GETPARAM);
     ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
-    EXPECT_EQ(euTotalData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM));
-    EXPECT_EQ(euTotalData->second.second, 2u);
-    EXPECT_NE(euTotalData->second.first, 0);
-    auto firstTime = euTotalData->second.first;
+    EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM), euTotalData->first);
+    EXPECT_EQ(2u, euTotalData->second.count);
+    EXPECT_NE(0, euTotalData->second.totalTime);
+    EXPECT_NE(initialMin, euTotalData->second.minTime);
+    EXPECT_NE(initialMax, euTotalData->second.minTime);
+    EXPECT_NE(initialMin, euTotalData->second.maxTime);
+    EXPECT_NE(initialMax, euTotalData->second.maxTime);
+    auto firstTime = euTotalData->second.totalTime;
 
     auto lowPriorityData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM);
     ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
-    EXPECT_EQ(lowPriorityData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
-    EXPECT_EQ(lowPriorityData->second.second, 1u);
-    EXPECT_NE(lowPriorityData->second.first, 0);
+    EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM), lowPriorityData->first);
+    EXPECT_EQ(1u, lowPriorityData->second.count);
+    EXPECT_NE(0, lowPriorityData->second.totalTime);
+    EXPECT_NE(initialMin, lowPriorityData->second.minTime);
+    EXPECT_NE(initialMax, lowPriorityData->second.minTime);
+    EXPECT_NE(initialMin, lowPriorityData->second.maxTime);
+    EXPECT_NE(initialMax, lowPriorityData->second.maxTime);
 
     drm->getEuTotal(euTotal);
     EXPECT_EQ(drm->ioctlStatistics.size(), 2u);
 
     euTotalData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GETPARAM);
     ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
-    EXPECT_EQ(euTotalData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM));
-    EXPECT_EQ(euTotalData->second.second, 3u);
-    EXPECT_NE(euTotalData->second.first, 0);
+    EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM), euTotalData->first);
+    EXPECT_EQ(3u, euTotalData->second.count);
+    EXPECT_NE(0u, euTotalData->second.totalTime);
 
-    auto secondTime = euTotalData->second.first;
+    auto secondTime = euTotalData->second.totalTime;
     EXPECT_GT(secondTime, firstTime);
 
     lowPriorityData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM);
     ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
-    EXPECT_EQ(lowPriorityData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
-    EXPECT_EQ(lowPriorityData->second.second, 1u);
-    EXPECT_NE(lowPriorityData->second.first, 0);
+    EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM), lowPriorityData->first);
+    EXPECT_EQ(1u, lowPriorityData->second.count);
+    EXPECT_NE(0, lowPriorityData->second.totalTime);
 
     drm->destroyDrmContext(contextId);
-    EXPECT_EQ(drm->ioctlStatistics.size(), 3u);
+    EXPECT_EQ(3u, drm->ioctlStatistics.size());
 
     euTotalData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GETPARAM);
     ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
-    EXPECT_EQ(euTotalData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM));
-    EXPECT_EQ(euTotalData->second.second, 3u);
-    EXPECT_NE(euTotalData->second.first, 0);
+    EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM), euTotalData->first);
+    EXPECT_EQ(3u, euTotalData->second.count);
+    EXPECT_NE(0, euTotalData->second.totalTime);
 
     lowPriorityData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM);
     ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
-    EXPECT_EQ(lowPriorityData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
-    EXPECT_EQ(lowPriorityData->second.second, 1u);
-    EXPECT_NE(lowPriorityData->second.first, 0);
+    EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM), lowPriorityData->first);
+    EXPECT_EQ(1u, lowPriorityData->second.count);
+    EXPECT_NE(0, lowPriorityData->second.totalTime);
 
     auto destroyData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY);
     ASSERT_TRUE(destroyData != drm->ioctlStatistics.end());
-    EXPECT_EQ(destroyData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY));
-    EXPECT_EQ(destroyData->second.second, 1u);
-    EXPECT_NE(destroyData->second.first, 0);
+    EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY), destroyData->first);
+    EXPECT_EQ(1u, destroyData->second.count);
+    EXPECT_NE(0, destroyData->second.totalTime);
 
     delete drm;
 
     std::string output = ::testing::internal::GetCapturedStdout();
-    EXPECT_STRNE(output.c_str(), "");
+    EXPECT_STRNE("", output.c_str());
+
+    std::string_view requestString("Request");
+    std::string_view totalTimeString("Total time(ns)");
+    std::string_view countString("Count");
+    std::string_view avgTimeString("Avg time per ioctl");
+    std::string_view minString("Min");
+    std::string_view maxString("Max");
+
+    std::size_t position = output.find(requestString);
+    EXPECT_NE(std::string::npos, position);
+    position += requestString.size();
+
+    position = output.find(totalTimeString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += totalTimeString.size();
+
+    position = output.find(countString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += countString.size();
+
+    position = output.find(avgTimeString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += avgTimeString.size();
+
+    position = output.find(minString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += minString.size();
+
+    position = output.find(maxString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += maxString.size();
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevicesAndNoDevicesAreCreated) {
