@@ -14,6 +14,7 @@ if(TESTS_XE_HP_CORE)
   set(IGDRCL_SRCS_tests_xe_hp_core
       ${IGDRCL_SRCS_tests_xe_hp_core_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xe_hp_core.cpp

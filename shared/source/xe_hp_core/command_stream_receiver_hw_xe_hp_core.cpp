@@ -69,6 +69,41 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
 }
 
 template <>
+inline bool CommandStreamReceiverHw<Family>::isAdditionalPipeControlNeeded() const {
+    return DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.get();
+}
+
+template <>
+void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+    if (isComputeModeNeeded()) {
+        this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
+
+        if (DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.get()) {
+            auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();
+            *pc = Family::cmdInitPipeControl;
+            pc->setHdcPipelineFlush(true);
+            pc->setAmfsFlushEnable(true);
+            pc->setCommandStreamerStallEnable(true);
+            pc->setInstructionCacheInvalidateEnable(true);
+            pc->setTextureCacheInvalidationEnable(true);
+            pc->setDcFlushEnable(true);
+            pc->setConstantCacheInvalidationEnable(true);
+            pc->setStateCacheInvalidationEnable(true);
+        }
+
+        auto stateComputeMode = Family::cmdInitStateComputeMode;
+        EncodeStates<Family>::adjustStateComputeMode(stream, dispatchFlags.numGrfRequired, &stateComputeMode,
+                                                     dispatchFlags.requiresCoherency, this->requiredThreadArbitrationPolicy, hwInfo);
+
+        if (csrSizeRequestFlags.hasSharedHandles) {
+            auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();
+            *pc = Family::cmdInitPipeControl;
+        }
+    }
+}
+
+template <>
 void BlitCommandsHelper<Family>::appendClearColor(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
     using XY_COPY_BLT = typename Family::XY_COPY_BLT;
     if (DebugManager.flags.UseClearColorAllocationForBlitter.get()) {
