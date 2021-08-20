@@ -542,6 +542,16 @@ void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void *const
         maskBits |= Family::stateComputeModeLargeGrfModeMask;
     }
 
+    if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
+        stateComputeMode.setForceDisableSupportForMultiGpuAtomics(!!DebugManager.flags.ForceMultiGpuAtomics.get());
+        maskBits |= Family::stateComputeModeForceDisableSupportMultiGpuAtomics;
+    }
+
+    if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
+        stateComputeMode.setForceDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
+        maskBits |= Family::stateComputeModeForceDisableSupportMultiGpuPartialWrites;
+    }
+
     stateComputeMode.setMaskBits(maskBits);
 
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();

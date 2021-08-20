@@ -24,6 +24,8 @@ struct XeHpCore {
 
     static constexpr uint32_t stateComputeModeForceNonCoherentMask = (0b11u << 3);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
+    static constexpr uint32_t stateComputeModeForceDisableSupportMultiGpuPartialWrites = (1u << 2);
+    static constexpr uint32_t stateComputeModeForceDisableSupportMultiGpuAtomics = (1u << 1);
 
     static constexpr bool isUsingL3Control = true;
 

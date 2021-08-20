@@ -53,6 +53,90 @@ XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, whenProgrammingStateComputeModeThen
     EXPECT_TRUE(pScm->getLargeGrfMode());
 }
 
+XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, givenForceDisableMultiAtomicsWhenDebugFlagIsZeroThenExpectForceDisableMultiAtomicsSetToFalse) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceMultiGpuAtomics.set(0);
+
+    uint8_t buffer[64]{};
+
+    STATE_COMPUTE_MODE scmCommandTemplate = FamilyType::cmdInitStateComputeMode;
+    scmCommandTemplate.setForceDisableSupportForMultiGpuAtomics(true);
+
+    StateComputeModeProperties properties;
+    LinearStream cmdStream(buffer, sizeof(buffer));
+    EncodeComputeMode<FamilyType>::adjustComputeMode(cmdStream, &scmCommandTemplate, properties, *defaultHwInfo);
+    auto scmCommand = reinterpret_cast<STATE_COMPUTE_MODE *>(cmdStream.getCpuBase());
+
+    uint32_t expectedMaskBits = FamilyType::stateComputeModeForceDisableSupportMultiGpuAtomics;
+    EXPECT_EQ(expectedMaskBits, scmCommand->getMaskBits());
+    EXPECT_FALSE(scmCommand->getForceDisableSupportForMultiGpuAtomics());
+}
+
+XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, givenForceDisableMultiAtomicsWhenDebugFlagIsOneThenExpectForceDisableMultiAtomicsSetToTrue) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceMultiGpuAtomics.set(1);
+
+    uint8_t buffer[64]{};
+
+    STATE_COMPUTE_MODE scmCommandTemplate = FamilyType::cmdInitStateComputeMode;
+    scmCommandTemplate.setForceDisableSupportForMultiGpuAtomics(false);
+
+    StateComputeModeProperties properties;
+    LinearStream cmdStream(buffer, sizeof(buffer));
+    EncodeComputeMode<FamilyType>::adjustComputeMode(cmdStream, &scmCommandTemplate, properties, *defaultHwInfo);
+    auto scmCommand = reinterpret_cast<STATE_COMPUTE_MODE *>(cmdStream.getCpuBase());
+
+    uint32_t expectedMaskBits = FamilyType::stateComputeModeForceDisableSupportMultiGpuAtomics;
+    EXPECT_EQ(expectedMaskBits, scmCommand->getMaskBits());
+    EXPECT_TRUE(scmCommand->getForceDisableSupportForMultiGpuAtomics());
+}
+
+XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, givenForceDisableMultiPartialWritesWhenDebugFlagIsZeroThenExpectForceDisableMultiPartialWritesSetToFalse) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceMultiGpuPartialWrites.set(0);
+
+    uint8_t buffer[64]{};
+
+    STATE_COMPUTE_MODE scmCommandTemplate = FamilyType::cmdInitStateComputeMode;
+    scmCommandTemplate.setForceDisableSupportForMultiGpuPartialWrites(true);
+
+    StateComputeModeProperties properties;
+    LinearStream cmdStream(buffer, sizeof(buffer));
+    EncodeComputeMode<FamilyType>::adjustComputeMode(cmdStream, &scmCommandTemplate, properties, *defaultHwInfo);
+    auto scmCommand = reinterpret_cast<STATE_COMPUTE_MODE *>(cmdStream.getCpuBase());
+
+    uint32_t expectedMaskBits = FamilyType::stateComputeModeForceDisableSupportMultiGpuPartialWrites;
+    EXPECT_EQ(expectedMaskBits, scmCommand->getMaskBits());
+    EXPECT_FALSE(scmCommand->getForceDisableSupportForMultiGpuAtomics());
+}
+
+XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, givenForceDisableMultiPartialWritesWhenDebugFlagIsOneThenExpectForceDisableMultiPartialWritesSetToTrue) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceMultiGpuPartialWrites.set(1);
+
+    uint8_t buffer[64]{};
+
+    STATE_COMPUTE_MODE scmCommandTemplate = FamilyType::cmdInitStateComputeMode;
+    scmCommandTemplate.setForceDisableSupportForMultiGpuPartialWrites(false);
+
+    StateComputeModeProperties properties;
+    LinearStream cmdStream(buffer, sizeof(buffer));
+    EncodeComputeMode<FamilyType>::adjustComputeMode(cmdStream, &scmCommandTemplate, properties, *defaultHwInfo);
+    auto scmCommand = reinterpret_cast<STATE_COMPUTE_MODE *>(cmdStream.getCpuBase());
+
+    uint32_t expectedMaskBits = FamilyType::stateComputeModeForceDisableSupportMultiGpuPartialWrites;
+    EXPECT_EQ(expectedMaskBits, scmCommand->getMaskBits());
+    EXPECT_TRUE(scmCommand->getForceDisableSupportForMultiGpuPartialWrites());
+}
+
 struct EncodeKernelGlobalAtomicsFixture : public CommandEncodeStatesFixture, public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(2);
