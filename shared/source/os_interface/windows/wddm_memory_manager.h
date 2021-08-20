@@ -84,8 +84,8 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override { return nullptr; }
 
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
-    GraphicsAllocation *allocateSystemMemoryAndCreateGraphicsAllocationFromIt(const AllocationData &allocationData);
-    GraphicsAllocation *allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(const AllocationData &allocationData, bool allowLargePages);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateSystemMemoryAndCreateGraphicsAllocationFromIt(const AllocationData &allocationData);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(const AllocationData &allocationData, bool allowLargePages);
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;

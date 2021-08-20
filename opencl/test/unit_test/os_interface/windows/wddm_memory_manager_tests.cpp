@@ -2290,3 +2290,46 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGettingGlobalMemor
     uint32_t rootDeviceIndex = 0u;
     EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.8);
 }
+
+TEST_F(WddmMemoryManagerSimpleTest, whenAlignmentRequirementExceedsPageSizeThenAllocateGraphicsMemoryFromSystemPtr) {
+    struct MockWddmMemoryManagerAllocateWithAlignment : MockWddmMemoryManager {
+        using MockWddmMemoryManager::MockWddmMemoryManager;
+
+        GraphicsAllocation *allocateSystemMemoryAndCreateGraphicsAllocationFromIt(const AllocationData &allocationData) override {
+            ++callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt;
+            return nullptr;
+        }
+        GraphicsAllocation *allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(const AllocationData &allocationData, bool allowLargePages) override {
+            ++callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA;
+            return nullptr;
+        }
+
+        struct {
+            int allocateSystemMemoryAndCreateGraphicsAllocationFromIt = 0;
+            int allocateGraphicsMemoryUsingKmdAndMapItToCpuVA = 0;
+        } callCount;
+    };
+
+    MockWddmMemoryManagerAllocateWithAlignment memoryManager(true, true, *executionEnvironment);
+
+    AllocationData allocData = {};
+    allocData.size = 1024;
+    allocData.alignment = MemoryConstants::pageSize64k * 4;
+    memoryManager.allocateGraphicsMemoryWithAlignment(allocData);
+    EXPECT_EQ(1U, memoryManager.callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt);
+    EXPECT_EQ(0U, memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA);
+
+    memoryManager.callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt = 0;
+    memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA = 0;
+
+    allocData.size = 1024;
+    allocData.alignment = MemoryConstants::pageSize;
+    memoryManager.allocateGraphicsMemoryWithAlignment(allocData);
+    if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+        EXPECT_EQ(0U, memoryManager.callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt);
+        EXPECT_EQ(1U, memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA);
+    } else {
+        EXPECT_EQ(1U, memoryManager.callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt);
+        EXPECT_EQ(0U, memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA);
+    }
+}

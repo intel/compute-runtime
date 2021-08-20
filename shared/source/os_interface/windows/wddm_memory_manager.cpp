@@ -199,7 +199,9 @@ GraphicsAllocation *WddmMemoryManager::allocateUSMHostGraphicsMemory(const Alloc
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-    if (preferredAllocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) {
+    auto pageSize = NEO::OSInterface::osEnabled64kbPages ? MemoryConstants::pageSize64k : MemoryConstants::pageSize;
+    bool requiresNonStandardAlignment = allocationData.alignment > pageSize;
+    if ((preferredAllocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) || requiresNonStandardAlignment) {
         return allocateSystemMemoryAndCreateGraphicsAllocationFromIt(allocationData);
     } else {
         return allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, NEO::OSInterface::osEnabled64kbPages);
