@@ -17,7 +17,7 @@ class RAIIHwInfoConfigFactory {
   public:
     PRODUCT_FAMILY productFamily;
     HwInfoConfig *hwInfoConfig;
-    MockHwInfoConfig mockHwInfoConfig;
+    MockHwInfoConfig mockHwInfoConfig{};
 
     RAIIHwInfoConfigFactory(PRODUCT_FAMILY productFamily) {
         this->productFamily = productFamily;
