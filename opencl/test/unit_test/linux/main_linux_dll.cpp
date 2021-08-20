@@ -318,7 +318,6 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
 
     position = output.find(maxString, position);
     EXPECT_NE(std::string::npos, position);
-    position += maxString.size();
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevicesAndNoDevicesAreCreated) {
