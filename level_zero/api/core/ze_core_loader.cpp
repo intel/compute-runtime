@@ -599,6 +599,7 @@ zeGetKernelExpProcAddrTable(
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     pDdiTable->pfnSetGlobalOffsetExp = zeKernelSetGlobalOffsetExp;
+    pDdiTable->pfnSchedulingHintExp = zeKernelSchedulingHintExp;
     driver_ddiTable.core_ddiTable.KernelExp = *pDdiTable;
     return result;
 }
