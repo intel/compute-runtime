@@ -66,11 +66,21 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
     } break;
     case GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA:
-    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
     case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
         storageInfo.cloningOfPageTables = false;
         storageInfo.memoryBanks = allTilesValue;
         storageInfo.tileInstanced = true;
+        break;
+    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+        storageInfo.cloningOfPageTables = false;
+
+        if (properties.subDevicesBitfield.count() == 1) {
+            storageInfo.memoryBanks = preferredTile;
+            storageInfo.pageTablesVisibility = preferredTile;
+        } else {
+            storageInfo.memoryBanks = allTilesValue;
+            storageInfo.tileInstanced = true;
+        }
         break;
     case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
     case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
