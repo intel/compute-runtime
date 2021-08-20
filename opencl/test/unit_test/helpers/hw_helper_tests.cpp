@@ -930,8 +930,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenDefaultHwHelperHwWhenIsWorkaround
 
 HWTEST_F(HwHelperTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConversionIsCorrect) {
     auto &helper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+
     for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
-        auto hwRevIdFromStepping = helper.getHwRevIdFromStepping(testValue, hardwareInfo);
+        auto hwRevIdFromStepping = hwInfoConfig.getHwRevIdFromStepping(testValue, hardwareInfo);
         if (hwRevIdFromStepping != CommonConstants::invalidStepping) {
             hardwareInfo.platform.usRevId = hwRevIdFromStepping;
             EXPECT_EQ(testValue, helper.getSteppingFromHwRevId(hardwareInfo));
@@ -939,18 +941,8 @@ HWTEST_F(HwHelperTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenCon
         hardwareInfo.platform.usRevId = testValue;
         auto steppingFromHwRevId = helper.getSteppingFromHwRevId(hardwareInfo);
         if (steppingFromHwRevId != CommonConstants::invalidStepping) {
-            EXPECT_EQ(testValue, helper.getHwRevIdFromStepping(steppingFromHwRevId, hardwareInfo));
+            EXPECT_EQ(testValue, hwInfoConfig.getHwRevIdFromStepping(steppingFromHwRevId, hardwareInfo));
         }
-    }
-}
-
-HWTEST_F(HwHelperTest, givenInvalidProductFamilyWhenConvertingHwRevIdAndSteppingThenConversionFails) {
-    auto &helper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    hardwareInfo.platform.eProductFamily = IGFX_UNKNOWN;
-    for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
-        EXPECT_EQ(CommonConstants::invalidStepping, helper.getHwRevIdFromStepping(testValue, hardwareInfo));
-        hardwareInfo.platform.usRevId = testValue;
-        EXPECT_EQ(CommonConstants::invalidStepping, helper.getSteppingFromHwRevId(hardwareInfo));
     }
 }
 

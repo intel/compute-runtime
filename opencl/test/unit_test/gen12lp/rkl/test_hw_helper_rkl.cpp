@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 using HwHelperTestRkl = HwHelperTest;
 
 RKLTEST_F(HwHelperTestRkl, givenRklA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
     hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
@@ -20,9 +22,9 @@ RKLTEST_F(HwHelperTestRkl, givenRklA0WhenAdjustDefaultEngineTypeCalledThenRcsIsR
 }
 
 RKLTEST_F(HwHelperTestRkl, givenRklBWhenAdjustDefaultEngineTypeCalledThenCcsIsReturned) {
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
     hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
@@ -36,21 +38,21 @@ RKLTEST_F(HwHelperTestRkl, givenRklWhenRequestedVmeFlagsThenReturnFalse) {
 }
 
 RKLTEST_F(HwHelperTestRkl, givenRklWhenSteppingA0OrB0ThenIntegerDivisionEmulationIsEnabled) {
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
     uint32_t steppings[] = {
         REVISION_A0,
         REVISION_B};
 
     for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
         auto &helper = HwHelper::get(renderCoreFamily);
         EXPECT_TRUE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
     }
 }
 
 RKLTEST_F(HwHelperTestRkl, givenRklWhenSteppingC0ThenIntegerDivisionEmulationIsNotEnabled) {
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_C, hardwareInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_C, hardwareInfo);
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }

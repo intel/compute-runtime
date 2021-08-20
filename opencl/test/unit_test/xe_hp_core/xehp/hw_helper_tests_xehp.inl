@@ -14,49 +14,51 @@ HWTEST_EXCLUDE_PRODUCT(HwHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalse
 XEHPTEST_F(HwHelperTestsXeHP, givenXEHPWhenIsBankOverrideRequiredIsCalledThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
     auto &helper = HwHelper::get(renderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
         EXPECT_TRUE(helper.isBankOverrideRequired(hwInfo));
     }
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
         EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
     }
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
         EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
     }
     {
         DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
         EXPECT_TRUE(helper.isBankOverrideRequired(hwInfo));
     }
     {
         DebugManager.flags.ForceMemoryBankIndexOverride.set(0);
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
         EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
     }
 }
 
 XEHPTEST_F(HwHelperTestsXeHP, givenXEHPWhenHeapInLocalMemIsCalledThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
-    auto &helper = HwHelper::get(renderCoreFamily);
     auto hwInfo = *defaultHwInfo;
+    auto &helper = HwHelper::get(renderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
 
     {
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
         EXPECT_FALSE(helper.heapInLocalMem(hwInfo));
     }
     {
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
         EXPECT_TRUE(helper.heapInLocalMem(hwInfo));
     }
 }

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -29,8 +30,8 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionAWhenCreatingEngineWithSubdevicesThe
     EXPECT_EQ(2u, device.getNumAvailableDevices());
 
     auto hwInfo = device.getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
     device.createEngines();
     auto engines = device.getEngines();
     for (auto engine : engines) {
@@ -49,8 +50,8 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionBWhenCreatingEngineWithSubdevicesThe
     EXPECT_EQ(2u, device.getNumAvailableDevices());
 
     auto hwInfo = device.getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
     device.createEngines();
     auto engines = device.getEngines();
     for (auto engine : engines) {

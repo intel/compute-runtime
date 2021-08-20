@@ -35,7 +35,7 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, givenXeHPAndForceWorkgroupSize1x1x1Flag
     kernel.setArgBuffer(0, sizeof(cl_mem *), &clMem);
 
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
     EXPECT_FALSE(pDevice->isSimulation());
 
     Vec3<size_t> elws{0, 0, 0};
@@ -55,25 +55,25 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, givenXeHPAndForceWorkgroupSize1x1x1Flag
     }
     {
         DebugManager.flags.ForceWorkgroupSize1x1x1.set(-1);
-        hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+        hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_NE(1u, expectedLws.x * expectedLws.y * expectedLws.z);
     }
     {
         DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
-        hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+        hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_EQ(1u, expectedLws.x * expectedLws.y * expectedLws.z);
         DebugManager.flags.ForceLocalMemoryAccessMode.set(-1);
     }
 
     {
-        hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+        hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_NE(1u, expectedLws.x * expectedLws.y * expectedLws.z);
     }
     {
-        hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+        hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
         hwInfo->featureTable.ftrSimulationMode = true;
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_NE(1u, expectedLws.x * expectedLws.y * expectedLws.z);

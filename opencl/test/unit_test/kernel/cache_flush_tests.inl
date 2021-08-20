@@ -10,6 +10,7 @@
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
@@ -93,9 +94,9 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenKernelArgIsSetA
 
         DebugManagerStateRestore dbgRestore;
         DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
-        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
         auto stepping = (isA0Stepping ? REVISION_A0 : REVISION_A1);
-        hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&hardwareInfo);
 
         CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
@@ -215,9 +216,9 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenAllocationRequi
         DebugManagerStateRestore restore;
         DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
         DebugManager.flags.EnableTimestampPacket.set(0);
-        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
         auto stepping = (isA0Stepping ? REVISION_A0 : REVISION_A1);
-        hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&hardwareInfo);
 
         MockKernelWithInternals mockKernel(*pClDevice, context, true);

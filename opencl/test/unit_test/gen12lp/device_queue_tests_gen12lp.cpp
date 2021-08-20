@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
@@ -24,8 +25,8 @@ GEN12LPTEST_F(DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOff
     blockInfo->kernelDescriptor.entryPoints.skipSetFFIDGP = 0x1234;
 
     auto &hwInfo = const_cast<HardwareInfo &>(device->getHardwareInfo());
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
     uint64_t expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch() + blockInfo->kernelDescriptor.entryPoints.skipSetFFIDGP;
     uint64_t offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, true);
@@ -35,7 +36,7 @@ GEN12LPTEST_F(DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOff
     offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, false);
     EXPECT_EQ(expectedOffset, offset);
 
-    hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A1, hwInfo);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hwInfo);
 
     expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
     offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, true);

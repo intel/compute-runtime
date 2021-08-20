@@ -10,6 +10,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -93,9 +94,9 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
     DebugManager.flags.UseAubStream.set(true);
 
     auto hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     for (auto steppingPair : steppingPairsToTest) {
-        auto hwRevId = hwHelper.getHwRevIdFromStepping(steppingPair.stepping, hwInfo);
+        auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(steppingPair.stepping, hwInfo);
         if (hwRevId == CommonConstants::invalidStepping) {
             continue;
         }

@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -575,7 +576,8 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
+    const auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
 
     uint8_t memory[1 * KB];
     auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(),
@@ -585,7 +587,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto revision : revisions) {
-        pHwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(revision, *pHwInfo);
+        pHwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, *pHwInfo);
 
         {
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();

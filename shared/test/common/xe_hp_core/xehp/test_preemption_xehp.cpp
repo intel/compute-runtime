@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -24,10 +25,10 @@ XEHPTEST_F(PreemptionXeHPTest, givenRevisionA0toBWhenProgrammingSipThenGlobalSip
     using STATE_SIP = XeHpFamily::STATE_SIP;
     HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
 
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    std::array<uint32_t, 2> revisions = {hwHelper.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
-                                         hwHelper.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
+    std::array<uint32_t, 2> revisions = {hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
+                                         hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
 
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;
@@ -64,10 +65,10 @@ XEHPTEST_F(PreemptionXeHPTest, givenRevisionA0toBWhenProgrammingSipEndWaThenGlob
     using STATE_SIP = XeHpFamily::STATE_SIP;
     HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
 
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    std::array<uint32_t, 2> revisions = {hwHelper.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
-                                         hwHelper.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
+    std::array<uint32_t, 2> revisions = {hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
+                                         hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
 
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;

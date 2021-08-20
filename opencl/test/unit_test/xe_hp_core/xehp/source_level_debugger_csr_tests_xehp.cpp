@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
@@ -27,8 +28,8 @@ XEHPTEST_F(CommandStreamReceiverWithActiveDebuggerXehpTest, GivenASteppingAndAct
     using MI_NOOP = typename FamilyType::MI_NOOP;
 
     hwInfo = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    HwHelper &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVID::REVISION_A0, *hwInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, *hwInfo);
 
     auto mockCsr = createCSR<FamilyType>();
     mockCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);

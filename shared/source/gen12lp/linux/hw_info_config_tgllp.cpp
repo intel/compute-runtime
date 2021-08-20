@@ -31,5 +31,18 @@ int HwInfoConfigHw<IGFX_TIGERLAKE_LP>::configureHardwareCustom(HardwareInfo *hwI
     return 0;
 }
 
+template <>
+uint32_t HwInfoConfigHw<IGFX_TIGERLAKE_LP>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+    switch (stepping) {
+    case REVISION_A0:
+        return 0x0;
+    case REVISION_B:
+        return 0x1;
+    case REVISION_C:
+        return 0x3;
+    }
+    return CommonConstants::invalidStepping;
+}
+
 template class HwInfoConfigHw<IGFX_TIGERLAKE_LP>;
 } // namespace NEO

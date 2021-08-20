@@ -70,38 +70,6 @@ bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
-        switch (stepping) {
-        case REVISION_A0:
-            return 0x0;
-        case REVISION_B:
-            return 0x1;
-        case REVISION_C:
-            return 0x3;
-        }
-    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ROCKETLAKE) {
-        switch (stepping) {
-        case REVISION_A0:
-            return 0x0;
-        case REVISION_B:
-            return 0x1;
-        case REVISION_C:
-            return 0x4;
-        }
-    } else if ((hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_S) ||
-               (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_P)) {
-        switch (stepping) {
-        case REVISION_A0:
-            return 0x0;
-        case REVISION_B:
-            return 0x4;
-        }
-    }
-    return Gen12LPHelpers::getHwRevIdFromStepping(stepping, hwInfo);
-}
-
-template <>
 uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
         switch (hwInfo.platform.usRevId) {

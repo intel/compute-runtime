@@ -62,8 +62,8 @@ XEHPTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenDebugVariableIsDisabledThenUsm
 
 XEHPTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenB0ThenUsmHostMemSupportIsSetCorrectly) {
     auto steppingSave = defaultHwInfo->platform.usRevId;
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    defaultHwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    defaultHwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
     std::vector<TestParams> params = {{CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL}};
     std::vector<TestParams> disabledParameters = {{CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, 0u}};
 

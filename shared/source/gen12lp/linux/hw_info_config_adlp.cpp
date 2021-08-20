@@ -26,12 +26,23 @@ template <>
 int HwInfoConfigHw<IGFX_ALDERLAKE_P>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
-    HwHelper &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= hwHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo));
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo));
 
     enableBlitterOperationsSupport(hwInfo);
 
     return 0;
+}
+
+template <>
+uint32_t HwInfoConfigHw<IGFX_ALDERLAKE_P>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+    switch (stepping) {
+    case REVISION_A0:
+        return 0x0;
+    case REVISION_B:
+        return 0x4;
+    }
+    return CommonConstants::invalidStepping;
 }
 
 template class HwInfoConfigHw<IGFX_ALDERLAKE_P>;

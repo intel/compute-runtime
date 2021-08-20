@@ -19,18 +19,6 @@ bool pipeControlWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
 }
 
-uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_DG1) {
-        switch (stepping) {
-        case REVISION_A0:
-            return 0x0;
-        case REVISION_B:
-            return 0x1;
-        }
-    }
-    return CommonConstants::invalidStepping;
-}
-
 uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) {
     if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_DG1) {
         switch (hwInfo.platform.usRevId) {

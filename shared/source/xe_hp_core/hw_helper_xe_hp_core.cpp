@@ -17,6 +17,7 @@ using Family = NEO::XeHpFamily;
 #include "shared/source/helpers/hw_helper_base.inl"
 #include "shared/source/helpers/hw_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/hw_helper_xehp_and_later.inl"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 template <>
@@ -53,23 +54,8 @@ bool HwHelperHw<Family>::isNewResidencyModelSupported() const {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_XE_HP_SDV) {
-        switch (stepping) {
-        case REVISION_A0:
-            return 0x0;
-        case REVISION_A1:
-            return 0x1;
-        case REVISION_B:
-            return 0x4;
-        }
-    }
-    return CommonConstants::invalidStepping;
-}
-
-template <>
 bool HwHelperHw<Family>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    if (hwInfo.platform.usRevId < getHwRevIdFromStepping(REVISION_B, hwInfo)) {
+    if (hwInfo.platform.usRevId < HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo)) {
         return false;
     }
     return true;
@@ -128,7 +114,7 @@ inline bool HwHelperHw<Family>::allowStatelessCompression(const HardwareInfo &hw
     if (HwHelper::getSubDevicesCount(&hwInfo) > 1) {
         return DebugManager.flags.EnableMultiTileCompression.get() > 0 ? true : false;
     }
-    if (hwInfo.platform.usRevId < getHwRevIdFromStepping(REVISION_B, hwInfo)) {
+    if (hwInfo.platform.usRevId < HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo)) {
         return false;
     }
     return true;
@@ -148,7 +134,7 @@ bool HwHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) cons
 
 template <>
 bool HwHelperHw<Family>::isSipWANeeded(const HardwareInfo &hwInfo) const {
-    return hwInfo.platform.usRevId <= getHwRevIdFromStepping(REVISION_B, hwInfo);
+    return hwInfo.platform.usRevId <= HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo);
 }
 
 template <>

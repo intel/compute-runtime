@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -20,12 +21,12 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
     const uint64_t defaultKernelStartOffset = 0;
     const uint64_t additionalOffsetDueToFfid = 0x1234;
     auto hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     unsigned short steppings[] = {REVISION_A0, REVISION_A1};
     for (auto stepping : steppings) {
 
-        hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(stepping, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hwInfo);
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
         MockKernelWithInternals mockKernelWithInternals{*device};
         mockKernelWithInternals.kernelInfo.kernelDescriptor.entryPoints.skipSetFFIDGP = additionalOffsetDueToFfid;

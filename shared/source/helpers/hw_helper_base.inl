@@ -17,6 +17,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -369,11 +370,6 @@ inline bool HwHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(const Hardw
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
-    return CommonConstants::invalidStepping;
-}
-
-template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }
@@ -399,8 +395,13 @@ uint32_t HwHelperHw<GfxFamily>::getAubStreamSteppingFromHwRevId(const HardwareIn
 
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const {
-    auto lowestHwRevIdWithBug = getHwRevIdFromStepping(lowestSteppingWithBug, hwInfo);
-    auto hwRevIdWithFix = getHwRevIdFromStepping(steppingWithFix, hwInfo);
+    const auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto lowestHwRevIdWithBug = CommonConstants::invalidStepping;
+    auto hwRevIdWithFix = CommonConstants::invalidStepping;
+    if (hwInfoConfig != nullptr) {
+        lowestHwRevIdWithBug = hwInfoConfig->getHwRevIdFromStepping(lowestSteppingWithBug, hwInfo);
+        hwRevIdWithFix = hwInfoConfig->getHwRevIdFromStepping(steppingWithFix, hwInfo);
+    }
     if ((lowestHwRevIdWithBug == CommonConstants::invalidStepping) || (hwRevIdWithFix == CommonConstants::invalidStepping)) {
         return false;
     }

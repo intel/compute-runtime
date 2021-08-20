@@ -66,10 +66,11 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenRevisionIsAtLeastBTh
     DebugManager.flags.CreateMultipleSubDevices.set(1);
 
     auto &hwHelper = HwHelper::get(renderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
 
     for (auto revision : {REVISION_A0, REVISION_A1, REVISION_B}) {
-        hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
         if (revision < REVISION_B) {
             EXPECT_FALSE(hwHelper.allowStatelessCompression(hwInfo));
         } else {
@@ -83,9 +84,10 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenCreateMultipleSubDev
     DebugManager.flags.CreateMultipleSubDevices.set(2);
 
     auto &hwHelper = HwHelper::get(renderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
 
-    hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_FALSE(hwHelper.allowStatelessCompression(hwInfo));
 }
 
@@ -95,9 +97,10 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenCreateMultipleSubDev
     DebugManager.flags.EnableMultiTileCompression.set(1);
 
     auto &hwHelper = HwHelper::get(renderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
 
-    hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_TRUE(hwHelper.allowStatelessCompression(hwInfo));
 }
 
@@ -147,12 +150,11 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamilyType
 }
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumThenProperMaxThreadsForWorkgroupIsReturned) {
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
     EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
 
-    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
     uint32_t numThreadsPerEU = hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount;
     EXPECT_EQ(64u * numThreadsPerEU, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
 }
@@ -312,19 +314,20 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenGettingThreadsPerEUCo
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     {
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
         EXPECT_FALSE(helper.isDirectSubmissionSupported(hwInfo));
     }
 
     {
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A1, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hwInfo);
         EXPECT_FALSE(helper.isDirectSubmissionSupported(hwInfo));
     }
 
     {
-        hwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
         EXPECT_TRUE(helper.isDirectSubmissionSupported(hwInfo));
     }
 }
@@ -341,9 +344,10 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreWhenIsBlitterForImagesSup
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     EXPECT_FALSE(hwHelper.isDisableOverdispatchAvailable(hwInfo));
 
-    hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_TRUE(hwHelper.isDisableOverdispatchAvailable(hwInfo));
 }

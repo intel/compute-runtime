@@ -22,6 +22,17 @@ void HwInfoConfigHw<IGFX_ALDERLAKE_P>::adjustPlatformForProductFamily(HardwareIn
     platform->eDisplayCoreFamily = IGFX_GEN12LP_CORE;
 }
 
+template <>
+uint32_t HwInfoConfigHw<IGFX_ALDERLAKE_P>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+    switch (stepping) {
+    case REVISION_A0:
+        return 0x0;
+    case REVISION_B:
+        return 0x4;
+    }
+    return CommonConstants::invalidStepping;
+}
+
 template class HwInfoConfigHw<IGFX_ALDERLAKE_P>;
 
 } // namespace NEO

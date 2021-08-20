@@ -16,19 +16,17 @@ using namespace NEO;
 using XeHPMaxThreadsTest = Test<DeviceFixture>;
 
 XEHPTEST_F(XeHPMaxThreadsTest, givenXEHPWithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
-    auto isWARequired = hwInfoConfig->isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
+    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+    auto isWARequired = hwInfoConfig.isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
     EXPECT_TRUE(isWARequired);
 }
 
 XEHPTEST_F(XeHPMaxThreadsTest, givenXEHPWithBSteppingThenMaxThreadsForWorkgroupWAIsNotRequired) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    hwInfo->platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
-    auto isWARequired = hwInfoConfig->isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
+    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    auto isWARequired = hwInfoConfig.isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
     EXPECT_FALSE(isWARequired);
 }
