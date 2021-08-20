@@ -20,6 +20,51 @@ inline static int mockAccessSuccess(const char *pathname, int mode) {
     return 0;
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanImpCreationWhenAllSysmanInterfacesAreAssignedToNullThenExpectSysmanDeviceModuleContextsAreNull) {
+    ze_device_handle_t hSysman = device->toHandle();
+    SysmanDeviceImp *sysmanImp = new SysmanDeviceImp(hSysman);
+
+    delete (sysmanImp->pPowerHandleContext);
+    delete (sysmanImp->pFrequencyHandleContext);
+    delete (sysmanImp->pFabricPortHandleContext);
+    delete (sysmanImp->pTempHandleContext);
+    delete (sysmanImp->pPci);
+    delete (sysmanImp->pStandbyHandleContext);
+    delete (sysmanImp->pEngineHandleContext);
+    delete (sysmanImp->pSchedulerHandleContext);
+    delete (sysmanImp->pRasHandleContext);
+    delete (sysmanImp->pMemoryHandleContext);
+    delete (sysmanImp->pGlobalOperations);
+    delete (sysmanImp->pEvents);
+    delete (sysmanImp->pFanHandleContext);
+    delete (sysmanImp->pFirmwareHandleContext);
+    delete (sysmanImp->pDiagnosticsHandleContext);
+    delete (sysmanImp->pPerformanceHandleContext);
+
+    sysmanImp->pPowerHandleContext = nullptr;
+    sysmanImp->pFrequencyHandleContext = nullptr;
+    sysmanImp->pFabricPortHandleContext = nullptr;
+    sysmanImp->pTempHandleContext = nullptr;
+    sysmanImp->pPci = nullptr;
+    sysmanImp->pStandbyHandleContext = nullptr;
+    sysmanImp->pEngineHandleContext = nullptr;
+    sysmanImp->pSchedulerHandleContext = nullptr;
+    sysmanImp->pRasHandleContext = nullptr;
+    sysmanImp->pMemoryHandleContext = nullptr;
+    sysmanImp->pGlobalOperations = nullptr;
+    sysmanImp->pEvents = nullptr;
+    sysmanImp->pFanHandleContext = nullptr;
+    sysmanImp->pFirmwareHandleContext = nullptr;
+    sysmanImp->pDiagnosticsHandleContext = nullptr;
+    sysmanImp->pPerformanceHandleContext = nullptr;
+
+    sysmanImp->init();
+    // all sysman module contexts are null. Validating PowerHandleContext instead of all contexts
+    EXPECT_EQ(sysmanImp->pPowerHandleContext, nullptr);
+    delete sysmanImp;
+    sysmanImp = nullptr;
+}
+
 using MockDeviceSysmanGetTest = Test<DeviceFixture>;
 TEST_F(MockDeviceSysmanGetTest, GivenValidSysmanHandleSetInDeviceStructWhenGetThisSysmanHandleThenHandlesShouldBeSimilar) {
     SysmanDeviceImp *sysman = new SysmanDeviceImp(device->toHandle());
@@ -128,6 +173,26 @@ TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThe
     }
     pLinuxSysmanImp->pPmuInterface = PmuInterface::create(pLinuxSysmanImp);
     EXPECT_EQ(pLinuxSysmanImp->getPmuInterface(), pLinuxSysmanImp->pPmuInterface);
+}
+
+TEST_F(SysmanDeviceFixture, GivenXmlParserHandleWhenCallinggetXmlParserThenCreatedXmlParserHandleWillBeRetrieved) {
+    if (pLinuxSysmanImp->pXmlParser != nullptr) {
+        //delete previously allocated XmlParser
+        delete pLinuxSysmanImp->pXmlParser;
+        pLinuxSysmanImp->pXmlParser = nullptr;
+    }
+    pLinuxSysmanImp->pXmlParser = XmlParser::create();
+    EXPECT_EQ(pLinuxSysmanImp->getXmlParser(), pLinuxSysmanImp->pXmlParser);
+}
+
+TEST_F(SysmanDeviceFixture, GivenFwUtilInterfaceHandleWhenCallinggetFwUtilInterfaceThenCreatedFwUtilInterfaceHandleWillBeRetrieved) {
+    if (pLinuxSysmanImp->pFwUtilInterface != nullptr) {
+        //delete previously allocated FwUtilInterface
+        delete pLinuxSysmanImp->pFwUtilInterface;
+        pLinuxSysmanImp->pFwUtilInterface = nullptr;
+    }
+    pLinuxSysmanImp->pFwUtilInterface = FirmwareUtil::create();
+    EXPECT_EQ(pLinuxSysmanImp->getFwUtilInterface(), pLinuxSysmanImp->pFwUtilInterface);
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturnedPathIs2LevelUpThenTheCurrentPath) {

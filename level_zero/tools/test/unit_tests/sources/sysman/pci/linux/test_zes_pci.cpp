@@ -483,6 +483,11 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStateThenV
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &state));
 }
 
+TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStatsThenVerifyzetSysmanPciGetStatsCallReturnNotSupported) {
+    zes_pci_stats_t stats;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetStats(device, &stats));
+}
+
 TEST_F(ZesPciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {
     for (int32_t i = PciGenerations::PciGen1; i <= PciGenerations::PciGen5; i++) {
         double speed = convertPciGenToLinkSpeed(i);
