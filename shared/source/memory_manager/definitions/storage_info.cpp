@@ -66,6 +66,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
     } break;
     case GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
     case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
         storageInfo.cloningOfPageTables = false;
         storageInfo.memoryBanks = allTilesValue;
@@ -81,7 +82,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
         break;
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
-    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
     case GraphicsAllocation::AllocationType::PREEMPTION:
         if (properties.flags.multiOsContextCapable) {
             storageInfo.cloningOfPageTables = false;
