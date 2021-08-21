@@ -679,7 +679,11 @@ ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) 
 ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_handle_t *phModules,
                                           ze_module_build_log_handle_t *phLinkLog) {
-
+    ModuleBuildLog *moduleLinkLog = nullptr;
+    if (phLinkLog) {
+        moduleLinkLog = ModuleBuildLog::create();
+        *phLinkLog = moduleLinkLog->toHandle();
+    }
     for (auto i = 0u; i < numModules; i++) {
         auto moduleId = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
         if (moduleId->isFullyLinked) {
@@ -688,6 +692,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         NEO::Linker::PatchableSegments isaSegmentsForPatching;
         std::vector<std::vector<char>> patchedIsaTempStorage;
         uint32_t numPatchedSymbols = 0u;
+        std::vector<std::string> unresolvedSymbolLogMessages;
         if (moduleId->translationUnit->programInfo.linkerInput && moduleId->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
             patchedIsaTempStorage.reserve(moduleId->kernelImmDatas.size());
             for (const auto &kernelInfo : moduleId->translationUnit->programInfo.kernelInfos) {
@@ -697,9 +702,14 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                 isaSegmentsForPatching.push_back(NEO::Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
             }
             for (const auto &unresolvedExternal : moduleId->unresolvedExternalsInfo) {
+                if (moduleLinkLog) {
+                    std::stringstream logMessage;
+                    logMessage << "Module <" << moduleId << ">: "
+                               << " Unresolved Symbol <" << unresolvedExternal.unresolvedRelocation.symbolName << ">";
+                    unresolvedSymbolLogMessages.push_back(logMessage.str());
+                }
                 for (auto i = 0u; i < numModules; i++) {
                     auto moduleHandle = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
-
                     auto symbolIt = moduleHandle->symbols.find(unresolvedExternal.unresolvedRelocation.symbolName);
                     if (symbolIt != moduleHandle->symbols.end()) {
                         auto relocAddress = ptrOffset(isaSegmentsForPatching[unresolvedExternal.instructionsSegmentId].hostPointer,
@@ -708,6 +718,13 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                         NEO::Linker::patchAddress(relocAddress, symbolIt->second, unresolvedExternal.unresolvedRelocation);
                         numPatchedSymbols++;
                         moduleId->importedSymbolAllocations.insert(moduleHandle->exportedFunctionsSurface);
+
+                        if (moduleLinkLog) {
+                            std::stringstream logMessage;
+                            logMessage << " Successfully Resolved Thru Dynamic Link to Module <" << moduleHandle << ">";
+                            unresolvedSymbolLogMessages.back().append(logMessage.str());
+                        }
+
                         // Apply the exported functions surface state from the export module to the import module if it exists.
                         // Enables import modules to access the exported functions during kernel execution.
                         for (auto &kernImmData : moduleId->kernelImmDatas) {
@@ -723,6 +740,11 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                         break;
                     }
                 }
+            }
+        }
+        if (moduleLinkLog) {
+            for (int i = 0; i < (int)unresolvedSymbolLogMessages.size(); i++) {
+                moduleLinkLog->appendString(unresolvedSymbolLogMessages[i].c_str(), unresolvedSymbolLogMessages[i].size());
             }
         }
         if (numPatchedSymbols != moduleId->unresolvedExternalsInfo.size()) {

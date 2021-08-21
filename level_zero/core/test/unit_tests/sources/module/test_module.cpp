@@ -786,6 +786,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInOther
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
 }
+
 TEST_F(ModuleDynamicLinkTests, whenModuleIsAlreadyLinkedThenThereIsNoSymbolsVerification) {
 
     NEO::Linker::RelocationInfo unresolvedRelocation;
@@ -889,6 +890,129 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ((int)module0->kernelImmDatas[0]->getResidencyContainer().size(), 2);
     EXPECT_EQ(module0->kernelImmDatas[0]->getResidencyContainer().back(), &alloc);
+}
+
+TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModuleDefinesTheSymbolThenTheBuildLogContainsTheSuccessfulLinkage) {
+
+    uint64_t gpuAddress = 0x12345;
+    uint32_t offset = 0x20;
+    uint32_t offset2 = 0x40;
+
+    ze_module_build_log_handle_t dynLinkLog;
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+    unresolvedRelocation.offset = offset;
+    unresolvedRelocation.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::Linker::UnresolvedExternal unresolvedExternal;
+    unresolvedExternal.unresolvedRelocation = unresolvedRelocation;
+
+    NEO::Linker::RelocationInfo unresolvedRelocation2;
+    unresolvedRelocation2.symbolName = "unresolved2";
+    unresolvedRelocation2.offset = offset2;
+    unresolvedRelocation2.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::Linker::UnresolvedExternal unresolvedExternal2;
+    unresolvedExternal2.unresolvedRelocation = unresolvedRelocation2;
+
+    NEO::SymbolInfo symbolInfo{};
+    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+
+    NEO::SymbolInfo symbolInfo2{};
+    NEO::Linker::RelocatedSymbol relocatedSymbol2{symbolInfo2, gpuAddress};
+
+    char kernelHeap[MemoryConstants::pageSize] = {};
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+
+    module0->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation2});
+    module0->unresolvedExternalsInfo[0].instructionsSegmentId = 0u;
+    module0->unresolvedExternalsInfo[1].instructionsSegmentId = 0u;
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
+    module0->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    module1->symbols[unresolvedRelocation.symbolName] = relocatedSymbol;
+
+    module1->symbols[unresolvedRelocation2.symbolName] = relocatedSymbol2;
+
+    MockGraphicsAllocation alloc;
+    module1->exportedFunctionsSurface = &alloc;
+
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+    ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    EXPECT_GT((int)buildLogSize, 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(dynLinkLog);
+}
+
+TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnotherModuleWhenDynamicLinkThenLinkFailureIsReturnedAndLogged) {
+    uint32_t offset = 0x20;
+    uint32_t offset2 = 0x40;
+
+    ze_module_build_log_handle_t dynLinkLog;
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+    unresolvedRelocation.offset = offset;
+    unresolvedRelocation.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::Linker::UnresolvedExternal unresolvedExternal;
+    unresolvedExternal.unresolvedRelocation = unresolvedRelocation;
+
+    NEO::Linker::RelocationInfo unresolvedRelocation2;
+    unresolvedRelocation2.symbolName = "unresolved2";
+    unresolvedRelocation2.offset = offset2;
+    unresolvedRelocation2.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::Linker::UnresolvedExternal unresolvedExternal2;
+    unresolvedExternal2.unresolvedRelocation = unresolvedRelocation2;
+
+    char kernelHeap[MemoryConstants::pageSize] = {};
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+
+    module0->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation2});
+    module0->unresolvedExternalsInfo[0].instructionsSegmentId = 0u;
+    module0->unresolvedExternalsInfo[1].instructionsSegmentId = 0u;
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
+    module0->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+    ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
+    EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    EXPECT_GT((int)buildLogSize, 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(dynLinkLog);
 }
 
 class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Test {
