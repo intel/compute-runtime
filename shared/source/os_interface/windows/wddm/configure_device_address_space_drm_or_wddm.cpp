@@ -38,15 +38,16 @@ bool Wddm::configureDeviceAddressSpace() {
                        ? maximumApplicationAddress + 1u
                        : 0u;
 
-    D3DDDI_RESERVEGPUVIRTUALADDRESS svmRangeReservationDesc = {};
-    svmRangeReservationDesc.BaseAddress = MemoryConstants::pageSize64k;
-    svmRangeReservationDesc.MinimumAddress = 0;
-    svmRangeReservationDesc.MaximumAddress = svmSize;
-    svmRangeReservationDesc.Size = svmSize - svmRangeReservationDesc.BaseAddress;
-    svmRangeReservationDesc.hAdapter = getAdapter();
-    NTSTATUS status = getGdi()->reserveGpuVirtualAddress(&svmRangeReservationDesc);
-    UNRECOVERABLE_IF(status != STATUS_SUCCESS);
-
+    if (svmSize > 0) {
+        D3DDDI_RESERVEGPUVIRTUALADDRESS svmRangeReservationDesc = {};
+        svmRangeReservationDesc.BaseAddress = MemoryConstants::pageSize64k;
+        svmRangeReservationDesc.MinimumAddress = 0;
+        svmRangeReservationDesc.MaximumAddress = svmSize;
+        svmRangeReservationDesc.Size = svmSize - svmRangeReservationDesc.BaseAddress;
+        svmRangeReservationDesc.hAdapter = getAdapter();
+        NTSTATUS status = getGdi()->reserveGpuVirtualAddress(&svmRangeReservationDesc);
+        UNRECOVERABLE_IF(status != STATUS_SUCCESS);
+    }
     bool obtainMinAddress = rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
     return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->ftrL3IACoherency, minAddress, obtainMinAddress);
 }

@@ -131,7 +131,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
     auto cpuPtr = gmm->isCompressionEnabled ? nullptr : lockResource(wddmAllocation.get());
 
-    [[maybe_unused]] auto status = mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
+    [[maybe_unused]] auto status = true;
+
+    if (executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress || is32bit) {
+        status = mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
+    } else {
+        status = mapGpuVirtualAddress(wddmAllocation.get(), nullptr);
+    }
     DEBUG_BREAK_IF(!status);
     wddmAllocation->setCpuAddress(cpuPtr);
     return wddmAllocation.release();

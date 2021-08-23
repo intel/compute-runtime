@@ -58,7 +58,12 @@ NTSTATUS __stdcall reserveDeviceAddressSpaceMock(D3DDDI_RESERVEGPUVIRTUALADDRESS
     return 0;
 }
 
-TEST(WddmLinux, whenConfiguringDeviceAddressSpaceThenReserveGpuVAForUSM) {
+TEST(WddmLinux, givenSvmAddressSpaceWhenConfiguringDeviceAddressSpaceThenReserveGpuVAForUSM) {
+
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
     RestorePoint receivedReserveGpuVaArgsGlobalsRestorer{receivedReserveGpuVaArgs};
 
     NEO::MockExecutionEnvironment mockExecEnv;
@@ -86,4 +91,33 @@ TEST(WddmLinux, whenConfiguringDeviceAddressSpaceThenReserveGpuVAForUSM) {
     EXPECT_EQ(svmSize, receivedReserveGpuVaArgs.MaximumAddress);
     EXPECT_EQ(svmSize - receivedReserveGpuVaArgs.BaseAddress, receivedReserveGpuVaArgs.Size);
     EXPECT_EQ(wddm.getAdapter(), receivedReserveGpuVaArgs.hAdapter);
+}
+
+TEST(WddmLinux, givenNonSvmAddressSpaceWhenConfiguringDeviceAddressSpaceThenReserveGpuVAForUSMIsNotCalled) {
+
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    RestorePoint receivedReserveGpuVaArgsGlobalsRestorer{receivedReserveGpuVaArgs};
+
+    NEO::MockExecutionEnvironment mockExecEnv;
+    NEO::MockRootDeviceEnvironment mockRootDeviceEnvironment{mockExecEnv};
+    std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceIdIn;
+    auto osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
+    osEnvironment->gdi->closeAdapter = closeAdapterMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    hwDeviceIdIn.reset(new NEO::HwDeviceIdWddm(NULL_HANDLE, LUID{}, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>()));
+
+    MockWddmLinux wddm{std::move(hwDeviceIdIn), mockRootDeviceEnvironment};
+    auto mockGmmClientContext = NEO::GmmClientContext::create<NEO::MockGmmClientContext>(nullptr, NEO::defaultHwInfo.get());
+    wddm.gmmMemory = std::make_unique<MockGmmMemoryWddmLinux>(mockGmmClientContext.get());
+    *wddm.gfxPlatform = NEO::defaultHwInfo->platform;
+    wddm.configureDeviceAddressSpace();
+
+    EXPECT_EQ(0U, receivedReserveGpuVaArgs.BaseAddress);
+    EXPECT_EQ(0U, receivedReserveGpuVaArgs.MinimumAddress);
+    EXPECT_EQ(0U, receivedReserveGpuVaArgs.MaximumAddress);
+    EXPECT_EQ(0U, receivedReserveGpuVaArgs.Size);
+    EXPECT_EQ(0U, receivedReserveGpuVaArgs.hAdapter);
 }
