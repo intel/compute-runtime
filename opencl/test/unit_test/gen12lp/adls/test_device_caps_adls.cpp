@@ -13,9 +13,7 @@ using namespace NEO;
 using AdlsUsDeviceIdTest = Test<ClDeviceFixture>;
 
 ADLSTEST_F(AdlsUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
-    unsigned short adlsSimulationIds[3] = {
-        0x4680,
-        0x4690,
+    unsigned short adlsSimulationIds[1] = {
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;
@@ -24,10 +22,7 @@ ADLSTEST_F(AdlsUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSi
         mockDevice = createWithUsDeviceId(id);
         ASSERT_NE(mockDevice, nullptr);
 
-        if (id == 0)
-            EXPECT_FALSE(mockDevice->isSimulation());
-        else
-            EXPECT_TRUE(mockDevice->isSimulation());
+        EXPECT_FALSE(mockDevice->isSimulation());
         delete mockDevice;
     }
 }

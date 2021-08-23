@@ -16,11 +16,6 @@ namespace NEO {
 const char *HwMapper<IGFX_ALDERLAKE_S>::abbreviation = "adls";
 
 bool isSimulationADLS(unsigned short deviceId) {
-    switch (deviceId) {
-    case 0x4680:
-    case 0x4690:
-        return true;
-    }
     return false;
 };
 
