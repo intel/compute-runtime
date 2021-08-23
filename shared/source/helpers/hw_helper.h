@@ -93,7 +93,7 @@ class HwHelper {
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
     virtual const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
-    virtual std::string getExtensions() const = 0;
+    virtual std::string getExtensions(const HardwareInfo &hwInfo) const = 0;
     virtual std::string getDeviceMemoryName() const = 0;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
     virtual uint32_t getMetricsLibraryGenId() const = 0;
@@ -157,6 +157,7 @@ class HwHelper {
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
+    virtual std::string getExtraExtensions(const HardwareInfo &hwInfo) const = 0;
 
     HwHelper() = default;
 };
@@ -265,7 +266,7 @@ class HwHelperHw : public HwHelper {
 
     bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
 
-    std::string getExtensions() const override;
+    std::string getExtensions(const HardwareInfo &hwInfo) const override;
 
     std::string getDeviceMemoryName() const override;
 
@@ -386,6 +387,8 @@ class HwHelperHw : public HwHelper {
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
+
+    std::string getExtraExtensions(const HardwareInfo &hwInfo) const override;
 
     static const AuxTranslationMode defaultAuxTranslationMode;
     HwHelperHw() = default;

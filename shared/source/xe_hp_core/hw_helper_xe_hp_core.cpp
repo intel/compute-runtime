@@ -19,6 +19,8 @@ using Family = NEO::XeHpFamily;
 #include "shared/source/helpers/hw_helper_xehp_and_later.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 
+#include "hw_helper_extra.inl"
+
 namespace NEO {
 template <>
 const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
@@ -160,10 +162,12 @@ const StackVec<uint32_t, 6> HwHelperHw<Family>::getThreadsPerEUConfigs() const {
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions() const {
+std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
     extensions += "cl_intel_dot_accumulate ";
     extensions += "cl_intel_subgroup_local_block_io ";
+
+    extensions += getExtraExtensions(hwInfo);
 
     return extensions;
 }
