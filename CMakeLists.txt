@@ -984,6 +984,11 @@ set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
 add_subdirectory_unique(shared/source)
 add_subdirectory_unique(shared/generate_cpp_array)
 
+set(TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared/tools${BRANCH_DIR_SUFFIX}")
+if(EXISTS ${TOOLS_DIR})
+  add_subdirectory_unique(${TOOLS_DIR})
+endif()
+
 macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
   set(NEO_STATIC_LIB_NAME ${LIB_NAME})
   set(SHARINGS_ENABLE_LIB_NAME "${LIB_NAME}_sharings_enable")
