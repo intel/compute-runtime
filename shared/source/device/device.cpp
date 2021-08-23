@@ -265,7 +265,8 @@ void Device::translateToEngineInstanced(EngineInstancesContainer &engineInstance
     EngineInstancesContainer newEngines;
 
     for (auto &engine : engineInstancesContainer) {
-        if (EngineHelpers::isBcs(engine.first) || (engine.first == this->engineInstancedType) || (engine.second != EngineUsage::Regular)) {
+        if (EngineHelpers::isBcs(engine.first) || (engine.first == this->engineInstancedType) ||
+            (engine.second != EngineUsage::Regular && engine.second != EngineUsage::Cooperative)) {
             newEngines.push_back(engine);
         } else {
             continue;

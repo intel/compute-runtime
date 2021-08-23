@@ -369,6 +369,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         bool regularCcsFound = false;
         bool internalCcsFound = false;
         bool lowPriorityCcsFound = false;
+        bool cooperativeCcsFound = false;
 
         OsContext *defaultOsContext = device->getDefaultEngine().osContext;
         EXPECT_EQ(engineType, defaultOsContext->getEngineType());
@@ -394,6 +395,9 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
                 } else if (osContext->isInternalEngine()) {
                     EXPECT_FALSE(internalCcsFound);
                     internalCcsFound = true;
+                } else if (osContext->getEngineUsage() == EngineUsage::Cooperative) {
+                    EXPECT_FALSE(cooperativeCcsFound);
+                    cooperativeCcsFound = true;
                 } else {
                     EXPECT_TRUE(false);
                 }
@@ -402,7 +406,9 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
             }
         }
 
-        return (regularCcsFound && internalCcsFound && lowPriorityCcsFound);
+        auto &hwInfo = device->getHardwareInfo();
+        return (regularCcsFound && internalCcsFound && lowPriorityCcsFound) &&
+               (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isCooperativeEngineSupported(hwInfo) || cooperativeCcsFound);
     }
 
     DebugManagerStateRestore restorer;
