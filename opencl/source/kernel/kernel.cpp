@@ -1041,9 +1041,6 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
 
     auto engineGroupType = hwHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                        commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType)) {
-        return 0;
-    }
 
     const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     auto dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;

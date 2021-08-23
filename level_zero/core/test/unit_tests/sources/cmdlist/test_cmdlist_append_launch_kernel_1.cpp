@@ -1018,12 +1018,17 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
     bool isCooperative = true;
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto engineGroupType = NEO::EngineGroupType::Compute;
+    if (hwHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
+        engineGroupType = hwHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative, *defaultHwInfo);
+    }
+    pCommandList->initialize(device, engineGroupType, 0u);
     auto result = pCommandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    pCommandList->initialize(device, engineGroupType, 0u);
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1038,10 +1043,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     {
         VariableBackup<uint32_t> groupCountX{&groupCount.groupCountX};
         uint32_t maximalNumberOfWorkgroupsAllowed;
-        kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed, NEO::EngineGroupType::Compute, false);
+        kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed, engineGroupType, false);
         groupCountX = maximalNumberOfWorkgroupsAllowed + 1;
         pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+        pCommandList->initialize(device, engineGroupType, 0u);
         result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }

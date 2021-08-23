@@ -123,7 +123,8 @@ class HwHelper {
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
-    virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType) const = 0;
+    virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                              const HardwareInfo &hwInfo, bool isEngineInstanced) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
@@ -329,7 +330,9 @@ class HwHelperHw : public HwHelper {
 
     bool packedFormatsSupported() const override;
 
-    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType) const override;
+    bool isRcsAvailable(const HardwareInfo &hwInfo) const override;
+
+    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const override;
 
     uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                      const HardwareInfo &hwInfo, bool isEngineInstanced) const override;

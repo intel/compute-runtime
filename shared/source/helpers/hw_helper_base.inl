@@ -568,7 +568,12 @@ bool MemorySynchronizationCommands<GfxFamily>::isPipeControlPriorToPipelineSelec
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType) const {
+bool HwHelperHw<GfxFamily>::isRcsAvailable(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const {
     return true;
 }
 

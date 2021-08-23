@@ -5949,7 +5949,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
         auto engineGroupType = hwHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
                                                            pCommandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        if (!hwHelper.isCooperativeDispatchSupported(engineGroupType)) {
+        if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
             retVal = CL_INVALID_COMMAND_QUEUE;
             return retVal;
         }

@@ -16,6 +16,8 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
+#include "engine_node.h"
+
 using namespace NEO;
 
 class MockSyncBufferHandler : public SyncBufferHandler {
@@ -69,6 +71,9 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
         hwHelper = &HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
+        if (hwHelper->isCooperativeEngineSupported(pClDevice->getHardwareInfo())) {
+            commandQueue->gpgpuEngine = &pClDevice->getEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative);
+        }
     }
 
     template <typename FamilyType>
@@ -93,7 +98,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     bool isCooperativeDispatchSupported() {
         auto engineGroupType = hwHelper->getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                             commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        return hwHelper->isCooperativeDispatchSupported(engineGroupType);
+        return hwHelper->isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());
     }
 
     const cl_uint workDim = 1;
@@ -116,9 +121,10 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurr
     EXPECT_EQ(workItemsCount, syncBufferHandler->usedBufferSize);
 
     commandQueue->flush();
-    EXPECT_EQ(syncBufferHandler->graphicsAllocation->getTaskCount(
-                  pDevice->getUltCommandStreamReceiver<FamilyType>().getOsContext().getContextId()),
-              pDevice->getUltCommandStreamReceiver<FamilyType>().latestSentTaskCount);
+
+    auto pCsr = commandQueue->getGpgpuEngine().commandStreamReceiver;
+    EXPECT_EQ(syncBufferHandler->graphicsAllocation->getTaskCount(pCsr->getOsContext().getContextId()),
+              static_cast<UltCommandStreamReceiver<FamilyType> *>(pCsr)->latestSentTaskCount);
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsNotCreated) {

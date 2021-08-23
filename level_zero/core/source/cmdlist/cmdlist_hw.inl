@@ -1874,8 +1874,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kernel, NEO::Device &device,
                                                                     const ze_group_count_t *pThreadGroupDimensions) {
-    auto &hwHelper = NEO::HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
-    if (!hwHelper.isCooperativeDispatchSupported(this->engineGroupType)) {
+    auto &hwInfo = device.getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (!hwHelper.isCooperativeDispatchSupported(this->engineGroupType, hwInfo)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
