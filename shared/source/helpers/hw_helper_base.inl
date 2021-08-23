@@ -597,6 +597,12 @@ bool HwHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType
 }
 
 template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
+                                                        const HardwareInfo &hwInfo, bool isEngineInstanced) const {
+    return maxWorkGroupCount;
+}
+
+template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isKmdMigrationSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

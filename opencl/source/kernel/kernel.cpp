@@ -1056,15 +1056,18 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
         hardwareInfo.gtSystemInfo.EUCount, hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
 
     auto barrierCount = kernelDescriptor.kernelAttributes.barrierCount;
-    return KernelHelper::getMaxWorkGroupCount(kernelInfo.getMaxSimdSize(),
-                                              availableThreadCount,
-                                              dssCount,
-                                              dssCount * KB * hardwareInfo.capabilityTable.slmSize,
-                                              hwHelper.alignSlmSize(slmTotalSize),
-                                              static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
-                                              hwHelper.getBarriersCountFromHasBarriers(barrierCount),
-                                              workDim,
-                                              localWorkSize);
+    auto maxWorkGroupCount = KernelHelper::getMaxWorkGroupCount(kernelInfo.getMaxSimdSize(),
+                                                                availableThreadCount,
+                                                                dssCount,
+                                                                dssCount * KB * hardwareInfo.capabilityTable.slmSize,
+                                                                hwHelper.alignSlmSize(slmTotalSize),
+                                                                static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
+                                                                hwHelper.getBarriersCountFromHasBarriers(barrierCount),
+                                                                workDim,
+                                                                localWorkSize);
+    auto isEngineInstanced = commandQueue->getCommandStreamReceiver(false).getOsContext().isEngineInstanced();
+    maxWorkGroupCount = hwHelper.adjustMaxWorkGroupCount(maxWorkGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
+    return maxWorkGroupCount;
 }
 
 inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceiver) {

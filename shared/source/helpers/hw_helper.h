@@ -126,6 +126,8 @@ class HwHelper {
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType) const = 0;
+    virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
+                                             const HardwareInfo &hwInfo, bool isEngineInstanced) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual bool isCopyOnlyEngineType(EngineGroupType type) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
@@ -333,6 +335,9 @@ class HwHelperHw : public HwHelper {
     bool packedFormatsSupported() const override;
 
     bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType) const override;
+
+    uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
+                                     const HardwareInfo &hwInfo, bool isEngineInstanced) const override;
 
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 

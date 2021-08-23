@@ -393,7 +393,8 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount) {
+ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount, NEO::EngineGroupType engineGroupType,
+                                                       bool isEngineInstanced) {
     UNRECOVERABLE_IF(0 == groupSize[0]);
     UNRECOVERABLE_IF(0 == groupSize[1]);
     UNRECOVERABLE_IF(0 == groupSize[2]);
@@ -423,6 +424,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
                                                                hwHelper.getBarriersCountFromHasBarriers(barrierCount),
                                                                workDim,
                                                                localWorkSize);
+    *totalGroupCount = hwHelper.adjustMaxWorkGroupCount(*totalGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
     return ZE_RESULT_SUCCESS;
 }
 

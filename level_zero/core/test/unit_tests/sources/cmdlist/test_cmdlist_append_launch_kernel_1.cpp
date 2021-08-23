@@ -1038,7 +1038,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     {
         VariableBackup<uint32_t> groupCountX{&groupCount.groupCountX};
         uint32_t maximalNumberOfWorkgroupsAllowed;
-        kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed);
+        kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed, NEO::EngineGroupType::Compute, false);
         groupCountX = maximalNumberOfWorkgroupsAllowed + 1;
         pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);

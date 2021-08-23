@@ -111,7 +111,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestMaxCooperativeGroupCount(
     ze_kernel_handle_t hKernel,
     uint32_t *totalGroupCount) {
-    return L0::Kernel::fromHandle(hKernel)->suggestMaxCooperativeGroupCount(totalGroupCount);
+    return L0::Kernel::fromHandle(hKernel)->suggestMaxCooperativeGroupCount(totalGroupCount, NEO::EngineGroupType::Compute, false);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
