@@ -88,7 +88,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
     DirectSubmissionControllerMock controller;
     controller.registerDirectSubmission(&csr);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10 * controller.timeout));
+    while (!controller.directSubmissions[&csr].isStopped) {
+    }
 
     EXPECT_TRUE(controller.directSubmissionControllingThread.joinable());
     EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
