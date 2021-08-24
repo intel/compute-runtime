@@ -449,6 +449,12 @@ class CommandStreamReceiverHwDirectSubmissionMock : public CommandStreamReceiver
   public:
     using CommandStreamReceiverHw<Type>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<Type>::directSubmission;
+
+    std::unique_lock<CommandStreamReceiver::MutexType> obtainUniqueOwnership() override {
+        recursiveLockCounter++;
+        return CommandStreamReceiverHw<Type>::obtainUniqueOwnership();
+    }
+    uint32_t recursiveLockCounter = 0;
 };
 
 HWTEST_F(InitDirectSubmissionTest, whenCallInitDirectSubmissionAgainThenItIsNotReinitialized) {
@@ -477,6 +483,21 @@ HWTEST_F(InitDirectSubmissionTest, whenCallInitDirectSubmissionAgainThenItIsNotR
     csr.reset();
 }
 
+HWTEST_F(InitDirectSubmissionTest, whenCallInitDirectSubmissionThenObtainLock) {
+    auto csr = std::make_unique<CommandStreamReceiverHwDirectSubmissionMock<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
+    osContext->ensureContextInitialized();
+    osContext->setDefaultContext(true);
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
+    csr->initDirectSubmission(*device, *osContext.get());
+    EXPECT_EQ(1u, csr->recursiveLockCounter);
+
+    csr.reset();
+}
 HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionEnabledWhenPlatformNotSupportsRcsThenExpectFeatureNotAvailable) {
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
     std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,

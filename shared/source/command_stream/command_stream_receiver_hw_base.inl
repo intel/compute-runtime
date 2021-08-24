@@ -1413,6 +1413,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
     auto startDirect = osContext.isDirectSubmissionAvailable(device.getHardwareInfo(), submitOnInit);
 
     if (startDirect) {
+        auto lock = this->obtainUniqueOwnership();
         if (!this->isBlitterDirectSubmissionEnabled() && !this->isDirectSubmissionEnabled()) {
             if (EngineHelpers::isBcs(osContext.getEngineType())) {
                 blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
