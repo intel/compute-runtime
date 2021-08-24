@@ -664,24 +664,50 @@ ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
 
         if (calculateSizeOnly) {
 
+            const size_t headerSize = sizeof(MetricGroupCalculateHeader);
+            const size_t rawDataOffsetsRequiredSize = sizeof(uint32_t) * metricQueriesSize;
+            const size_t rawDataSizesRequiredSize = sizeof(uint32_t) * metricQueriesSize;
+
             auto pMetricQueryImp = static_cast<MetricQueryImp *>(MetricQuery::fromHandle(metricQueries[0]));
             result = pMetricQueryImp->metricsLibrary.getMetricQueryReportSize(*pRawDataSize);
-            *pRawDataSize *= metricQueriesSize;
+
+            const size_t rawDataRequiredSize = *pRawDataSize * metricQueriesSize;
+
+            *pRawDataSize = headerSize + rawDataOffsetsRequiredSize + rawDataSizesRequiredSize + rawDataRequiredSize;
 
         } else {
 
-            size_t sizePerSubDevice = *pRawDataSize / metricQueriesSize;
+            MetricGroupCalculateHeader *pRawDataHeader = reinterpret_cast<MetricGroupCalculateHeader *>(pRawData);
+            pRawDataHeader->magic = MetricGroupCalculateHeader::magicValue;
+            pRawDataHeader->dataCount = static_cast<uint32_t>(metricQueriesSize);
+
+            // Relative offsets in the header allow to move/copy the buffer.
+            pRawDataHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+            pRawDataHeader->rawDataSizes = static_cast<uint32_t>(pRawDataHeader->rawDataOffsets + (sizeof(uint32_t) * metricQueriesSize));
+            pRawDataHeader->rawDataOffset = static_cast<uint32_t>(pRawDataHeader->rawDataSizes + (sizeof(uint32_t) * metricQueriesSize));
+
+            size_t sizePerSubDevice = (*pRawDataSize - pRawDataHeader->rawDataOffset) / metricQueriesSize;
             DEBUG_BREAK_IF(sizePerSubDevice == 0);
+            *pRawDataSize = pRawDataHeader->rawDataOffset;
+
+            uint32_t *pRawDataOffsetsUnpacked = reinterpret_cast<uint32_t *>(pRawData + pRawDataHeader->rawDataOffsets);
+            uint32_t *pRawDataSizesUnpacked = reinterpret_cast<uint32_t *>(pRawData + pRawDataHeader->rawDataSizes);
+            uint8_t *pRawDataUnpacked = reinterpret_cast<uint8_t *>(pRawData + pRawDataHeader->rawDataOffset);
 
             for (size_t i = 0; i < metricQueriesSize; ++i) {
 
+                const uint32_t rawDataOffset = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] : 0;
                 auto pMetricQuery = MetricQuery::fromHandle(metricQueries[i]);
-                ze_result_t tmpResult = pMetricQuery->getData(&sizePerSubDevice, pRawData + (sizePerSubDevice * i));
+                ze_result_t tmpResult = pMetricQuery->getData(&sizePerSubDevice, pRawDataUnpacked + rawDataOffset);
 
                 if (tmpResult != ZE_RESULT_SUCCESS) {
                     result = false;
                     break;
                 }
+
+                pRawDataSizesUnpacked[i] = static_cast<uint32_t>(sizePerSubDevice);
+                pRawDataOffsetsUnpacked[i] = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] + pRawDataSizesUnpacked[i] : 0;
+                *pRawDataSize += sizePerSubDevice;
             }
         }
 

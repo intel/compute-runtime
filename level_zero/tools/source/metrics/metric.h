@@ -78,6 +78,10 @@ struct MetricGroup : _zet_metric_group_handle_t {
     virtual ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                               const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                               zet_typed_value_t *pMetricValues) = 0;
+    virtual ze_result_t calculateMetricValuesExp(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
+                                                 const uint8_t *pRawData, uint32_t *pSetCount,
+                                                 uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
+                                                 zet_typed_value_t *pMetricValues) = 0;
 
     static MetricGroup *create(zet_metric_group_properties_t &properties,
                                MetricsDiscovery::IMetricSet_1_5 &metricSet,
@@ -99,6 +103,16 @@ struct MetricGroup : _zet_metric_group_handle_t {
     virtual ze_result_t waitForReports(const uint32_t timeoutMs) = 0;
     virtual ze_result_t readIoStream(uint32_t &reportCount, uint8_t &reportData) = 0;
     virtual ze_result_t closeIoStream() = 0;
+};
+
+struct MetricGroupCalculateHeader {
+    static constexpr uint32_t magicValue = 0xFFFEDCBA;
+
+    uint32_t magic;
+    uint32_t dataCount;
+    uint32_t rawDataOffsets;
+    uint32_t rawDataSizes;
+    uint32_t rawDataOffset;
 };
 
 struct MetricStreamer : _zet_metric_streamer_handle_t {

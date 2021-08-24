@@ -597,6 +597,99 @@ ze_result_t MetricGroupImp::calculateMetricValues(const zet_metric_group_calcula
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
+ze_result_t MetricGroupImp::calculateMetricValuesExp(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
+                                                     const uint8_t *pRawData, uint32_t *pSetCount,
+                                                     uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
+                                                     zet_typed_value_t *pMetricValues) {
+
+    const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
+
+    if (pRawHeader->magic != MetricGroupCalculateHeader::magicValue) {
+
+        const bool calculationCountOnly = *pTotalMetricValueCount == 0;
+        ze_result_t result = calculateMetricValues(type, rawDataSize, pRawData, pTotalMetricValueCount, pMetricValues);
+
+        if (result == ZE_RESULT_SUCCESS) {
+            *pSetCount = 1;
+            if (!calculationCountOnly) {
+                pMetricCounts[0] = *pTotalMetricValueCount;
+            }
+        } else {
+            if (calculationCountOnly) {
+                *pSetCount = 0;
+                *pTotalMetricValueCount = 0;
+            } else {
+                pMetricCounts[0] = 0;
+            }
+        }
+        return result;
+    }
+
+    bool result = true;
+    const size_t metricGroupCount = metricGroups.size();
+
+    if (*pSetCount == 0 || *pTotalMetricValueCount == 0) {
+
+        const uint32_t *pRawDataSizesUnpacked = reinterpret_cast<const uint32_t *>(pRawData + pRawHeader->rawDataSizes);
+
+        if (metricGroupCount == 0) {
+            result = getCalculatedMetricCount(*pRawDataSizesUnpacked, *pTotalMetricValueCount);
+
+            if (result) {
+                *pSetCount = 1;
+            } else {
+                *pSetCount = 0;
+                *pTotalMetricValueCount = 0;
+            }
+        } else {
+            *pSetCount = static_cast<uint32_t>(metricGroupCount);
+            *pTotalMetricValueCount = 0;
+
+            for (size_t i = 0; i < metricGroupCount; i++) {
+                uint32_t metricCount = 0;
+                auto &metricGroup = *static_cast<MetricGroupImp *>(metricGroups[i]);
+                result = metricGroup.getCalculatedMetricCount(pRawDataSizesUnpacked[i], metricCount);
+
+                if (!result) {
+                    *pSetCount = 0;
+                    *pTotalMetricValueCount = 0;
+                    break;
+                }
+
+                *pTotalMetricValueCount += metricCount;
+            }
+        }
+    } else {
+
+        const uint32_t *pRawDataSizesUnpacked = reinterpret_cast<const uint32_t *>(pRawData + pRawHeader->rawDataSizes);
+        const uint32_t *pRawDataOffsetsUnpacked = reinterpret_cast<const uint32_t *>(pRawData + pRawHeader->rawDataOffsets);
+        const uint8_t *pRawDataOffsetUnpacked = reinterpret_cast<const uint8_t *>(pRawData + pRawHeader->rawDataOffset);
+
+        if (metricGroupCount == 0) {
+            result = getCalculatedMetricValues(type, pRawDataSizesUnpacked[0], pRawDataOffsetUnpacked, *pTotalMetricValueCount, pMetricValues);
+            pMetricCounts[0] = *pTotalMetricValueCount;
+
+        } else {
+            for (size_t i = 0; i < metricGroupCount; i++) {
+                auto &metricGroup = *static_cast<MetricGroupImp *>(metricGroups[i]);
+                const uint32_t dataSize = pRawDataSizesUnpacked[i];
+                const uint8_t *pRawDataOffset = pRawDataOffsetUnpacked + pRawDataOffsetsUnpacked[i];
+                pMetricCounts[i] = *pTotalMetricValueCount;
+                result = metricGroup.getCalculatedMetricValues(type, dataSize, pRawDataOffset, pMetricCounts[i], pMetricValues);
+
+                if (!result) {
+                    for (size_t j = 0; j <= i; j++) {
+                        pMetricCounts[j] = 0;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+}
+
 bool MetricGroupImp::getCalculatedMetricCount(const size_t rawDataSize,
                                               uint32_t &metricValueCount) {
     uint32_t rawReportSize = getRawReportSize();

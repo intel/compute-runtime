@@ -122,107 +122,6 @@ void MetricMultiDeviceFixture::SetUp() {
         devices[i] = driverHandle->devices[i];
     }
 
-    auto &metricContext = devices[0]->getMetricContext();
-    metricContext.setInitializationState(ZE_RESULT_SUCCESS);
-
-    mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricContext));
-    mockMetricsLibrary->setMockedApi(&mockMetricsLibraryApi);
-    mockMetricsLibrary->handle = new MockOsLibrary();
-
-    mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricContext));
-    mockMetricEnumeration->setMockedApi(&mockMetricsDiscoveryApi);
-    mockMetricEnumeration->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
-
-    // Metrics Discovery device common settings.
-    metricsDeviceParams.Version.MajorNumber = MetricEnumeration::requiredMetricsDiscoveryMajorVersion;
-    metricsDeviceParams.Version.MinorNumber = MetricEnumeration::requiredMetricsDiscoveryMinorVersion;
-}
-
-void MetricMultiDeviceFixture::TearDown() {
-
-    // Restore original metrics library
-    delete mockMetricsLibrary->handle;
-    mockMetricsLibrary->setMockedApi(nullptr);
-    mockMetricsLibrary.reset();
-
-    // Restore original metric enumeration.
-    mockMetricEnumeration->setMockedApi(nullptr);
-    mockMetricEnumeration.reset();
-
-    MultiDeviceFixture::TearDown();
-
-    NEO::ImplicitScaling::apiSupport = false;
-}
-
-void MetricMultiDeviceFixture::openMetricsAdapter() {
-
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsSubDevice(_, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(adapterGroup, GetAdapter(_))
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&adapter));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-}
-
-void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
-
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, OpenMetricsSubDevice(_, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(adapter, CloseMetricsDevice(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
-
-    EXPECT_CALL(adapterGroup, Close())
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-}
-
-void MetricMultiDeviceContextFixture::SetUp() {
-
-    NEO::ImplicitScaling::apiSupport = true;
-
-    MultiDeviceFixture::SetUp();
-
-    devices.resize(driverHandle->devices.size());
-
-    for (uint32_t i = 0; i < driverHandle->devices.size(); i++) {
-        devices[i] = driverHandle->devices[i];
-    }
-
     // Initialize metric api.
     auto &metricContext = devices[0]->getMetricContext();
 
@@ -256,7 +155,7 @@ void MetricMultiDeviceContextFixture::SetUp() {
     metricsDeviceParams.Version.MinorNumber = MetricEnumeration::requiredMetricsDiscoveryMinorVersion;
 }
 
-void MetricMultiDeviceContextFixture::TearDown() {
+void MetricMultiDeviceFixture::TearDown() {
 
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
     const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
@@ -288,7 +187,7 @@ void MetricMultiDeviceContextFixture::TearDown() {
     NEO::ImplicitScaling::apiSupport = false;
 }
 
-void MetricMultiDeviceContextFixture::openMetricsAdapter() {
+void MetricMultiDeviceFixture::openMetricsAdapter() {
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
@@ -317,7 +216,7 @@ void MetricMultiDeviceContextFixture::openMetricsAdapter() {
         .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
-void MetricMultiDeviceContextFixture::openMetricsAdapterSubDevice(uint32_t subDeviceIndex) {
+void MetricMultiDeviceFixture::openMetricsAdapterSubDevice(uint32_t subDeviceIndex) {
 
     EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex], loadMetricsDiscovery())
         .Times(0);
@@ -346,7 +245,7 @@ void MetricMultiDeviceContextFixture::openMetricsAdapterSubDevice(uint32_t subDe
         .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
-void MetricMultiDeviceContextFixture::openMetricsAdapterGroup() {
+void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
@@ -368,7 +267,7 @@ void MetricMultiDeviceContextFixture::openMetricsAdapterGroup() {
         .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
-void MetricStreamerMultiDeviceContextFixture::cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer) {
+void MetricStreamerMultiDeviceFixture::cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer) {
 
     MetricStreamerImp *pStreamerImp = static_cast<MetricStreamerImp *>(MetricStreamer::fromHandle(hStreamer));
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
