@@ -6,6 +6,99 @@ SPDX-License-Identifier: MIT
 
 -->
 
+# Release Notes v1.2
+
+Level Zero Core API.
+
+August 2021
+
+## Changes in this release:
+
+### [Extension to create image views for planar formats](https://spec.oneapi.com/level-zero/latest/core/api.html?highlight=relaxed#relaxedalloclimits-enums)
+
+This extension allows accessing each plane for planar formats and have different interpretations of created images.
+
+Sample code:
+
+[https://github.com/intel/compute-runtime/blob/master/level_zero/core/test/black_box_tests/zello_image_view.cpp](https://github.com/intel/compute-runtime/blob/master/level_zero/core/test/black_box_tests/zello_image_view.cpp)
+
+### [Extension for querying image properties](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_image_memory_properties_exp_t#_CPPv432ze_image_memory_properties_exp_t)
+
+This extension allows querying the different properties of an image, such as size, row pitch, and slice pitch.
+
+### [Definition of ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2 properties](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_structure_type_device_properties_1_2#_CPPv439ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2)
+
+`ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2` properties allows users to request driver to return timer resolution in cycles per seconds,
+as defined v1.2 specification:
+
+```cpp
+ze_api_version_t version;
+zeDriverGetApiVersion(hDriver, &version);
+...
+ze_device_properties_t devProperties = {};
+devProperties->stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2;
+zeDeviceGetProperties(device, &devProperties);
+
+uint64_t timerResolutionInCyclesPerSecond = devProperties.timerResolution;
+```
+
+If `ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2` is not set, then timer resolution is returned in nanoseconds, as defined in v1.1.
+
+```cpp
+ze_api_version_t version;
+zeDriverGetApiVersion(hDriver, &version);
+...
+ze_device_properties_t devProperties = {};
+zeDeviceGetProperties(device, &devProperties);
+
+uint64_t timerResolutionInNanoSeconds = devProperties.timerResolution;
+```
+### Extension to set preferred allocation for USM shared allocations
+[`ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT`](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=mem_alloc_flag_bias_initial_placement#_CPPv447ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) and [`ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT`](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=mem_alloc_flag_bias_initial_placement#_CPPv445ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) can now be set in
+`ze_device_mem_alloc_flags_t` and `ze_host_mem_alloc_flags_t`, respectively, when creating a shared-alloaction, to indicate
+the driver where a shared-allocation should be initially placed.
+
+### [IPC Memory Cache Bias Flags](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_ipc_memory_flag_bias_cached#ze-ipc-memory-flags-t)
+
+`ZE_IPC_MEMORY_FLAG_BIAS_CACHED` and `ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED ` can be passed when opening an IPC
+memory handle with `zeMemOpenIpcHandle` to set the cache settings of the imported allocation.
+
+### [Support for preferred group size](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_kernel_preferred_group_size_properties_t#ze-kernel-preferred-group-size-properties-t)
+
+`ze_kernel_preferred_group_size_properties_t` can be used through `zeKernelGetProperties` to query for the preferred
+multiple group size of a kernel for submission. Submitting a kernel with the preferred group size returned by the driver
+may improve performance in certain platforms.
+
+### [Module compilation options](https://spec.oneapi.io/level-zero/latest/core/PROG.html#module-build-options)
+
+Optimization levels can now be passed to `zeModuleCreate` using the `-ze-opt-level` option, which are then communicated
+to the underlying graphics compiler as hint to indicate the level of optimization desired.
+
+### [Extension to read the timestamps of each subdevice](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=zeeventquerytimestampsexp#zeeventquerytimestampsexp)
+
+This extension defines the `zeEventQueryTimestampsExp` interface to query for timestamps of the parent device or
+all of the available subdevices.
+
+### [Extension to set thread arbitration policy](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_structure_type_device_properties_1_2#kernelschedulinghints)
+
+The `zeKernelSchedulingHintExp` interface allows applications to set the thread arbitration policy desired for the
+target kernel. Avaialable policies can be queried by application through `zeDeviceGetModuleProperties` with the
+[`ze_scheduling_hint_exp_properties_t`](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_scheduling_hint_exp_properties_t#_CPPv435ze_scheduling_hint_exp_properties_t) structure.
+
+Policies include:
+
+* `ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST`
+* `ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN`
+* `ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN`
+
+### [Extension for cache reservation](https://spec.oneapi.io/level-zero/latest/core/EXT_CacheReservation.html#cache-reservation-extension)
+
+With `zeDeviceReserveCacheExt`, applications can reserve sections of the GPU cache for exclusive use. Cache level
+support varies between platforms.
+
+Likewise, `zeDeviceSetCacheAdviceExt`, can be used to set a region of the cached as reserved or non-reserved region. If default behavior selected, then non-reserved is used, where region is accessible to all clients or applications.
+
+
 # Release Notes v1.1
 
 Level Zero Core API.
