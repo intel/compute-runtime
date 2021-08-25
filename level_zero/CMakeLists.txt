@@ -428,6 +428,7 @@ if(BUILD_WITH_L0)
                                ${NEO__GMM_INCLUDE_DIR}
                                ${CIF_BASE_DIR}
                                ${IGC_OCL_ADAPTOR_DIR}
+                               ${IGC_COMMON_PARENT_DIR}
                                ${NEO__IGC_INCLUDE_DIR}
                                ${KHRONOS_HEADERS_DIR}
     )
