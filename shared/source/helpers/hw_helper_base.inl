@@ -452,6 +452,11 @@ inline bool HwHelperHw<GfxFamily>::allowStatelessCompression(const HardwareInfo 
 }
 
 template <typename GfxFamily>
+inline uint32_t HwHelperHw<GfxFamily>::getFormatForStatelessCompression(const uint32_t format) const {
+    return format;
+}
+
+template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
     return allocation.isAllocatedInLocalMemoryPool() &&
            (getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed || !allocation.isAllocationLockable());

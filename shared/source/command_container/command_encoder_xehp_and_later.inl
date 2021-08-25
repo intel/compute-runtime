@@ -631,6 +631,11 @@ void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *sur
         auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();
         compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
 
+        auto &hwHelper = HwHelper::get(gmmHelper->getHardwareInfo()->platform.eRenderCoreFamily);
+        if (hwHelper.allowStatelessCompression(*gmmHelper->getHardwareInfo())) {
+            compressionFormat = hwHelper.getFormatForStatelessCompression(compressionFormat);
+        }
+
         if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
             compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
         }

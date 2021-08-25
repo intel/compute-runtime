@@ -79,6 +79,13 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenRevisionIsAtLeastBTh
     }
 }
 
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenGettingFormatForStatelessCompressionThenCorrectValueIsReturned) {
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    uint32_t format = 0x2;
+
+    EXPECT_EQ(format, hwHelper.getFormatForStatelessCompression(format));
+}
+
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenCreateMultipleSubDevicesThenDontAllowStatelessCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.CreateMultipleSubDevices.set(2);

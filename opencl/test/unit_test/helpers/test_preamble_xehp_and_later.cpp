@@ -15,6 +15,8 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
+#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "reg_configs_common.h"
@@ -578,4 +580,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenSpecificP
                                                  pClDevice->getNumAvailableDevices(), allocation, pClDevice->getGmmHelper(), false, 1u);
 
     EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, rssCmd.getCoherencyType());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenEncodeBufferWhenStatelessCompressionIsEnabledThenApplyFormatForStatelessCompression) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperWithCompressionFormat<FamilyType>>(defaultHwInfo->platform.eRenderCoreFamily);
+
+    auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
+    size_t allocationSize = MemoryConstants::pageSize;
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, pDevice->getDeviceBitfield());
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    allocation->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmClientContext(), allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), 0, false));
+    allocation->getDefaultGmm()->isCompressionEnabled = true;
+
+    auto rssCmd = FamilyType::cmdInitRenderSurfaceState;
+
+    MockContext context(pClDevice);
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(pClDevice->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(allocation);
+
+    std::unique_ptr<BufferHw<FamilyType>> buffer(static_cast<BufferHw<FamilyType> *>(
+        BufferHw<FamilyType>::create(&context, {}, 0, 0, allocationSize, nullptr, nullptr, multiGraphicsAllocation, false, false, false)));
+
+    raiiFactory.mockHwHelper.compressionFormat = 0xF;
+
+    EncodeSurfaceState<FamilyType>::encodeBuffer(&rssCmd, allocation->getGpuAddress(), allocation->getUnderlyingBufferSize(),
+                                                 buffer->getMocsValue(false, false, pClDevice->getRootDeviceIndex()), false, false, false,
+                                                 pClDevice->getNumAvailableDevices(), allocation, pClDevice->getGmmHelper(), false, 1u);
+
+    EXPECT_EQ(static_cast<uint32_t>(0xF), rssCmd.getCompressionFormat());
 }

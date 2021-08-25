@@ -23,6 +23,13 @@ void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *s
         }
 
         if (imageFromBuffer) {
+            if (!gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
+                auto &hwHelper = HwHelper::get(gmmHelper->getHardwareInfo()->platform.eRenderCoreFamily);
+                if (hwHelper.allowStatelessCompression(*gmmHelper->getHardwareInfo())) {
+                    compressionFormat = hwHelper.getFormatForStatelessCompression(compressionFormat);
+                }
+            }
+
             if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
                 compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
             }

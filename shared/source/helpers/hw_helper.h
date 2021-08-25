@@ -69,6 +69,7 @@ class HwHelper {
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowStatelessCompression(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getFormatForStatelessCompression(const uint32_t format) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
@@ -317,6 +318,8 @@ class HwHelperHw : public HwHelper {
     bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
 
     bool allowStatelessCompression(const HardwareInfo &hwInfo) const override;
+
+    uint32_t getFormatForStatelessCompression(const uint32_t format) const override;
 
     bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
 

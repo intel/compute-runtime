@@ -47,6 +47,12 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProper
     appendClearColor(blitProperties, blitCmd);
 
     uint32_t compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
+
+    auto &hwHelper = HwHelper::get(rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily);
+    if (hwHelper.allowStatelessCompression(*rootDeviceEnvironment.getHardwareInfo())) {
+        compressionFormat = hwHelper.getFormatForStatelessCompression(compressionFormat);
+    }
+
     if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
         compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
     }
@@ -132,6 +138,12 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::Graphic
     bool dstAllocationisCompressionEnabled = dstAlloc->getDefaultGmm() && dstAlloc->getDefaultGmm()->isCompressionEnabled;
 
     uint32_t compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
+
+    auto &hwHelper = HwHelper::get(rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily);
+    if (hwHelper.allowStatelessCompression(*rootDeviceEnvironment.getHardwareInfo())) {
+        compressionFormat = hwHelper.getFormatForStatelessCompression(compressionFormat);
+    }
+
     if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
         compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
     }
