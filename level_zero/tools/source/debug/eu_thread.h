@@ -88,11 +88,15 @@ class EuThread {
         return state != State::Stopped;
     }
 
-    std::string toString() {
+    static std::string toString(ThreadId threadId) {
         std::stringstream threadString;
         threadString << "device index = " << threadId.tileIndex << " slice = " << threadId.slice << " subslice = " << threadId.subslice << " eu = " << threadId.eu
                      << " thread = " << threadId.thread;
         return threadString.str();
+    }
+
+    std::string toString() {
+        return toString(threadId);
     }
 
     ThreadId getThreadId() {
