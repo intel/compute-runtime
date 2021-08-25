@@ -11,7 +11,7 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
     case REVISION_A0:
         return 0x0;
     case REVISION_B:
-        return 0x1;
+        return 0x4;
     }
     return CommonConstants::invalidStepping;
 }

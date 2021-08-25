@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
@@ -13,26 +14,8 @@
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
 
+#include "shared/source/gen12lp/os_agnostic_hw_info_config_adlp.inl"
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 
-template <>
-void HwInfoConfigHw<IGFX_ALDERLAKE_P>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
-    PLATFORM *platform = &hwInfo->platform;
-    platform->eRenderCoreFamily = IGFX_GEN12LP_CORE;
-    platform->eDisplayCoreFamily = IGFX_GEN12LP_CORE;
-}
-
-template <>
-uint32_t HwInfoConfigHw<IGFX_ALDERLAKE_P>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
-    switch (stepping) {
-    case REVISION_A0:
-        return 0x0;
-    case REVISION_B:
-        return 0x4;
-    }
-    return CommonConstants::invalidStepping;
-}
-
-template class HwInfoConfigHw<IGFX_ALDERLAKE_P>;
-
+template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

@@ -17,11 +17,5 @@ constexpr static auto gfxProduct = IGFX_DG1;
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_dg1.inl"
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 
-template <>
-void HwInfoConfigHw<IGFX_DG1>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
-    Gen12LPHelpers::adjustPlatformForProductFamily(hwInfo->platform, GFXCORE_FAMILY::IGFX_GEN12LP_CORE);
-}
-
-template class HwInfoConfigHw<IGFX_DG1>;
-
+template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

@@ -18,12 +18,7 @@ constexpr static auto gfxProduct = IGFX_DG1;
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 
 template <>
-void HwInfoConfigHw<IGFX_DG1>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
-    Gen12LPHelpers::adjustPlatformForProductFamily(hwInfo->platform, GFXCORE_FAMILY::IGFX_GEN12LP_CORE);
-}
-
-template <>
-int HwInfoConfigHw<IGFX_DG1>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
 
@@ -36,5 +31,5 @@ int HwInfoConfigHw<IGFX_DG1>::configureHardwareCustom(HardwareInfo *hwInfo, OSIn
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_DG1>;
+template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO
