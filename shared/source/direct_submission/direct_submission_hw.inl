@@ -157,6 +157,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
     if (ringStart) {
         return true;
     }
+
     size_t startSize = getSizeSemaphoreSection();
     size_t requiredSize = startSize + getSizeDispatch() + getSizeEnd();
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
@@ -174,6 +175,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
+    if (!ringStart) {
+        return true;
+    }
+
     void *flushPtr = ringCommandStream.getSpace(0);
     Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo, gpuVaForMiFlush);
     if (disableMonitorFence) {
@@ -192,6 +197,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     semaphoreData->QueueWorkCount = currentQueueWorkCount;
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
 
+    this->handleStopRingBuffer();
     this->ringStart = false;
 
     return true;

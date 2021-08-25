@@ -94,12 +94,17 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
     drmDirectSubmission.getTagAddressValue(tagData);
     EXPECT_EQ(drmDirectSubmission.currentTagData.tagAddress, tagData.tagAddress);
     EXPECT_EQ(drmDirectSubmission.currentTagData.tagValue + 1, tagData.tagValue);
+
+    *drmDirectSubmission.tagAddress = 1u;
 }
 
 HWTEST_F(DrmDirectSubmissionTest, whenCreateDirectSubmissionThenValidObjectIsReturned) {
     auto directSubmission = DirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>::create(*device.get(),
                                                                                                  *osContext.get());
     EXPECT_NE(directSubmission.get(), nullptr);
+
+    bool ret = directSubmission->initialize(false);
+    EXPECT_TRUE(ret);
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenDispatchSwitchRingBufferThenDispatchPipeControl) {

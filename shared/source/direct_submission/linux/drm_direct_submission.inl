@@ -34,13 +34,8 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
 
 template <typename GfxFamily, typename Dispatcher>
 inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
-    if (this->ringStart) {
-        this->stopRingBuffer();
-        if (this->disableMonitorFence) {
-            this->currentTagData.tagValue++;
-        }
-        this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
-    }
+    this->stopRingBuffer();
+    this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
     this->deallocateResources();
 }
 
@@ -128,6 +123,13 @@ size_t DrmDirectSubmission<GfxFamily, Dispatcher>::getSizeNewResourceHandler() {
     }
 
     return size;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
+    if (this->disableMonitorFence) {
+        this->currentTagData.tagValue++;
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>

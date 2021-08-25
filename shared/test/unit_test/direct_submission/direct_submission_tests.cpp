@@ -277,6 +277,7 @@ HWTEST_F(DirectSubmissionTest,
 
     bool ret = directSubmission.allocateResources();
     directSubmission.disableMonitorFence = true;
+    directSubmission.ringStart = true;
 
     EXPECT_TRUE(ret);
 

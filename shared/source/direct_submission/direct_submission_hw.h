@@ -78,6 +78,7 @@ class DirectSubmissionHw {
     virtual bool handleResidency() = 0;
     virtual void handleNewResourcesSubmission();
     virtual size_t getSizeNewResourceHandler();
+    virtual void handleStopRingBuffer(){};
     virtual uint64_t switchRingBuffers();
     virtual void handleSwitchRingBuffers() = 0;
     GraphicsAllocation *switchRingBuffersAllocations();
