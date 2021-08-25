@@ -26,3 +26,12 @@ uint32_t HwInfoConfigHw<IGFX_XE_HP_SDV>::getHwRevIdFromStepping(uint32_t steppin
     }
     return CommonConstants::invalidStepping;
 }
+template <>
+void HwInfoConfigHw<IGFX_XE_HP_SDV>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
+    using SAMPLER_STATE = typename XeHpFamily::SAMPLER_STATE;
+
+    auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
+    if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
+        samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
+    }
+}

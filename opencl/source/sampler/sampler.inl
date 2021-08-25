@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/numeric.h"
 
 #include <algorithm>
@@ -87,11 +88,7 @@ void SamplerHw<GfxFamily>::setArg(void *memory, const HardwareInfo &hwInfo) {
     samplerState->setMinLod(minLodValue.getRawAccess());
     samplerState->setMaxLod(maxLodValue.getRawAccess());
 
-    appendSamplerStateParams(samplerState, hwInfo);
-}
-
-template <typename GfxFamily>
-void SamplerHw<GfxFamily>::appendSamplerStateParams(typename GfxFamily::SAMPLER_STATE *state, const HardwareInfo &hwInfo) {
+    HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(samplerState, hwInfo);
 }
 
 template <typename GfxFamily>

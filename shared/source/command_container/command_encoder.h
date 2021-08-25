@@ -102,7 +102,8 @@ struct EncodeStates {
                                      uint32_t samplerCount,
                                      uint32_t borderColorOffset,
                                      const void *fnDynamicStateHeap,
-                                     BindlessHeapsHelper *bindlessHeapHelper);
+                                     BindlessHeapsHelper *bindlessHeapHelper,
+                                     const HardwareInfo &hwInfo);
 
     static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
                                        bool requiresCoherency, uint32_t threadArbitrationPolicy, const HardwareInfo &hwInfo);

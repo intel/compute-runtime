@@ -87,7 +87,6 @@ class Sampler : public BaseObject<_cl_sampler> {
 template <typename GfxFamily>
 struct SamplerHw : public Sampler {
     void setArg(void *memory, const HardwareInfo &hwInfo) override;
-    void appendSamplerStateParams(typename GfxFamily::SAMPLER_STATE *state, const HardwareInfo &hwInfo);
     static constexpr float getGenSamplerMaxLod() {
         return 14.0f;
     }

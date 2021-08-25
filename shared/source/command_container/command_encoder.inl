@@ -23,6 +23,7 @@
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include <algorithm>
 
@@ -34,7 +35,8 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
                                                 uint32_t samplerCount,
                                                 uint32_t borderColorOffset,
                                                 const void *fnDynamicStateHeap,
-                                                BindlessHeapsHelper *bindlessHeapHelper) {
+                                                BindlessHeapsHelper *bindlessHeapHelper,
+                                                const HardwareInfo &hwInfo) {
     auto sizeSamplerState = sizeof(SAMPLER_STATE) * samplerCount;
     auto borderColorSize = samplerStateOffset - borderColorOffset;
 
@@ -77,6 +79,9 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     for (uint32_t i = 0; i < samplerCount; i++) {
         state = srcSamplerState[i];
         state.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+
+        HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(&state, hwInfo);
+
         dstSamplerState[i] = state;
     }
 

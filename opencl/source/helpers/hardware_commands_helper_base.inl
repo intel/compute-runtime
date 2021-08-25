@@ -239,7 +239,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         samplerCount = samplerTable.numSamplers;
         samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
                                                                        samplerCount, samplerTable.borderColor,
-                                                                       kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper());
+                                                                       kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
+                                                                       device.getHardwareInfo());
     }
 
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
