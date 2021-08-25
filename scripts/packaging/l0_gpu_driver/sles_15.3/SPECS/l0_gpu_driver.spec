@@ -49,6 +49,15 @@ libraries. Level Zero offers fine-grain control over accelerators capabilities,
 delivering a simplified and low-latency interface to hardware, and efficiently
 exposing hardware capabilities to applications.
 
+%package     -n intel-level-zero-gpu%{?name_suffix}-devel
+Summary:        Development files for Intel(R) GPU Driver for oneAPI Level Zero.
+Group:          Development/Libraries/C and C++
+Requires:       intel-level-zero-gpu%{?name_suffix} = %{version}
+Provides:       intel-level-zero-gpu-devel
+
+%description     -n intel-level-zero-gpu%{?name_suffix}-devel
+Intel(R) Graphics Compute Runtime for oneAPI Level Zero - development headers
+
 %debug_package %{nil}
 
 %prep
@@ -97,6 +106,9 @@ cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu%
 %{_libdir}/libze_intel_gpu.so.*
 /usr/share/doc/intel-level-zero-gpu%{?name_suffix}/copyright
 %config(noreplace)
+
+%files -n intel-level-zero-gpu%{?name_suffix}-devel
+%{_includedir}/zet_intel_gpu_debug.h
 
 %doc
 

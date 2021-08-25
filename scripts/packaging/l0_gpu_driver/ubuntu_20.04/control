@@ -24,3 +24,10 @@ Description: Intel(R) Graphics Compute Runtime for oneAPI Level Zero.
  libraries. Level Zero offers fine-grain control over accelerators
  capabilities, delivering a simplified and low-latency interface to
  hardware, and efficiently exposing hardware capabilities to applications.
+
+Package: intel-level-zero-gpu-devel
+Architecture: amd64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: Intel(R) Graphics Compute Runtime for oneAPI Level Zero - development headers

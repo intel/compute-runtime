@@ -106,11 +106,6 @@ if(BUILD_WITH_L0)
     message(STATUS "igsc Library headers not available. Building without")
   endif()
 
-  if(UNIX)
-    # Load GNUInstallDirs to determine install targets for Linux packages
-    include(GNUInstallDirs)
-  endif()
-
   if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC")
   endif()
@@ -591,6 +586,13 @@ if(BUILD_WITH_L0)
       include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/cpack.cmake)
     endif()
 
+  endif()
+
+  if(UNIX)
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/zet_intel_gpu_debug.h"
+            TYPE INCLUDE
+            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+    )
   endif()
 else()
   message(STATUS "Skipping level zero")
