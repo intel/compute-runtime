@@ -54,6 +54,8 @@ bool RootDevice::createEngines() {
 }
 
 void RootDevice::initializeRootCommandStreamReceiver() {
+    rootCsrCreated = true;
+
     std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex, getDeviceBitfield()));
 
     auto &hwInfo = getHardwareInfo();

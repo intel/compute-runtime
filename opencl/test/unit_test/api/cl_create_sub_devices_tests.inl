@@ -93,8 +93,8 @@ TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenSubDevi
 
     auto retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(device->getDeviceById(0), outDevices[0]);
-    EXPECT_EQ(device->getDeviceById(1), outDevices[1]);
+    EXPECT_EQ(device->getSubDevice(0), outDevices[0]);
+    EXPECT_EQ(device->getSubDevice(1), outDevices[1]);
 
     properties[1] = CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE;
     cl_device_id outDevices2[2];
@@ -107,18 +107,18 @@ TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenSubDevi
 TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceApiReferenceCountIsIncreasedEveryTime) {
     setup(2);
 
-    EXPECT_EQ(0, device->getDeviceById(0)->getRefApiCount());
-    EXPECT_EQ(0, device->getDeviceById(1)->getRefApiCount());
+    EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
+    EXPECT_EQ(0, device->getSubDevice(1)->getRefApiCount());
 
     auto retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1, device->getDeviceById(0)->getRefApiCount());
-    EXPECT_EQ(1, device->getDeviceById(1)->getRefApiCount());
+    EXPECT_EQ(1, device->getSubDevice(0)->getRefApiCount());
+    EXPECT_EQ(1, device->getSubDevice(1)->getRefApiCount());
 
     retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(2, device->getDeviceById(0)->getRefApiCount());
-    EXPECT_EQ(2, device->getDeviceById(1)->getRefApiCount());
+    EXPECT_EQ(2, device->getSubDevice(0)->getRefApiCount());
+    EXPECT_EQ(2, device->getSubDevice(1)->getRefApiCount());
 }
 
 struct clCreateSubDevicesDeviceInfoTests : clCreateSubDevicesTests {

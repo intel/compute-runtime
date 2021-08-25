@@ -13,7 +13,7 @@ namespace L0 {
 
 NEO::Device *DeviceImp::getActiveDevice() const {
     if (isMultiDeviceCapable()) {
-        return this->neoDevice->getDeviceById(0);
+        return this->neoDevice->getThisOrNextNonRootCsrDevice(0);
     }
     return this->neoDevice;
 }

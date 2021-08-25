@@ -696,7 +696,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
             }
 
             ze_device_handle_t subDevice = Device::create(driverHandle,
-                                                          device->neoDevice->getDeviceById(i),
+                                                          device->neoDevice->getSubDevice(i),
                                                           0,
                                                           true, returnValue);
             if (subDevice == nullptr) {

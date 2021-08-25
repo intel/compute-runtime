@@ -259,7 +259,7 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
     EXPECT_EQ(2u, device->getNumAvailableDevices());
     std::unique_ptr<OsContext> bcsOsContext;
 
-    auto subDevice = device->getDeviceById(0);
+    auto subDevice = device->getSubDevice(0);
     auto &bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
 
     MockCommandQueue cmdQ(nullptr, device.get(), 0, false);
@@ -1689,7 +1689,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
 }
 
 TEST_F(MultiTileFixture, givenSubDeviceWhenQueueIsCreatedThenItContainsProperDevice) {
-    auto tile0 = platform()->getClDevice(0)->getDeviceById(0);
+    auto tile0 = platform()->getClDevice(0)->getSubDevice(0);
 
     const cl_device_id deviceId = tile0;
     auto returnStatus = CL_SUCCESS;
@@ -1709,7 +1709,7 @@ TEST_F(MultiTileFixture, givenSubDeviceWhenQueueIsCreatedThenItContainsProperDev
 }
 
 TEST_F(MultiTileFixture, givenTile1WhenQueueIsCreatedThenItContainsTile1Device) {
-    auto tile1 = platform()->getClDevice(0)->getDeviceById(1);
+    auto tile1 = platform()->getClDevice(0)->getSubDevice(1);
 
     const cl_device_id deviceId = tile1;
     auto returnStatus = CL_SUCCESS;
@@ -1879,7 +1879,7 @@ TEST_F(MultiTileFixture, givenDefaultContextWithRootDeviceWhenQueueIsCreatedThen
 }
 
 TEST_F(MultiTileFixture, givenDefaultContextWithSubdeviceWhenQueueIsCreatedThenQueueIsNotMultiEngine) {
-    auto subdevice = platform()->getClDevice(0)->getDeviceById(0);
+    auto subdevice = platform()->getClDevice(0)->getSubDevice(0);
     MockContext context(subdevice);
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
 

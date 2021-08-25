@@ -505,8 +505,13 @@ uint32_t Device::getNumAvailableDevices() const {
     return getNumSubDevices();
 }
 
-Device *Device::getDeviceById(uint32_t deviceId) const {
-    if (subdevices.empty()) {
+Device *Device::getSubDevice(uint32_t deviceId) const {
+    UNRECOVERABLE_IF(deviceId >= subdevices.size());
+    return subdevices[deviceId];
+}
+
+Device *Device::getThisOrNextNonRootCsrDevice(uint32_t deviceId) {
+    if (subdevices.empty() || !hasRootCsr()) {
         return const_cast<Device *>(this);
     }
     UNRECOVERABLE_IF(deviceId >= subdevices.size());
@@ -567,7 +572,7 @@ EngineControl &Device::getInternalEngine() {
 
     auto engineType = getChosenEngineType(getHardwareInfo());
 
-    return this->getDeviceById(0)->getEngine(engineType, EngineUsage::Internal);
+    return this->getThisOrNextNonRootCsrDevice(0)->getEngine(engineType, EngineUsage::Internal);
 }
 
 void Device::initializeRayTracing() {

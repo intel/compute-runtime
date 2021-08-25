@@ -560,7 +560,7 @@ HWTEST_F(LowPriorityCommandQueueTest, GivenDeviceWithSubdevicesWhenCreatingLowPr
     auto cmdQ = clCreateCommandQueueWithProperties(&context, context.getDevice(0), properties, nullptr);
 
     auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
-    auto subDevice = context.getDevice(0)->getDeviceById(0);
+    auto subDevice = context.getDevice(0)->getSubDevice(0);
     auto &engine = subDevice->getEngine(getChosenEngineType(subDevice->getHardwareInfo()), EngineUsage::LowPriority);
 
     EXPECT_EQ(engine.commandStreamReceiver, &commandQueueObj->getGpgpuCommandStreamReceiver());

@@ -83,7 +83,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         }
         if (bcsAllowed) {
-            auto &neoDevice = device->getDeviceById(0)->getDevice();
+            auto &neoDevice = device->getThisOrNextNonRootCsrDevice(0)->getDevice();
             auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
             auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
             bcsEngine = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
@@ -113,7 +113,7 @@ CommandQueue::~CommandQueue() {
         }
 
         if (bcsEngine) {
-            auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
+            auto &selectorCopyEngine = device->getThisOrNextNonRootCsrDevice(0)->getSelectorCopyEngine();
             EngineHelpers::releaseBcsEngineType(bcsEngine->getEngineType(), selectorCopyEngine);
         }
     }

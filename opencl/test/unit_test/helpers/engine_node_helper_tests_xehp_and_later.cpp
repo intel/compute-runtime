@@ -16,6 +16,6 @@ using EngineNodeHelperTestsXeHPAndLater = ::Test<ClDeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, EngineNodeHelperTestsXeHPAndLater, WhenGetBcsEngineTypeIsCalledThenBcsEngineIsReturned) {
     const auto hwInfo = pDevice->getHardwareInfo();
-    auto &selectorCopyEngine = pDevice->getDeviceById(0)->getSelectorCopyEngine();
+    auto &selectorCopyEngine = pDevice->getThisOrNextNonRootCsrDevice(0)->getSelectorCopyEngine();
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, EngineHelpers::getBcsEngineType(hwInfo, {}, selectorCopyEngine, false));
 }

@@ -115,7 +115,8 @@ class ClDevice : public BaseObject<_cl_device_id> {
     Device &getDevice() const noexcept { return device; }
     const ClDeviceInfo &getDeviceInfo() const { return deviceInfo; }
     const DeviceInfo &getSharedDeviceInfo() const;
-    ClDevice *getDeviceById(uint32_t deviceId);
+    ClDevice *getSubDevice(uint32_t deviceId) const;
+    ClDevice *getThisOrNextNonRootCsrDevice(uint32_t deviceId);
     const std::string &peekCompilerExtensions() const;
     const std::string &peekCompilerExtensionsWithFeatures() const;
     DeviceBitfield getDeviceBitfield() const;

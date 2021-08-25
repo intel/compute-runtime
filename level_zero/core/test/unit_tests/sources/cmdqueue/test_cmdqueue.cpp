@@ -1192,7 +1192,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
         GTEST_SKIP();
     }
 
-    auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(0));
+    auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(0));
     auto defaultEngine = subDevice->getDefaultEngine();
     EXPECT_TRUE(defaultEngine.osContext->isEngineInstanced());
 

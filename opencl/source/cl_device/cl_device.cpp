@@ -38,7 +38,7 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
     auto numAvailableDevices = device.getNumAvailableDevices();
     if (numAvailableDevices > 1) {
         for (uint32_t i = 0; i < numAvailableDevices; i++) {
-            auto &coreSubDevice = static_cast<SubDevice &>(*device.getDeviceById(i));
+            auto &coreSubDevice = static_cast<SubDevice &>(*device.getSubDevice(i));
             auto pClSubDevice = std::make_unique<ClDevice>(coreSubDevice, platform);
             pClSubDevice->incRefInternal();
             pClSubDevice->decRefApi();
@@ -118,11 +118,16 @@ const DeviceInfo &ClDevice::getSharedDeviceInfo() const {
     return device.getDeviceInfo();
 }
 
-ClDevice *ClDevice::getDeviceById(uint32_t deviceId) {
-    UNRECOVERABLE_IF(deviceId >= getNumAvailableDevices());
-    if (subDevices.empty()) {
-        return this;
+ClDevice *ClDevice::getSubDevice(uint32_t deviceId) const {
+    UNRECOVERABLE_IF(deviceId >= subDevices.size());
+    return subDevices[deviceId].get();
+}
+
+ClDevice *ClDevice::getThisOrNextNonRootCsrDevice(uint32_t deviceId) {
+    if (subDevices.empty() || !getDevice().hasRootCsr()) {
+        return const_cast<ClDevice *>(this);
     }
+    UNRECOVERABLE_IF(deviceId >= subDevices.size());
     return subDevices[deviceId].get();
 }
 
