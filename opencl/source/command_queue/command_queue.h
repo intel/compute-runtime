@@ -223,6 +223,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
     CommandStreamReceiver *getBcsCommandStreamReceiver() const;
+    CommandStreamReceiver *getBcsForAuxTranslation() const;
     MOCKABLE_VIRTUAL CommandStreamReceiver &getCommandStreamReceiver(bool blitAllowed) const;
     Device &getDevice() const noexcept;
     ClDevice &getClDevice() const { return *device; }
@@ -344,7 +345,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     virtual void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType){};
     bool isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue, bool isMarkerWithProfiling) const;
 
-    MOCKABLE_VIRTUAL void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, bool blitEnqueue);
+    MOCKABLE_VIRTUAL void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, CommandStreamReceiver &csr);
     void storeProperties(const cl_queue_properties *properties);
     void processProperties(const cl_queue_properties *properties);
     void overrideEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);

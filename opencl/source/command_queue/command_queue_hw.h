@@ -383,7 +383,8 @@ class CommandQueueHw : public CommandQueue {
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
                                       uint32_t taskLevel,
-                                      PrintfHandler *printfHandler);
+                                      PrintfHandler *printfHandler,
+                                      CommandStreamReceiver *bcsCsr);
 
     void enqueueBlocked(uint32_t commandType,
                         Surface **surfacesForResidency,
@@ -406,7 +407,8 @@ class CommandQueueHw : public CommandQueue {
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,
                                                 uint32_t taskLevel,
-                                                CsrDependencies &csrDeps);
+                                                CsrDependencies &csrDeps,
+                                                CommandStreamReceiver *bcsCsr);
     void processDispatchForCacheFlush(Surface **surfaces,
                                       size_t numSurfaces,
                                       LinearStream *commandStream,
@@ -419,7 +421,8 @@ class CommandQueueHw : public CommandQueue {
                                                      LinearStream *commandStream,
                                                      EventsRequest &eventsRequest,
                                                      CsrDependencies &csrDeps);
-    BlitProperties processDispatchForBlitEnqueue(const MultiDispatchInfo &multiDispatchInfo,
+    BlitProperties processDispatchForBlitEnqueue(CommandStreamReceiver &blitCommandStreamReceiver,
+                                                 const MultiDispatchInfo &multiDispatchInfo,
                                                  TimestampPacketDependencies &timestampPacketDependencies,
                                                  const EventsRequest &eventsRequest,
                                                  LinearStream *commandStream,
@@ -477,7 +480,7 @@ class CommandQueueHw : public CommandQueue {
         return commandStream;
     }
 
-    void processDispatchForBlitAuxTranslation(const MultiDispatchInfo &multiDispatchInfo, BlitPropertiesContainer &blitPropertiesContainer,
+    void processDispatchForBlitAuxTranslation(CommandStreamReceiver &bcsCsr, const MultiDispatchInfo &multiDispatchInfo, BlitPropertiesContainer &blitPropertiesContainer,
                                               TimestampPacketDependencies &timestampPacketDependencies, const EventsRequest &eventsRequest,
                                               bool queueBlocked);
 

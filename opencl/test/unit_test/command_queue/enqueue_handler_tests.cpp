@@ -114,9 +114,9 @@ struct EnqueueHandlerWithAubSubCaptureTests : public EnqueueHandlerTest {
             CommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
         }
 
-        void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, bool blitEnqueue) override {
+        void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, CommandStreamReceiver &csr) override {
             timestampPacketDependenciesCleared = clearAllDependencies;
-            CommandQueueHw<FamilyType>::obtainNewTimestampPacketNodes(numberOfNodes, previousNodes, clearAllDependencies, blitEnqueue);
+            CommandQueueHw<FamilyType>::obtainNewTimestampPacketNodes(numberOfNodes, previousNodes, clearAllDependencies, csr);
         }
 
         bool waitUntilCompleteCalled = false;

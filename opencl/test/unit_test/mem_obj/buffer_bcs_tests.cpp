@@ -444,7 +444,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedBlitEnqueueWhenUnblockingThenMake
     bufferForBlt->forceDisallowCPUCopy = true;
 
     TimestampPacketContainer previousTimestampPackets;
-    mockCmdQ->obtainNewTimestampPacketNodes(1, previousTimestampPackets, false, true);
+    mockCmdQ->obtainNewTimestampPacketNodes(1, previousTimestampPackets, false, *mockCmdQ->getBcsCommandStreamReceiver());
     auto dependencyFromPreviousEnqueue = mockCmdQ->timestampPacketContainer->peekNodes()[0];
 
     auto event = make_releaseable<Event>(mockCmdQ, CL_COMMAND_READ_BUFFER, 0, 0);

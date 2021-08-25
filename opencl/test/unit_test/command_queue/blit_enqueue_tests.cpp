@@ -1673,24 +1673,24 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushR
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenSubmissionToDifferentEngineWhenRequestingForNewTimestmapPacketThenDontClearDependencies) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     const bool clearDependencies = true;
-    const bool blitEnqueue = true;
-    const bool nonBlitEnqueue = false;
+    auto &gpgpuCsr = mockCommandQueue->getGpgpuCommandStreamReceiver();
+    auto &blitCsr = *mockCommandQueue->getBcsCommandStreamReceiver();
 
     {
         TimestampPacketContainer previousNodes;
-        mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, nonBlitEnqueue); // init
+        mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, gpgpuCsr); // init
         EXPECT_EQ(0u, previousNodes.peekNodes().size());
     }
 
     {
         TimestampPacketContainer previousNodes;
-        mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, blitEnqueue);
+        mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, blitCsr);
         EXPECT_EQ(1u, previousNodes.peekNodes().size());
     }
 
     {
         TimestampPacketContainer previousNodes;
-        mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, blitEnqueue);
+        mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, blitCsr);
         EXPECT_EQ(0u, previousNodes.peekNodes().size());
     }
 }

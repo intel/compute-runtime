@@ -137,6 +137,13 @@ CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver() const {
     return nullptr;
 }
 
+CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
+    if (bcsEngine) {
+        return bcsEngine->commandStreamReceiver;
+    }
+    return nullptr;
+}
+
 CommandStreamReceiver &CommandQueue::getCommandStreamReceiver(bool blitAllowed) const {
     if (blitAllowed) {
         auto csr = getBcsCommandStreamReceiver();
@@ -626,9 +633,8 @@ void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
     getGpgpuCommandStreamReceiver().releaseIndirectHeap(heapType);
 }
 
-void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, bool blitEnqueue) {
-    auto allocator = blitEnqueue ? getBcsCommandStreamReceiver()->getTimestampPacketAllocator()
-                                 : getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, CommandStreamReceiver &csr) {
+    TagAllocatorBase *allocator = csr.getTimestampPacketAllocator();
 
     previousNodes.swapNodes(*timestampPacketContainer);
 
@@ -716,7 +722,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
-    auto blitterSupported = (getBcsCommandStreamReceiver() != nullptr);
+    auto blitterSupported = bcsEngine != nullptr;
 
     bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
     if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
