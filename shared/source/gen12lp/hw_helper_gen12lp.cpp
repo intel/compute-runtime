@@ -104,6 +104,9 @@ uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) 
 
 template <>
 bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
+        return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
+    }
     return false;
 }
 

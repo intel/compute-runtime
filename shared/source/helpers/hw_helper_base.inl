@@ -31,6 +31,9 @@ const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTran
 
 template <typename Family>
 bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
+        return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
+    }
     return size > KB;
 }
 
