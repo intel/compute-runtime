@@ -71,6 +71,10 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
     return ::pread(fd, buf, count, offset);
 }
 
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+    return ::pwrite(fd, buf, count, offset);
+}
+
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
     return ::mmap(addr, size, prot, flags, fd, off);
 }
