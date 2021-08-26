@@ -145,7 +145,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
 
         if (outEventObj) {
             outEventObj->setEndTimeStamp();
-            outEventObj->updateTaskCount(this->taskCount, this->bcsTaskCount);
+            outEventObj->updateTaskCount(this->taskCount, outEventObj->peekBcsTaskCountFromCommandQueue());
             outEventObj->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
             if (eventCompleted) {
                 outEventObj->setStatus(CL_COMPLETE);

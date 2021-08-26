@@ -13,6 +13,7 @@
 #include "shared/source/utilities/iflist.h"
 
 #include "opencl/source/api/cl_types.h"
+#include "opencl/source/command_queue/copy_engine_state.h"
 #include "opencl/source/event/hw_timestamps.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/task_information.h"
@@ -87,6 +88,9 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     Event &operator=(const Event &) = delete;
 
     ~Event() override;
+
+    void setupBcs(aub_stream::EngineType bcsEngineType);
+    uint32_t peekBcsTaskCountFromCommandQueue();
 
     uint32_t getCompletionStamp() const;
     void updateCompletionStamp(uint32_t taskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp);
@@ -253,7 +257,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
             return;
         }
 
-        this->bcsTaskCount = bcsTaskCount;
+        this->bcsState.taskCount = bcsTaskCount;
         uint32_t prevTaskCount = this->taskCount.exchange(gpgpuTaskCount);
         if ((prevTaskCount != CompletionStamp::notReady) && (prevTaskCount > gpgpuTaskCount)) {
             this->taskCount = prevTaskCount;
@@ -371,7 +375,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     uint64_t startTimeStamp;
     uint64_t endTimeStamp;
     uint64_t completeTimeStamp;
-    uint32_t bcsTaskCount = 0;
+    CopyEngineState bcsState{};
     bool perfCountersEnabled;
     TagNodeBase *timeStampNode = nullptr;
     TagNodeBase *perfCounterNode = nullptr;

@@ -618,6 +618,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenOutEventWhenDispatchingThenAssi
     eventNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*eventNodes[2]);
     verifySemaphore<FamilyType>(cmdFound, eventNodeAddress);
 
+    EXPECT_NE(0u, event->peekBcsTaskCountFromCommandQueue());
+
     clReleaseEvent(clEvent);
 }
 
@@ -1288,6 +1290,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventWithNotreadyBcsTaskCount
     commandQueue->updateBcsTaskCount(bcsTaskCount);
 
     Event event(commandQueue.get(), CL_COMMAND_WRITE_BUFFER, 1, gpgpuTaskCount);
+    event.setupBcs(bcsCsr->getOsContext().getEngineType());
     event.updateCompletionStamp(gpgpuTaskCount, bcsTaskCount, 1, 0);
 
     event.updateExecutionStatus();
@@ -1506,6 +1509,44 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenProfilingEn
     EXPECT_NE(0u, submitTime);
 
     clReleaseEvent(clEvent);
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenOutEventWhenEnqueuingBcsSubmissionThenSetupBcsCsrInEvent) {
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    {
+        DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+
+        cl_event clEvent;
+        commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &clEvent);
+        EXPECT_EQ(EnqueueProperties::Operation::GpuKernel, mockCommandQueue->latestSentEnqueueType);
+        EXPECT_EQ(0u, bcsCsr->peekTaskCount());
+        EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+
+        auto event = castToObject<Event>(clEvent);
+        EXPECT_EQ(0u, event->peekBcsTaskCountFromCommandQueue());
+
+        clReleaseEvent(clEvent);
+    }
+    {
+        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+        cl_event clEvent;
+        commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &clEvent);
+        EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+        EXPECT_EQ(1u, bcsCsr->peekTaskCount());
+        EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
+
+        auto event = castToObject<Event>(clEvent);
+        EXPECT_EQ(1u, event->peekBcsTaskCountFromCommandQueue());
+
+        clReleaseEvent(clEvent);
+    }
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyThenDontSubmitToGpgpu) {

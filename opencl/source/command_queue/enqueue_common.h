@@ -577,6 +577,8 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
                                                            *this->timestampPacketContainer, csrDeps,
                                                            getGpgpuCommandStreamReceiver(), bcsCsr);
     }
+
+    eventsRequest.setupBcsCsrForOutputEvent(bcsCsr);
 }
 
 template <typename GfxFamily>
@@ -1169,6 +1171,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     EventBuilder eventBuilder;
 
     setupEvent(eventBuilder, eventsRequest.outEvent, cmdType);
+    eventsRequest.setupBcsCsrForOutputEvent(bcsCsr);
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);

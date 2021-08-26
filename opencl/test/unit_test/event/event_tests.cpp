@@ -12,6 +12,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/perf_counter.h"
@@ -131,6 +132,24 @@ TEST(Event, WhenGettingEventInfoThenCqIsReturned) {
     EXPECT_EQ(cmdQ.get(), cmdQResult);
     EXPECT_EQ(sizeReturned, sizeof(cmdQResult));
     delete event;
+}
+
+TEST(Event, givenBcsCsrSetInEventWhenPeekingBcsTaskCountThenReturnCorrectTaskCount) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
+
+    auto device = ReleaseableObjectPtr<MockClDevice>{
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockAlignedMallocManagerDevice>(&hwInfo)}};
+    MockContext context{device.get()};
+    MockCommandQueue queue{context};
+    queue.updateBcsTaskCount(19);
+    Event event{&queue, CL_COMMAND_READ_BUFFER, 0, 0};
+
+    EXPECT_EQ(0u, event.peekBcsTaskCountFromCommandQueue());
+
+    event.setupBcs(queue.getBcsCommandStreamReceiver()->getOsContext().getEngineType());
+    EXPECT_EQ(19u, event.peekBcsTaskCountFromCommandQueue());
 }
 
 TEST(Event, givenCommandQueueWhenEventIsCreatedWithCommandQueueThenCommandQueueInternalRefCountIsIncremented) {

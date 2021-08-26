@@ -218,13 +218,26 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     return retVal;
 } // namespace NEO
 
+void Event::setupBcs(aub_stream::EngineType bcsEngineType) {
+    DEBUG_BREAK_IF(!EngineHelpers::isBcs(bcsEngineType));
+    this->bcsState.engineType = bcsEngineType;
+}
+
+uint32_t Event::peekBcsTaskCountFromCommandQueue() {
+    if (bcsState.isValid()) {
+        return this->cmdQueue->peekBcsTaskCount(bcsState.engineType);
+    } else {
+        return 0u;
+    }
+}
+
 uint32_t Event::getCompletionStamp() const {
     return this->taskCount;
 }
 
 void Event::updateCompletionStamp(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp) {
     this->taskCount = gpgpuTaskCount;
-    this->bcsTaskCount = bcsTaskCount;
+    this->bcsState.taskCount = bcsTaskCount;
     this->taskLevel = tasklevel;
     this->flushStamp->setStamp(flushStamp);
 }
@@ -395,7 +408,7 @@ inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
         }
     }
 
-    cmdQueue->waitUntilComplete(taskCount.load(), this->bcsTaskCount, flushStamp->peekStamp(), useQuickKmdSleep);
+    cmdQueue->waitUntilComplete(taskCount.load(), this->bcsState.taskCount, flushStamp->peekStamp(), useQuickKmdSleep);
     updateExecutionStatus();
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
@@ -432,7 +445,7 @@ void Event::updateExecutionStatus() {
         // Note : Intentional fallthrough (no return) to check for CL_COMPLETE
     }
 
-    if ((cmdQueue != nullptr) && (cmdQueue->isCompleted(getCompletionStamp(), this->bcsTaskCount))) {
+    if ((cmdQueue != nullptr) && (cmdQueue->isCompleted(getCompletionStamp(), this->bcsState))) {
         transitionExecutionStatus(CL_COMPLETE);
         executeCallbacks(CL_COMPLETE);
         unblockEventsBlockedByThis(CL_COMPLETE);
@@ -556,7 +569,7 @@ void Event::submitCommand(bool abortTasks) {
         if (profilingCpuPath && this->isProfilingEnabled()) {
             setEndTimeStamp();
         }
-        updateTaskCount(complStamp.taskCount, cmdQueue->peekBcsTaskCount());
+        updateTaskCount(complStamp.taskCount, peekBcsTaskCountFromCommandQueue());
         flushStamp->setStamp(complStamp.flushStamp);
         submittedCmd.exchange(cmdToProcess.release());
     } else if (profilingCpuPath && endTimeStamp == 0) {
@@ -566,7 +579,7 @@ void Event::submitCommand(bool abortTasks) {
         if (!this->isUserEvent() && this->eventWithoutCommand) {
             if (this->cmdQueue) {
                 auto lockCSR = this->getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-                updateTaskCount(this->cmdQueue->getGpgpuCommandStreamReceiver().peekTaskCount(), cmdQueue->peekBcsTaskCount());
+                updateTaskCount(this->cmdQueue->getGpgpuCommandStreamReceiver().peekTaskCount(), peekBcsTaskCountFromCommandQueue());
             }
         }
         //make sure that task count is synchronized for events with kernels

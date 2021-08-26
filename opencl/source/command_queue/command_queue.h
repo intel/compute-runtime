@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/engine_control.h"
 
+#include "opencl/source/command_queue/copy_engine_state.h"
 #include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/base_object.h"
@@ -211,7 +212,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     volatile uint32_t *getHwTagAddress() const;
 
-    bool isCompleted(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount) const;
+    bool isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) const;
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
@@ -314,7 +315,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     }
 
     void updateBcsTaskCount(uint32_t newBcsTaskCount) { this->bcsTaskCount = newBcsTaskCount; }
-    uint32_t peekBcsTaskCount() const { return bcsTaskCount; }
+    uint32_t peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const;
 
     void updateLatestSentEnqueueType(EnqueueProperties::Operation newEnqueueType) { this->latestSentEnqueueType = newEnqueueType; }
 

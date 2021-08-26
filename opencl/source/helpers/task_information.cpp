@@ -96,7 +96,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::DependencyResolveOnGpu);
 
     if (!memObj.isMemObjZeroCopy()) {
-        commandQueue.waitUntilComplete(completionStamp.taskCount, commandQueue.peekBcsTaskCount(), completionStamp.flushStamp, false);
+        commandQueue.waitUntilComplete(completionStamp.taskCount, 0u, completionStamp.flushStamp, false);
         if (operationType == MAP) {
             memObj.transferDataToHostPtr(copySize, copyOffset);
         } else if (!readOnly) {
@@ -286,8 +286,9 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
 
+    uint32_t bcsTaskCount = 0u;
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        auto bcsTaskCount = commandQueue.getBcsForAuxTranslation()->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+        bcsTaskCount = commandQueue.getBcsForAuxTranslation()->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
         commandQueue.updateBcsTaskCount(bcsTaskCount);
     }
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
@@ -297,7 +298,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (printfHandler) {
-        commandQueue.waitUntilComplete(completionStamp.taskCount, commandQueue.peekBcsTaskCount(), completionStamp.flushStamp, false);
+        commandQueue.waitUntilComplete(completionStamp.taskCount, bcsTaskCount, completionStamp.flushStamp, false);
         printfHandler.get()->printEnqueueOutput();
     }
 

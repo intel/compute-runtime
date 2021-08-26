@@ -64,6 +64,13 @@ void EventsRequest::fillCsrDependenciesForTaskCountContainer(CsrDependencies &cs
     }
 }
 
+void EventsRequest::setupBcsCsrForOutputEvent(CommandStreamReceiver &bcsCsr) const {
+    if (outEvent) {
+        auto event = castToObjectOrAbort<Event>(*outEvent);
+        event->setupBcs(bcsCsr.getOsContext().getEngineType());
+    }
+}
+
 TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking,
                                        size_t *offsetPtr, size_t *sizePtr, void *ptr, bool doTransferOnCpu, uint32_t rootDeviceIndex)
     : memObj(memObj), ptr(ptr), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), doTransferOnCpu(doTransferOnCpu) {

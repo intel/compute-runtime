@@ -179,13 +179,14 @@ volatile uint32_t *CommandQueue::getHwTagAddress() const {
     return getGpgpuCommandStreamReceiver().getTagAddress();
 }
 
-bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount) const {
+bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) const {
     uint32_t gpgpuHwTag = getHwTag();
     DEBUG_BREAK_IF(gpgpuHwTag == CompletionStamp::notReady);
 
     if (gpgpuHwTag >= gpgpuTaskCount) {
-        if (auto bcsCsr = getBcsCommandStreamReceiver()) {
-            return (*bcsCsr->getTagAddress()) >= bcsTaskCount;
+        if (bcsState.isValid()) {
+            DEBUG_BREAK_IF(bcsState.engineType != getBcsCommandStreamReceiver()->getOsContext().getEngineType());
+            return *getBcsCommandStreamReceiver()->getTagAddress() >= bcsTaskCount;
         }
 
         return true;
@@ -364,7 +365,7 @@ void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionSt
     this->taskLevel = completionStamp.taskLevel;
 
     if (outEvent) {
-        outEvent->updateCompletionStamp(completionStamp.taskCount, bcsTaskCount, completionStamp.taskLevel, completionStamp.flushStamp);
+        outEvent->updateCompletionStamp(completionStamp.taskCount, outEvent->peekBcsTaskCountFromCommandQueue(), completionStamp.taskLevel, completionStamp.flushStamp);
         FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", outEvent, "taskLevel", outEvent->taskLevel.load());
     }
 }
@@ -636,6 +637,11 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
         const auto familyIndex = device->getDevice().getIndexOfNonEmptyEngineGroup(engineGroupType);
         return static_cast<cl_uint>(familyIndex);
     }
+}
+
+uint32_t CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const {
+    UNRECOVERABLE_IF(bcsEngine->getEngineType() != bcsEngineType);
+    return this->bcsTaskCount;
 }
 
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
