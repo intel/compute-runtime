@@ -11,8 +11,6 @@
 #include "shared/source/helpers/hw_helper_bdw_and_later.inl"
 #include "shared/source/helpers/hw_helper_bdw_to_icllp.inl"
 
-#include "hw_helper_extra.inl"
-
 namespace NEO {
 typedef ICLFamily Family;
 
@@ -22,7 +20,7 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string HwHelperHw<Family>::getExtensions() const {
     return "cl_intel_subgroup_local_block_io ";
 }
 

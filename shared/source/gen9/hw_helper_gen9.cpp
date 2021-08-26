@@ -11,8 +11,6 @@
 #include "shared/source/helpers/hw_helper_bdw_and_later.inl"
 #include "shared/source/helpers/hw_helper_bdw_to_icllp.inl"
 
-#include "hw_helper_extra.inl"
-
 #include <cstring>
 
 namespace NEO {
