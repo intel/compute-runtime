@@ -54,11 +54,11 @@ void EventsRequest::fillCsrDependenciesForTaskCountContainer(CsrDependencies &cs
 
         if (event->getCommandQueue() && event->getCommandQueue()->getDevice().getRootDeviceIndex() != currentCsr.getRootDeviceIndex()) {
             auto taskCountPreviousRootDevice = event->peekTaskCount();
-            auto tagAddressPreviousRootDevice = event->getCommandQueue()->getCommandStreamReceiver(false).getTagAddress();
+            auto tagAddressPreviousRootDevice = event->getCommandQueue()->getGpgpuCommandStreamReceiver().getTagAddress();
 
             csrDeps.taskCountContainer.push_back({taskCountPreviousRootDevice, reinterpret_cast<uint64_t>(tagAddressPreviousRootDevice)});
 
-            auto graphicsAllocation = event->getCommandQueue()->getCommandStreamReceiver(false).getTagsMultiAllocation()->getGraphicsAllocation(currentCsr.getRootDeviceIndex());
+            auto graphicsAllocation = event->getCommandQueue()->getGpgpuCommandStreamReceiver().getTagsMultiAllocation()->getGraphicsAllocation(currentCsr.getRootDeviceIndex());
             currentCsr.getResidencyAllocations().push_back(graphicsAllocation);
         }
     }

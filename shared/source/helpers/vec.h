@@ -56,7 +56,7 @@ struct Vec3 {
         return values[i];
     }
 
-    T operator[](uint32_t i) const {
+    const T &operator[](uint32_t i) const {
         UNRECOVERABLE_IF(i > 2);
         return values[i];
     }

@@ -228,7 +228,46 @@ TEST(CommandQueue, givenDeviceWhenCreatingCommandQueueThenPickCsrFromDefaultEngi
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
 }
 
-struct CommandQueueWithBlitOperationsTests : public ::testing::TestWithParam<uint32_t> {};
+struct BuiltinOpParamsFixture {
+    BuiltinOpParams createParams(cl_command_type cmdType) {
+        BuiltinOpParams params{};
+        switch (cmdType) {
+        case CL_COMMAND_READ_IMAGE:
+            params.srcMemObj = &correctImage;
+            params.srcOffset = correctOrigin;
+            params.size = correctRegion;
+            break;
+        case CL_COMMAND_WRITE_IMAGE:
+            params.dstMemObj = &correctImage;
+            params.dstOffset = correctOrigin;
+            params.size = correctRegion;
+            break;
+        case CL_COMMAND_COPY_IMAGE:
+            params.srcMemObj = &correctImage;
+            params.dstMemObj = &correctImage;
+            params.srcOffset = correctOrigin;
+            params.dstOffset = correctOrigin;
+            params.size = correctRegion;
+            break;
+        case CL_COMMAND_COPY_BUFFER:
+            params.srcMemObj = &correctBuffer;
+            params.dstMemObj = &correctBuffer;
+            break;
+        case CL_COMMAND_SVM_MEMCPY:
+            params.srcSvmAlloc = correctBuffer.getGraphicsAllocation(0);
+            params.dstSvmAlloc = correctBuffer.getGraphicsAllocation(0);
+            break;
+        }
+        return params;
+    }
+
+    size_t correctRegion[3] = {10u, 10u, 0};
+    size_t correctOrigin[3] = {1u, 1u, 0};
+    MockImageBase correctImage = {};
+    MockBuffer correctBuffer = {};
+};
+
+struct CommandQueueWithBlitOperationsTests : public ::testing::TestWithParam<uint32_t>, BuiltinOpParamsFixture {};
 
 TEST_P(CommandQueueWithBlitOperationsTests, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenDontRegisterBcsCsr) {
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -242,8 +281,9 @@ TEST_P(CommandQueueWithBlitOperationsTests, givenDeviceNotSupportingBlitOperatio
     auto defaultCsr = mockDevice->getDefaultEngine().commandStreamReceiver;
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
 
-    auto blitAllowed = cmdQ.blitEnqueueAllowed(cmdType);
-    EXPECT_EQ(defaultCsr, &cmdQ.getCommandStreamReceiver(blitAllowed));
+    BuiltinOpParams params = createParams(cmdType);
+    MultiDispatchInfo dispatchInfo{params};
+    EXPECT_EQ(defaultCsr, &cmdQ.selectCsrForBuiltinOperation(cmdType, dispatchInfo));
 }
 
 HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsCreatedThenBcsIsTakenFromFirstSubDevice) {
@@ -264,12 +304,13 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
 
     MockCommandQueue cmdQ(nullptr, device.get(), 0, false);
     auto cmdType = GetParam();
-    auto blitAllowed = cmdQ.blitEnqueueAllowed(cmdType);
+    BuiltinOpParams params = createParams(cmdType);
+    MultiDispatchInfo dispatchInfo{params};
 
     EXPECT_NE(nullptr, cmdQ.getBcsCommandStreamReceiver());
     EXPECT_EQ(bcsEngine.commandStreamReceiver, cmdQ.getBcsCommandStreamReceiver());
-    EXPECT_EQ(bcsEngine.commandStreamReceiver, &cmdQ.getCommandStreamReceiver(blitAllowed));
-    EXPECT_EQ(bcsEngine.osContext, &cmdQ.getCommandStreamReceiver(blitAllowed).getOsContext());
+    EXPECT_EQ(bcsEngine.commandStreamReceiver, &cmdQ.selectCsrForBuiltinOperation(cmdType, dispatchInfo));
+    EXPECT_EQ(bcsEngine.osContext, &cmdQ.selectCsrForBuiltinOperation(cmdType, dispatchInfo).getOsContext());
 }
 
 INSTANTIATE_TEST_CASE_P(uint32_t,
@@ -1165,13 +1206,18 @@ TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue
 
     queue.isCopyOnly = false;
     EXPECT_EQ(queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled(),
-              queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
+              queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER, {}));
 
     queue.isCopyOnly = true;
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
+    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER, {}));
 }
 
-TEST(CommandQueue, givenClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
+struct CommandQueueBuiltinTest : BuiltinOpParamsFixture, ::testing::Test {};
+
+TEST_F(CommandQueueBuiltinTest, givenClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+
     MockContext context{};
 
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
@@ -1181,17 +1227,44 @@ TEST(CommandQueue, givenClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectV
 
     bool supported = queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled();
 
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER_RECT));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER_RECT));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
-    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
-    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE_TO_BUFFER));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER, {}));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER, {}));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER, {}));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER_RECT, {}));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER_RECT, {}));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT, {}));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY, {}));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE, createParams(CL_COMMAND_READ_IMAGE)));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE, createParams(CL_COMMAND_WRITE_IMAGE)));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE, createParams(CL_COMMAND_COPY_IMAGE)));
+    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE_TO_BUFFER, {}));
+}
+
+TEST_F(CommandQueueBuiltinTest, givenCopyImageCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+
+    MockContext context{};
+
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
+    if (!queue.bcsEngine) {
+        queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
+    }
+    if (!queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        GTEST_SKIP();
+    }
+
+    auto builtinOpParams = createParams(CL_COMMAND_COPY_IMAGE);
+    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE, builtinOpParams));
+
+    builtinOpParams.srcOffset[0] = 0x9999;
+    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE, builtinOpParams));
+
+    builtinOpParams.dstOffset[0] = 0x9999;
+    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE, builtinOpParams));
+
+    builtinOpParams.srcOffset = correctOrigin;
+    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE, builtinOpParams));
 }
 
 TEST(CommandQueue, givenRegularClCommandWhenCallingBlitEnqueuePreferredThenReturnCorrectValue) {

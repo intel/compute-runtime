@@ -761,14 +761,16 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DThatIsZeroCopyWhenReadImageWithTheSam
 }
 
 HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
+    auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(hwInfo);
+
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(1);
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
-    auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
     size_t origin[] = {0, 0, 0};
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Image> image(Image2dHelper<>::create(context));

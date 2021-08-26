@@ -272,6 +272,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         ensureCommandBufferAllocationCalled++;
         BaseClass::ensureCommandBufferAllocation(commandStream, minimumRequiredSize, additionalAllocationSize);
     }
+
+    void waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) override {
+        BaseClass::waitForTaskCountAndCleanTemporaryAllocationList(requiredTaskCount);
+        waitForTaskCountAndCleanAllocationListCalled++;
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -281,6 +287,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     LinearStream *lastFlushedCommandStream = nullptr;
 
+    uint32_t waitForTaskCountAndCleanAllocationListCalled = 0;
     uint32_t makeSurfacePackNonResidentCalled = false;
     uint32_t latestSentTaskCountValueDuringFlush = 0;
     uint32_t blitBufferCalled = 0;

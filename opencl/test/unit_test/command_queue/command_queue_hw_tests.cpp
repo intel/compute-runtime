@@ -197,7 +197,7 @@ HWTEST_F(CommandQueueHwTest, GivenCommandQueueWhenProcessDispatchForMarkerCalled
     MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     auto myCmdQ = std::make_unique<MockCommandQueueHwWithOverwrittenCsr<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr, false);
     myCmdQ->csr = &csr;
-    csr.osContext = &pCmdQ->getCommandStreamReceiver(false).getOsContext();
+    csr.osContext = &pCmdQ->getGpgpuCommandStreamReceiver().getOsContext();
     std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 

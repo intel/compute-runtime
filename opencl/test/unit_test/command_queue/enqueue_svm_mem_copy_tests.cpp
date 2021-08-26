@@ -353,11 +353,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(mockCmdQ->notifyEnqueueSVMMemcpyCalled);
 
-    auto blitAllowed = mockCmdQ->blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY);
-
-    auto &csr = mockCmdQ->getCommandStreamReceiver(blitAllowed);
-    EXPECT_EQ(EngineHelpers::isBcs(csr.getOsContext().getEngineType()), mockCmdQ->useBcsCsrOnNotifyEnabled);
-
     alignedFree(dstHostPtr);
 }
 

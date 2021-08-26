@@ -82,7 +82,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     MemObjSurface bufferSurf(buffer);
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&bufferSurf, nullptr};
-    auto blitAllowed = blitEnqueueAllowed(cmdType);
 
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
@@ -95,9 +94,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-
-            auto &csr = getCommandStreamReceiver(blitAllowed);
-            bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
+            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
@@ -116,7 +113,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
 
     MultiDispatchInfo dispatchInfo(dc);
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, blitAllowed);
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_WRITE_BUFFER, dispatchInfo);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer));
