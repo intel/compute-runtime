@@ -397,7 +397,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                        enqueueProperties,
                        eventsRequest,
                        eventBuilder,
-                       std::move(printfHandler));
+                       std::move(printfHandler),
+                       nullptr);
     }
 
     if (deferredTimestampPackets.get()) {
@@ -942,7 +943,8 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     const EnqueueProperties &enqueueProperties,
     EventsRequest &eventsRequest,
     EventBuilder &externalEventBuilder,
-    std::unique_ptr<PrintfHandler> printfHandler) {
+    std::unique_ptr<PrintfHandler> printfHandler,
+    CommandStreamReceiver *bcsCsr) {
 
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
@@ -975,6 +977,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     if (blockedCommandsData) {
         if (enqueueProperties.blitPropertiesContainer) {
             blockedCommandsData->blitPropertiesContainer = *enqueueProperties.blitPropertiesContainer;
+            blockedCommandsData->bcsCsr = bcsCsr;
             blockedCommandsData->blitEnqueue = true;
         }
 
@@ -1233,7 +1236,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     updateFromCompletionStamp(completionStamp, eventBuilder.getEvent());
 
     if (blockQueue) {
-        enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, eventBuilder, nullptr);
+        enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, eventBuilder, nullptr, &bcsCsr);
     }
 
     timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);

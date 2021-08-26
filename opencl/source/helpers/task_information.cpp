@@ -204,7 +204,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        auto &bcsCsr = *commandQueue.getBcsCommandStreamReceiver();
+        auto &bcsCsr = *commandQueue.getBcsForAuxTranslation();
         CsrDependencies csrDeps;
         eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, bcsCsr, CsrDependencies::DependenciesType::All);
 
@@ -287,7 +287,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       commandQueue.getDevice());
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        auto bcsTaskCount = commandQueue.getBcsCommandStreamReceiver()->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+        auto bcsTaskCount = commandQueue.getBcsForAuxTranslation()->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
         commandQueue.updateBcsTaskCount(bcsTaskCount);
     }
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
@@ -310,7 +310,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 }
 
 void CommandWithoutKernel::dispatchBlitOperation() {
-    auto bcsCsr = commandQueue.getBcsCommandStreamReceiver();
+    auto bcsCsr = kernelOperation->bcsCsr;
     UNRECOVERABLE_IF(bcsCsr == nullptr);
 
     UNRECOVERABLE_IF(kernelOperation->blitPropertiesContainer.size() != 1);

@@ -398,7 +398,8 @@ class CommandQueueHw : public CommandQueue {
                         const EnqueueProperties &enqueueProperties,
                         EventsRequest &eventsRequest,
                         EventBuilder &externalEventBuilder,
-                        std::unique_ptr<PrintfHandler> printfHandler);
+                        std::unique_ptr<PrintfHandler> printfHandler,
+                        CommandStreamReceiver *bcsCsr);
 
     CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,
                                                 size_t surfaceCount,
