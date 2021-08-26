@@ -304,26 +304,6 @@ GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFiel
     EXPECT_FALSE(args.constantCacheInvalidationEnable);
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenUnknownProductFamilyWhenGettingIsWorkaroundRequiredThenFalseIsReturned) {
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    uint32_t steppings[] = {
-        REVISION_A0,
-        REVISION_B,
-        REVISION_C,
-        CommonConstants::invalidStepping};
-    hardwareInfo.platform.eProductFamily = IGFX_UNKNOWN;
-
-    for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
-
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
-    }
-}
-
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12WhenCallIsPackedSupportedThenReturnTrue) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_TRUE(helper.packedFormatsSupported());

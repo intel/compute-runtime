@@ -124,35 +124,33 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableSta
 }
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
-    std::vector<unsigned short> steppings;
-    PRODUCT_FAMILY productFamilies[] = {IGFX_XE_HP_SDV, IGFX_TIGERLAKE_LP, IGFX_UNKNOWN};
+    uint32_t steppings[] = {
+        REVISION_A0,
+        REVISION_A1,
+        REVISION_C,
+        REVISION_D,
+        CommonConstants::invalidStepping,
+    };
 
-    for (auto productFamily : productFamilies) {
-        hardwareInfo.platform.eProductFamily = productFamily;
-        steppings.push_back(0x0);
-        steppings.push_back(0x1);
-        steppings.push_back(0x4);
-        steppings.push_back(0x5);
+    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
 
-        for (auto stepping : steppings) {
-            hardwareInfo.platform.usRevId = stepping;
-            HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    for (auto stepping : steppings) {
+        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
 
-            if (hardwareInfo.platform.eProductFamily == IGFX_XE_HP_SDV) {
-                if (stepping == 0x0) { //A0
-                    EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                    EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
-                } else if (stepping == 0x1) { //A1
-                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                } else if (stepping == 0x4 || stepping == 0x5) { //B0, undefined
-                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
-                }
-            } else {
+        if (hardwareInfo.platform.eProductFamily == IGFX_XE_HP_SDV) {
+            if (stepping == REVISION_A0) {
+                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
+                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+            } else if (stepping == REVISION_A1) {
+                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
+            } else if (stepping == REVISION_C || stepping == REVISION_D) { //undefined
                 EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
             }
+        } else {
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
         }
-        steppings.clear();
     }
 }
 

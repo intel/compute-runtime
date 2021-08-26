@@ -396,12 +396,8 @@ uint32_t HwHelperHw<GfxFamily>::getAubStreamSteppingFromHwRevId(const HardwareIn
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const {
     const auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto lowestHwRevIdWithBug = CommonConstants::invalidStepping;
-    auto hwRevIdWithFix = CommonConstants::invalidStepping;
-    if (hwInfoConfig != nullptr) {
-        lowestHwRevIdWithBug = hwInfoConfig->getHwRevIdFromStepping(lowestSteppingWithBug, hwInfo);
-        hwRevIdWithFix = hwInfoConfig->getHwRevIdFromStepping(steppingWithFix, hwInfo);
-    }
+    auto lowestHwRevIdWithBug = hwInfoConfig->getHwRevIdFromStepping(lowestSteppingWithBug, hwInfo);
+    auto hwRevIdWithFix = hwInfoConfig->getHwRevIdFromStepping(steppingWithFix, hwInfo);
     if ((lowestHwRevIdWithBug == CommonConstants::invalidStepping) || (hwRevIdWithFix == CommonConstants::invalidStepping)) {
         return false;
     }
