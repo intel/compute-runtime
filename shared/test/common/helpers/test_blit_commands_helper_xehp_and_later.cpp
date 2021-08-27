@@ -13,9 +13,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_hw_helper.h"
 
 #include "gtest/gtest.h"
 #include "test_traits_common.h"
@@ -896,29 +894,6 @@ HWTEST2_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBl
         auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
         EXPECT_EQ(cmd->getDestinationSurfaceType(), XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_2D);
     }
-}
-
-HWTEST2_F(BlitTests, givenAppendBlitCommandsForFillBufferWhenStatelessCompressionIsEnabledThenApplyApplyFormatForStatelessCompression, BlitPlatforms) {
-    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableStatelessCompression.set(1);
-
-    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperWithCompressionFormat<FamilyType>>(defaultHwInfo->platform.eRenderCoreFamily);
-
-    auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    auto gmm = std::make_unique<MockGmm>();
-    gmm->isCompressionEnabled = true;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
-                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, mockMaxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
-
-    raiiFactory.mockHwHelper.compressionFormat = 0xF;
-
-    BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
-
-    EXPECT_EQ(static_cast<uint32_t>(0xF), blitCmd.getDestinationCompressionFormat());
 }
 
 using IsXeHPOrAbove = IsAtLeastProduct<IGFX_XE_HP_SDV>;

@@ -14,11 +14,9 @@
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
@@ -660,44 +658,4 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenAppendin
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
     EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
     EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
-}
-
-HWTEST2_F(XeHPAndLaterImageHelperTests, givenMediaCompressedImageWhenImageFromBufferIsCreatedAndForceBufferCompressionFormatIsSpecifiedThenApplyFormatCorrectly, CompressionParamsSupportedMatcher) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceBufferCompressionFormat.set(0x2);
-
-    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperWithCompressionFormat<FamilyType>>(defaultHwInfo->platform.eRenderCoreFamily);
-
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    RENDER_SURFACE_STATE rss{};
-    platformsImpl->clear();
-    rss.setMemoryCompressionEnable(true);
-    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
-    gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
-
-    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
-                                                                 context->getDevice(0)->getGmmHelper(), true);
-
-    EXPECT_EQ(static_cast<uint32_t>(0x2), rss.getCompressionFormat());
-}
-
-HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenStatelessCompressionIsEnabledThenApplyFormatForStatelessCompression, CompressionParamsSupportedMatcher) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
-
-    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperWithCompressionFormat<FamilyType>>(defaultHwInfo->platform.eRenderCoreFamily);
-
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    RENDER_SURFACE_STATE rss{};
-    platformsImpl->clear();
-    rss.setMemoryCompressionEnable(true);
-    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = false;
-    gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
-
-    raiiFactory.mockHwHelper.compressionFormat = 0xF;
-
-    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
-                                                                 context->getDevice(0)->getGmmHelper(), true);
-
-    EXPECT_EQ(static_cast<uint32_t>(0xF), rss.getCompressionFormat());
 }

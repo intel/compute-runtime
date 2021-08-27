@@ -16,12 +16,10 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_hw_helper.h"
 #include "test.h"
 
 using namespace NEO;
@@ -711,39 +709,4 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenCommandQueueWhenAskingForCacheFlushO
     auto pHwQ = static_cast<CommandQueueHw<FamilyType> *>(cmdQ.get());
 
     EXPECT_TRUE(pHwQ->isCacheFlushForBcsRequired());
-}
-
-XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenAppendBlitCommandsForBufferWhenStatelessCompressionIsEnabledThenApplyFormatForStatelessCompression) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-
-    DebugManager.flags.EnableStatelessCompression.set(1);
-
-    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperWithCompressionFormat<FamilyType>>(defaultHwInfo->platform.eRenderCoreFamily);
-
-    char buff[1024] = {0};
-    LinearStream stream(buff, 1024);
-    MockGraphicsAllocation clearColorAlloc;
-    MockContext context(clDevice.get());
-    cl_int retVal = CL_SUCCESS;
-
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, {}, MemoryConstants::pageSize64k, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto allocation = buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex());
-    EXPECT_TRUE(!MemoryPool::isSystemMemoryPool(allocation->getMemoryPool()));
-
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
-                                                                     0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
-    auto bltCmd = stream.getSpaceForCmd<XY_COPY_BLT>();
-    *bltCmd = FamilyType::cmdInitXyCopyBlt;
-
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
-
-    raiiFactory.mockHwHelper.compressionFormat = 0xF;
-
-    BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, clDevice->getRootDeviceEnvironment());
-
-    EXPECT_EQ(static_cast<uint32_t>(0xF), bltCmd->getSourceCompressionFormat());
-    EXPECT_EQ(static_cast<uint32_t>(0xF), bltCmd->getDestinationCompressionFormat());
 }

@@ -26,13 +26,4 @@ class MockHwHelperWithLocalMemory : public HwHelperHw<GfxFamily> {
         return true;
     }
 };
-
-template <typename GfxFamily>
-class MockHwHelperWithCompressionFormat : public HwHelperHw<GfxFamily> {
-  public:
-    uint32_t getFormatForStatelessCompression(const uint32_t format) const override {
-        return compressionFormat;
-    }
-    uint32_t compressionFormat = 0;
-};
 } // namespace NEO
