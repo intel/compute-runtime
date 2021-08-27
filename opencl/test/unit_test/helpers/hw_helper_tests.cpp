@@ -823,6 +823,22 @@ HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenR
     EXPECT_EQ(AuxTranslationMode::Builtin, HwHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 }
 
+HWTEST_F(HwHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForRenderCompressionThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(0);
+    EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(0, *defaultHwInfo));
+    EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(KB, *defaultHwInfo));
+    EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(KB + 1, *defaultHwInfo));
+
+    DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+    EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(0, *defaultHwInfo));
+    EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(KB, *defaultHwInfo));
+    EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(KB + 1, *defaultHwInfo));
+}
+
 HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidValue) {
     bool tilingSupported = UnitTestHelper<FamilyType>::tiledImagesSupported;
 
