@@ -126,6 +126,30 @@ template <>
 uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }
+
+template <>
+uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    return CommonConstants::invalidStepping;
+}
+
+template <>
+uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    switch (getSteppingFromHwRevId(hwInfo)) {
+    default:
+    case REVISION_A0:
+    case REVISION_A1:
+    case REVISION_A3:
+        return AubMemDump::SteppingValues::A;
+    case REVISION_B:
+        return AubMemDump::SteppingValues::B;
+    case REVISION_C:
+        return AubMemDump::SteppingValues::C;
+    case REVISION_D:
+        return AubMemDump::SteppingValues::D;
+    case REVISION_K:
+        return AubMemDump::SteppingValues::K;
+    }
+}
 } // namespace NEO
 
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
@@ -650,4 +674,9 @@ HWTEST_F(HwInfoConfigTestLinuxDummy, givenHardwareInfoWhenCallingObtainBlitterPr
 HWTEST_F(HwInfoConfigTestLinuxDummy, givenHardwareInfoWhenCallingIsPageTableManagerSupportedThenFalseIsReturned) {
     bool ret = hwConfig.isPageTableManagerSupported(outHwInfo);
     EXPECT_FALSE(ret);
+}
+
+HWTEST_F(HwInfoConfigTestLinuxDummy, givenHardwareInfoWhenCallingGetSteppingFromHwRevIdThenInvalidSteppingIsReturned) {
+    uint32_t ret = hwConfig.getSteppingFromHwRevId(outHwInfo);
+    EXPECT_EQ(CommonConstants::invalidStepping, ret);
 }

@@ -159,3 +159,46 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedForPageTableManagerSupportT
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_EQ(hwInfoConfig.isPageTableManagerSupported(pInHwInfo), UnitTestHelper<FamilyType>::isPageTableManagerSupported(pInHwInfo));
 }
+
+HWTEST_F(HwInfoConfigTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConversionIsCorrect) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
+        auto hwRevIdFromStepping = hwInfoConfig.getHwRevIdFromStepping(testValue, pInHwInfo);
+        if (hwRevIdFromStepping != CommonConstants::invalidStepping) {
+            pInHwInfo.platform.usRevId = hwRevIdFromStepping;
+            EXPECT_EQ(testValue, hwInfoConfig.getSteppingFromHwRevId(pInHwInfo));
+        }
+        pInHwInfo.platform.usRevId = testValue;
+        auto steppingFromHwRevId = hwInfoConfig.getSteppingFromHwRevId(pInHwInfo);
+        if (steppingFromHwRevId != CommonConstants::invalidStepping) {
+            EXPECT_EQ(testValue, hwInfoConfig.getHwRevIdFromStepping(steppingFromHwRevId, pInHwInfo));
+        }
+    }
+}
+
+HWTEST_F(HwInfoConfigTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwRevIdThenReturnValuesAreCorrect) {
+    struct MockHwInfoConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
+        uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override {
+            return returnedStepping;
+        }
+        uint32_t returnedStepping = 0;
+    };
+    MockHwInfoConfig mockHwInfoConfig;
+    mockHwInfoConfig.returnedStepping = REVISION_A0;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockHwInfoConfig.returnedStepping = REVISION_A1;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockHwInfoConfig.returnedStepping = REVISION_A3;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockHwInfoConfig.returnedStepping = REVISION_B;
+    EXPECT_EQ(AubMemDump::SteppingValues::B, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockHwInfoConfig.returnedStepping = REVISION_C;
+    EXPECT_EQ(AubMemDump::SteppingValues::C, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockHwInfoConfig.returnedStepping = REVISION_D;
+    EXPECT_EQ(AubMemDump::SteppingValues::D, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockHwInfoConfig.returnedStepping = REVISION_K;
+    EXPECT_EQ(AubMemDump::SteppingValues::K, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockHwInfoConfig.returnedStepping = CommonConstants::invalidStepping;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+}

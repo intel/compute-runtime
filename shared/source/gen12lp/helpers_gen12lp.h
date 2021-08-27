@@ -24,7 +24,6 @@ enum class LocalMemoryAccessMode;
 
 namespace Gen12LPHelpers {
 bool pipeControlWaRequired(PRODUCT_FAMILY productFamily);
-uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo);
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily);
 void adjustCoherencyFlag(PRODUCT_FAMILY productFamily, bool &coherencyFlag);
 bool isLocalMemoryEnabled(const HardwareInfo &hwInfo);

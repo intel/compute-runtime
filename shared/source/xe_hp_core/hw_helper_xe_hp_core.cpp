@@ -62,21 +62,6 @@ bool HwHelperHw<Family>::isDirectSubmissionSupported(const HardwareInfo &hwInfo)
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_XE_HP_SDV) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return REVISION_A0;
-        case 0x1:
-            return REVISION_A1;
-        case 0x4:
-            return REVISION_B;
-        }
-    }
-    return CommonConstants::invalidStepping;
-}
-
-template <>
 uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
@@ -178,7 +163,7 @@ bool HwHelperHw<Family>::isBlitterForImagesSupported(const HardwareInfo &hwInfo)
 
 template <>
 bool HwHelperHw<Family>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
-    return (this->getSteppingFromHwRevId(hwInfo) >= REVISION_B);
+    return (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B);
 }
 
 template <>

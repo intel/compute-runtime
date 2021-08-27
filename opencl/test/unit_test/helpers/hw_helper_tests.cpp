@@ -944,50 +944,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenDefaultHwHelperHwWhenIsWorkaround
     EXPECT_FALSE(helper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
 }
 
-HWTEST_F(HwHelperTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConversionIsCorrect) {
-    auto &helper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-
-    for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
-        auto hwRevIdFromStepping = hwInfoConfig.getHwRevIdFromStepping(testValue, hardwareInfo);
-        if (hwRevIdFromStepping != CommonConstants::invalidStepping) {
-            hardwareInfo.platform.usRevId = hwRevIdFromStepping;
-            EXPECT_EQ(testValue, helper.getSteppingFromHwRevId(hardwareInfo));
-        }
-        hardwareInfo.platform.usRevId = testValue;
-        auto steppingFromHwRevId = helper.getSteppingFromHwRevId(hardwareInfo);
-        if (steppingFromHwRevId != CommonConstants::invalidStepping) {
-            EXPECT_EQ(testValue, hwInfoConfig.getHwRevIdFromStepping(steppingFromHwRevId, hardwareInfo));
-        }
-    }
-}
-
-HWTEST_F(HwHelperTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwRevIdThenReturnValuesAreCorrect) {
-    struct MockHwHelper : HwHelperHw<FamilyType> {
-        uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override {
-            return returnedStepping;
-        }
-        uint32_t returnedStepping = 0;
-    };
-    MockHwHelper mockHwHelper;
-    mockHwHelper.returnedStepping = REVISION_A0;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-    mockHwHelper.returnedStepping = REVISION_A1;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-    mockHwHelper.returnedStepping = REVISION_A3;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-    mockHwHelper.returnedStepping = REVISION_B;
-    EXPECT_EQ(AubMemDump::SteppingValues::B, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-    mockHwHelper.returnedStepping = REVISION_C;
-    EXPECT_EQ(AubMemDump::SteppingValues::C, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-    mockHwHelper.returnedStepping = REVISION_D;
-    EXPECT_EQ(AubMemDump::SteppingValues::D, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-    mockHwHelper.returnedStepping = REVISION_K;
-    EXPECT_EQ(AubMemDump::SteppingValues::K, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-    mockHwHelper.returnedStepping = CommonConstants::invalidStepping;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-}
-
 HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceEmuInt32DivRemSPWARequiredCalledThenFalseIsReturned) {
     if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();

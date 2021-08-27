@@ -106,6 +106,30 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getHwRevIdFromStepping(uint32_t stepping,
     return CommonConstants::invalidStepping;
 }
 
+template <>
+uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    return CommonConstants::invalidStepping;
+}
+
+template <>
+uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    switch (getSteppingFromHwRevId(hwInfo)) {
+    default:
+    case REVISION_A0:
+    case REVISION_A1:
+    case REVISION_A3:
+        return AubMemDump::SteppingValues::A;
+    case REVISION_B:
+        return AubMemDump::SteppingValues::B;
+    case REVISION_C:
+        return AubMemDump::SteppingValues::C;
+    case REVISION_D:
+        return AubMemDump::SteppingValues::D;
+    case REVISION_K:
+        return AubMemDump::SteppingValues::K;
+    }
+}
+
 HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
@@ -191,6 +215,11 @@ HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingObtainBlitterPrefe
 HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsPageTableManagerSupportedThenFalseIsReturned) {
     bool ret = hwConfig.isPageTableManagerSupported(outHwInfo);
     EXPECT_FALSE(ret);
+}
+
+HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingGetSteppingFromHwRevIdThenInvalidSteppingIsReturned) {
+    uint32_t ret = hwConfig.getSteppingFromHwRevId(outHwInfo);
+    EXPECT_EQ(CommonConstants::invalidStepping, ret);
 }
 
 } // namespace NEO

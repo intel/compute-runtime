@@ -173,7 +173,7 @@ bool MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(const Har
 
 template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const {
-    if (getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
         return false;
     }
 

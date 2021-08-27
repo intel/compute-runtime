@@ -108,4 +108,28 @@ template <PRODUCT_FAMILY gfxProduct>
 uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    return CommonConstants::invalidStepping;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t HwInfoConfigHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    switch (getSteppingFromHwRevId(hwInfo)) {
+    default:
+    case REVISION_A0:
+    case REVISION_A1:
+    case REVISION_A3:
+        return AubMemDump::SteppingValues::A;
+    case REVISION_B:
+        return AubMemDump::SteppingValues::B;
+    case REVISION_C:
+        return AubMemDump::SteppingValues::C;
+    case REVISION_D:
+        return AubMemDump::SteppingValues::D;
+    case REVISION_K:
+        return AubMemDump::SteppingValues::K;
+    }
+}
 } // namespace NEO

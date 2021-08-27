@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
@@ -128,8 +129,8 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
     {
         using L3_FLUSH_EVICTION_POLICY = typename FamilyType::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
         auto cmd = genCmdCast<L3_CONTROL *>(*itorPC);
-        auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-        auto isA0Stepping = (hwHelper.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
+        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily);
+        auto isA0Stepping = (hwInfoConfig.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
         auto maskedAddress = cmd->getL3FlushAddressRange().getAddress(isA0Stepping);
         EXPECT_NE(maskedAddress, 0u);
 
@@ -191,8 +192,8 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddres
     {
         using L3_FLUSH_EVICTION_POLICY = typename FamilyType::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
         auto cmd = genCmdCast<L3_CONTROL *>(*itorPC);
-        auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-        auto isA0Stepping = (hwHelper.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
+        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily);
+        auto isA0Stepping = (hwInfoConfig.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
         auto maskedAddress = cmd->getL3FlushAddressRange().getAddress(isA0Stepping);
         EXPECT_NE(maskedAddress, 0u);
 

@@ -47,6 +47,8 @@ class HwInfoConfig {
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
 
     uint32_t threadsPerEu;
 };
@@ -77,6 +79,8 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
+    uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
+    uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

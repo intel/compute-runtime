@@ -15,3 +15,14 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
     }
     return CommonConstants::invalidStepping;
 }
+
+template <>
+uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    switch (hwInfo.platform.usRevId) {
+    case 0x0:
+        return REVISION_A0;
+    case 0x1:
+        return REVISION_B;
+    }
+    return CommonConstants::invalidStepping;
+}

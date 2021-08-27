@@ -30,8 +30,8 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
 
     // Header
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    aubFile.init(hwHelper.getAubStreamSteppingFromHwRevId(hwInfo), AUB::Traits::device);
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    aubFile.init(hwInfoConfig.getAubStreamSteppingFromHwRevId(hwInfo), AUB::Traits::device);
 
     aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x229c), 0xffff8280);
 

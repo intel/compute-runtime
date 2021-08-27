@@ -108,8 +108,6 @@ class HwHelper {
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const = 0;
     virtual uint32_t getMinimalSIMDSize() = 0;
-    virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
-    virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
     virtual bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const = 0;
@@ -285,10 +283,6 @@ class HwHelperHw : public HwHelper {
     uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) override;
 
     static AuxTranslationMode getAuxTranslationMode(const HardwareInfo &hwInfo);
-
-    uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
-
-    uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
 
     bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const override;
 

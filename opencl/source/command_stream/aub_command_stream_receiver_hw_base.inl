@@ -25,6 +25,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
@@ -147,8 +148,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
         }
         // Add the file header
         auto &hwInfo = this->peekHwInfo();
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        stream->init(hwHelper.getAubStreamSteppingFromHwRevId(hwInfo), aubDeviceId);
+        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        stream->init(hwInfoConfig.getAubStreamSteppingFromHwRevId(hwInfo), aubDeviceId);
     }
 }
 

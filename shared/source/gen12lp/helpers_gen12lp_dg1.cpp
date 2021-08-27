@@ -19,18 +19,6 @@ bool pipeControlWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
 }
 
-uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_DG1) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return REVISION_A0;
-        case 0x1:
-            return REVISION_B;
-        }
-    }
-    return CommonConstants::invalidStepping;
-}
-
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
 }

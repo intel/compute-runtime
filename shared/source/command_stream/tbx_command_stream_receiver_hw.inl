@@ -24,6 +24,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
@@ -162,6 +163,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     auto &hwInfo = *(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo());
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (withAubDump) {
         auto localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfo);
         auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName, rootDeviceIndex);
@@ -197,7 +199,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         csr->stream->open(nullptr);
 
         // Add the file header.
-        bool streamInitialized = csr->stream->init(hwHelper.getAubStreamSteppingFromHwRevId(hwInfo), csr->aubDeviceId);
+        bool streamInitialized = csr->stream->init(hwInfoConfig.getAubStreamSteppingFromHwRevId(hwInfo), csr->aubDeviceId);
         csr->streamInitialized = streamInitialized;
     }
     return csr;

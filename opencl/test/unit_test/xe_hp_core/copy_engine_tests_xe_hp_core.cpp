@@ -380,9 +380,9 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     PLATFORM platform = clDevice->getHardwareInfo().platform;
-    auto &hwHelper = HwHelper::get(platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(platform.eProductFamily);
     const bool isXeHPRev0 = (platform.eProductFamily == IGFX_XE_HP_SDV) &&
-                            (hwHelper.getSteppingFromHwRevId(clDevice->getHardwareInfo()) < REVISION_B);
+                            (hwInfoConfig.getSteppingFromHwRevId(clDevice->getHardwareInfo()) < REVISION_B);
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
     MockContext context(clDevice.get());

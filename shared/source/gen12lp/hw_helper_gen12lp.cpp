@@ -70,38 +70,6 @@ bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return REVISION_A0;
-        case 0x1:
-            return REVISION_B;
-        case 0x3:
-            return REVISION_C;
-        }
-    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ROCKETLAKE) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return REVISION_A0;
-        case 0x1:
-            return REVISION_B;
-        case 0x4:
-            return REVISION_C;
-        }
-    } else if ((hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_S) ||
-               (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_P)) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return REVISION_A0;
-        case 0x4:
-            return REVISION_B;
-        }
-    }
-    return Gen12LPHelpers::getSteppingFromHwRevId(hwInfo);
-}
-
-template <>
 bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
