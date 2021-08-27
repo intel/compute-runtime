@@ -230,8 +230,23 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  isCooperative);
     if (hEvent) {
         auto event = Event::fromHandle(hEvent);
-        if (isTimestampEvent && partitionCount > 1) {
+        if (partitionCount > 1) {
             event->setPacketsInUse(partitionCount);
+        }
+        if (L3FlushEnable) {
+            using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+            using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
+            auto &hwHelper = this->device->getHwHelper();
+            eventAddress = event->getPacketAddress(this->device) + hwHelper.getSingleTimestampPacketSize();
+            event->setPacketsInUse(event->getPacketsInUse() + 1);
+
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = L3FlushEnable;
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+                *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                eventAddress, Event::STATE_SIGNALED,
+                commandContainer.getDevice()->getHardwareInfo(),
+                args);
         }
     }
 
