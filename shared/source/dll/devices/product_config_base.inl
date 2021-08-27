@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#ifdef SUPPORT_XE_HP_CORE
+#ifdef SUPPORT_XE_HP_SDV
+DEVICE_CONFIG(XEHP_SDV, XE_HP_SDV_CONFIG)
+#endif
+#endif
+
+#ifdef SUPPORT_GEN12LP
+#ifdef SUPPORT_TGLLP
+DEVICE_CONFIG(TGL, TGLLP_1x6x16)
+#endif
+#ifdef SUPPORT_DG1
+DEVICE_CONFIG(DG1, DG1_CONFIG)
+#endif
+#ifdef SUPPORT_RKL
+DEVICE_CONFIG(RKL, RKL_HW_CONFIG)
+#endif
+#ifdef SUPPORT_ADLS
+DEVICE_CONFIG(ADL_S, ADLS_HW_CONFIG)
+#endif
+#ifdef SUPPORT_ADLP
+DEVICE_CONFIG(ADL_P, ADLP_CONFIG)
+#endif
+#endif
+
+#ifdef SUPPORT_GEN11
+#ifdef SUPPORT_ICLLP
+DEVICE_CONFIG(ICL, ICLLP_1x8x8)
+#endif
+
+#ifdef SUPPORT_EHL
+DEVICE_CONFIG(EHL, EHL_HW_CONFIG)
+#endif
+#endif
+
+#ifdef SUPPORT_GEN9
+#ifdef SUPPORT_SKL
+DEVICE_CONFIG(SKL, SKL_1x3x8)
+#endif
+
+#ifdef SUPPORT_KBL
+DEVICE_CONFIG(KBL, KBL_1x3x6)
+#endif
+
+#ifdef SUPPORT_CFL
+DEVICE_CONFIG(CFL, CFL_1x3x6)
+#endif
+
+#ifdef SUPPORT_GLK
+DEVICE_CONFIG(GLK, GLK_1x3x6)
+#endif
+
+#ifdef SUPPORT_BXT
+DEVICE_CONFIG(BXT, BXT_1x3x6)
+#endif
+#endif
+
+#ifdef SUPPORT_GEN8
+DEVICE_CONFIG(BDW, BDW_1x3x8)
+#endif

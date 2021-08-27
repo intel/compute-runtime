@@ -49,6 +49,7 @@ class OfflineCompiler {
     int build();
     std::string &getBuildLog();
     void printUsage();
+    std::string getDevicesConfigs();
 
     static constexpr ConstStringRef queryHelp =
         "Depending on <query_option> will generate file\n"
@@ -90,6 +91,7 @@ class OfflineCompiler {
   protected:
     OfflineCompiler();
 
+    void setFamilyType();
     int initHardwareInfo(std::string deviceName);
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
@@ -116,6 +118,7 @@ class OfflineCompiler {
     MOCKABLE_VIRTUAL void writeOutAllFiles();
     HardwareInfo hwInfo;
 
+    PRODUCT_CONFIG deviceConfig = UNKNOWN_ISA;
     std::string deviceName;
     std::string familyNameWithType;
     std::string inputFile;

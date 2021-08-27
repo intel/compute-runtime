@@ -7,14 +7,16 @@
 
 #pragma once
 
+#include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/utilities/const_stringref.h"
 
+#include "compiler_options.h"
 #include "igfxfmid.h"
 
 #include <string>
 #include <vector>
 
-class OclocArgHelper;
 namespace NEO {
 
 bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper);
@@ -31,10 +33,19 @@ inline int buildFatBinary(int argc, const char *argv[], OclocArgHelper *argHelpe
     return buildFatBinary(args, argHelper);
 }
 
+bool isDeviceWithPlatformAbbreviation(ConstStringRef deviceArg, OclocArgHelper *argHelper);
 std::vector<PRODUCT_FAMILY> getAllSupportedTargetPlatforms();
+std::vector<PRODUCT_CONFIG> getAllMatchedConfigs(const std::string device, OclocArgHelper *argHelper);
+std::vector<DeviceMapping> getTargetConfigsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper);
+std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper);
+std::vector<DeviceMapping> getProductConfigsForOpenRange(ConstStringRef openRange, OclocArgHelper *argHelper, bool rangeTo);
+std::vector<DeviceMapping> getProductConfigsForClosedRange(ConstStringRef rangeFrom, ConstStringRef rangeTo, OclocArgHelper *argHelper);
+std::vector<ConstStringRef> getPlatformsForClosedRange(ConstStringRef rangeFrom, ConstStringRef rangeTo, PRODUCT_FAMILY platformFrom, OclocArgHelper *argHelper);
+std::vector<ConstStringRef> getPlatformsForOpenRange(ConstStringRef openRange, PRODUCT_FAMILY prodId, OclocArgHelper *argHelper, bool rangeTo);
+std::vector<DeviceMapping> getProductConfigsForSpecificTargets(CompilerOptions::TokenizedString targets, OclocArgHelper *argHelper);
+std::vector<ConstStringRef> getPlatformsForSpecificTargets(CompilerOptions::TokenizedString targets, OclocArgHelper *argHelper);
 std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &productIds);
 PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms);
-void appendPlatformsForGfxCore(GFXCORE_FAMILY core, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms, std::vector<PRODUCT_FAMILY> &out);
-std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper);
-
+int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::string pointerSize,
+                            Ar::ArEncoder &fatbinary, OfflineCompiler *pCompiler, OclocArgHelper *argHelper);
 } // namespace NEO

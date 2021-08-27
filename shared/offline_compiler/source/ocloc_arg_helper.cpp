@@ -54,7 +54,14 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
 #include "devices.inl"
 #undef DEVICE
 #undef NAMEDDEVICE
-                                                                                              {0u, std::string("")}}) {
+                                                                                              {0u, std::string("")}}),
+      deviceMap({
+#define DEVICE_CONFIG_REVISION(product, productConfig, revision_id) {product, &NEO::productConfig::hwInfo, NEO::productConfig::setupHardwareInfo, revision_id},
+#define DEVICE_CONFIG(product, productConfig) {product, &NEO::productConfig::hwInfo, NEO::productConfig::setupHardwareInfo, NEO::productConfig::hwInfo.platform.usRevId},
+#include "product_config.inl"
+#undef DEVICE_CONFIG
+#undef DEVICE_CONFIG_REVISION
+          {PRODUCT_CONFIG::UNKNOWN_ISA, {}, 0x0}}) {
     for (uint32_t i = 0; i < numSources; ++i) {
         inputs.push_back(Source(dataSources[i], static_cast<size_t>(lenSources[i]), nameSources[i]));
     }
@@ -151,6 +158,45 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
     }
 }
 
+void OclocArgHelper::setDeviceInfoForFatbinaryTarget(const DeviceMapping &device) {
+    deviceForFatbinary.hwInfo = device.hwInfo;
+    deviceForFatbinary.setupHardwareInfo = device.setupHardwareInfo;
+    deviceForFatbinary.revId = device.revId;
+}
+
+void OclocArgHelper::setHwInfoForFatbinaryTarget(NEO::HardwareInfo &hwInfo) {
+    hwInfo = *deviceForFatbinary.hwInfo;
+    deviceForFatbinary.setupHardwareInfo(&hwInfo, true);
+    hwInfo.platform.usRevId = deviceForFatbinary.revId;
+}
+
+bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInfo &hwInfo) {
+    bool retVal = false;
+    if (config == UNKNOWN_ISA) {
+        return retVal;
+    }
+    for (auto &deviceConfig : deviceMap) {
+        if (deviceConfig.config == config) {
+            hwInfo = *deviceConfig.hwInfo;
+            deviceConfig.setupHardwareInfo(&hwInfo, true);
+            hwInfo.platform.usRevId = deviceConfig.revId;
+            retVal = true;
+            return retVal;
+        }
+    }
+    return retVal;
+}
+
+void OclocArgHelper::getProductConfigsForGfxCoreFamily(GFXCORE_FAMILY core, std::vector<DeviceMapping> &out) {
+    for (auto &deviceConfig : deviceMap) {
+        if (deviceConfig.config == PRODUCT_CONFIG::UNKNOWN_ISA)
+            continue;
+        if (deviceConfig.hwInfo->platform.eRenderCoreFamily == core) {
+            out.push_back(deviceConfig);
+        }
+    }
+}
+
 void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) {
     if (outputEnabled()) {
         addOutput(filename, pData, dataSize);
@@ -180,6 +226,110 @@ std::string OclocArgHelper::returnProductNameForDevice(unsigned short deviceId) 
     return res;
 }
 
+std::vector<DeviceMapping> OclocArgHelper::getAllSupportedDeviceConfigs() {
+    std::vector<DeviceMapping> allConfigs;
+
+    for (auto &deviceConfig : deviceMap) {
+        if (deviceConfig.config != PRODUCT_CONFIG::UNKNOWN_ISA) {
+            allConfigs.push_back(deviceConfig);
+        }
+    }
+    std::sort(allConfigs.begin(), allConfigs.end(), compareConfigs);
+    return allConfigs;
+}
+
+const std::string OclocArgHelper::parseProductConfigFromValue(PRODUCT_CONFIG config) {
+    auto configValue = static_cast<uint32_t>(config);
+    std::stringstream stringConfig;
+    uint32_t major = (configValue & 0xff0000) >> 16;
+    uint32_t minor = (configValue & 0x00ff00) >> 8;
+    uint32_t revision = configValue & 0x0000ff;
+    stringConfig << major << "." << minor << "." << revision;
+    return stringConfig.str();
+}
+
+std::vector<PRODUCT_CONFIG> OclocArgHelper::getAllSupportedProductConfigs() {
+    std::vector<PRODUCT_CONFIG> allConfigs;
+    for (auto &deviceConfig : deviceMap) {
+        if (deviceConfig.config != PRODUCT_CONFIG::UNKNOWN_ISA) {
+            allConfigs.push_back(deviceConfig.config);
+        }
+    }
+    std::sort(allConfigs.begin(), allConfigs.end());
+    return allConfigs;
+}
+
+int OclocArgHelper::parseProductConfigFromString(const std::string &device, size_t begin, size_t end) {
+    if (begin == end) {
+        return CONFIG_STATUS::MISMATCHED_VALUE;
+    }
+    if (end == std::string::npos) {
+        if (!std::all_of(device.begin() + begin, device.end(), (::isdigit))) {
+            return CONFIG_STATUS::MISMATCHED_VALUE;
+        }
+        return std::stoi(device.substr(begin, device.size() - begin));
+    } else {
+        if (!std::all_of(device.begin() + begin, device.begin() + end, (::isdigit))) {
+            return CONFIG_STATUS::MISMATCHED_VALUE;
+        }
+        return std::stoi(device.substr(begin, end - begin));
+    }
+}
+
+std::vector<uint32_t> OclocArgHelper::getMajorMinorRevision(const std::string &device) {
+    std::vector<uint32_t> numeration;
+    auto major_pos = device.find(".");
+    auto major = parseProductConfigFromString(device, 0, major_pos);
+    if (major == CONFIG_STATUS::MISMATCHED_VALUE) {
+        return {};
+    }
+    numeration.push_back(major);
+    if (major_pos == std::string::npos) {
+        return numeration;
+    }
+
+    auto minor_pos = device.find(".", ++major_pos);
+    auto minor = parseProductConfigFromString(device, major_pos, minor_pos);
+
+    if (minor == CONFIG_STATUS::MISMATCHED_VALUE) {
+        return {};
+    }
+    numeration.push_back(minor);
+    if (minor_pos == std::string::npos) {
+        return numeration;
+    }
+    auto revision = parseProductConfigFromString(device, minor_pos + 1, device.size());
+    if (revision == CONFIG_STATUS::MISMATCHED_VALUE) {
+        return {};
+    }
+    numeration.push_back(revision);
+    return numeration;
+}
+
+uint32_t OclocArgHelper::getProductConfig(std::vector<uint32_t> &numeration) {
+    uint32_t config = 0x0;
+
+    config = numeration.at(0) << 16;
+    if (numeration.size() > 1) {
+        config |= (numeration.at(1) << 8);
+    }
+    if (numeration.size() > 2) {
+        config |= numeration.at(2);
+    }
+
+    return config;
+}
+
+uint32_t OclocArgHelper::getMaskForConfig(std::vector<uint32_t> &numeration) {
+    uint32_t mask = 0xffffff;
+    if (numeration.size() == 1) {
+        mask = 0xff0000;
+    } else if (numeration.size() == 2) {
+        mask = 0xffff00;
+    }
+    return mask;
+}
+
 bool OclocArgHelper::isGen(const std::string &device) {
     std::string buf(device);
     std::transform(buf.begin(), buf.end(), buf.begin(), ::tolower);
@@ -194,4 +344,29 @@ unsigned int OclocArgHelper::returnIGFXforGen(const std::string &device) {
     if (it == genIGFXMap.end())
         return 0;
     return it->second;
+}
+
+PRODUCT_CONFIG OclocArgHelper::findConfigMatch(const std::string &device, bool firstAppearance) {
+    auto numeration = getMajorMinorRevision(device);
+    if (numeration.empty()) {
+        return PRODUCT_CONFIG::UNKNOWN_ISA;
+    }
+
+    std::vector<PRODUCT_CONFIG> allMatchedConfigs;
+    std::vector<PRODUCT_CONFIG> allConfigs = getAllSupportedProductConfigs();
+    auto configValue = getProductConfig(numeration);
+    uint32_t mask = getMaskForConfig(numeration);
+
+    if (!firstAppearance) {
+        // find last appearance
+        std::reverse(allConfigs.begin(), allConfigs.end());
+    }
+
+    for (auto &productConfig : allConfigs) {
+        uint32_t value = static_cast<uint32_t>(productConfig) & mask;
+        if (value == configValue) {
+            return productConfig;
+        }
+    }
+    return PRODUCT_CONFIG::UNKNOWN_ISA;
 }

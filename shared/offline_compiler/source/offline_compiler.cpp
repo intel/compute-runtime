@@ -316,14 +316,47 @@ std::string &OfflineCompiler::getBuildLog() {
     return buildLog;
 }
 
+void OfflineCompiler::setFamilyType() {
+    familyNameWithType.clear();
+    familyNameWithType.append(familyName[hwInfo.platform.eRenderCoreFamily]);
+    familyNameWithType.append(hwInfo.capabilityTable.platformType);
+}
+
 int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     int retVal = INVALID_DEVICE;
 
+    if (deviceName.empty()) {
+        return retVal;
+    }
+
+    if (argHelper->isFatbinary()) {
+        argHelper->setHwInfoForFatbinaryTarget(hwInfo);
+        setFamilyType();
+        retVal = SUCCESS;
+        return retVal;
+    }
+
     overridePlatformName(deviceName);
     std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
-
     const char hexPrefix = 2;
     std::string product("");
+
+    auto numeration = argHelper->getMajorMinorRevision(deviceName);
+    if (!numeration.empty()) {
+        uint32_t productConfig = argHelper->getProductConfig(numeration);
+
+        if (argHelper->getHwInfoForProductConfig(productConfig, hwInfo)) {
+            deviceConfig = static_cast<PRODUCT_CONFIG>(productConfig);
+            setFamilyType();
+            retVal = SUCCESS;
+            return retVal;
+        }
+        argHelper->printf("Could not determine target based on product config: %s\n", deviceName.c_str());
+        return retVal;
+    } else if (deviceName.find(".") != std::string::npos) {
+        argHelper->printf("Could not determine target based on product config: %s\n", deviceName.c_str());
+        return retVal;
+    }
 
     if (deviceName.substr(0, hexPrefix) == "0x" && std::all_of(deviceName.begin() + hexPrefix, deviceName.end(), (::isxdigit))) {
         product = argHelper->returnProductNameForDevice(stoi(deviceName, 0, 16));
@@ -343,12 +376,11 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
                 if (revisionId != -1) {
                     hwInfo.platform.usRevId = revisionId;
                 }
+
                 auto hwInfoConfig = defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
                 setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
                 hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig);
-                familyNameWithType.clear();
-                familyNameWithType.append(familyName[hwInfo.platform.eRenderCoreFamily]);
-                familyNameWithType.append(hwInfo.capabilityTable.platformType);
+                setFamilyType();
                 retVal = SUCCESS;
                 break;
             }
@@ -473,6 +505,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     if ((inputFileSpirV == false) && (inputFileLlvm == false)) {
         auto fclLibFile = OsLibrary::load(Os::frontEndDllName);
+
         if (fclLibFile == nullptr) {
             argHelper->printf("Error: Failed to load %s\n", Os::frontEndDllName);
             return OUT_OF_HOST_MEMORY;
@@ -562,6 +595,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo.platform);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
     // populate with features
+
     igcFeWa.get()->SetFtrDesktop(hwInfo.featureTable.flags.ftrDesktop);
     igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.flags.ftrChannelSwizzlingXOREnabled);
 
@@ -791,7 +825,7 @@ std::string OfflineCompiler::getFileNameTrunk(std::string &filePath) {
 
     return fileTrunk;
 }
-//
+
 std::string getDevicesTypes() {
     std::list<std::string> prefixes;
     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
@@ -828,6 +862,25 @@ std::string getDevicesFamilies() {
     return os.str();
 }
 
+std::string OfflineCompiler::getDevicesConfigs() {
+    std::list<std::string> configNum;
+    auto allSupportedConfigs = argHelper->getAllSupportedProductConfigs();
+
+    for (auto &config : allSupportedConfigs) {
+        auto numeration = argHelper->parseProductConfigFromValue(config);
+        configNum.push_back(numeration);
+    }
+
+    std::ostringstream os;
+    for (auto it = configNum.begin(); it != configNum.end(); it++) {
+        if (it != configNum.begin())
+            os << ", ";
+        os << *it;
+    }
+
+    return os.str();
+}
+
 void OfflineCompiler::printUsage() {
     argHelper->printf(R"===(Compiles input file to Intel Compute GPU device binary (*.bin).
 Additionally, outputs intermediate representation (e.g. spirV).
@@ -841,16 +894,42 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -device <device_type>         Target device.
                                 <device_type> can be: %s, %s or hexadecimal value with 0x prefix - can be single or multiple target devices.
+                                The <major>[<minor>[.<revision>]] numbers:
+                                <major> - family of graphics products,
+                                <minor> - can be omitted, then ocloc will 
+                                compile for all of the <major> matching devices.
+                                <revision> - can be omitted, then ocloc will 
+                                compile for all of the <major>.<minor> matching 
+                                devices.
                                 The hexadecimal value represents device ID.
-                                If such value is provided, ocloc will try to match it
-                                with corresponding device type.
-                                For example, 0xFF20 device ID will be translated to tgllp.
+                                If such value is provided, ocloc will try to
+                                match it with corresponding device type.
+                                For example, 0xFF20 device ID will be translated
+                                to tgllp.
                                 If multiple target devices are provided, ocloc
                                 will compile for each of these targets and will
                                 create a fatbinary archive that contains all of
                                 device binaries produced this way.
                                 Supported -device patterns examples:
-                                -device 0xFF20     ; will compile 1 target (tgllp)
+                                -device 0xFF20   ; will compile 1 target (tgllp)
+                                -device 12.0.7   ; will compile 1 target (dg1)
+                                -device 11       ; will compile the architecture
+                                                   (gen11)
+                                -device 9.0,11.0 ; will compile 2 targets 
+                                                   (skl & icllp)
+                                -device 9.0-11.0 ; will compile all targets
+                                                   in range (inclusive)
+                                -device 9.0-     ; will compile all targets
+                                                   newer/same as provided
+                                -device -9.0     ; will compile all targets
+                                                   older/same as provided
+                                -device *        ; will compile all targets
+                                                   known to ocloc
+
+                                Deprecated notation that is still supported:
+                                <device_type> can be: %s
+                                - can be single or multiple target devices.
+                                Supported -device patterns examples:
                                 -device skl        ; will compile 1 target
                                 -device skl,icllp  ; will compile 2 targets
                                 -device skl-icllp  ; will compile all targets
@@ -867,8 +946,6 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                                      newer/same as provided
                                 -device -gen9      ; will compile all targets
                                                      older/same as provided
-                                -device *          ; will compile all targets
-                                                     known to ocloc
 
   -output <filename>            Optional output file base name.
                                 Default is input file's base name.
@@ -954,8 +1031,9 @@ Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
 )===",
-                      NEO::getDevicesTypes().c_str(),
-                      NEO::getDevicesFamilies().c_str());
+                      getDevicesConfigs().c_str(),
+                      NEO::getDevicesFamilies().c_str(),
+                      NEO::getDevicesTypes().c_str());
 }
 
 void OfflineCompiler::storeBinary(

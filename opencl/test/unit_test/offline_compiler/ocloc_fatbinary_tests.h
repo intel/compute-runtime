@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,9 @@
 #include <memory>
 
 namespace NEO {
-class OclocFatBinaryGetTargetPlatformsForFatbinary : public ::testing::Test {
+class OclocFatBinaryGetTargetConfigsForFatbinary : public ::testing::Test {
   public:
-    OclocFatBinaryGetTargetPlatformsForFatbinary() {
+    OclocFatBinaryGetTargetConfigsForFatbinary() {
         oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
         oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{true};
     }

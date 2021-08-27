@@ -107,6 +107,7 @@ TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
 
     deleteFileWithArgs();
 }
+
 TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsReturned) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
@@ -139,6 +140,7 @@ TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsRe
 
     deleteFileWithArgs();
 }
+
 TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuccessIsReturned) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
@@ -174,6 +176,50 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuc
     deleteFileWithArgs();
     delete pMultiCommand;
 }
+
+TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuildingMultiCommandThenSuccessIsReturned) {
+    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+    auto deviceMapConfig = allEnabledDeviceConfigs[0];
+    auto configStr = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig.config);
+
+    nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
+    std::vector<std::string> argv = {
+        "ocloc",
+        "multi",
+        nameOfFileWithArgs.c_str(),
+        "-q",
+    };
+
+    std::vector<std::string> singleArgs = {
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        configStr,
+        "-out_dir",
+        "offline_compiler_test"};
+
+    int numOfBuild = 4;
+    createFileWithArgs(singleArgs, numOfBuild);
+
+    pMultiCommand = MultiCommand::create(argv, retVal, oclocArgHelperWithoutInput.get());
+
+    EXPECT_NE(nullptr, pMultiCommand);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (int i = 0; i < numOfBuild; i++) {
+        std::string outFileName = "offline_compiler_test/build_no_" + std::to_string(i + 1);
+        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
+        EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
+    }
+
+    deleteFileWithArgs();
+    delete pMultiCommand;
+}
+
 TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
     nameOfFileWithArgs = "test_files/ImANotExistedComandFile.txt";
     std::vector<std::string> argv = {
@@ -298,6 +344,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenOfflineCompilerIsCreatedThenSuccessIsR
 
     delete pOfflineCompiler;
 }
+
 TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIsReturned) {
     std::map<std::string, std::string> files;
     std::unique_ptr<MockOclocArgHelper> argHelper = std::make_unique<MockOclocArgHelper>(files);
@@ -305,7 +352,6 @@ TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIs
     if (argHelper->deviceProductTable.size() == 1 && argHelper->deviceProductTable[0].deviceId == 0) {
         GTEST_SKIP();
     }
-
     std::stringstream deviceString, productString;
     deviceString << "0x" << std::hex << argHelper->deviceProductTable[0].deviceId;
     productString << argHelper->deviceProductTable[0].product;
@@ -341,6 +387,96 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdHexThenInvalidDeviceIsReturne
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_STREQ(output.c_str(), "Could not determine target based on device id: 0x0\nError: Cannot get HW Info for device 0x0.\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceNumerationWithMissingRevisionValueWhenInvalidPatternIsPassedThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        "9.1."};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Could not determine target based on product config: 9.1.\nError: Cannot get HW Info for device 9.1..\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceNumerationWithInvalidPatternThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        "9.1.."};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Could not determine target based on product config: 9.1..\nError: Cannot get HW Info for device 9.1...\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceNumerationWithMissingMajorValueWhenInvalidPatternIsPassedThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        ".1.2"};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Could not determine target based on product config: .1.2\nError: Cannot get HW Info for device .1.2.\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenInvalidRevisionValueIsPassedThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        "9.0.a"};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Could not determine target based on product config: 9.0.a\nError: Cannot get HW Info for device 9.0.a.\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenInvalidMinorValueIsPassedThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        "9.a"};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Could not determine target based on product config: 9.a\nError: Cannot get HW Info for device 9.a.\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenPassedValuesAreOutOfRangeThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        "256.350"};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Could not determine target based on product config: 256.350\nError: Cannot get HW Info for device 256.350.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -508,6 +644,40 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
         "test_files/copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
+
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    testing::internal::CaptureStdout();
+    retVal = pOfflineCompiler->build();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bc") || compilerOutputExists("copybuffer", "spv"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
+
+    std::string buildLog = pOfflineCompiler->getBuildLog();
+    EXPECT_STREQ(buildLog.c_str(), "");
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuildSucceeds) {
+    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
+    if (allEnabledDeviceConfigs.empty()) {
+        return;
+    }
+    auto deviceMapConfig = allEnabledDeviceConfigs[0];
+    auto configString = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig.config);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        configString};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -879,6 +1049,23 @@ TEST(OfflineCompilerTest, GivenValidParamWhenGettingHardwareInfoThenSuccessIsRet
     EXPECT_EQ(PRODUCT_FAMILY::IGFX_UNKNOWN, mockOfflineCompiler->getHardwareInfo().platform.eProductFamily);
     EXPECT_EQ(CL_SUCCESS, mockOfflineCompiler->initHardwareInfo(gEnvironment->devicePrefix.c_str()));
     EXPECT_NE(PRODUCT_FAMILY::IGFX_UNKNOWN, mockOfflineCompiler->getHardwareInfo().platform.eProductFamily);
+}
+
+TEST(OfflineCompilerTest, GivenConfigValueWhichIsOutOfRangeWhenGettingHardwareInfoThenInvalidDeviceIsReturned) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    uint32_t value = 0xffffff + 1;
+    std::stringstream inproperValue, resString;
+    inproperValue << value;
+
+    testing::internal::CaptureStdout();
+    EXPECT_EQ(CL_INVALID_DEVICE, mockOfflineCompiler->initHardwareInfo(inproperValue.str()));
+
+    resString << "Could not determine target based on product config: " << inproperValue.str() << "\n";
+
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST(OfflineCompilerTest, WhenStoringBinaryThenStoredCorrectly) {
@@ -1772,7 +1959,7 @@ TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefullBufferOffsetF
     MockOfflineCompiler mockOfflineCompiler;
     {
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
-        mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+        mockOfflineCompiler.initHardwareInfo(gEnvironment->devicePrefix.c_str());
         mockOfflineCompiler.setStatelessToStatefullBufferOffsetFlag();
         std::string internalOptions = mockOfflineCompiler.internalOptions;
         size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
@@ -1780,7 +1967,7 @@ TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefullBufferOffsetF
     }
     {
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
-        mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+        mockOfflineCompiler.initHardwareInfo(gEnvironment->devicePrefix.c_str());
         mockOfflineCompiler.setStatelessToStatefullBufferOffsetFlag();
         std::string internalOptions = mockOfflineCompiler.internalOptions;
         size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
