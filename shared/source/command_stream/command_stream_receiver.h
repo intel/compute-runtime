@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -261,6 +262,10 @@ class CommandStreamReceiver {
         return useNotifyEnableForPostSync;
     }
 
+    NEO::StreamProperties &getStreamProperties() {
+        return this->streamProperties;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -332,6 +337,7 @@ class CommandStreamReceiver {
     uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
     KernelExecutionType lastKernelExecutionType = KernelExecutionType::Default;
     MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::NotApplicable;
+    StreamProperties streamProperties{};
 
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;

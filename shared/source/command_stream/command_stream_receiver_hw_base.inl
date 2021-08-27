@@ -941,7 +941,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
         auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo) &&
                                    (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
-        StreamProperties streamProperties{};
         streamProperties.frontEndState.setProperties(lastKernelExecutionType == KernelExecutionType::Concurrent,
                                                      disableOverdispatch, osContext->isEngineInstanced(), hwInfo);
         PreambleHelper<GfxFamily>::programVfeState(

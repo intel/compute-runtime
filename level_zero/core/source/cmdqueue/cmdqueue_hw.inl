@@ -13,7 +13,6 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
-#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -308,6 +307,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
     }
 
+    auto &streamProperties = csr->getStreamProperties();
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
@@ -441,7 +441,7 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
                                                     perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
-                                                    streamProperties);
+                                                    csr->getStreamProperties());
     csr->setMediaVFEStateDirty(false);
 }
 
@@ -455,7 +455,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandLists(
     bool isFrontEndStateDirty, uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
 
-    auto streamPropertiesCopy = streamProperties;
+    auto streamPropertiesCopy = csr->getStreamProperties();
     auto singleFrontEndCmdSize = estimateFrontEndCmdSize();
     size_t estimatedSize = 0;
 
