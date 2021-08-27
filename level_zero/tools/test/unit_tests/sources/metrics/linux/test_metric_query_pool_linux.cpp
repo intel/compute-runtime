@@ -221,6 +221,10 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterTypeWhenGe
         .Times(1)
         .WillOnce([&]() { return mockMetricEnumeration->baseGetMetricsAdapter(); });
 
+    EXPECT_CALL(adapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
@@ -257,6 +261,10 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMajorWhenG
         .Times(1)
         .WillOnce([&]() { return mockMetricEnumeration->baseGetMetricsAdapter(); });
 
+    EXPECT_CALL(adapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
@@ -292,6 +300,10 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMinorWhenG
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce([&]() { return mockMetricEnumeration->baseGetMetricsAdapter(); });
+
+    EXPECT_CALL(adapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
@@ -331,6 +343,10 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectOpenMetricDeviceOnAdapterWhenGet
     EXPECT_CALL(adapter, OpenMetricsDevice(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(nullptr), Return(TCompletionCode::CC_ERROR_GENERAL)));
+
+    EXPECT_CALL(adapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }

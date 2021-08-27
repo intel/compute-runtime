@@ -136,11 +136,11 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
         // Open metrics device for each sub device.
         const auto &deviceImp = *static_cast<DeviceImp *>(&device);
 
-        for (size_t i = 0; i < deviceImp.subDevices.size(); i++) {
+        for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
 
             auto &metricsDevice = deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().pMetricsDevice;
-
             pAdapter->OpenMetricsSubDevice(static_cast<uint32_t>(i), &metricsDevice);
+            deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().pAdapter = pAdapter;
 
             if (metricsDevice == nullptr) {
                 NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", i);
@@ -168,31 +168,14 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
 }
 
 ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
-
     if (pAdapter) {
 
         auto &device = metricContext.getDevice();
         if (device.isMultiDeviceCapable()) {
 
-            // Close metrics device for each sub device.
             const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-
-            for (size_t i = 0; i < deviceImp.subDevices.size(); i++) {
-
-                auto &metricsDevice = deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().pMetricsDevice;
-
-                if (metricsDevice) {
-                    pAdapter->CloseMetricsDevice(metricsDevice);
-                    metricsDevice = nullptr;
-                }
-
-                auto &metricGroupsSubDevice = deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().metricGroups;
-
-                for (size_t j = 0; j < metricGroupsSubDevice.size(); ++j) {
-                    auto metricGroupSubDevice = MetricGroup::fromHandle(metricGroupsSubDevice[j]);
-                    delete metricGroupSubDevice;
-                }
-                metricGroupsSubDevice.clear();
+            for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
+                deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().cleanupMetricsDiscovery();
             }
         } else if (pMetricsDevice) {
 
@@ -208,12 +191,16 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     metricGroups.clear();
 
     if (hMetricsDiscovery != nullptr) {
+        if (pAdapterGroup != nullptr) {
+            pAdapterGroup->Close();
+        }
+        pAdapterGroup = nullptr;
         openAdapterGroup = nullptr;
         hMetricsDiscovery.reset();
     }
 
     return ZE_RESULT_SUCCESS;
-}
+} // namespace L0
 
 ze_result_t MetricEnumeration::cacheMetricInformation() {
 

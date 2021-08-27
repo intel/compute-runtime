@@ -82,6 +82,10 @@ void MetricContextFixture::openMetricsAdapter() {
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce(Return(&adapter));
+
+    EXPECT_CALL(adapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
 void MetricContextFixture::openMetricsAdapterGroup() {
@@ -98,6 +102,10 @@ void MetricContextFixture::openMetricsAdapterGroup() {
         .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
 
     EXPECT_CALL(adapter, CloseMetricsDevice(_))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(adapterGroup, Close())
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
 }
@@ -172,6 +180,10 @@ void MetricMultiDeviceFixture::openMetricsAdapter() {
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce(Return(&adapter));
+
+    EXPECT_CALL(adapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
@@ -193,6 +205,10 @@ void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
     EXPECT_CALL(adapter, CloseMetricsDevice(_))
         .Times(subDeviceCount)
         .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(adapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
 void MetricMultiDeviceContextFixture::SetUp() {
@@ -264,6 +280,10 @@ void MetricMultiDeviceContextFixture::openMetricsAdapter() {
     EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
         .Times(1)
         .WillOnce(Return(&adapter));
+
+    EXPECT_CALL(adapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
 void MetricMultiDeviceContextFixture::openMetricsAdapterGroup() {
@@ -280,6 +300,10 @@ void MetricMultiDeviceContextFixture::openMetricsAdapterGroup() {
         .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
 
     EXPECT_CALL(adapter, CloseMetricsDevice(_))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(adapterGroup, Close())
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
 }

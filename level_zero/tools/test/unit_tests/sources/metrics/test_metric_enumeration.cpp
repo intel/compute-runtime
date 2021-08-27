@@ -2151,6 +2151,10 @@ TEST_F(MetricEnumerationTest, givenRootDeviceWhenLoadDependenciesIsCalledThenLeg
         .Times(1)
         .WillOnce(Return(&metricsDeviceParams));
 
+    EXPECT_CALL(mockAdapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
     // Use first sub device.
     metricContext.setSubDeviceIndex(0);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
@@ -2196,6 +2200,10 @@ TEST_F(MetricEnumerationTest, givenSubDeviceWhenLoadDependenciesIsCalledThenOpen
         .Times(1)
         .WillOnce(Return(&metricsDeviceParams));
 
+    EXPECT_CALL(mockAdapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
     // Use second sub device.
     metricContext.setSubDeviceIndex(1);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
@@ -2238,6 +2246,10 @@ TEST_F(MetricEnumerationTest, givenSubDeviceWhenLoadDependenciesIsCalledThenOpen
 
     EXPECT_CALL(mockDevice, GetParams())
         .Times(0);
+
+    EXPECT_CALL(mockAdapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 
     // Use second sub device.
     metricContext.setSubDeviceIndex(1);
@@ -2301,6 +2313,10 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
         .Times(subDeviceCount)
         .WillRepeatedly(Return(&metricsDeviceParams));
 
+    EXPECT_CALL(mockAdapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
     // Use root device.
     metricContext.setSubDeviceIndex(0);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
@@ -2344,6 +2360,10 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
 
     EXPECT_CALL(mockDevice, GetParams())
         .Times(0);
+
+    EXPECT_CALL(mockAdapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 
     // Use root device.
     metricContext.setSubDeviceIndex(0);
