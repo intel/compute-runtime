@@ -36,6 +36,9 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
         device = pClDevice;
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(new SourceLevelDebugger(nullptr));
 
+        auto sipType = SipKernel::getSipKernelType(*pDevice);
+        SipKernel::initSipKernel(sipType, *pDevice);
+
         if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             pDevice->deviceInfo.debuggerActive = true;
             std::string filename;

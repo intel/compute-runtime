@@ -121,6 +121,16 @@ macro(macro_for_each_gen)
         list(APPEND CORE_SRCS_${GEN_TYPE}_H_BASE ${SRC_FILE})
       endif()
 
+      set(SRC_FILE "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR}sip_kernels/${GEN_TYPE_LOWER}/sip_kernel_${GEN_TYPE_LOWER}.cpp")
+      if(EXISTS ${SRC_FILE})
+        list(APPEND CORE_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
+      endif()
+
+      set(SRC_FILE "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR}sip_kernels/${GEN_TYPE_LOWER}/sip_kernel_${GEN_TYPE_LOWER}.h")
+      if(EXISTS ${SRC_FILE})
+        list(APPEND CORE_SRCS_${GEN_TYPE}_H_BASE ${SRC_FILE})
+      endif()
+
     endforeach()
     if(EXISTS ${GENERATED_GENX_PREFIX}/hw_cmds_generated_${GEN_TYPE_LOWER}.inl)
       list(APPEND CORE_SRCS_${GEN_TYPE}_H_BASE "${GENERATED_GENX_PREFIX}/hw_cmds_generated_${GEN_TYPE_LOWER}.inl")

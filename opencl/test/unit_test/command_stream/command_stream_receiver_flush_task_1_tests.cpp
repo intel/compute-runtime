@@ -188,6 +188,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionMode::MidThread;
+    auto sipType = SipKernel::getSipKernelType(*pDevice);
+    SipKernel::initSipKernel(sipType, *pDevice);
 
     mockCsr.flushTask(commandStream,
                       0,
@@ -219,6 +221,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionMode::MidThread;
+    auto sipType = SipKernel::getSipKernelType(*pDevice);
+    SipKernel::initSipKernel(sipType, *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,

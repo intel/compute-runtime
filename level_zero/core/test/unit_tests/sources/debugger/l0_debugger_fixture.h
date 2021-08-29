@@ -9,6 +9,7 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -30,6 +31,12 @@ struct L0DebuggerFixture {
 
         hwInfo = *NEO::defaultHwInfo.get();
         hwInfo.featureTable.ftrLocalMemory = true;
+
+        auto isHexadecimalArrayPrefered = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+        if (isHexadecimalArrayPrefered) {
+            MockSipData::useMockSip = true;
+        }
+
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
         executionEnvironment->initializeMemoryManager();
 
@@ -52,6 +59,9 @@ struct L0DebuggerFixture {
     L0::Device *device = nullptr;
     NEO::HardwareInfo hwInfo;
     MockMemoryOperations *memoryOperationsHandler = nullptr;
+    VariableBackup<bool> mockSipCalled{&NEO::MockSipData::called};
+    VariableBackup<NEO::SipKernelType> mockSipCalledType{&NEO::MockSipData::calledType};
+    VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
 };
 
 struct L0DebuggerHwFixture : public L0DebuggerFixture {

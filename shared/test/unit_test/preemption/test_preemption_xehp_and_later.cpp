@@ -97,6 +97,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenP
     using STATE_SIP = typename FamilyType::STATE_SIP;
     device->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
 
+    auto sipType = SipKernel::getSipKernelType(*device.get());
+    SipKernel::initSipKernel(sipType, *device.get());
+
     size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
     EXPECT_EQ(sizeof(STATE_SIP), requiredSize);
 

@@ -53,7 +53,11 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIs
     ASSERT_NE(nullptr, systemRoutine);
 
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
-    auto expectedSipAllocation = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getSipAllocation();
+    auto isHexadecimalArrayPreferred = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+
+    auto expectedSipAllocation = isHexadecimalArrayPreferred
+                                     ? NEO::MockSipData::mockSipKernel->getSipAllocation()
+                                     : neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getSipAllocation();
 
     EXPECT_EQ(expectedSipAllocation, systemRoutine);
 }
@@ -69,9 +73,13 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSip
 
 TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
-    auto mockBuiltIns = new MockBuiltins();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+
+    auto isHexadecimalArrayPreferred = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+    if (!isHexadecimalArrayPreferred) {
+        auto mockBuiltIns = new MockBuiltins();
+        executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    }
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.ftrLocalMemory = true;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
@@ -84,13 +92,20 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
     driverHandle->enableProgramDebugging = false;
 
     driverHandle->initialize(std::move(devices));
+    auto sipType = SipKernel::getSipKernelType(*neoDevice);
 
+    if (isHexadecimalArrayPreferred) {
+        SipKernel::initSipKernel(sipType, *neoDevice);
+    }
     auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
 
-    auto sipType = SipKernel::getSipKernelType(*neoDevice);
-    auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
-
-    EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
+    if (isHexadecimalArrayPreferred) {
+        auto &expectedStateSaveAreaHeader = neoDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)]->getStateSaveAreaHeader();
+        EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
+    } else {
+        auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
+        EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
+    }
 }
 
 HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocated) {
@@ -195,7 +210,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValid
 
         auto systemRoutine = SipKernel::getSipKernel(*neoDevice).getSipAllocation();
         ASSERT_NE(nullptr, systemRoutine);
-        EXPECT_EQ(systemRoutine->getGpuAddress(), stateSip->getSystemInstructionPointer());
+        EXPECT_EQ(systemRoutine->getGpuAddressToPatch(), stateSip->getSystemInstructionPointer());
     }
 
     for (auto i = 0u; i < numCommandLists; i++) {

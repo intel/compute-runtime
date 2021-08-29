@@ -28,7 +28,12 @@ void clearUseFlags() {
 
 bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
     if (MockSipData::useMockSip) {
-        SipKernel::classType = SipClassType::Builtins;
+        auto &hwHelper = HwHelper::get(device.getRootDeviceEnvironment().getHardwareInfo()->platform.eRenderCoreFamily);
+        if (hwHelper.isSipKernelAsHexadecimalArrayPreferred()) {
+            SipKernel::classType = SipClassType::HexadecimalHeaderFile;
+        } else {
+            SipKernel::classType = SipClassType::Builtins;
+        }
         MockSipData::calledType = type;
         MockSipData::called = true;
 

@@ -225,3 +225,51 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoaded
     EXPECT_EQ(sipKernel, secondSipKernel);
     EXPECT_EQ(storedAllocation, secondStoredAllocation);
 }
+
+struct HexadecimalHeaderSipKernel : public SipKernel {
+    using SipKernel::getSipKernelImpl;
+    using SipKernel::initHexadecimalArraySipKernel;
+};
+using HexadecimalHeaderSipTest = Test<DeviceFixture>;
+
+TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledThenSipKernelIsCorrect) {
+    VariableBackup<SipClassType> backupSipClassType(&SipKernel::classType, SipClassType::HexadecimalHeaderFile);
+
+    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::Csr, *pDevice));
+    EXPECT_EQ(SipKernelType::Csr, SipKernel::getSipKernelType(*pDevice));
+
+    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::Csr);
+    const auto expectedSipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
+    ASSERT_NE(nullptr, expectedSipKernel);
+
+    const auto &sipKernel = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
+    EXPECT_EQ(expectedSipKernel, &sipKernel);
+
+    auto expectedSipAllocation = expectedSipKernel->getSipAllocation();
+    auto sipAllocation = sipKernel.getSipAllocation();
+    EXPECT_EQ(expectedSipAllocation, sipAllocation);
+}
+
+TEST_F(HexadecimalHeaderSipTest, givenFailMemoryManagerWhenInitHexadecimalArraySipKernelIsCalledThenSipKernelIsNullptr) {
+    pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));
+    EXPECT_FALSE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::Csr, *pDevice));
+
+    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::Csr);
+    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
+    EXPECT_EQ(nullptr, sipKernel);
+}
+
+TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceThenSipKernelIsCreatedOnce) {
+    VariableBackup<SipClassType> backupSipClassType(&SipKernel::classType, SipClassType::HexadecimalHeaderFile);
+    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::Csr, *pDevice));
+
+    const auto &sipKernel = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
+    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::Csr, *pDevice));
+
+    const auto &sipKernel2 = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
+    EXPECT_EQ(&sipKernel, &sipKernel2);
+
+    auto sipAllocation = sipKernel.getSipAllocation();
+    auto sipAllocation2 = sipKernel2.getSipAllocation();
+    EXPECT_EQ(sipAllocation, sipAllocation2);
+}

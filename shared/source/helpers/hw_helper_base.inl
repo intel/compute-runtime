@@ -656,4 +656,17 @@ bool HwHelperHw<GfxFamily>::isEngineTypeRemappingToHwSpecificRequired() const {
     return false;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isSipKernelAsHexadecimalArrayPreferred() const {
+    return false;
+}
+
+template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const {
+}
+
+template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize) const {
+}
+
 } // namespace NEO

@@ -156,6 +156,10 @@ class HwHelper {
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getCopyEnginesCount(const HardwareInfo &hwInfo);
 
+    virtual bool isSipKernelAsHexadecimalArrayPreferred() const = 0;
+    virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const = 0;
+    virtual void adjustPreemptionSurfaceSize(size_t &csrSize) const = 0;
+
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
 
@@ -385,6 +389,12 @@ class HwHelperHw : public HwHelper {
     bool additionalPipeControlArgsRequired() const override;
 
     bool isEngineTypeRemappingToHwSpecificRequired() const override;
+
+    bool isSipKernelAsHexadecimalArrayPreferred() const override;
+
+    void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const override;
+
+    void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

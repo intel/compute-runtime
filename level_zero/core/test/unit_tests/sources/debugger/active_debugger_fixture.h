@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_library.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 
@@ -38,6 +39,11 @@ struct ActiveDebuggerFixture {
 
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+
+        auto isHexadecimalArrayPrefered = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+        if (isHexadecimalArrayPrefered) {
+            MockSipData::useMockSip = true;
+        }
 
         debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
         executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debugger);
@@ -70,6 +76,9 @@ struct ActiveDebuggerFixture {
     L0::Device *deviceL0;
     MockActiveSourceLevelDebugger *debugger = nullptr;
     HardwareInfo hwInfo;
+    VariableBackup<bool> mockSipCalled{&NEO::MockSipData::called};
+    VariableBackup<NEO::SipKernelType> mockSipCalledType{&NEO::MockSipData::calledType};
+    VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
 };
 } // namespace ult
 } // namespace L0

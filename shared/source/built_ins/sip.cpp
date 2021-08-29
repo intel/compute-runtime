@@ -111,6 +111,38 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
     return true;
 }
 
+bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device) {
+    uint32_t *sipKernelBinary = nullptr;
+    size_t kernelBinarySize = 0u;
+    auto &hwInfo = device.getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    hwHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
+
+    uint32_t sipIndex = static_cast<uint32_t>(type);
+    uint32_t rootDeviceIndex = device.getRootDeviceIndex();
+    if (device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get() != nullptr) {
+        return true;
+    }
+    const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
+    AllocationProperties properties = {rootDeviceIndex, kernelBinarySize, allocType, device.getDeviceBitfield()};
+    properties.flags.use32BitFrontWindow = false;
+
+    auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    if (sipAllocation == nullptr) {
+        return false;
+    }
+
+    MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+                                                     device, sipAllocation, 0, sipKernelBinary,
+                                                     kernelBinarySize);
+
+    std::vector<char> emptyStateSaveAreaHeader;
+    device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
+        std::make_unique<SipKernel>(type, sipAllocation, std::move(emptyStateSaveAreaHeader));
+
+    return true;
+}
+
 void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager) {
     for (auto &sipKernel : rootDeviceEnvironment->sipKernels) {
         if (sipKernel.get()) {
@@ -119,10 +151,12 @@ void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, Mem
     }
 }
 
-void SipKernel::selectSipClassType(std::string &fileName) {
+void SipKernel::selectSipClassType(std::string &fileName, const HardwareInfo &hwInfo) {
     const std::string unknown("unk");
     if (fileName.compare(unknown) == 0) {
-        SipKernel::classType = SipClassType::Builtins;
+        SipKernel::classType = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred()
+                                   ? SipClassType::HexadecimalHeaderFile
+                                   : SipClassType::Builtins;
     } else {
         SipKernel::classType = SipClassType::RawBinaryFromFile;
     }
@@ -130,21 +164,28 @@ void SipKernel::selectSipClassType(std::string &fileName) {
 
 bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device) {
     std::string fileName = DebugManager.flags.LoadBinarySipFromFile.get();
-    SipKernel::selectSipClassType(fileName);
+    SipKernel::selectSipClassType(fileName, *device.getRootDeviceEnvironment().getHardwareInfo());
 
-    if (SipKernel::classType == SipClassType::RawBinaryFromFile) {
+    switch (SipKernel::classType) {
+    case SipClassType::RawBinaryFromFile:
         return SipKernel::initRawBinaryFromFileKernel(type, device, fileName);
+    case SipClassType::HexadecimalHeaderFile:
+        return SipKernel::initHexadecimalArraySipKernel(type, device);
+    default:
+        return SipKernel::initBuiltinsSipKernel(type, device);
     }
-    return SipKernel::initBuiltinsSipKernel(type, device);
 }
 
 const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
     auto sipType = SipKernel::getSipKernelType(device);
 
-    if (SipKernel::classType == SipClassType::RawBinaryFromFile) {
+    switch (SipKernel::classType) {
+    case SipClassType::RawBinaryFromFile:
+    case SipClassType::HexadecimalHeaderFile:
         return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
+    default:
+        return device.getBuiltIns()->getSipKernel(sipType, device);
     }
-    return device.getBuiltIns()->getSipKernel(sipType, device);
 }
 
 const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device) {

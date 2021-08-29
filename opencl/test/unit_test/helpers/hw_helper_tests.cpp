@@ -1307,6 +1307,30 @@ HWTEST_F(HwHelperTest, whenSetRenderCompressedFlagThenProperFlagSet) {
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
 }
 
+HWTEST_F(HwHelperTest, whenAdjustPreemptionSurfaceSizeIsCalledThenCsrSizeDoesntChange) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    size_t csrSize = 1024;
+    size_t oldCsrSize = csrSize;
+    hwHelper.adjustPreemptionSurfaceSize(csrSize);
+    EXPECT_EQ(oldCsrSize, csrSize);
+}
+
+HWTEST_F(HwHelperTest, whenSetSipKernelDataIsCalledThenSipKernelDataDoesntChange) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    uint32_t *sipKernelBinary = nullptr;
+    uint32_t *oldSipKernelBinary = sipKernelBinary;
+    size_t kernelBinarySize = 1024;
+    size_t oldKernelBinarySize = kernelBinarySize;
+    hwHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
+    EXPECT_EQ(oldKernelBinarySize, kernelBinarySize);
+    EXPECT_EQ(oldSipKernelBinary, sipKernelBinary);
+}
+
+HWTEST_F(HwHelperTest, whenIsSipKernelAsHexadecimalArrayPreferredIsCalledThenReturnFalse) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.isSipKernelAsHexadecimalArrayPreferred());
+}
+
 using isXeHpCoreOrBelow = IsAtMostProduct<IGFX_XE_HP_SDV>;
 HWTEST2_F(HwHelperTest, givenXeHPAndBelowPlatformWhenCheckingIfAdditionalPipeControlArgsAreRequiredThenReturnFalse, isXeHpCoreOrBelow) {
     const auto &hwHelper = HwHelper::get(renderCoreFamily);

@@ -84,8 +84,9 @@ struct OOQueueHwTest : public ClDeviceFixture,
 HWTEST_F(CommandQueueHwTest, WhenConstructingTwoCommandQueuesThenOnlyOneDebugSurfaceIsAllocated) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
-
     auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
+    auto sipType = SipKernel::getSipKernelType(device->getDevice());
+    SipKernel::initSipKernel(sipType, device->getDevice());
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw1(context, device.get(), nullptr);
 

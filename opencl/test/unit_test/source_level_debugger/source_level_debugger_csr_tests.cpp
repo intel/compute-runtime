@@ -22,6 +22,8 @@
 HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebuggerAndDisabledPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
 
     auto mockCsr = createCSR<FamilyType>();
+    auto sipType = SipKernel::getSipKernelType(device->getDevice());
+    SipKernel::initSipKernel(sipType, device->getDevice());
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
