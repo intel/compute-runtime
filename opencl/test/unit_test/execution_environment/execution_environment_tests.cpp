@@ -266,21 +266,40 @@ TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryMan
 }
 
 TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasProperValue) {
+    DebugManagerStateRestore restore;
     VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount, 0);
     uint32_t numRootDevices = 17u;
-    MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
+    uint32_t expectedOsContextCount = 0u;
+    uint32_t expectedOsContextCountForCcs = 0u;
 
-    auto expectedOsContextCount = 0u;
-    for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
-        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-        auto osContextCount = hwHelper.getGpgpuEngineInstances(*hwInfo).size();
-        auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
-        bool hasRootCsr = subDevicesCount > 1;
-        expectedOsContextCount += static_cast<uint32_t>(osContextCount * subDevicesCount + hasRootCsr);
+    {
+        DebugManager.flags.EngineInstancedSubDevices.set(false);
+        MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
+
+        for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
+            auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
+            auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+            auto osContextCount = hwHelper.getGpgpuEngineInstances(*hwInfo).size();
+            auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+            bool hasRootCsr = subDevicesCount > 1;
+            auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+            expectedOsContextCount += static_cast<uint32_t>(osContextCount * subDevicesCount + hasRootCsr);
+
+            if (ccsCount > 1) {
+                expectedOsContextCountForCcs += ccsCount * subDevicesCount;
+            }
+        }
+
+        EXPECT_EQ(expectedOsContextCount, MemoryManager::maxOsContextCount);
     }
 
-    EXPECT_EQ(expectedOsContextCount, MemoryManager::maxOsContextCount);
+    {
+        DebugManager.flags.EngineInstancedSubDevices.set(true);
+        MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
+
+        EXPECT_EQ(expectedOsContextCount + expectedOsContextCountForCcs, MemoryManager::maxOsContextCount);
+    }
 }
 
 TEST(ClExecutionEnvironment, WhenExecutionEnvironmentIsDeletedThenAsyncEventHandlerThreadIsDestroyed) {
