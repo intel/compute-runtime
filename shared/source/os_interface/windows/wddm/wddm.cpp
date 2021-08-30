@@ -495,7 +495,7 @@ bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) 
     return status == STATUS_SUCCESS;
 }
 
-NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, D3DKMT_HANDLE *outSharedHandle) {
+NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DDDI_ALLOCATIONINFO2 AllocationInfo = {};
     D3DKMT_CREATEALLOCATION CreateAllocation = {};
@@ -522,7 +522,17 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     outHandle = AllocationInfo.hAllocation;
     outResourceHandle = CreateAllocation.hResource;
     if (outSharedHandle) {
-        *outSharedHandle = CreateAllocation.hGlobalShare;
+        HANDLE ntSharedHandle = NULL;
+        status = this->createNTHandle(&outResourceHandle, &ntSharedHandle);
+        if (status != STATUS_SUCCESS) {
+            DEBUG_BREAK_IF(true);
+            [[maybe_unused]] auto destroyStatus = this->destroyAllocations(&outHandle, 1, outResourceHandle);
+            outHandle = NULL_HANDLE;
+            outResourceHandle = NULL_HANDLE;
+            DEBUG_BREAK_IF(destroyStatus != STATUS_SUCCESS);
+            return status;
+        }
+        *outSharedHandle = castToUint64(ntSharedHandle);
     }
     kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, getAdapter(), device, outHandle, getGdi()->escape);
 
@@ -531,7 +541,7 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
 
 bool Wddm::createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     D3DKMT_HANDLE outResourceHandle = NULL_HANDLE;
-    D3DKMT_HANDLE *outSharedHandle = nullptr;
+    uint64_t *outSharedHandle = nullptr;
     auto result = this->createAllocation(nullptr, gmm, outHandle, outResourceHandle, outSharedHandle);
     return STATUS_SUCCESS == result;
 }

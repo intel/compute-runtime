@@ -69,9 +69,13 @@ class WddmAllocation : public GraphicsAllocation {
         handles[handleIndex] = handle;
     }
 
-    D3DKMT_HANDLE *getSharedHandleToModify() {
+    uint64_t peekInternalHandle(MemoryManager *memoryManager) override {
+        return ntSecureHandle;
+    }
+
+    uint64_t *getSharedHandleToModify() {
         if (shareable) {
-            return &sharingInfo.sharedHandle;
+            return &ntSecureHandle;
         }
         return nullptr;
     }
@@ -102,6 +106,7 @@ class WddmAllocation : public GraphicsAllocation {
     bool allocInFrontWindowPool = false;
 
   protected:
+    uint64_t ntSecureHandle = 0u;
     std::string getHandleInfoString() const {
         std::stringstream ss;
         for (auto &handle : handles) {

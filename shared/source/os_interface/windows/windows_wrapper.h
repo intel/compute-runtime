@@ -8,6 +8,9 @@
 #pragma once
 #if _WIN32
 #include <windows.h>
+
+#include <winternl.h>
+
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <ntstatus.h>
@@ -24,7 +27,9 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
 #endif
+
 #include <winadapter.h>
+
 #if __clang__
 #pragma clang diagnostic pop
 #endif

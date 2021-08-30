@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/sys_calls_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
@@ -499,13 +500,17 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
         delete gfxAllocation->getGmm(handleId);
     }
+    if (input->peekInternalHandle(nullptr) != 0u) {
+        [[maybe_unused]] auto status = SysCalls::closeHandle(reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(input->peekInternalHandle(nullptr))));
+        DEBUG_BREAK_IF(!status);
+    }
 
     if (input->peekSharedHandle() == false &&
         input->getDriverAllocatedCpuPtr() == nullptr &&
         input->fragmentsStorage.fragmentCount > 0) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
-        if (input->peekSharedHandle()) {
+        if (input->peekSharedHandle() || input->peekInternalHandle(nullptr) != 0) {
             [[maybe_unused]] auto status = tryDeferDeletions(nullptr, 0, input->resourceHandle, gfxAllocation->getRootDeviceIndex());
             DEBUG_BREAK_IF(!status);
         } else {

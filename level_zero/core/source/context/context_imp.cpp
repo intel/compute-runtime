@@ -156,7 +156,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, this->driverHandle->rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.allocationFlags.flags.shareable = static_cast<uint32_t>(lookupTable.isSharedHandle);
+    unifiedMemoryProperties.allocationFlags.flags.shareable = static_cast<uint32_t>(lookupTable.exportMemory);
     unifiedMemoryProperties.device = neoDevice;
 
     if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
@@ -554,6 +554,13 @@ ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
             }
             uint64_t handle = alloc->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager());
             extendedMemoryExportProperties->fd = static_cast<int>(handle);
+        } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_WIN32) {
+            ze_external_memory_export_win32_handle_t *exportStructure = reinterpret_cast<ze_external_memory_export_win32_handle_t *>(extendedProperties);
+            if (exportStructure->flags != ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+            uint64_t handle = alloc->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager());
+            exportStructure->handle = reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(handle));
         }
     }
 

@@ -40,6 +40,7 @@ bool Gdi::setupHwQueueProcAddresses() {
 bool Gdi::getAllProcAddresses() {
     openAdapterFromLuid = gdiDll->getProcAddress("D3DKMTOpenAdapterFromLuid");
     createAllocation_ = gdiDll->getProcAddress("D3DKMTCreateAllocation");
+    shareObjects = reinterpret_cast<decltype(shareObjects)>(gdiDll->getProcAddress("D3DKMTShareObjects"));
     createAllocation2 = gdiDll->getProcAddress("D3DKMTCreateAllocation2");
     destroyAllocation2 = gdiDll->getProcAddress("D3DKMTDestroyAllocation2");
     queryAdapterInfo = gdiDll->getProcAddress("D3DKMTQueryAdapterInfo");
@@ -82,7 +83,7 @@ bool Gdi::getAllProcAddresses() {
 
     // clang-format off
     if (openAdapterFromLuid && createAllocation2 
-        && destroyAllocation2 && queryAdapterInfo && closeAdapter && createDevice 
+        && destroyAllocation2 && shareObjects && queryAdapterInfo && closeAdapter && createDevice
         && destroyDevice && escape && createContext && destroyContext 
         && openResource && queryResourceInfo
         && createSynchronizationObject && createSynchronizationObject2 

@@ -168,6 +168,11 @@ NTSTATUS __stdcall D3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *alloc
     return STATUS_SUCCESS;
 }
 
+NTSTATUS __stdcall D3DKMTShareObjects(UINT cObjects, const D3DKMT_HANDLE *hObjects, POBJECT_ATTRIBUTES pObjectAttributes, DWORD dwDesiredAccess, HANDLE *phSharedNtHandle) {
+    *phSharedNtHandle = reinterpret_cast<HANDLE>(reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(0x123)));
+    return STATUS_SUCCESS;
+}
+
 static unsigned int DestroyAllocationWithResourceHandleCalled = 0u;
 static D3DKMT_DESTROYALLOCATION2 destroyalloc2 = {0};
 static D3DKMT_HANDLE LastDestroyedResourceHandle = 0;

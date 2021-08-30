@@ -29,6 +29,7 @@ namespace NEO {
 
 using osHandle = unsigned int;
 inline osHandle toOsHandle(const void *handle) {
+
     return static_cast<osHandle>(castToUint64(handle));
 }
 

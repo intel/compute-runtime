@@ -86,6 +86,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/configure_device_address_space_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/set_gmm_input_args_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/max_mem_alloc_size_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/helper_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_defs.h
@@ -108,12 +109,14 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper.h
 )
 
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_WDDM
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_dxcore.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback_stub.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper_drm_or_wddm.cpp
   )
 endif()
 

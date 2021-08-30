@@ -75,7 +75,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext, const HardwareInfo &hwInfo);
     MOCKABLE_VIRTUAL void applyAdditionalMapGPUVAFields(D3DDDI_MAPGPUVIRTUALADDRESS &MapGPUVA, Gmm *gmm);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
-    MOCKABLE_VIRTUAL NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, D3DKMT_HANDLE *outSharedHandle);
+    MOCKABLE_VIRTUAL NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle);
     MOCKABLE_VIRTUAL bool createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle);
     MOCKABLE_VIRTUAL NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles);
     MOCKABLE_VIRTUAL bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
@@ -92,6 +92,7 @@ class Wddm : public DriverModel {
 
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
+    MOCKABLE_VIRTUAL NTSTATUS createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle);
 
     MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments);
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence);
