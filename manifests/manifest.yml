@@ -18,9 +18,9 @@ components:
     revision: V0.2.3
     repository: https://github.com/intel/igsc.git
   infra:
-    branch: infra
+    branch: master
     dest_dir: infra
-    revision: 6b70ffc7e9daf419a136f992e35b18f06f5a7833
+    revision: aea268948c225c4da77fc87e7c05656d9bee445c
     type: git
   internal:
     branch: master
