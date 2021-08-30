@@ -157,6 +157,7 @@ static constexpr ConstStringRef version("version");
 namespace Kernel {
 static constexpr ConstStringRef name("name");
 static constexpr ConstStringRef executionEnv("execution_env");
+static constexpr ConstStringRef debugEnv("debug_env");
 static constexpr ConstStringRef payloadArguments("payload_arguments");
 static constexpr ConstStringRef bindingTableIndices("binding_table_indices");
 static constexpr ConstStringRef perThreadPayloadArguments("per_thread_payload_arguments");
@@ -184,6 +185,10 @@ static constexpr ConstStringRef slmSize("slm_size");
 static constexpr ConstStringRef subgroupIndependentForwardProgress("subgroup_independent_forward_progress");
 static constexpr ConstStringRef workGroupWalkOrderDimensions("work_group_walk_order_dimensions");
 } // namespace ExecutionEnv
+
+namespace DebugEnv {
+static constexpr ConstStringRef debugSurfaceBTI("sip_surface_bti");
+} // namespace DebugEnv
 
 namespace PayloadArgument {
 static constexpr ConstStringRef argType("arg_type");
@@ -355,6 +360,18 @@ struct ExperimentalPropertiesBaseT {
 };
 
 } // namespace ExecutionEnv
+
+namespace DebugEnv {
+using DebugSurfaceBTIT = int32_t;
+
+namespace Defaults {
+static constexpr DebugSurfaceBTIT debugSurfaceBTI = -1;
+} // namespace Defaults
+
+struct DebugEnvBaseT {
+    DebugSurfaceBTIT debugSurfaceBTI = Defaults::debugSurfaceBTI;
+};
+} // namespace DebugEnv
 
 enum ArgType : uint8_t {
     ArgTypeUnknown = 0,

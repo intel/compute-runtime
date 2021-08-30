@@ -35,6 +35,7 @@ using UniqueNode = StackVec<const NEO::Yaml::Node *, 1>;
 struct ZeInfoKernelSections {
     UniqueNode nameNd;
     UniqueNode executionEnvNd;
+    UniqueNode debugEnvNd;
     UniqueNode payloadArgumentsNd;
     UniqueNode bindingTableIndicesNd;
     UniqueNode perThreadPayloadArgumentsNd;
@@ -52,6 +53,10 @@ DecodeError validateZeInfoKernelSectionsCount(const ZeInfoKernelSections &outZeI
 DecodeError readZeInfoExecutionEnvironment(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                            NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT &outExecEnv,
                                            ConstStringRef context, std::string &outErrReason, std::string &outWarning);
+DecodeError readZeInfoDebugEnvironment(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
+                                       NEO::Elf::ZebinKernelMetadata::Types::Kernel::DebugEnv::DebugEnvBaseT &outDebugEnv,
+                                       ConstStringRef context,
+                                       std::string &outErrReason, std::string &outWarning);
 DecodeError readZeInfoExperimentalProperties(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                              NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExperimentalPropertiesBaseT &outExperimentalProperties,
                                              ConstStringRef context,
