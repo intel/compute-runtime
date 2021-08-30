@@ -709,7 +709,9 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorre
     EXPECT_EQ(workSizeInfo.numThreadsPerSubSlice, threadsPerEu * euPerSubSlice);
 }
 
-TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtr) {
+using LocalWorkSizeTest = ::testing::Test;
+
+HWTEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtr) {
     MockClDevice device{new MockDevice};
     MockKernelWithInternals kernel(device);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
@@ -731,8 +733,6 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusi
         EXPECT_EQ(fusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
     }
 }
-
-using LocalWorkSizeTest = ::testing::Test;
 
 HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtrForcedByDebugManager, IsAtLeastGen12lp) {
     DebugManagerStateRestore dbgRestore;
