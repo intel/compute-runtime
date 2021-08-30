@@ -20,114 +20,8 @@
 namespace NEO {
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilities(const HardwareInfo * /*hwInfo*/) {
-    return 0;
-}
-
-template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemCapabilities() {
-    return 0;
-}
-
-template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getSingleDeviceSharedMemCapabilities() {
-    return 0;
-}
-
-template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getCrossDeviceSharedMemCapabilities() {
-    return 0;
-}
-
-template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
-}
-
-template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
-    return 0;
-}
-
-template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities() {
-    return 0;
-}
-
-template <>
 int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     return 0;
-}
-
-template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
-}
-
-template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
-
-template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo){};
-
-template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
-    return 0;
-}
-
-template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
-    return 0;
-}
-
-template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {}
-
-template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
-    return CommonConstants::invalidStepping;
-}
-
-template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    return CommonConstants::invalidStepping;
-}
-
-template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    switch (getSteppingFromHwRevId(hwInfo)) {
-    default:
-    case REVISION_A0:
-    case REVISION_A1:
-    case REVISION_A3:
-        return AubMemDump::SteppingValues::A;
-    case REVISION_B:
-        return AubMemDump::SteppingValues::B;
-    case REVISION_C:
-        return AubMemDump::SteppingValues::C;
-    case REVISION_D:
-        return AubMemDump::SteppingValues::D;
-    case REVISION_K:
-        return AubMemDump::SteppingValues::K;
-    }
 }
 
 HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
@@ -180,16 +74,6 @@ TEST_F(HwInfoConfigTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabl
     EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled);
 }
 
-HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
-    bool ret = hwConfig.isAdditionalStateBaseAddressWARequired(outHwInfo);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned) {
-    bool ret = hwConfig.isMaxThreadsForWorkgroupWARequired(outHwInfo);
-    EXPECT_FALSE(ret);
-}
-
 HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {
     HardwareInfo initialHwInfo = *defaultHwInfo;
     auto &hwHelper = HwHelper::get(initialHwInfo.platform.eRenderCoreFamily);
@@ -205,21 +89,6 @@ HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoTh
     initialHwInfo.featureTable.ftrL3IACoherency = true;
     hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
-}
-
-HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingObtainBlitterPreferenceThenFalseIsReturned) {
-    bool ret = hwConfig.obtainBlitterPreference(outHwInfo);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsPageTableManagerSupportedThenFalseIsReturned) {
-    bool ret = hwConfig.isPageTableManagerSupported(outHwInfo);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingGetSteppingFromHwRevIdThenInvalidSteppingIsReturned) {
-    uint32_t ret = hwConfig.getSteppingFromHwRevId(outHwInfo);
-    EXPECT_EQ(CommonConstants::invalidStepping, ret);
 }
 
 } // namespace NEO
