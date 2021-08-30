@@ -157,7 +157,6 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual bool genericSubDevicesAllowed();
     bool engineInstancedSubDevicesAllowed();
     void setAsEngineInstanced();
-    void translateToEngineInstanced(EngineInstancesContainer &engineInstancesContainer);
 
     DeviceInfo deviceInfo = {};
 

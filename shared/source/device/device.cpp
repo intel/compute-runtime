@@ -261,33 +261,13 @@ bool Device::createDeviceImpl() {
     return true;
 }
 
-void Device::translateToEngineInstanced(EngineInstancesContainer &engineInstancesContainer) {
-    EngineInstancesContainer newEngines;
-
-    for (auto &engine : engineInstancesContainer) {
-        if (EngineHelpers::isBcs(engine.first) || (engine.first == this->engineInstancedType) ||
-            (engine.second != EngineUsage::Regular && engine.second != EngineUsage::Cooperative)) {
-            newEngines.push_back(engine);
-        } else {
-            continue;
-        }
-
-        // Override non-Regular (internal, low priority, ..) to engineInstancedType
-        if (newEngines.rbegin()->second != EngineUsage::Regular && !EngineHelpers::isBcs(newEngines.rbegin()->first)) {
-            newEngines.rbegin()->first = this->engineInstancedType;
-        }
+bool Device::createEngines() {
+    if (engineInstanced) {
+        return createEngine(0, {engineInstancedType, EngineUsage::Regular});
     }
 
-    std::swap(newEngines, engineInstancesContainer);
-}
-
-bool Device::createEngines() {
     auto &hwInfo = getHardwareInfo();
     auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
-
-    if (engineInstanced) {
-        translateToEngineInstanced(gpgpuEngines);
-    }
 
     uint32_t deviceCsrIndex = 0;
     for (auto &engine : gpgpuEngines) {

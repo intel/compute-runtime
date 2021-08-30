@@ -332,6 +332,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         isEngineInstanced &= (engineType == subDevice->engineInstancedType);
         isEngineInstanced &= (subDeviceIndex == subDevice->getSubDeviceIndex());
         isEngineInstanced &= (deviceBitfield == subDevice->getDeviceBitfield());
+        isEngineInstanced &= (subDevice->getEngines().size() == 1);
 
         return isEngineInstanced;
     }
@@ -366,49 +367,21 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
 
     template <typename MockDeviceT>
     bool hasEngineInstancedEngines(MockDeviceT *device, aub_stream::EngineType engineType) {
-        bool regularCcsFound = false;
-        bool internalCcsFound = false;
-        bool lowPriorityCcsFound = false;
-        bool cooperativeCcsFound = false;
+        if (device->getEngines().size() != 1) {
+            return false;
+        }
 
         OsContext *defaultOsContext = device->getDefaultEngine().osContext;
         EXPECT_EQ(engineType, defaultOsContext->getEngineType());
         EXPECT_EQ(EngineUsage::Regular, defaultOsContext->getEngineUsage());
         EXPECT_TRUE(defaultOsContext->isDefaultContext());
 
-        for (auto &engine : device->engines) {
-            if ((engine.getEngineType() != engineType) && !EngineHelpers::isBcs(engine.getEngineType())) {
-                return false;
-            }
+        auto &engine = device->getEngines()[0];
 
-            EXPECT_EQ(EngineHelpers::isCcs(engine.getEngineType()), engine.osContext->isEngineInstanced());
+        EXPECT_EQ(engine.getEngineType(), engineType);
+        EXPECT_TRUE(engine.osContext->isRegular());
 
-            auto osContext = engine.osContext;
-
-            if (engine.getEngineType() == engineType) {
-                if (osContext->isRegular()) {
-                    EXPECT_FALSE(regularCcsFound);
-                    regularCcsFound = true;
-                } else if (osContext->isLowPriority()) {
-                    EXPECT_FALSE(lowPriorityCcsFound);
-                    lowPriorityCcsFound = true;
-                } else if (osContext->isInternalEngine()) {
-                    EXPECT_FALSE(internalCcsFound);
-                    internalCcsFound = true;
-                } else if (osContext->getEngineUsage() == EngineUsage::Cooperative) {
-                    EXPECT_FALSE(cooperativeCcsFound);
-                    cooperativeCcsFound = true;
-                } else {
-                    EXPECT_TRUE(false);
-                }
-            } else if (!EngineHelpers::isBcs(engine.getEngineType())) {
-                EXPECT_TRUE(false);
-            }
-        }
-
-        auto &hwInfo = device->getHardwareInfo();
-        return (regularCcsFound && internalCcsFound && lowPriorityCcsFound) &&
-               (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isCooperativeEngineSupported(hwInfo) || cooperativeCcsFound);
+        return true;
     }
 
     DebugManagerStateRestore restorer;
