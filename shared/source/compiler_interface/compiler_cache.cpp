@@ -38,7 +38,7 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
     hash.update("----", 4);
     hash.update(reinterpret_cast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
     hash.update("----", 4);
-    hash.update(reinterpret_cast<const char *>(&hwInfo.featureTable), sizeof(hwInfo.featureTable));
+    hash.update(reinterpret_cast<const char *>(&hwInfo.featureTable.packed), sizeof(hwInfo.featureTable.packed));
     hash.update("----", 4);
     hash.update(reinterpret_cast<const char *>(&hwInfo.workaroundTable), sizeof(hwInfo.workaroundTable));
 
@@ -48,6 +48,7 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
            << std::setw(sizeof(res) * 2)
            << std::hex
            << res;
+
     return stream.str();
 }
 
