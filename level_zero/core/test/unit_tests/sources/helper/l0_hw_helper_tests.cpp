@@ -76,7 +76,7 @@ HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenC
     uint32_t subslice = subslicesPerSlice > 1 ? subslicesPerSlice - 1 : 0;
 
     const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-    const auto bytesPerEu = threadsPerEu <= 8 ? 1 : 2;
+    const auto bytesPerEu = 1;
 
     const auto maxEUsInAtt = hwInfo.gtSystemInfo.MaxEuPerSubSlice > 8 ? 8 : hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const auto threadsSizePerSubSlice = maxEUsInAtt * bytesPerEu;
@@ -141,7 +141,12 @@ HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenC
 
     data = ptrOffset(data, (hwInfo.gtSystemInfo.MaxSlicesSupported - 1) * threadsSizePerSlice);
     data = ptrOffset(data, subslice * threadsSizePerSubSlice);
-    data = ptrOffset(data, maxEUsInAtt - 1 * bytesPerEu);
+
+    if (l0HwHelper.isResumeWARequired()) {
+        data = ptrOffset(data, (maxEUsInAtt - 1) % 4 * bytesPerEu);
+    } else {
+        data = ptrOffset(data, maxEUsInAtt - 1 * bytesPerEu);
+    }
     data[0] = 1;
 
     printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
@@ -343,7 +348,7 @@ HWTEST2_F(L0HwHelperFusedEuTest, givenBitmaskWithAttentionBitsForSingleThreadWhe
 
     EXPECT_EQ(0u, threads[1].slice);
     EXPECT_EQ(subsliceID, threads[1].subslice);
-    EXPECT_EQ(8u, threads[1].eu);
+    EXPECT_EQ(4u, threads[1].eu);
     EXPECT_EQ(threadID, threads[1].thread);
 }
 
@@ -381,7 +386,7 @@ HWTEST2_F(L0HwHelperFusedEuTest, givenBitmaskWithAttentionBitsForAllSubslicesWhe
 
         threadIndex++;
         EXPECT_EQ(threadID, threads[threadIndex].thread);
-        EXPECT_EQ(8u, threads[threadIndex].eu);
+        EXPECT_EQ(4u, threads[threadIndex].eu);
         threadIndex++;
     }
 }
@@ -408,9 +413,9 @@ HWTEST2_F(L0HwHelperFusedEuTest, givenBitmaskWithAttentionBitsForAllEUsWhenGetti
     l0HwHelper.getAttentionBitmaskForSingleThreads(threadsWithAtt, hwInfo, bitmask, size);
     auto threads = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, bitmask.get(), size);
 
-    ASSERT_EQ(maxEUsInAtt * 2, threads.size());
+    ASSERT_EQ(maxEUsInAtt, threads.size());
 
-    uint32_t expectedEUs[] = {0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15};
+    uint32_t expectedEUs[] = {0, 4, 1, 5, 2, 6, 3, 7};
     for (uint32_t i = 0; i < threads.size(); i++) {
 
         EXPECT_EQ(0u, threads[i].slice);
@@ -434,22 +439,31 @@ HWTEST2_F(L0HwHelperFusedEuTest, givenEu0To1Threads0To3BitmaskWhenGettingThreads
     ASSERT_EQ(16u, threads.size());
 
     ze_device_thread_t expectedThreads[] = {
-        {0, 0, 0, 0},
-        {0, 0, 0, 1},
-        {0, 0, 0, 2},
-        {0, 0, 0, 3},
-        {0, 0, 8, 0},
-        {0, 0, 8, 1},
-        {0, 0, 8, 2},
-        {0, 0, 8, 3},
-        {0, 0, 1, 0},
-        {0, 0, 1, 1},
-        {0, 0, 1, 2},
-        {0, 0, 1, 3},
-        {0, 0, 9, 0},
-        {0, 0, 9, 1},
-        {0, 0, 9, 2},
-        {0, 0, 9, 3}};
+        {0, 0, 0, 0}, {0, 0, 4, 0}, {0, 0, 0, 1}, {0, 0, 4, 1}, {0, 0, 0, 2}, {0, 0, 4, 2}, {0, 0, 0, 3}, {0, 0, 4, 3}, {0, 0, 1, 0}, {0, 0, 5, 0}, {0, 0, 1, 1}, {0, 0, 5, 1}, {0, 0, 1, 2}, {0, 0, 5, 2}, {0, 0, 1, 3}, {0, 0, 5, 3}};
+
+    for (uint32_t i = 0; i < 16u; i++) {
+        EXPECT_EQ(expectedThreads[i].slice, threads[i].slice);
+        EXPECT_EQ(expectedThreads[i].subslice, threads[i].subslice);
+        EXPECT_EQ(expectedThreads[i].eu, threads[i].eu);
+        EXPECT_EQ(expectedThreads[i].thread, threads[i].thread);
+    }
+}
+
+HWTEST2_F(L0HwHelperFusedEuTest, givenEu8To9Threads0To3BitmaskWhenGettingThreadsThenCorrectThreadsAreReturned, PlatformsWithFusedEus) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    if (hwInfo.gtSystemInfo.MaxEuPerSubSlice <= 8) {
+        GTEST_SKIP();
+    }
+
+    auto &l0HwHelper = L0::L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    uint8_t data[] = {0x00, 0x00, 0x00, 0x00, 0x0f, 0x0f};
+    auto threads = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, data, sizeof(data));
+
+    ASSERT_EQ(16u, threads.size());
+
+    ze_device_thread_t expectedThreads[] = {
+        {0, 0, 8, 0}, {0, 0, 12, 0}, {0, 0, 8, 1}, {0, 0, 12, 1}, {0, 0, 8, 2}, {0, 0, 12, 2}, {0, 0, 8, 3}, {0, 0, 12, 3}, {0, 0, 9, 0}, {0, 0, 13, 0}, {0, 0, 9, 1}, {0, 0, 13, 1}, {0, 0, 9, 2}, {0, 0, 13, 2}, {0, 0, 9, 3}, {0, 0, 13, 3}};
 
     for (uint32_t i = 0; i < 16u; i++) {
         EXPECT_EQ(expectedThreads[i].slice, threads[i].slice);
@@ -500,7 +514,7 @@ HWTEST2_F(L0HwHelperFusedEuTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWh
         } else {
             EXPECT_EQ(0u, threads[i].slice);
             EXPECT_EQ(subsliceIndex, threads[i].subslice);
-            EXPECT_EQ(8u, threads[i].eu);
+            EXPECT_EQ(4u, threads[i].eu);
             EXPECT_EQ(threadID, threads[i].thread);
 
             subsliceIndex++;
