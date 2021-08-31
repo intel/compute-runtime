@@ -30,9 +30,6 @@ bool isLocalMemoryEnabled(const HardwareInfo &hwInfo);
 void initAdditionalGlobalMMIO(const CommandStreamReceiver &commandStreamReceiver, AubMemDump::AubStream &stream);
 uint64_t getPPGTTAdditionalBits(GraphicsAllocation *graphicsAllocation);
 void adjustAubGTTData(const CommandStreamReceiver &commandStreamReceiver, AubGTTData &data);
-void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
-                                       const PipelineSelectArgs &pipelineSelectArgs,
-                                       const HardwareInfo &hwInfo);
 bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo);
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo);
 bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo);

@@ -118,6 +118,10 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const Har
     }
 }
 
+template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) {
+}
+
 void OsAgnosticHwInfoConfigTest::SetUp() {
     DeviceFixture::SetUp();
 }

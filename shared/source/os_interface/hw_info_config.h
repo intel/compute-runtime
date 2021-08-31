@@ -16,6 +16,7 @@ namespace NEO {
 
 struct HardwareInfo;
 struct StateComputeModeProperties;
+struct PipelineSelectArgs;
 class OSInterface;
 class HwInfoConfig;
 
@@ -49,6 +50,7 @@ class HwInfoConfig {
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
+    virtual void setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) = 0;
 
     uint32_t threadsPerEu;
 };
@@ -81,6 +83,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
+    void setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) override;
 
   protected:
     HwInfoConfigHw() = default;

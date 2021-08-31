@@ -26,3 +26,17 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
     }
     return CommonConstants::invalidStepping;
 }
+
+template <>
+void HwInfoConfigHw<gfxProduct>::setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
+                                                                   const PipelineSelectArgs &pipelineSelectArgs,
+                                                                   const HardwareInfo &hwInfo) {
+    using PIPELINE_SELECT = typename TGLLPFamily::PIPELINE_SELECT;
+    auto pipelineSelectTglplpCmd = reinterpret_cast<PIPELINE_SELECT *>(pipelineSelectCmd);
+
+    auto mask = pipelineSelectTglplpCmd->getMaskBits();
+
+    mask |= pipelineSelectSystolicModeEnableMaskBits;
+    pipelineSelectTglplpCmd->setMaskBits(mask);
+    pipelineSelectTglplpCmd->setSpecialModeEnable(pipelineSelectArgs.specialPipelineSelectMode);
+}

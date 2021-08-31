@@ -132,4 +132,6 @@ uint32_t HwInfoConfigHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const Hardw
         return AubMemDump::SteppingValues::K;
     }
 }
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) {}
 } // namespace NEO

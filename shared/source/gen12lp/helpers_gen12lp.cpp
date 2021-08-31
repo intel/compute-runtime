@@ -8,7 +8,6 @@
 #include "shared/source/gen12lp/helpers_gen12lp.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/gen12lp/helpers_gen12lp.inl"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 

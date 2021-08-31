@@ -9,6 +9,7 @@
 #include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/preamble_bdw_and_later.inl"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "pipe_control_args.h"
 #include "reg_configs_common.h"
@@ -52,7 +53,7 @@ void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandSt
     cmd.setPipelineSelection(pipeline);
     cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 
-    Gen12LPHelpers::setAdditionalPipelineSelectFields(&cmd, pipelineSelectArgs, hwInfo);
+    HwInfoConfig::get(hwInfo.platform.eProductFamily)->setAdditionalPipelineSelectFields(&cmd, pipelineSelectArgs, hwInfo);
 
     *pCmd = cmd;
 }
