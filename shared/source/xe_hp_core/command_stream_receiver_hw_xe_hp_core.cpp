@@ -69,11 +69,6 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
 }
 
 template <>
-inline bool CommandStreamReceiverHw<Family>::isAdditionalPipeControlNeeded() const {
-    return DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.get();
-}
-
-template <>
 void BlitCommandsHelper<Family>::appendClearColor(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
     using XY_COPY_BLT = typename Family::XY_COPY_BLT;
     if (DebugManager.flags.UseClearColorAllocationForBlitter.get()) {

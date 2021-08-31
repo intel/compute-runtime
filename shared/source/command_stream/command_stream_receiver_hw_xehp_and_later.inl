@@ -55,8 +55,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
     }
 
     size_t size = 0;
+    auto hwInfo = peekHwInfo();
     if (isComputeModeNeeded()) {
-        if (isAdditionalPipeControlNeeded()) {
+        auto &hwHelper = HwHelperHw<Family>::get();
+        if (hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
         }
         size += sizeof(typename GfxFamily::STATE_COMPUTE_MODE);

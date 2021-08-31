@@ -49,6 +49,15 @@ inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInf
 }
 
 template <>
+inline bool HwHelperHw<Family>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const {
+    if ((hwInfo.platform.eProductFamily == IGFX_XE_HP_SDV && hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1) ||
+        DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.get() == 1) {
+        return true;
+    }
+    return false;
+}
+
+template <>
 bool HwHelperHw<Family>::isNewResidencyModelSupported() const {
     return true;
 }

@@ -19,7 +19,8 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
         this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
 
-        if (DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.get()) {
+        auto &hwHelper = HwHelperHw<Family>::get();
+        if (hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
             auto pPipeControlSpace = stream.getSpaceForCmd<PIPE_CONTROL>();
 
             auto pipeControl = GfxFamily::cmdInitPipeControl;
