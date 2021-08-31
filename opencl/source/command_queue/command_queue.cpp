@@ -125,6 +125,7 @@ CommandQueue::~CommandQueue() {
     if (context && !isSpecialCommandQueue) {
         context->decRefInternal();
     }
+    gtpinRemoveCommandQueue(this);
 }
 
 CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {

@@ -2830,4 +2830,49 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
     mockGAHandle.reset();
     allocDataHandle.reset();
 }
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenGtpinRemoveCommandQueueIsCalledThenAllKernelsFromCmdQueueAreRemoved) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    kernelExecQueue.clear();
+
+    CommandQueue *cmdQ1 = reinterpret_cast<CommandQueue *>(1);
+    CommandQueue *cmdQ2 = reinterpret_cast<CommandQueue *>(2);
+    Kernel *kernel1 = reinterpret_cast<Kernel *>(1);
+    Kernel *kernel2 = reinterpret_cast<Kernel *>(2);
+    Kernel *kernel3 = reinterpret_cast<Kernel *>(3);
+    Kernel *kernel4 = reinterpret_cast<Kernel *>(4);
+
+    gtpinkexec_t kExec;
+    kExec.pKernel = kernel1;
+    kExec.pCommandQueue = cmdQ1;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel2;
+    kExec.pCommandQueue = cmdQ1;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel3;
+    kExec.pCommandQueue = cmdQ2;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel4;
+    kExec.pCommandQueue = cmdQ2;
+    kernelExecQueue.push_back(kExec);
+    EXPECT_EQ(4u, kernelExecQueue.size());
+
+    gtpinRemoveCommandQueue(cmdQ1);
+    EXPECT_EQ(2u, kernelExecQueue.size());
+
+    gtpinRemoveCommandQueue(cmdQ2);
+    EXPECT_EQ(0u, kernelExecQueue.size());
+}
+
 } // namespace ULT
