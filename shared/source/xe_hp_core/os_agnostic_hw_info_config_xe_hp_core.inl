@@ -49,3 +49,8 @@ void HwInfoConfigHw<IGFX_XE_HP_SDV>::adjustSamplerState(void *sampler, const Har
         samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
     }
 }
+
+template <>
+std::string HwInfoConfigHw<IGFX_XE_HP_SDV>::getDeviceMemoryName() const {
+    return "HBM";
+}

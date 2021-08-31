@@ -8,6 +8,7 @@ if(TESTS_XE_HP_SDV)
   set(IGDRCL_SRCS_tests_xe_hp_core_xehp
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_tests_xehp.inl
+      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xehp.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_xehp.inl

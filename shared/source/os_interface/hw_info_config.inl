@@ -140,4 +140,10 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+std::string HwInfoConfigHw<gfxProduct>::getDeviceMemoryName() const {
+    return "DDR";
+}
+
 } // namespace NEO

@@ -117,6 +117,10 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const Har
         return AubMemDump::SteppingValues::K;
     }
 }
+template <>
+std::string HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryName() const {
+    return "";
+}
 
 template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) {

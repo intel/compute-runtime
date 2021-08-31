@@ -17,6 +17,8 @@
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "gmock/gmock.h"
+
 using namespace NEO;
 
 void HwInfoConfigTest::SetUp() {
@@ -206,4 +208,10 @@ HWTEST_F(HwInfoConfigTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwR
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedForDefaultEngineTypeAdjustmentThenFalseIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isDefaultEngineTypeAdjustmentRequired(pInHwInfo));
+}
+
+HWTEST_F(HwInfoConfigTest, whenCallingGetDeviceMemoryNameThenDdrIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    auto deviceMemoryName = hwInfoConfig.getDeviceMemoryName();
+    EXPECT_THAT(deviceMemoryName, testing::HasSubstr(std::string("DDR")));
 }

@@ -272,10 +272,9 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
     }
 
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
-
-    strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, getHwHelper().getDeviceMemoryName().c_str());
     auto &hwInfo = this->getHwInfo();
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, hwInfoConfig.getDeviceMemoryName().c_str());
     pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(&hwInfo);
     pMemProperties->maxBusWidth = deviceInfo.addressBits;
     if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(this->getNEODevice()->getDeviceBitfield(), true) ||

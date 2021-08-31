@@ -14,6 +14,8 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
 
+#include "gmock/gmock.h"
+
 using namespace NEO;
 
 using XeHPHwInfoConfig = ::testing::Test;
@@ -64,6 +66,12 @@ XEHPTEST_F(XeHPHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableRcs) 
 
     hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.featureTable.ftrRcsNode);
+}
+
+XEHPTEST_F(XeHPHwInfoConfig, givenXeHpWhenCallingGetDeviceMemoryNameThenHbmIsReturned) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto deviceMemoryName = hwInfoConfig->getDeviceMemoryName();
+    EXPECT_THAT(deviceMemoryName, testing::HasSubstr(std::string("HBM")));
 }
 
 using XeHPHwHelperTest = HwHelperTest;
