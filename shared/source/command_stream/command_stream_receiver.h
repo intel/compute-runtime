@@ -296,7 +296,7 @@ class CommandStreamReceiver {
     uint64_t totalMemoryUsed = 0u;
 
     volatile uint32_t *tagAddress = nullptr;
-    volatile DebugPauseState *debugPauseStateAddress;
+    volatile DebugPauseState *debugPauseStateAddress = nullptr;
     SpinLock debugPauseStateLock;
     static void *asyncDebugBreakConfirmation(void *arg);
     std::function<void()> debugConfirmationFunction = []() { std::cin.get(); };
