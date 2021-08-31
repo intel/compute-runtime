@@ -82,7 +82,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
 
-        if (commandListsContainCooperativeKernels != commandList->containsCooperativeKernels()) {
+        if ((commandListsContainCooperativeKernels != commandList->containsCooperativeKernels()) &&
+            (!NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get())) {
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
     }

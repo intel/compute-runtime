@@ -188,8 +188,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
             kernelDescriptor.kernelMetadata.kernelName.c_str(), 0u);
     }
 
-    if (!containsAnyKernel) {
-        containsCooperativeKernelsFlag = isCooperative;
+    if ((!containsAnyKernel) || NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get()) {
+        containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || isCooperative);
     } else if (containsCooperativeKernelsFlag != isCooperative) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -205,7 +205,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     auto isMultiOsContextCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(device->getNEODevice()->getDeviceBitfield(),
                                                                                         !isCooperative);
-    updateStreamProperties(*kernel, isMultiOsContextCapable);
+    updateStreamProperties(*kernel, isMultiOsContextCapable, isCooperative);
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();

@@ -430,6 +430,21 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNo
         auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, result);
     }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    {
+        ze_command_list_handle_t commandLists[] = {pCommandListWithCooperativeKernels->toHandle(),
+                                                   pCommandListWithNonCooperativeKernels->toHandle()};
+        auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+    {
+        ze_command_list_handle_t commandLists[] = {pCommandListWithNonCooperativeKernels->toHandle(),
+                                                   pCommandListWithCooperativeKernels->toHandle()};
+        auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
     pCommandQueue->destroy();
 }
 

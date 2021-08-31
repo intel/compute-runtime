@@ -120,8 +120,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         this->indirectAllocationsAllowed = true;
     }
 
-    if (!containsAnyKernel) {
-        containsCooperativeKernelsFlag = isCooperative;
+    if ((!containsAnyKernel) || NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get()) {
+        containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || isCooperative);
     } else if (containsCooperativeKernelsFlag != isCooperative) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -150,7 +150,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
             kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str(), 0u);
     }
 
-    updateStreamProperties(*kernel, false);
+    updateStreamProperties(*kernel, false, isCooperative);
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
                                                  reinterpret_cast<const void *>(pThreadGroupDimensions),

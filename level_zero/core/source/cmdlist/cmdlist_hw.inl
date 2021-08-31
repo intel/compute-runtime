@@ -2149,7 +2149,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
@@ -2158,12 +2158,12 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo);
 
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), disableOverdispatch, false, device->getHwInfo());
+        requiredStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, false, hwInfo);
         finalStreamState = requiredStreamState;
         containsAnyKernel = true;
     }
 
-    finalStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), disableOverdispatch, false, hwInfo);
+    finalStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, false, hwInfo);
     if (finalStreamState.frontEndState.isDirty()) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
         auto pVfeState = new VFE_STATE_TYPE;
