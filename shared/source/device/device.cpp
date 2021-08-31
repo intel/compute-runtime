@@ -491,7 +491,17 @@ Device *Device::getSubDevice(uint32_t deviceId) const {
     return subdevices[deviceId];
 }
 
-Device *Device::getThisOrNextNonRootCsrDevice(uint32_t deviceId) {
+Device *Device::getNearestGenericSubDevice(uint32_t deviceId) {
+    /*
+    * EngineInstanced: Upper level
+    * Generic SubDevice: 'this'
+    * RootCsr Device: Next level SubDevice (generic)
+    */
+
+    if (engineInstanced) {
+        return getRootDevice()->getNearestGenericSubDevice(Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong())));
+    }
+
     if (subdevices.empty() || !hasRootCsr()) {
         return const_cast<Device *>(this);
     }
@@ -553,7 +563,7 @@ EngineControl &Device::getInternalEngine() {
 
     auto engineType = getChosenEngineType(getHardwareInfo());
 
-    return this->getThisOrNextNonRootCsrDevice(0)->getEngine(engineType, EngineUsage::Internal);
+    return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::Internal);
 }
 
 void Device::initializeRayTracing() {

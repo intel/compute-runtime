@@ -55,7 +55,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
         deviceBuildInfos[device] = {};
         if (device->getNumAvailableDevices() > 1) {
             for (auto i = 0u; i < device->getNumAvailableDevices(); i++) {
-                auto subDevice = device->getThisOrNextNonRootCsrDevice(i);
+                auto subDevice = device->getNearestGenericSubDevice(i);
                 if (isDeviceAssociated(*subDevice)) {
                     deviceBuildInfos[device].associatedSubDevices.push_back(subDevice);
                 }

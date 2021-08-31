@@ -110,12 +110,13 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual uint32_t getRootDeviceIndex() const = 0;
     uint32_t getNumAvailableDevices() const;
     Device *getSubDevice(uint32_t deviceId) const;
-    Device *getThisOrNextNonRootCsrDevice(uint32_t deviceId);
+    Device *getNearestGenericSubDevice(uint32_t deviceId);
     virtual Device *getRootDevice() const = 0;
     DeviceBitfield getDeviceBitfield() const { return deviceBitfield; };
     uint32_t getNumSubDevices() const { return numSubDevices; }
     virtual bool isSubDevice() const = 0;
     bool hasRootCsr() const { return rootCsrCreated; }
+    bool isEngineInstanced() const { return engineInstanced; }
 
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
 

@@ -23,7 +23,7 @@
 
 namespace NEO {
 
-ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platformId(platform) {
+ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) : device(device), rootClDevice(rootClDevice), platformId(platform) {
     device.incRefInternal();
     device.setSpecializedDevice(this);
     deviceExtensions.reserve(1000);
@@ -39,7 +39,7 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
     if (numAvailableDevices > 1) {
         for (uint32_t i = 0; i < numAvailableDevices; i++) {
             auto &coreSubDevice = static_cast<SubDevice &>(*device.getSubDevice(i));
-            auto pClSubDevice = std::make_unique<ClDevice>(coreSubDevice, platform);
+            auto pClSubDevice = std::make_unique<ClDevice>(coreSubDevice, rootClDevice, platform);
             pClSubDevice->incRefInternal();
             pClSubDevice->decRefApi();
 
@@ -59,6 +59,9 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
         auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
         getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
     }
+}
+
+ClDevice::ClDevice(Device &device, Platform *platformId) : ClDevice(device, *this, platformId) {
 }
 
 ClDevice::~ClDevice() {
@@ -123,7 +126,17 @@ ClDevice *ClDevice::getSubDevice(uint32_t deviceId) const {
     return subDevices[deviceId].get();
 }
 
-ClDevice *ClDevice::getThisOrNextNonRootCsrDevice(uint32_t deviceId) {
+ClDevice *ClDevice::getNearestGenericSubDevice(uint32_t deviceId) {
+    /*
+    * EngineInstanced: Upper level
+    * Generic SubDevice: 'this'
+    * RootCsr Device: Next level SubDevice (generic)
+    */
+
+    if (getDevice().isEngineInstanced()) {
+        return rootClDevice.getNearestGenericSubDevice(Math::log2(static_cast<uint32_t>(getDeviceBitfield().to_ulong())));
+    }
+
     if (subDevices.empty() || !getDevice().hasRootCsr()) {
         return const_cast<ClDevice *>(this);
     }

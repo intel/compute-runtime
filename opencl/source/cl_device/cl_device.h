@@ -51,6 +51,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     ClDevice(const ClDevice &) = delete;
 
     explicit ClDevice(Device &device, Platform *platformId);
+    explicit ClDevice(Device &device, ClDevice &rootClDevice, Platform *platformId);
     ~ClDevice() override;
 
     void incRefInternal();
@@ -116,7 +117,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     const ClDeviceInfo &getDeviceInfo() const { return deviceInfo; }
     const DeviceInfo &getSharedDeviceInfo() const;
     ClDevice *getSubDevice(uint32_t deviceId) const;
-    ClDevice *getThisOrNextNonRootCsrDevice(uint32_t deviceId);
+    ClDevice *getNearestGenericSubDevice(uint32_t deviceId);
     const std::string &peekCompilerExtensions() const;
     const std::string &peekCompilerExtensionsWithFeatures() const;
     DeviceBitfield getDeviceBitfield() const;
@@ -138,6 +139,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     const std::string getClDeviceName(const HardwareInfo &hwInfo) const;
 
     Device &device;
+    ClDevice &rootClDevice;
     std::vector<std::unique_ptr<ClDevice>> subDevices;
     cl_platform_id platformId;
 

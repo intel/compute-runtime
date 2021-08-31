@@ -1881,7 +1881,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
 
     uint32_t maximalNumberOfWorkgroupsAllowed;
     auto ret = kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed, this->engineGroupType,
-                                                      device.getDefaultEngine().osContext->isEngineInstanced());
+                                                      device.isEngineInstanced());
     UNRECOVERABLE_IF(ret != ZE_RESULT_SUCCESS);
     size_t requestedNumberOfWorkgroups = (pThreadGroupDimensions->groupCountX * pThreadGroupDimensions->groupCountY *
                                           pThreadGroupDimensions->groupCountZ);

@@ -189,7 +189,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         }
 
         UNRECOVERABLE_IF(!pRootDevice->getDeviceBitfield().test(tileId));
-        auto pDeviceForBlit = pRootDevice->getThisOrNextNonRootCsrDevice(tileId);
+        auto pDeviceForBlit = pRootDevice->getNearestGenericSubDevice(tileId);
 
         auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
         auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();

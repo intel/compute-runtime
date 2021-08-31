@@ -425,7 +425,7 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndZeroCcsesWhenCreatingRoot
     EXPECT_TRUE(hasAllEngines(rootDevice));
 
     EXPECT_EQ(1u, rootDevice->getNumAvailableDevices());
-    EXPECT_FALSE(rootDevice->getThisOrNextNonRootCsrDevice(0)->isSubDevice());
+    EXPECT_FALSE(rootDevice->getNearestGenericSubDevice(0)->isSubDevice());
 }
 
 TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndSingleCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenDontCreateEngineInstanced) {
@@ -440,7 +440,7 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndSingleCcsWhenCreatingRoot
     EXPECT_TRUE(hasAllEngines(rootDevice));
 
     EXPECT_EQ(1u, rootDevice->getNumAvailableDevices());
-    EXPECT_FALSE(rootDevice->getThisOrNextNonRootCsrDevice(0)->isSubDevice());
+    EXPECT_FALSE(rootDevice->getNearestGenericSubDevice(0)->isSubDevice());
 }
 
 TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevicesAndZeroCcsesThenDontCreateEngineInstanced) {
@@ -556,16 +556,16 @@ TEST_F(EngineInstancedDeviceTests, givenMultipleSubDevicesWhenCallingGetSubDevic
 
     {
         EXPECT_EQ(rootDevice->getSubDevice(0), subDevice0);
-        EXPECT_EQ(rootDevice->getThisOrNextNonRootCsrDevice(0), subDevice0);
+        EXPECT_EQ(rootDevice->getNearestGenericSubDevice(0), subDevice0);
         EXPECT_EQ(rootDevice->getSubDevice(1), subDevice1);
-        EXPECT_EQ(rootDevice->getThisOrNextNonRootCsrDevice(1), subDevice1);
+        EXPECT_EQ(rootDevice->getNearestGenericSubDevice(1), subDevice1);
     }
 
     {
-        EXPECT_EQ(subDevice0->getThisOrNextNonRootCsrDevice(0), subDevice0);
-        EXPECT_EQ(subDevice0->getThisOrNextNonRootCsrDevice(1), subDevice0);
-        EXPECT_EQ(subDevice1->getThisOrNextNonRootCsrDevice(0), subDevice1);
-        EXPECT_EQ(subDevice1->getThisOrNextNonRootCsrDevice(1), subDevice1);
+        EXPECT_EQ(subDevice0->getNearestGenericSubDevice(0), subDevice0);
+        EXPECT_EQ(subDevice0->getNearestGenericSubDevice(1), subDevice0);
+        EXPECT_EQ(subDevice1->getNearestGenericSubDevice(0), subDevice1);
+        EXPECT_EQ(subDevice1->getNearestGenericSubDevice(1), subDevice1);
     }
 
     {
@@ -576,10 +576,10 @@ TEST_F(EngineInstancedDeviceTests, givenMultipleSubDevicesWhenCallingGetSubDevic
     }
 
     {
-        EXPECT_EQ(subSubDevice00->getThisOrNextNonRootCsrDevice(0), subSubDevice00);
-        EXPECT_EQ(subSubDevice01->getThisOrNextNonRootCsrDevice(0), subSubDevice01);
-        EXPECT_EQ(subSubDevice10->getThisOrNextNonRootCsrDevice(0), subSubDevice10);
-        EXPECT_EQ(subSubDevice11->getThisOrNextNonRootCsrDevice(0), subSubDevice11);
+        EXPECT_EQ(subSubDevice00->getNearestGenericSubDevice(0), subDevice0);
+        EXPECT_EQ(subSubDevice01->getNearestGenericSubDevice(0), subDevice0);
+        EXPECT_EQ(subSubDevice10->getNearestGenericSubDevice(0), subDevice1);
+        EXPECT_EQ(subSubDevice11->getNearestGenericSubDevice(0), subDevice1);
     }
 
     {
@@ -602,12 +602,12 @@ TEST_F(EngineInstancedDeviceTests, givenMultipleClSubDevicesWhenCallingGetSubDev
     auto subSubDevice = subDevice->getSubDevice(0);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
-    auto clSubDevice = std::make_unique<ClDevice>(*subDevice, nullptr);
-    auto clSubSubDevice = std::make_unique<ClDevice>(*subSubDevice, nullptr);
+    auto clSubDevice = std::make_unique<ClDevice>(*subDevice, *clRootDevice, nullptr);
+    auto clSubSubDevice = std::make_unique<ClDevice>(*subSubDevice, *clRootDevice, nullptr);
 
-    EXPECT_EQ(clRootDevice->getSubDevice(0), clRootDevice->getThisOrNextNonRootCsrDevice(0));
-    EXPECT_EQ(clSubDevice.get(), clSubDevice->getThisOrNextNonRootCsrDevice(0));
-    EXPECT_EQ(clSubSubDevice.get(), clSubSubDevice->getThisOrNextNonRootCsrDevice(0));
+    EXPECT_EQ(clRootDevice->getSubDevice(0), clRootDevice->getNearestGenericSubDevice(0));
+    EXPECT_EQ(clSubDevice.get(), clSubDevice->getNearestGenericSubDevice(0));
+    EXPECT_EQ(clRootDevice->getSubDevice(0), clSubSubDevice->getNearestGenericSubDevice(0));
 }
 
 TEST_F(EngineInstancedDeviceTests, givenAffinityMaskSetWhenCreatingDevicesThenFilterMaskedDevices) {
