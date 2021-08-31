@@ -43,6 +43,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/transfer_direction.h
 )
 
 if(SUPPORT_XEHP_AND_LATER)

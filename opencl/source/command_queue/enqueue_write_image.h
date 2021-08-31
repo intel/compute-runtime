@@ -37,6 +37,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     auto cmdType = CL_COMMAND_WRITE_IMAGE;
     auto isMemTransferNeeded = true;
 
+    const bool validImages = blitEnqueueImageAllowed(origin, region, *dstImage);
+    GraphicsAllocation *dstImageAlloc = dstImage->getGraphicsAllocation(getDevice().getRootDeviceIndex());
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(cmdType, TransferDirectionHelper::fromHostToGfxAlloc(*dstImageAlloc), validImages);
+
     if (dstImage->isMemObjZeroCopy()) {
         size_t hostOffset;
         Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, dstImage->getImageDesc().image_type, dstImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
@@ -65,7 +69,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         if (region[0] != 0 &&
             region[1] != 0 &&
             region[2] != 0) {
-            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
+            bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
@@ -92,7 +96,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     auto eBuiltInOps = EBuiltInOps::CopyBufferToImage3d;
     MultiDispatchInfo dispatchInfo(dc);
 
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_WRITE_IMAGE, dispatchInfo);
     dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);
 
     if (context->isProvidingPerformanceHints()) {

@@ -144,9 +144,9 @@ CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
     return nullptr;
 }
 
-CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(cl_command_type cmdType, const MultiDispatchInfo &dispatchInfo) const {
-    const bool blitAllowed = blitEnqueueAllowed(cmdType, dispatchInfo.peekBuiltinOpParams());
-    const bool blitPreferred = blitEnqueuePreferred(cmdType, dispatchInfo.peekBuiltinOpParams());
+CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(cl_command_type cmdType, TransferDirection transferDirection, bool imagesValidForBlit) const {
+    const bool blitAllowed = blitEnqueueAllowed(cmdType, imagesValidForBlit);
+    const bool blitPreferred = blitEnqueuePreferred(transferDirection);
     const bool blitRequired = isCopyOnly;
     const bool blit = blitAllowed && (blitPreferred || blitRequired);
 
@@ -725,7 +725,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
     return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
 }
 
-bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType, const BuiltinOpParams &params) const {
+bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType, bool imagesValidForBlit) const {
     if (bcsEngine == nullptr) {
         return false;
     }
@@ -748,32 +748,16 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType, const BuiltinOpPa
     case CL_COMMAND_SVM_MEMCPY:
         return true;
     case CL_COMMAND_READ_IMAGE:
-        return blitEnqueueImageAllowed(&params.srcOffset[0], &params.size[0], *static_cast<Image *>(params.srcMemObj));
     case CL_COMMAND_WRITE_IMAGE:
-        return blitEnqueueImageAllowed(&params.dstOffset[0], &params.size[0], *static_cast<Image *>(params.dstMemObj));
     case CL_COMMAND_COPY_IMAGE:
-        return blitEnqueueImageAllowed(&params.srcOffset[0], &params.size[0], *static_cast<Image *>(params.srcMemObj)) &&
-               blitEnqueueImageAllowed(&params.dstOffset[0], &params.size[0], *static_cast<Image *>(params.dstMemObj));
+        return imagesValidForBlit;
     default:
         return false;
     }
 }
 
-bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOpParams &builtinOpParams) const {
-    bool isLocalToLocal = false;
-
-    if (cmdType == CL_COMMAND_COPY_BUFFER &&
-        builtinOpParams.srcMemObj->getGraphicsAllocation(device->getRootDeviceIndex())->isAllocatedInLocalMemoryPool() &&
-        builtinOpParams.dstMemObj->getGraphicsAllocation(device->getRootDeviceIndex())->isAllocatedInLocalMemoryPool()) {
-        isLocalToLocal = true;
-    }
-    if (cmdType == CL_COMMAND_SVM_MEMCPY &&
-        builtinOpParams.srcSvmAlloc->isAllocatedInLocalMemoryPool() &&
-        builtinOpParams.dstSvmAlloc->isAllocatedInLocalMemoryPool()) {
-        isLocalToLocal = true;
-    }
-
-    if (isLocalToLocal) {
+bool CommandQueue::blitEnqueuePreferred(TransferDirection transferDirection) const {
+    if (transferDirection == TransferDirection::LocalToLocal) {
         if (DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get() != -1) {
             return static_cast<bool>(DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get());
         }

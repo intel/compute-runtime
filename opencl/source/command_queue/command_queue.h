@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/engine_control.h"
 
+#include "opencl/source/command_queue/transfer_direction.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -224,7 +225,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
     CommandStreamReceiver *getBcsCommandStreamReceiver() const;
     CommandStreamReceiver *getBcsForAuxTranslation() const;
-    MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(cl_command_type cmdType, const MultiDispatchInfo &dispatchInfo) const;
+    MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(cl_command_type cmdType, TransferDirection transferDirection, bool imagesValidForBlit) const;
     Device &getDevice() const noexcept;
     ClDevice &getClDevice() const { return *device; }
     Context &getContext() const { return *context; }
@@ -353,8 +354,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                               cl_uint numEventsInWaitList, const cl_event *eventWaitList);
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
-    bool blitEnqueueAllowed(cl_command_type cmdType, const BuiltinOpParams &params) const;
-    bool blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOpParams &builtinOpParams) const;
+    bool blitEnqueueAllowed(cl_command_type cmdType, bool imagesValidForBlit) const;
+    bool blitEnqueuePreferred(TransferDirection transferDirection) const;
     MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;

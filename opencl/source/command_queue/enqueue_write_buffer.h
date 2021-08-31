@@ -38,6 +38,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     auto isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingWrite, size, const_cast<void *>(ptr),
                                                  numEventsInWaitList, eventWaitList);
+    GraphicsAllocation *dstBufferAlloc = buffer->getGraphicsAllocation(rootDeviceIndex);
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(cmdType, TransferDirectionHelper::fromHostToGfxAlloc(*dstBufferAlloc), false);
 
     InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
     //check if we are dealing with SVM pointer here for which we already have an allocation
@@ -94,7 +96,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
+            bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
@@ -113,7 +115,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
 
     MultiDispatchInfo dispatchInfo(dc);
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_WRITE_BUFFER, dispatchInfo);
     dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
 
     if (context->isProvidingPerformanceHints()) {

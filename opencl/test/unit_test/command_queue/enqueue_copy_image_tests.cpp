@@ -212,6 +212,7 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenNumberOfPipelineSelectsIsOne)
 HWTEST_F(EnqueueCopyImageTest, givenDeviceWithBlitterSupportWhenEnqueueCopyImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
     REQUIRE_BLITTER_OR_SKIP(hwInfo);
 
     DebugManagerStateRestore restorer;
@@ -219,7 +220,6 @@ HWTEST_F(EnqueueCopyImageTest, givenDeviceWithBlitterSupportWhenEnqueueCopyImage
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
     size_t srcOrigin[] = {0, 0, 0};
     size_t dstOrigin[] = {0, 0, 0};
 

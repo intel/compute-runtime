@@ -36,6 +36,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     const cl_command_type cmdType = CL_COMMAND_WRITE_BUFFER_RECT;
     auto isMemTransferNeeded = true;
 
+    GraphicsAllocation *dstBufferAlloc = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(cmdType, TransferDirectionHelper::fromHostToGfxAlloc(*dstBufferAlloc), false);
+
     if (buffer->isMemObjZeroCopy()) {
         size_t bufferOffset;
         size_t hostOffset;
@@ -62,7 +65,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     if (region[0] != 0 &&
         region[1] != 0 &&
         region[2] != 0) {
-        bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
+        bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
@@ -86,7 +89,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.dstSlicePitch = bufferSlicePitch;
 
     MultiDispatchInfo dispatchInfo(dc);
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_WRITE_BUFFER_RECT, dispatchInfo);
     dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
 
     if (context->isProvidingPerformanceHints()) {
