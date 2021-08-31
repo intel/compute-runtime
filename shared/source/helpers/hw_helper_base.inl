@@ -646,4 +646,9 @@ void HwHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isRend
     gmm.resourceParams.Flags.Info.RenderCompressed = isRenderCompressed;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isEngineTypeRemappingToHwSpecificRequired() const {
+    return false;
+}
+
 } // namespace NEO

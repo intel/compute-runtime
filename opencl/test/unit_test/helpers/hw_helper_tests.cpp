@@ -1309,6 +1309,11 @@ HWTEST_F(HwHelperTest, whenSetRenderCompressedFlagThenProperFlagSet) {
 
 using isXeHpCoreOrBelow = IsAtMostProduct<IGFX_XE_HP_SDV>;
 HWTEST2_F(HwHelperTest, givenXeHPAndBelowPlatformWhenCheckingIfAdditionalPipeControlArgsAreRequiredThenReturnFalse, isXeHpCoreOrBelow) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(hwHelper.additionalPipeControlArgsRequired());
+}
+
+HWTEST2_F(HwHelperTest, givenXeHPAndBelowPlatformPlatformWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnFalse, isXeHpCoreOrBelow) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.isEngineTypeRemappingToHwSpecificRequired());
 }

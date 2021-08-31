@@ -150,6 +150,7 @@ class HwHelper {
     virtual void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const = 0;
     virtual void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const = 0;
     virtual bool additionalPipeControlArgsRequired() const = 0;
+    virtual bool isEngineTypeRemappingToHwSpecificRequired() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getCopyEnginesCount(const HardwareInfo &hwInfo);
@@ -379,6 +380,8 @@ class HwHelperHw : public HwHelper {
     void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const override;
 
     bool additionalPipeControlArgsRequired() const override;
+
+    bool isEngineTypeRemappingToHwSpecificRequired() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
