@@ -154,5 +154,12 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPer
     pSysmanDeviceImp->pRasHandleContext->releaseRasHandles();
 }
 
+TEST_F(SysmanRasFixture, GivenValidInstanceWhenOsRasImplementationIsNullThenDestructorIsCalledWithoutException) {
+
+    RasImp *pTestRasImp = new RasImp();
+    pTestRasImp->pOsRas = nullptr;
+    EXPECT_NO_THROW(delete pTestRasImp;);
+}
+
 } // namespace ult
 } // namespace L0
