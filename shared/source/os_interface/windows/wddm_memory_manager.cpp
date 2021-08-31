@@ -337,7 +337,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         ptrAligned = alignDown(allocationData.hostPtr, MemoryConstants::allocationAlignment);
         sizeAligned = alignSizeWholePage(allocationData.hostPtr, sizeAligned);
         offset = ptrDiff(allocationData.hostPtr, ptrAligned);
-    } else {
+    } else if (preferredAllocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) {
         sizeAligned = alignUp(sizeAligned, MemoryConstants::allocationAlignment);
         pSysMem = allocateSystemMemory(sizeAligned, MemoryConstants::allocationAlignment);
         if (pSysMem == nullptr) {
@@ -368,6 +368,11 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
     auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo, allocationData.flags.use32BitFrontWindow));
     wddmAllocation->setGpuBaseAddress(GmmHelper::canonize(baseAddress));
+
+    if (preferredAllocationMethod != GfxMemoryAllocationMethod::UseUmdSystemPtr) {
+        auto lockedPtr = lockResource(wddmAllocation.get());
+        wddmAllocation->setCpuAddress(lockedPtr);
+    }
 
     return wddmAllocation.release();
 }
