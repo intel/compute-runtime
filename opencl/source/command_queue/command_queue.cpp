@@ -842,7 +842,7 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
 
         if (specificEngineSelected) {
             this->queueFamilySelected = true;
-            if (getDevice().getNumAvailableDevices() == 1) {
+            if (!getDevice().hasRootCsr()) {
                 auto queueFamily = getDevice().getNonEmptyEngineGroup(selectedQueueFamilyIndex);
                 const auto &engine = queueFamily->at(selectedQueueIndex);
                 auto engineType = engine.getEngineType();

@@ -256,7 +256,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = sizeof(cl_uint);
         break;
     case CL_DEVICE_NUM_SLICES_INTEL:
-        param.uint = static_cast<cl_uint>(getHardwareInfo().gtSystemInfo.SliceCount * ((subDevices.size() > 0) ? subDevices.size() : 1));
+        param.uint = static_cast<cl_uint>(getHardwareInfo().gtSystemInfo.SliceCount * std::max(device.getNumGenericSubDevices(), 1u));
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
         break;

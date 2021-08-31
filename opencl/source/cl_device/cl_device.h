@@ -89,7 +89,8 @@ class ClDevice : public BaseObject<_cl_device_id> {
     bool isFullRangeSvm() const;
     bool areSharedSystemAllocationsAllowed() const;
     uint32_t getRootDeviceIndex() const;
-    uint32_t getNumAvailableDevices() const;
+    uint32_t getNumGenericSubDevices() const;
+    uint32_t getNumSubDevices() const;
 
     // API entry points
     cl_int getDeviceInfo(cl_device_info paramName,

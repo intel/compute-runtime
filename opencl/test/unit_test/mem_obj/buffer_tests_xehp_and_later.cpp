@@ -35,7 +35,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhe
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(1);
     initPlatform();
-    EXPECT_EQ(1u, platform()->getClDevice(0)->getNumAvailableDevices());
+    EXPECT_EQ(0u, platform()->getClDevice(0)->getNumGenericSubDevices());
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context(platform()->getClDevice(0));
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
@@ -280,7 +280,12 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsBufferTest, givenSetArgStatefu
     DebugManager.flags.CreateMultipleSubDevices.set(numAvailableDevices);
     DebugManager.flags.EnableMultiGpuAtomicsOptimization.set(enableMultiGpuAtomicsOptimization);
     initPlatform();
-    EXPECT_EQ(numAvailableDevices, platform()->getClDevice(0)->getNumAvailableDevices());
+
+    if (numAvailableDevices == 1) {
+        EXPECT_EQ(0u, platform()->getClDevice(0)->getNumGenericSubDevices());
+    } else {
+        EXPECT_EQ(numAvailableDevices, platform()->getClDevice(0)->getNumGenericSubDevices());
+    }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context(platform()->getClDevice(0));
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
@@ -322,7 +327,11 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsBufferTest, givenSetSurfaceSta
     DebugManager.flags.CreateMultipleSubDevices.set(numAvailableDevices);
     DebugManager.flags.EnableMultiGpuAtomicsOptimization.set(enableMultiGpuAtomicsOptimization);
     initPlatform();
-    EXPECT_EQ(numAvailableDevices, platform()->getClDevice(0)->getNumAvailableDevices());
+    if (numAvailableDevices == 1) {
+        EXPECT_EQ(0u, platform()->getClDevice(0)->getNumGenericSubDevices());
+    } else {
+        EXPECT_EQ(numAvailableDevices, platform()->getClDevice(0)->getNumGenericSubDevices());
+    }
 
     auto size = MemoryConstants::pageSize;
     auto ptr = alignedMalloc(size, MemoryConstants::pageSize);

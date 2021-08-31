@@ -556,7 +556,7 @@ HWTEST_F(LowPriorityCommandQueueTest, GivenDeviceWithSubdevicesWhenCreatingLowPr
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     MockContext context;
     cl_queue_properties properties[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
-    EXPECT_EQ(2u, context.getDevice(0)->getNumAvailableDevices());
+    EXPECT_EQ(2u, context.getDevice(0)->getNumGenericSubDevices());
     auto cmdQ = clCreateCommandQueueWithProperties(&context, context.getDevice(0), properties, nullptr);
 
     auto commandQueueObj = castToObject<CommandQueue>(cmdQ);

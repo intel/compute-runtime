@@ -197,7 +197,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_intel_media_block_io ";
     }
 
-    auto sharingAllowed = (getNumAvailableDevices() == 1u);
+    auto sharingAllowed = (getNumGenericSubDevices() <= 1u);
     if (sharingAllowed) {
         deviceExtensions += sharingFactory.getExtensions(driverInfo.get());
     }
@@ -245,8 +245,8 @@ void ClDevice::initializeCaps() {
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
     deviceInfo.parentDevice = nullptr;
-    deviceInfo.partitionMaxSubDevices = device.getNumAvailableDevices();
-    if (deviceInfo.partitionMaxSubDevices > 1) {
+    deviceInfo.partitionMaxSubDevices = device.getNumSubDevices();
+    if (deviceInfo.partitionMaxSubDevices > 0) {
         deviceInfo.partitionProperties[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
         deviceInfo.partitionProperties[1] = 0;
         deviceInfo.partitionAffinityDomain = CL_DEVICE_AFFINITY_DOMAIN_NUMA | CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE;
@@ -308,7 +308,11 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.maxWorkItemDimensions = 3;
 
-    deviceInfo.maxComputUnits = systemInfo.EUCount * getNumAvailableDevices();
+    deviceInfo.maxComputUnits = systemInfo.EUCount * std::max(getNumGenericSubDevices(), 1u);
+    if (device.isEngineInstanced()) {
+        deviceInfo.maxComputUnits /= systemInfo.CCSInfo.NumberOfCCSEnabled;
+    }
+
     deviceInfo.maxConstantArgs = 8;
     deviceInfo.maxSliceCount = systemInfo.SliceCount;
 

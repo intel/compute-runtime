@@ -35,7 +35,7 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
     compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, emptyOpenClCFeatures);
     compilerExtensionsWithFeatures = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, deviceInfo.openclCFeatures);
 
-    auto numAvailableDevices = device.getNumAvailableDevices();
+    auto numAvailableDevices = device.getNumSubDevices();
     if (numAvailableDevices > 1) {
         for (uint32_t i = 0; i < numAvailableDevices; i++) {
             auto &coreSubDevice = static_cast<SubDevice &>(*device.getSubDevice(i));
@@ -169,7 +169,8 @@ const HardwareCapabilities &ClDevice::getHardwareCapabilities() const { return d
 bool ClDevice::isFullRangeSvm() const { return device.isFullRangeSvm(); }
 bool ClDevice::areSharedSystemAllocationsAllowed() const { return device.areSharedSystemAllocationsAllowed(); }
 uint32_t ClDevice::getRootDeviceIndex() const { return device.getRootDeviceIndex(); }
-uint32_t ClDevice::getNumAvailableDevices() const { return device.getNumAvailableDevices(); }
+uint32_t ClDevice::getNumGenericSubDevices() const { return device.getNumGenericSubDevices(); }
+uint32_t ClDevice::getNumSubDevices() const { return static_cast<uint32_t>(subDevices.size()); }
 
 ClDeviceVector::ClDeviceVector(const cl_device_id *devices,
                                cl_uint numDevices) {

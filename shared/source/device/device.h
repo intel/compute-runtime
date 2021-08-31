@@ -108,7 +108,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void allocateSyncBufferHandler();
 
     virtual uint32_t getRootDeviceIndex() const = 0;
-    uint32_t getNumAvailableDevices() const;
+    uint32_t getNumGenericSubDevices() const;
     Device *getSubDevice(uint32_t deviceId) const;
     Device *getNearestGenericSubDevice(uint32_t deviceId);
     virtual Device *getRootDevice() const = 0;

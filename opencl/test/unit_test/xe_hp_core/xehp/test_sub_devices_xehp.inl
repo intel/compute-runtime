@@ -27,7 +27,8 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionAWhenCreatingEngineWithSubdevicesThe
     MockDevice device(executionEnvironment, 0);
     EXPECT_EQ(0u, device.engines.size());
     device.createSubDevices();
-    EXPECT_EQ(2u, device.getNumAvailableDevices());
+    device.createEngines();
+    EXPECT_EQ(2u, device.getNumGenericSubDevices());
 
     auto hwInfo = device.getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
@@ -47,7 +48,8 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionBWhenCreatingEngineWithSubdevicesThe
     MockDevice device(executionEnvironment, 0);
     EXPECT_EQ(0u, device.engines.size());
     device.createSubDevices();
-    EXPECT_EQ(2u, device.getNumAvailableDevices());
+    device.createEngines();
+    EXPECT_EQ(2u, device.getNumGenericSubDevices());
 
     auto hwInfo = device.getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);

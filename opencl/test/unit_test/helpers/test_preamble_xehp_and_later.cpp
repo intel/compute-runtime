@@ -575,7 +575,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenSpecificP
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(&rssCmd, allocation->getGpuAddress(), allocation->getUnderlyingBufferSize(),
                                                  buffer->getMocsValue(false, false, pClDevice->getRootDeviceIndex()), false, false, false,
-                                                 pClDevice->getNumAvailableDevices(), allocation, pClDevice->getGmmHelper(), false, 1u);
+                                                 pClDevice->getNumGenericSubDevices(), allocation, pClDevice->getGmmHelper(), false, 1u);
 
     EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, rssCmd.getCoherencyType());
 }

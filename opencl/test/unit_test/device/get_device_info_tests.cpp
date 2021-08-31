@@ -1080,7 +1080,7 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         case CL_DEVICE_NUM_SLICES_INTEL: {
             auto pNumSlices = reinterpret_cast<cl_uint *>(object.get());
             const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
-            EXPECT_EQ(gtSysInfo.SliceCount * device.getNumAvailableDevices(), *pNumSlices);
+            EXPECT_EQ(gtSysInfo.SliceCount * std::max(device.getNumGenericSubDevices(), 1u), *pNumSlices);
             EXPECT_EQ(sizeof(cl_uint), sizeReturned);
             break;
         }

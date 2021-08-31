@@ -69,7 +69,7 @@ struct KernelHw : public KernelImp {
 
         NEO::Device *neoDevice = module->getDevice()->getNEODevice();
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(&surfaceState, bufferAddressForSsh, bufferSizeForSsh, mocs,
-                                                         false, false, false, neoDevice->getNumAvailableDevices(),
+                                                         false, false, false, neoDevice->getNumGenericSubDevices(),
                                                          alloc, neoDevice->getGmmHelper(),
                                                          kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics, 1u);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;

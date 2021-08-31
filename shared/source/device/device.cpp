@@ -479,11 +479,8 @@ bool Device::getHostTimer(uint64_t *hostTimestamp) const {
     return getOSTime()->getCpuTime(hostTimestamp);
 }
 
-uint32_t Device::getNumAvailableDevices() const {
-    if (subdevices.empty()) {
-        return 1u;
-    }
-    return getNumSubDevices();
+uint32_t Device::getNumGenericSubDevices() const {
+    return (hasRootCsr() ? getNumSubDevices() : 0);
 }
 
 Device *Device::getSubDevice(uint32_t deviceId) const {

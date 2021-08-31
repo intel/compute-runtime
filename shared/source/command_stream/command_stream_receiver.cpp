@@ -535,7 +535,7 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
     if (!staticWorkPartitioningEnabled) {
         return false;
     }
-    UNRECOVERABLE_IF(device.getNumAvailableDevices() < 2);
+    UNRECOVERABLE_IF(device.getNumGenericSubDevices() < 2);
 
     AllocationProperties properties{this->rootDeviceIndex, true, 4096u, GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE, true, false, deviceBitfield};
     this->workPartitionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);

@@ -296,7 +296,7 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
     REQUIRE_BLITTER_OR_SKIP(&hwInfo);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    EXPECT_EQ(2u, device->getNumAvailableDevices());
+    EXPECT_EQ(2u, device->getNumGenericSubDevices());
     std::unique_ptr<OsContext> bcsOsContext;
 
     auto subDevice = device->getSubDevice(0);

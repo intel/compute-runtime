@@ -37,8 +37,8 @@ UltDeviceFactory::UltDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevice
 
     for (auto &pCreatedDevice : createdDevices) {
         pCreatedDevice->incRefInternal();
-        if (pCreatedDevice->getNumAvailableDevices() > 1) {
-            for (uint32_t i = 0; i < pCreatedDevice->getNumAvailableDevices(); i++) {
+        if (pCreatedDevice->getNumSubDevices() > 1) {
+            for (uint32_t i = 0; i < pCreatedDevice->getNumSubDevices(); i++) {
                 this->subDevices.push_back(static_cast<SubDevice *>(pCreatedDevice->getSubDevice(i)));
             }
         }

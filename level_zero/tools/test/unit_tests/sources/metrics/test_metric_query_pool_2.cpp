@@ -899,7 +899,7 @@ TEST_F(MetricQueryPoolTest, givenRootDeviceWhenGetSubDeviceClientOptionsIsCalled
     EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, 0u);
 
     EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
-    EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, device->getNEODevice()->getNumAvailableDevices());
+    EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, device->getNEODevice()->getNumSubDevices());
 }
 
 TEST_F(MetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptionsIsCalledThenReturnSubDeviceProperties) {
@@ -914,7 +914,7 @@ TEST_F(MetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptionsIsCalledT
     auto subDeviceCount = ClientOptionsData_1_0{};
 
     // Sub devices
-    for (uint32_t i = 0, count = rootDevice->getNumAvailableDevices(); i < count; ++i) {
+    for (uint32_t i = 0, count = rootDevice->getNumSubDevices(); i < count; ++i) {
 
         metricsLibrary.getSubDeviceClientOptions(*rootDevice->subdevices[i], subDevice, subDeviceIndex, subDeviceCount);
 
@@ -925,7 +925,7 @@ TEST_F(MetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptionsIsCalledT
         EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, i);
 
         EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
-        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, rootDevice->getNumAvailableDevices());
+        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, rootDevice->getNumSubDevices());
     }
 }
 } // namespace ult

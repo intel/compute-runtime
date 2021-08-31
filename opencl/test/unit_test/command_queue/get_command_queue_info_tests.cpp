@@ -193,7 +193,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenGe
     auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, nullptr);
     auto ccsFamily = mockClDevice.getDevice().getIndexOfNonEmptyEngineGroup(EngineGroupType::Compute);
     cl_command_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, ccsFamily, CL_QUEUE_INDEX_INTEL, 0, 0};
-    EXPECT_EQ(1u, mockClDevice.getNumAvailableDevices());
+    EXPECT_EQ(0u, mockClDevice.getNumGenericSubDevices());
     auto commandQueue = clCreateCommandQueueWithProperties(context, deviceId, properties, nullptr);
     auto neoQueue = castToObject<CommandQueue>(commandQueue);
 
@@ -229,7 +229,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenCr
     auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, nullptr);
 
     cl_command_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, static_cast<uint32_t>(EngineGroupType::Compute), CL_QUEUE_INDEX_INTEL, 0, 0};
-    EXPECT_EQ(2u, rootDevice->getNumAvailableDevices());
+    EXPECT_EQ(2u, rootDevice->getNumGenericSubDevices());
     cl_int retVal;
     auto commandQueue = clCreateCommandQueueWithProperties(context, rootDevice, properties, &retVal);
 

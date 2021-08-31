@@ -42,7 +42,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(rootDeviceIndex),
                                                 getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex),
                                                 getMocsValue(disableL3, isReadOnly, rootDeviceIndex),
-                                                true, forceNonAuxMode, isReadOnly, device.getNumAvailableDevices(),
+                                                true, forceNonAuxMode, isReadOnly, device.getNumGenericSubDevices(),
                                                 graphicsAllocation, device.getGmmHelper(), useGlobalAtomics, areMultipleSubDevicesInContext);
     appendSurfaceStateExt(memory);
 }

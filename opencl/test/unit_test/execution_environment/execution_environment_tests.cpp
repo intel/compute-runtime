@@ -63,11 +63,11 @@ TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExec
 
     auto expectedRefCounts = executionEnvironment->getRefInternalCount();
     auto devices = DeviceFactory::createDevices(*executionEnvironment);
-    EXPECT_LT(0u, devices[0]->getNumAvailableDevices());
-    if (devices[0]->getNumAvailableDevices() > 1) {
+    EXPECT_LE(0u, devices[0]->getNumSubDevices());
+    if (devices[0]->getNumSubDevices() > 1) {
         expectedRefCounts++;
     }
-    expectedRefCounts += devices[0]->getNumAvailableDevices();
+    expectedRefCounts += std::max(devices[0]->getNumSubDevices(), 1u);
     EXPECT_EQ(expectedRefCounts, executionEnvironment->getRefInternalCount());
 }
 

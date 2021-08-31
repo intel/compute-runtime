@@ -686,28 +686,23 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         device->setDebugSurface(debugSurface);
     }
 
-    if (device->neoDevice->getNumAvailableDevices() == 1) {
-        device->numSubDevices = 0;
-    } else {
-        for (uint32_t i = 0; i < device->neoDevice->getNumAvailableDevices(); i++) {
-
-            if (!((1UL << i) & currentDeviceMask)) {
-                continue;
-            }
-
-            ze_device_handle_t subDevice = Device::create(driverHandle,
-                                                          device->neoDevice->getSubDevice(i),
-                                                          0,
-                                                          true, returnValue);
-            if (subDevice == nullptr) {
-                return nullptr;
-            }
-            static_cast<DeviceImp *>(subDevice)->isSubdevice = true;
-            static_cast<DeviceImp *>(subDevice)->setDebugSurface(debugSurface);
-            device->subDevices.push_back(static_cast<Device *>(subDevice));
+    for (uint32_t i = 0; i < device->neoDevice->getNumSubDevices(); i++) {
+        if (!((1UL << i) & currentDeviceMask)) {
+            continue;
         }
-        device->numSubDevices = static_cast<uint32_t>(device->subDevices.size());
+
+        ze_device_handle_t subDevice = Device::create(driverHandle,
+                                                      device->neoDevice->getSubDevice(i),
+                                                      0,
+                                                      true, returnValue);
+        if (subDevice == nullptr) {
+            return nullptr;
+        }
+        static_cast<DeviceImp *>(subDevice)->isSubdevice = true;
+        static_cast<DeviceImp *>(subDevice)->setDebugSurface(debugSurface);
+        device->subDevices.push_back(static_cast<Device *>(subDevice));
     }
+    device->numSubDevices = static_cast<uint32_t>(device->subDevices.size());
 
     if (neoDevice->getCompilerInterface()) {
         auto &hwInfo = neoDevice->getHardwareInfo();

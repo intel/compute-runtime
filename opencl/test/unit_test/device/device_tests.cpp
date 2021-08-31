@@ -325,8 +325,8 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
     auto memoryManager = device->getMemoryManager();
     auto &hwInfo = device->getHardwareInfo();
     auto numEnginesForDevice = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size();
-    if (device->getNumAvailableDevices() > 1) {
-        numEnginesForDevice *= device->getNumAvailableDevices();
+    if (device->getNumGenericSubDevices() > 1) {
+        numEnginesForDevice *= device->getNumGenericSubDevices();
         numEnginesForDevice += device->engines.size();
     }
     EXPECT_EQ(numEnginesForDevice, memoryManager->getRegisteredEnginesCount());

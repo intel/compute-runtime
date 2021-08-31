@@ -289,7 +289,7 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
     if (pInDevice == nullptr) {
         return CL_INVALID_DEVICE;
     }
-    auto subDevicesCount = pInDevice->getNumAvailableDevices();
+    auto subDevicesCount = pInDevice->getNumSubDevices();
     if (subDevicesCount <= 1) {
         return CL_DEVICE_PARTITION_FAILED;
     }

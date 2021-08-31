@@ -19,7 +19,7 @@ NEO::Device *DeviceImp::getActiveDevice() const {
 }
 
 bool DeviceImp::isMultiDeviceCapable() const {
-    return neoDevice->getNumAvailableDevices() > 1u;
+    return neoDevice->getNumGenericSubDevices() > 1u;
 }
 
 void DeviceImp::processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties) {

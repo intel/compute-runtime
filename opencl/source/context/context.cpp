@@ -181,7 +181,7 @@ bool Context::createImpl(const cl_context_properties *properties,
     bool containsDeviceWithSubdevices = false;
     for (const auto &device : inputDevices) {
         rootDeviceIndices.insert(device->getRootDeviceIndex());
-        containsDeviceWithSubdevices |= device->getNumAvailableDevices() > 1;
+        containsDeviceWithSubdevices |= device->getNumGenericSubDevices() > 1;
     }
 
     this->driverDiagnostics = driverDiagnostics.release();
@@ -472,6 +472,6 @@ Platform *Context::getPlatformFromProperties(const cl_context_properties *proper
 }
 
 bool Context::isSingleDeviceContext() {
-    return devices[0]->getNumAvailableDevices() == 1 && getNumDevices() == 1;
+    return devices[0]->getNumGenericSubDevices() == 0 && getNumDevices() == 1;
 }
 } // namespace NEO
