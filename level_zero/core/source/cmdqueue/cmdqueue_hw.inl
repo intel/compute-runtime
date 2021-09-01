@@ -74,7 +74,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto lockCSR = csr->obtainUniqueOwnership();
 
-    auto commandListsContainCooperativeKernels = CommandList::fromHandle(phCommandLists[0])->containsCooperativeKernels();
+    auto anyCommandListWithCooperativeKernels = false;
+    auto anyCommandListWithoutCooperativeKernels = false;
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
@@ -82,10 +83,17 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
 
-        if ((commandListsContainCooperativeKernels != commandList->containsCooperativeKernels()) &&
-            (!NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get())) {
-            return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
+        if (commandList->containsCooperativeKernels()) {
+            anyCommandListWithCooperativeKernels = true;
+        } else {
+            anyCommandListWithoutCooperativeKernels = true;
         }
+    }
+
+    bool isMixingRegularAndCooperativeKernelsAllowed = NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get();
+    if (anyCommandListWithCooperativeKernels && anyCommandListWithoutCooperativeKernels &&
+        (!isMixingRegularAndCooperativeKernelsAllowed)) {
+        return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
     }
 
     size_t spaceForResidency = 0;
@@ -199,6 +207,17 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                        gsbaStateDirty, frontEndStateDirty,
                        perThreadScratchSpaceSize);
 
+    auto &streamProperties = csr->getStreamProperties();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo);
+    auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
+    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
+    if (!isPatchingVfeStateAllowed) {
+        streamProperties.frontEndState.setProperties(anyCommandListWithCooperativeKernels, disableOverdispatch,
+                                                     isEngineInstanced, hwInfo);
+        frontEndStateDirty |= streamProperties.frontEndState.isDirty();
+    }
+
     gsbaStateDirty |= csr->getGSBAStateDirty();
     frontEndStateDirty |= csr->getMediaVFEStateDirty();
     if (!isCopyOnlyCommandQueue) {
@@ -308,7 +327,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
     }
 
-    auto &streamProperties = csr->getStreamProperties();
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
@@ -335,20 +353,24 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         if (!isCopyOnlyCommandQueue) {
-            auto &requiredStreamState = commandList->getRequiredStreamState();
-            streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
-            streamProperties.frontEndState.singleSliceDispatchCcsMode.value = csr->getOsContext().isEngineInstanced();
-            auto programVfe = streamProperties.frontEndState.isDirty();
-            if (frontEndStateDirty) {
-                programVfe = true;
-                frontEndStateDirty = false;
+            bool programVfe = frontEndStateDirty;
+            if (isPatchingVfeStateAllowed) {
+                auto requiredStreamStateCopy = commandList->getRequiredStreamState();
+                requiredStreamStateCopy.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
+                streamProperties.frontEndState.setProperties(requiredStreamStateCopy.frontEndState);
+                programVfe |= streamProperties.frontEndState.isDirty();
             }
+
             if (programVfe) {
                 programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
+                frontEndStateDirty = false;
             }
-            auto &finalStreamState = commandList->getFinalStreamState();
-            streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
-            streamProperties.frontEndState.singleSliceDispatchCcsMode.value = csr->getOsContext().isEngineInstanced();
+
+            if (isPatchingVfeStateAllowed) {
+                auto finalStreamStateCopy = commandList->getFinalStreamState();
+                finalStreamStateCopy.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
+                streamProperties.frontEndState.setProperties(finalStreamStateCopy.frontEndState);
+            }
         }
 
         patchCommands(*commandList, scratchSpaceController->getScratchPatchAddress());
@@ -413,7 +435,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd,
-                      commandListsContainCooperativeKernels);
+                      anyCommandListWithCooperativeKernels);
 
     this->taskCount = csr->peekTaskCount();
 
@@ -456,24 +478,29 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandLists(
     bool isFrontEndStateDirty, uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
 
-    auto streamPropertiesCopy = csr->getStreamProperties();
     auto singleFrontEndCmdSize = estimateFrontEndCmdSize();
+    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
+    if (!isPatchingVfeStateAllowed) {
+        return isFrontEndStateDirty * singleFrontEndCmdSize;
+    }
+
+    auto streamPropertiesCopy = csr->getStreamProperties();
+    auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     size_t estimatedSize = 0;
 
     for (size_t i = 0; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        auto &requiredStreamState = commandList->getRequiredStreamState();
-        streamPropertiesCopy.frontEndState.setProperties(requiredStreamState.frontEndState);
-        auto isVfeRequired = streamPropertiesCopy.frontEndState.isDirty();
-        if (isFrontEndStateDirty) {
-            isVfeRequired = true;
+        auto requiredStreamStateCopy = commandList->getRequiredStreamState();
+        requiredStreamStateCopy.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
+        streamPropertiesCopy.frontEndState.setProperties(requiredStreamStateCopy.frontEndState);
+
+        if (isFrontEndStateDirty || streamPropertiesCopy.frontEndState.isDirty()) {
+            estimatedSize += singleFrontEndCmdSize;
             isFrontEndStateDirty = false;
         }
-        if (isVfeRequired) {
-            estimatedSize += singleFrontEndCmdSize;
-        }
-        auto &finalStreamState = commandList->getFinalStreamState();
-        streamPropertiesCopy.frontEndState.setProperties(finalStreamState.frontEndState);
+        auto finalStreamStateCopy = commandList->getFinalStreamState();
+        finalStreamStateCopy.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
+        streamPropertiesCopy.frontEndState.setProperties(finalStreamStateCopy.frontEndState);
     }
 
     return estimatedSize;

@@ -144,7 +144,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
 
             cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
-            cfeStateCmd->setSingleSliceDispatchCcsMode(csr->getStreamProperties().frontEndState.singleSliceDispatchCcsMode.value);
+            cfeStateCmd->setSingleSliceDispatchCcsMode(csr->getOsContext().isEngineInstanced());
 
             *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
             break;

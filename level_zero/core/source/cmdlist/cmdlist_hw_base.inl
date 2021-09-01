@@ -120,7 +120,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         this->indirectAllocationsAllowed = true;
     }
 
-    if ((!containsAnyKernel) || NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get()) {
+    bool isMixingRegularAndCooperativeKernelsAllowed = NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get();
+    if ((!containsAnyKernel) || isMixingRegularAndCooperativeKernelsAllowed) {
         containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || isCooperative);
     } else if (containsCooperativeKernelsFlag != isCooperative) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

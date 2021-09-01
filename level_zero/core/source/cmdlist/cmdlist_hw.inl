@@ -2164,7 +2164,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     }
 
     finalStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, false, hwInfo);
-    if (finalStreamState.frontEndState.isDirty()) {
+    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
+    if (finalStreamState.frontEndState.isDirty() && isPatchingVfeStateAllowed) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
         auto pVfeState = new VFE_STATE_TYPE;
         NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
