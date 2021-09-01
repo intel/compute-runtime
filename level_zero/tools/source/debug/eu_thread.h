@@ -72,6 +72,46 @@ class EuThread {
         return true;
     }
 
+    bool verifyStopped(uint8_t newCounter) {
+
+        PRINT_DEBUGGER_INFO_LOG("EuThread::verifyStopped() Thread: %s newCounter == %d oldCounter == %d", toString().c_str(), (int32_t)newCounter, (int32_t)systemRoutineCounter);
+
+        if (newCounter == systemRoutineCounter) {
+            if (newCounter % 2 != 0) {
+                if (state == State::Running) {
+                    PRINT_DEBUGGER_ERROR_LOG("Thread: %s state RUNNING when thread is stopped. Switching to STOPPED", toString().c_str());
+                    DEBUG_BREAK_IF(true);
+                }
+                state = State::Stopped;
+                return true;
+            }
+        }
+
+        if (newCounter == (systemRoutineCounter + 2)) {
+            state = State::Stopped;
+            systemRoutineCounter = newCounter;
+            return true;
+        } else if (newCounter > systemRoutineCounter + 2) {
+            PRINT_DEBUGGER_ERROR_LOG("Thread: %s state out of sync.", toString().c_str());
+            DEBUG_BREAK_IF(true);
+        }
+
+        if (newCounter % 2 == 0) {
+            if (state == State::Stopped) {
+                PRINT_DEBUGGER_ERROR_LOG("Thread: %s state STOPPED when thread is running. Switching to RUNNING", toString().c_str());
+                DEBUG_BREAK_IF(true);
+            }
+            state = State::Running;
+            systemRoutineCounter = newCounter;
+
+            return false;
+        }
+
+        state = State::Stopped;
+        systemRoutineCounter = newCounter;
+        return true;
+    }
+
     bool resumeThread() {
         if (state != State::Stopped) {
             return false;
@@ -106,6 +146,7 @@ class EuThread {
   protected:
     ThreadId threadId;
     State state = State::Unavailable;
+    uint8_t systemRoutineCounter = 0;
 };
 
 static_assert(sizeof(EuThread::ThreadId) == sizeof(uint64_t));

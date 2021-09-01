@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+
 #include "test.h"
 
 #include "level_zero/tools/source/debug/eu_thread.h"
@@ -86,6 +88,144 @@ TEST(EuThread, GivenEuThreadWhenToStringCalledThenCorrectStringReturned) {
 
     auto threadString = euThread.toString();
     EXPECT_EQ("device index = 0 slice = 3 subslice = 4 eu = 5 thread = 6", threadString);
+}
+
+TEST(EuThread, GivenThreadStateRunningWhenVerifyingStopWithOddCounterThenTrueReturnedAndStateStopped) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+    EXPECT_TRUE(euThread.isRunning());
+
+    EXPECT_TRUE(euThread.verifyStopped(1));
+    EXPECT_TRUE(euThread.isStopped());
+}
+
+TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithOddCounterThenTrueReturnedAndStateStopped) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    euThread.verifyStopped(1);
+    euThread.stopThread();
+
+    EXPECT_TRUE(euThread.verifyStopped(1));
+    EXPECT_TRUE(euThread.isStopped());
+}
+
+TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithEvenCounterThenFalseReturnedAndStateRunning) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    euThread.verifyStopped(1);
+    euThread.stopThread();
+
+    EXPECT_FALSE(euThread.verifyStopped(2));
+    EXPECT_TRUE(euThread.isRunning());
+}
+
+TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithEvenCounterThenErrorMessageIsPrinted) {
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+
+    ze_device_thread_t devThread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    euThread.verifyStopped(1);
+    euThread.stopThread();
+
+    ::testing::internal::CaptureStderr();
+
+    EXPECT_FALSE(euThread.verifyStopped(2));
+    EXPECT_TRUE(euThread.isRunning());
+
+    auto message = ::testing::internal::GetCapturedStderr();
+    EXPECT_STREQ("\nERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state STOPPED when thread is running. Switching to RUNNING", message.c_str());
+}
+
+TEST(EuThread, GivenThreadStateRunningWhenVerifyingStopWithOddCounterForSecondStopThenTrueIsReturnedAndStateStopped) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    euThread.verifyStopped(1);
+    euThread.resumeThread();
+
+    EXPECT_TRUE(euThread.verifyStopped(3));
+    EXPECT_TRUE(euThread.isStopped());
+}
+
+TEST(EuThread, GivenThreadStateRunningWhenVerifyingStopWithEvenCounteThenFalseIsReturnedAndStateRunning) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+    euThread.verifyStopped(1);
+    euThread.resumeThread();
+
+    EXPECT_FALSE(euThread.verifyStopped(2));
+    EXPECT_TRUE(euThread.isRunning());
+}
+
+TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithOddCounterBiggerByMoreThanTwoThenTrueIsReturnedAndStateStopped) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+    euThread.verifyStopped(1);
+
+    EXPECT_TRUE(euThread.verifyStopped(7));
+    EXPECT_TRUE(euThread.isStopped());
+}
+
+TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithOddCounterBiggerByMoreThanTwoThenErrorMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+
+    ze_device_thread_t devThread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    euThread.verifyStopped(1);
+
+    ::testing::internal::CaptureStderr();
+
+    EXPECT_TRUE(euThread.verifyStopped(7));
+    EXPECT_TRUE(euThread.isStopped());
+
+    auto message = ::testing::internal::GetCapturedStderr();
+    EXPECT_STREQ("\nERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state out of sync.", message.c_str());
+}
+
+TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateRunningAndVerifyingStopWithOddCounterEqualToPreviousThenErrorMessageIsPrinted) {
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+
+    ze_device_thread_t devThread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    euThread.verifyStopped(1);
+    euThread.resumeThread();
+
+    ::testing::internal::CaptureStderr();
+
+    EXPECT_TRUE(euThread.verifyStopped(1));
+    EXPECT_TRUE(euThread.isStopped());
+
+    auto message = ::testing::internal::GetCapturedStderr();
+    EXPECT_STREQ("\nERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state RUNNING when thread is stopped. Switching to STOPPED", message.c_str());
+}
+
+TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithEvenCounterBiggerByMoreThanTwoThenFalseIsReturnedAndStateRunning) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+    euThread.verifyStopped(1);
+
+    EXPECT_FALSE(euThread.verifyStopped(8));
+    EXPECT_TRUE(euThread.isRunning());
 }
 
 } // namespace ult
