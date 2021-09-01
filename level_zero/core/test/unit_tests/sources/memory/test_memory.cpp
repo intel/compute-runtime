@@ -664,6 +664,51 @@ TEST_F(MemoryRelaxedSizeTests,
     EXPECT_EQ(nullptr, ptr);
 }
 
+struct ContextMemoryTests : public MemoryRelaxedSizeTests {
+    void SetUp() override {
+        DebugManager.flags.AllowUnrestrictedSize.set(true);
+        DebugManager.flags.CreateMultipleSubDevices.set(4);
+
+        MemoryRelaxedSizeTests::SetUp();
+
+        EXPECT_EQ(4u, device->getNEODevice()->getNumGenericSubDevices());
+    }
+
+    DebugManagerStateRestore restore;
+};
+
+TEST_F(ContextMemoryTests, givenMultipleSubDevicesWhenAllocatingThenUseCorrectGlobalMemorySize) {
+    size_t allocationSize = neoDevice->getDeviceInfo().globalMemSize;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, allocationSize, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+    EXPECT_EQ(nullptr, ptr);
+
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, allocationSize, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+    EXPECT_EQ(nullptr, ptr);
+
+    allocationSize /= 4;
+
+    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, allocationSize, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    context->freeMem(ptr);
+
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, allocationSize, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    context->freeMem(ptr);
+}
+
 struct DriverHandleFailGetFdMock : public L0::DriverHandleImp {
     void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAloc) override {
         if (mockFd == allocationMap.second) {

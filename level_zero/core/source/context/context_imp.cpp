@@ -146,7 +146,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
 
     uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
 
-    uint32_t numSubDevices = neoDevice->getNumSubDevices();
+    uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
     if ((!(NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true))) && (numSubDevices > 1)) {
         globalMemSize = globalMemSize / numSubDevices;
     }
@@ -206,7 +206,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     neoDevice = this->driverHandle->devices[0]->getNEODevice();
     uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
 
-    uint32_t numSubDevices = neoDevice->getNumSubDevices();
+    uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
     if ((!(NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true))) && (numSubDevices > 1)) {
         globalMemSize = globalMemSize / numSubDevices;
     }
