@@ -223,8 +223,7 @@ class Drm : public DriverModel {
     };
     MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags);
 
-    void setNewResourceBound(bool value) { this->newResourceBound = value; };
-    bool getNewResourceBound() { return this->newResourceBound; };
+    void setNewResourceBoundToVM(uint32_t vmHandleId);
 
     const std::vector<int> &getSliceMappings(uint32_t deviceIndex);
     const TopologyMap &getTopologyMap();
@@ -312,7 +311,6 @@ class Drm : public DriverModel {
     bool bindAvailable = false;
     bool directSubmissionActive = false;
     bool contextDebugSupported = false;
-    bool newResourceBound = false;
 
   private:
     int getParamIoctl(int param, int *dstValue);

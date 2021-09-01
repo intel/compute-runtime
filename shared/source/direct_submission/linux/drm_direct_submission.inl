@@ -93,7 +93,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    auto newResourcesBound = osContextLinux->getDrm().getNewResourceBound();
+    auto newResourcesBound = osContextLinux->getNewResourceBound();
 
     if (DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get() != -1) {
         newResourcesBound = DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get();
@@ -109,9 +109,7 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleNewResourcesSubmission() 
     }
 
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    if (!EngineHelpers::isBcs(osContextLinux->getEngineType())) {
-        osContextLinux->getDrm().setNewResourceBound(false);
-    }
+    osContextLinux->setNewResourceBound(false);
 }
 
 template <typename GfxFamily, typename Dispatcher>

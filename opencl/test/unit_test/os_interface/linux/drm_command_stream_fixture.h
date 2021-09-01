@@ -118,6 +118,9 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
+        constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
+        constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        constructPlatform()->peekExecutionEnvironment()->initializeMemoryManager();
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
         device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);

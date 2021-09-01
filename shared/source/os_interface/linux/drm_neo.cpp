@@ -19,6 +19,7 @@
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -637,6 +638,19 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) {
         return virtualMemoryIds[vmId];
     }
     return 0;
+}
+
+void Drm::setNewResourceBoundToVM(uint32_t vmHandleId) {
+    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
+    for (const auto &engine : engines) {
+        if (engine.osContext->getDeviceBitfield().test(vmHandleId)) {
+            auto osContextLinux = static_cast<OsContextLinux *>(engine.osContext);
+
+            if (&osContextLinux->getDrm() == this) {
+                osContextLinux->setNewResourceBound(true);
+            }
+        }
+    }
 }
 
 bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping) {
