@@ -26,6 +26,22 @@ using namespace NEO;
 
 using PrintfHandlerTests = ::testing::Test;
 
+TEST_F(PrintfHandlerTests, givenPrintfHandlerWhenBeingConstructedThenStorePrintfSurfaceInitialDataSize) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    struct MockPrintfHandler : public PrintfHandler {
+        using PrintfHandler::PrintfHandler;
+        using PrintfHandler::printfSurfaceInitialDataSizePtr;
+
+        MockPrintfHandler(ClDevice &device) : PrintfHandler(device) {}
+    };
+
+    MockPrintfHandler printfHandler(*device);
+
+    EXPECT_NE(nullptr, printfHandler.printfSurfaceInitialDataSizePtr);
+    EXPECT_EQ(sizeof(uint32_t), *printfHandler.printfSurfaceInitialDataSizePtr);
+}
+
 TEST_F(PrintfHandlerTests, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResultIsNullptr) {
     MockClDevice *device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     MockContext context;
@@ -73,8 +89,10 @@ TEST_F(PrintfHandlerTests, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenG
     delete device;
 }
 
-HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedForAuxTranslation) {
-    REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutput) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
 
     DebugManagerStateRestore restore;
 
@@ -105,7 +123,7 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
 
         if (enable > 0) {
             EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
-            EXPECT_EQ(AuxTranslationDirection::AuxToNonAux, bcsCsr->receivedBlitProperties[0].auxTranslationDirection);
+            EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
         } else {
             EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
         }

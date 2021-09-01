@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/program/kernel_info.h"
@@ -113,6 +114,23 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableSta
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
     for (size_t size : sizesToCheck) {
         EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(size, *defaultHwInfo));
+    }
+}
+
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenStatelessCompressionEnabledWhenSetExtraAllocationDataThenDontRequireCpuAccessNorMakeResourceLocableForCompressedAllocations) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    for (auto allocType : {GraphicsAllocation::AllocationType::CONSTANT_SURFACE, GraphicsAllocation::AllocationType::GLOBAL_SURFACE, GraphicsAllocation::AllocationType::PRINTF_SURFACE}) {
+        AllocationData allocData;
+        AllocationProperties allocProperties(mockRootDeviceIndex, true, allocType, mockDeviceBitfield);
+
+        hwHelper.setExtraAllocationData(allocData, allocProperties, hwInfo);
+        EXPECT_FALSE(allocData.flags.requiresCpuAccess);
+        EXPECT_FALSE(allocData.storageInfo.isLockable);
     }
 }
 

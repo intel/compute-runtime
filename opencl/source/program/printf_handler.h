@@ -33,7 +33,7 @@ class PrintfHandler {
   protected:
     PrintfHandler(ClDevice &device);
 
-    static const uint32_t printfSurfaceInitialDataSize = sizeof(uint32_t);
+    std::unique_ptr<uint32_t> printfSurfaceInitialDataSizePtr;
     ClDevice &device;
     Kernel *kernel = nullptr;
     GraphicsAllocation *printfSurface = nullptr;

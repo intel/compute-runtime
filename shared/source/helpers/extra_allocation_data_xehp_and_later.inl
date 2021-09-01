@@ -26,5 +26,15 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
             allocationData.storageInfo.isLockable = false;
         }
     }
+
+    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (helper.allowStatelessCompression(hwInfo)) {
+        if (properties.allocationType == GraphicsAllocation::AllocationType::GLOBAL_SURFACE ||
+            properties.allocationType == GraphicsAllocation::AllocationType::CONSTANT_SURFACE ||
+            properties.allocationType == GraphicsAllocation::AllocationType::PRINTF_SURFACE) {
+            allocationData.flags.requiresCpuAccess = false;
+            allocationData.storageInfo.isLockable = false;
+        }
+    }
 }
 } // namespace NEO

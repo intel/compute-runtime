@@ -22,9 +22,10 @@
 
 namespace NEO {
 
-const uint32_t PrintfHandler::printfSurfaceInitialDataSize;
-
-PrintfHandler::PrintfHandler(ClDevice &deviceArg) : device(deviceArg) {}
+PrintfHandler::PrintfHandler(ClDevice &deviceArg) : device(deviceArg) {
+    printfSurfaceInitialDataSizePtr = std::make_unique<uint32_t>();
+    *printfSurfaceInitialDataSizePtr = sizeof(uint32_t);
+}
 
 PrintfHandler::~PrintfHandler() {
     device.getMemoryManager()->freeGraphicsMemory(printfSurface);
@@ -55,8 +56,8 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     MemoryTransferHelper::transferMemoryToAllocation(helper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
-                                                     device.getDevice(), printfSurface, 0, &printfSurfaceInitialDataSize,
-                                                     sizeof(printfSurfaceInitialDataSize));
+                                                     device.getDevice(), printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),
+                                                     sizeof(*printfSurfaceInitialDataSizePtr.get()));
 
     const auto &printfSurfaceArg = kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData()), printfSurfaceArg.stateless);
@@ -78,12 +79,24 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 void PrintfHandler::printEnqueueOutput() {
     auto &helper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
     if (helper.allowStatelessCompression(device.getHardwareInfo())) {
+        auto printOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
+        auto printOutputDecompressed = std::make_unique<uint8_t[]>(printOutputSize);
         auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(device.getHardwareInfo(), device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);
+
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
-            BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
-                                                                 printfSurface, bcsEngine.commandStreamReceiver->getClearColorAllocation()));
+            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                            *bcsEngine.commandStreamReceiver, printfSurface, nullptr,
+                                                            printOutputDecompressed.get(),
+                                                            printfSurface->getGpuAddress(),
+                                                            0, 0, 0, Vec3<size_t>(printOutputSize, 0, 0), 0, 0, 0, 0));
         bcsEngine.commandStreamReceiver->blitBuffer(blitPropertiesContainer, true, false, device.getDevice());
+
+        PrintFormatter printFormatter(printOutputDecompressed.get(), printOutputSize,
+                                      kernel->is32Bit(),
+                                      kernel->getDescriptor().kernelAttributes.flags.usesStringMapForPrintf ? &kernel->getDescriptor().kernelMetadata.printfStringsMap : nullptr);
+        printFormatter.printKernelOutput();
+        return;
     }
 
     PrintFormatter printFormatter(reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer()), static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize()),
