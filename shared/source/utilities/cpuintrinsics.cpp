@@ -7,7 +7,11 @@
 
 #include "shared/source/utilities/cpuintrinsics.h"
 
+#if defined(__ARM_ARCH)
+#include <sse2neon.h>
+#else
 #include <emmintrin.h>
+#endif
 
 namespace NEO {
 namespace CpuIntrinsics {

@@ -56,6 +56,7 @@ Summary:        ocloc package for opencl
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DSKIP_UNIT_TESTS=1 \
    -DRELEASE_WITH_REGKEYS=1 \
+   -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
    -Wno-dev
 %make_build
 

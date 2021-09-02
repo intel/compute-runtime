@@ -71,10 +71,9 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/l3_range.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.h
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen_avx2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen_special.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen_sse4.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/non_copyable_or_moveable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/options.h

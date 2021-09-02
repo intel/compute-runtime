@@ -10,7 +10,11 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <cstdint>
+#if defined(__ARM_ARCH)
+#include <sse2neon.h>
+#else
 #include <immintrin.h>
+#endif
 
 namespace NEO {
 

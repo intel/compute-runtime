@@ -65,6 +65,7 @@ exposing hardware capabilities to applications.
    -DRELEASE_WITH_REGKEYS=TRUE \
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \
+   -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
    -Wno-dev
 %make_build
 
