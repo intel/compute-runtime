@@ -127,7 +127,7 @@ TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithEvenCounterThenFalseR
 TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithEvenCounterThenErrorMessageIsPrinted) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
     ze_device_thread_t devThread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, devThread);
@@ -180,7 +180,7 @@ TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithOddCounterBiggerByMor
 
 TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithOddCounterBiggerByMoreThanTwoThenErrorMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
     ze_device_thread_t devThread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, devThread);
@@ -200,7 +200,7 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithOd
 TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateRunningAndVerifyingStopWithOddCounterEqualToPreviousThenErrorMessageIsPrinted) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
     ze_device_thread_t devThread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, devThread);
