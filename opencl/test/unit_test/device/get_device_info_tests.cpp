@@ -1127,7 +1127,7 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
 
 TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnClDeviceThenReturnCorrectAttributeValue) {
     auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ASSERT_EQ(0u, pClDevice->subDevices.size());
+    ASSERT_EQ(0u, pClDevice->getNumGenericSubDevices());
 
     verifyDeviceAttribute(*pClDevice);
 }

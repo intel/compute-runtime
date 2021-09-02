@@ -45,9 +45,6 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
 
             auto &deviceInfo = pClSubDevice->deviceInfo;
             deviceInfo.parentDevice = this;
-            deviceInfo.partitionMaxSubDevices = 0;
-            deviceInfo.partitionProperties[0] = 0;
-            deviceInfo.partitionAffinityDomain = 0;
             deviceInfo.partitionType[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
             deviceInfo.partitionType[1] = CL_DEVICE_AFFINITY_DOMAIN_NUMA;
             deviceInfo.partitionType[2] = 0;

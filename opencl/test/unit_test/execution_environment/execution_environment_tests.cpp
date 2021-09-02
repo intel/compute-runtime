@@ -82,7 +82,10 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
     device->incRefInternal();
     platform.reset(nullptr);
     EXPECT_EQ(1, device->getRefInternalCount());
-    EXPECT_EQ(1, executionEnvironment->getRefInternalCount());
+
+    int32_t expectedRefCount = 1 + device->getNumSubDevices();
+
+    EXPECT_EQ(expectedRefCount, executionEnvironment->getRefInternalCount());
 
     device->decRefInternal();
 }

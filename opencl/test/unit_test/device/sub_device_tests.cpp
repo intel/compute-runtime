@@ -27,8 +27,10 @@ using namespace NEO;
 TEST(SubDevicesTest, givenDefaultConfigWhenCreateRootDeviceThenItDoesntContainSubDevices) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
-    EXPECT_EQ(0u, device->getNumSubDevices());
     EXPECT_EQ(0u, device->getNumGenericSubDevices());
+    if (device->getNumSubDevices() > 0) {
+        EXPECT_TRUE(device->getSubDevice(0)->isEngineInstanced());
+    }
 }
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItsSubdevicesHaveProperRootIdSet) {
@@ -201,13 +203,6 @@ TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnS
     EXPECT_EQ(secondSubDeviceMask, static_cast<uint32_t>(secondSubDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong()));
 }
 
-TEST(SubDevicesTest, givenDeviceWithoutSubDevicesWhenGettingDeviceByIdZeroThenGetThisDevice) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-
-    EXPECT_EQ(0u, device->getNumGenericSubDevices());
-    EXPECT_ANY_THROW(device->getSubDevice(0u));
-}
-
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrectSubDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
@@ -227,7 +222,11 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
     EXPECT_EQ(2u, device->getNumSubDevices());
     auto subDevice = device->subdevices.at(0);
 
-    EXPECT_ANY_THROW(subDevice->getSubDevice(0));
+    if (subDevice->getNumSubDevices() > 0) {
+        EXPECT_ANY_THROW(subDevice->getSubDevice(0)->getSubDevice(0));
+    } else {
+        EXPECT_ANY_THROW(subDevice->getSubDevice(0));
+    }
 }
 
 TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDeviceCreatesCorrectNumberOfEngines) {
@@ -293,10 +292,6 @@ TEST(SubDevicesTest, whenCreatingEngineInstancedSubDeviceThenSetCorrectSubdevice
 }
 
 struct EngineInstancedDeviceTests : public ::testing::Test {
-    void SetUp() override {
-        DebugManager.flags.EngineInstancedSubDevices.set(true);
-    }
-
     bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
         DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
 

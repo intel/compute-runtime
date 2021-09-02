@@ -125,8 +125,8 @@ TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterRootDeviceThanAvailable
 
     EXPECT_EQ(devices.size(), 2u);
     EXPECT_EQ(devices[0]->getNumSubDevices(), 4u);
+    EXPECT_EQ(devices[0]->getNumGenericSubDevices(), 4u);
     EXPECT_EQ(devices[1]->getNumGenericSubDevices(), 0u);
-    EXPECT_EQ(devices[1]->getNumSubDevices(), 0u);
 }
 
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterSubDeviceThanAvailableWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {

@@ -46,7 +46,16 @@ TEST_F(clCreateSubDevicesTests, GivenInvalidDeviceWhenCreatingSubDevicesThenInva
 TEST_F(clCreateSubDevicesTests, GivenDeviceWithoutSubDevicesWhenCreatingSubDevicesThenDevicePartitionFailedErrorIsReturned) {
     setup(1);
 
-    auto retVal = clCreateSubDevices(device.get(), nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, device->getNumGenericSubDevices());
+
+    cl_int retVal = CL_SUCCESS;
+
+    if (device->getNumSubDevices() > 0) {
+        retVal = clCreateSubDevices(device->getSubDevice(0), nullptr, 0, nullptr, nullptr);
+    } else {
+        retVal = clCreateSubDevices(device.get(), nullptr, 0, nullptr, nullptr);
+    }
+
     EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
 }
 
@@ -173,12 +182,32 @@ TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoT
         auto &subDevice = *castToObject<ClDevice>(outDevice);
         auto &subDeviceInfo = subDevice.getDeviceInfo();
         EXPECT_EQ(expectedSubDeviceParentDevice, subDeviceInfo.parentDevice);
-        EXPECT_EQ(expectedSubDevicePartitionAffinityDomain, subDeviceInfo.partitionAffinityDomain);
-        EXPECT_EQ(expectedSubDevicePartitionMaxSubDevices, subDeviceInfo.partitionMaxSubDevices);
-        EXPECT_EQ(expectedSubDevicePartitionProperties[0], subDeviceInfo.partitionProperties[0]);
-        EXPECT_EQ(expectedSubDevicePartitionType[0], subDeviceInfo.partitionType[0]);
-        EXPECT_EQ(expectedSubDevicePartitionType[1], subDeviceInfo.partitionType[1]);
-        EXPECT_EQ(expectedSubDevicePartitionType[2], subDeviceInfo.partitionType[2]);
+
+        if (subDevice.getNumSubDevices() > 0) {
+            for (uint32_t i = 0; i < subDevice.getNumSubDevices(); i++) {
+                auto subSubDevice = subDevice.getSubDevice(i);
+                auto &subSubDeviceInfo = subSubDevice->getDeviceInfo();
+                EXPECT_EQ(expectedSubDevicePartitionAffinityDomain, subSubDeviceInfo.partitionAffinityDomain);
+                EXPECT_EQ(expectedSubDevicePartitionMaxSubDevices, subSubDeviceInfo.partitionMaxSubDevices);
+                EXPECT_EQ(expectedSubDevicePartitionProperties[0], subSubDeviceInfo.partitionProperties[0]);
+                EXPECT_EQ(expectedSubDevicePartitionType[0], subSubDeviceInfo.partitionType[0]);
+                EXPECT_EQ(expectedSubDevicePartitionType[1], subSubDeviceInfo.partitionType[1]);
+                EXPECT_EQ(expectedSubDevicePartitionType[2], subSubDeviceInfo.partitionType[2]);
+            }
+            EXPECT_NE(expectedSubDevicePartitionAffinityDomain, subDeviceInfo.partitionAffinityDomain);
+            EXPECT_NE(expectedSubDevicePartitionMaxSubDevices, subDeviceInfo.partitionMaxSubDevices);
+            EXPECT_NE(expectedSubDevicePartitionProperties[0], subDeviceInfo.partitionProperties[0]);
+            EXPECT_EQ(expectedSubDevicePartitionType[0], subDeviceInfo.partitionType[0]);
+            EXPECT_EQ(expectedSubDevicePartitionType[1], subDeviceInfo.partitionType[1]);
+            EXPECT_EQ(expectedSubDevicePartitionType[2], subDeviceInfo.partitionType[2]);
+        } else {
+            EXPECT_EQ(expectedSubDevicePartitionAffinityDomain, subDeviceInfo.partitionAffinityDomain);
+            EXPECT_EQ(expectedSubDevicePartitionMaxSubDevices, subDeviceInfo.partitionMaxSubDevices);
+            EXPECT_EQ(expectedSubDevicePartitionProperties[0], subDeviceInfo.partitionProperties[0]);
+            EXPECT_EQ(expectedSubDevicePartitionType[0], subDeviceInfo.partitionType[0]);
+            EXPECT_EQ(expectedSubDevicePartitionType[1], subDeviceInfo.partitionType[1]);
+            EXPECT_EQ(expectedSubDevicePartitionType[2], subDeviceInfo.partitionType[2]);
+        }
     }
 }
 
@@ -187,14 +216,31 @@ TEST_F(clCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGe
 
     auto &rootDeviceInfo = device->getDeviceInfo();
     EXPECT_EQ(expectedRootDeviceWithoutSubDevicesParentDevice, rootDeviceInfo.parentDevice);
-    EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionAffinityDomain, rootDeviceInfo.partitionAffinityDomain);
-    EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionMaxSubDevices, rootDeviceInfo.partitionMaxSubDevices);
-    EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionProperties[0], rootDeviceInfo.partitionProperties[0]);
-    EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionType[0], rootDeviceInfo.partitionType[0]);
+
+    if (expectedRootDeviceWithoutSubDevicesPartitionAffinityDomain != rootDeviceInfo.partitionAffinityDomain) {
+        EXPECT_EQ(0u, device->getNumGenericSubDevices());
+        EXPECT_NE(0u, device->getNumSubDevices());
+
+        EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionAffinityDomain, device->getSubDevice(0)->getDeviceInfo().partitionAffinityDomain);
+        EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionMaxSubDevices, device->getSubDevice(0)->getDeviceInfo().partitionMaxSubDevices);
+        EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionProperties[0], device->getSubDevice(0)->getDeviceInfo().partitionProperties[0]);
+        EXPECT_NE(expectedRootDeviceWithoutSubDevicesPartitionType[0], device->getSubDevice(0)->getDeviceInfo().partitionType[0]);
+
+    } else {
+        EXPECT_EQ(0u, device->getNumGenericSubDevices());
+        EXPECT_EQ(0u, device->getNumSubDevices());
+
+        EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionMaxSubDevices, rootDeviceInfo.partitionMaxSubDevices);
+        EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionProperties[0], rootDeviceInfo.partitionProperties[0]);
+        EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionType[0], rootDeviceInfo.partitionType[0]);
+    }
 }
 
 TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
     setup(4);
+
+    size_t partitionPropertiesReturnValueSize = 0;
+    size_t partitionTypeReturnValueSize = 0;
 
     clGetDeviceInfo(device.get(), CL_DEVICE_PARENT_DEVICE,
                     sizeof(parentDevice), &parentDevice, nullptr);
@@ -209,46 +255,100 @@ TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoV
     EXPECT_EQ(expectedRootDevicePartitionMaxSubDevices, partitionMaxSubDevices);
 
     clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_PROPERTIES,
-                    sizeof(partitionProperties), &partitionProperties, &returnValueSize);
-    EXPECT_EQ(sizeof(expectedRootDevicePartitionProperties), returnValueSize);
+                    sizeof(partitionProperties), &partitionProperties, &partitionPropertiesReturnValueSize);
+    EXPECT_EQ(sizeof(expectedRootDevicePartitionProperties), partitionPropertiesReturnValueSize);
     EXPECT_EQ(expectedRootDevicePartitionProperties[0], partitionProperties[0]);
     EXPECT_EQ(expectedRootDevicePartitionProperties[1], partitionProperties[1]);
 
     clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_TYPE,
-                    sizeof(partitionType), &partitionType, &returnValueSize);
-    EXPECT_EQ(sizeof(expectedRootDevicePartitionType), returnValueSize);
+                    sizeof(partitionType), &partitionType, &partitionTypeReturnValueSize);
+    EXPECT_EQ(sizeof(expectedRootDevicePartitionType), partitionTypeReturnValueSize);
     EXPECT_EQ(expectedRootDevicePartitionType[0], partitionType[0]);
 
     auto retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     for (auto subDevice : outDevices) {
+        auto neoSubDevice = castToObject<ClDevice>(subDevice);
+        ASSERT_NE(nullptr, neoSubDevice);
+        bool hasSubDevices = neoSubDevice->getNumSubDevices() > 0;
+
         clGetDeviceInfo(subDevice, CL_DEVICE_PARENT_DEVICE,
                         sizeof(parentDevice), &parentDevice, nullptr);
-        EXPECT_EQ(expectedSubDeviceParentDevice, parentDevice);
 
         clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_AFFINITY_DOMAIN,
                         sizeof(partitionAffinityDomain), &partitionAffinityDomain, nullptr);
-        EXPECT_EQ(expectedSubDevicePartitionAffinityDomain, partitionAffinityDomain);
 
         clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_MAX_SUB_DEVICES,
                         sizeof(partitionMaxSubDevices), &partitionMaxSubDevices, nullptr);
-        EXPECT_EQ(expectedSubDevicePartitionMaxSubDevices, partitionMaxSubDevices);
 
         clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_PROPERTIES,
-                        sizeof(partitionProperties), &partitionProperties, &returnValueSize);
-        EXPECT_EQ(sizeof(expectedSubDevicePartitionProperties), returnValueSize);
-        EXPECT_EQ(expectedSubDevicePartitionProperties[0], partitionProperties[0]);
+                        sizeof(partitionProperties), &partitionProperties, &partitionPropertiesReturnValueSize);
 
         clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_TYPE,
-                        sizeof(partitionType), &partitionType, &returnValueSize);
-        EXPECT_EQ(sizeof(expectedSubDevicePartitionType), returnValueSize);
-        EXPECT_EQ(expectedSubDevicePartitionType[0], partitionType[0]);
-        EXPECT_EQ(expectedSubDevicePartitionType[1], partitionType[1]);
-        EXPECT_EQ(expectedSubDevicePartitionType[2], partitionType[2]);
+                        sizeof(partitionType), &partitionType, &partitionTypeReturnValueSize);
+
+        EXPECT_EQ(expectedSubDeviceParentDevice, parentDevice);
+
+        if (hasSubDevices) {
+            EXPECT_NE(expectedSubDevicePartitionAffinityDomain, partitionAffinityDomain);
+            EXPECT_NE(expectedSubDevicePartitionMaxSubDevices, partitionMaxSubDevices);
+            EXPECT_NE(sizeof(expectedSubDevicePartitionProperties), partitionPropertiesReturnValueSize);
+            EXPECT_NE(expectedSubDevicePartitionProperties[0], partitionProperties[0]);
+
+            EXPECT_EQ(sizeof(expectedSubDevicePartitionType), partitionTypeReturnValueSize);
+
+            EXPECT_EQ(expectedSubDevicePartitionType[0], partitionType[0]);
+            EXPECT_EQ(expectedSubDevicePartitionType[1], partitionType[1]);
+            EXPECT_EQ(expectedSubDevicePartitionType[2], partitionType[2]);
+
+            auto neoSubDevice = castToObject<ClDevice>(subDevice);
+            ASSERT_NE(nullptr, neoSubDevice);
+            EXPECT_NE(0u, neoSubDevice->getNumSubDevices());
+
+            cl_device_id clSubSubDevice = neoSubDevice->getSubDevice(0);
+
+            clGetDeviceInfo(clSubSubDevice, CL_DEVICE_PARENT_DEVICE,
+                            sizeof(parentDevice), &parentDevice, nullptr);
+            EXPECT_EQ(subDevice, parentDevice);
+
+            clGetDeviceInfo(clSubSubDevice, CL_DEVICE_PARTITION_AFFINITY_DOMAIN,
+                            sizeof(partitionAffinityDomain), &partitionAffinityDomain, nullptr);
+            EXPECT_EQ(expectedSubDevicePartitionAffinityDomain, partitionAffinityDomain);
+
+            clGetDeviceInfo(clSubSubDevice, CL_DEVICE_PARTITION_MAX_SUB_DEVICES,
+                            sizeof(partitionMaxSubDevices), &partitionMaxSubDevices, nullptr);
+            EXPECT_EQ(expectedSubDevicePartitionMaxSubDevices, partitionMaxSubDevices);
+
+            clGetDeviceInfo(clSubSubDevice, CL_DEVICE_PARTITION_PROPERTIES,
+                            sizeof(partitionProperties), &partitionProperties, &partitionPropertiesReturnValueSize);
+            EXPECT_EQ(sizeof(expectedSubDevicePartitionProperties), partitionPropertiesReturnValueSize);
+            EXPECT_EQ(expectedSubDevicePartitionProperties[0], partitionProperties[0]);
+
+            clGetDeviceInfo(clSubSubDevice, CL_DEVICE_PARTITION_TYPE,
+                            sizeof(partitionType), &partitionType, &partitionTypeReturnValueSize);
+            EXPECT_EQ(sizeof(expectedSubDevicePartitionType), partitionTypeReturnValueSize);
+
+            EXPECT_EQ(expectedSubDevicePartitionType[0], partitionType[0]);
+            EXPECT_EQ(expectedSubDevicePartitionType[1], partitionType[1]);
+            EXPECT_EQ(expectedSubDevicePartitionType[2], partitionType[2]);
+        } else {
+            EXPECT_EQ(expectedSubDeviceParentDevice, parentDevice);
+            EXPECT_EQ(expectedSubDevicePartitionAffinityDomain, partitionAffinityDomain);
+            EXPECT_EQ(expectedSubDevicePartitionMaxSubDevices, partitionMaxSubDevices);
+            EXPECT_EQ(sizeof(expectedSubDevicePartitionProperties), partitionPropertiesReturnValueSize);
+            EXPECT_EQ(expectedSubDevicePartitionProperties[0], partitionProperties[0]);
+
+            EXPECT_EQ(sizeof(expectedSubDevicePartitionType), partitionTypeReturnValueSize);
+
+            EXPECT_EQ(expectedSubDevicePartitionType[0], partitionType[0]);
+            EXPECT_EQ(expectedSubDevicePartitionType[1], partitionType[1]);
+            EXPECT_EQ(expectedSubDevicePartitionType[2], partitionType[2]);
+        }
     }
 }
 
 TEST_F(clCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
+    DebugManager.flags.EngineInstancedSubDevices.set(false);
     setup(1);
 
     clGetDeviceInfo(device.get(), CL_DEVICE_PARENT_DEVICE,

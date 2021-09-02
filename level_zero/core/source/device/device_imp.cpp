@@ -276,7 +276,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
     pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(&hwInfo);
     pMemProperties->maxBusWidth = deviceInfo.addressBits;
     if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(this->getNEODevice()->getDeviceBitfield(), true) ||
-        this->numSubDevices == 0) {
+        this->getNEODevice()->getNumGenericSubDevices() == 0) {
         pMemProperties->totalSize = deviceInfo.globalMemSize;
     } else {
         pMemProperties->totalSize = deviceInfo.globalMemSize / this->numSubDevices;
@@ -439,7 +439,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
         }
     }
 
-    pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount * ((this->numSubDevices > 0) ? this->numSubDevices : 1);
+    pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount * std::max(this->neoDevice->getNumGenericSubDevices(), 1u);
 
     if ((NEO::DebugManager.flags.UseCyclesPerSecondTimer.get() == 1) ||
         (pDeviceProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2)) {
