@@ -311,7 +311,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::isCacheFlushForBcsRequired();
     }
 
-    bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const override {
+    bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) override {
         isBlitEnqueueImageAllowed = BaseClass::blitEnqueueImageAllowed(origin, region, image);
         return isBlitEnqueueImageAllowed;
     }
@@ -329,7 +329,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool notifyEnqueueSVMMemcpyCalled = false;
     bool cpuDataTransferHandlerCalled = false;
     bool useBcsCsrOnNotifyEnabled = false;
-    mutable bool isBlitEnqueueImageAllowed = false;
+    bool isBlitEnqueueImageAllowed = false;
     struct OverrideReturnValue {
         bool enabled = false;
         bool returnValue = false;

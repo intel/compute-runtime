@@ -144,17 +144,13 @@ CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
     return nullptr;
 }
 
-CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(cl_command_type cmdType, const MultiDispatchInfo &dispatchInfo) const {
-    const bool blitAllowed = blitEnqueueAllowed(cmdType, dispatchInfo.peekBuiltinOpParams());
-    const bool blitPreferred = blitEnqueuePreferred(cmdType, dispatchInfo.peekBuiltinOpParams());
-    const bool blitRequired = isCopyOnly;
-    const bool blit = blitAllowed && (blitPreferred || blitRequired);
-
-    if (blit) {
-        return *bcsEngine->commandStreamReceiver;
-    } else {
-        return getGpgpuCommandStreamReceiver();
+CommandStreamReceiver &CommandQueue::getCommandStreamReceiver(bool blitAllowed) const {
+    if (blitAllowed) {
+        auto csr = getBcsCommandStreamReceiver();
+        UNRECOVERABLE_IF(!csr);
+        return *csr;
     }
+    return getGpgpuCommandStreamReceiver();
 }
 
 Device &CommandQueue::getDevice() const noexcept {
@@ -725,17 +721,12 @@ bool CommandQueue::queueDependenciesClearRequired() const {
     return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
 }
 
-bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType, const BuiltinOpParams &params) const {
-    if (bcsEngine == nullptr) {
-        return false;
-    }
+bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
+    auto blitterSupported = bcsEngine != nullptr;
 
-    bool allowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
+    bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
     if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
-        allowed = DebugManager.flags.EnableBlitterForEnqueueOperations.get();
-    }
-    if (!allowed) {
-        return false;
+        blitEnqueueAllowed = DebugManager.flags.EnableBlitterForEnqueueOperations.get();
     }
 
     switch (cmdType) {
@@ -746,14 +737,10 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType, const BuiltinOpPa
     case CL_COMMAND_WRITE_BUFFER_RECT:
     case CL_COMMAND_COPY_BUFFER_RECT:
     case CL_COMMAND_SVM_MEMCPY:
-        return true;
     case CL_COMMAND_READ_IMAGE:
-        return blitEnqueueImageAllowed(&params.srcOffset[0], &params.size[0], *static_cast<Image *>(params.srcMemObj));
     case CL_COMMAND_WRITE_IMAGE:
-        return blitEnqueueImageAllowed(&params.dstOffset[0], &params.size[0], *static_cast<Image *>(params.dstMemObj));
     case CL_COMMAND_COPY_IMAGE:
-        return blitEnqueueImageAllowed(&params.srcOffset[0], &params.size[0], *static_cast<Image *>(params.srcMemObj)) &&
-               blitEnqueueImageAllowed(&params.dstOffset[0], &params.size[0], *static_cast<Image *>(params.dstMemObj));
+        return blitterSupported && blitEnqueueAllowed;
     default:
         return false;
     }
@@ -784,7 +771,7 @@ bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOp
     return true;
 }
 
-bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {
+bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) {
     const auto &hwInfo = device->getHardwareInfo();
     const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto blitEnqueueImageAllowed = hwHelper.isBlitterForImagesSupported(hwInfo);

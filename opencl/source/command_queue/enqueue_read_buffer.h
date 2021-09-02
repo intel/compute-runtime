@@ -36,6 +36,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     cl_event *event) {
 
     const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
+    auto blitAllowed = blitEnqueueAllowed(cmdType);
+    auto &csr = getCommandStreamReceiver(blitAllowed);
+
+    if (nullptr == mapAllocation) {
+        notifyEnqueueReadBuffer(buffer, !!blockingRead, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
+    }
 
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
     bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
@@ -61,9 +67,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     }
 
     if (isCpuCopyAllowed) {
-        if (nullptr == mapAllocation) {
-            notifyEnqueueReadBuffer(buffer, !!blockingRead, false);
-        }
         if (isMemTransferNeeded) {
             return enqueueReadWriteBufferOnCpuWithMemoryTransfer(cmdType, buffer, offset, size, ptr,
                                                                  numEventsInWaitList, eventWaitList, event);
@@ -99,7 +102,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
+            bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
@@ -125,12 +128,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, ptr, size, MemoryConstants::pageSize, MemoryConstants::pageSize);
         }
     }
-
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_READ_BUFFER, dispatchInfo);
-    if (nullptr == mapAllocation) {
-        notifyEnqueueReadBuffer(buffer, !!blockingRead, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
-    }
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, blitAllowed);
 
     return CL_SUCCESS;
 }

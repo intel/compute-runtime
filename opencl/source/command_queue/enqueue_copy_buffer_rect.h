@@ -54,8 +54,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     dc.dstSlicePitch = dstSlicePitch;
 
     MultiDispatchInfo dispatchInfo(dc);
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_COPY_BUFFER_RECT, dispatchInfo);
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false, csr);
+    auto blitAllowed = blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false, blitAllowed);
 
     return CL_SUCCESS;
 }

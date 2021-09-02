@@ -59,11 +59,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     MemObjSurface bufferSurf(buffer);
     HostPtrSurface hostPtrSurf(dstPtr, hostPtrSize);
     Surface *surfaces[] = {&bufferSurf, &hostPtrSurf};
+    auto blitAllowed = blitEnqueueAllowed(cmdType);
 
     if (region[0] != 0 &&
         region[1] != 0 &&
         region[2] != 0) {
-        bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
+        auto &csr = getCommandStreamReceiver(blitAllowed);
+        bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
@@ -87,8 +89,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     dc.dstSlicePitch = hostSlicePitch;
 
     MultiDispatchInfo dispatchInfo(dc);
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_READ_BUFFER_RECT, dispatchInfo);
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, blitAllowed);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHintForMemoryTransfer(CL_COMMAND_READ_BUFFER_RECT, true, static_cast<cl_mem>(buffer), ptr);
