@@ -755,7 +755,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle2rdLevelDeviceOnlyW
     constexpr uint32_t genericDeviceIndex = 0;
     constexpr uint32_t engineInstancedEngineIndex = 1;
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.1, 0.9");
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0.1, 0.9");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -776,6 +776,23 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle2rdLevelDeviceOnlyW
     EXPECT_EQ(1u, rootDevice->getDeviceBitfield().count());
 
     EXPECT_TRUE(hasEngineInstancedEngines(rootDevice, engineType));
+}
+
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDeviceWhenCreatingThenEnableAllEngineInstancedDevices) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+
+    EXPECT_FALSE(rootDevice->isEngineInstanced());
+    EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
+    EXPECT_EQ(ccsCount, rootDevice->getNumSubDevices());
 }
 
 HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, IsAtLeastXeHpCore) {
