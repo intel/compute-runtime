@@ -32,11 +32,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    const bool validImages = blitEnqueueImageAllowed(srcOrigin, region, *srcImage) && blitEnqueueImageAllowed(dstOrigin, region, *dstImage);
-    GraphicsAllocation *srcImageAlloc = srcImage->getGraphicsAllocation(getDevice().getRootDeviceIndex());
-    GraphicsAllocation *dstImageAlloc = dstImage->getGraphicsAllocation(getDevice().getRootDeviceIndex());
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_COPY_IMAGE, TransferDirectionHelper::fromGfxAllocToGfxAlloc(*srcImageAlloc, *dstImageAlloc), validImages);
-
     MemObjSurface srcImgSurf(srcImage);
     MemObjSurface dstImgSurf(dstImage);
     Surface *surfaces[] = {&srcImgSurf, &dstImgSurf};
@@ -55,7 +50,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     }
 
     MultiDispatchInfo dispatchInfo(dc);
-
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_COPY_IMAGE, dispatchInfo);
     dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_IMAGE>(dispatchInfo, surfaces, EBuiltInOps::CopyImageToImage3d, numEventsInWaitList, eventWaitList, event, false, csr);
 
     return CL_SUCCESS;

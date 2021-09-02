@@ -41,8 +41,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingRead, size, ptr,
                                                  numEventsInWaitList, eventWaitList);
-    GraphicsAllocation *srcBufferAlloc = buffer->getGraphicsAllocation(rootDeviceIndex);
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(cmdType, TransferDirectionHelper::fromGfxAllocToHost(*srcBufferAlloc), false);
 
     InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
     //check if we are dealing with SVM pointer here for which we already have an allocation
@@ -101,7 +99,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-            bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
+            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
@@ -128,6 +126,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         }
     }
 
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_READ_BUFFER, dispatchInfo);
     if (nullptr == mapAllocation) {
         notifyEnqueueReadBuffer(buffer, !!blockingRead, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
     }

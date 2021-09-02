@@ -34,10 +34,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     cl_event *event) {
     auto eBuiltInOps = EBuiltInOps::CopyBufferRect;
 
-    GraphicsAllocation *srcBufferAlloc = srcBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    GraphicsAllocation *dstBufferAlloc = dstBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_COPY_BUFFER_RECT, TransferDirectionHelper::fromGfxAllocToGfxAlloc(*srcBufferAlloc, *dstBufferAlloc), false);
-
     if (forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()))) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
@@ -58,7 +54,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     dc.dstSlicePitch = dstSlicePitch;
 
     MultiDispatchInfo dispatchInfo(dc);
-
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_COPY_BUFFER_RECT, dispatchInfo);
     dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false, csr);
 
     return CL_SUCCESS;

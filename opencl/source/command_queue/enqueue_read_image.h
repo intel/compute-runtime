@@ -42,10 +42,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     cl_event *event) {
     cl_command_type cmdType = CL_COMMAND_READ_IMAGE;
 
-    const bool validImages = blitEnqueueImageAllowed(origin, region, *srcImage);
-    GraphicsAllocation *srcImageAlloc = srcImage->getGraphicsAllocation(getDevice().getRootDeviceIndex());
-    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(cmdType, TransferDirectionHelper::fromGfxAllocToHost(*srcImageAlloc), validImages);
-
     auto isMemTransferNeeded = true;
     if (srcImage->isMemObjZeroCopy()) {
         size_t hostOffset;
@@ -76,7 +72,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
         if (region[0] != 0 &&
             region[1] != 0 &&
             region[2] != 0) {
-            bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
+            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
@@ -103,6 +99,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);
 
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(CL_COMMAND_READ_IMAGE, dispatchInfo);
     if (nullptr == mapAllocation) {
         notifyEnqueueReadImage(srcImage, static_cast<bool>(blockingRead), EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
     }
