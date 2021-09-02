@@ -122,6 +122,11 @@ template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) {
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 void OsAgnosticHwInfoConfigTest::SetUp() {
     DeviceFixture::SetUp();
 }
@@ -152,5 +157,10 @@ HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsAdditionalSta
 
 HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned) {
     bool ret = hwConfig.isMaxThreadsForWorkgroupWARequired(hardwareInfo);
+    EXPECT_FALSE(ret);
+}
+
+HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsDefaultEngineTypeAdjustmentRequiredThenFalseIsReturned) {
+    bool ret = hwConfig.isDefaultEngineTypeAdjustmentRequired(hardwareInfo);
     EXPECT_FALSE(ret);
 }
