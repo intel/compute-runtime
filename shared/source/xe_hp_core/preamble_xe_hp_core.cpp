@@ -21,7 +21,7 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     auto command = static_cast<typename Family::CFE_STATE *>(cmd);
 
     command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
-    command->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value);
+    command->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
 
     if (DebugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
         command->setComputeOverdispatchDisable(DebugManager.flags.CFEComputeOverdispatchDisable.get());

@@ -2159,12 +2159,12 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo);
 
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, false, hwInfo);
+        requiredStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, -1, hwInfo);
         finalStreamState = requiredStreamState;
         containsAnyKernel = true;
     }
 
-    finalStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, false, hwInfo);
+    finalStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, -1, hwInfo);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (finalStreamState.frontEndState.isDirty() && isPatchingVfeStateAllowed) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);

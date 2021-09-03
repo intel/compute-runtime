@@ -37,7 +37,8 @@ void StateComputeModeProperties::clearIsDirty() {
     largeGrfMode.isDirty = false;
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableOverdispatch, bool engineInstancedDevice, const HardwareInfo &hwInfo) {
+void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableOverdispatch, int32_t engineInstancedDevice,
+                                       const HardwareInfo &hwInfo) {
     clearIsDirty();
 
     this->disableOverdispatch.set(disableOverdispatch);

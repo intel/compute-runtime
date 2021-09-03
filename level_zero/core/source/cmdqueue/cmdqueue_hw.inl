@@ -221,8 +221,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (!isPatchingVfeStateAllowed) {
         streamProperties.frontEndState.setProperties(anyCommandListWithCooperativeKernels, disableOverdispatch,
                                                      isEngineInstanced, hwInfo);
-        frontEndStateDirty |= streamProperties.frontEndState.isDirty();
+    } else {
+        streamProperties.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
     }
+    frontEndStateDirty |= streamProperties.frontEndState.isDirty();
 
     gsbaStateDirty |= csr->getGSBAStateDirty();
     frontEndStateDirty |= csr->getMediaVFEStateDirty();
@@ -365,9 +367,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         if (!isCopyOnlyCommandQueue) {
             bool programVfe = frontEndStateDirty;
             if (isPatchingVfeStateAllowed) {
-                auto requiredStreamStateCopy = commandList->getRequiredStreamState();
-                requiredStreamStateCopy.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
-                streamProperties.frontEndState.setProperties(requiredStreamStateCopy.frontEndState);
+                auto &requiredStreamState = commandList->getRequiredStreamState();
+                streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
                 programVfe |= streamProperties.frontEndState.isDirty();
             }
 
@@ -377,9 +378,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             }
 
             if (isPatchingVfeStateAllowed) {
-                auto finalStreamStateCopy = commandList->getFinalStreamState();
-                finalStreamStateCopy.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
-                streamProperties.frontEndState.setProperties(finalStreamStateCopy.frontEndState);
+                auto &finalStreamState = commandList->getFinalStreamState();
+                streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
             }
         }
 
@@ -510,22 +510,19 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
     }
 
     auto streamPropertiesCopy = csr->getStreamProperties();
-    auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     size_t estimatedSize = 0;
 
     for (size_t i = 0; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        auto requiredStreamStateCopy = commandList->getRequiredStreamState();
-        requiredStreamStateCopy.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
-        streamPropertiesCopy.frontEndState.setProperties(requiredStreamStateCopy.frontEndState);
+        auto &requiredStreamState = commandList->getRequiredStreamState();
+        streamPropertiesCopy.frontEndState.setProperties(requiredStreamState.frontEndState);
 
         if (isFrontEndStateDirty || streamPropertiesCopy.frontEndState.isDirty()) {
             estimatedSize += singleFrontEndCmdSize;
             isFrontEndStateDirty = false;
         }
-        auto finalStreamStateCopy = commandList->getFinalStreamState();
-        finalStreamStateCopy.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
-        streamPropertiesCopy.frontEndState.setProperties(finalStreamStateCopy.frontEndState);
+        auto &finalStreamState = commandList->getFinalStreamState();
+        streamPropertiesCopy.frontEndState.setProperties(finalStreamState.frontEndState);
     }
 
     return estimatedSize;
