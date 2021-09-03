@@ -74,7 +74,6 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
         this->receivedCreateContextId = create->ctx_id;
         this->receivedContextCreateFlags = create->flags;
-        this->receivedContextCreateExtensions = create->extensions;
         return this->storedRetVal;
     }
 
