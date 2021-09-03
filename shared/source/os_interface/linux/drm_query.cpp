@@ -66,14 +66,6 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     return false;
 }
 
-bool Drm::queryEngineInfo() {
-    return Drm::queryEngineInfo(false);
-}
-
-bool Drm::sysmanQueryEngineInfo() {
-    return Drm::queryEngineInfo(true);
-}
-
 bool Drm::queryMemoryInfo() {
     return true;
 }

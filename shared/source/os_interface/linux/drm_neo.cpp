@@ -780,4 +780,12 @@ int Drm::getTimestampFrequency(int &frequency) {
     return getParamIoctl(I915_PARAM_CS_TIMESTAMP_FREQUENCY, &frequency);
 }
 
+bool Drm::queryEngineInfo() {
+    return Drm::queryEngineInfo(false);
+}
+
+bool Drm::sysmanQueryEngineInfo() {
+    return Drm::queryEngineInfo(true);
+}
+
 } // namespace NEO

@@ -68,14 +68,6 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     return false;
 }
 
-bool Drm::queryEngineInfo() {
-    return Drm::queryEngineInfo(false);
-}
-
-bool Drm::sysmanQueryEngineInfo() {
-    return Drm::queryEngineInfo(true);
-}
-
 bool Drm::queryMemoryInfo() {
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty, length);
