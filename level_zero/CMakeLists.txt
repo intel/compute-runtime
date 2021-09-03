@@ -282,10 +282,12 @@ if(BUILD_WITH_L0)
                    $<TARGET_OBJECTS:aub_stream_all_hw>
     )
   endif()
-  target_sources(${TARGET_NAME_L0}
-                 PRIVATE
-                 $<TARGET_OBJECTS:${BUILTINS_SPIRV_LIB_NAME}>
-  )
+  if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
+    target_sources(${TARGET_NAME_L0}
+                   PRIVATE
+                   $<TARGET_OBJECTS:${BUILTINS_SPIRV_LIB_NAME}>
+    )
+  endif()
   if(NOT ${DONT_USE_PREBUILT_KERNELS_L0})
     message("Prebuilt kernels are linked to Level Zero.")
     target_sources(${TARGET_NAME_L0}

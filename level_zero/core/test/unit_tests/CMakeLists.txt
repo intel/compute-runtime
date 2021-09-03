@@ -126,10 +126,14 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_fixtures>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
-               $<TARGET_OBJECTS:${BUILTINS_SPIRV_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
 )
+if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
+  target_sources(${TARGET_NAME} PRIVATE
+                 $<TARGET_OBJECTS:${BUILTINS_SPIRV_LIB_NAME}>
+  )
+endif()
 
 set(TEST_MODULES
     ${CMAKE_CURRENT_SOURCE_DIR}/test_modules/test_kernel.cl
