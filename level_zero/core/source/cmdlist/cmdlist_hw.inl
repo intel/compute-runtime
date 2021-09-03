@@ -108,7 +108,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
     }
     this->ownedPrivateAllocations.clear();
-
+    partitionCount = 1;
     return ZE_RESULT_SUCCESS;
 }
 

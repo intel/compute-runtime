@@ -42,4 +42,12 @@ struct ImplicitScalingDispatch {
                                  uint64_t workPartitionAllocationGpuVa);
 };
 
+template <typename GfxFamily>
+struct PartitionRegisters {
+    enum {
+        wparidCCSOffset = 0x221C,
+        addressOffsetCCSOffset = 0x23B4
+    };
+};
+
 } // namespace NEO

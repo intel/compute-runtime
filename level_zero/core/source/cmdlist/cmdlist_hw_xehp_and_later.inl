@@ -228,6 +228,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  partitionCount,
                                                  internalUsage,
                                                  isCooperative);
+    this->partitionCount = std::max(partitionCount, this->partitionCount);
     if (hEvent) {
         auto event = Event::fromHandle(hEvent);
         if (partitionCount > 1) {

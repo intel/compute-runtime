@@ -106,10 +106,17 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
         timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
     }
 
-    csr->waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, this->taskCount);
-
-    if (*csr->getTagAddress() < taskCountToWait) {
-        return ZE_RESULT_NOT_READY;
+    if (partitionCount > 1) {
+        volatile uint32_t *pollAddress = csr->getTagAddress();
+        for (uint32_t i = 0; i < partitionCount; i++) {
+            csr->waitForCompletionWithTimeout(pollAddress, enableTimeout, timeoutMicroseconds, this->taskCount);
+            pollAddress += addressOffsetDwords;
+        }
+    } else {
+        csr->waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, this->taskCount);
+        if (*csr->getTagAddress() < taskCountToWait) {
+            return ZE_RESULT_NOT_READY;
+        }
     }
 
     postSyncOperations();

@@ -53,6 +53,42 @@ struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
     ze_command_list_handle_t commandLists[numCommandLists];
 };
 
+struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixture> {
+    void SetUp() override {
+        DebugManager.flags.EnableWalkerPartition.set(1);
+        numRootDevices = 1u;
+        MultiDeviceFixture::SetUp();
+
+        uint32_t deviceCount = 1;
+        ze_device_handle_t deviceHandle;
+        driverHandle->getDevice(&deviceCount, &deviceHandle);
+        device = Device::fromHandle(deviceHandle);
+        ASSERT_NE(nullptr, device);
+
+        ze_result_t returnValue;
+        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+        ASSERT_NE(nullptr, commandLists[0]);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+        ASSERT_NE(nullptr, commandLists[1]);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    }
+
+    void TearDown() override {
+        for (auto i = 0u; i < numCommandLists; i++) {
+            auto commandList = CommandList::fromHandle(commandLists[i]);
+            commandList->destroy();
+        }
+
+        MultiDeviceFixture::TearDown();
+    }
+
+    L0::Device *device = nullptr;
+    const static uint32_t numCommandLists = 2;
+    ze_command_list_handle_t commandLists[numCommandLists];
+};
+
 HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandListAddedThenProperSizeExpected) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -761,6 +797,96 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
         }
     }
     EXPECT_TRUE(tagFound);
+}
+
+HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCountWhenExecutingCmdListThenExpectMmioProgrammingAndCorrectEstimation, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using PARSE = typename FamilyType::PARSE;
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           device->getNEODevice()->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_fence_desc_t fenceDesc{};
+    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(nullptr, fence);
+    ze_fence_handle_t fenceHandle = fence->toHandle();
+
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    //1st execute call initialized pipeline
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+    size_t cmdBufferSizeWithoutMmioProgramming = usedSpaceAfter - usedSpaceBefore;
+
+    auto workPartitionAddress = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(commandLists[i]);
+        commandList->partitionCount = 2;
+    }
+
+    usedSpaceBefore = commandQueue->commandStream->getUsed();
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+    size_t cmdBufferSizeWithtMmioProgramming = usedSpaceAfter - usedSpaceBefore;
+
+    size_t expectedSizeWithMmioProgramming = cmdBufferSizeWithoutMmioProgramming + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_LOAD_REGISTER_MEM);
+    EXPECT_GE(expectedSizeWithMmioProgramming, cmdBufferSizeWithtMmioProgramming);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore), usedSpaceAfter));
+
+    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorLri);
+    auto itorLrm = find<MI_LOAD_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorLrm);
+
+    auto loadRegisterImm = static_cast<MI_LOAD_REGISTER_IMM *>(*itorLri);
+    EXPECT_EQ(0x23B4u, loadRegisterImm->getRegisterOffset());
+    EXPECT_EQ(8u, loadRegisterImm->getDataDword());
+
+    auto loadRegisterMem = static_cast<MI_LOAD_REGISTER_MEM *>(*itorLrm);
+    EXPECT_EQ(0x221Cu, loadRegisterMem->getRegisterAddress());
+    EXPECT_EQ(workPartitionAddress, loadRegisterMem->getMemoryAddress());
+
+    auto pipeControlList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    uint32_t foundPostSyncPipeControl = 0u;
+    for (size_t i = 0; i < pipeControlList.size(); i++) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlList[i]);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
+            foundPostSyncPipeControl++;
+        }
+    }
+    EXPECT_EQ(2u, foundPostSyncPipeControl);
+
+    fence->destroy();
+    commandQueue->destroy();
 }
 
 } // namespace ult

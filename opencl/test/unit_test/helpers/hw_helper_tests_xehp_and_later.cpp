@@ -405,3 +405,42 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGettingB
     EXPECT_EQ(messageExtDescriptor.getBindlessSurfaceOffsetToPatch(), value);
     EXPECT_EQ(0x200u, value);
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenPostSyncPipeControlWhenSettingWorkloadPartitionFlagThenExpectPipeControlFlagSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    uint8_t buffer[128] = {};
+    LinearStream stream(buffer, sizeof(buffer));
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+    uint64_t gpuAddress = 0xBADA550;
+    uint64_t data = 0xABCDEF;
+
+    PipeControlArgs args;
+    args.workloadPartitionOffset = true;
+
+    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
+        stream,
+        POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        gpuAddress,
+        data,
+        hardwareInfo,
+        args);
+
+    GenCmdList cmdList;
+    FamilyType::PARSE::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed());
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    bool foundPostSyncPipeControl = false;
+    for (size_t i = 0; i < pipeControls.size(); i++) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(static_cast<uint32_t>(gpuAddress), pipeControl->getAddress());
+            EXPECT_EQ(data, pipeControl->getImmediateData());
+            EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
+            foundPostSyncPipeControl = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(foundPostSyncPipeControl);
+}

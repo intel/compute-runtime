@@ -845,5 +845,22 @@ HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectVa
     }
 }
 
+HWTEST_F(CommandListCreate, whenCommandListIsResetThenPartitionCountIsReversedToOne) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
+                                                                     device,
+                                                                     NEO::EngineGroupType::Compute,
+                                                                     0u,
+                                                                     returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    commandList->partitionCount = 2;
+
+    returnValue = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(1u, commandList->partitionCount);
+}
+
 } // namespace ult
 } // namespace L0

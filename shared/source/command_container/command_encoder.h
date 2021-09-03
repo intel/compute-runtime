@@ -195,10 +195,12 @@ struct EncodeSetMMIO {
     static const size_t sizeREG = sizeof(MI_LOAD_REGISTER_REG);
 
     static void encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap);
-
     static void encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address);
-
     static void encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset);
+
+    static void encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap);
+    static void encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address);
+    static void encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset);
 
     static bool isRemapApplicable(uint32_t offset);
     static void remapOffset(MI_LOAD_REGISTER_MEM *pMiLoadReg);

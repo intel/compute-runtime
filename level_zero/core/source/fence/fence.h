@@ -47,8 +47,13 @@ struct Fence : _ze_fence_handle_t {
         return allocation->getGpuAddress();
     }
 
+    void setPartitionCount(uint32_t newPartitionCount) {
+        partitionCount = newPartitionCount;
+    }
+
   protected:
     NEO::GraphicsAllocation *allocation = nullptr;
+    uint32_t partitionCount = 1;
 };
 
 struct FenceImp : public Fence {

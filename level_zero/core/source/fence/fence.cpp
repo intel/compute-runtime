@@ -37,9 +37,15 @@ ze_result_t FenceImp::queryStatus() {
         csr->downloadAllocations();
     }
 
-    uint64_t *hostAddr = static_cast<uint64_t *>(allocation->getUnderlyingBuffer());
+    void *hostAddr = static_cast<uint64_t *>(allocation->getUnderlyingBuffer());
     uint32_t queryVal = Fence::STATE_CLEARED;
-    memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), hostAddr, sizeof(uint32_t));
+        if (queryVal == Fence::STATE_CLEARED) {
+            break;
+        }
+        hostAddr = ptrOffset(hostAddr, CommandQueueImp::addressOffset);
+    }
     return queryVal == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
 }
 

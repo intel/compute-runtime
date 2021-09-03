@@ -1529,6 +1529,12 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         tagAddress = new uint32_t;
     }
 
+    bool waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+        enableTimeoutSet = enableTimeout;
+        waitForComplitionCalledTimes++;
+        return true;
+    }
+
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
         enableTimeoutSet = enableTimeout;
         waitForComplitionCalledTimes++;
@@ -1619,6 +1625,32 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
     EXPECT_EQ(2u, csr->waitForComplitionCalledTimes);
     EXPECT_EQ(1u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_FALSE(csr->enableTimeoutSet);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSynchronizeThenExpectTheSameNumberCsrSynchronizeCalls) {
+    auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                          device->getNEODevice()->getDeviceBitfield()));
+    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+
+    commandQueue->partitionCount = 2;
+    uint64_t timeout = std::numeric_limits<uint64_t>::max();
+    commandQueue->synchronize(timeout);
+
+    EXPECT_EQ(2u, csr->waitForComplitionCalledTimes);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }

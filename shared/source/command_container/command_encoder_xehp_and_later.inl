@@ -586,9 +586,9 @@ bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
     return false;
 }
 
-template <typename GfxFamily>
-void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                                            bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
+template <typename Family>
+void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
+                                                         bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
     Gmm *gmm = allocation ? allocation->getDefaultGmm() : nullptr;
     uint32_t compressionFormat = 0;
 
@@ -627,7 +627,7 @@ void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *sur
         surfaceState->setDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
     }
 
-    if (EncodeSurfaceState<GfxFamily>::isAuxModeEnabled(surfaceState, gmm)) {
+    if (EncodeSurfaceState<Family>::isAuxModeEnabled(surfaceState, gmm)) {
         auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();
         compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
 

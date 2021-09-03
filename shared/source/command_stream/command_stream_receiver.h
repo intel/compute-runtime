@@ -158,6 +158,7 @@ class CommandStreamReceiver {
 
     virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
     virtual bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
+    MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
     virtual void downloadAllocations(){};
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
@@ -292,7 +293,7 @@ class CommandStreamReceiver {
     LinearStream commandStream;
 
     // offset for debug state must be 8 bytes, if only 4 bytes are used tag writes overwrite it
-    const uint64_t debugPauseStateAddressOffset = 8;
+    const uint64_t debugPauseStateAddressOffset = MemoryConstants::cacheLineSize;
     uint64_t totalMemoryUsed = 0u;
 
     volatile uint32_t *tagAddress = nullptr;

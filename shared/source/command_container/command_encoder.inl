@@ -297,30 +297,45 @@ void EncodeMath<Family>::bitwiseOr(CommandContainer &container,
 
 template <typename Family>
 inline void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap) {
-    LriHelper<Family>::program(container.getCommandStream(),
+    EncodeSetMMIO<Family>::encodeIMM(*container.getCommandStream(), offset, data, remap);
+}
+
+template <typename Family>
+inline void EncodeSetMMIO<Family>::encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address) {
+    EncodeSetMMIO<Family>::encodeMEM(*container.getCommandStream(), offset, address);
+}
+
+template <typename Family>
+inline void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset) {
+    EncodeSetMMIO<Family>::encodeREG(*container.getCommandStream(), dstOffset, srcOffset);
+}
+
+template <typename Family>
+inline void EncodeSetMMIO<Family>::encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap) {
+    LriHelper<Family>::program(&cmdStream,
                                offset,
                                data,
                                remap);
 }
 
 template <typename Family>
-void EncodeSetMMIO<Family>::encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address) {
+void EncodeSetMMIO<Family>::encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address) {
     MI_LOAD_REGISTER_MEM cmd = Family::cmdInitLoadRegisterMem;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
     remapOffset(&cmd);
 
-    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_LOAD_REGISTER_MEM>();
+    auto buffer = cmdStream.getSpaceForCmd<MI_LOAD_REGISTER_MEM>();
     *buffer = cmd;
 }
 
 template <typename Family>
-void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset) {
+void EncodeSetMMIO<Family>::encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset) {
     MI_LOAD_REGISTER_REG cmd = Family::cmdInitLoadRegisterReg;
     cmd.setSourceRegisterAddress(srcOffset);
     cmd.setDestinationRegisterAddress(dstOffset);
     remapOffset(&cmd);
-    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
+    auto buffer = cmdStream.getSpaceForCmd<MI_LOAD_REGISTER_REG>();
     *buffer = cmd;
 }
 
@@ -508,8 +523,8 @@ bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDes
     return false;
 }
 
-template <typename GfxFamily>
-void EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo) {}
+template <typename Family>
+void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
 void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress) {
@@ -706,12 +721,12 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer
     *buffer = cmd;
 }
 
-template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData, MiFlushArgs &args) {
+template <typename Family>
+void EncodeMiFlushDW<Family>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData, MiFlushArgs &args) {
     programMiFlushDwWA(commandStream);
 
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
-    MI_FLUSH_DW miFlush = GfxFamily::cmdInitMiFlushDw;
+    MI_FLUSH_DW miFlush = Family::cmdInitMiFlushDw;
     if (args.commandWithPostSync) {
         auto postSyncType = args.timeStampOperation ? MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER : MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD;
         miFlush.setPostSyncOperation(postSyncType);
@@ -724,16 +739,16 @@ void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, u
     *miFlushDwCmd = miFlush;
 }
 
-template <typename GfxFamily>
-size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() {
-    return sizeof(typename GfxFamily::MI_FLUSH_DW) + EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize();
+template <typename Family>
+size_t EncodeMiFlushDW<Family>::getMiFlushDwCmdSizeForDataWrite() {
+    return sizeof(typename Family::MI_FLUSH_DW) + EncodeMiFlushDW<Family>::getMiFlushDwWaSize();
 }
 
-template <typename GfxFamily>
-inline void EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo) {}
+template <typename Family>
+inline void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo) {}
 
-template <typename GfxFamily>
-inline size_t EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(size_t size) { return 0u; }
+template <typename Family>
+inline size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size) { return 0u; }
 
 template <typename Family>
 void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {

@@ -62,6 +62,9 @@ struct CommandQueueImp : public CommandQueue {
         MemoryConstants::cacheLineSize +
         NEO::CSRequirements::csOverfetchSize;
 
+    static constexpr uint32_t addressOffsetDwords = 2u;
+    static constexpr uint32_t addressOffset = sizeof(uint32_t) * addressOffsetDwords;
+
     CommandQueueImp() = delete;
     CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc);
 

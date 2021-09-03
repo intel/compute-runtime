@@ -186,6 +186,7 @@ template <>
 void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
     pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
+    pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);
 
     if (DebugManager.flags.FlushAllCaches.get()) {
         pipeControl.setHdcPipelineFlush(true);
