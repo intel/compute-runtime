@@ -94,6 +94,41 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
     csr.blitterDirectSubmission.release();
 }
 
+HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenMakingResourcesResidentThenCorrectContextIsUsed) {
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto mockMemoryOperations = std::make_unique<MockMemoryOperations>();
+
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(mockMemoryOperations.get());
+
+    std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 2,
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                         PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext2.get());
+
+    csr.directSubmission.reset(&directSubmission);
+    csr.setupContext(*osContext2.get());
+
+    bool ret = directSubmission.initialize(true);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
+    GraphicsAllocation *alloc = directSubmission.ringCommandStream.getGraphicsAllocation();
+
+    directSubmission.callBaseResident = true;
+
+    DirectSubmissionAllocations allocs;
+    allocs.push_back(alloc);
+
+    directSubmission.makeResourcesResident(allocs);
+
+    EXPECT_EQ(2u, mockMemoryOperations->makeResidentContextId);
+
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
+    csr.directSubmission.release();
+}
+
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStartedThenExpectAllocationsCreatedAndCommandsDispatched) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());

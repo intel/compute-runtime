@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "gmock/gmock.h"
 
@@ -20,6 +21,8 @@ class MockMemoryOperationsHandler : public MemoryOperationsHandler {
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override { return MemoryOperationsStatus::UNSUPPORTED; }
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::UNSUPPORTED; }
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::UNSUPPORTED; }
 };
 
 class MockMemoryOperationsHandlerTests : public MemoryOperationsHandler {
@@ -31,6 +34,10 @@ class MockMemoryOperationsHandlerTests : public MemoryOperationsHandler {
                 (Device * device, GraphicsAllocation &gfxAllocation), (override));
     MOCK_METHOD(MemoryOperationsStatus, isResident,
                 (Device * device, GraphicsAllocation &gfxAllocation), (override));
+    MOCK_METHOD(MemoryOperationsStatus, makeResidentWithinOsContext,
+                (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable), (override));
+    MOCK_METHOD(MemoryOperationsStatus, evictWithinOsContext,
+                (OsContext * osContext, GraphicsAllocation &gfxAllocation), (override));
 };
 
 class MockMemoryOperations : public MemoryOperationsHandler {
@@ -49,8 +56,21 @@ class MockMemoryOperations : public MemoryOperationsHandler {
         return MemoryOperationsStatus::SUCCESS;
     }
 
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
+        makeResidentCalledCount++;
+        if (osContext) {
+            makeResidentContextId = osContext->getContextId();
+        }
+        return MemoryOperationsStatus::SUCCESS;
+    }
+    MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {
+        evictCalledCount++;
+        return MemoryOperationsStatus::SUCCESS;
+    }
+
     int makeResidentCalledCount = 0;
     int evictCalledCount = 0;
+    uint32_t makeResidentContextId = std::numeric_limits<uint32_t>::max();
 };
 
 } // namespace NEO

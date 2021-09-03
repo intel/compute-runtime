@@ -191,7 +191,7 @@ TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueTh
 
     std::string output = testing::internal::GetCapturedStdout();
     auto idx = output.find("drm_i915_gem_execbuffer2 {");
-    size_t expectedValue = 0;
+    size_t expectedValue = 29;
     EXPECT_EQ(expectedValue, idx);
 
     idx = output.find("Buffer Object = { handle: BO-");
@@ -228,7 +228,7 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
 
     std::string output = testing::internal::GetCapturedStdout();
     auto idx = output.find("drm_i915_gem_execbuffer2 {");
-    size_t expectedValue = 0;
+    size_t expectedValue = 29;
     EXPECT_EQ(expectedValue, idx);
 }
 

@@ -56,6 +56,14 @@ MemoryOperationsStatus AubMemoryOperationsHandler::evict(Device *device, Graphic
     }
 }
 
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
+    return makeResident(nullptr, gfxAllocations);
+}
+
+MemoryOperationsStatus AubMemoryOperationsHandler::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
+    return evict(nullptr, gfxAllocation);
+}
+
 MemoryOperationsStatus AubMemoryOperationsHandler::isResident(Device *device, GraphicsAllocation &gfxAllocation) {
     auto lock = acquireLock(resourcesLock);
     auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), &gfxAllocation);

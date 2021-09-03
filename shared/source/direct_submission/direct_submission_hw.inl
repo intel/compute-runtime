@@ -106,7 +106,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::makeResourcesResident(DirectSubmissionAllocations &allocations) {
     auto memoryInterface = this->device.getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto ret = memoryInterface->makeResident(&device, ArrayRef<GraphicsAllocation *>(allocations)) == MemoryOperationsStatus::SUCCESS;
+
+    auto ret = memoryInterface->makeResidentWithinOsContext(&this->osContext, ArrayRef<GraphicsAllocation *>(allocations), false) == MemoryOperationsStatus::SUCCESS;
 
     return ret;
 }

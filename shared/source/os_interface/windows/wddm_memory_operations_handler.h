@@ -24,6 +24,13 @@ class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
 
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
+        return makeResident(nullptr, gfxAllocations);
+    }
+    MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {
+        return evict(nullptr, gfxAllocation);
+    }
+
   protected:
     Wddm *wddm;
     std::unique_ptr<WddmResidentAllocationsContainer> residentAllocations;

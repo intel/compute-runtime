@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/stackvec.h"
@@ -141,6 +142,9 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.rsvd1 = drmContextId;
 
     if (DebugManager.flags.PrintExecutionBuffer.get()) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintExecutionBuffer.get(), stdout, "Exec called with drmVmId = %u\n",
+                           static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0);
+
         printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
 
@@ -171,7 +175,10 @@ int BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
     if (!this->bindInfo[contextId][vmHandleId]) {
         retVal = this->drm->bindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
+                           this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+
         if (!retVal) {
             this->bindInfo[contextId][vmHandleId] = true;
         }
@@ -185,7 +192,10 @@ int BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
     if (this->bindInfo[contextId][vmHandleId]) {
         retVal = this->drm->unbindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
+                           this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+
         if (!retVal) {
             this->bindInfo[contextId][vmHandleId] = false;
         }

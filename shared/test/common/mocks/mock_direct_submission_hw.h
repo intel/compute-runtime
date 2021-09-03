@@ -9,7 +9,7 @@
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/direct_submission_hw_diagnostic_mode.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
@@ -73,6 +73,9 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     }
 
     bool makeResourcesResident(DirectSubmissionAllocations &allocations) override {
+        if (callBaseResident) {
+            return BaseClass::makeResourcesResident(allocations);
+        }
         return true;
     }
 
@@ -122,5 +125,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     bool allocateOsResourcesReturn = true;
     bool submitReturn = true;
     bool handleResidencyReturn = true;
+    bool callBaseResident = false;
 };
 } // namespace NEO
