@@ -81,6 +81,7 @@ target_include_directories(${TARGET_NAME}
                            PRIVATE
                            $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${IGC_COMMON_PARENT_DIR}
 )
 
 if(UNIX)
