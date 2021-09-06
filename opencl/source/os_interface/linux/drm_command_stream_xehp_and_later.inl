@@ -51,19 +51,28 @@ void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batch
 }
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue) {
+int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue, uint32_t partitionCount, uint32_t offsetSize) {
     int ret = 0;
+    StackVec<uint32_t, 32> ctxIds;
     uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
     if (useContextForUserFenceWait) {
         for (auto tileIterator = 0u; tileIterator < this->osContext->getDeviceBitfield().size(); tileIterator++) {
             uint32_t ctxId = 0u;
             if (this->osContext->getDeviceBitfield().test(tileIterator)) {
                 ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[tileIterator];
-                ret |= this->drm->waitUserFence(ctxId, tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout, 0u);
+                ctxIds.push_back(ctxId);
             }
         }
+        UNRECOVERABLE_IF(ctxIds.size() != partitionCount);
+        for (uint32_t i = 0; i < partitionCount; i++) {
+            ret |= this->drm->waitUserFence(ctxIds[i], tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout, 0u);
+            tagAddress += offsetSize;
+        }
     } else {
-        ret = this->drm->waitUserFence(0u, tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout, 0u);
+        for (uint32_t i = 0; i < partitionCount; i++) {
+            ret |= this->drm->waitUserFence(0u, tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout, 0u);
+            tagAddress += offsetSize;
+        }
     }
 
     return ret;

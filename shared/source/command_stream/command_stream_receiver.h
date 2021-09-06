@@ -124,7 +124,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL volatile uint32_t *getTagAddress() const { return tagAddress; }
     uint64_t getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + debugPauseStateAddressOffset; }
 
-    virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; };
+    virtual bool waitForFlushStamp(FlushStamp &flushStampToWait, uint32_t partitionCount, uint32_t offsetSize) { return true; };
 
     uint32_t peekTaskCount() const { return taskCount; }
 
@@ -156,9 +156,9 @@ class CommandStreamReceiver {
     void requestStallingPipeControlOnNextFlush() { stallingPipeControlOnNextFlushRequired = true; }
     bool isStallingPipeControlOnNextFlushRequired() const { return stallingPipeControlOnNextFlushRequired; }
 
-    virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
+    virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) = 0;
     virtual bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
-    MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
+    MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait, uint32_t partitionCount, uint32_t offsetSize);
     virtual void downloadAllocations(){};
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }

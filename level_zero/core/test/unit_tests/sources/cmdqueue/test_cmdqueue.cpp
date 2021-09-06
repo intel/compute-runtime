@@ -1529,8 +1529,10 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         tagAddress = new uint32_t;
     }
 
-    bool waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+    bool waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait, uint32_t partitionCount, uint32_t offsetSize) override {
         enableTimeoutSet = enableTimeout;
+        partitionCountSet = partitionCount;
+        offsetSizeSet = offsetSize;
         waitForComplitionCalledTimes++;
         return true;
     }
@@ -1541,9 +1543,9 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         return true;
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) override {
         waitForTaskCountWithKmdNotifyFallbackCalled++;
-        NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
+        NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode, partitionCount, offsetSize);
     }
 
     volatile uint32_t *getTagAddress() const override {
@@ -1553,6 +1555,8 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     uint32_t *tagAddress;
     uint32_t waitForComplitionCalledTimes = 0;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
+    uint32_t partitionCountSet = 0;
+    uint32_t offsetSizeSet = 0;
     bool enableTimeoutSet = false;
 };
 
@@ -1650,9 +1654,84 @@ HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSync
     uint64_t timeout = std::numeric_limits<uint64_t>::max();
     commandQueue->synchronize(timeout);
 
-    EXPECT_EQ(2u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(2u, csr->partitionCountSet);
+    EXPECT_EQ(8u, csr->offsetSizeSet);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+template <typename GfxFamily>
+struct TestCmdQueueCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
+    TestCmdQueueCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
+        : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
+    }
+    MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+    MOCK_METHOD6(waitForCompletionWithTimeout, bool(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait, uint32_t partitionCount, uint32_t offsetSize));
+};
+
+HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {
+    auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                            device->getNEODevice()->getDeviceBitfield()));
+    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
+                                                   ::testing::_,
+                                                   ::testing::_))
+        .Times(1)
+        .WillOnce(::testing::Return(false));
+
+    uint64_t timeout = std::numeric_limits<uint64_t>::max();
+    returnValue = commandQueue->synchronize(timeout);
+    EXPECT_EQ(returnValue, ZE_RESULT_NOT_READY);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {
+    auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                            device->getNEODevice()->getDeviceBitfield()));
+    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
+                                                   ::testing::_,
+                                                   ::testing::_,
+                                                   ::testing::_,
+                                                   ::testing::_,
+                                                   ::testing::_))
+        .Times(1)
+        .WillOnce(::testing::Return(false));
+
+    commandQueue->partitionCount = 2;
+    uint64_t timeout = std::numeric_limits<uint64_t>::max();
+    returnValue = commandQueue->synchronize(timeout);
+    EXPECT_EQ(returnValue, ZE_RESULT_NOT_READY);
+
+    commandQueue->destroy();
 }
 
 struct MemoryManagerCommandQueueCreateNegativeTest : public NEO::MockMemoryManager {

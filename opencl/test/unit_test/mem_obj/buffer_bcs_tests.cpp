@@ -69,11 +69,14 @@ struct BcsBufferTests : public ::testing::Test {
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
         void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                   bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+                                                   bool useQuickKmdSleep, bool forcePowerSavingMode,
+                                                   uint32_t partitionCount, uint32_t offsetSize) override {
             EXPECT_EQ(this->latestFlushedTaskCount, taskCountToWait);
             EXPECT_EQ(0u, flushStampToWait);
             EXPECT_FALSE(useQuickKmdSleep);
             EXPECT_FALSE(forcePowerSavingMode);
+            EXPECT_EQ(1u, partitionCount);
+            EXPECT_EQ(0u, offsetSize);
             waitForTaskCountWithKmdNotifyFallbackCalled++;
         }
 

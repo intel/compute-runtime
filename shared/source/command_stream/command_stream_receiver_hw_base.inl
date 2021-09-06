@@ -865,7 +865,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) {
     updateTagFromWait();
 
     int64_t waitTimeout = 0;
@@ -877,11 +877,20 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
                        "\nWaiting for task count %u at location %p. Current value: %u\n",
                        taskCountToWait, getTagAddress(), *getTagAddress());
 
-    auto status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
+    bool status;
+    if (partitionCount > 1) {
+        status = waitForCompletionWithTimeout(getTagAddress(), enableTimeout, waitTimeout, taskCountToWait, partitionCount, offsetSize);
+    } else {
+        status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
+    }
     if (!status) {
-        waitForFlushStamp(flushStampToWait);
+        waitForFlushStamp(flushStampToWait, partitionCount, offsetSize);
         //now call blocking wait, this is to ensure that task count is reached
-        waitForCompletionWithTimeout(false, 0, taskCountToWait);
+        if (partitionCount > 1) {
+            status = waitForCompletionWithTimeout(getTagAddress(), false, 0, taskCountToWait, partitionCount, offsetSize);
+        } else {
+            status = waitForCompletionWithTimeout(false, 0, taskCountToWait);
+        }
     }
     UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);
 
@@ -1116,7 +1125,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
     lock.unlock();
     if (blocking) {
-        waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
+        waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false, 1, 0);
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
     }
 

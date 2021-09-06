@@ -361,7 +361,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKm
 
     tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};
 
-    tbxCsr.waitForTaskCountWithKmdNotifyFallback(0u, 0u, false, false);
+    tbxCsr.waitForTaskCountWithKmdNotifyFallback(0u, 0u, false, false, 1, 0);
 
     std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &allocation1, &allocation2, &allocation3};
     EXPECT_EQ(expectedDownloadedAllocations, tbxCsr.downloadedAllocations);

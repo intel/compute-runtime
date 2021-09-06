@@ -27,7 +27,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
     void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void processEviction() override;
-    bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
+    bool waitForFlushStamp(FlushStamp &flushStampToWait, uint32_t partitionCount, uint32_t offsetSize) override;
 
     WddmMemoryManager *getMemoryManager() const;
     Wddm *peekWddm() const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,8 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     }
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                               bool useQuickKmdSleep, bool forcePowerSavingMode) override;
+                                               bool useQuickKmdSleep, bool forcePowerSavingMode,
+                                               uint32_t partitionCount, uint32_t offsetSize) override;
 
     size_t getPreferredTagPoolSize() const override { return 1; }
 

@@ -61,7 +61,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitFo
         .Times(1)
         .WillRepeatedly(copyIoctlParam(&calledWait));
 
-    csr->waitForFlushStamp(handleToWait);
+    csr->waitForFlushStamp(handleToWait, 1, 0);
     EXPECT_TRUE(memcmp(&expectedWait, &calledWait, sizeof(drm_i915_gem_wait)) == 0);
 }
 

@@ -434,6 +434,24 @@ HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideDisableWhenComputeSup
     EXPECT_FALSE(startInContext);
 }
 
+HWTEST_F(UltCommandStreamReceiverTest, givenSinglePartitionWhenCallingWaitKmdNotifyThenExpectImplicitBusyLoopWaitCalled) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
+    commandStreamReceiver.returnWaitForCompletionWithTimeout = false;
+
+    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false, 1, 0);
+    EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenMultiplePartitionsWhenCallingWaitKmdNotifyThenExpectExplicitBusyLoopWaitCalled) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
+    commandStreamReceiver.returnWaitForCompletionWithTimeout = false;
+
+    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false, 2, 8);
+    EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountExplicitCalled);
+}
+
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTests;
 
 HWTEST_F(CommandStreamReceiverFlushTests, WhenAddingBatchBufferEndThenBatchBufferEndIsAppendedCorrectly) {

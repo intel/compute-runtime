@@ -579,19 +579,24 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
         void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                   bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+                                                   bool useQuickKmdSleep, bool forcePowerSavingMode,
+                                                   uint32_t partitionCount, uint32_t offsetSize) override {
             waitForTaskCountWithKmdNotifyFallbackCalled++;
             taskCountToWaitPassed = taskCountToWait;
             flushStampToWaitPassed = flushStampToWait;
             useQuickKmdSleepPassed = useQuickKmdSleep;
             forcePowerSavingModePassed = forcePowerSavingMode;
+            partitionCountPassed = partitionCount;
+            offsetSizePassed = offsetSize;
         }
 
-        uint32_t taskCountToWaitPassed = 0;
         FlushStamp flushStampToWaitPassed = 0;
+        uint32_t taskCountToWaitPassed = 0;
+        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
+        uint32_t partitionCountPassed = 0;
+        uint32_t offsetSizePassed = 0;
         bool useQuickKmdSleepPassed = false;
         bool forcePowerSavingModePassed = false;
-        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     };
 
     auto myMockCsr = std::make_unique<::testing::NiceMock<MyMockCsr>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -625,6 +630,8 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
     EXPECT_EQ(myMockCsr->flushStamp->peekStamp(), myMockCsr->flushStampToWaitPassed);
     EXPECT_FALSE(myMockCsr->useQuickKmdSleepPassed);
     EXPECT_FALSE(myMockCsr->forcePowerSavingModePassed);
+    EXPECT_EQ(1u, myMockCsr->partitionCountPassed);
+    EXPECT_EQ(0u, myMockCsr->offsetSizePassed);
 }
 
 HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {

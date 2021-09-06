@@ -257,10 +257,10 @@ void CommandStreamReceiver::cleanupResources() {
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
-    return waitForCompletionWithTimeout(getTagAddress(), enableTimeout, timeoutMicroseconds, taskCountToWait);
+    return waitForCompletionWithTimeout(getTagAddress(), enableTimeout, timeoutMicroseconds, taskCountToWait, 1u, 0u);
 }
 
-bool CommandStreamReceiver::waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+bool CommandStreamReceiver::waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait, uint32_t partitionCount, uint32_t offsetSize) {
     std::chrono::high_resolution_clock::time_point time1, time2;
     int64_t timeDiff = 0;
 
@@ -275,22 +275,33 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(volatile uint32_t *poll
         }
     }
 
+    volatile uint32_t *partitionAddress = pollAddress;
+
     time1 = std::chrono::high_resolution_clock::now();
-    while (*pollAddress < taskCountToWait && timeDiff <= timeoutMicroseconds) {
-        if (WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
-            break;
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        while (*partitionAddress < taskCountToWait && timeDiff <= timeoutMicroseconds) {
+            if (WaitUtils::waitFunction(partitionAddress, taskCountToWait)) {
+                break;
+            }
+
+            if (enableTimeout) {
+                time2 = std::chrono::high_resolution_clock::now();
+                timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count();
+            }
         }
 
-        if (enableTimeout) {
-            time2 = std::chrono::high_resolution_clock::now();
-            timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count();
-        }
+        partitionAddress = ptrOffset(partitionAddress, offsetSize);
     }
 
-    if (*pollAddress >= taskCountToWait) {
-        return true;
+    partitionAddress = pollAddress;
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        if (*partitionAddress < taskCountToWait) {
+            return false;
+        }
+
+        partitionAddress = ptrOffset(partitionAddress, offsetSize);
     }
-    return false;
+    return true;
 }
 
 void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {

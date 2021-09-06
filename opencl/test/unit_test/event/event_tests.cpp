@@ -1479,12 +1479,14 @@ TEST_F(EventTest, GivenCompletedEventWhenAddingChildThenNumEventsBlockingThisIsZ
     }
 }
 
+template <typename GfxFamily>
+struct TestEventCsr : public UltCommandStreamReceiver<GfxFamily> {
+    TestEventCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
+        : UltCommandStreamReceiver<GfxFamily>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
+    MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+};
+
 HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
-    struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
-        MyCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
-            : UltCommandStreamReceiver<FamilyType>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
-        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
-    };
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();
     localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
     localHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = true;
@@ -1493,7 +1495,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
 
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&localHwInfo);
 
-    auto csr = new ::testing::NiceMock<MyCsr>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    auto csr = new ::testing::NiceMock<TestEventCsr<FamilyType>>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(csr);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
@@ -1508,11 +1510,6 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
 }
 
 HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
-    struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
-        MyCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
-            : UltCommandStreamReceiver<FamilyType>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
-        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
-    };
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();
     localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
     localHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = true;
@@ -1522,7 +1519,7 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
 
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&localHwInfo);
 
-    auto csr = new ::testing::NiceMock<MyCsr>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    auto csr = new ::testing::NiceMock<TestEventCsr<FamilyType>>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(csr);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
