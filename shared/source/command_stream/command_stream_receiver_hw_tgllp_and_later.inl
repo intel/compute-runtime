@@ -19,9 +19,27 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
         this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
 
+        if (DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.get()) {
+            auto pPipeControlSpace = stream.getSpaceForCmd<PIPE_CONTROL>();
+
+            auto pipeControl = GfxFamily::cmdInitPipeControl;
+            pipeControl.setHdcPipelineFlush(true);
+            pipeControl.setAmfsFlushEnable(true);
+            pipeControl.setCommandStreamerStallEnable(true);
+            pipeControl.setInstructionCacheInvalidateEnable(true);
+            pipeControl.setTextureCacheInvalidationEnable(true);
+            pipeControl.setDcFlushEnable(true);
+            pipeControl.setConstantCacheInvalidationEnable(true);
+            pipeControl.setStateCacheInvalidationEnable(true);
+
+            *pPipeControlSpace = pipeControl;
+        }
+
         auto stateComputeMode = GfxFamily::cmdInitStateComputeMode;
-        EncodeStates<GfxFamily>::adjustStateComputeMode(stream, dispatchFlags.numGrfRequired, &stateComputeMode,
-                                                        dispatchFlags.requiresCoherency, this->requiredThreadArbitrationPolicy, hwInfo);
+        StreamProperties properties{};
+        properties.stateComputeMode.setProperties(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
+                                                  this->requiredThreadArbitrationPolicy);
+        EncodeComputeMode<GfxFamily>::adjustComputeMode(stream, &stateComputeMode, properties.stateComputeMode, hwInfo);
 
         if (csrSizeRequestFlags.hasSharedHandles) {
             auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();

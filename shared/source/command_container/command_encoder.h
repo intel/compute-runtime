@@ -105,9 +105,6 @@ struct EncodeStates {
                                      BindlessHeapsHelper *bindlessHeapHelper,
                                      const HardwareInfo &hwInfo);
 
-    static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
-                                       bool requiresCoherency, uint32_t threadArbitrationPolicy, const HardwareInfo &hwInfo);
-
     static size_t getAdjustStateComputeModeSize();
 };
 

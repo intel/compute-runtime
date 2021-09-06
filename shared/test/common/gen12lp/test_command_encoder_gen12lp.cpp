@@ -20,7 +20,7 @@ using namespace NEO;
 
 using CommandEncoderTest = Test<DeviceFixture>;
 
-GEN12LPTEST_F(CommandEncoderTest, givenAdjustStateComputeModeThenStateComputeModeShowsNonCoherencySet) {
+GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeModeShowsNonCoherencySet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
@@ -32,7 +32,10 @@ GEN12LPTEST_F(CommandEncoderTest, givenAdjustStateComputeModeThenStateComputeMod
     auto usedSpaceBefore = cmdContainer.getCommandStream()->getUsed();
 
     // Adjust the State Compute Mode which sets FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
-    EncodeStates<FamilyType>::adjustStateComputeMode(*cmdContainer.getCommandStream(), cmdContainer.lastSentNumGrfRequired, nullptr, false, 0, *defaultHwInfo);
+    StreamProperties properties{};
+    properties.stateComputeMode.setProperties(false, cmdContainer.lastSentNumGrfRequired, 0);
+    NEO::EncodeComputeMode<FamilyType>::adjustComputeMode(*cmdContainer.getCommandStream(), nullptr,
+                                                          properties.stateComputeMode, *defaultHwInfo);
 
     auto usedSpaceAfter = cmdContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
