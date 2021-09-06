@@ -10,6 +10,7 @@ set(IGDRCL_SRCS_tests_command_queue
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_operations_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/csr_selection_args_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_barrier_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_command_without_kernel_tests.cpp

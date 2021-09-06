@@ -36,8 +36,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     cl_event *event) {
 
     const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
-    auto blitAllowed = blitEnqueueAllowed(cmdType);
-    auto &csr = getCommandStreamReceiver(blitAllowed);
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, buffer, {}, device->getRootDeviceIndex(), &size};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
     if (nullptr == mapAllocation) {
         notifyEnqueueReadBuffer(buffer, !!blockingRead, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
@@ -128,7 +129,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, ptr, size, MemoryConstants::pageSize, MemoryConstants::pageSize);
         }
     }
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, blitAllowed);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
 
     return CL_SUCCESS;
 }

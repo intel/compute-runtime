@@ -40,9 +40,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    cl_command_type cmdType = CL_COMMAND_READ_IMAGE;
-    auto blitAllowed = blitEnqueueAllowed(cmdType) && blitEnqueueImageAllowed(origin, region, *srcImage);
-    auto &csr = getCommandStreamReceiver(blitAllowed);
+    constexpr cl_command_type cmdType = CL_COMMAND_READ_IMAGE;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, srcImage, {}, device->getRootDeviceIndex(), region, origin, nullptr};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
     if (nullptr == mapAllocation) {
         notifyEnqueueReadImage(srcImage, static_cast<bool>(blockingRead), EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
@@ -105,7 +106,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, blitAllowed);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
 
     if (context->isProvidingPerformanceHints()) {
         if (!isL3Capable(ptr, hostPtrSize)) {

@@ -34,7 +34,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    auto cmdType = CL_COMMAND_WRITE_IMAGE;
+    constexpr cl_command_type cmdType = CL_COMMAND_WRITE_IMAGE;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, nullptr, dstImage, device->getRootDeviceIndex(), region, nullptr, origin};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
     auto isMemTransferNeeded = true;
 
     if (dstImage->isMemObjZeroCopy()) {
@@ -54,7 +58,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&dstImgSurf, nullptr};
-    auto blitAllowed = blitEnqueueAllowed(cmdType) && blitEnqueueImageAllowed(origin, region, *dstImage);
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
@@ -66,7 +69,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         if (region[0] != 0 &&
             region[1] != 0 &&
             region[2] != 0) {
-            auto &csr = getCommandStreamReceiver(blitAllowed);
             bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
@@ -94,7 +96,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     auto eBuiltInOps = EBuiltInOps::CopyBufferToImage3d;
     MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, blitAllowed);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_IMAGE_REQUIRES_COPY_DATA, static_cast<cl_mem>(dstImage));

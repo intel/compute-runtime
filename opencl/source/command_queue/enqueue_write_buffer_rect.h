@@ -34,6 +34,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     const cl_event *eventWaitList,
     cl_event *event) {
     const cl_command_type cmdType = CL_COMMAND_WRITE_BUFFER_RECT;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, buffer, {}, device->getRootDeviceIndex(), region};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
     auto isMemTransferNeeded = true;
 
     if (buffer->isMemObjZeroCopy()) {
@@ -58,12 +62,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     MemObjSurface dstBufferSurf(buffer);
     HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
     Surface *surfaces[] = {&dstBufferSurf, &hostPtrSurf};
-    auto blitAllowed = blitEnqueueAllowed(cmdType);
 
     if (region[0] != 0 &&
         region[1] != 0 &&
         region[2] != 0) {
-        auto &csr = getCommandStreamReceiver(blitAllowed);
         bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
         if (!status) {
             return CL_OUT_OF_RESOURCES;
@@ -88,7 +90,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.dstSlicePitch = bufferSlicePitch;
 
     MultiDispatchInfo dispatchInfo(dc);
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, blitAllowed);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer));

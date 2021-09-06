@@ -106,8 +106,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
             return CL_SUCCESS;
         }
 
-        auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(getDevice().getRootDeviceIndex());
+        CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_BUFFER, &svmData->gpuAllocations, {}, device->getRootDeviceIndex(), &size};
+        CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
+        auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(getDevice().getRootDeviceIndex());
         GeneralSurface dstSurface(svmData->cpuAllocation);
         GeneralSurface srcSurface(gpuAllocation);
 
@@ -126,8 +128,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         dc.unifiedMemoryArgsRequireMemSync = externalAppCall;
 
         MultiDispatchInfo dispatchInfo(dc);
-        auto blitAllowed = blitEnqueueAllowed(CL_COMMAND_READ_BUFFER);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, blocking, blitAllowed);
+        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, blocking, csr);
 
         if (event) {
             castToObjectOrAbort<Event>(*event)->setCmdType(CL_COMMAND_SVM_MAP);
@@ -189,8 +190,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
             return CL_SUCCESS;
         }
 
-        auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(getDevice().getRootDeviceIndex());
+        CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_BUFFER, {}, &svmData->gpuAllocations, device->getRootDeviceIndex(), &svmOperation->regionSize};
+        CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
+        auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(getDevice().getRootDeviceIndex());
         gpuAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
         gpuAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
 
@@ -210,8 +213,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
         dc.unifiedMemoryArgsRequireMemSync = externalAppCall;
 
         MultiDispatchInfo dispatchInfo(dc);
-        auto blitAllowed = blitEnqueueAllowed(CL_COMMAND_READ_BUFFER);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, false, blitAllowed);
+        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, false, csr);
 
         if (event) {
             castToObjectOrAbort<Event>(*event)->setCmdType(CL_COMMAND_SVM_UNMAP);
@@ -328,12 +330,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     cl_command_type cmdType;
 
     if (copyType == SvmToHost) {
+        CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &srcSvmData->gpuAllocations, {}, device->getRootDeviceIndex(), &size};
+        CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
         GeneralSurface srcSvmSurf(srcSvmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex));
         HostPtrSurface dstHostPtrSurf(dstPtr, size);
-        cmdType = CL_COMMAND_READ_BUFFER;
-        auto blitAllowed = blitEnqueueAllowed(cmdType);
         if (size != 0) {
-            auto &csr = getCommandStreamReceiver(blitAllowed);
             bool status = csr.createAllocationForHostSurface(dstHostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
@@ -346,15 +348,16 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstHostPtrSurf;
 
         dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, blitAllowed);
+        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
 
     } else if (copyType == HostToSvm) {
+        CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, {}, &dstSvmData->gpuAllocations, device->getRootDeviceIndex(), &size};
+        CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
         HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcPtr), size);
         GeneralSurface dstSvmSurf(dstSvmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex));
         cmdType = CL_COMMAND_WRITE_BUFFER;
-        auto blitAllowed = blitEnqueueAllowed(cmdType);
         if (size != 0) {
-            auto &csr = getCommandStreamReceiver(blitAllowed);
             bool status = csr.createAllocationForHostSurface(srcHostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
@@ -367,9 +370,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &srcHostPtrSurf;
 
         dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, blitAllowed);
+        dispatchInfo.setBuiltinOpParams(operationParams);
+        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
 
     } else if (copyType == SvmToSvm) {
+        CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &srcSvmData->gpuAllocations, &dstSvmData->gpuAllocations, device->getRootDeviceIndex(), &size};
+        CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
         GeneralSurface srcSvmSurf(srcSvmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex));
         GeneralSurface dstSvmSurf(dstSvmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex));
         setOperationParams(operationParams, size, srcPtr, srcSvmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex),
@@ -378,16 +385,16 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstSvmSurf;
 
         dispatchInfo.setBuiltinOpParams(operationParams);
-        auto blitAllowed = blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_SVM_MEMCPY>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, blitAllowed);
+        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_SVM_MEMCPY>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
 
     } else {
+        CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
+        CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
         HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcPtr), size);
         HostPtrSurface dstHostPtrSurf(dstPtr, size);
         cmdType = CL_COMMAND_WRITE_BUFFER;
-        auto blitAllowed = blitEnqueueAllowed(cmdType);
         if (size != 0) {
-            auto &csr = getCommandStreamReceiver(blitAllowed);
             bool status = csr.createAllocationForHostSurface(srcHostPtrSurf, false);
             status &= csr.createAllocationForHostSurface(dstHostPtrSurf, true);
             if (!status) {
@@ -401,7 +408,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstHostPtrSurf;
 
         dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, blitAllowed);
+        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     }
     if (event) {
         auto pEvent = castToObjectOrAbort<Event>(*event);

@@ -1162,9 +1162,8 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 
 template <typename GfxFamily>
 template <uint32_t cmdType>
-void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking) {
+void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
     auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-    auto &bcsCsr = *getBcsCommandStreamReceiver();
 
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     EventBuilder eventBuilder;
@@ -1251,13 +1250,11 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
 
 template <typename GfxFamily>
 template <uint32_t cmdType, size_t surfaceCount>
-void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, bool blitAllowed) {
-    const bool blitPreferred = blitEnqueuePreferred(cmdType, dispatchInfo.peekBuiltinOpParams());
-    const bool blitRequired = isCopyOnly;
-    const bool blit = blitAllowed && (blitPreferred || blitRequired);
+void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr) {
+    const bool blit = EngineHelpers::isBcs(csr.getOsContext().getEngineType());
 
     if (blit) {
-        enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking);
+        enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking, csr);
     } else {
         auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInOperation,
                                                                                 this->getClDevice());

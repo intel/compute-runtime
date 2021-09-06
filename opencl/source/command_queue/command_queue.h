@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/engine_control.h"
 
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -225,6 +226,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     CommandStreamReceiver *getBcsCommandStreamReceiver() const;
     CommandStreamReceiver *getBcsForAuxTranslation() const;
     MOCKABLE_VIRTUAL CommandStreamReceiver &getCommandStreamReceiver(bool blitAllowed) const;
+    MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const;
     Device &getDevice() const noexcept;
     ClDevice &getClDevice() const { return *device; }
     Context &getContext() const { return *context; }
@@ -353,9 +355,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                               cl_uint numEventsInWaitList, const cl_event *eventWaitList);
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
-    bool blitEnqueueAllowed(cl_command_type cmdType) const;
-    bool blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOpParams &builtinOpParams) const;
-    MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image);
+    bool blitEnqueueAllowed(const CsrSelectionArgs &args) const;
+    bool blitEnqueuePreferred(const CsrSelectionArgs &args) const;
+    MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
     void waitForLatestTaskCount();

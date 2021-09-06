@@ -33,6 +33,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     const cl_event *eventWaitList,
     cl_event *event) {
     auto eBuiltInOps = EBuiltInOps::CopyBufferRect;
+    constexpr cl_command_type cmdType = CL_COMMAND_COPY_BUFFER_RECT;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, srcBuffer, dstBuffer, device->getRootDeviceIndex(), region};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
     if (forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()))) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
@@ -54,8 +58,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     dc.dstSlicePitch = dstSlicePitch;
 
     MultiDispatchInfo dispatchInfo(dc);
-    auto blitAllowed = blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT);
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false, blitAllowed);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false, csr);
 
     return CL_SUCCESS;
 }

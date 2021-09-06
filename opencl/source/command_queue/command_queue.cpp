@@ -153,6 +153,19 @@ CommandStreamReceiver &CommandQueue::getCommandStreamReceiver(bool blitAllowed) 
     return getGpgpuCommandStreamReceiver();
 }
 
+CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const {
+    const bool blitAllowed = blitEnqueueAllowed(args);
+    const bool blitPreferred = blitEnqueuePreferred(args);
+    const bool blitRequired = isCopyOnly;
+    const bool blit = blitAllowed && (blitPreferred || blitRequired);
+
+    if (blit) {
+        return *bcsEngine->commandStreamReceiver;
+    } else {
+        return getGpgpuCommandStreamReceiver();
+    }
+}
+
 Device &CommandQueue::getDevice() const noexcept {
     return device->getDevice();
 }
@@ -725,15 +738,20 @@ bool CommandQueue::queueDependenciesClearRequired() const {
     return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
 }
 
-bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
-    auto blitterSupported = bcsEngine != nullptr;
+bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
+    if (bcsEngine == nullptr) {
+        return false;
+    }
 
     bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
     if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
         blitEnqueueAllowed = DebugManager.flags.EnableBlitterForEnqueueOperations.get();
     }
+    if (!blitEnqueueAllowed) {
+        return false;
+    }
 
-    switch (cmdType) {
+    switch (args.cmdType) {
     case CL_COMMAND_READ_BUFFER:
     case CL_COMMAND_WRITE_BUFFER:
     case CL_COMMAND_COPY_BUFFER:
@@ -741,30 +759,25 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
     case CL_COMMAND_WRITE_BUFFER_RECT:
     case CL_COMMAND_COPY_BUFFER_RECT:
     case CL_COMMAND_SVM_MEMCPY:
+    case CL_COMMAND_SVM_MAP:
+    case CL_COMMAND_SVM_UNMAP:
+        return true;
     case CL_COMMAND_READ_IMAGE:
+        return blitEnqueueImageAllowed(args.srcResource.imageOrigin, args.size, *args.srcResource.image);
     case CL_COMMAND_WRITE_IMAGE:
+        return blitEnqueueImageAllowed(args.dstResource.imageOrigin, args.size, *args.dstResource.image);
+
     case CL_COMMAND_COPY_IMAGE:
-        return blitterSupported && blitEnqueueAllowed;
+        return blitEnqueueImageAllowed(args.srcResource.imageOrigin, args.size, *args.srcResource.image) &&
+               blitEnqueueImageAllowed(args.dstResource.imageOrigin, args.size, *args.dstResource.image);
+
     default:
         return false;
     }
 }
 
-bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOpParams &builtinOpParams) const {
-    bool isLocalToLocal = false;
-
-    if (cmdType == CL_COMMAND_COPY_BUFFER &&
-        builtinOpParams.srcMemObj->getGraphicsAllocation(device->getRootDeviceIndex())->isAllocatedInLocalMemoryPool() &&
-        builtinOpParams.dstMemObj->getGraphicsAllocation(device->getRootDeviceIndex())->isAllocatedInLocalMemoryPool()) {
-        isLocalToLocal = true;
-    }
-    if (cmdType == CL_COMMAND_SVM_MEMCPY &&
-        builtinOpParams.srcSvmAlloc->isAllocatedInLocalMemoryPool() &&
-        builtinOpParams.dstSvmAlloc->isAllocatedInLocalMemoryPool()) {
-        isLocalToLocal = true;
-    }
-
-    if (isLocalToLocal) {
+bool CommandQueue::blitEnqueuePreferred(const CsrSelectionArgs &args) const {
+    if (args.direction == TransferDirection::LocalToLocal) {
         if (DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get() != -1) {
             return static_cast<bool>(DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get());
         }
@@ -775,7 +788,7 @@ bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOp
     return true;
 }
 
-bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) {
+bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {
     const auto &hwInfo = device->getHardwareInfo();
     const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto blitEnqueueImageAllowed = hwHelper.isBlitterForImagesSupported(hwInfo);
