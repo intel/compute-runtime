@@ -97,6 +97,11 @@ uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroup(const HardwareInf
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const {
+    return static_cast<bool>(hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {}
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -162,6 +162,19 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedForPageTableManagerSupportT
     EXPECT_EQ(hwInfoConfig.isPageTableManagerSupported(pInHwInfo), UnitTestHelper<FamilyType>::isPageTableManagerSupported(pInHwInfo));
 }
 
+HWTEST_F(HwInfoConfigTest, whenIsMidThreadPreemptionSupportedIsCalledThenCorrectResultIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    auto hwInfo = pInHwInfo;
+
+    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = true;
+    auto midThreadPreemptionSupported = hwInfoConfig.isMidThreadPreemptionSupported(hwInfo);
+    EXPECT_TRUE(midThreadPreemptionSupported);
+
+    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = false;
+    midThreadPreemptionSupported = hwInfoConfig.isMidThreadPreemptionSupported(hwInfo);
+    EXPECT_FALSE(midThreadPreemptionSupported);
+}
+
 HWTEST_F(HwInfoConfigTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConversionIsCorrect) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
 
