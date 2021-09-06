@@ -19,9 +19,7 @@ constexpr static auto gfxProduct = IGFX_XE_HP_SDV;
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-
-    if (hwHelper.allowRenderCompression(*hwInfo)) {
+    if (allowRenderCompression(*hwInfo)) {
         enableRenderCompression(hwInfo);
     }
 

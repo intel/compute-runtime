@@ -136,6 +136,11 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isDisableOverdispatchAvailable(const Hardware
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::allowRenderCompression(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 void OsAgnosticHwInfoConfigTest::SetUp() {
     DeviceFixture::SetUp();
 }

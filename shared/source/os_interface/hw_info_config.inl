@@ -150,4 +150,9 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::allowRenderCompression(const HardwareInfo &hwInfo) const {
+    return true;
+}
 } // namespace NEO

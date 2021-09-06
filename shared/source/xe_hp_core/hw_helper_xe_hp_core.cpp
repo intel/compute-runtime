@@ -80,15 +80,6 @@ void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::REND
 }
 
 template <>
-inline bool HwHelperHw<Family>::allowRenderCompression(const HardwareInfo &hwInfo) const {
-    if (hwInfo.gtSystemInfo.EUCount == 256u) {
-        return false;
-    }
-
-    return true;
-}
-
-template <>
 inline bool HwHelperHw<Family>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
     if (!NEO::ApiSpecificConfig::isStatelessCompressionSupported()) {
         return false;

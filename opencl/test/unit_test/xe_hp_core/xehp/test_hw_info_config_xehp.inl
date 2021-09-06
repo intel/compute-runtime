@@ -77,14 +77,14 @@ XEHPTEST_F(XeHPHwInfoConfig, givenXeHpWhenCallingGetDeviceMemoryNameThenHbmIsRet
 using XeHPHwHelperTest = HwHelperTest;
 
 XEHPTEST_F(XeHPHwHelperTest, givenXeHPMultiConfigWhenAllowRenderCompressionIsCalledThenCorrectValueIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
     HardwareInfo hwInfo = *defaultHwInfo;
 
     hwInfo.gtSystemInfo.EUCount = 512u;
-    EXPECT_TRUE(helper.allowRenderCompression(hwInfo));
+    EXPECT_TRUE(hwInfoConfig->allowRenderCompression(hwInfo));
 
     hwInfo.gtSystemInfo.EUCount = 256u;
-    EXPECT_FALSE(helper.allowRenderCompression(hwInfo));
+    EXPECT_FALSE(hwInfoConfig->allowRenderCompression(hwInfo));
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {

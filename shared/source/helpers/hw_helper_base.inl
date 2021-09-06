@@ -414,11 +414,6 @@ inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const Hardware
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::allowRenderCompression(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
         return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());

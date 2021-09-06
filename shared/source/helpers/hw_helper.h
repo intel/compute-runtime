@@ -67,7 +67,6 @@ class HwHelper {
     virtual bool preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const = 0;
     virtual bool isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
-    virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowStatelessCompression(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -312,8 +311,6 @@ class HwHelperHw : public HwHelper {
     uint32_t getGlobalTimeStampBits() const override;
 
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const override;
-
-    bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
 
     bool allowStatelessCompression(const HardwareInfo &hwInfo) const override;
 

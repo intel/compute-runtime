@@ -878,11 +878,6 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidVal
     }
 }
 
-HWTEST_F(HwHelperTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned) {
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    EXPECT_TRUE(hwHelper.allowRenderCompression(hardwareInfo));
-}
-
 HWTEST_F(HwHelperTest, WhenAllowStatelessCompressionIsCalledThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 

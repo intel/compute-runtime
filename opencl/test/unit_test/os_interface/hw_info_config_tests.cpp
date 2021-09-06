@@ -220,3 +220,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwInfoConfigTest, givenHwInfoConfigWhenAdditionalKer
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isDisableOverdispatchAvailable(pInHwInfo));
 }
+
+HWTEST_F(HwInfoConfigTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.allowRenderCompression(pInHwInfo));
+}
