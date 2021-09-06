@@ -75,69 +75,6 @@ struct KernelHw : public KernelImp {
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
     }
 
-    std::unique_ptr<Kernel> clone() const override {
-        std::unique_ptr<Kernel> ret{new KernelHw<gfxCoreFamily>};
-        auto cloned = static_cast<KernelHw<gfxCoreFamily> *>(ret.get());
-
-        cloned->kernelImmData = kernelImmData;
-        cloned->module = module;
-        cloned->kernelArgHandlers.assign(this->kernelArgHandlers.begin(), this->kernelArgHandlers.end());
-        cloned->residencyContainer.assign(this->residencyContainer.begin(), this->residencyContainer.end());
-
-        if (printfBuffer != nullptr) {
-            const auto &it = std::find(cloned->residencyContainer.rbegin(), cloned->residencyContainer.rend(), this->printfBuffer);
-            if (it == cloned->residencyContainer.rbegin()) {
-                cloned->residencyContainer.resize(cloned->residencyContainer.size() - 1);
-            } else {
-                std::iter_swap(it, cloned->residencyContainer.rbegin());
-            }
-            cloned->createPrintfBuffer();
-        }
-
-        std::copy(this->groupSize, this->groupSize + 3, cloned->groupSize);
-        cloned->numThreadsPerThreadGroup = this->numThreadsPerThreadGroup;
-        cloned->threadExecutionMask = this->threadExecutionMask;
-
-        if (this->surfaceStateHeapDataSize > 0) {
-            cloned->surfaceStateHeapData.reset(new uint8_t[this->surfaceStateHeapDataSize]);
-            memcpy_s(cloned->surfaceStateHeapData.get(),
-                     this->surfaceStateHeapDataSize,
-                     this->surfaceStateHeapData.get(), this->surfaceStateHeapDataSize);
-            cloned->surfaceStateHeapDataSize = this->surfaceStateHeapDataSize;
-        }
-
-        if (this->crossThreadDataSize != 0) {
-            cloned->crossThreadData.reset(new uint8_t[this->crossThreadDataSize]);
-            memcpy_s(cloned->crossThreadData.get(),
-                     this->crossThreadDataSize,
-                     this->crossThreadData.get(),
-                     this->crossThreadDataSize);
-            cloned->crossThreadDataSize = this->crossThreadDataSize;
-        }
-
-        if (this->dynamicStateHeapDataSize != 0) {
-            cloned->dynamicStateHeapData.reset(new uint8_t[this->dynamicStateHeapDataSize]);
-            memcpy_s(cloned->dynamicStateHeapData.get(),
-                     this->dynamicStateHeapDataSize,
-                     this->dynamicStateHeapData.get(), this->dynamicStateHeapDataSize);
-            cloned->dynamicStateHeapDataSize = this->dynamicStateHeapDataSize;
-        }
-
-        if (this->perThreadDataForWholeThreadGroup != nullptr) {
-            alignedFree(cloned->perThreadDataForWholeThreadGroup);
-            cloned->perThreadDataForWholeThreadGroup = reinterpret_cast<uint8_t *>(alignedMalloc(perThreadDataSizeForWholeThreadGroupAllocated, 32));
-            memcpy_s(cloned->perThreadDataForWholeThreadGroup,
-                     this->perThreadDataSizeForWholeThreadGroupAllocated,
-                     this->perThreadDataForWholeThreadGroup,
-                     this->perThreadDataSizeForWholeThreadGroupAllocated);
-            cloned->perThreadDataSizeForWholeThreadGroupAllocated = this->perThreadDataSizeForWholeThreadGroupAllocated;
-            cloned->perThreadDataSizeForWholeThreadGroup = this->perThreadDataSizeForWholeThreadGroup;
-            cloned->perThreadDataSize = this->perThreadDataSize;
-        }
-
-        return ret;
-    }
-
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
         size_t localWorkSizes[3];
         localWorkSizes[0] = this->groupSize[0];

@@ -64,8 +64,6 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
 
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
 
-    std::unique_ptr<Kernel> clone() const override { return nullptr; }
-
     WhiteBox() : ::L0::KernelImp(nullptr) {}
 };
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -91,8 +89,6 @@ struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
     using ::L0::KernelImp::unifiedMemoryControls;
 
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
-
-    std::unique_ptr<Kernel> clone() const override { return nullptr; }
 
     WhiteBoxKernelHw() : ::L0::KernelHw<gfxCoreFamily>(nullptr) {}
 };
@@ -128,9 +124,6 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
 
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {}
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
-    std::unique_ptr<Kernel> clone() const override {
-        return nullptr;
-    }
     ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override {
         return ZE_RESULT_SUCCESS;
     }

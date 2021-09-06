@@ -127,7 +127,6 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         }
         ~MockKernel() override {
         }
-        std::unique_ptr<Kernel> clone() const override { return nullptr; }
     };
 
     void SetUp() override {

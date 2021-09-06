@@ -125,7 +125,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) = 0;
 
     virtual const KernelImmutableData *getImmutableData() const = 0;
-    virtual std::unique_ptr<Kernel> clone() const = 0;
 
     virtual const std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() const = 0;
 
