@@ -49,7 +49,6 @@ if(I915_LOCAL_MEM_EXP)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests_exp.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_drm_tip.cpp
   )
 else()
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
@@ -61,6 +60,20 @@ if(NEO__LIBVA_FOUND)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_va_sharing_tests.cpp
   )
 endif()
+
+if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper_tests_dg1.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_dg1_internal.h
+  )
+endif()
+
+if(SUPPORT_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
+  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper_tests_xe_hp_sdv.cpp
+  )
+endif()
+
 if(UNIX)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_linux})
 endif()
