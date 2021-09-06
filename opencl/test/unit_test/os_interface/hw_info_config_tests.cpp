@@ -228,3 +228,8 @@ HWTEST_F(HwInfoConfigTest, whenCallingGetDeviceMemoryNameThenDdrIsReturned) {
     auto deviceMemoryName = hwInfoConfig.getDeviceMemoryName();
     EXPECT_THAT(deviceMemoryName, testing::HasSubstr(std::string("DDR")));
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwInfoConfigTest, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isDisableOverdispatchAvailable(pInHwInfo));
+}

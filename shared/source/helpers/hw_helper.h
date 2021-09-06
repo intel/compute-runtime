@@ -129,7 +129,6 @@ class HwHelper {
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual bool isCopyOnlyEngineType(EngineGroupType type) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isNewResidencyModelSupported() const = 0;
@@ -351,8 +350,6 @@ class HwHelperHw : public HwHelper {
     bool isCopyOnlyEngineType(EngineGroupType type) const override;
 
     bool isSipWANeeded(const HardwareInfo &hwInfo) const override;
-
-    bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
 
     bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const override;
 

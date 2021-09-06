@@ -576,7 +576,6 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
 
     uint8_t memory[1 * KB];
@@ -596,7 +595,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
             mockCsr->programVFEState(commandStream, flags, 10);
             auto pCommand = reinterpret_cast<CFE_STATE *>(&memory);
 
-            auto expectedDisableOverdispatch = hwHelper.isDisableOverdispatchAvailable(*pHwInfo);
+            auto expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*pHwInfo);
             EXPECT_EQ(expectedDisableOverdispatch, pCommand->getComputeOverdispatchDisable());
         }
         {

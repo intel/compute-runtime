@@ -433,11 +433,6 @@ inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const Hardwa
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 std::unique_ptr<TagAllocatorBase> HwHelperHw<GfxFamily>::createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
                                                                                         size_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
     bool doNotReleaseNodes = (csrType > CommandStreamReceiverType::CSR_HW) ||

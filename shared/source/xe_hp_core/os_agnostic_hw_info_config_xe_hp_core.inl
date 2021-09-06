@@ -8,14 +8,7 @@
 using namespace NEO;
 
 template <>
-bool HwInfoConfigHw<IGFX_XE_HP_SDV>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t stepping = hwInfoConfig.getSteppingFromHwRevId(hwInfo);
-    return REVISION_B > stepping;
-}
-
-template <>
-uint32_t HwInfoConfigHw<IGFX_XE_HP_SDV>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     switch (stepping) {
     case REVISION_A0:
         return 0x0;
@@ -28,7 +21,7 @@ uint32_t HwInfoConfigHw<IGFX_XE_HP_SDV>::getHwRevIdFromStepping(uint32_t steppin
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_XE_HP_SDV>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     switch (hwInfo.platform.usRevId) {
     case 0x0:
         return REVISION_A0;
@@ -41,7 +34,13 @@ uint32_t HwInfoConfigHw<IGFX_XE_HP_SDV>::getSteppingFromHwRevId(const HardwareIn
 }
 
 template <>
-void HwInfoConfigHw<IGFX_XE_HP_SDV>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
+bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
+    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
+    return REVISION_B > stepping;
+}
+
+template <>
+void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
     using SAMPLER_STATE = typename XeHpFamily::SAMPLER_STATE;
 
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
@@ -51,6 +50,11 @@ void HwInfoConfigHw<IGFX_XE_HP_SDV>::adjustSamplerState(void *sampler, const Har
 }
 
 template <>
-std::string HwInfoConfigHw<IGFX_XE_HP_SDV>::getDeviceMemoryName() const {
+std::string HwInfoConfigHw<gfxProduct>::getDeviceMemoryName() const {
     return "HBM";
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }

@@ -151,4 +151,8 @@ std::string HwInfoConfigHw<gfxProduct>::getDeviceMemoryName() const {
     return "DDR";
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
+    return false;
+}
 } // namespace NEO

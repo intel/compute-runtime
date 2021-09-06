@@ -86,3 +86,12 @@ XEHPTEST_F(XeHPHwHelperTest, givenXeHPMultiConfigWhenAllowRenderCompressionIsCal
     hwInfo.gtSystemInfo.EUCount = 256u;
     EXPECT_FALSE(helper.allowRenderCompression(hwInfo));
 }
+
+XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_FALSE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+}

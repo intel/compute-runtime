@@ -54,6 +54,7 @@ class HwInfoConfig {
     virtual void setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) = 0;
     virtual bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual std::string getDeviceMemoryName() const = 0;
+    virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
 
     uint32_t threadsPerEu;
 };
@@ -90,6 +91,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     void setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) override;
     bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     std::string getDeviceMemoryName() const override;
+    bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

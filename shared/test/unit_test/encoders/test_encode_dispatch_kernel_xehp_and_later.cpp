@@ -570,7 +570,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t forceThreadGroupDispatchSize = -1;
     auto hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
 
     DebugManagerStateRestore restorer;
@@ -581,7 +580,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
         hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
         EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, hwInfo);
 
-        if (hwHelper.isDisableOverdispatchAvailable(hwInfo)) {
+        if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
             EXPECT_EQ(3u, iddArg.getThreadGroupDispatchSize());
         } else {
             EXPECT_EQ(0u, iddArg.getThreadGroupDispatchSize());

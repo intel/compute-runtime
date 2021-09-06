@@ -162,11 +162,6 @@ bool HwHelperHw<Family>::isBlitterForImagesSupported(const HardwareInfo &hwInfo)
 }
 
 template <>
-bool HwHelperHw<Family>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
-    return (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B);
-}
-
-template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 

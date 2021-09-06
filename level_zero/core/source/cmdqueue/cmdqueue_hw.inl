@@ -21,6 +21,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -214,8 +215,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                        perThreadScratchSpaceSize);
 
     auto &streamProperties = csr->getStreamProperties();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto disableOverdispatch = hwHelper.isDisableOverdispatchAvailable(hwInfo);
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto disableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(hwInfo);
     auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (!isPatchingVfeStateAllowed) {

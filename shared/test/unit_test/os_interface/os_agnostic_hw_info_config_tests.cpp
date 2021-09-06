@@ -136,6 +136,11 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isDefaultEngineTypeAdjustmentRequired(const H
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 void OsAgnosticHwInfoConfigTest::SetUp() {
     DeviceFixture::SetUp();
 }
@@ -171,5 +176,10 @@ HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsMaxThreadsFor
 
 HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsDefaultEngineTypeAdjustmentRequiredThenFalseIsReturned) {
     bool ret = hwConfig.isDefaultEngineTypeAdjustmentRequired(hardwareInfo);
+    EXPECT_FALSE(ret);
+}
+
+HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsDisableOverdispatchAvailableThenFalseIsReturned) {
+    bool ret = hwConfig.isDisableOverdispatchAvailable(hardwareInfo);
     EXPECT_FALSE(ret);
 }
