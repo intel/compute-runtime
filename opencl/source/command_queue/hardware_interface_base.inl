@@ -193,18 +193,18 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
     }
 
     //Get dispatch geometry
-    uint32_t dim = dispatchInfo.getDim();
-    Vec3<size_t> gws = dispatchInfo.getGWS();
-    Vec3<size_t> offset = dispatchInfo.getOffset();
-    Vec3<size_t> startOfWorkgroups = dispatchInfo.getStartOfWorkgroups();
+    auto dim = dispatchInfo.getDim();
+    const auto &gws = dispatchInfo.getGWS();
+    const auto &offset = dispatchInfo.getOffset();
+    const auto &startOfWorkgroups = dispatchInfo.getStartOfWorkgroups();
 
     // Compute local workgroup sizes
-    Vec3<size_t> lws = dispatchInfo.getLocalWorkgroupSize();
-    Vec3<size_t> elws = (dispatchInfo.getEnqueuedWorkgroupSize().x > 0) ? dispatchInfo.getEnqueuedWorkgroupSize() : lws;
+    const auto &lws = dispatchInfo.getLocalWorkgroupSize();
+    const auto &elws = (dispatchInfo.getEnqueuedWorkgroupSize().x > 0) ? dispatchInfo.getEnqueuedWorkgroupSize() : lws;
 
     // Compute number of work groups
-    Vec3<size_t> totalNumberOfWorkgroups = dispatchInfo.getTotalNumberOfWorkgroups();
-    Vec3<size_t> numberOfWorkgroups = dispatchInfo.getNumberOfWorkgroups();
+    const auto &totalNumberOfWorkgroups = dispatchInfo.getTotalNumberOfWorkgroups();
+    const auto &numberOfWorkgroups = dispatchInfo.getNumberOfWorkgroups();
     UNRECOVERABLE_IF(totalNumberOfWorkgroups.x == 0);
     UNRECOVERABLE_IF(numberOfWorkgroups.x == 0);
 

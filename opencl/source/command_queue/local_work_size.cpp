@@ -452,13 +452,13 @@ Vec3<size_t> generateWorkgroupSize(const DispatchInfo &dispatchInfo) {
     return (dispatchInfo.getEnqueuedWorkgroupSize().x == 0) ? computeWorkgroupSize(dispatchInfo) : dispatchInfo.getEnqueuedWorkgroupSize();
 }
 
-Vec3<size_t> computeWorkgroupsNumber(const Vec3<size_t> gws, const Vec3<size_t> lws) {
+Vec3<size_t> computeWorkgroupsNumber(const Vec3<size_t> &gws, const Vec3<size_t> &lws) {
     return (Vec3<size_t>(gws.x / lws.x + ((gws.x % lws.x) ? 1 : 0),
                          gws.y / lws.y + ((gws.y % lws.y) ? 1 : 0),
                          gws.z / lws.z + ((gws.z % lws.z) ? 1 : 0)));
 }
 
-Vec3<size_t> generateWorkgroupsNumber(const Vec3<size_t> gws, const Vec3<size_t> lws) {
+Vec3<size_t> generateWorkgroupsNumber(const Vec3<size_t> &gws, const Vec3<size_t> &lws) {
     return (lws.x > 0) ? computeWorkgroupsNumber(gws, lws) : Vec3<size_t>(0, 0, 0);
 }
 
@@ -466,7 +466,7 @@ Vec3<size_t> generateWorkgroupsNumber(const DispatchInfo &dispatchInfo) {
     return generateWorkgroupsNumber(dispatchInfo.getGWS(), dispatchInfo.getLocalWorkgroupSize());
 }
 
-Vec3<size_t> canonizeWorkgroup(Vec3<size_t> workgroup) {
+Vec3<size_t> canonizeWorkgroup(const Vec3<size_t> &workgroup) {
     return ((workgroup.x > 0) ? Vec3<size_t>({workgroup.x, std::max(workgroup.y, static_cast<size_t>(1)), std::max(workgroup.z, static_cast<size_t>(1))})
                               : Vec3<size_t>(0, 0, 0));
 }

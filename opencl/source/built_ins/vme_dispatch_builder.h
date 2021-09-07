@@ -174,7 +174,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         return *(RetType *)(vmeKernel->getCrossThreadData() + element.offset);
     }
 
-    cl_int validateImages(Vec3<size_t> inputRegion, Vec3<size_t> offset) const {
+    cl_int validateImages(const Vec3<size_t> &inputRegion, const Vec3<size_t> &offset) const {
         Image *srcImg = castToObject<Image>((cl_mem)vmeKernel->getKernelArg(srcImgArgNum));
         Image *refImg = castToObject<Image>((cl_mem)vmeKernel->getKernelArg(refImgArgNum));
 
@@ -208,7 +208,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         return CL_SUCCESS;
     }
 
-    virtual cl_int validateVmeDispatch(Vec3<size_t> inputRegion, Vec3<size_t> offset, size_t blkNum, size_t blkMul) const {
+    virtual cl_int validateVmeDispatch(const Vec3<size_t> &inputRegion, const Vec3<size_t> &offset, size_t blkNum, size_t blkMul) const {
         {
             cl_int imageValidationStatus = validateImages(inputRegion, offset);
             if (imageValidationStatus != CL_SUCCESS) {
@@ -383,7 +383,7 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
         return predictorsBufferExpSize;
     }
 
-    cl_int validateVmeDispatch(Vec3<size_t> inputRegion, Vec3<size_t> offset, size_t blkNum, size_t blkMul) const override {
+    cl_int validateVmeDispatch(const Vec3<size_t> &inputRegion, const Vec3<size_t> &offset, size_t blkNum, size_t blkMul) const override {
         cl_int basicVmeValidationStatus = VmeBuiltinDispatchInfoBuilder::validateVmeDispatch(inputRegion, offset, blkNum, blkMul);
         if (basicVmeValidationStatus != CL_SUCCESS) {
             return basicVmeValidationStatus;
@@ -452,7 +452,7 @@ class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public 
                                                 "block_advanced_motion_estimate_check_intel") {
     }
 
-    cl_int validateVmeDispatch(Vec3<size_t> inputRegion, Vec3<size_t> offset,
+    cl_int validateVmeDispatch(const Vec3<size_t> &inputRegion, const Vec3<size_t> &offset,
                                size_t gwWidthInBlk, size_t gwHeightInBlk) const override {
         cl_int basicAdvVmeValidationStatus = AdvancedVmeBuiltinDispatchInfoBuilder::validateVmeDispatch(inputRegion, offset, gwWidthInBlk, gwHeightInBlk);
         if (basicAdvVmeValidationStatus != CL_SUCCESS) {

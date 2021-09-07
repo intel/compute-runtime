@@ -68,22 +68,22 @@ Vec3<size_t> generateWorkgroupSize(
     const DispatchInfo &dispatchInfo);
 
 Vec3<size_t> computeWorkgroupsNumber(
-    const Vec3<size_t> gws,
-    const Vec3<size_t> lws);
+    const Vec3<size_t> &gws,
+    const Vec3<size_t> &lws);
 
 Vec3<size_t> generateWorkgroupsNumber(
-    const Vec3<size_t> gws,
-    const Vec3<size_t> lws);
+    const Vec3<size_t> &gws,
+    const Vec3<size_t> &lws);
 
 Vec3<size_t> generateWorkgroupsNumber(
     const DispatchInfo &dispatchInfo);
 
-inline uint32_t calculateDispatchDim(Vec3<size_t> dispatchSize, Vec3<size_t> dispatchOffset) {
+inline uint32_t calculateDispatchDim(const Vec3<size_t> &dispatchSize, const Vec3<size_t> &dispatchOffset) {
     return std::max(1U, std::max(dispatchSize.getSimplifiedDim(), dispatchOffset.getSimplifiedDim()));
 }
 
 Vec3<size_t> canonizeWorkgroup(
-    Vec3<size_t> workgroup);
+    const Vec3<size_t> &workgroup);
 
 void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo);
 

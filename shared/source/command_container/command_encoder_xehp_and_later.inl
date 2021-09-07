@@ -422,8 +422,8 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 }
 
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart,
-                                                                          Vec3<size_t> groupCount, bool isInternal,
+size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart,
+                                                                          const Vec3<size_t> &groupCount, bool isInternal,
                                                                           bool isCooperative) {
     size_t totalSize = sizeof(WALKER_TYPE);
     totalSize += PreemptionHelper::getPreemptionWaCsSize<Family>(*device);

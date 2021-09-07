@@ -15,8 +15,8 @@ template <typename GfxFamily>
 size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool nativeCrossTileAtomicSync,
                                                    bool preferStaticPartitioning,
                                                    const DeviceBitfield &devices,
-                                                   Vec3<size_t> groupStart,
-                                                   Vec3<size_t> groupCount) {
+                                                   const Vec3<size_t> &groupStart,
+                                                   const Vec3<size_t> &groupCount) {
     typename GfxFamily::COMPUTE_WALKER::PARTITION_TYPE partitionType{};
     bool staticPartitioning = false;
     const uint32_t tileCount = static_cast<uint32_t>(devices.count());

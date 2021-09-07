@@ -25,8 +25,8 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
                                                                GraphicsAllocation *memObjAllocation,
                                                                GraphicsAllocation *preallocatedHostAllocation,
                                                                const void *hostPtr, uint64_t memObjGpuVa,
-                                                               uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
-                                                               Vec3<size_t> copyOffset, Vec3<size_t> copySize,
+                                                               uint64_t hostAllocGpuVa, const Vec3<size_t> &hostPtrOffset,
+                                                               const Vec3<size_t> &copyOffset, Vec3<size_t> copySize,
                                                                size_t hostRowPitch, size_t hostSlicePitch,
                                                                size_t gpuRowPitch, size_t gpuSlicePitch) {
     GraphicsAllocation *hostAllocation = nullptr;
@@ -94,7 +94,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
 }
 
 BlitProperties BlitProperties::constructPropertiesForCopy(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
-                                                          Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
+                                                          const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
                                                           size_t srcRowPitch, size_t srcSlicePitch,
                                                           size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation) {
     copySize.y = copySize.y ? copySize.y : 1;
@@ -166,13 +166,13 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
 }
 
 BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                       Vec3<size_t> size) {
+                                                       const Vec3<size_t> &size) {
     auto memoryBanks = memory->storageInfo.getMemoryBanks();
     return blitMemoryToAllocationBanks(device, memory, offset, hostPtr, size, memoryBanks);
 }
 
 BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                            Vec3<size_t> size, DeviceBitfield memoryBanks) {
+                                                            const Vec3<size_t> &size, DeviceBitfield memoryBanks) {
     const auto &hwInfo = device.getHardwareInfo();
     auto isBlitterRequired = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isBlitCopyRequiredForLocalMemory(hwInfo, *memory);
     if (!hwInfo.capabilityTable.blitterOperationsSupported && !isBlitterRequired) {

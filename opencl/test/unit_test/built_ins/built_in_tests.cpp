@@ -1828,7 +1828,7 @@ TEST_F(VmeBuiltInTests, WhenValidatingDispatchThenCorrectReturns) {
     struct MockVmeBuilder : BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> {
         using BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel>::BuiltInOp;
 
-        cl_int validateVmeDispatch(Vec3<size_t> inputRegion, Vec3<size_t> offset, size_t blkNum, size_t blkMul) const override {
+        cl_int validateVmeDispatch(const Vec3<size_t> &inputRegion, const Vec3<size_t> &offset, size_t blkNum, size_t blkMul) const override {
             receivedInputRegion = inputRegion;
             receivedOffset = offset;
             receivedBlkNum = blkNum;

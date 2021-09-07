@@ -67,8 +67,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     uint32_t &interfaceDescriptorIndex,
     const DispatchInfo &dispatchInfo,
     size_t offsetInterfaceDescriptorTable,
-    Vec3<size_t> &numberOfWorkgroups,
-    Vec3<size_t> &startOfWorkgroups) {
+    const Vec3<size_t> &numberOfWorkgroups,
+    const Vec3<size_t> &startOfWorkgroups) {
 
     auto walkerCmdBuf = allocateWalkerSpace(commandStream, kernel);
     WALKER_TYPE<GfxFamily> walkerCmd = GfxFamily::cmdInitGpgpuWalker;

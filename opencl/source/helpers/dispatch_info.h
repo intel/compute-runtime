@@ -32,9 +32,9 @@ class DispatchInfo {
     using EstimateCommandsMethodT = size_t(size_t, const HardwareInfo &, bool);
 
     DispatchInfo() = default;
-    DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
+    DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset)
         : pClDevice(device), kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset) {}
-    DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset, Vec3<size_t> agws, Vec3<size_t> lws, Vec3<size_t> twgs, Vec3<size_t> nwgs, Vec3<size_t> swgs)
+    DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws, const Vec3<size_t> &lws, const Vec3<size_t> &twgs, const Vec3<size_t> &nwgs, const Vec3<size_t> &swgs)
         : pClDevice(device), kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
 
     ClDevice &getClDevice() const { return *pClDevice; }

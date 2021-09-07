@@ -179,10 +179,10 @@ struct CommandListCoreFamily : CommandListImp {
                                                             size_t srcOffset,
                                                             size_t dstOffset,
                                                             ze_copy_region_t srcRegion,
-                                                            ze_copy_region_t dstRegion, Vec3<size_t> copySize,
+                                                            ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
                                                             size_t srcRowPitch, size_t srcSlicePitch,
                                                             size_t dstRowPitch, size_t dstSlicePitch,
-                                                            Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent,
+                                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent,
                                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
@@ -208,11 +208,11 @@ struct CommandListCoreFamily : CommandListImp {
 
     MOCKABLE_VIRTUAL ze_result_t appendCopyImageBlit(NEO::GraphicsAllocation *src,
                                                      NEO::GraphicsAllocation *dst,
-                                                     Vec3<size_t> srcOffsets, Vec3<size_t> dstOffsets,
+                                                     const Vec3<size_t> &srcOffsets, const Vec3<size_t> &dstOffsets,
                                                      size_t srcRowPitch, size_t srcSlicePitch,
                                                      size_t dstRowPitch, size_t dstSlicePitch,
-                                                     size_t bytesPerPixel, Vec3<size_t> copySize,
-                                                     Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent);
+                                                     size_t bytesPerPixel, const Vec3<size_t> &copySize,
+                                                     const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                               const ze_group_count_t *pThreadGroupDimensions,

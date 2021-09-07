@@ -92,8 +92,8 @@ bool inline isCrossTileAtomicRequired() {
 template <typename GfxFamily>
 uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitionCount,
                                                bool preferStaticPartitioning,
-                                               Vec3<size_t> groupStart,
-                                               Vec3<size_t> groupCount,
+                                               const Vec3<size_t> &groupStart,
+                                               const Vec3<size_t> &groupCount,
                                                std::optional<typename COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE> requestedPartitionType,
                                                typename COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE *outSelectedPartitionType,
                                                bool *outSelectStaticPartitioning) {

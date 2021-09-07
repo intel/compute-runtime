@@ -30,8 +30,8 @@ struct ImplicitScalingDispatch {
     static size_t getSize(bool nativeCrossTileAtomicSync,
                           bool preferStaticPartitioning,
                           const DeviceBitfield &devices,
-                          Vec3<size_t> groupStart,
-                          Vec3<size_t> groupCount);
+                          const Vec3<size_t> &groupStart,
+                          const Vec3<size_t> &groupCount);
     static void dispatchCommands(LinearStream &commandStream,
                                  WALKER_TYPE &walkerCmd,
                                  const DeviceBitfield &devices,

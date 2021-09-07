@@ -57,10 +57,10 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                            size_t srcOffset,
                                            size_t dstOffset,
                                            ze_copy_region_t srcRegion,
-                                           ze_copy_region_t dstRegion, Vec3<size_t> copySize,
+                                           ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
                                            size_t dstRowPitch, size_t dstSlicePitch,
-                                           Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent,
+                                           const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         appendMemoryCopyBlitRegionCalledTimes++;
         return ZE_RESULT_SUCCESS;
@@ -95,11 +95,11 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     }
     ze_result_t appendCopyImageBlit(NEO::GraphicsAllocation *src,
                                     NEO::GraphicsAllocation *dst,
-                                    Vec3<size_t> srcOffsets, Vec3<size_t> dstOffsets,
+                                    const Vec3<size_t> &srcOffsets, const Vec3<size_t> &dstOffsets,
                                     size_t srcRowPitch, size_t srcSlicePitch,
                                     size_t dstRowPitch, size_t dstSlicePitch,
-                                    size_t bytesPerPixel, Vec3<size_t> copySize,
-                                    Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent) override {
+                                    size_t bytesPerPixel, const Vec3<size_t> &copySize,
+                                    const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent) override {
         appendCopyImageBlitCalledTimes++;
         appendImageRegionCopySize = copySize;
         appendImageRegionSrcOrigin = srcOffsets;
@@ -901,10 +901,10 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
                                            size_t srcOffset,
                                            size_t dstOffset,
                                            ze_copy_region_t srcRegion,
-                                           ze_copy_region_t dstRegion, Vec3<size_t> copySize,
+                                           ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
                                            size_t dstRowPitch, size_t dstSlicePitch,
-                                           Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent,
+                                           const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         this->srcSize = srcSize;
         this->dstSize = dstSize;

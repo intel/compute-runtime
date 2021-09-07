@@ -94,8 +94,8 @@ class HardwareInterface {
         uint32_t &interfaceDescriptorIndex,
         const DispatchInfo &dispatchInfo,
         size_t offsetInterfaceDescriptorTable,
-        Vec3<size_t> &numberOfWorkgroups,
-        Vec3<size_t> &startOfWorkgroups);
+        const Vec3<size_t> &numberOfWorkgroups,
+        const Vec3<size_t> &startOfWorkgroups);
 
     static WALKER_TYPE<GfxFamily> *allocateWalkerSpace(LinearStream &commandStream,
                                                        const Kernel &kernel);

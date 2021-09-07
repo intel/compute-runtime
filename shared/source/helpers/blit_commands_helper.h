@@ -44,13 +44,13 @@ struct BlitProperties {
                                                           GraphicsAllocation *memObjAllocation,
                                                           GraphicsAllocation *preallocatedHostAllocation,
                                                           const void *hostPtr, uint64_t memObjGpuVa,
-                                                          uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
-                                                          Vec3<size_t> copyOffset, Vec3<size_t> copySize,
+                                                          uint64_t hostAllocGpuVa, const Vec3<size_t> &hostPtrOffset,
+                                                          const Vec3<size_t> &copyOffset, Vec3<size_t> copySize,
                                                           size_t hostRowPitch, size_t hostSlicePitch,
                                                           size_t gpuRowPitch, size_t gpuSlicePitch);
 
     static BlitProperties constructPropertiesForCopy(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
-                                                     Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
+                                                     const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
                                                      size_t srcRowPitch, size_t srcSlicePitch,
                                                      size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation);
 
@@ -96,15 +96,15 @@ using BlitMemoryToAllocationFunc = std::function<BlitOperationResult(const Devic
                                                                      GraphicsAllocation *memory,
                                                                      size_t offset,
                                                                      const void *hostPtr,
-                                                                     Vec3<size_t> size)>;
+                                                                     const Vec3<size_t> &size)>;
 extern BlitMemoryToAllocationFunc blitMemoryToAllocation;
 } // namespace BlitHelperFunctions
 
 struct BlitHelper {
     static BlitOperationResult blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                      Vec3<size_t> size);
+                                                      const Vec3<size_t> &size);
     static BlitOperationResult blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                           Vec3<size_t> size, DeviceBitfield memoryBanks);
+                                                           const Vec3<size_t> &size, DeviceBitfield memoryBanks);
 };
 
 template <typename GfxFamily>
@@ -148,7 +148,7 @@ struct BlitCommandsHelper {
     static void getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger, DebugPauseState waitCondition);
     static size_t getSizeForDebugPauseCommands();
-    static bool useOneBlitCopyCommand(Vec3<size_t> copySize, uint32_t bytesPerPixel);
+    static bool useOneBlitCopyCommand(const Vec3<size_t> &copySize, uint32_t bytesPerPixel);
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize);
     static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void programGlobalSequencerFlush(LinearStream &commandStream);

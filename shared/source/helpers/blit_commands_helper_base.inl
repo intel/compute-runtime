@@ -316,7 +316,7 @@ size_t BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands() {
 }
 
 template <typename GfxFamily>
-bool BlitCommandsHelper<GfxFamily>::useOneBlitCopyCommand(Vec3<size_t> copySize, uint32_t bytesPerPixel) {
+bool BlitCommandsHelper<GfxFamily>::useOneBlitCopyCommand(const Vec3<size_t> &copySize, uint32_t bytesPerPixel) {
     return (copySize.x / bytesPerPixel <= BlitterConstants::maxBlitWidth && copySize.y <= BlitterConstants::maxBlitHeight);
 }
 
