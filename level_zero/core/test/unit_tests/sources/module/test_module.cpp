@@ -1545,5 +1545,35 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerWithNullptrInput
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
+
+using ModuleTests = Test<DeviceFixture>;
+TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTbxAndAub) {
+    auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
+
+    char data[1]{};
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.pKernelHeap = data;
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+
+    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    NEO::Linker::PatchableSegments segments{{data, 1}};
+
+    auto allocation = pModule->kernelImmDatas[0]->getIsaGraphicsAllocation();
+
+    allocation->setTbxWritable(false, std::numeric_limits<uint32_t>::max());
+    allocation->setAubWritable(false, std::numeric_limits<uint32_t>::max());
+
+    pModule->copyPatchedSegments(segments);
+
+    EXPECT_TRUE(allocation->isTbxWritable(std::numeric_limits<uint32_t>::max()));
+    EXPECT_TRUE(allocation->isAubWritable(std::numeric_limits<uint32_t>::max()));
+}
 } // namespace ult
 } // namespace L0
