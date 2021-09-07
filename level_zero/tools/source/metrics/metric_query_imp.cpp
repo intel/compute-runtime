@@ -769,7 +769,13 @@ ze_result_t MetricQuery::appendStreamerMarker(CommandList &commandList,
                                               zet_metric_streamer_handle_t hMetricStreamer,
                                               uint32_t value) {
 
-    auto &metricContext = commandList.device->getMetricContext();
+    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
+
+    if (pDeviceImp->isMultiDeviceCapable()) {
+        // Use one of the sub-device contexts to append to command list.
+        pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
+    }
+    auto &metricContext = pDeviceImp->getMetricContext();
     auto &metricsLibrary = metricContext.getMetricsLibrary();
 
     const uint32_t streamerMarkerHighBitsShift = 25;

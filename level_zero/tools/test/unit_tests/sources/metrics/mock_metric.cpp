@@ -251,7 +251,6 @@ void MetricMultiDeviceContextFixture::SetUp() {
         mockMetricsLibrarySubDevices[i]->setMockedApi(&mockMetricsLibraryApi);
         mockMetricsLibrarySubDevices[i]->handle = new MockOsLibrary();
     }
-
     // Metrics Discovery device common settings.
     metricsDeviceParams.Version.MajorNumber = MetricEnumeration::requiredMetricsDiscoveryMajorVersion;
     metricsDeviceParams.Version.MinorNumber = MetricEnumeration::requiredMetricsDiscoveryMinorVersion;
