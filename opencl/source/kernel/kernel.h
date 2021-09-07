@@ -523,6 +523,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     const ClDevice &getDevice() const {
         return clDevice;
     }
+    cl_int patchPrivateSurface();
 
     const ExecutionEnvironment &executionEnvironment;
     Program *program;

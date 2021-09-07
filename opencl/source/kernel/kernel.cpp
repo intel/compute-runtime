@@ -202,25 +202,9 @@ cl_int Kernel::initialize() {
     localBindingTableOffset = kernelDescriptor.payloadMappings.bindingTable.tableOffset;
 
     // patch crossthread data and ssh with inline surfaces, if necessary
-    auto perHwThreadPrivateMemorySize = kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
-    if (perHwThreadPrivateMemorySize) {
-        privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
-        DEBUG_BREAK_IF(privateSurfaceSize == 0);
-
-        if (privateSurfaceSize > std::numeric_limits<uint32_t>::max()) {
-            return CL_OUT_OF_RESOURCES;
-        }
-        privateSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
-            {rootDeviceIndex,
-             static_cast<size_t>(privateSurfaceSize),
-             GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
-             pClDevice->getDeviceBitfield()});
-        if (privateSurface == nullptr) {
-            return CL_OUT_OF_RESOURCES;
-        }
-
-        const auto &privateMemoryAddress = kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress;
-        patchWithImplicitSurface(reinterpret_cast<void *>(privateSurface->getGpuAddressToPatch()), *privateSurface, privateMemoryAddress);
+    auto status = patchPrivateSurface();
+    if (CL_SUCCESS != status) {
+        return status;
     }
 
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless)) {
@@ -334,11 +318,43 @@ cl_int Kernel::initialize() {
     return CL_SUCCESS;
 }
 
+cl_int Kernel::patchPrivateSurface() {
+    auto pClDevice = &getDevice();
+    auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    auto &kernelDescriptor = kernelInfo.kernelDescriptor;
+    auto perHwThreadPrivateMemorySize = kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
+    if (perHwThreadPrivateMemorySize) {
+        if (!privateSurface) {
+            privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
+            DEBUG_BREAK_IF(privateSurfaceSize == 0);
+
+            if (privateSurfaceSize > std::numeric_limits<uint32_t>::max()) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            privateSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
+                {rootDeviceIndex,
+                 static_cast<size_t>(privateSurfaceSize),
+                 GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
+                 pClDevice->getDeviceBitfield()});
+            if (privateSurface == nullptr) {
+                return CL_OUT_OF_RESOURCES;
+            }
+        }
+
+        const auto &privateMemoryAddress = kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress;
+        patchWithImplicitSurface(reinterpret_cast<void *>(privateSurface->getGpuAddressToPatch()), *privateSurface, privateMemoryAddress);
+    }
+    return CL_SUCCESS;
+}
+
 cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
     // copy cross thread data to store arguments set to source kernel with clSetKernelArg on immediate data (non-pointer types)
     memcpy_s(crossThreadData, crossThreadDataSize,
              pSourceKernel->crossThreadData, pSourceKernel->crossThreadDataSize);
     DEBUG_BREAK_IF(pSourceKernel->crossThreadDataSize != crossThreadDataSize);
+
+    [[maybe_unused]] auto status = patchPrivateSurface();
+    DEBUG_BREAK_IF(status != CL_SUCCESS);
 
     // copy arguments set to source kernel with clSetKernelArg or clSetKernelArgSVMPointer
     for (uint32_t i = 0; i < pSourceKernel->kernelArguments.size(); i++) {

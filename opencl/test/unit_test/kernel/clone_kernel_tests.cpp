@@ -49,6 +49,8 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
         pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors.resize(1);
 
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+        pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 72;
+        pKernelInfo->setPrivateMemory(0x10, false, 8, 64, 64);
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
 
@@ -66,16 +68,11 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
 
             pSourceKernel[rootDeviceIndex] = new MockKernel(pProgram.get(), *pKernelInfo, *deviceFactory->rootDevices[rootDeviceIndex]);
             ASSERT_EQ(CL_SUCCESS, pSourceKernel[rootDeviceIndex]->initialize());
-            char pSourceCrossThreadData[64] = {};
             sourceKernels[rootDeviceIndex] = pSourceKernel[rootDeviceIndex];
 
             pClonedKernel[rootDeviceIndex] = new MockKernel(pProgram.get(), *pKernelInfo, *deviceFactory->rootDevices[rootDeviceIndex]);
             ASSERT_EQ(CL_SUCCESS, pClonedKernel[rootDeviceIndex]->initialize());
-            char pClonedCrossThreadData[64] = {};
             clonedKernels[rootDeviceIndex] = pClonedKernel[rootDeviceIndex];
-
-            pSourceKernel[rootDeviceIndex]->setCrossThreadData(pSourceCrossThreadData, sizeof(pSourceCrossThreadData));
-            pClonedKernel[rootDeviceIndex]->setCrossThreadData(pClonedCrossThreadData, sizeof(pClonedCrossThreadData));
         }
 
         pSourceMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(sourceKernels, kernelInfos);
@@ -95,6 +92,33 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
     std::unique_ptr<MockKernelInfo> pKernelInfo;
     char surfaceStateHeap[128];
 };
+
+TEST_F(CloneKernelTest, GivenKernelWithPrivateSurfaceWhenCloningKernelThenClonedKernelProgramItsOwnPrivateSurfaceAddress) {
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pSourcePrivateSurface = pSourceKernel[rootDeviceIndex]->privateSurface;
+        auto pClonedPrivateSurface = pClonedKernel[rootDeviceIndex]->privateSurface;
+        EXPECT_NE(nullptr, pSourcePrivateSurface);
+        EXPECT_NE(nullptr, pClonedPrivateSurface);
+        EXPECT_NE(pClonedPrivateSurface, pSourcePrivateSurface);
+        {
+            auto pSourcePrivateSurfPatchedAddress = reinterpret_cast<uint64_t *>(ptrOffset(pSourceKernel[rootDeviceIndex]->getCrossThreadData(), 64));
+            auto pClonedPrivateSurfPatchedAddress = reinterpret_cast<uint64_t *>(ptrOffset(pClonedKernel[rootDeviceIndex]->getCrossThreadData(), 64));
+
+            EXPECT_EQ(pSourcePrivateSurface->getGpuAddressToPatch(), *pSourcePrivateSurfPatchedAddress);
+            EXPECT_EQ(pClonedPrivateSurface->getGpuAddressToPatch(), *pClonedPrivateSurfPatchedAddress);
+        }
+
+        retVal = pClonedKernel[rootDeviceIndex]->cloneKernel(pSourceKernel[rootDeviceIndex]);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto pClonedPrivateSurface2 = pClonedKernel[rootDeviceIndex]->privateSurface;
+        EXPECT_EQ(pClonedPrivateSurface, pClonedPrivateSurface2);
+        {
+            auto pClonedPrivateSurfPatchedAddress = reinterpret_cast<uint64_t *>(ptrOffset(pClonedKernel[rootDeviceIndex]->getCrossThreadData(), 64));
+            EXPECT_EQ(pClonedPrivateSurface->getGpuAddressToPatch(), *pClonedPrivateSurfPatchedAddress);
+        }
+    }
+}
 
 TEST_F(CloneKernelTest, GivenUnsetArgWhenCloningKernelThenKernelInfoIsCorrect) {
     pKernelInfo->addArgBuffer(0);
