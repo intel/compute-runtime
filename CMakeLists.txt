@@ -362,6 +362,8 @@ endif()
 
 if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
   get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party/uapi/dg1" ABSOLUTE)
+elseif(SUPPORT_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
+  get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party/uapi/xe_hp_sdv" ABSOLUTE)
 else()
   get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/uapi" ABSOLUTE)
 endif()
