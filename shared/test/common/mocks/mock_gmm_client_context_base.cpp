@@ -7,6 +7,8 @@
 
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 
+#include "gtest/gtest.h"
+
 namespace NEO {
 
 GMM_RESOURCE_INFO *MockGmmClientContextBase::createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) {
@@ -33,4 +35,10 @@ uint8_t MockGmmClientContextBase::getMediaSurfaceStateCompressionFormat(GMM_RESO
     return compressionFormatToReturn;
 }
 
+void MockGmmClientContextBase::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
+    EXPECT_NE(deviceInfo, nullptr);
+
+    GMM_DEVICE_CALLBACKS_INT emptyStruct{};
+    EXPECT_EQ(0, memcmp(deviceInfo->pDeviceCb, &emptyStruct, sizeof(GMM_DEVICE_CALLBACKS_INT)));
+}
 } // namespace NEO

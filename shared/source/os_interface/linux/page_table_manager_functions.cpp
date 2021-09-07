@@ -14,6 +14,7 @@
 namespace NEO {
 GmmPageTableMngr::GmmPageTableMngr(GmmClientContext *gmmClientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) : clientContext(gmmClientContext->getHandle()) {
     pageTableManager = clientContext->CreatePageTblMgrObject(translationTableFlags);
+    DEBUG_BREAK_IF(pageTableManager == nullptr);
 }
 
 void GmmPageTableMngr::setCsrHandle(void *csrHandle) {}

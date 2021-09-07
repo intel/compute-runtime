@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -211,9 +212,19 @@ DrmMemoryManager *DrmCommandStreamReceiver<GfxFamily>::getMemoryManager() const 
 
 template <typename GfxFamily>
 GmmPageTableMngr *DrmCommandStreamReceiver<GfxFamily>::createPageTableManager() {
-    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->getGmmClientContext(), TT_TYPE::AUXTT, nullptr);
+    auto rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
+    auto gmmClientContext = rootDeviceEnvironment->getGmmClientContext();
+
+    GMM_DEVICE_INFO deviceInfo{};
+    GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
+    deviceInfo.pDeviceCb = &deviceCallbacks;
+    gmmClientContext->setGmmDeviceInfo(&deviceInfo);
+
+    auto gmmPageTableMngr = GmmPageTableMngr::create(gmmClientContext, TT_TYPE::AUXTT, nullptr);
     gmmPageTableMngr->setCsrHandle(this);
-    this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->pageTableManager.reset(gmmPageTableMngr);
+
+    rootDeviceEnvironment->pageTableManager.reset(gmmPageTableMngr);
+
     return gmmPageTableMngr;
 }
 

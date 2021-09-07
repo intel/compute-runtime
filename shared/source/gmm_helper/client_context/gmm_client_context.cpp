@@ -75,4 +75,8 @@ uint8_t GmmClientContext::getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FOR
     return clientContext->GetMediaSurfaceStateCompressionFormat(format);
 }
 
+void GmmClientContext::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
+    clientContext->GmmSetDeviceInfo(deviceInfo);
+}
+
 } // namespace NEO

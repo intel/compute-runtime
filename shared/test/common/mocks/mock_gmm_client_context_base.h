@@ -17,6 +17,7 @@ class MockGmmClientContextBase : public GmmClientContext {
     void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) override;
     uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
     uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
+    void setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override;
 
     GMM_RESOURCE_FORMAT capturedFormat = GMM_FORMAT_INVALID;
     uint8_t compressionFormatToReturn = 1;
