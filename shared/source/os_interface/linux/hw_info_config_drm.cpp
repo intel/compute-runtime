@@ -176,7 +176,7 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     drm->checkPreemptionSupport();
     bool preemption = drm->isPreemptionSupported();
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  isMidThreadPreemptionSupported(*outHwInfo) && preemption,
+                                                  hwHelper.isMidThreadPreemptionSupported(*outHwInfo) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuThreadGroupLevelPreempt) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidBatchPreempt) && preemption);
 

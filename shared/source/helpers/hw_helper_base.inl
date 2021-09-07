@@ -652,6 +652,11 @@ bool HwHelperHw<GfxFamily>::isEngineTypeRemappingToHwSpecificRequired() const {
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const {
+    return static_cast<bool>(hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt);
+}
+
+template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isSipKernelAsHexadecimalArrayPreferred() const {
     return false;
 }

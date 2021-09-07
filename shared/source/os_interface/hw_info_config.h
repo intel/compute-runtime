@@ -40,7 +40,6 @@ class HwInfoConfig {
     virtual uint64_t getSharedSystemMemCapabilities() = 0;
     virtual void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) = 0;
     virtual uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) = 0;
-    virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
@@ -78,7 +77,6 @@ class HwInfoConfigHw : public HwInfoConfig {
     void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) override;
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) override;
     bool isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const override;
-    bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;

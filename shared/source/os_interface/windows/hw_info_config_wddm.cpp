@@ -28,7 +28,7 @@ int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo
     outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.ftrL3IACoherency;
 
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  isMidThreadPreemptionSupported(*outHwInfo),
+                                                  hwHelper.isMidThreadPreemptionSupported(*outHwInfo),
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuThreadGroupLevelPreempt),
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidBatchPreempt));
 
