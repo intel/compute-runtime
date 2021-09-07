@@ -18,26 +18,6 @@
 
 using namespace NEO;
 
-TEST(DrmQueryTest, GivenGtMaxFreqFileExistsWhenFrequencyIsQueriedThenValidValueIsReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    int expectedMaxFrequency = 1000;
-
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto hwInfo = *defaultHwInfo;
-
-    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
-
-    EXPECT_TRUE(fileExists(gtMaxFreqFile));
-    drm.setPciPath("device");
-
-    int maxFrequency = 0;
-    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
-}
-
 TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsFalse) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

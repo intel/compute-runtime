@@ -788,4 +788,50 @@ bool Drm::sysmanQueryEngineInfo() {
     return Drm::queryEngineInfo(true);
 }
 
+int getMaxGpuFrequencyOfDevice(Drm &drm, std::string &sysFsPciPath, int &maxGpuFrequency) {
+    maxGpuFrequency = 0;
+    std::string clockSysFsPath = sysFsPciPath + "/gt_max_freq_mhz";
+
+    std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
+    if (ifs.fail()) {
+        return -1;
+    }
+
+    ifs >> maxGpuFrequency;
+    ifs.close();
+    return 0;
+}
+
+int getMaxGpuFrequencyOfSubDevice(Drm &drm, std::string &sysFsPciPath, int subDeviceId, int &maxGpuFrequency) {
+    maxGpuFrequency = 0;
+    std::string clockSysFsPath = sysFsPciPath + "/gt/gt" + std::to_string(subDeviceId) + "/rps_max_freq_mhz";
+
+    std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
+    if (ifs.fail()) {
+        return -1;
+    }
+
+    ifs >> maxGpuFrequency;
+    ifs.close();
+    return 0;
+}
+
+int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
+    int ret = 0;
+    std::string sysFsPciPath = getSysFsPciPath();
+    auto tileCount = hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount;
+
+    if (hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid && tileCount > 0) {
+        for (auto tileId = 0; tileId < tileCount; tileId++) {
+            int maxGpuFreqOfSubDevice = 0;
+            ret |= getMaxGpuFrequencyOfSubDevice(*this, sysFsPciPath, tileId, maxGpuFreqOfSubDevice);
+            maxGpuFrequency = std::max(maxGpuFrequency, maxGpuFreqOfSubDevice);
+        }
+        if (ret == 0) {
+            return 0;
+        }
+    }
+    return getMaxGpuFrequencyOfDevice(*this, sysFsPciPath, maxGpuFrequency);
+}
+
 } // namespace NEO

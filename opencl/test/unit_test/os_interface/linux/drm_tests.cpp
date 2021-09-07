@@ -740,3 +740,121 @@ TEST(DrmQueryTest, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
         EXPECT_EQ(drmMock.storedSVal, static_cast<int>(topologyMap.at(i).sliceIndices.size()));
     }
 }
+
+TEST(DrmQueryTest, GivenNonTileArchitectureWhenFrequencyIsQueriedThenFallbackToLegacyInterface) {
+    int expectedMaxFrequency = 2000;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
+    EXPECT_TRUE(fileExists(gtMaxFreqFile));
+
+    drm.setPciPath("device");
+
+    int maxFrequency = 0;
+    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+}
+
+TEST(DrmQueryTest, GivenTileArchitectureIsInvalidWhenFrequencyIsQueriedThenFallbackToLegacyInterface) {
+    int expectedMaxFrequency = 2000;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
+
+    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
+    EXPECT_TRUE(fileExists(gtMaxFreqFile));
+
+    drm.setPciPath("device");
+
+    int maxFrequency = 0;
+    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+}
+
+TEST(DrmQueryTest, GivenRpsMaxFreqFileExistsWhenFrequencyIsQueriedThenValidValueIsReturned) {
+    int expectedMaxFrequency = 3000;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    std::string rpsMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt/gt0/rps_max_freq_mhz";
+    EXPECT_TRUE(fileExists(rpsMaxFreqFile));
+
+    drm.setPciPath("device");
+
+    int maxFrequency = 0;
+    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+}
+
+TEST(DrmQueryTest, GivenRpsMaxFreqFilesExistWhenFrequenciesAreQueriedThenValidValueIsReturned) {
+    int expectedMaxFrequency = 4000;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    std::string rpsMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt/gt1/rps_max_freq_mhz";
+    EXPECT_TRUE(fileExists(rpsMaxFreqFile));
+
+    drm.setPciPath("device");
+
+    int maxFrequency = 0;
+    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+}
+
+TEST(DrmQueryTest, GivenRpsMaxFreqFileDoesntExistWhenFrequencyIsQueriedThenFallbackToLegacyInterface) {
+    int expectedMaxFrequency = 2000;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 3;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    std::string rpsMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt/gt2/rps_max_freq_mhz";
+    EXPECT_FALSE(fileExists(rpsMaxFreqFile));
+
+    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
+    EXPECT_TRUE(fileExists(gtMaxFreqFile));
+
+    drm.setPciPath("device");
+
+    int maxFrequency = 0;
+    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+}

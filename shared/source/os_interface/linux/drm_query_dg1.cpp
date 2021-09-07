@@ -35,22 +35,6 @@ std::string getIoctlParamStringRemaining(int param) {
 }
 } // namespace IoctlHelper
 
-int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
-    maxGpuFrequency = 0;
-    std::string clockSysFsPath = getSysFsPciPath();
-
-    clockSysFsPath += "/gt_max_freq_mhz";
-
-    std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
-    if (ifs.fail()) {
-        return -1;
-    }
-
-    ifs >> maxGpuFrequency;
-    ifs.close();
-    return 0;
-}
-
 bool Drm::querySystemInfo() {
     return false;
 }
