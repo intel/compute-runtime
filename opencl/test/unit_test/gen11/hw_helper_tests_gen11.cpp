@@ -70,3 +70,8 @@ GEN11TEST_F(MemorySynchronizatiopCommandsTestsGen11, WhenProgrammingCacheFlushTh
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
 }
+
+GEN11TEST_F(MemorySynchronizatiopCommandsTestsGen11, givenGen11WhenCallIsPackedSupportedThenReturnTrue) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_TRUE(helper.packedFormatsSupported());
+}

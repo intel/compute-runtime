@@ -29,6 +29,11 @@ uint32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::RoundRobinAfterDependency;
 }
 
+template <>
+bool HwHelperHw<Family>::packedFormatsSupported() const {
+    return true;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
