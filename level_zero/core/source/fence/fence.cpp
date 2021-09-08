@@ -37,10 +37,10 @@ ze_result_t FenceImp::queryStatus() {
         csr->downloadAllocations();
     }
 
-    void *hostAddr = static_cast<uint64_t *>(allocation->getUnderlyingBuffer());
+    volatile uint32_t *hostAddr = static_cast<uint32_t *>(allocation->getUnderlyingBuffer());
     uint32_t queryVal = Fence::STATE_CLEARED;
     for (uint32_t i = 0; i < partitionCount; i++) {
-        memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), hostAddr, sizeof(uint32_t));
+        queryVal = *hostAddr;
         if (queryVal == Fence::STATE_CLEARED) {
             break;
         }
@@ -55,16 +55,17 @@ void FenceImp::initialize() {
     properties.alignment = MemoryConstants::cacheLineSize;
     allocation = cmdQueue->getDevice()->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     UNRECOVERABLE_IF(allocation == nullptr);
-
     reset();
 }
 
 ze_result_t FenceImp::reset() {
-    auto hostAddress = static_cast<uint64_t *>(allocation->getUnderlyingBuffer());
-    *(hostAddress) = Fence::STATE_CLEARED;
-
-    NEO::CpuIntrinsics::clFlush(hostAddress);
-
+    volatile uint32_t *hostAddress = static_cast<uint32_t *>(allocation->getUnderlyingBuffer());
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        *hostAddress = Fence::STATE_CLEARED;
+        NEO::CpuIntrinsics::clFlush(const_cast<uint32_t *>(hostAddress));
+        hostAddress = ptrOffset(hostAddress, CommandQueueImp::addressOffset);
+    }
+    partitionCount = 1;
     return ZE_RESULT_SUCCESS;
 }
 

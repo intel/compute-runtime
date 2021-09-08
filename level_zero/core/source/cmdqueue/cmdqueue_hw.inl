@@ -431,8 +431,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             NEO::PipeControlArgs args(true);
             if (partitionCount > 1) {
                 args.workloadPartitionOffset = true;
-                fence->setPartitionCount(partitionCount);
             }
+            fence->setPartitionCount(partitionCount);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 child, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                 fence->getGpuAddress(),

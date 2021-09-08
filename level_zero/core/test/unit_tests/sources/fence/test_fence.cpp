@@ -14,6 +14,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_fence.h"
 
 namespace L0 {
 namespace ult {
@@ -58,7 +59,7 @@ TEST_F(FenceTest, whenQueryingStatusAndStateSignaledThenReturnSuccess) {
     EXPECT_NE(nullptr, fence);
 
     auto &graphicsAllocation = fence->getAllocation();
-    auto hostAddr = static_cast<uint64_t *>(graphicsAllocation.getUnderlyingBuffer());
+    auto hostAddr = static_cast<uint32_t *>(graphicsAllocation.getUnderlyingBuffer());
     *hostAddr = Fence::STATE_SIGNALED;
     auto status = fence->queryStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
@@ -101,7 +102,7 @@ TEST_F(FenceSynchronizeTest, givenCallToFenceHostSynchronizeWithTimeoutZeroAndSt
     fence = std::unique_ptr<L0::Fence>(L0::Fence::create(&cmdQueue, nullptr));
     EXPECT_NE(nullptr, fence);
     auto alloc = &(fence->getAllocation());
-    auto hostAddr = static_cast<uint64_t *>(alloc->getUnderlyingBuffer());
+    auto hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
     *hostAddr = Fence::STATE_SIGNALED;
     ze_result_t result = fence->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -116,10 +117,38 @@ TEST_F(FenceSynchronizeTest, givenCallToFenceHostSynchronizeWithTimeoutNonZeroAn
     fence = std::unique_ptr<L0::Fence>(L0::Fence::create(&cmdQueue, nullptr));
     EXPECT_NE(nullptr, fence);
     auto alloc = &(fence->getAllocation());
-    auto hostAddr = static_cast<uint64_t *>(alloc->getUnderlyingBuffer());
+    auto hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
     *hostAddr = Fence::STATE_SIGNALED;
     ze_result_t result = fence->hostSynchronize(10);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(FenceSynchronizeTest, givenMultiplePartitionsWhenFenceIsResetThenAllPartitionFenceStatesAreReset) {
+    std::unique_ptr<MockCommandStreamReceiver> csr = nullptr;
+    csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+
+    Mock<CommandQueue> cmdQueue(device, csr.get());
+
+    auto fence = whitebox_cast(Fence::create(&cmdQueue, nullptr));
+    EXPECT_NE(nullptr, fence);
+
+    fence->partitionCount = 2;
+    auto alloc = &(fence->getAllocation());
+    auto hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
+    *hostAddr = Fence::STATE_SIGNALED;
+    hostAddr = ptrOffset(hostAddr, CommandQueueImp::addressOffset);
+    *hostAddr = Fence::STATE_SIGNALED;
+
+    ze_result_t result = fence->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
+    EXPECT_EQ(Fence::STATE_CLEARED, *hostAddr);
+    hostAddr = ptrOffset(hostAddr, CommandQueueImp::addressOffset);
+    EXPECT_EQ(Fence::STATE_CLEARED, *hostAddr);
+    EXPECT_EQ(1u, fence->partitionCount);
+
+    fence->destroy();
 }
 
 using FenceAubCsrTest = Test<DeviceFixture>;

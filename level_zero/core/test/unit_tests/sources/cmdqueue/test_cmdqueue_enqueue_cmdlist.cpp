@@ -17,6 +17,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_fence.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -825,10 +826,12 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     ze_fence_desc_t fenceDesc{};
     auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
     ASSERT_NE(nullptr, fence);
+    EXPECT_EQ(1u, fence->partitionCount);
     ze_fence_handle_t fenceHandle = fence->toHandle();
 
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
+    fence->partitionCount = 2;
     //1st execute call initialized pipeline
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -839,6 +842,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     auto usedSpaceAfter = commandQueue->commandStream->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
     size_t cmdBufferSizeWithoutMmioProgramming = usedSpaceAfter - usedSpaceBefore;
+    EXPECT_EQ(1u, fence->partitionCount);
 
     auto workPartitionAddress = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
 
@@ -853,6 +857,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     usedSpaceAfter = commandQueue->commandStream->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
     size_t cmdBufferSizeWithtMmioProgramming = usedSpaceAfter - usedSpaceBefore;
+    EXPECT_EQ(2u, fence->partitionCount);
 
     size_t expectedSizeWithMmioProgramming = cmdBufferSizeWithoutMmioProgramming + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_LOAD_REGISTER_MEM);
     EXPECT_GE(expectedSizeWithMmioProgramming, cmdBufferSizeWithtMmioProgramming);
