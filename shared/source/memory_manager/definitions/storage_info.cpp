@@ -47,8 +47,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA: {
         auto placeIsaOnMultiTile = (properties.subDevicesBitfield.count() != 1);
 
-        if (executionEnvironment.isDebuggingEnabled() &&
-            executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->debugger.get()) {
+        if (executionEnvironment.isDebuggingEnabled()) {
             placeIsaOnMultiTile = false;
         }
 
