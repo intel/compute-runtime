@@ -16,4 +16,9 @@ void OfflineCompiler::resolveExtraSettings() {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
 }
+
+bool OfflineCompiler::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) {
+    return hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt;
+}
+
 } // namespace NEO

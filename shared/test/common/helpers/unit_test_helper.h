@@ -49,7 +49,7 @@ struct UnitTestHelper {
 
     static bool requiresTimestampPacketsInSystemMemory();
 
-    static void setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo);
+    static void setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value);
 
     static const bool tiledImagesSupported;
 

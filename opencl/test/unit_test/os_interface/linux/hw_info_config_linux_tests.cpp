@@ -320,7 +320,7 @@ HWTEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledMidThreadOnWhenCon
         I915_SCHEDULER_CAP_PREEMPTION;
     drm->storedDeviceID = hwConfigTestMidThreadBit;
 
-    UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(pInHwInfo);
+    UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(pInHwInfo, true);
 
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);

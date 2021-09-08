@@ -31,6 +31,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::internalOptions;
     using OfflineCompiler::irBinary;
     using OfflineCompiler::irBinarySize;
+    using OfflineCompiler::isMidThreadPreemptionSupported;
     using OfflineCompiler::isSpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;

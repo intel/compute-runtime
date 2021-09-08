@@ -25,6 +25,7 @@ class MockCompilerInterface : public CompilerInterface {
     using CompilerInterface::isCompilerAvailable;
     using CompilerInterface::isFclAvailable;
     using CompilerInterface::isIgcAvailable;
+    using CompilerInterface::isMidThreadPreemptionSupported;
 
     using CompilerInterface::fclMain;
     using CompilerInterface::igcMain;

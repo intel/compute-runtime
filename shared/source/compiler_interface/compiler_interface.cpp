@@ -452,7 +452,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     igcFeWa.get()->SetFtrGTX(device.getHardwareInfo().featureTable.ftrGTX);
     igcFeWa.get()->SetFtr5Slice(device.getHardwareInfo().featureTable.ftr5Slice);
 
-    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(device.getHardwareInfo().featureTable.ftrGpGpuMidThreadLevelPreempt);
+    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(isMidThreadPreemptionSupported(device.getHardwareInfo()));
     igcFeWa.get()->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.ftrIoMmuPageFaulting);
     igcFeWa.get()->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.ftrWddm2Svm);
     igcFeWa.get()->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.ftrPooledEuEnabled);

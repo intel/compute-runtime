@@ -609,7 +609,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     igcFeWa.get()->SetFtrGTX(hwInfo.featureTable.ftrGTX);
     igcFeWa.get()->SetFtr5Slice(hwInfo.featureTable.ftr5Slice);
 
-    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt);
+    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(isMidThreadPreemptionSupported(hwInfo));
     igcFeWa.get()->SetFtrIoMmuPageFaulting(hwInfo.featureTable.ftrIoMmuPageFaulting);
     igcFeWa.get()->SetFtrWddm2Svm(hwInfo.featureTable.ftrWddm2Svm);
     igcFeWa.get()->SetFtrPooledEuEnabled(hwInfo.featureTable.ftrPooledEuEnabled);
