@@ -80,23 +80,6 @@ void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::REND
 }
 
 template <>
-inline bool HwHelperHw<Family>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
-    if (!NEO::ApiSpecificConfig::isStatelessCompressionSupported()) {
-        return false;
-    }
-    if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
-        return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
-    }
-    if (HwHelper::getSubDevicesCount(&hwInfo) > 1) {
-        return DebugManager.flags.EnableMultiTileCompression.get() > 0 ? true : false;
-    }
-    if (hwInfo.platform.usRevId < HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo)) {
-        return false;
-    }
-    return true;
-}
-
-template <>
 bool HwHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) const {
 
     bool forceOverrideMemoryBankIndex = (HwHelper::getSubDevicesCount(&hwInfo) == 4 &&
@@ -118,7 +101,7 @@ bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t s
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
-    if (allowStatelessCompression(hwInfo)) {
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
         return true;
     } else {
         return size > KB;

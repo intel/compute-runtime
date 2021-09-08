@@ -66,3 +66,20 @@ bool HwInfoConfigHw<gfxProduct>::allowRenderCompression(const HardwareInfo &hwIn
     }
     return true;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
+    if (!NEO::ApiSpecificConfig::isStatelessCompressionSupported()) {
+        return false;
+    }
+    if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
+        return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
+    }
+    if (HwHelper::getSubDevicesCount(&hwInfo) > 1) {
+        return DebugManager.flags.EnableMultiTileCompression.get() > 0 ? true : false;
+    }
+    if (hwInfo.platform.usRevId < getHwRevIdFromStepping(REVISION_B, hwInfo)) {
+        return false;
+    }
+    return true;
+}

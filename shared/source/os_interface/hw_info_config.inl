@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
@@ -154,5 +155,16 @@ bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareIn
 template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::allowRenderCompression(const HardwareInfo &hwInfo) const {
     return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
+    if (!NEO::ApiSpecificConfig::isStatelessCompressionSupported()) {
+        return false;
+    }
+    if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
+        return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
+    }
+    return false;
 }
 } // namespace NEO

@@ -141,6 +141,11 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::allowRenderCompression(const HardwareInfo &hw
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 void OsAgnosticHwInfoConfigTest::SetUp() {
     DeviceFixture::SetUp();
 }

@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/program/print_formatter.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -77,8 +78,8 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 }
 
 void PrintfHandler::printEnqueueOutput() {
-    auto &helper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
-    if (helper.allowStatelessCompression(device.getHardwareInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(device.getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.allowStatelessCompression(device.getHardwareInfo())) {
         auto printOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
         auto printOutputDecompressed = std::make_unique<uint8_t[]>(printOutputSize);
         auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(device.getHardwareInfo(), device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);

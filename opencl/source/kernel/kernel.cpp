@@ -2485,8 +2485,8 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
             }
         }
     }
-    auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.allowStatelessCompression(getDevice().getHardwareInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.allowStatelessCompression(getDevice().getHardwareInfo())) {
         for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
             if ((gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
                 (gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::SVM_GPU)) {
@@ -2806,8 +2806,8 @@ bool Kernel::requiresLimitedWorkgroupSize() const {
 }
 
 void Kernel::updateAuxTranslationRequired() {
-    auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.allowStatelessCompression(getDevice().getHardwareInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.allowStatelessCompression(getDevice().getHardwareInfo())) {
         if (hasDirectStatelessAccessToHostMemory() || hasIndirectStatelessAccessToHostMemory()) {
             setAuxTranslationRequired(true);
         }

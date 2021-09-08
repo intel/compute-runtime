@@ -640,8 +640,8 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
 }
 
 TEST_F(DeviceTest, whenCheckingIfStatelessCompressionIsSupportedThenReturnFalse) {
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.allowStatelessCompression(*defaultHwInfo));
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(*defaultHwInfo));
 }
 
 struct DeviceHwInfoTest : public ::testing::Test {

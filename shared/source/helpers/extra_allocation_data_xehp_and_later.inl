@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 
@@ -27,8 +28,8 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
         }
     }
 
-    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (helper.allowStatelessCompression(hwInfo)) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.allowStatelessCompression(hwInfo)) {
         if (properties.allocationType == GraphicsAllocation::AllocationType::GLOBAL_SURFACE ||
             properties.allocationType == GraphicsAllocation::AllocationType::CONSTANT_SURFACE ||
             properties.allocationType == GraphicsAllocation::AllocationType::PRINTF_SURFACE) {

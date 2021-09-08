@@ -5,8 +5,8 @@
  *
  */
 
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/compression_selector.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 bool CompressionSelector::preferRenderCompressedBuffer(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
@@ -17,8 +17,8 @@ bool CompressionSelector::preferRenderCompressedBuffer(const AllocationPropertie
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::SVM_GPU:
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE: {
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        return hwHelper.allowStatelessCompression(hwInfo);
+        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        return hwInfoConfig.allowStatelessCompression(hwInfo);
     }
     default:
         return false;

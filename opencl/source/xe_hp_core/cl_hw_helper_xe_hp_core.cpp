@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_hw_helper_base.inl"
@@ -27,7 +28,7 @@ void populateFactoryTable<ClHwHelperHw<Family>>() {
 
 template <>
 bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const HardwareInfo &hwInfo) const {
-    if (HwHelperHw<Family>::get().allowStatelessCompression(hwInfo)) {
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
         return false;
     } else {
         return !argAsPtr.isPureStateful();
@@ -36,7 +37,7 @@ bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, co
 
 template <>
 bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const HardwareInfo &hwInfo) const {
-    if (HwHelperHw<Family>::get().allowStatelessCompression(hwInfo)) {
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
         return false;
     } else {
         return hasStatelessAccessToBuffer(kernelInfo);

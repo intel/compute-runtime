@@ -225,3 +225,20 @@ HWTEST_F(HwInfoConfigTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned)
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.allowRenderCompression(pInHwInfo));
 }
+
+HWTEST_F(HwInfoConfigTest, WhenAllowStatelessCompressionIsCalledThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(pInHwInfo));
+
+    for (auto enable : {-1, 0, 1}) {
+        DebugManager.flags.EnableStatelessCompression.set(enable);
+
+        if (enable > 0) {
+            EXPECT_TRUE(hwInfoConfig.allowStatelessCompression(pInHwInfo));
+        } else {
+            EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(pInHwInfo));
+        }
+    }
+}

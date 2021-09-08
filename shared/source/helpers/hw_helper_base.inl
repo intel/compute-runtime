@@ -414,14 +414,6 @@ inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const Hardware
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
-    if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
-        return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
-    }
-    return false;
-}
-
-template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
     return allocation.isAllocatedInLocalMemoryPool() &&
            (getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed || !allocation.isAllocationLockable());

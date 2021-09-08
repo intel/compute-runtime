@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
@@ -504,8 +505,8 @@ GraphicsAllocation::AllocationType SVMAllocsManager::getGraphicsAllocationType(c
             allocationType = GraphicsAllocation::AllocationType::WRITE_COMBINED;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
-            auto &hwHelper = HwHelper::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eRenderCoreFamily);
-            if (hwHelper.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
+            const auto &hwInfoConfig = *HwInfoConfig::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eProductFamily);
+            if (hwInfoConfig.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
                 allocationType = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
             } else {
                 allocationType = GraphicsAllocation::AllocationType::BUFFER;

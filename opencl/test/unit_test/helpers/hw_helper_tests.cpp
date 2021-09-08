@@ -878,23 +878,6 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidVal
     }
 }
 
-HWTEST_F(HwHelperTest, WhenAllowStatelessCompressionIsCalledThenReturnCorrectValue) {
-    DebugManagerStateRestore restore;
-
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.allowStatelessCompression(hardwareInfo));
-
-    for (auto enable : {-1, 0, 1}) {
-        DebugManager.flags.EnableStatelessCompression.set(enable);
-
-        if (enable > 0) {
-            EXPECT_TRUE(hwHelper.allowStatelessCompression(hardwareInfo));
-        } else {
-            EXPECT_FALSE(hwHelper.allowStatelessCompression(hardwareInfo));
-        }
-    }
-}
-
 HWTEST_F(HwHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturned) {
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     EXPECT_FALSE(hwHelper.isBankOverrideRequired(hardwareInfo));

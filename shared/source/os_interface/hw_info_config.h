@@ -55,6 +55,7 @@ class HwInfoConfig {
     virtual std::string getDeviceMemoryName() const = 0;
     virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
+    virtual bool allowStatelessCompression(const HardwareInfo &hwInfo) const = 0;
 
     uint32_t threadsPerEu;
 };
@@ -92,6 +93,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     std::string getDeviceMemoryName() const override;
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
     bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
+    bool allowStatelessCompression(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;
