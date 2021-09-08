@@ -130,7 +130,16 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     indirectHeap.align(WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 
     auto offsetCrossThreadData = indirectHeap.getUsed();
-    char *pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
+    char *pDest = nullptr;
+
+    auto pImplicitArgs = kernel.getImplicitArgs();
+    if (pImplicitArgs) {
+        auto implicitArgsSize = static_cast<uint32_t>(sizeof(ImplicitArgs));
+        pDest = static_cast<char *>(indirectHeap.getSpace(implicitArgsSize));
+        memcpy_s(pDest, implicitArgsSize, pImplicitArgs, implicitArgsSize);
+    }
+
+    pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
     memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {

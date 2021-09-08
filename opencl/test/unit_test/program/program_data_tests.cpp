@@ -690,3 +690,27 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     delete buildInfo.constantSurface;
     buildInfo.constantSurface = nullptr;
 }
+
+TEST(ProgramImplicitArgsTest, whenImplicitRelocationIsPresentThenKernelRequiresImplicitArgs) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
+    KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
+    uint8_t kernelHeapData[64] = {};
+    kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
+    kernelInfo.heapInfo.KernelHeapSize = 64;
+    MockGraphicsAllocation kernelIsa(kernelHeapData, 64);
+    kernelInfo.kernelAllocation = &kernelIsa;
+    program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
+
+    auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
+    auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, ret);
+
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+    program.getKernelInfoArray(rootDeviceIndex).clear();
+}

@@ -64,7 +64,7 @@ TEST_F(PrintfHandlerTests, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledTh
     delete device;
 }
 
-TEST_F(PrintfHandlerTests, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenGetSurfaceIsCalledThenResultIsNullptr) {
+TEST_F(PrintfHandlerTests, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenGetSurfaceIsCalledThenResultIsNotNullptr) {
     MockClDevice *device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     MockContext context;
 
@@ -87,6 +87,35 @@ TEST_F(PrintfHandlerTests, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenG
 
     delete pProgram;
     delete device;
+}
+
+TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandlerThenProperAddressIsPatchedInImplicitArgsStruct) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context(device.get());
+
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 16;
+    pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+
+    MockProgram program{&context, false, toClDeviceVector(*device)};
+
+    uint64_t crossThread[10];
+    MockKernel kernel{&program, *pKernelInfo, *device};
+    kernel.setCrossThreadData(&crossThread, sizeof(uint64_t) * 10);
+    kernel.initialize();
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), &kernel);
+    auto printfHandler = std::unique_ptr<PrintfHandler>(PrintfHandler::create(multiDispatchInfo, *device));
+    printfHandler->prepareDispatch(multiDispatchInfo);
+
+    auto printfSurface = printfHandler->getSurface();
+    ASSERT_NE(nullptr, printfSurface);
+
+    auto pImplicitArgs = kernel.getImplicitArgs();
+    ASSERT_NE(nullptr, pImplicitArgs);
+
+    EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->printfBufferPtr);
 }
 
 HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutput) {

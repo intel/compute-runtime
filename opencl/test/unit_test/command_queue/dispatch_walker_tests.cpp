@@ -1551,3 +1551,70 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
     expectedAddress = hwTimeStamp2->getGpuAddress() + contextTimestampFieldOffset;
     EXPECT_EQ(expectedAddress, gpuAddress);
 }
+
+HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSpace) {
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    size_t workGroupSize[3] = {2, 5, 10};
+    cl_uint dimensions = 1;
+    Vec3<size_t> localWorkgroupSize(workGroupSize);
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
+
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
+    MockKernel kernelWithoutImplicitArgs(program.get(), kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernelWithoutImplicitArgs.initialize());
+
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    MockKernel kernelWithImplicitArgs(program.get(), kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernelWithImplicitArgs.initialize());
+
+    DispatchInfo dispatchInfoWithoutImplicitArgs(pClDevice, const_cast<MockKernel *>(&kernelWithoutImplicitArgs), dimensions, workItems, workGroupSize, globalOffsets);
+    dispatchInfoWithoutImplicitArgs.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfoWithoutImplicitArgs.setTotalNumberOfWorkgroups({1, 1, 1});
+    MultiDispatchInfo multiDispatchInfoWithoutImplicitArgs(&kernelWithoutImplicitArgs);
+    multiDispatchInfoWithoutImplicitArgs.push(dispatchInfoWithoutImplicitArgs);
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfoWithoutImplicitArgs,
+        CsrDependencies(),
+        blockedCommandsData.get(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
+
+    auto iohSizeWithoutImplicitArgs = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithoutImplicitArgs, Math::computeTotalElementsCount(localWorkgroupSize));
+
+    DispatchInfo dispatchInfoWithImplicitArgs(pClDevice, const_cast<MockKernel *>(&kernelWithImplicitArgs), dimensions, workItems, workGroupSize, globalOffsets);
+    dispatchInfoWithImplicitArgs.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfoWithImplicitArgs.setTotalNumberOfWorkgroups({1, 1, 1});
+    MultiDispatchInfo multiDispatchInfoWithImplicitArgs(&kernelWithoutImplicitArgs);
+    multiDispatchInfoWithImplicitArgs.push(dispatchInfoWithImplicitArgs);
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfoWithImplicitArgs,
+        CsrDependencies(),
+        blockedCommandsData.get(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
+
+    auto iohSizeWithImplicitArgs = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithImplicitArgs, Math::computeTotalElementsCount(localWorkgroupSize));
+
+    EXPECT_LE(iohSizeWithoutImplicitArgs, iohSizeWithImplicitArgs);
+
+    {
+        auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
+        uint32_t grfSize = sizeof(typename FamilyType::GRF);
+        auto size = kernelWithImplicitArgs.getCrossThreadDataSize() +
+                    HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(kernelInfo.getMaxSimdSize(), grfSize, numChannels, Math::computeTotalElementsCount(localWorkgroupSize)) +
+                    sizeof(ImplicitArgs) +
+                    alignUp(HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(kernelInfo.getMaxSimdSize(), grfSize, 3u, Math::computeTotalElementsCount(localWorkgroupSize)), MemoryConstants::cacheLineSize);
+
+        size = alignUp(size, MemoryConstants::cacheLineSize);
+        EXPECT_EQ(size, iohSizeWithImplicitArgs);
+    }
+}

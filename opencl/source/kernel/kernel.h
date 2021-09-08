@@ -14,6 +14,7 @@
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -426,6 +427,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool areMultipleSubDevicesInContext() const;
     bool requiresMemoryMigration() const { return migratableArgsMap.size() > 0; }
     const std::map<uint32_t, MemObj *> &getMemObjectsToMigrate() const { return migratableArgsMap; }
+    ImplicitArgs *getImplicitArgs() const { return pImplicitArgs.get(); }
 
   protected:
     struct ObjectCounts {
@@ -625,6 +627,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     bool kernelHasIndirectAccess = true;
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
+    std::unique_ptr<ImplicitArgs> pImplicitArgs = nullptr;
 };
 
 } // namespace NEO

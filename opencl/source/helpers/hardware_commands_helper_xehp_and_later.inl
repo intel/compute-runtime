@@ -100,6 +100,13 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     char *dest = nullptr;
     char *src = kernel.getCrossThreadData();
 
+    auto pImplicitArgs = kernel.getImplicitArgs();
+    if (pImplicitArgs) {
+        auto implicitArgsSize = static_cast<uint32_t>(sizeof(ImplicitArgs));
+        dest = static_cast<char *>(indirectHeap.getSpace(implicitArgsSize));
+        memcpy_s(dest, implicitArgsSize, pImplicitArgs, implicitArgsSize);
+    }
+
     using InlineData = typename GfxFamily::INLINE_DATA;
     using GRF = typename GfxFamily::GRF;
     uint32_t inlineDataSize = sizeof(InlineData);

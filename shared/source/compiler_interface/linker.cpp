@@ -14,6 +14,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/compiler_support.h"
@@ -306,6 +307,10 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
             }
             UNRECOVERABLE_IF(nullptr == instSeg.hostPointer);
             auto relocAddress = ptrOffset(instSeg.hostPointer, static_cast<uintptr_t>(relocation.offset));
+            if (relocation.symbolName == implicitArgsRelocationSymbolName) {
+                *reinterpret_cast<uint32_t *>(relocAddress) = sizeof(ImplicitArgs);
+                continue;
+            }
             auto symbolIt = relocatedSymbols.find(relocation.symbolName);
 
             bool invalidOffset = relocation.offset + addressSizeInBytes(relocation.type) > instSeg.segmentSize;

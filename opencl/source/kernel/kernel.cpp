@@ -163,6 +163,14 @@ cl_int Kernel::initialize() {
         return CL_INVALID_KERNEL;
     }
 
+    if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
+        pImplicitArgs = std::make_unique<ImplicitArgs>();
+        *pImplicitArgs = {};
+        pImplicitArgs->structSize = sizeof(ImplicitArgs);
+        pImplicitArgs->structVersion = 0;
+        pImplicitArgs->simdWidth = maxSimdSize;
+    }
+
     crossThreadDataSize = kernelDescriptor.kernelAttributes.crossThreadDataSize;
 
     // now allocate our own cross-thread data, if necessary
@@ -393,6 +401,9 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
         kernelUnifiedMemoryGfxAllocations.push_back(gfxAlloc);
     }
 
+    if (pImplicitArgs) {
+        memcpy_s(pImplicitArgs.get(), sizeof(ImplicitArgs), pSourceKernel->getImplicitArgs(), sizeof(ImplicitArgs));
+    }
     this->isBuiltIn = pSourceKernel->isBuiltIn;
 
     return CL_SUCCESS;
@@ -2680,24 +2691,42 @@ const HardwareInfo &Kernel::getHardwareInfo() const {
 
 void Kernel::setWorkDim(uint32_t workDim) {
     patchNonPointer(getCrossThreadDataRef(), getDescriptor().payloadMappings.dispatchTraits.workDim, workDim);
+    if (pImplicitArgs) {
+        pImplicitArgs->numWorkDim = workDim;
+    }
 }
 
 void Kernel::setGlobalWorkOffsetValues(uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ) {
     patchVecNonPointer(getCrossThreadDataRef(),
                        getDescriptor().payloadMappings.dispatchTraits.globalWorkOffset,
                        {globalWorkOffsetX, globalWorkOffsetY, globalWorkOffsetZ});
+    if (pImplicitArgs) {
+        pImplicitArgs->globalOffsetX = globalWorkOffsetX;
+        pImplicitArgs->globalOffsetY = globalWorkOffsetY;
+        pImplicitArgs->globalOffsetZ = globalWorkOffsetZ;
+    }
 }
 
 void Kernel::setGlobalWorkSizeValues(uint32_t globalWorkSizeX, uint32_t globalWorkSizeY, uint32_t globalWorkSizeZ) {
     patchVecNonPointer(getCrossThreadDataRef(),
                        getDescriptor().payloadMappings.dispatchTraits.globalWorkSize,
                        {globalWorkSizeX, globalWorkSizeY, globalWorkSizeZ});
+    if (pImplicitArgs) {
+        pImplicitArgs->globalSizeX = globalWorkSizeX;
+        pImplicitArgs->globalSizeY = globalWorkSizeY;
+        pImplicitArgs->globalSizeZ = globalWorkSizeZ;
+    }
 }
 
 void Kernel::setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) {
     patchVecNonPointer(getCrossThreadDataRef(),
                        getDescriptor().payloadMappings.dispatchTraits.localWorkSize,
                        {localWorkSizeX, localWorkSizeY, localWorkSizeZ});
+    if (pImplicitArgs) {
+        pImplicitArgs->localSizeX = localWorkSizeX;
+        pImplicitArgs->localSizeY = localWorkSizeY;
+        pImplicitArgs->localSizeZ = localWorkSizeZ;
+    }
 }
 
 void Kernel::setLocalWorkSize2Values(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) {
@@ -2716,6 +2745,11 @@ void Kernel::setNumWorkGroupsValues(uint32_t numWorkGroupsX, uint32_t numWorkGro
     patchVecNonPointer(getCrossThreadDataRef(),
                        getDescriptor().payloadMappings.dispatchTraits.numWorkGroups,
                        {numWorkGroupsX, numWorkGroupsY, numWorkGroupsZ});
+    if (pImplicitArgs) {
+        pImplicitArgs->groupCountX = numWorkGroupsX;
+        pImplicitArgs->groupCountY = numWorkGroupsY;
+        pImplicitArgs->groupCountZ = numWorkGroupsZ;
+    }
 }
 
 bool Kernel::isLocalWorkSize2Patchable() {

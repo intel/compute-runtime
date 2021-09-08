@@ -71,6 +71,10 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
                                 kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
                                 kernel->areMultipleSubDevicesInContext());
     }
+    auto pImplicitArgs = kernel->getImplicitArgs();
+    if (pImplicitArgs) {
+        pImplicitArgs->printfBufferPtr = printfSurface->getGpuAddress();
+    }
 }
 
 void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
