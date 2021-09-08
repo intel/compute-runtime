@@ -288,19 +288,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     return allocation.release();
 }
 
-void *DrmMemoryManager::lockResourceInLocalMemoryImpl(GraphicsAllocation &graphicsAllocation) {
-    auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
-    if (graphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
-        auto addr = lockResourceInLocalMemoryImpl(bo);
-        auto alignedAddr = alignUp(addr, MemoryConstants::pageSize64k);
-        auto notUsedSize = ptrDiff(alignedAddr, addr);
-        munmapFunction(addr, notUsedSize);
-        bo->setLockedAddress(alignedAddr);
-        return bo->peekLockedAddress();
-    }
-    return lockResourceInLocalMemoryImpl(bo);
-}
-
 void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     if (bo == nullptr)
         return nullptr;
@@ -320,33 +307,6 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     bo->setLockedAddress(addr);
 
     return bo->peekLockedAddress();
-}
-
-void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
-    if (bo == nullptr)
-        return;
-
-    auto ret = munmapFunction(bo->peekLockedAddress(), bo->peekSize());
-    DEBUG_BREAK_IF(ret != 0);
-    UNUSED_VARIABLE(ret);
-
-    bo->setLockedAddress(nullptr);
-}
-
-bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
-    if (graphicsAllocation->getUnderlyingBuffer()) {
-        return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
-    }
-    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
-    for (auto handleId = 0u; handleId < graphicsAllocation->storageInfo.getNumBanks(); handleId++) {
-        auto ptr = lockResourceInLocalMemoryImpl(drmAllocation->getBOs()[handleId]);
-        if (!ptr) {
-            return false;
-        }
-        memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy);
-        this->unlockResourceInLocalMemoryImpl(drmAllocation->getBOs()[handleId]);
-    }
-    return true;
 }
 
 } // namespace NEO

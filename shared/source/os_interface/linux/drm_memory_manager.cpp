@@ -16,6 +16,7 @@
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/residency.h"
@@ -1064,6 +1065,51 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
     }
 
     return size;
+}
+void *DrmMemoryManager::lockResourceInLocalMemoryImpl(GraphicsAllocation &graphicsAllocation) {
+    if (!isLocalMemorySupported(graphicsAllocation.getRootDeviceIndex())) {
+        return nullptr;
+    }
+    auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
+    if (graphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
+        auto addr = lockResourceInLocalMemoryImpl(bo);
+        auto alignedAddr = alignUp(addr, MemoryConstants::pageSize64k);
+        auto notUsedSize = ptrDiff(alignedAddr, addr);
+        //call unmap to free the unaligned pages preceding the BO allocation and
+        //adjust the pointer in the CPU mapping to the beginning of the BO allocation
+        munmapFunction(addr, notUsedSize);
+        bo->setLockedAddress(alignedAddr);
+        return bo->peekLockedAddress();
+    }
+    return lockResourceInLocalMemoryImpl(bo);
+}
+
+bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
+    if (graphicsAllocation->getUnderlyingBuffer() || !isLocalMemorySupported(graphicsAllocation->getRootDeviceIndex())) {
+        return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
+    }
+    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    for (auto handleId = 0u; handleId < graphicsAllocation->storageInfo.getNumBanks(); handleId++) {
+        auto ptr = lockResourceInLocalMemoryImpl(drmAllocation->getBOs()[handleId]);
+        if (!ptr) {
+            return false;
+        }
+        memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy);
+        this->unlockResourceInLocalMemoryImpl(drmAllocation->getBOs()[handleId]);
+    }
+    return true;
+}
+
+void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
+    if (bo == nullptr)
+        return;
+
+    releaseReservedCpuAddressRange(bo->peekLockedAddress(), bo->peekSize(), this->getRootDeviceIndex(bo->drm));
+
+    [[maybe_unused]] auto ret = munmapFunction(bo->peekLockedAddress(), bo->peekSize());
+    DEBUG_BREAK_IF(ret != 0);
+
+    bo->setLockedAddress(nullptr);
 }
 
 } // namespace NEO

@@ -50,19 +50,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     return nullptr;
 }
 
-void *DrmMemoryManager::lockResourceInLocalMemoryImpl(GraphicsAllocation &graphicsAllocation) {
-    return nullptr;
-}
-
 void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     return nullptr;
-}
-
-void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
-}
-
-bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
-    return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
 }
 
 } // namespace NEO

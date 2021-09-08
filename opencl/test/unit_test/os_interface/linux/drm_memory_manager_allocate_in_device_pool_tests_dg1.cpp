@@ -1272,21 +1272,6 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithL
     EXPECT_EQ(nullptr, bo.peekLockedAddress());
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnWriteCombinedAllocationThenReturnPtrAlignedTo64Kb) {
-    BufferObject bo(mock, 1, 1024, 0);
-
-    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
-    EXPECT_EQ(&bo, drmAllocation.getBO());
-
-    auto ptr = memoryManager->lockResourceInLocalMemoryImpl(drmAllocation);
-    EXPECT_NE(nullptr, ptr);
-    EXPECT_EQ(ptr, bo.peekLockedAddress());
-    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(ptr));
-
-    memoryManager->unlockResourceInLocalMemoryImpl(&bo);
-    EXPECT_EQ(nullptr, bo.peekLockedAddress());
-}
-
 using DrmMemoryManagerFailInjectionTest = Test<DrmMemoryManagerFixtureDg1>;
 
 TEST_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation) {

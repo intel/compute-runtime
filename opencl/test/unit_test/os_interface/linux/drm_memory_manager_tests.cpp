@@ -4499,4 +4499,82 @@ TEST_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenGettingGlobalM
     EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.8);
 }
 
+struct DrmMemoryManagerToTestLockInLocalMemory : public TestedDrmMemoryManager {
+    using TestedDrmMemoryManager::lockResourceInLocalMemoryImpl;
+    DrmMemoryManagerToTestLockInLocalMemory(ExecutionEnvironment &executionEnvironment)
+        : TestedDrmMemoryManager(true, false, false, executionEnvironment) {}
+
+    void *lockResourceInLocalMemoryImpl(BufferObject *bo) override {
+        lockedLocalMemory.reset(new uint8_t[bo->peekSize()]);
+        return lockedLocalMemory.get();
+    }
+    std::unique_ptr<uint8_t[]> lockedLocalMemory;
+};
+
+TEST_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryWhenLockResourceIsCalledOnWriteCombinedAllocationThenReturnPtrAlignedTo64Kb) {
+    DrmMemoryManagerToTestLockInLocalMemory memoryManager(*executionEnvironment);
+    BufferObject bo(mock, 1, 1024, 0);
+
+    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    EXPECT_EQ(&bo, drmAllocation.getBO());
+
+    auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(ptr, bo.peekLockedAddress());
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(ptr));
+
+    memoryManager.unlockResourceInLocalMemoryImpl(&bo);
+    EXPECT_EQ(nullptr, bo.peekLockedAddress());
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenLockResourceIsCalledOnWriteCombinedAllocationThenReturnNullptr) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    BufferObject bo(mock, 1, 1024, 0);
+
+    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    EXPECT_EQ(&bo, drmAllocation.getBO());
+
+    auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation);
+    EXPECT_EQ(nullptr, ptr);
+
+    memoryManager.unlockResourceInLocalMemoryImpl(&bo);
+    EXPECT_EQ(nullptr, bo.peekLockedAddress());
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWithoutLocalMemoryWhenCopyMemoryToAllocationThenAllocationIsFilledWithCorrectData) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), GraphicsAllocation::AllocationType::BUFFER, device->getDeviceBitfield()});
+    ASSERT_NE(nullptr, allocation);
+
+    auto ret = memoryManager.copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), dataToCopy.data(), dataToCopy.size()));
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWithoutLocalMemoryAndCpuPtrWhenCopyMemoryToAllocationThenReturnFalse) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), GraphicsAllocation::AllocationType::BUFFER, device->getDeviceBitfield()});
+    ASSERT_NE(nullptr, allocation);
+    allocation->setCpuPtrAndGpuAddress(nullptr, 0u);
+    auto ret = memoryManager.copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
+    EXPECT_FALSE(ret);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 } // namespace NEO
