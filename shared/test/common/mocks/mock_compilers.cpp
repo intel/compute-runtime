@@ -137,6 +137,11 @@ bool CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 2)::GetSystemRoutine(IGC::SystemRo
                                                                    CIF::Builtins::BufferSimple *stateSaveAreaHeaderInit) {
     return true;
 }
+
+const char *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 3)::GetIGCRevision() {
+    return "";
+}
+
 // Platform stubs
 Platform<0>::~Platform() {}
 
