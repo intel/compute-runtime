@@ -49,6 +49,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/dxgi_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_time_gpu_cpu_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h

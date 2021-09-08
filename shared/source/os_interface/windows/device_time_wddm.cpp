@@ -19,7 +19,7 @@
 
 namespace NEO {
 
-bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
+bool DeviceTimeWddm::runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
     if (wddm) {
         D3DKMT_ESCAPE escapeCommand = {0};
 
@@ -46,29 +46,6 @@ bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
     }
 
     return false;
-}
-
-bool DeviceTimeWddm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
-    bool retVal = false;
-
-    pGpuCpuTime->CPUTimeinNS = 0;
-    pGpuCpuTime->GPUTimeStamp = 0;
-
-    TimeStampDataHeader escapeInfo = {};
-
-    if (runEscape(wddm, escapeInfo)) {
-        auto productFamily = wddm->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily;
-        auto *hwInfoConfig = HwInfoConfig::get(productFamily);
-        hwInfoConfig->convertTimestampsFromOaToCsDomain(escapeInfo.m_Data.m_Out.gpuPerfTicks);
-        double cpuNanoseconds = escapeInfo.m_Data.m_Out.cpuPerfTicks *
-                                (1000000000.0 / escapeInfo.m_Data.m_Out.cpuPerfFreq);
-
-        pGpuCpuTime->CPUTimeinNS = (unsigned long long)cpuNanoseconds;
-        pGpuCpuTime->GPUTimeStamp = (unsigned long long)escapeInfo.m_Data.m_Out.gpuPerfTicks;
-        retVal = true;
-    }
-
-    return retVal;
 }
 
 DeviceTimeWddm::DeviceTimeWddm(Wddm *wddm) {

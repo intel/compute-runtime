@@ -13,6 +13,7 @@
 
 namespace NEO {
 class Wddm;
+struct TimeStampDataHeader;
 
 class DeviceTimeWddm : public DeviceTime {
   public:
@@ -22,6 +23,7 @@ class DeviceTimeWddm : public DeviceTime {
     uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override;
 
   protected:
+    MOCKABLE_VIRTUAL bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo);
     Wddm *wddm = nullptr;
 };
 
