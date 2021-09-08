@@ -16,4 +16,5 @@ struct TestTraits<IGFX_XE_HP_CORE> {
     static constexpr bool compressionAubsSupported = true;
     static constexpr bool l3ControlSupported = true;
     static constexpr bool forceNonCoherentSupported = true;
+    static constexpr bool threadPreemptionDisableBitMatcher = true;
 };

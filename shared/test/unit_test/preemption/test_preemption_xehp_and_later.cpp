@@ -15,6 +15,8 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 
+#include "test_traits_common.h"
+
 using namespace NEO;
 
 using XeHPAndLaterPreemptionTests = DevicePreemptionTests;
@@ -46,7 +48,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingThenWaN
     EXPECT_EQ(usedSize, cmdStream.getUsed());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, givenInterfaceDescriptorDataWhenMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToDisable) {
+struct ThreadPreemptionDisableBitMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (HwMapper<productFamily>::GfxProduct::supportsCmdSet(IGFX_XE_HP_CORE)) {
+            return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::threadPreemptionDisableBitMatcher;
+        }
+        return false;
+    }
+};
+
+HWTEST2_F(XeHPAndLaterPreemptionTests, givenInterfaceDescriptorDataWhenMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToDisable, ThreadPreemptionDisableBitMatcher) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     INTERFACE_DESCRIPTOR_DATA iddArg;
@@ -58,7 +70,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, givenInterfaceDescript
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_DISABLE, iddArg.getThreadPreemptionDisable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, givenInterfaceDescriptorDataWhenNoMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToEnable) {
+HWTEST2_F(XeHPAndLaterPreemptionTests, givenInterfaceDescriptorDataWhenNoMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToEnable, ThreadPreemptionDisableBitMatcher) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     INTERFACE_DESCRIPTOR_DATA iddArg;
