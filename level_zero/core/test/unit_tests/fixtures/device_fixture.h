@@ -28,6 +28,7 @@ struct Context;
 struct Device;
 
 namespace ult {
+class MockBuiltins;
 
 struct DeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
@@ -38,6 +39,7 @@ struct DeviceFixture {
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     L0::ContextImp *context = nullptr;
+    MockBuiltins *mockBuiltIns = nullptr;
 };
 
 struct PageFaultDeviceFixture {

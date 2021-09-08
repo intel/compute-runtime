@@ -600,6 +600,13 @@ ze_result_t DeviceImp::getDeviceImageProperties(ze_device_image_properties_t *pD
 
 ze_result_t DeviceImp::getDebugProperties(zet_device_debug_properties_t *pDebugProperties) {
     bool isDebugAttachAvailable = getOsInterface().isDebugAttachAvailable();
+    auto &stateSaveAreaHeader = NEO::SipKernel::getBindlessDebugSipKernel(*this->getNEODevice()).getStateSaveAreaHeader();
+
+    if (stateSaveAreaHeader.size() == 0) {
+        PRINT_DEBUGGER_INFO_LOG("Context state save area header missing", "");
+        isDebugAttachAvailable = false;
+    }
+
     if (isDebugAttachAvailable && !isSubdevice) {
         pDebugProperties->flags = zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH;
     } else {

@@ -18,7 +18,7 @@ namespace ult {
 
 void DeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-    auto mockBuiltIns = new MockBuiltins();
+    mockBuiltIns = new MockBuiltins();
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
