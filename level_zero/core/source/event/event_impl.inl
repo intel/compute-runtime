@@ -261,22 +261,32 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *pCo
         isStaticPartitioning = false;
     }
 
-    if (deviceImp->isSubdevice || !isStaticPartitioning) {
+    if (!isStaticPartitioning) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
+    uint32_t numPacketsUsed = 1u;
+    if (!deviceImp->isSubdevice) {
+        numPacketsUsed = this->getPacketsInUse();
+    }
+
     if ((*pCount == 0) ||
-        (*pCount > kernelTimestampsData[timestampPacket].getPacketsUsed())) {
-        *pCount = this->getPacketsInUse();
+        (*pCount > numPacketsUsed)) {
+        *pCount = numPacketsUsed;
         return ZE_RESULT_SUCCESS;
     }
 
-    for (auto packetId = 0u; packetId < *pCount; packetId++) {
-        ze_kernel_timestamp_result_t &result = *(pTimestamps + packetId);
+    for (auto i = 0u; i < *pCount; i++) {
+        ze_kernel_timestamp_result_t &result = *(pTimestamps + i);
 
         auto queryTsEventAssignFunc = [&](uint64_t &timestampFieldForWriting, uint64_t &timestampFieldToCopy) {
             memcpy_s(&timestampFieldForWriting, sizeof(uint64_t), static_cast<void *>(&timestampFieldToCopy), sizeof(uint64_t));
         };
+
+        auto packetId = i;
+        if (deviceImp->isSubdevice) {
+            packetId = static_cast<NEO::SubDevice *>(deviceImp->neoDevice)->getSubDeviceIndex();
+        }
 
         globalStartTs = kernelTimestampsData[timestampPacket].getGlobalStartValue(packetId);
         contextStartTs = kernelTimestampsData[timestampPacket].getContextStartValue(packetId);
