@@ -897,7 +897,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
                                                        1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
+    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctl_cnt.gemWait = 0;
 
@@ -920,7 +920,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutU
                                                        1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
+    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctl_cnt.gemWait = 0;
 
@@ -933,9 +933,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutU
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
-                   givenWaitUserFenceFlagSetAndVmBindAvailableWhenDrmCsrWaitsForFlushStampThenExpectUseDrmWaitUserFenceCallWithNonZeroContext) {
+                   givenWaitUserFenceFlagSetAndVmBindAvailableAndUseDrmCtxWhenDrmCsrWaitsForFlushStampThenExpectUseDrmWaitUserFenceCallWithNonZeroContext) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    DebugManager.flags.EnableUserFenceUseCtxId.set(1);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -987,7 +988,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                                                        1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
+    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctl_cnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
@@ -1016,7 +1017,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                                                        1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
+    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctl_cnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
