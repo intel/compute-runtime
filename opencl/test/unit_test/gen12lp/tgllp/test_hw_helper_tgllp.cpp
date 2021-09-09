@@ -82,13 +82,3 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIsWorka
         }
     }
 }
-
-TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenGettingLocalMemoryAccessModeThenReturnCpuAccessDefault) {
-    struct MockHwHelper : HwHelperHw<FamilyType> {
-        using HwHelper::getDefaultLocalMemoryAccessMode;
-    };
-
-    auto hwHelper = static_cast<MockHwHelper &>(HwHelper::get(renderCoreFamily));
-
-    EXPECT_EQ(LocalMemoryAccessMode::Default, hwHelper.getDefaultLocalMemoryAccessMode(*defaultHwInfo));
-}

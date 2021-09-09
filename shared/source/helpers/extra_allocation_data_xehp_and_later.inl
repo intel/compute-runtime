@@ -13,7 +13,9 @@ namespace NEO {
 
 template <>
 void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
-    if (LocalMemoryAccessMode::CpuAccessDisallowed == getLocalMemoryAccessMode(hwInfo)) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    if (LocalMemoryAccessMode::CpuAccessDisallowed == hwInfoConfig.getLocalMemoryAccessMode(hwInfo)) {
         if (properties.allocationType == GraphicsAllocation::AllocationType::LINEAR_STREAM ||
             properties.allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP ||
             properties.allocationType == GraphicsAllocation::AllocationType::PRINTF_SURFACE ||
@@ -28,7 +30,6 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
         }
     }
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.allowStatelessCompression(hwInfo)) {
         if (properties.allocationType == GraphicsAllocation::AllocationType::GLOBAL_SURFACE ||
             properties.allocationType == GraphicsAllocation::AllocationType::CONSTANT_SURFACE ||

@@ -83,3 +83,11 @@ bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &h
     }
     return true;
 }
+
+template <>
+LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
+        return LocalMemoryAccessMode::CpuAccessDisallowed;
+    }
+    return LocalMemoryAccessMode::Default;
+}

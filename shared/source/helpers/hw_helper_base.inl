@@ -421,7 +421,8 @@ inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const Hardware
 template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
     return allocation.isAllocatedInLocalMemoryPool() &&
-           (getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed || !allocation.isAllocationLockable());
+           (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
+            !allocation.isAllocationLockable());
 }
 
 template <typename GfxFamily>
@@ -468,22 +469,6 @@ size_t HwHelperHw<GfxFamily>::getSingleTimestampPacketSize() const {
     }
 
     return TimestampPackets<typename GfxFamily::TimestampPacketType>::getSinglePacketSize();
-}
-
-template <typename GfxFamily>
-LocalMemoryAccessMode HwHelperHw<GfxFamily>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    switch (static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get())) {
-    case LocalMemoryAccessMode::Default:
-    case LocalMemoryAccessMode::CpuAccessAllowed:
-    case LocalMemoryAccessMode::CpuAccessDisallowed:
-        return static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get());
-    }
-    return getDefaultLocalMemoryAccessMode(hwInfo);
-}
-
-template <typename GfxFamily>
-inline LocalMemoryAccessMode HwHelperHw<GfxFamily>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    return LocalMemoryAccessMode::Default;
 }
 
 template <typename GfxFamily>

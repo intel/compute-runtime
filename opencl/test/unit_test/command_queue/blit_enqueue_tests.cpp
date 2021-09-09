@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"

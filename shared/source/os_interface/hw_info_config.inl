@@ -167,4 +167,20 @@ bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &h
     }
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    return LocalMemoryAccessMode::Default;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    switch (static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get())) {
+    case LocalMemoryAccessMode::Default:
+    case LocalMemoryAccessMode::CpuAccessAllowed:
+    case LocalMemoryAccessMode::CpuAccessDisallowed:
+        return static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get());
+    }
+    return getDefaultLocalMemoryAccessMode(hwInfo);
+}
 } // namespace NEO

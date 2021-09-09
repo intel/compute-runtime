@@ -953,6 +953,7 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
 HWTEST_F(HwHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {
     DebugManagerStateRestore restore{};
     auto &helper = HwHelper::get(renderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
@@ -961,7 +962,7 @@ HWTEST_F(HwHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLo
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
-    auto expectedDefaultValue = (helper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
+    auto expectedDefaultValue = (hwInfoConfig.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
     EXPECT_EQ(expectedDefaultValue, helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
@@ -1011,23 +1012,6 @@ HWTEST_F(HwHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequiredFo
     EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
-}
-
-HWTEST_F(HwHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
-    struct MockHwHelper : HwHelperHw<FamilyType> {
-        using HwHelper::getDefaultLocalMemoryAccessMode;
-    };
-
-    DebugManagerStateRestore restore{};
-    auto hwHelper = static_cast<MockHwHelper &>(HwHelper::get(renderCoreFamily));
-    EXPECT_EQ(hwHelper.getDefaultLocalMemoryAccessMode(*defaultHwInfo), hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
-
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
-    EXPECT_EQ(LocalMemoryAccessMode::Default, hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
-    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessAllowed, hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
-    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
 }
 
 HWTEST2_F(HwHelperTest, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned, IsAtMostGen11) {

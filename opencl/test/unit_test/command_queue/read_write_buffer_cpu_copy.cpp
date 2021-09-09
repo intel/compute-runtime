@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_read_buffer_fixture.h"

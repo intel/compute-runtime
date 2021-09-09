@@ -14,10 +14,9 @@
 
 using namespace NEO;
 
-TEST(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
-    if (IGFX_DG1 != productFamily) {
-        return;
-    }
+using Dg1HwInfoConfig = ::testing::Test;
+
+DG1TEST_F(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 

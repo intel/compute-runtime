@@ -97,16 +97,6 @@ DG1TEST_F(HwHelperTestDg1, givenDg1WhenSteppingB0ThenIntegerDivisionEmulationIsN
     EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }
 
-DG1TEST_F(HwHelperTestDg1, givenDg1WhenGettingLocalMemoryAccessModeThenReturnCpuAccessDefault) {
-    struct MockHwHelper : HwHelperHw<FamilyType> {
-        using HwHelper::getDefaultLocalMemoryAccessMode;
-    };
-
-    auto hwHelper = static_cast<MockHwHelper &>(HwHelper::get(renderCoreFamily));
-
-    EXPECT_EQ(LocalMemoryAccessMode::Default, hwHelper.getDefaultLocalMemoryAccessMode(*defaultHwInfo));
-}
-
 DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledThenIsLockableIsSet) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     AllocationData allocData{};

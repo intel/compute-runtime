@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 
 #include "igfxfmid.h"
@@ -56,7 +57,12 @@ class HwInfoConfig {
     virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowStatelessCompression(const HardwareInfo &hwInfo) const = 0;
+    virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
 
+  protected:
+    virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
+
+  public:
     uint32_t threadsPerEu;
 };
 
@@ -94,6 +100,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
     bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
     bool allowStatelessCompression(const HardwareInfo &hwInfo) const override;
+    LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;
@@ -102,6 +109,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo);
     uint64_t getHostMemCapabilitiesValue();
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo);
+    LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

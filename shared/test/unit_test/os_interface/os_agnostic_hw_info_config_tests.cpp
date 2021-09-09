@@ -146,6 +146,16 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::allowStatelessCompression(const HardwareInfo 
     return false;
 }
 
+template <>
+LocalMemoryAccessMode HwInfoConfigHw<IGFX_UNKNOWN>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    return LocalMemoryAccessMode::Default;
+}
+
+template <>
+LocalMemoryAccessMode HwInfoConfigHw<IGFX_UNKNOWN>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    return LocalMemoryAccessMode::Default;
+}
+
 void OsAgnosticHwInfoConfigTest::SetUp() {
     DeviceFixture::SetUp();
 }

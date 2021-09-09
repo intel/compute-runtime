@@ -36,12 +36,6 @@ struct HardwareCapabilities;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
 
-enum class LocalMemoryAccessMode {
-    Default = 0,
-    CpuAccessAllowed = 1,
-    CpuAccessDisallowed = 3
-};
-
 class HwHelper {
   public:
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
@@ -68,7 +62,6 @@ class HwHelper {
     virtual bool isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
-    virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
@@ -159,8 +152,6 @@ class HwHelper {
     virtual void adjustPreemptionSurfaceSize(size_t &csrSize) const = 0;
 
   protected:
-    virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
-
     HwHelper() = default;
 };
 
@@ -316,8 +307,6 @@ class HwHelperHw : public HwHelper {
 
     bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
 
-    LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
-
     bool isBankOverrideRequired(const HardwareInfo &hwInfo) const override;
 
     uint32_t getDefaultThreadArbitrationPolicy() const override;
@@ -391,8 +380,6 @@ class HwHelperHw : public HwHelper {
     void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
 
   protected:
-    LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
-
     static const AuxTranslationMode defaultAuxTranslationMode;
     HwHelperHw() = default;
 };

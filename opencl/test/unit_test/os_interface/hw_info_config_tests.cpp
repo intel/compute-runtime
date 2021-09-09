@@ -242,3 +242,21 @@ HWTEST_F(HwInfoConfigTest, WhenAllowStatelessCompressionIsCalledThenReturnCorrec
         }
     }
 }
+
+HWTEST_F(HwInfoConfigTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
+    struct MockHwInfoConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
+        using HwInfoConfig::getDefaultLocalMemoryAccessMode;
+    };
+
+    DebugManagerStateRestore restore{};
+    auto mockHwInfoConfig = static_cast<MockHwInfoConfig &>(*HwInfoConfig::get(productFamily));
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_EQ(mockHwInfoConfig.getDefaultLocalMemoryAccessMode(pInHwInfo), mockHwInfoConfig.getLocalMemoryAccessMode(pInHwInfo));
+
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    EXPECT_EQ(LocalMemoryAccessMode::Default, hwInfoConfig.getLocalMemoryAccessMode(pInHwInfo));
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessAllowed, hwInfoConfig.getLocalMemoryAccessMode(pInHwInfo));
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
+    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, hwInfoConfig.getLocalMemoryAccessMode(pInHwInfo));
+}

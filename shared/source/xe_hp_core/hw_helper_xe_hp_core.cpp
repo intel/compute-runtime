@@ -43,8 +43,8 @@ inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInf
     if (DebugManager.flags.ForceWorkgroupSize1x1x1.get() != -1) {
         return static_cast<bool>(DebugManager.flags.ForceWorkgroupSize1x1x1.get());
     } else {
-        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        return (!isSimulation && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo) && hwHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed);
+        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        return (!isSimulation && isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo) && hwInfoConfig.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed);
     }
 }
 
@@ -115,14 +115,6 @@ bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t s
     } else {
         return size > KB;
     }
-}
-
-template <>
-LocalMemoryAccessMode HwHelperHw<Family>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    if (isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
-        return LocalMemoryAccessMode::CpuAccessDisallowed;
-    }
-    return LocalMemoryAccessMode::Default;
 }
 
 template <>
