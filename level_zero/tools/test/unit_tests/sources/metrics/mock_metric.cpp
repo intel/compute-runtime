@@ -236,12 +236,44 @@ void MetricMultiDeviceContextFixture::SetUp() {
     mockMetricEnumeration->setMockedApi(&mockMetricsDiscoveryApi);
     mockMetricEnumeration->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
 
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    mockMetricEnumerationSubDevices.resize(subDeviceCount);
+    mockMetricsLibrarySubDevices.resize(subDeviceCount);
+
+    for (uint32_t i = 0; i < subDeviceCount; i++) {
+        auto &metricsSubDeviceContext = deviceImp.subDevices[i]->getMetricContext();
+        mockMetricEnumerationSubDevices[i] = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricsSubDeviceContext));
+        mockMetricEnumerationSubDevices[i]->setMockedApi(&mockMetricsDiscoveryApi);
+        mockMetricEnumerationSubDevices[i]->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
+
+        mockMetricsLibrarySubDevices[i] = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricsSubDeviceContext));
+        mockMetricsLibrarySubDevices[i]->setMockedApi(&mockMetricsLibraryApi);
+        mockMetricsLibrarySubDevices[i]->handle = new MockOsLibrary();
+    }
+
     // Metrics Discovery device common settings.
     metricsDeviceParams.Version.MajorNumber = MetricEnumeration::requiredMetricsDiscoveryMajorVersion;
     metricsDeviceParams.Version.MinorNumber = MetricEnumeration::requiredMetricsDiscoveryMinorVersion;
 }
 
 void MetricMultiDeviceContextFixture::TearDown() {
+
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+
+    for (uint32_t i = 0; i < subDeviceCount; i++) {
+
+        mockMetricEnumerationSubDevices[i]->setMockedApi(nullptr);
+        mockMetricEnumerationSubDevices[i].reset();
+
+        delete mockMetricsLibrarySubDevices[i]->handle;
+        mockMetricsLibrarySubDevices[i]->setMockedApi(nullptr);
+        mockMetricsLibrarySubDevices[i].reset();
+    }
+
+    mockMetricEnumerationSubDevices.clear();
+    mockMetricsLibrarySubDevices.clear();
 
     // Restore original metrics library
     delete mockMetricsLibrary->handle;

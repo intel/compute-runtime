@@ -127,7 +127,6 @@ struct MetricQueryPool : _zet_metric_query_pool_handle_t {
     virtual ze_result_t createMetricQuery(uint32_t index,
                                           zet_metric_query_handle_t *phMetricQuery) = 0;
 
-    static MetricQueryPool *create(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_t &desc);
     static MetricQueryPool *fromHandle(zet_metric_query_pool_handle_t handle);
 
     zet_metric_query_pool_handle_t toHandle();

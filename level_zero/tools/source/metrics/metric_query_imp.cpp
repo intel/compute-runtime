@@ -44,8 +44,30 @@ bool MetricsLibrary::isInitialized() {
     return initializationState == ZE_RESULT_SUCCESS;
 }
 
+uint32_t MetricsLibrary::getQueryReportGpuSize() {
+
+    TypedValue_1_0 gpuReportSize = {};
+
+    // Obtain gpu report size.
+    if (!isInitialized() ||
+        api.GetParameter(ParameterType::QueryHwCountersReportGpuSize, &gpuReportSize.Type, &gpuReportSize) != StatusCode::Success) {
+
+        DEBUG_BREAK_IF(true);
+        return 0;
+    }
+
+    // Validate gpu report size.
+    if (!gpuReportSize.ValueUInt32) {
+        DEBUG_BREAK_IF(true);
+        return 0;
+    }
+
+    return gpuReportSize.ValueUInt32;
+}
+
 bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_0 &query,
                                        NEO::GraphicsAllocation *&pAllocation) {
+
     std::lock_guard<std::mutex> lock(mutex);
 
     // Validate metrics library state.
@@ -54,41 +76,14 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
         return false;
     }
 
-    TypedValue_1_0 gpuReportSize = {};
     QueryCreateData_1_0 queryData = {};
     queryData.HandleContext = context;
     queryData.Type = ObjectType::QueryHwCounters;
     queryData.Slots = slotsCount;
 
-    // Obtain gpu report size.
-    api.GetParameter(ParameterType::QueryHwCountersReportGpuSize, &gpuReportSize.Type,
-                     &gpuReportSize);
-
-    // Validate gpu report size.
-    if (!gpuReportSize.ValueUInt32) {
-        DEBUG_BREAK_IF(true);
-        return false;
-    }
-
-    // Allocate gpu memory.
-    NEO::AllocationProperties properties(
-        metricContext.getDevice().getRootDeviceIndex(), gpuReportSize.ValueUInt32 * slotsCount, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, metricContext.getDevice().getNEODevice()->getDeviceBitfield());
-    properties.alignment = 64u;
-    pAllocation = metricContext.getDevice().getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-
-    // Validate gpu report size.
-    if (!pAllocation) {
-        DEBUG_BREAK_IF(true);
-        return false;
-    }
-
-    // Mark allocation as shared and clear it.
-    memset(pAllocation->getUnderlyingBuffer(), 0, gpuReportSize.ValueUInt32 * slotsCount);
-
     // Create query pool within metrics library.
     if (api.QueryCreate(&queryData, &query) != StatusCode::Success) {
         DEBUG_BREAK_IF(true);
-        metricContext.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
         return false;
     }
 
@@ -230,22 +225,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
 }
 
 bool MetricsLibrary::createContext() {
-
     auto &device = metricContext.getDevice();
-    bool status = true;
-
-    if (device.isMultiDeviceCapable()) {
-        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-        for (auto subDevice : deviceImp.subDevices) {
-            status &= createContextForDevice(*subDevice);
-        }
-    } else {
-        status = createContextForDevice(device);
-    }
-    return status;
-}
-
-bool MetricsLibrary::createContextForDevice(Device &device) {
     const auto &hwHelper = device.getHwHelper();
     const auto &asyncComputeEngines = hwHelper.getGpgpuEngineInstances(device.getHwInfo());
     ContextCreateData_1_0 createData = {};
@@ -435,25 +415,65 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    // Create metric query pool
-    *phMetricQueryPool = MetricQueryPool::create(hDevice, hMetricGroup, *pDesc);
+    const auto &deviceImp = *static_cast<DeviceImp *>(device);
+    auto metricPoolImp = new MetricQueryPoolImp(device->getMetricContext(), hMetricGroup, *pDesc);
 
-    // Return result status.
-    return (*phMetricQueryPool != nullptr) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_INVALID_ARGUMENT;
-}
+    if (deviceImp.isMultiDeviceCapable()) {
 
-MetricQueryPool *MetricQueryPool::create(zet_device_handle_t hDevice,
-                                         zet_metric_group_handle_t hMetricGroup,
-                                         const zet_metric_query_pool_desc_t &desc) {
-    auto device = Device::fromHandle(hDevice);
-    auto metricPoolImp = new MetricQueryPoolImp(device->getMetricContext(), hMetricGroup, desc);
+        auto emptyMetricGroups = std::vector<zet_metric_group_handle_t>();
+        auto &metricGroups = hMetricGroup
+                                 ? static_cast<MetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup))->getMetricGroups()
+                                 : emptyMetricGroups;
 
-    if (!metricPoolImp->create()) {
-        delete metricPoolImp;
-        metricPoolImp = nullptr;
+        const bool useMetricGroupSubDevice = metricGroups.size() > 0;
+
+        auto &metricPools = metricPoolImp->getMetricQueryPools();
+
+        for (size_t i = 0; i < deviceImp.numSubDevices; ++i) {
+
+            auto &subDevice = deviceImp.subDevices[i];
+
+            zet_metric_group_handle_t metricGroupHandle = useMetricGroupSubDevice
+                                                              ? metricGroups[subDevice->getMetricContext().getSubDeviceIndex()]
+                                                              : hMetricGroup;
+
+            auto metricPoolSubdeviceImp = new MetricQueryPoolImp(subDevice->getMetricContext(), metricGroupHandle, *pDesc);
+
+            // Create metric query pool.
+            if (!metricPoolSubdeviceImp->create()) {
+                metricPoolSubdeviceImp->destroy();
+                metricPoolImp->destroy();
+                metricPoolSubdeviceImp = nullptr;
+                metricPoolImp = nullptr;
+                *phMetricQueryPool = nullptr;
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+
+            metricPools.push_back(metricPoolSubdeviceImp);
+        }
+
+    } else {
+
+        // Create metric query pool.
+        if (!metricPoolImp->create()) {
+            metricPoolImp->destroy();
+            metricPoolImp = nullptr;
+            *phMetricQueryPool = nullptr;
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
     }
 
-    return metricPoolImp;
+    // Allocate gpu memory.
+    if (!metricPoolImp->allocateGpuMemory()) {
+        metricPoolImp->destroy();
+        metricPoolImp = nullptr;
+        *phMetricQueryPool = nullptr;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *phMetricQueryPool = metricPoolImp;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 MetricQueryPoolImp::MetricQueryPoolImp(MetricContext &metricContextInput,
@@ -478,20 +498,58 @@ bool MetricQueryPoolImp::create() {
 ze_result_t MetricQueryPoolImp::destroy() {
     switch (description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
-        DEBUG_BREAK_IF(!(pAllocation && query.IsValid()));
-        metricContext.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
-        metricsLibrary.destroyMetricQuery(query);
-        delete this;
+        if (metricQueryPools.size() > 0) {
+            for (auto &metricQueryPool : metricQueryPools) {
+                MetricQueryPool::fromHandle(metricQueryPool)->destroy();
+            }
+        }
+        if (query.IsValid()) {
+            metricsLibrary.destroyMetricQuery(query);
+        }
+        if (pAllocation) {
+            metricContext.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
+        }
         break;
     case ZET_METRIC_QUERY_POOL_TYPE_EXECUTION:
-        delete this;
+        for (auto &metricQueryPool : metricQueryPools) {
+            MetricQueryPool::fromHandle(metricQueryPool)->destroy();
+        }
         break;
     default:
         DEBUG_BREAK_IF(true);
         break;
     }
 
+    delete this;
+
     return ZE_RESULT_SUCCESS;
+}
+
+bool MetricQueryPoolImp::allocateGpuMemory() {
+
+    if (description.type == ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE) {
+        // Get allocation size.
+        const auto &deviceImp = *static_cast<DeviceImp *>(&metricContext.getDevice());
+        const uint32_t allocationSize = (deviceImp.isMultiDeviceCapable())
+                                            ? deviceImp.subDevices[0]->getMetricContext().getMetricsLibrary().getQueryReportGpuSize() * description.count * deviceImp.numSubDevices
+                                            : metricsLibrary.getQueryReportGpuSize() * description.count;
+
+        if (allocationSize == 0) {
+            return false;
+        }
+
+        // Allocate gpu memory.
+        NEO::AllocationProperties properties(
+            metricContext.getDevice().getRootDeviceIndex(), allocationSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, metricContext.getDevice().getNEODevice()->getDeviceBitfield());
+        properties.alignment = 64u;
+        pAllocation = metricContext.getDevice().getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+
+        UNRECOVERABLE_IF(pAllocation == nullptr);
+
+        // Clear allocation.
+        memset(pAllocation->getUnderlyingBuffer(), 0, allocationSize);
+    }
+    return true;
 }
 
 bool MetricQueryPoolImp::createMetricQueryPool() {
@@ -531,13 +589,35 @@ zet_metric_query_pool_handle_t MetricQueryPool::toHandle() { return this; }
 
 ze_result_t MetricQueryPoolImp::createMetricQuery(uint32_t index,
                                                   zet_metric_query_handle_t *phMetricQuery) {
-    *phMetricQuery = (index < description.count)
-                         ? &(pool[index])
-                         : nullptr;
 
-    return (*phMetricQuery != nullptr)
-               ? ZE_RESULT_SUCCESS
-               : ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (index >= description.count) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (metricQueryPools.size() > 0) {
+
+        auto pMetricQueryImp = new MetricQueryImp(metricContext, *this, index);
+
+        for (auto metricQueryPoolHandle : metricQueryPools) {
+            auto &metricQueries = pMetricQueryImp->getMetricQueries();
+            auto metricQueryPoolImp = static_cast<MetricQueryPoolImp *>(MetricQueryPool::fromHandle(metricQueryPoolHandle));
+            metricQueries.push_back(&metricQueryPoolImp->pool[index]);
+        }
+
+        *phMetricQuery = pMetricQueryImp;
+
+        return ZE_RESULT_SUCCESS;
+
+    } else {
+
+        *phMetricQuery = &(pool[index]);
+
+        return ZE_RESULT_SUCCESS;
+    }
+}
+
+std::vector<zet_metric_query_pool_handle_t> &MetricQueryPoolImp::getMetricQueryPools() {
+    return metricQueryPools;
 }
 
 MetricQueryImp::MetricQueryImp(MetricContext &metricContextInput, MetricQueryPoolImp &poolInput,
@@ -587,7 +667,16 @@ ze_result_t MetricQueryImp::reset() {
 }
 
 ze_result_t MetricQueryImp::destroy() {
+
+    if (metricQueries.size() > 0) {
+        delete this;
+    }
+
     return ZE_RESULT_SUCCESS;
+}
+
+std::vector<zet_metric_query_handle_t> &MetricQueryImp::getMetricQueries() {
+    return metricQueries;
 }
 
 ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,

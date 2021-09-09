@@ -213,6 +213,9 @@ class MetricMultiDeviceContextFixture : public MultiDeviceFixture {
     MockMetricsLibraryApi mockMetricsLibraryApi = {};
     MockMetricsDiscoveryApi mockMetricsDiscoveryApi = {};
 
+    std::vector<std::unique_ptr<Mock<MetricEnumeration>>> mockMetricEnumerationSubDevices;
+    std::vector<std::unique_ptr<Mock<MetricsLibrary>>> mockMetricsLibrarySubDevices;
+
     // Metrics discovery device
     Mock<IAdapterGroup_1_9> adapterGroup;
     Mock<IAdapter_1_9> adapter;
