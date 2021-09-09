@@ -807,7 +807,7 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
         MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
-        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;
         }

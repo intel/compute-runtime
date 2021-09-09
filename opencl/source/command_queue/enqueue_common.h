@@ -331,7 +331,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 getGpgpuCommandStreamReceiver().setMediaVFEStateDirty(true);
 
                 if (devQueueHw->getSchedulerReturnInstance() > 0) {
-                    waitUntilComplete(completionStamp.taskCount, this->bcsState.taskCount, completionStamp.flushStamp, false);
+                    waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
                     this->runSchedulerSimulation(*devQueueHw, *parentKernel);
                 }
             }

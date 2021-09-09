@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/utilities/range.h"
 
 #include "opencl/source/command_queue/copy_engine_state.h"
 #include "opencl/source/command_queue/csr_selection_args.h"
@@ -216,7 +217,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
-    MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
+    MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
     MOCKABLE_VIRTUAL void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler);
 
     static uint32_t getTaskLevelFromWaitList(uint32_t taskLevel,

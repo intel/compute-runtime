@@ -70,9 +70,9 @@ class MockCommandQueue : public CommandQueue {
         return writeBufferRetValue;
     }
 
-    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
-        return CommandQueue::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
+        return CommandQueue::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
     }
 
     cl_int enqueueCopyImage(Image *srcImage, Image *dstImage, const size_t *srcOrigin,
@@ -300,9 +300,9 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         useBcsCsrOnNotifyEnabled = notifyBcsCsr;
     }
 
-    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
-        return BaseClass::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
+        return BaseClass::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
     }
 
     bool isCacheFlushForBcsRequired() const override {

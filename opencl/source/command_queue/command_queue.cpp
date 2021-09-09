@@ -188,7 +188,7 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
     return false;
 }
 
-void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
+void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
     WAIT_ENTER()
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
@@ -206,10 +206,10 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcs
         gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
     }
 
-    if (bcsEngine) {
-        auto bcsCsr = getBcsCommandStreamReceiver(bcsEngine->getEngineType());
-        bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCountToWait, 0, false, false);
-        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(bcsTaskCountToWait);
+    for (const CopyEngineState &copyEngine : copyEnginesToWait) {
+        auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
+        bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
+        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
     }
 
     getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanTemporaryAllocationList(gpgpuTaskCountToWait);
@@ -919,7 +919,8 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
         deferredTimestampPackets->swapNodes(nodesToRelease);
     }
 
-    waitUntilComplete(taskCount, this->bcsState.taskCount, flushStamp->peekStamp(), false);
+    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+    waitUntilComplete(taskCount, states, flushStamp->peekStamp(), false);
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();

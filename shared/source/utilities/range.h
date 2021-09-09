@@ -18,7 +18,11 @@ struct Range {
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    Range(DataType *base, size_t count)
+    Range()
+        : begIt(nullptr), endIt(nullptr) {
+    }
+
+    explicit Range(DataType *base, size_t count = 1)
         : begIt(base), endIt(base + count) {
     }
 

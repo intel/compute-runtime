@@ -408,7 +408,8 @@ inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
         }
     }
 
-    cmdQueue->waitUntilComplete(taskCount.load(), this->bcsState.taskCount, flushStamp->peekStamp(), useQuickKmdSleep);
+    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+    cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep);
     updateExecutionStatus();
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);

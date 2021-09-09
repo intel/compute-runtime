@@ -176,6 +176,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
 
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     mockCmdQueue->bcsEngine = nullptr;
+    mockCmdQueue->bcsState.engineType = aub_stream::EngineType::NUM_ENGINES;
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
@@ -191,6 +192,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
 
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     mockCmdQueue->bcsEngine = nullptr;
+    mockCmdQueue->bcsState.engineType = aub_stream::EngineType::NUM_ENGINES;
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
@@ -206,6 +208,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
 
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     mockCmdQueue->bcsEngine = bcsEngine;
+    mockCmdQueue->bcsState.engineType = bcsEngine->getEngineType();
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
@@ -222,6 +225,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
 
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(-1);
     mockCmdQueue->bcsEngine = bcsEngine;
+    mockCmdQueue->bcsState.engineType = bcsEngine->getEngineType();
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
@@ -240,6 +244,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
 
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     mockCmdQueue->bcsEngine = bcsEngine;
+    mockCmdQueue->bcsState.engineType = bcsEngine->getEngineType();
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(8u, bcsCsr->blitBufferCalled);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
