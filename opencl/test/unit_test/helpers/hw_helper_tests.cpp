@@ -794,6 +794,21 @@ HWTEST_F(HwHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
     EXPECT_EQ(16u, helper.getMaxNumSamplers());
 }
 
+HWTEST_F(HwHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned) {
+    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    KernelInfo kernelInfo{};
+
+    ArgDescriptor argDescriptorValue(ArgDescriptor::ArgType::ArgTValue);
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorValue);
+    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, hwInfo));
+
+    ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
+    argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
+    EXPECT_TRUE(clHwHelper.requiresAuxResolves(kernelInfo, hwInfo));
+}
+
 HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 

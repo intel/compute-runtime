@@ -2583,6 +2583,25 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
     EXPECT_FALSE(kernel->is32Bit());
 }
 
+TEST(KernelTest, givenBuiltInProgramWhenCallingInitializeThenAuxTranslationRequiredIsFalse) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    KernelInfo info{};
+
+    ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
+    argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
+    info.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
+
+    const auto rootDeviceIndex = 0u;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
+    MockContext context(device.get());
+    MockProgram program(&context, true, toClDeviceVector(*device));
+    MockKernel kernel(&program, info, *device);
+
+    kernel.initialize();
+    EXPECT_FALSE(kernel.auxTranslationRequired);
+}
+
 TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonStatefulAccessThenMarkKernelForAuxTranslation) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceAuxTranslationEnabled.set(1);
