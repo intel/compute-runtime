@@ -84,6 +84,16 @@ size_t PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize() {
 }
 
 template <>
+std::vector<uint32_t> PreambleHelper<ICLFamily>::getSupportedThreadArbitrationPolicies() {
+    std::vector<uint32_t> retVal;
+    size_t policySize = sizeof(RowChickenReg4::regDataForArbitrationPolicy) /
+                        sizeof(RowChickenReg4::regDataForArbitrationPolicy[0]);
+    for (uint32_t i = 0u; i < policySize; i++) {
+        retVal.push_back(i);
+    }
+    return retVal;
+}
+template <>
 size_t PreambleHelper<ICLFamily>::getAdditionalCommandsSize(const Device &device) {
     size_t totalSize = PreemptionHelper::getRequiredPreambleSize<ICLFamily>(device);
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();

@@ -179,6 +179,12 @@ GEN12LPTEST_F(ThreadArbitrationGen12Lp, givenPolicyWhenThreadArbitrationProgramm
     EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
+GEN12LPTEST_F(ThreadArbitrationGen12Lp, whenGetSupportThreadArbitrationPoliciesIsCalledThenEmptyVectorIsReturned) {
+    auto supportedPolicies = PreambleHelper<FamilyType>::getSupportedThreadArbitrationPolicies();
+
+    EXPECT_EQ(0u, supportedPolicies.size());
+}
+
 typedef PreambleFixture PreemptionWatermarkGen12LP;
 GEN12LPTEST_F(PreemptionWatermarkGen12LP, WhenPreambleIsCreatedThenPreambleWorkAroundsIsNotProgrammed) {
     PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, pDevice->getHardwareInfo());

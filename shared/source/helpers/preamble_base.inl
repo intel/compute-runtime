@@ -30,6 +30,11 @@ size_t PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize() {
 }
 
 template <typename GfxFamily>
+std::vector<uint32_t> PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies() {
+    return std::vector<uint32_t>();
+}
+
+template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo) {
 }
 

@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 namespace NEO {
 
@@ -60,6 +61,7 @@ struct PreambleHelper {
     static bool isL3Configurable(const HardwareInfo &hwInfo);
     static size_t getAdditionalCommandsSize(const Device &device);
     static size_t getThreadArbitrationCommandsSize();
+    static std::vector<uint32_t> getSupportedThreadArbitrationPolicies();
     static size_t getVFECommandsSize();
     static size_t getKernelDebuggingCommandsSize(bool debuggingActive);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);

@@ -83,5 +83,13 @@ size_t PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize() {
     return sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
 }
 
+template <>
+std::vector<uint32_t> PreambleHelper<SKLFamily>::getSupportedThreadArbitrationPolicies() {
+    std::vector<uint32_t> retVal;
+    for (const uint32_t &p : DebugControlReg2::supportedArbitrationPolicy) {
+        retVal.push_back(p);
+    }
+    return retVal;
+}
 template struct PreambleHelper<SKLFamily>;
 } // namespace NEO

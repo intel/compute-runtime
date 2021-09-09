@@ -104,6 +104,18 @@ SKLTEST_F(ThreadArbitration, GivenDefaultWhenProgrammingPreambleThenArbitrationP
     EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, HwHelperHw<SKLFamily>::get().getDefaultThreadArbitrationPolicy());
 }
 
+SKLTEST_F(ThreadArbitration, whenGetSupportedThreadArbitrationPoliciesIsCalledThenAgeBasedAndRoundRobinAreReturned) {
+    auto supportedPolicies = PreambleHelper<SKLFamily>::getSupportedThreadArbitrationPolicies();
+
+    EXPECT_EQ(2u, supportedPolicies.size());
+    EXPECT_NE(supportedPolicies.end(), std::find(supportedPolicies.begin(),
+                                                 supportedPolicies.end(),
+                                                 ThreadArbitrationPolicy::AgeBased));
+    EXPECT_NE(supportedPolicies.end(), std::find(supportedPolicies.begin(),
+                                                 supportedPolicies.end(),
+                                                 ThreadArbitrationPolicy::RoundRobin));
+}
+
 GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
