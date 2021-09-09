@@ -53,8 +53,11 @@ void OsContextLinux::initializeContext() {
                 drm.setNonPersistentContext(drmContextId);
             }
 
-            if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled() && !isInternalEngine()) {
-                drm.setContextDebugFlag(drmContextId);
+            if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
+                drm.setUnrecoverableContext(drmContextId);
+                if (!isInternalEngine()) {
+                    drm.setContextDebugFlag(drmContextId);
+                }
             }
 
             if (drm.isPreemptionSupported() && isLowPriority()) {

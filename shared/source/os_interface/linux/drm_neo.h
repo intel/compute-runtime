@@ -164,6 +164,8 @@ class Drm : public DriverModel {
     bool isContextDebugSupported() { return contextDebugSupported; }
     MOCKABLE_VIRTUAL void setContextDebugFlag(uint32_t drmContextId);
 
+    void setUnrecoverableContext(uint32_t drmContextId);
+
     void setDirectSubmissionActive(bool value) { this->directSubmissionActive = value; }
     bool isDirectSubmissionActive() { return this->directSubmissionActive; }
 

@@ -520,7 +520,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPer
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
-    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
     auto &drmVmIds = osContext.getDrmVmIds();
     EXPECT_EQ(32u, drmVmIds.size());
@@ -541,7 +541,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImpl
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
     osContext.ensureContextInitialized();
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
-    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
     auto &drmVmIds = osContext.getDrmVmIds();
     EXPECT_EQ(32u, drmVmIds.size());
@@ -565,7 +565,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenIm
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
     osContext.ensureContextInitialized();
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
-    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(2 * 2u, drmMock.receivedContextParamRequestCount);
 
     auto &drmVmIds = osContext.getDrmVmIds();
     EXPECT_EQ(32u, drmVmIds.size());
@@ -672,6 +672,23 @@ TEST(DrmTest, givenPrintIoctlDebugFlagNotSetWhenGettingTimestampFrequencyThenCap
 
     std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CS_TIMESTAMP_FREQUENCY, output value: 1000, retCode: 0";
     EXPECT_EQ(std::string::npos, outputString.find(expectedString));
+}
+
+TEST(DrmTest, givenProgramDebuggingWhenCreatingContextThenUnrecoverableContextIsSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+
+    EXPECT_EQ(0u, drm.receivedRecoverableContextValue);
+    EXPECT_EQ(2u, drm.receivedContextParamRequestCount);
 }
 
 TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSystemInfoArePreserved) {

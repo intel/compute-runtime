@@ -104,6 +104,10 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
             return this->storedRetVal;
         }
+        if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_RECOVERABLE) {
+            receivedRecoverableContextValue = receivedContextParamRequest.value;
+            return this->storedRetVal;
+        }
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM) && (arg != nullptr)) {
