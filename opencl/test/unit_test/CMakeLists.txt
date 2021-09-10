@@ -177,18 +177,6 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
 )
 
-if(NOT DEFINED cloc_cmd_prefix)
-  if(WIN32)
-    set(cloc_cmd_prefix ocloc)
-  else()
-    if(DEFINED NEO__IGC_LIBRARY_PATH)
-      set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-    else()
-      set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-    endif()
-  endif()
-endif()
-
 function(neo_gen_kernels platform_name_with_type platform_name revision_id suffix)
   set(outputdir "${TargetDir}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
 
@@ -208,7 +196,7 @@ function(neo_gen_kernels platform_name_with_type platform_name revision_id suffi
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir}
+                         COMMAND ocloc -q -file ${filename} -device ${platform_name} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -254,7 +242,7 @@ function(neo_gen_kernels_with_options platform_name_with_type platform_name revi
 
         add_custom_command(
                            OUTPUT ${output_files}
-                           COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id} -options ${arg} -options_name
+                           COMMAND ocloc -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id} -options ${arg} -options_name
                            WORKING_DIRECTORY ${workdir}
                            DEPENDS ${filearg} ocloc
         )
@@ -306,7 +294,7 @@ function(neo_gen_kernels_with_internal_options platform_name_with_type platform_
 
     add_custom_command(
                        OUTPUT ${output_files}
-                       COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
+                       COMMAND ocloc -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
                        WORKING_DIRECTORY ${workdir}
                        DEPENDS ${filearg} ocloc
     )
@@ -352,7 +340,7 @@ function(neo_gen_kernel_with_kernel_debug_options platform_name_with_type platfo
     )
     add_custom_command(
                        OUTPUT ${output_files}
-                       COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
+                       COMMAND ocloc -q -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
                        WORKING_DIRECTORY ${workdir}
                        DEPENDS ${filepath} ocloc
     )
@@ -388,7 +376,7 @@ function(neo_gen_kernel_from_ll platform_name_with_type platform_name suffix fil
 
          add_custom_command(
                      OUTPUT ${output_files}
-                     COMMAND ${cloc_cmd_prefix} -q -file ${filename} -output ${output_name} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
+                     COMMAND ocloc -q -file ${filename} -output ${output_name} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
                      WORKING_DIRECTORY ${workdir}
                      DEPENDS ${filepath} ocloc
   )

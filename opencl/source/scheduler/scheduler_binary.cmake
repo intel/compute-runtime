@@ -33,23 +33,12 @@ function(compile_kernel target gen_type platform_type kernel)
 
   set(SCHEDULER_CPP "${OUTPUTDIR}/${BASENAME}_${family_name_with_type}.cpp")
 
-  if(NOT DEFINED cloc_cmd_prefix)
-    if(WIN32)
-      set(cloc_cmd_prefix ocloc)
-    else()
-      if(DEFINED NEO__IGC_LIBRARY_PATH)
-        set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-      else()
-        set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-      endif()
-    endif()
-  endif()
   list(APPEND __cloc__options__ "-cl-kernel-arg-info")
   list(APPEND __cloc__options__ "-cl-std=CL2.0")
   list(APPEND __cloc__options__ "-cl-intel-disable-a64WA")
   add_custom_command(
                      OUTPUT ${OUTPUTPATH}
-                     COMMAND ${cloc_cmd_prefix} -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__cloc__options__}, >" -internal_options "-cl-intel-no-spill"
+                     COMMAND ocloc -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__cloc__options__}, >" -internal_options "-cl-intel-no-spill"
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${kernel} ocloc copy_compiler_files
   )

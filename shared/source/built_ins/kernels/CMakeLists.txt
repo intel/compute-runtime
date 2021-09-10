@@ -64,22 +64,11 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
         ${OUTPUTDIR}/${mode}_${BASENAME}_${family_name_with_type}.spv
     )
 
-    if(NOT DEFINED cloc_cmd_prefix)
-      if(WIN32)
-        set(cloc_cmd_prefix ocloc)
-      else()
-        if(DEFINED NEO__IGC_LIBRARY_PATH)
-          set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-        else()
-          set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-        endif()
-      endif()
-    endif()
     list(APPEND __cloc__options__ "-cl-kernel-arg-info")
     set(INTERNAL_OPTIONS "${${mode}_OPTIONS}")
     add_custom_command(
                        OUTPUT ${OUTPUT_FILE_SPV}
-                       COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -spv_only -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__cloc__options__}, >"
+                       COMMAND ocloc -q -file ${FILENAME} -spv_only -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__cloc__options__}, >"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        DEPENDS ${builtin} ocloc copy_compiler_files
     )
@@ -95,7 +84,7 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
       add_custom_command(
                          OUTPUT ${OUTPUT_FILES_BINARIES}
-                         COMMAND ${cloc_cmd_prefix} -q -file ${OUTPUT_FILE_SPV} -spirv_input -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__cloc__options__}, >"
+                         COMMAND ocloc -q -file ${OUTPUT_FILE_SPV} -spirv_input -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__cloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
       )
@@ -110,18 +99,6 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
   endfunction()
 
   function(generate_cpp_spirv builtin)
-    if(NOT DEFINED cloc_cmd_prefix)
-      if(WIN32)
-        set(cloc_cmd_prefix $<TARGET_FILE:ocloc>)
-      else()
-        if(DEFINED NEO__IGC_LIBRARY_PATH)
-          set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-        else()
-          set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-        endif()
-      endif()
-    endif()
-
     get_filename_component(BASENAME ${builtin} NAME_WE)
     get_filename_component(DIR ${builtin} DIRECTORY)
 
@@ -139,7 +116,7 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
     set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
     add_custom_command(
                        OUTPUT ${GENERATED_SPV_INPUT}
-                       COMMAND ${cloc_cmd_prefix} -q -spv_only -file ${INPUT_FILENAME} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
+                       COMMAND ocloc -q -spv_only -file ${INPUT_FILENAME} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files
     )
