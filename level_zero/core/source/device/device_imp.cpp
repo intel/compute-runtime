@@ -356,17 +356,38 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
 
     pKernelProperties->printfBufferSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().printfBufferSize);
 
-    if (pKernelProperties->pNext) {
+    auto &hwInfo = this->getHwInfo();
+    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    void *pNext = pKernelProperties->pNext;
+    while (pNext) {
         ze_base_desc_t *extendedProperties = reinterpret_cast<ze_base_desc_t *>(pKernelProperties->pNext);
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
             ze_float_atomic_ext_properties_t *floatProperties =
                 reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);
-            auto &hwInfo = this->getHwInfo();
-            auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
             hwInfoConfig.getKernelExtendedProperties(&floatProperties->fp16Flags,
                                                      &floatProperties->fp32Flags,
                                                      &floatProperties->fp64Flags);
+        } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES) {
+            ze_scheduling_hint_exp_properties_t *hintProperties =
+                reinterpret_cast<ze_scheduling_hint_exp_properties_t *>(extendedProperties);
+            auto supportedThreadArbitrationPolicies = hwInfoConfig.getKernelSupportedThreadArbitrationPolicies();
+            hintProperties->schedulingHintFlags = 0;
+            for (uint32_t &p : supportedThreadArbitrationPolicies) {
+                switch (p) {
+                case NEO::ThreadArbitrationPolicy::AgeBased:
+                    hintProperties->schedulingHintFlags |= ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST;
+                    break;
+                case NEO::ThreadArbitrationPolicy::RoundRobin:
+                    hintProperties->schedulingHintFlags |= ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN;
+                    break;
+                case NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency:
+                    hintProperties->schedulingHintFlags |= ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN;
+                    break;
+                }
+            }
         }
+        pNext = const_cast<void *>(extendedProperties->pNext);
     }
 
     return ZE_RESULT_SUCCESS;

@@ -184,6 +184,9 @@ HWTEST_F(HwInfoConfigTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwR
         uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override {
             return returnedStepping;
         }
+        std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() override {
+            return std::vector<uint32_t>();
+        }
         uint32_t returnedStepping = 0;
     };
     MockHwInfoConfig mockHwInfoConfig;

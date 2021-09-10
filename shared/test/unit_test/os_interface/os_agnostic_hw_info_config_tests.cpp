@@ -156,6 +156,11 @@ LocalMemoryAccessMode HwInfoConfigHw<IGFX_UNKNOWN>::getLocalMemoryAccessMode(con
     return LocalMemoryAccessMode::Default;
 }
 
+template <>
+std::vector<uint32_t> HwInfoConfigHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbitrationPolicies() {
+    return std::vector<uint32_t>();
+}
+
 void OsAgnosticHwInfoConfigTest::SetUp() {
     DeviceFixture::SetUp();
 }

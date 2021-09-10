@@ -7,6 +7,7 @@
 
 #include "shared/source/device/root_device.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_time.h"
@@ -507,6 +508,116 @@ TEST_F(DeviceTest, givenKernelExtendedPropertiesStructureWhenKernelPropertiesCal
     EXPECT_EQ(maxValue, kernelExtendedProperties.fp16Flags);
     EXPECT_EQ(maxValue, kernelExtendedProperties.fp32Flags);
     EXPECT_EQ(maxValue, kernelExtendedProperties.fp64Flags);
+}
+
+HWTEST_F(DeviceTest, whenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithCorrectFlagIsReturned) {
+
+    ze_device_module_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
+
+    ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
+    schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;
+    schedulingHintProperties.schedulingHintFlags = ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32;
+
+    kernelProperties.pNext = &schedulingHintProperties;
+
+    ze_result_t res = device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_NE(ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32, schedulingHintProperties.schedulingHintFlags);
+    auto supportedThreadArbitrationPolicies = NEO::PreambleHelper<FamilyType>::getSupportedThreadArbitrationPolicies();
+    for (uint32_t &p : supportedThreadArbitrationPolicies) {
+        switch (p) {
+        case ThreadArbitrationPolicy::AgeBased:
+            EXPECT_NE(0u, (schedulingHintProperties.schedulingHintFlags &
+                           ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST));
+            break;
+        case ThreadArbitrationPolicy::RoundRobin:
+            EXPECT_NE(0u, (schedulingHintProperties.schedulingHintFlags &
+                           ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN));
+            break;
+        case ThreadArbitrationPolicy::RoundRobinAfterDependency:
+            EXPECT_NE(0u, (schedulingHintProperties.schedulingHintFlags &
+                           ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN));
+            break;
+        default:
+            FAIL();
+        }
+    }
+}
+
+HWTEST_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned) {
+    struct MockHwInfoConfig : NEO::HwInfoConfigHw<IGFX_SKYLAKE> {
+        std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() override {
+            return threadArbPolicies;
+        }
+        std::vector<uint32_t> threadArbPolicies;
+    };
+
+    const uint32_t rootDeviceIndex = 0u;
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
+                                                                                              rootDeviceIndex);
+
+    Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    MockHwInfoConfig hwInfoConfig{};
+    hwInfoConfig.threadArbPolicies = {ThreadArbitrationPolicy::AgeBased,
+                                      ThreadArbitrationPolicy::RoundRobin,
+                                      ThreadArbitrationPolicy::RoundRobinAfterDependency};
+    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    hwInfoConfigFactoryBackup = &hwInfoConfig;
+
+    ze_device_module_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
+
+    ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
+    schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;
+    schedulingHintProperties.schedulingHintFlags = ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32;
+
+    kernelProperties.pNext = &schedulingHintProperties;
+
+    ze_result_t res = deviceImp.getKernelProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_scheduling_hint_exp_flags_t expected = (ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST |
+                                               ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN |
+                                               ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN);
+    EXPECT_EQ(expected, schedulingHintProperties.schedulingHintFlags);
+}
+
+HWTEST_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned) {
+    struct MockHwInfoConfig : NEO::HwInfoConfigHw<IGFX_SKYLAKE> {
+        std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() override {
+            return threadArbPolicies;
+        }
+        std::vector<uint32_t> threadArbPolicies;
+    };
+
+    const uint32_t rootDeviceIndex = 0u;
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
+                                                                                              rootDeviceIndex);
+
+    Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    MockHwInfoConfig hwInfoConfig{};
+    hwInfoConfig.threadArbPolicies = {ThreadArbitrationPolicy::NotPresent};
+    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    hwInfoConfigFactoryBackup = &hwInfoConfig;
+
+    ze_device_module_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
+
+    ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
+    schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;
+    schedulingHintProperties.schedulingHintFlags = ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32;
+
+    kernelProperties.pNext = &schedulingHintProperties;
+
+    ze_result_t res = deviceImp.getKernelProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, schedulingHintProperties.schedulingHintFlags);
 }
 
 TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenAllPropertiesAreAssigned) {

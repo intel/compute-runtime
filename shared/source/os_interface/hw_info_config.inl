@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
@@ -25,6 +26,12 @@ void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uin
     *fp16 = 0u;
     *fp32 = 0u;
     *fp64 = 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+std::vector<uint32_t> HwInfoConfigHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
+    using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
+    return PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
