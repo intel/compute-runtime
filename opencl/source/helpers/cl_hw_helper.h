@@ -74,4 +74,6 @@ class ClHwHelperHw : public ClHwHelper {
     ClHwHelperHw() = default;
 };
 
+extern ClHwHelper *clHwHelperFactory[IGFX_MAX_CORE];
+
 } // namespace NEO

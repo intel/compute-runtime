@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
@@ -1684,6 +1685,31 @@ HWTEST_F(QueueFamilyNameTest, givenBcsWhenGettingQueueFamilyNameThenReturnProper
 HWTEST_F(QueueFamilyNameTest, givenInvalidEngineGroupWhenGettingQueueFamilyNameThenReturnEmptyName) {
     verify(EngineGroupType::MaxEngineGroups, "");
 }
+
+HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNameThenExceptionIsThrown) {
+    struct MockClHwHelper : NEO::ClHwHelperHw<FamilyType> {
+        bool getQueueFamilyName(std::string &name, EngineGroupType type) const override {
+            name = familyNameOverride;
+            return true;
+        }
+        std::string familyNameOverride = "";
+    };
+
+    MockClHwHelper clHwHelper{};
+    VariableBackup<ClHwHelper *> clHwHelperFactoryBackup{
+        &NEO::clHwHelperFactory[static_cast<size_t>(defaultHwInfo->platform.eRenderCoreFamily)]};
+    clHwHelperFactoryBackup = &clHwHelper;
+
+    char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL] = "";
+
+    clHwHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL - 1, 'a');
+    device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups);
+    EXPECT_EQ(0, std::strcmp(name, clHwHelper.familyNameOverride.c_str()));
+
+    clHwHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, 'a');
+    EXPECT_ANY_THROW(device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups));
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupCalculatedCorrectly) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;

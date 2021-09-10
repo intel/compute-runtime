@@ -253,7 +253,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
     return CL_QUEUE_DEFAULT_CAPABILITIES_INTEL;
 }
 
-void ClDevice::getQueueFamilyName(char *outputName, size_t maxOutputNameLength, EngineGroupType type) {
+void ClDevice::getQueueFamilyName(char *outputName, EngineGroupType type) {
     std::string name{};
 
     const auto &clHwHelper = ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
@@ -276,8 +276,8 @@ void ClDevice::getQueueFamilyName(char *outputName, size_t maxOutputNameLength, 
         }
     }
 
-    UNRECOVERABLE_IF(name.length() > maxOutputNameLength + 1);
-    strncpy_s(outputName, maxOutputNameLength, name.c_str(), name.size());
+    UNRECOVERABLE_IF(name.size() >= CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL);
+    strncpy_s(outputName, CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, name.c_str(), name.size());
 }
 Platform *ClDevice::getPlatform() const {
     return castToObject<Platform>(platformId);

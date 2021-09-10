@@ -44,7 +44,7 @@ struct QueueFamilyNameTest : ::testing::Test {
 
     void verify(EngineGroupType type, const char *expectedName) {
         char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL];
-        device->getQueueFamilyName(name, sizeof(name), type);
+        device->getQueueFamilyName(name, type);
         EXPECT_EQ(0, std::strcmp(name, expectedName));
     }
 
