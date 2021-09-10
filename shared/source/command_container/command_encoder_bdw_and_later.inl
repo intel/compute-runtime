@@ -360,7 +360,9 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 
 template <typename Family>
 void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics) {
-    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
+    if (container.isAnyHeapDirty()) {
+        EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
+    }
 
     auto gmmHelper = container.getDevice()->getGmmHelper();
 
