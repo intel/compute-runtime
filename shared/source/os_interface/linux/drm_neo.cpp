@@ -180,6 +180,10 @@ std::string getIoctlString(unsigned long request) {
         return "DRM_IOCTL_I915_QUERY";
     case DRM_IOCTL_I915_GEM_MMAP:
         return "DRM_IOCTL_I915_GEM_MMAP";
+    case DRM_IOCTL_PRIME_FD_TO_HANDLE:
+        return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
+    case DRM_IOCTL_PRIME_HANDLE_TO_FD:
+        return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
     default:
         return getIoctlStringRemaining(request);
     }
