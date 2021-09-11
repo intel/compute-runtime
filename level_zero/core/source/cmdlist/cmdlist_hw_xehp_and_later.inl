@@ -111,6 +111,43 @@ void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t num
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void programEventL3Flush(ze_event_handle_t hEvent,
+                         Device *device,
+                         uint32_t partitionCount,
+                         NEO::CommandContainer &commandContainer) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
+    auto event = Event::fromHandle(hEvent);
+
+    uint64_t eventAddress = event->getPacketAddress(device) + event->getSinglePacketSize();
+    bool isTimestampEvent = event->isEventTimestampFlagSet();
+    if (isTimestampEvent) {
+        eventAddress += event->getContextEndOffset();
+    }
+
+    if (partitionCount > 1) {
+        event->setPacketsInUse(event->getPacketsInUse() + partitionCount);
+    } else {
+        event->setPacketsInUse(event->getPacketsInUse() + 1);
+    }
+
+    NEO::PipeControlArgs args;
+    args.dcFlushEnable = true;
+    if (partitionCount > 1) {
+        args.workloadPartitionOffset = true;
+        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(),
+                                                 NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                                 static_cast<uint32_t>(event->getSinglePacketSize()),
+                                                 true);
+    }
+    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        eventAddress, Event::STATE_SIGNALED,
+        commandContainer.getDevice()->getHardwareInfo(),
+        args);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                                                const ze_group_count_t *pThreadGroupDimensions,
                                                                                ze_event_handle_t hEvent,
@@ -228,8 +265,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     this->partitionCount = std::max(partitionCount, this->partitionCount);
     if (hEvent) {
         auto event = Event::fromHandle(hEvent);
-        if (isTimestampEvent && partitionCount > 1) {
+        if (partitionCount > 1) {
             event->setPacketsInUse(partitionCount);
+        }
+        if (L3FlushEnable) {
+            programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);
         }
     }
 
