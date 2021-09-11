@@ -606,10 +606,10 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
     return allocation;
 }
 
-BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle) {
+BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex) {
     BufferObject *bo = nullptr;
     for (const auto &i : sharingBufferObjects) {
-        if (i->peekHandle() == boHandle) {
+        if (i->getHandle() == boHandle && i->getRootDeviceIndex() == rootDeviceIndex) {
             bo = i;
             bo->reference();
             break;
@@ -639,7 +639,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     }
 
     auto boHandle = openFd.handle;
-    auto bo = findAndReferenceSharedBufferObject(boHandle);
+    auto bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
 
     if (bo == nullptr) {
         size_t size = lseekFunction(handle, 0, SEEK_END);
@@ -658,6 +658,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
         bo->setAddress(gpuRange);
         bo->setUnmapSize(size);
+        bo->setRootDeviceIndex(properties.rootDeviceIndex);
 
         pushSharedBufferObject(bo);
     }

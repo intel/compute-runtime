@@ -42,6 +42,7 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/fixtures/memory_allocator_multi_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -55,6 +56,104 @@
 #include <memory>
 
 namespace NEO {
+
+using MemoryManagerMultiDeviceSharedHandleTest = MemoryAllocatorMultiDeviceFixture<2>;
+
+TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromSharedHandleWithSameHandleAndSameRootDeviceThenSameBOIsUsed) {
+    uint32_t handle0 = 0;
+    uint32_t rootDeviceIndex0 = 0;
+    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    auto gfxAllocation0 = memoryManager->createGraphicsAllocationFromSharedHandle(handle0, properties0, false, false);
+    ASSERT_NE(gfxAllocation0, nullptr);
+    EXPECT_EQ(rootDeviceIndex0, gfxAllocation0->getRootDeviceIndex());
+
+    uint32_t handle1 = 0;
+    uint32_t rootDeviceIndex1 = 0;
+    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties1, false, false);
+    ASSERT_NE(gfxAllocation1, nullptr);
+    EXPECT_EQ(rootDeviceIndex1, gfxAllocation1->getRootDeviceIndex());
+
+    DrmAllocation *drmAllocation0 = static_cast<DrmAllocation *>(gfxAllocation0);
+    DrmAllocation *drmAllocation1 = static_cast<DrmAllocation *>(gfxAllocation1);
+
+    EXPECT_EQ(drmAllocation0->getBO(), drmAllocation1->getBO());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation0);
+    memoryManager->freeGraphicsMemory(gfxAllocation1);
+}
+
+TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromSharedHandleWithSameHandleAndDifferentRootDeviceThenDifferentBOIsUsed) {
+    uint32_t handle0 = 0;
+    uint32_t rootDeviceIndex0 = 0;
+    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    auto gfxAllocation0 = memoryManager->createGraphicsAllocationFromSharedHandle(handle0, properties0, false, false);
+    ASSERT_NE(gfxAllocation0, nullptr);
+    EXPECT_EQ(rootDeviceIndex0, gfxAllocation0->getRootDeviceIndex());
+
+    uint32_t handle1 = 0;
+    uint32_t rootDeviceIndex1 = 1;
+    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties1, false, false);
+    ASSERT_NE(gfxAllocation1, nullptr);
+    EXPECT_EQ(rootDeviceIndex1, gfxAllocation1->getRootDeviceIndex());
+
+    DrmAllocation *drmAllocation0 = static_cast<DrmAllocation *>(gfxAllocation0);
+    DrmAllocation *drmAllocation1 = static_cast<DrmAllocation *>(gfxAllocation1);
+
+    EXPECT_NE(drmAllocation0->getBO(), drmAllocation1->getBO());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation0);
+    memoryManager->freeGraphicsMemory(gfxAllocation1);
+}
+
+TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromSharedHandleWithDifferentHandleAndSameRootDeviceThenDifferentBOIsUsed) {
+    uint32_t handle0 = 0;
+    uint32_t rootDeviceIndex0 = 0;
+    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    auto gfxAllocation0 = memoryManager->createGraphicsAllocationFromSharedHandle(handle0, properties0, false, false);
+    ASSERT_NE(gfxAllocation0, nullptr);
+    EXPECT_EQ(rootDeviceIndex0, gfxAllocation0->getRootDeviceIndex());
+
+    uint32_t handle1 = 1;
+    uint32_t rootDeviceIndex1 = 0;
+    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties1, false, false);
+    ASSERT_NE(gfxAllocation1, nullptr);
+    EXPECT_EQ(rootDeviceIndex1, gfxAllocation1->getRootDeviceIndex());
+
+    DrmAllocation *drmAllocation0 = static_cast<DrmAllocation *>(gfxAllocation0);
+    DrmAllocation *drmAllocation1 = static_cast<DrmAllocation *>(gfxAllocation1);
+
+    EXPECT_NE(drmAllocation0->getBO(), drmAllocation1->getBO());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation0);
+    memoryManager->freeGraphicsMemory(gfxAllocation1);
+}
+
+TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromSharedHandleWithDifferentHandleAndDifferentRootDeviceThenDifferentBOIsUsed) {
+    uint32_t handle0 = 0;
+    uint32_t rootDeviceIndex0 = 0;
+    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    auto gfxAllocation0 = memoryManager->createGraphicsAllocationFromSharedHandle(handle0, properties0, false, false);
+    ASSERT_NE(gfxAllocation0, nullptr);
+    EXPECT_EQ(rootDeviceIndex0, gfxAllocation0->getRootDeviceIndex());
+
+    uint32_t handle1 = 1;
+    uint32_t rootDeviceIndex1 = 1;
+    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties1, false, false);
+    ASSERT_NE(gfxAllocation1, nullptr);
+    EXPECT_EQ(rootDeviceIndex1, gfxAllocation1->getRootDeviceIndex());
+
+    DrmAllocation *drmAllocation0 = static_cast<DrmAllocation *>(gfxAllocation0);
+    DrmAllocation *drmAllocation1 = static_cast<DrmAllocation *>(gfxAllocation1);
+
+    EXPECT_NE(drmAllocation0->getBO(), drmAllocation1->getBO());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation0);
+    memoryManager->freeGraphicsMemory(gfxAllocation1);
+}
 
 AllocationProperties createAllocationProperties(uint32_t rootDeviceIndex, size_t size, bool forcePin) {
     MockAllocationProperties properties(rootDeviceIndex, size);

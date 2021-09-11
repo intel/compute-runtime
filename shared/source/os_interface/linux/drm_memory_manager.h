@@ -82,7 +82,7 @@ class DrmMemoryManager : public MemoryManager {
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
 
   protected:
-    BufferObject *findAndReferenceSharedBufferObject(int boHandle);
+    BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex);
     void eraseSharedBufferObject(BufferObject *bo);
     void pushSharedBufferObject(BufferObject *bo);
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags, uint32_t rootDeviceIndex);

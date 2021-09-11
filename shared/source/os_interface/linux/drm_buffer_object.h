@@ -97,6 +97,15 @@ class BufferObject {
     void requireExplicitResidency(bool required) {
         requiresExplicitResidency = required;
     }
+    void setRootDeviceIndex(uint32_t index) {
+        rootDeviceIndex = index;
+    }
+    uint32_t getRootDeviceIndex() {
+        return rootDeviceIndex;
+    }
+    int getHandle() {
+        return handle;
+    }
 
     void setCacheRegion(CacheRegion regionIndex) { cacheRegion = regionIndex; }
     CacheRegion peekCacheRegion() const { return cacheRegion; }
@@ -132,6 +141,7 @@ class BufferObject {
     bool perContextVmsUsed = false;
     std::atomic<uint32_t> refCount;
 
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     int handle; // i915 gem object handle
     uint64_t size;
     bool isReused;
