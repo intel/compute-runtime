@@ -518,6 +518,43 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
+TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallFillWithKernelObjsForAuxTranslationOnAllocationInSvmAllocsManagerThenContextProvidesProperHint) {
+    if (context->getSVMAllocsManager() == nullptr) {
+        return;
+    }
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.PrintDriverDiagnostics.set(1);
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    auto pDevice = castToObject<ClDevice>(devices[0]);
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    char data[128];
+    void *ptr = &data;
+    MockGraphicsAllocation gfxAllocation(ptr, 128);
+
+    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    mockKernel.mockKernel->initialize();
+
+    SvmAllocationData allocData(0);
+    allocData.gpuAllocations.addAllocation(&gfxAllocation);
+    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.device = &pDevice->getDevice();
+    context->getSVMAllocsManager()->insertSVMAlloc(allocData);
+
+    testing::internal::CaptureStdout();
+    KernelObjsForAuxTranslation kernelObjects;
+    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ALLOCATION_AUX_TRANSLATION],
+             mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), ptr, 128);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(0u, output.size());
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+}
+
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKernelObjectWithGraphicsAllocationAccessedStatefullyOnlyThenDontReportAnyHint) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.PrintDriverDiagnostics.set(1);
