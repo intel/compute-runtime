@@ -23,8 +23,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/ocl_elf.h
-    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices.inl
-    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices_additional.inl
+    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
+    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
@@ -33,9 +33,9 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.h
-    ${NEO_SHARED_DIRECTORY}/helpers${BRANCH_DIR_SUFFIX}/hw_info_extended.cpp
-    ${NEO_SHARED_DIRECTORY}/kernel${BRANCH_DIR_SUFFIX}/kernel_descriptor.cpp
-    ${NEO_SHARED_DIRECTORY}/kernel${BRANCH_DIR_SUFFIX}/kernel_descriptor.h
+    ${NEO_SHARED_DIRECTORY}/helpers${BRANCH_DIR_SUFFIX}hw_info_extended.cpp
+    ${NEO_SHARED_DIRECTORY}/kernel${BRANCH_DIR_SUFFIX}kernel_descriptor.cpp
+    ${NEO_SHARED_DIRECTORY}/kernel${BRANCH_DIR_SUFFIX}kernel_descriptor.h
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
     ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.cpp
     ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.h
@@ -47,7 +47,7 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/decoder/helper.h
     ${OCLOC_DIRECTORY}/source/decoder/iga_wrapper.h
     ${OCLOC_DIRECTORY}/source/decoder/translate_platform_base.h
-    ${OCLOC_DIRECTORY}/source${BRANCH_DIR_SUFFIX}/extra_settings.cpp
+    ${OCLOC_DIRECTORY}/source${BRANCH_DIR_SUFFIX}extra_settings.cpp
     ${OCLOC_DIRECTORY}/source/multi_command.cpp
     ${OCLOC_DIRECTORY}/source/multi_command.h
     ${OCLOC_DIRECTORY}/source/ocloc_api.cpp
@@ -73,7 +73,7 @@ set(CLOC_LIB_SRCS_LIB
 if(${IGA_HEADERS_AVAILABLE})
   set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB}
       ${OCLOC_DIRECTORY}/source/decoder/iga_wrapper.cpp
-      ${OCLOC_DIRECTORY}/source/decoder${BRANCH_DIR_SUFFIX}/translate_platform.cpp
+      ${OCLOC_DIRECTORY}/source/decoder${BRANCH_DIR_SUFFIX}translate_platform.cpp
   )
 else()
   set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB}

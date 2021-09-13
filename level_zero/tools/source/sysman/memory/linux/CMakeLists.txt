@@ -15,8 +15,8 @@ if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
   )
 else()
   list(APPEND L0_SRCS_TOOLS_SYSMAN_MEMORY_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/os_memory_imp.h
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/os_memory_imp.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}os_memory_imp.h
+       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}os_memory_imp.cpp
   )
 endif()
 

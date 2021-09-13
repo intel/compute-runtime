@@ -8,23 +8,23 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/cache_info_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cache_info_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_drm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_allocation_extended.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_allocation_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_buffer_object_extended.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_debug.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_buffer_object_extended.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_debug.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_engine_mapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_engine_mapper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_mapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.cpp
@@ -34,15 +34,15 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_operations_handler_create.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_query_extended.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_operations_handler_create.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_query_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_inc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/engine_info_impl.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/flags${BRANCH_DIR_SUFFIX}/drm_query_flags.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}engine_info_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/flags${BRANCH_DIR_SUFFIX}drm_query_flags.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux.h
@@ -66,7 +66,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/settings_reader_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
     ${CMAKE_CURRENT_SOURCE_DIR}/system_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/system_info_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}system_info_impl.h
 )
 
 if(DISABLE_WDDM_LINUX)
@@ -88,9 +88,9 @@ if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
   )
 else()
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_manager_allocate_in_device_pool.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_manager_create_multi_host_allocation.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_query.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_manager_allocate_in_device_pool.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_manager_create_multi_host_allocation.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_query.cpp
   )
 endif()
 

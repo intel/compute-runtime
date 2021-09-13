@@ -7,7 +7,7 @@
 set(MAX_GEN 64)
 
 set(ALL_GEN_TYPES "")
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}/fill_gens.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}fill_gens.cmake)
 
 set(ALL_GEN_TYPES_REVERSED ${ALL_GEN_TYPES})
 list(REVERSE ALL_GEN_TYPES_REVERSED)
@@ -205,7 +205,7 @@ INIT_LIST("PLATFORMS" "TESTED")
 INIT_PRODUCTS_LIST("TESTED")
 INIT_PRODUCTS_LIST("SUPPORTED")
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}/setup_platform_flags.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}setup_platform_flags.cmake)
 
 # Get platform lists, flag definition and set default platforms
 GET_AVAILABLE_PLATFORMS("SUPPORTED" "SUPPORT" ALL_AVAILABLE_SUPPORTED_PLATFORMS)

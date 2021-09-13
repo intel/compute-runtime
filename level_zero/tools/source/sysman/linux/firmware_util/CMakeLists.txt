@@ -18,7 +18,7 @@ if(libigsc_FOUND)
   else()
     message(STATUS "LIBIGSC version: ${libigsc_VERSION}")
     set(L0_SRCS_TOOLS_SYSMAN_LINUX_FIRMWARE_UTIL_HELPER
-        ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/firmware_util_imp_helper.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}firmware_util_imp_helper.cpp
     )
   endif()
 else()

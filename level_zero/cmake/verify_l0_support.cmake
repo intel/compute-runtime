@@ -1,10 +1,10 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}/not_supported_platforms.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}not_supported_platforms.cmake)
 
 set(L0_SUPPORTED_PRODUCT_FAMILIES ${ALL_SUPPORTED_PRODUCT_FAMILY})
 # Remove unsupported products

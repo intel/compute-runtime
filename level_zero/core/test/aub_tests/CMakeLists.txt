@@ -82,7 +82,7 @@ if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
 endif()
 
 target_sources(${TARGET_NAME} PRIVATE
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}/kernel_binary_helper_hash_value.cpp
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp

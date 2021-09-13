@@ -5,6 +5,6 @@
 #
 
 if(TESTS_ADLP)
-  include(${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/enable_adlp_testing.cmake)
+  include(${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_adlp_testing.cmake)
 endif()
 

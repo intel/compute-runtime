@@ -11,7 +11,7 @@ set(RUNTIME_SRCS_BUILT_INS
     ${CMAKE_CURRENT_SOURCE_DIR}/builtins_dispatch_builder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/built_in_ops_vme.h
     ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/unknown_built_in_name.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}unknown_built_in_name.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vme_builtin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vme_builtin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/vme_dispatch_builder.h

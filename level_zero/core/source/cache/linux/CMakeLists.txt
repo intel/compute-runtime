@@ -6,8 +6,8 @@
 
 set(L0_SRCS_CACHE_RESERVATION_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/cache_reservation_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/cache_reservation_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cache_reservation_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cache_reservation_impl.h
 )
 
 if(UNIX)

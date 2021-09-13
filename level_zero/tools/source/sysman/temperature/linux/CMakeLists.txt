@@ -5,7 +5,7 @@
 #
 
 set(L0_SRCS_TOOLS_SYSMAN_TEMPERATURE_LINUX
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/os_temperature_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}os_temperature_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_temperature_imp.h
 )
 

@@ -15,8 +15,8 @@ if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
   )
 else()
   list(APPEND L0_TESTS_TOOLS_SYSMAN_MEMORY_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_memory.h
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/test_sysman_memory.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}mock_memory.h
+       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}test_sysman_memory.cpp
   )
 endif()
 

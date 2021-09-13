@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
   add_custom_target(lint
-                    ${NEO_SOURCE_DIR}/scripts/lint${BRANCH_DIR_SUFFIX}/set_copyright.sh
+                    ${NEO_SOURCE_DIR}/scripts/lint${BRANCH_DIR_SUFFIX}set_copyright.sh
                     WORKING_DIRECTORY ${NEO_SOURCE_DIR}
   )
   set_target_properties(lint PROPERTIES
@@ -15,7 +15,7 @@ if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
                         FOLDER ${NEO_SCRIPT_PROJECTS_FOLDER}
   )
   add_custom_target(lint_head
-                    ${NEO_SOURCE_DIR}/scripts/lint${BRANCH_DIR_SUFFIX}/set_copyright.sh HEAD
+                    ${NEO_SOURCE_DIR}/scripts/lint${BRANCH_DIR_SUFFIX}set_copyright.sh HEAD
                     WORKING_DIRECTORY ${NEO_SOURCE_DIR}
   )
   set_target_properties(lint_head PROPERTIES

@@ -59,8 +59,8 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}mock_gmm_client_context.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}mock_gmm_client_context.h
 )
 
 if(WIN32)

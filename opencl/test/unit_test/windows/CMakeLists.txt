@@ -24,7 +24,7 @@ if(WIN32)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
                  ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
                  ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}get_devices_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h

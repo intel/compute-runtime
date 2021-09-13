@@ -56,8 +56,8 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.h
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}mock_gmm_client_context.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}mock_gmm_client_context.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_experimental_command_buffer.h
     ${NEO_CORE_tests_compiler_mocks}
 )
@@ -75,7 +75,7 @@ if(WIN32)
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime_win.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory${BRANCH_DIR_SUFFIX}/mock_gmm_memory.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory${BRANCH_DIR_SUFFIX}mock_gmm_memory.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/os_interface/windows/mock_gdi_interface.cpp
        ${IGDRCL_SRC_tests_mock_wddm}

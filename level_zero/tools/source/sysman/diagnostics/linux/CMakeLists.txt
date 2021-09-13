@@ -8,7 +8,7 @@ set(L0_SRCS_TOOLS_SYSMAN_DIAGNOSTICS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/os_diagnostics_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_diagnostics_imp.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/os_diagnostics_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}os_diagnostics_helper.cpp
 )
 
 if(UNIX)

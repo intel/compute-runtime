@@ -18,7 +18,7 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_descriptor_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/hw_helper_extended_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hw_helper_extended_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.h
@@ -27,7 +27,7 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_traits.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/includes${BRANCH_DIR_SUFFIX}/test_traits_common.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes${BRANCH_DIR_SUFFIX}test_traits_common.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_helper.h

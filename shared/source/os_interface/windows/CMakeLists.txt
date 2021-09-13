@@ -41,10 +41,10 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
 
 set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_additional_context_flags.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_allocation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_apply_additional_map_gpu_va_fields.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_engine_mapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}wddm_additional_context_flags.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}wddm_allocation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}wddm_apply_additional_map_gpu_va_fields.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}wddm_engine_mapper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/d3dkmthk_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dxgi_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.cpp
@@ -85,7 +85,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_residency_logger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_memory_manager_allocate_in_device_pool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}wddm_memory_manager_allocate_in_device_pool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/um_km_data_translator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/um_km_data_translator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/create_um_km_data_translator.cpp

@@ -205,7 +205,7 @@ if(BUILD_WITH_L0)
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
   include_directories(ddi${BRANCH_DIR_SUFFIX})
   include_directories(tools/source)
-  include_directories(experimental${BRANCH_DIR_SUFFIX}/source)
+  include_directories(experimental${BRANCH_DIR_SUFFIX}source)
   include_directories(experimental/source/tracing)
 
   # Create our shared library/DLL
@@ -260,8 +260,8 @@ if(BUILD_WITH_L0)
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
-                   ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices.inl
-                   ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices_additional.inl
+                   ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
+                   ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
                    ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/allocator_helper.cpp
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/options_linux.cpp
@@ -372,7 +372,7 @@ if(BUILD_WITH_L0)
     )
 
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/source "${NEO_BUILD_DIR}/${LIB_NAME}/core/source")
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/experimental${BRANCH_DIR_SUFFIX}/source "${NEO_BUILD_DIR}/${LIB_NAME}/experimental${BRANCH_DIR_SUFFIX}/source")
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/experimental${BRANCH_DIR_SUFFIX}source "${NEO_BUILD_DIR}/${LIB_NAME}/experimental${BRANCH_DIR_SUFFIX}source")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/experimental/source/tracing "${NEO_BUILD_DIR}/${LIB_NAME}/experimental/tracing")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/source "${NEO_BUILD_DIR}/${LIB_NAME}tools/source")
 

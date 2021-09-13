@@ -66,7 +66,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/program_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}/kernel_binary_helper_hash_value.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/indirect_heap/indirect_heap_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp

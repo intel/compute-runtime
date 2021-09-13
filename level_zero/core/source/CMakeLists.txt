@@ -7,7 +7,7 @@
 set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/get_extension_function_lookup_map.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_extension_function_lookup_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}get_extension_function_lookup_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/builtin/builtin_functions_lib.h
     ${CMAKE_CURRENT_SOURCE_DIR}/builtin/builtin_functions_lib_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/builtin/builtin_functions_lib_impl.h
@@ -20,19 +20,19 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_immediate.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_immediate.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX}/cmdlist_extended.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX}cmdlist_extended.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_hw.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_hw_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_imp.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_extended${BRANCH_DIR_SUFFIX}/cmdqueue_extended.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_extended${BRANCH_DIR_SUFFIX}cmdqueue_extended.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/debugger/debug_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/device${BRANCH_DIR_SUFFIX}/device_imp_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device${BRANCH_DIR_SUFFIX}device_imp_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp.h
@@ -76,7 +76,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module.h
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_build_log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_build_log.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/module${BRANCH_DIR_SUFFIX}/module_extra_options.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/module${BRANCH_DIR_SUFFIX}module_extra_options.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler/printf_handler.cpp

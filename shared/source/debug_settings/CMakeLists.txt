@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,8 +11,8 @@ set(NEO_CORE_DEBUG_SETTINGS
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_variables_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_variables_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/release_variables.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/debug_variables.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/translate_debug_settings.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}debug_variables.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}translate_debug_settings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/translate_debug_settings.h
 )
 

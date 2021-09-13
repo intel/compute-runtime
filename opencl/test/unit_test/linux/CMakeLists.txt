@@ -29,7 +29,7 @@ add_executable(igdrcl_${target_name}
                ${NEO_SOURCE_DIR}/opencl/source/dll/linux/os_interface.cpp
                ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}/drm_other_requests.cpp
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}drm_other_requests.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.cpp
 )

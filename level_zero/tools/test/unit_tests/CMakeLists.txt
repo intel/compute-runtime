@@ -37,7 +37,7 @@ target_sources(${TARGET_NAME} PRIVATE
 )
 
 target_sources(${TARGET_NAME} PRIVATE
-               ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}/kernel_binary_helper_hash_value.cpp
+               ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/io_functions.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
