@@ -51,11 +51,85 @@ TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingAtomicsForNativeCle
 }
 
 TEST_F(ImplicitScalingTests, givenForceNotUseAtomicsWhenCheckingAtomicsForNativeCleanupThenExpectFalse) {
-    DebugManager.flags.ExperimentalUseAtomicsForNativeSectionCleanup.set(0);
+    DebugManager.flags.UseAtomicsForNativeSectionCleanup.set(0);
     EXPECT_FALSE(ImplicitScalingHelper::useAtomicsForNativeCleanup());
 }
 
 TEST_F(ImplicitScalingTests, givenForceUseAtomicsWhenCheckingAtomicsForNativeCleanupThenExpectTrue) {
-    DebugManager.flags.ExperimentalUseAtomicsForNativeSectionCleanup.set(1);
+    DebugManager.flags.UseAtomicsForNativeSectionCleanup.set(1);
     EXPECT_TRUE(ImplicitScalingHelper::useAtomicsForNativeCleanup());
+}
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsIsFalseWhenCheckingProgramNativeCleanupThenExpectFalse) {
+    EXPECT_FALSE(ImplicitScalingHelper::programNativeCleanup(false));
+}
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsIsTrueWhenCheckingProgramNativeCleanupThenExpectTrue) {
+    EXPECT_TRUE(ImplicitScalingHelper::programNativeCleanup(true));
+}
+
+TEST_F(ImplicitScalingTests, givenForceNotProgramNativeCleanupWhenDefaultNativeCleanupIsTrueThenExpectFalse) {
+    DebugManager.flags.ProgramNativeCleanup.set(0);
+    EXPECT_FALSE(ImplicitScalingHelper::programNativeCleanup(true));
+}
+
+TEST_F(ImplicitScalingTests, givenForceProgramNativeCleanupWhenDefaultNativeCleanupIsFalseThenExpectTrue) {
+    DebugManager.flags.ProgramNativeCleanup.set(1);
+    EXPECT_TRUE(ImplicitScalingHelper::programNativeCleanup(false));
+}
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingToProgramWparidRegisterThenExpectTrue) {
+    EXPECT_TRUE(ImplicitScalingHelper::initWparidRegister());
+}
+
+TEST_F(ImplicitScalingTests, givenForceNotProgramWparidRegisterWhenCheckingRegisterProgramThenExpectFalse) {
+    DebugManager.flags.WparidRegisterProgramming.set(0);
+    EXPECT_FALSE(ImplicitScalingHelper::initWparidRegister());
+}
+
+TEST_F(ImplicitScalingTests, givenForceProgramWparidRegisterWhenCheckingRegisterProgramThenExpectTrue) {
+    DebugManager.flags.WparidRegisterProgramming.set(1);
+    EXPECT_TRUE(ImplicitScalingHelper::initWparidRegister());
+}
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingToUsePipeControlThenExpectTrue) {
+    EXPECT_TRUE(ImplicitScalingHelper::usePipeControl());
+}
+
+TEST_F(ImplicitScalingTests, givenForceNotUsePipeControlWhenCheckingPipeControlUseThenExpectFalse) {
+    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
+    EXPECT_FALSE(ImplicitScalingHelper::usePipeControl());
+}
+
+TEST_F(ImplicitScalingTests, givenForceUsePipeControlWhenCheckingPipeControlUseThenExpectTrue) {
+    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
+    EXPECT_TRUE(ImplicitScalingHelper::usePipeControl());
+}
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingSemaphoreUseThenExpectFalse) {
+    EXPECT_FALSE(ImplicitScalingHelper::isSemaphoreProgrammingRequired());
+}
+
+TEST_F(ImplicitScalingTests, givenForceSemaphoreNotUseWhenCheckingSemaphoreUseThenExpectFalse) {
+    DebugManager.flags.SynchronizeWithSemaphores.set(0);
+    EXPECT_FALSE(ImplicitScalingHelper::isSemaphoreProgrammingRequired());
+}
+
+TEST_F(ImplicitScalingTests, givenForceSemaphoreUseWhenCheckingSemaphoreUseThenExpectTrue) {
+    DebugManager.flags.SynchronizeWithSemaphores.set(1);
+    EXPECT_TRUE(ImplicitScalingHelper::isSemaphoreProgrammingRequired());
+}
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingCrossTileAtomicSyncThenExpectTrue) {
+    EXPECT_TRUE(ImplicitScalingHelper::isCrossTileAtomicRequired());
+}
+
+TEST_F(ImplicitScalingTests, givenForceDisableWhenCheckingCrossTileAtomicSyncThenExpectFalse) {
+    DebugManager.flags.UseCrossAtomicSynchronization.set(0);
+    EXPECT_FALSE(ImplicitScalingHelper::isCrossTileAtomicRequired());
+}
+
+TEST_F(ImplicitScalingTests, givenForceEnableWhenCheckingCrossTileAtomicSyncThenExpectTrue) {
+    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
+    EXPECT_TRUE(ImplicitScalingHelper::isCrossTileAtomicRequired());
 }

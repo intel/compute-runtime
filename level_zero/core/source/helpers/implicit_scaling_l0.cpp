@@ -10,5 +10,7 @@
 namespace NEO {
 namespace ImplicitScaling {
 bool apiSupport = false;
-}
+bool semaphoreProgrammingRequired = false;
+bool crossTileAtomicSynchronization = true;
+} // namespace ImplicitScaling
 } // namespace NEO

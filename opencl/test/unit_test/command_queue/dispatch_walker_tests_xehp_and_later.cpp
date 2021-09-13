@@ -1072,8 +1072,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     MockClDevice *device = deviceFactory.rootDevices[0];
     MockContext context{device};
 
-    auto synchronizeBeforeExecution = false;
-    auto staticPartitioning = false;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device, nullptr);
     auto &csr = cmdQ->getUltCommandStreamReceiver();
 
@@ -1087,35 +1085,39 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
 
-    synchronizeBeforeExecution = false;
+    WalkerPartition::WalkerPartitionArgs testArgs = {};
+    testArgs.initializeWparidRegister = true;
+    testArgs.crossTileAtomicSynchronization = true;
+    testArgs.usePipeControlStall = true;
+    testArgs.partitionCount = 2u;
+    testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
+
     DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
-    staticPartitioning = false;
+    testArgs.staticPartitioning = false;
+    testArgs.synchronizeBeforeExecution = false;
     csr.staticWorkPartitioningEnabled = false;
-    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(false, 16u, synchronizeBeforeExecution, false, staticPartitioning, false);
+    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
     auto returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
-    synchronizeBeforeExecution = false;
-    DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
-    staticPartitioning = true;
+    testArgs.staticPartitioning = true;
     csr.staticWorkPartitioningEnabled = true;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(false, 16u, synchronizeBeforeExecution, false, staticPartitioning, false);
+    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
-    synchronizeBeforeExecution = true;
     DebugManager.flags.SynchronizeWalkerInWparidMode.set(1);
-    staticPartitioning = false;
+    testArgs.synchronizeBeforeExecution = true;
+    testArgs.staticPartitioning = false;
     csr.staticWorkPartitioningEnabled = false;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(false, 16u, synchronizeBeforeExecution, false, staticPartitioning, false);
+    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
-    synchronizeBeforeExecution = true;
-    DebugManager.flags.SynchronizeWalkerInWparidMode.set(1);
-    staticPartitioning = true;
+    testArgs.synchronizeBeforeExecution = true;
+    testArgs.staticPartitioning = true;
     csr.staticWorkPartitioningEnabled = true;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(false, 16u, synchronizeBeforeExecution, false, staticPartitioning, false);
+    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 }
@@ -1167,7 +1169,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsMul
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
                     EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize);
 
-    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(false, 16u, false, false, false, false);
+    WalkerPartition::WalkerPartitionArgs testArgs = {};
+    testArgs.initializeWparidRegister = true;
+    testArgs.usePipeControlStall = true;
+    testArgs.crossTileAtomicSynchronization = true;
+    testArgs.partitionCount = 16u;
+    testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
+
+    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
 
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});

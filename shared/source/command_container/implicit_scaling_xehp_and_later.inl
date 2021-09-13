@@ -20,6 +20,7 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool nativeCrossTileAtomicSyn
     typename GfxFamily::COMPUTE_WALKER::PARTITION_TYPE partitionType{};
     bool staticPartitioning = false;
     const uint32_t tileCount = static_cast<uint32_t>(devices.count());
+
     const uint32_t partitionCount = WalkerPartition::computePartitionCountAndPartitionType<GfxFamily>(tileCount,
                                                                                                       preferStaticPartitioning,
                                                                                                       groupStart,
@@ -28,15 +29,21 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool nativeCrossTileAtomicSyn
                                                                                                       &partitionType,
                                                                                                       &staticPartitioning);
     UNRECOVERABLE_IF(staticPartitioning && (tileCount != partitionCount));
+    WalkerPartition::WalkerPartitionArgs args = {};
 
-    auto synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
-    const bool useAtomicsForNativeCleanup = ImplicitScalingHelper::useAtomicsForNativeCleanup();
-    return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily>(false,
-                                                                                                16u,
-                                                                                                synchronizeBeforeExecution,
-                                                                                                nativeCrossTileAtomicSync,
-                                                                                                staticPartitioning,
-                                                                                                useAtomicsForNativeCleanup));
+    args.partitionCount = partitionCount;
+    args.tileCount = tileCount;
+    args.synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
+    args.useAtomicsForNativeCleanup = ImplicitScalingHelper::useAtomicsForNativeCleanup();
+    args.nativeCrossTileAtomicSync = ImplicitScalingHelper::programNativeCleanup(nativeCrossTileAtomicSync);
+    args.initializeWparidRegister = ImplicitScalingHelper::initWparidRegister();
+    args.crossTileAtomicSynchronization = ImplicitScalingHelper::isCrossTileAtomicRequired();
+    args.semaphoreProgrammingRequired = ImplicitScalingHelper::isSemaphoreProgrammingRequired();
+    args.usePipeControlStall = ImplicitScalingHelper::usePipeControl();
+    args.emitBatchBufferEnd = false;
+    args.staticPartitioning = staticPartitioning;
+
+    return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily>(args));
 }
 
 template <typename GfxFamily>
@@ -54,36 +61,43 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
 
     bool staticPartitioning = false;
     partitionCount = WalkerPartition::computePartitionCountAndSetPartitionType<GfxFamily>(&walkerCmd, tileCount, preferStaticPartitioning, usesImages, &staticPartitioning);
-    const bool synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
-    const bool useAtomicsForNativeCleanup = ImplicitScalingHelper::useAtomicsForNativeCleanup();
+
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.workPartitionAllocationGpuVa = workPartitionAllocationGpuVa;
+    args.partitionCount = partitionCount;
+    args.tileCount = tileCount;
+    args.synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
+    args.useAtomicsForNativeCleanup = ImplicitScalingHelper::useAtomicsForNativeCleanup();
+    args.nativeCrossTileAtomicSync = ImplicitScalingHelper::programNativeCleanup(nativeCrossTileAtomicSync);
+    args.initializeWparidRegister = ImplicitScalingHelper::initWparidRegister();
+    args.crossTileAtomicSynchronization = ImplicitScalingHelper::isCrossTileAtomicRequired();
+    args.semaphoreProgrammingRequired = ImplicitScalingHelper::isSemaphoreProgrammingRequired();
+    args.usePipeControlStall = ImplicitScalingHelper::usePipeControl();
+    args.emitBatchBufferEnd = false;
+    args.secondaryBatchBuffer = useSecondaryBatchBuffer;
+    args.staticPartitioning = staticPartitioning;
+
     if (staticPartitioning) {
         UNRECOVERABLE_IF(tileCount != partitionCount);
         WalkerPartition::constructStaticallyPartitionedCommandBuffer<GfxFamily>(commandStream.getSpace(0u),
                                                                                 commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed(),
                                                                                 &walkerCmd,
                                                                                 totalProgrammedSize,
-                                                                                partitionCount,
-                                                                                tileCount,
-                                                                                synchronizeBeforeExecution,
-                                                                                useSecondaryBatchBuffer,
-                                                                                nativeCrossTileAtomicSync,
-                                                                                workPartitionAllocationGpuVa,
-                                                                                useAtomicsForNativeCleanup);
+                                                                                args);
     } else {
         if (DebugManager.flags.ExperimentalSetWalkerPartitionCount.get()) {
             partitionCount = DebugManager.flags.ExperimentalSetWalkerPartitionCount.get();
             if (partitionCount == 1u) {
                 walkerCmd.setPartitionType(GfxFamily::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
             }
+            args.partitionCount = partitionCount;
         }
 
         WalkerPartition::constructDynamicallyPartitionedCommandBuffer<GfxFamily>(commandStream.getSpace(0u),
                                                                                  commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed(),
-                                                                                 &walkerCmd, totalProgrammedSize,
-                                                                                 partitionCount, tileCount,
-                                                                                 false, synchronizeBeforeExecution, useSecondaryBatchBuffer,
-                                                                                 nativeCrossTileAtomicSync,
-                                                                                 useAtomicsForNativeCleanup);
+                                                                                 &walkerCmd,
+                                                                                 totalProgrammedSize,
+                                                                                 args);
     }
     commandStream.getSpace(totalProgrammedSize);
 }

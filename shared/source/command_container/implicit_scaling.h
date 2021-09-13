@@ -15,12 +15,22 @@ class LinearStream;
 
 namespace ImplicitScaling {
 extern bool apiSupport;
-}
+extern bool semaphoreProgrammingRequired;
+extern bool crossTileAtomicSynchronization;
+
+constexpr uint32_t partitionAddressOffsetDwords = 2u;
+constexpr uint32_t partitionAddressOffset = sizeof(uint32_t) * partitionAddressOffsetDwords;
+} // namespace ImplicitScaling
 
 struct ImplicitScalingHelper {
     static bool isImplicitScalingEnabled(const DeviceBitfield &devices, bool preCondition);
+    static bool isSemaphoreProgrammingRequired();
+    static bool isCrossTileAtomicRequired();
     static bool isSynchronizeBeforeExecutionRequired();
     static bool useAtomicsForNativeCleanup();
+    static bool programNativeCleanup(bool defaultNativeCleanup);
+    static bool initWparidRegister();
+    static bool usePipeControl();
 };
 
 template <typename GfxFamily>

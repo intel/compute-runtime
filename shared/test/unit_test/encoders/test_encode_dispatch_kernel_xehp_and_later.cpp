@@ -1026,7 +1026,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     uint32_t expectedPartitionSize = (dims[0] + partitionCount - 1u) / partitionCount;
     EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
 
-    auto cleanupSectionOffset = WalkerPartition::computeControlSectionOffset<FamilyType>(partitionCount, false, true, false);
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.initializeWparidRegister = true;
+    args.usePipeControlStall = true;
+    args.partitionCount = partitionCount;
+    args.nativeCrossTileAtomicSync = true;
+
+    auto cleanupSectionOffset = WalkerPartition::computeControlSectionOffset<FamilyType>(args);
     uint64_t expectedCleanupGpuVa = cmdContainer->getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
                                     cleanupSectionOffset;
     constexpr uint32_t expectedData = 0ull;

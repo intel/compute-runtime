@@ -18,6 +18,22 @@
 
 namespace WalkerPartition {
 
+struct WalkerPartitionArgs {
+    uint64_t workPartitionAllocationGpuVa = 0;
+    uint32_t partitionCount = 0;
+    uint32_t tileCount = 0;
+    bool emitBatchBufferEnd = false;
+    bool secondaryBatchBuffer = false;
+    bool synchronizeBeforeExecution = false;
+    bool crossTileAtomicSynchronization = false;
+    bool semaphoreProgrammingRequired = false;
+    bool staticPartitioning = false;
+    bool nativeCrossTileAtomicSync = false;
+    bool useAtomicsForNativeCleanup = false;
+    bool initializeWparidRegister = false;
+    bool usePipeControlStall = false;
+};
+
 template <typename GfxFamily>
 using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
 template <typename GfxFamily>
@@ -71,22 +87,6 @@ Command *putCommand(void *&inputAddress, uint32_t &totalBytesProgrammed) {
     auto commandToReturn = reinterpret_cast<Command *>(inputAddress);
     inputAddress = ptrOffset(inputAddress, sizeof(Command));
     return commandToReturn;
-}
-
-bool inline isSemaphoreProgrammingRequired() {
-    auto semaphoreProgrammingRequired = false;
-    if (NEO::DebugManager.flags.ExperimentalSynchronizeWithSemaphores.get() == 1) {
-        semaphoreProgrammingRequired = true;
-    }
-    return semaphoreProgrammingRequired;
-}
-
-bool inline isCrossTileAtomicRequired() {
-    auto crossTileAtomicSynchronization = true;
-    if (NEO::DebugManager.flags.ExperimentalForceCrossAtomicSynchronization.get() == 0) {
-        crossTileAtomicSynchronization = false;
-    }
-    return crossTileAtomicSynchronization;
 }
 
 template <typename GfxFamily>
@@ -350,22 +350,52 @@ void programStoreMemImmediateDword(void *&inputAddress, uint32_t &totalBytesProg
 }
 
 template <typename GfxFamily>
+uint64_t computeNativeCrossTileSyncControlSectionSize(bool useAtomicsForNativeCleanup) {
+    if (useAtomicsForNativeCleanup) {
+        return sizeof(MI_ATOMIC<GfxFamily>);
+    } else {
+        return sizeof(MI_STORE_DATA_IMM<GfxFamily>);
+    }
+}
+
+template <typename GfxFamily>
 void programNativeCrossTileSyncControl(void *&inputAddress,
                                        uint32_t &totalBytesProgrammed,
-                                       uint64_t finalSyncTileCountField,
+                                       uint64_t address,
                                        bool useAtomicsForNativeCleanup) {
     if (useAtomicsForNativeCleanup) {
         programMiAtomic<GfxFamily>(inputAddress,
                                    totalBytesProgrammed,
-                                   finalSyncTileCountField,
+                                   address,
                                    false,
                                    MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_MOVE);
     } else {
         programStoreMemImmediateDword<GfxFamily>(inputAddress,
                                                  totalBytesProgrammed,
-                                                 finalSyncTileCountField,
+                                                 address,
                                                  0u);
     }
+}
+
+template <typename GfxFamily>
+uint64_t computeTilesSynchronizationWithAtomicsSectionSize() {
+    return sizeof(MI_ATOMIC<GfxFamily>) +
+           sizeof(MI_SEMAPHORE_WAIT<GfxFamily>);
+}
+
+template <typename GfxFamily>
+void programTilesSynchronizationWithAtomics(void *&currentBatchBufferPointer,
+                                            uint32_t &totalBytesProgrammed,
+                                            uint64_t atomicAddress,
+                                            uint32_t tileCount) {
+    programMiAtomic<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, false, MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
+    programWaitForSemaphore<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, tileCount, MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+}
+
+template <typename GfxFamily>
+uint64_t computeNativeCrossTileSyncCleanupSectionSize(size_t fieldsForCleanupCount, bool useAtomicsForNativeCleanup) {
+    return fieldsForCleanupCount * computeNativeCrossTileSyncControlSectionSize<GfxFamily>(useAtomicsForNativeCleanup) +
+           2 * computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>();
 }
 
 template <typename GfxFamily>
@@ -377,28 +407,18 @@ void programNativeCrossTileSyncCleanup(void *&inputAddress,
                                        uint32_t tileCount,
                                        bool useAtomicsForNativeCleanup) {
     // Synchronize tiles, so the fields are not cleared while still in use
-    programMiAtomic<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, false, MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
-    programWaitForSemaphore<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, tileCount, MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+    programTilesSynchronizationWithAtomics<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, tileCount);
 
     for (auto fieldIndex = 0u; fieldIndex < fieldsForCleanupCount; fieldIndex++) {
         const uint64_t addressForCleanup = baseAddressForCleanup + fieldIndex * sizeof(uint32_t);
-        if (useAtomicsForNativeCleanup) {
-            programMiAtomic<GfxFamily>(inputAddress,
-                                       totalBytesProgrammed,
-                                       addressForCleanup,
-                                       false,
-                                       MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_MOVE);
-        } else {
-            programStoreMemImmediateDword<GfxFamily>(inputAddress,
+        programNativeCrossTileSyncControl<GfxFamily>(inputAddress,
                                                      totalBytesProgrammed,
                                                      addressForCleanup,
-                                                     0u);
-        }
+                                                     useAtomicsForNativeCleanup);
     }
 
     //this synchronization point ensures that all tiles finished zeroing and will fairly access control section atomic variables
-    programMiAtomic<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, false, MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
-    programWaitForSemaphore<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, 2 * tileCount, MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+    programTilesSynchronizationWithAtomics<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, 2 * tileCount);
 }
 
 template <typename GfxFamily>
@@ -413,61 +433,36 @@ void programTilesSynchronizationWithPostSyncs(void *&currentBatchBufferPointer,
 }
 
 template <typename GfxFamily>
-void programTilesSynchronizationWithAtomics(void *&currentBatchBufferPointer,
-                                            uint32_t &totalBytesProgrammed,
-                                            uint64_t atomicAddress,
-                                            uint32_t tileCount) {
-    programMiAtomic<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, false, MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
-    programWaitForSemaphore<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, tileCount, MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
-}
-
-template <typename GfxFamily>
 uint64_t computeWalkerSectionSize() {
     return sizeof(BATCH_BUFFER_START<GfxFamily>) +
            sizeof(COMPUTE_WALKER<GfxFamily>);
 }
 
 template <typename GfxFamily>
-uint64_t computeNativeCrossTileSyncControlSectionSize(bool useAtomicsForNativeCleanup) {
-    if (useAtomicsForNativeCleanup) {
-        return sizeof(MI_ATOMIC<GfxFamily>);
-    } else {
-        return sizeof(MI_STORE_DATA_IMM<GfxFamily>);
+uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
+    uint64_t size = 0u;
+
+    size += args.synchronizeBeforeExecution ? computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>() : 0;
+    size += sizeof(LOAD_REGISTER_IMM<GfxFamily>); //predication mask
+    size += sizeof(MI_ATOMIC<GfxFamily>);         //current id for partition
+    size += sizeof(LOAD_REGISTER_REG<GfxFamily>); //id into register
+    size += sizeof(MI_SET_PREDICATE<GfxFamily>) * 2 +
+            sizeof(BATCH_BUFFER_START<GfxFamily>) * 2;
+    size += (args.semaphoreProgrammingRequired ? sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) * args.partitionCount : 0u);
+    size += computeWalkerSectionSize<GfxFamily>();
+    size += args.usePipeControlStall ? sizeof(PIPE_CONTROL<GfxFamily>) : 0u;
+    if (args.crossTileAtomicSynchronization || args.nativeCrossTileAtomicSync) {
+        size += computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>();
     }
-}
-
-template <typename GfxFamily>
-uint64_t computeNativeCrossTileSyncCleanupSectionSize(size_t fieldsForCleanupCount, bool useAtomicsForNativeCleanup) {
-    return fieldsForCleanupCount * computeNativeCrossTileSyncControlSectionSize<GfxFamily>(useAtomicsForNativeCleanup) +
-           2 * sizeof(MI_ATOMIC<GfxFamily>) +
-           2 * sizeof(MI_SEMAPHORE_WAIT<GfxFamily>);
-}
-
-template <typename GfxFamily>
-uint64_t computeControlSectionOffset(uint32_t partitionCount, bool synchronizeBeforeExecution, bool nativeCrossTileAtomicSync, bool useAtomicsForNativeCleanup) {
-    auto synchronizationCount = (synchronizeBeforeExecution) ? 2u : 1u;
-    if (!isCrossTileAtomicRequired() && !nativeCrossTileAtomicSync) {
-        synchronizationCount--;
+    if (args.nativeCrossTileAtomicSync) {
+        size += computeNativeCrossTileSyncControlSectionSize<GfxFamily>(args.useAtomicsForNativeCleanup);
     }
-
-    return sizeof(LOAD_REGISTER_IMM<GfxFamily>) +
-           sizeof(MI_ATOMIC<GfxFamily>) * (1u + synchronizationCount) +
-           sizeof(LOAD_REGISTER_REG<GfxFamily>) +
-           sizeof(MI_SET_PREDICATE<GfxFamily>) * 2 +
-           sizeof(BATCH_BUFFER_START<GfxFamily>) * 2 +
-           sizeof(PIPE_CONTROL<GfxFamily>) +
-           sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) * synchronizationCount +
-           (isSemaphoreProgrammingRequired() ? sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) * partitionCount : 0u) +
-           computeWalkerSectionSize<GfxFamily>() +
-           (nativeCrossTileAtomicSync ? computeNativeCrossTileSyncControlSectionSize<GfxFamily>(useAtomicsForNativeCleanup) : 0u);
+    return size;
 }
 
 template <typename GfxFamily>
-uint64_t computeWalkerSectionStart(uint32_t partitionCount,
-                                   bool synchronizeBeforeExecution,
-                                   bool nativeCrossTileAtomicSync,
-                                   bool useAtomicsForNativeCleanup) {
-    return computeControlSectionOffset<GfxFamily>(partitionCount, synchronizeBeforeExecution, nativeCrossTileAtomicSync, useAtomicsForNativeCleanup) -
+uint64_t computeWalkerSectionStart(WalkerPartitionArgs &args) {
+    return computeControlSectionOffset<GfxFamily>(args) -
            computeWalkerSectionSize<GfxFamily>();
 }
 
@@ -537,26 +532,17 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
                                                   uint64_t gpuAddressOfAllocation,
                                                   COMPUTE_WALKER<GfxFamily> *inputWalker,
                                                   uint32_t &totalBytesProgrammed,
-                                                  uint32_t partitionCount,
-                                                  uint32_t tileCount,
-                                                  bool emitBatchBufferEnd,
-                                                  bool synchronizeBeforeExecution,
-                                                  bool secondaryBatchBuffer,
-                                                  bool nativeCrossTileAtomicSync,
-                                                  bool useAtomicsForNativeCleanup) {
+                                                  WalkerPartitionArgs &args) {
     totalBytesProgrammed = 0u;
     void *currentBatchBufferPointer = cpuPointer;
 
-    auto controlSectionOffset = computeControlSectionOffset<GfxFamily>(partitionCount, synchronizeBeforeExecution, nativeCrossTileAtomicSync, useAtomicsForNativeCleanup);
-    if (synchronizeBeforeExecution) {
+    auto controlSectionOffset = computeControlSectionOffset<GfxFamily>(args);
+    if (args.synchronizeBeforeExecution) {
         auto tileAtomicAddress = gpuAddressOfAllocation + controlSectionOffset + offsetof(BatchBufferControlData, inTileCount);
-        programMiAtomic<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, tileAtomicAddress, false, MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
-
-        //if all tiles hit the atomic, it means we may go further
-        programWaitForSemaphore<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, tileAtomicAddress, tileCount, MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+        programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, tileAtomicAddress, args.tileCount);
     }
 
-    programWparidMask<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, partitionCount);
+    programWparidMask<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args.partitionCount);
 
     programMiAtomic<GfxFamily>(currentBatchBufferPointer,
                                totalBytesProgrammed,
@@ -573,36 +559,32 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
     programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer,
                                          totalBytesProgrammed,
                                          gpuAddressOfAllocation +
-                                             computeWalkerSectionStart<GfxFamily>(partitionCount,
-                                                                                  synchronizeBeforeExecution,
-                                                                                  nativeCrossTileAtomicSync,
-                                                                                  useAtomicsForNativeCleanup),
+                                             computeWalkerSectionStart<GfxFamily>(args),
                                          true,
-                                         secondaryBatchBuffer);
+                                         args.secondaryBatchBuffer);
 
     //disable predication to not noop subsequent commands.
     programWparidPredication<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, false);
 
-    if (nativeCrossTileAtomicSync) {
+    if (args.nativeCrossTileAtomicSync) {
         const auto finalSyncTileCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(BatchBufferControlData, finalSyncTileCount);
-        programNativeCrossTileSyncControl<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, finalSyncTileCountField, useAtomicsForNativeCleanup);
+        programNativeCrossTileSyncControl<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, finalSyncTileCountField, args.useAtomicsForNativeCleanup);
     }
 
-    programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true);
+    if (args.usePipeControlStall) {
+        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true);
+    }
 
-    if (isSemaphoreProgrammingRequired()) {
+    if (args.semaphoreProgrammingRequired) {
         auto postSyncAddress = inputWalker->getPostSync().getDestinationAddress() + 8llu;
-        for (uint32_t partitionId = 0u; partitionId < partitionCount; partitionId++) {
+        for (uint32_t partitionId = 0u; partitionId < args.partitionCount; partitionId++) {
             programWaitForSemaphore<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, postSyncAddress + partitionId * 16llu, 1u, MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
     }
 
-    if (isCrossTileAtomicRequired() || nativeCrossTileAtomicSync) {
+    if (args.crossTileAtomicSynchronization || args.nativeCrossTileAtomicSync) {
         auto tileAtomicAddress = gpuAddressOfAllocation + controlSectionOffset + offsetof(BatchBufferControlData, tileCount);
-        programMiAtomic<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, tileAtomicAddress, false, MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
-
-        //if all tiles hit the atomic, it means we may go further
-        programWaitForSemaphore<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, tileAtomicAddress, tileCount, MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+        programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, tileAtomicAddress, args.tileCount);
     }
 
     //this bb start goes to the end of partitioned command buffer
@@ -611,12 +593,12 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
         totalBytesProgrammed,
         gpuAddressOfAllocation + controlSectionOffset + sizeof(BatchBufferControlData),
         false,
-        secondaryBatchBuffer);
+        args.secondaryBatchBuffer);
 
     //Walker section
-    programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, partitionCount);
+    programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount);
 
-    programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation, false, secondaryBatchBuffer);
+    programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation, false, args.secondaryBatchBuffer);
 
     auto controlSection = reinterpret_cast<BatchBufferControlData *>(ptrOffset(cpuPointer, static_cast<size_t>(controlSectionOffset)));
     controlSection->partitionCount = 0u;
@@ -626,18 +608,18 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
     totalBytesProgrammed += sizeof(BatchBufferControlData);
     currentBatchBufferPointer = ptrOffset(currentBatchBufferPointer, sizeof(BatchBufferControlData));
 
-    if (nativeCrossTileAtomicSync) {
+    if (args.nativeCrossTileAtomicSync) {
         const auto finalSyncTileCountAddress = gpuAddressOfAllocation + controlSectionOffset + offsetof(BatchBufferControlData, finalSyncTileCount);
         programNativeCrossTileSyncCleanup<GfxFamily>(currentBatchBufferPointer,
                                                      totalBytesProgrammed,
                                                      finalSyncTileCountAddress,
                                                      gpuAddressOfAllocation + controlSectionOffset,
                                                      dynamicPartitioningFieldsForCleanupCount,
-                                                     tileCount,
-                                                     useAtomicsForNativeCleanup);
+                                                     args.tileCount,
+                                                     args.useAtomicsForNativeCleanup);
     }
 
-    if (emitBatchBufferEnd) {
+    if (args.emitBatchBufferEnd) {
         auto batchBufferEnd = putCommand<BATCH_BUFFER_END<GfxFamily>>(currentBatchBufferPointer, totalBytesProgrammed);
         *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
     }
@@ -651,14 +633,28 @@ struct StaticPartitioningControlSection {
 static constexpr inline size_t staticPartitioningFieldsForCleanupCount = sizeof(StaticPartitioningControlSection) / sizeof(uint32_t) - 1;
 
 template <typename GfxFamily>
-uint64_t computeStaticPartitioningControlSectionOffset(uint32_t partitionCount, bool synchronizeBeforeExecution, bool nativeCrossTileAtomicSync, bool useAtomicsForNativeCleanup) {
-    const auto beforeExecutionSyncAtomicSize = synchronizeBeforeExecution ? (sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) + sizeof(MI_ATOMIC<GfxFamily>)) : 0u;
-    const auto afterExecutionSyncAtomicSize = (isCrossTileAtomicRequired() || nativeCrossTileAtomicSync) ? (sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) + sizeof(MI_ATOMIC<GfxFamily>)) : 0u;
-    const auto afterExecutionSyncPostSyncSize = isSemaphoreProgrammingRequired() ? sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) * partitionCount : 0u;
-    const auto nativeCrossTileSyncSize = nativeCrossTileAtomicSync ? computeNativeCrossTileSyncControlSectionSize<GfxFamily>(useAtomicsForNativeCleanup) : 0u;
+uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args) {
+    const auto beforeExecutionSyncAtomicSize = args.synchronizeBeforeExecution
+                                                   ? computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>()
+                                                   : 0u;
+    const auto afterExecutionSyncAtomicSize = (args.crossTileAtomicSynchronization || args.nativeCrossTileAtomicSync)
+                                                  ? computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>()
+                                                  : 0u;
+    const auto afterExecutionSyncPostSyncSize = args.semaphoreProgrammingRequired
+                                                    ? sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) * args.partitionCount
+                                                    : 0u;
+    const auto nativeCrossTileSyncSize = args.nativeCrossTileAtomicSync
+                                             ? computeNativeCrossTileSyncControlSectionSize<GfxFamily>(args.useAtomicsForNativeCleanup)
+                                             : 0u;
+    const auto wparidRegisterSize = args.initializeWparidRegister
+                                        ? sizeof(LOAD_REGISTER_MEM<GfxFamily>)
+                                        : 0u;
+    const auto pipeControlSize = args.usePipeControlStall
+                                     ? sizeof(PIPE_CONTROL<GfxFamily>)
+                                     : 0u;
     return beforeExecutionSyncAtomicSize +
-           sizeof(LOAD_REGISTER_MEM<GfxFamily>) +
-           sizeof(PIPE_CONTROL<GfxFamily>) +
+           wparidRegisterSize +
+           pipeControlSize +
            sizeof(COMPUTE_WALKER<GfxFamily>) +
            nativeCrossTileSyncSize +
            afterExecutionSyncAtomicSize +
@@ -671,49 +667,48 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
                                                  uint64_t gpuAddressOfAllocation,
                                                  COMPUTE_WALKER<GfxFamily> *inputWalker,
                                                  uint32_t &totalBytesProgrammed,
-                                                 uint32_t partitionCount,
-                                                 uint32_t tileCount,
-                                                 bool synchronizeBeforeExecution,
-                                                 bool secondaryBatchBuffer,
-                                                 bool nativeCrossTileAtomicSync,
-                                                 uint64_t workPartitionAllocationGpuVa,
-                                                 bool useAtomicsForNativeCleanup) {
+                                                 WalkerPartitionArgs &args) {
     totalBytesProgrammed = 0u;
     void *currentBatchBufferPointer = cpuPointer;
 
     // Get address of the control section
-    const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<GfxFamily>(partitionCount, synchronizeBeforeExecution, nativeCrossTileAtomicSync, useAtomicsForNativeCleanup);
+    const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<GfxFamily>(args);
     const auto afterControlSectionOffset = controlSectionOffset + sizeof(StaticPartitioningControlSection);
 
     // Synchronize tiles before walker
-    if (synchronizeBeforeExecution) {
+    if (args.synchronizeBeforeExecution) {
         const auto atomicAddress = gpuAddressOfAllocation + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeBeforeWalkerCounter);
-        programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, tileCount);
+        programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, args.tileCount);
     }
 
     // Load partition ID to wparid register and execute walker
-    programMiLoadRegisterMem<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, workPartitionAllocationGpuVa, wparidCCSOffset);
-    programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, partitionCount);
+    if (args.initializeWparidRegister) {
+        programMiLoadRegisterMem<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args.workPartitionAllocationGpuVa, wparidCCSOffset);
+    }
+    programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount);
 
     // Prepare for cleanup section
-    if (nativeCrossTileAtomicSync) {
+    if (args.nativeCrossTileAtomicSync) {
         const auto finalSyncTileCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(StaticPartitioningControlSection, finalSyncTileCounter);
-        programNativeCrossTileSyncControl<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, finalSyncTileCountField, useAtomicsForNativeCleanup);
+        programNativeCrossTileSyncControl<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, finalSyncTileCountField, args.useAtomicsForNativeCleanup);
     }
 
-    programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true); // flush L3 cache
+    if (args.usePipeControlStall) {
+        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true); // flush L3 cache
+    }
 
     // Synchronize tiles after walker
-    if (isSemaphoreProgrammingRequired()) {
-        programTilesSynchronizationWithPostSyncs<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, partitionCount);
+    if (args.semaphoreProgrammingRequired) {
+        programTilesSynchronizationWithPostSyncs<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount);
     }
-    if (isCrossTileAtomicRequired() || nativeCrossTileAtomicSync) {
+
+    if (args.crossTileAtomicSynchronization || args.nativeCrossTileAtomicSync) {
         const auto atomicAddress = gpuAddressOfAllocation + controlSectionOffset + offsetof(StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
-        programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, tileCount);
+        programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, args.tileCount);
     }
 
     // Jump over the control section
-    programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation + afterControlSectionOffset, false, secondaryBatchBuffer);
+    programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation + afterControlSectionOffset, false, args.secondaryBatchBuffer);
 
     // Control section
     DEBUG_BREAK_IF(totalBytesProgrammed != controlSectionOffset);
@@ -724,35 +719,31 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
     DEBUG_BREAK_IF(totalBytesProgrammed != afterControlSectionOffset);
 
     // Cleanup section
-    if (nativeCrossTileAtomicSync) {
+    if (args.nativeCrossTileAtomicSync) {
         const auto finalSyncTileCountAddress = gpuAddressOfAllocation + controlSectionOffset + offsetof(StaticPartitioningControlSection, finalSyncTileCounter);
         programNativeCrossTileSyncCleanup<GfxFamily>(currentBatchBufferPointer,
                                                      totalBytesProgrammed,
                                                      finalSyncTileCountAddress,
                                                      gpuAddressOfAllocation + controlSectionOffset,
                                                      staticPartitioningFieldsForCleanupCount,
-                                                     tileCount,
-                                                     useAtomicsForNativeCleanup);
+                                                     args.tileCount,
+                                                     args.useAtomicsForNativeCleanup);
     }
 }
 
 template <typename GfxFamily>
-uint64_t estimateSpaceRequiredInCommandBuffer(bool requiresBatchBufferEnd,
-                                              uint32_t partitionCount,
-                                              bool synchronizeBeforeExecution,
-                                              bool nativeCrossTileAtomicSync,
-                                              bool staticPartitioning,
-                                              bool useAtomicsForNativeCleanup) {
+uint64_t estimateSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
+
     uint64_t size = {};
-    if (staticPartitioning) {
-        size += computeStaticPartitioningControlSectionOffset<GfxFamily>(partitionCount, synchronizeBeforeExecution, nativeCrossTileAtomicSync, useAtomicsForNativeCleanup);
+    if (args.staticPartitioning) {
+        size += computeStaticPartitioningControlSectionOffset<GfxFamily>(args);
         size += sizeof(StaticPartitioningControlSection);
-        size += nativeCrossTileAtomicSync ? computeNativeCrossTileSyncCleanupSectionSize<GfxFamily>(staticPartitioningFieldsForCleanupCount, useAtomicsForNativeCleanup) : 0u;
+        size += args.nativeCrossTileAtomicSync ? computeNativeCrossTileSyncCleanupSectionSize<GfxFamily>(staticPartitioningFieldsForCleanupCount, args.useAtomicsForNativeCleanup) : 0u;
     } else {
-        size += computeControlSectionOffset<GfxFamily>(partitionCount, synchronizeBeforeExecution, nativeCrossTileAtomicSync, useAtomicsForNativeCleanup);
+        size += computeControlSectionOffset<GfxFamily>(args);
         size += sizeof(BatchBufferControlData);
-        size += requiresBatchBufferEnd ? sizeof(BATCH_BUFFER_END<GfxFamily>) : 0u;
-        size += nativeCrossTileAtomicSync ? computeNativeCrossTileSyncCleanupSectionSize<GfxFamily>(dynamicPartitioningFieldsForCleanupCount, useAtomicsForNativeCleanup) : 0u;
+        size += args.emitBatchBufferEnd ? sizeof(BATCH_BUFFER_END<GfxFamily>) : 0u;
+        size += args.nativeCrossTileAtomicSync ? computeNativeCrossTileSyncCleanupSectionSize<GfxFamily>(dynamicPartitioningFieldsForCleanupCount, args.useAtomicsForNativeCleanup) : 0u;
     }
     return size;
 }

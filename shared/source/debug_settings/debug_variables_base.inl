@@ -123,15 +123,11 @@ DECLARE_DEBUG_VARIABLE(int32_t, CFENumberOfWalkers, -1, "Set Number of Walkers i
 DECLARE_DEBUG_VARIABLE(int32_t, CFEMaximumNumberOfThreads, -1, "Set Maximum Number of Threads in CFE_STATE on XEHP, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEOverDispatchControl, -1, "Set Over Dispatch Control in CFE_STATE on XEHP, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, CFELargeGRFThreadAdjustDisable, -1, "Set Large GRF thread adjust Disable field in CFE_STATE, -1 - do not set")
-DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWalkerInWparidMode, -1, "-1: default, 0: do not synchronize 1: synchronize all tiles prior to doing work distrubution")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNumComputeUnitsForScratch, -1, "Override number of compute units used for scratch size calculation")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceWorkgroupSize1x1x1, -1, "-1: default, 0: disable, 1: enable,  force workgroup size 1x1x1 in builtins")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceThreadGroupDispatchSize, -1, "Set ThreadGroupDispatchSize in INTERFACE_DESCRIPTOR_DATA, -1 - default, 0 - TG size 8, 1 - TG size 4, 2 - TG size 2, 3 - Reserved")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceStatelessL1CachingPolicy, -1, "-1: default, >=0 : program value for stateless L1 caching")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMemoryBankIndexOverride, -1, "-1: default, 0: disable, 1:enable, Force index=1 of memory bank for XEHP")
-DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSynchronizeWithSemaphores, -1, "Experimental implementation: 1: Emit Semaphores waiting after Walker completion in WPARID mode 0: do not emit semaphores after Walker")
-DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalForceCrossAtomicSynchronization, -1, "Experimental implementation: 1: Cross Tile Atomic Synchronization present 0: Cross tile atomic synchronization disabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePrivateScratchSlot1, -1, "-1: default, 0: disable, 1: enable Allows using private scratch space")
 DECLARE_DEBUG_VARIABLE(int32_t, DisablePipeControlPrecedingPostSyncCommand, -1, "-1 default - disabled adding PIPE_CONTROL, 0 - disabled adding PIPE_CONTROL, 1 - enabled adding PIPE_CONTROL")
 DECLARE_DEBUG_VARIABLE(int32_t, UseCachingPolicyForIndirectObjectHeap, -1, "Use selected caching policy for IOH, -1 - default, 0 - Uncached, 1 - L3 Caching, 2 - L1 Caching")
@@ -142,13 +138,11 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceMultiGpuPartialWrites, -1, "-1: default - 0
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMultiGpuAtomicsInComputeMode, -1, "-1: default - 0 for multiOsContext capable, 0: program value 0 in MultiGpuAtomics bit in STATE_COMPUTE_MODE, 1: program value 1 in MultiGpuAtomics bit in STATE_COMPUTE_MODE")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMultiGpuAtomics, -1, "-1: default - 0 for multiOsContext capable, 0: program value 0 in MultiGpuAtomics controls 1: program value 1 in MultiGpuAtomics controls")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceBufferCompressionFormat, -1, "-1: default, >0: Format value")
-DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experimental implementation: Set number of COMPUTE_WALKERs for a given Partition Type, 0 - do not set the feature.")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHwGenerationLocalIds, -1, "-1: default, 0: disable, 1: enable : Enables generation of local ids on HW")
 DECLARE_DEBUG_VARIABLE(int32_t, WalkerPartitionPreferHighestDimension, -1, "-1: default, 0: prefer biggest dimension, 1: prefer Z over Y over X if they divide partition count evenly")
 DECLARE_DEBUG_VARIABLE(int32_t, SetMinimalPartitionSize, -1, "-1 default value set to 512 workgroups, 0 - disabled, >0 - minimal partition size in workgroups (should be power of 2)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideBlitterTargetMemory, -1, "-1:default 0: overwrites to System 1: overwrites to Local")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideBlitterMocs, -1, "-1: default, >=0 SetGivenMocsInBlitterTransfers")
-DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionType, -1, "Experimental implementation: Set COMPUTE_WALKER Partition Type. Valid values for types from 1 to 3")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePostSyncMocs, -1, "-1: default, >=0 Override post sync mocs with value")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableImmediateVmBindExt, -1, "Use immediate bind extension to a new residency model on Linux (requires kernel support), -1: default (enabled whith direct submission), 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExecutionTile, -1, "-1: default, 0+: given tile is choosen as submission, must be used with EnableWalkerPartition = 0.")
@@ -237,11 +231,21 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideComputeSupport, -1, "Ove
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableCacheFlush, -1, "-1: driver default, 0: additional cache flush is present 1: disable dispatching cache flush commands")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionNewResourceTlbFlush, -1, "-1: driver default - flush when new resource is bound, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableMonitorFence, -1, "Disable dispatching monitor fence commands")
-DECLARE_DEBUG_VARIABLE(bool, USMEvictAfterMigration, true, "Evict USM allocation after implicit migration to GPU")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmissionController, -1, "Enable direct submission terminating after given timeout, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerTimeout, -1, "Set direct submission controller timeout, -1: default 5 ms, >=0: timeout in ms")
 
+/* IMPLICIT SCALING */
+DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")
+DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWalkerInWparidMode, -1, "-1: default, 0: do not synchronize 1: synchronize all tiles prior to doing work distrubution")
+DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWithSemaphores, -1, "-1: default (disabled),  1: Emit Semaphores waiting after Walker completion in WPARID mode 0: do not emit semaphores after Walker")
+DECLARE_DEBUG_VARIABLE(int32_t, UseCrossAtomicSynchronization, -1, "-1: default (enabled), 1: Cross Tile Atomic Synchronization present 0: Cross tile atomic synchronization disabled")
+DECLARE_DEBUG_VARIABLE(int32_t, UseAtomicsForNativeSectionCleanup, -1, "-1: default (disabled), 0: use store data op, 1: use atomic op")
+DECLARE_DEBUG_VARIABLE(int32_t, ProgramNativeCleanup, -1, "-1: default (API dependent), 0: Do not program native cleanup, 1: program native cleanup")
+DECLARE_DEBUG_VARIABLE(int32_t, WparidRegisterProgramming, -1, "-1: default (enabled), 0: do not program wparid register, 1: programing wparid register")
+DECLARE_DEBUG_VARIABLE(int32_t, UsePipeControlAfterPartitionedWalker, -1, "-1: default (enabled), 0: do not add PipeControl, 1: add PipeControl")
+
 /*FEATURE FLAGS*/
+DECLARE_DEBUG_VARIABLE(bool, USMEvictAfterMigration, true, "Evict USM allocation after implicit migration to GPU")
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")
 DECLARE_DEBUG_VARIABLE(bool, EnableDeferredDeleter, true, "Enables async deleter")
@@ -305,8 +309,9 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicPipelineSelect, -1, "set SYSTOLI
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicInComputeWalker, -1, "set SYSTOLIC MODE ENABLE in COMPUTE_WALKER cmd, -1:default, 0:disable, 1:enable")
 
 /*EXPERIMENTAL TOGGLES*/
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experimental implementation: Set number of COMPUTE_WALKERs for a given Partition Type, 0 - do not set the feature.")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionType, -1, "Experimental implementation: Set COMPUTE_WALKER Partition Type. Valid values for types from 1 to 3")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")
-DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalUseAtomicsForNativeSectionCleanup, -1, "-1: default (disabled), 0: use store data op, 1: use atomic op")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
