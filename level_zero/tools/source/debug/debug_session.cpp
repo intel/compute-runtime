@@ -83,14 +83,14 @@ DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : c
     }
 }
 
-std::vector<ze_device_thread_t> DebugSession::getSingleThreads(ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo) {
+std::vector<EuThread::ThreadId> DebugSession::getSingleThreadsForDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo) {
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
     UNRECOVERABLE_IF(numThreadsPerEu > 8);
 
-    std::vector<ze_device_thread_t> threads;
+    std::vector<EuThread::ThreadId> threads;
 
     const uint32_t slice = physicalThread.slice;
     const uint32_t subslice = physicalThread.subslice;
@@ -116,7 +116,7 @@ std::vector<ze_device_thread_t> DebugSession::getSingleThreads(ze_device_thread_
                     if (thread != UINT32_MAX) {
                         threadID = thread;
                     }
-                    threads.push_back({sliceID, subsliceID, euID, threadID});
+                    threads.push_back({deviceIndex, sliceID, subsliceID, euID, threadID});
 
                     if (thread != UINT32_MAX) {
                         break;
@@ -143,11 +143,10 @@ bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
     auto hwInfo = connectedDevice->getHwInfo();
     uint32_t deviceIndex = 0;
     auto physicalThread = convertToPhysical(thread, deviceIndex);
-    auto singleThreads = getSingleThreads(physicalThread, hwInfo);
+    auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
     bool requestedThreadsStopped = true;
 
-    for (auto &thread : singleThreads) {
-        EuThread::ThreadId threadId = {deviceIndex, thread.slice, thread.subslice, thread.eu, thread.thread};
+    for (auto &threadId : singleThreads) {
 
         if (allThreads[threadId]->isStopped()) {
             continue;

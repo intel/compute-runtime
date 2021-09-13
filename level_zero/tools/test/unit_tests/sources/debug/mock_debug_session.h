@@ -26,7 +26,7 @@ class OsInterfaceWithDebugAttach : public NEO::OSInterface {
 struct DebugSessionMock : public L0::DebugSession {
     using L0::DebugSession::allThreads;
     using L0::DebugSession::debugArea;
-    using L0::DebugSession::getSingleThreads;
+    using L0::DebugSession::getSingleThreadsForDevice;
     using L0::DebugSession::isBindlessSystemRoutine;
 
     DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : DebugSession(config, device), config(config){};

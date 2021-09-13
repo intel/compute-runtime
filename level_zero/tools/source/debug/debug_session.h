@@ -80,7 +80,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual bool isBindlessSystemRoutine();
     virtual bool readModuleDebugArea() = 0;
 
-    std::vector<ze_device_thread_t> getSingleThreads(ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo);
+    std::vector<EuThread::ThreadId> getSingleThreadsForDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo);
 
     DebugAreaHeader debugArea;
 

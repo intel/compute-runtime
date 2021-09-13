@@ -168,9 +168,11 @@ TEST(DebugSession, givenSingleThreadWhenGettingSingleThreadsThenCorrectThreadIsR
     auto subslice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported - 1;
     ze_device_thread_t physicalThread = {0, subslice, 2, 3};
 
-    auto threads = debugSession->getSingleThreads(physicalThread, hwInfo);
+    auto threads = debugSession->getSingleThreadsForDevice(0, physicalThread, hwInfo);
 
     EXPECT_EQ(1u, threads.size());
+
+    EXPECT_EQ(0u, threads[0].tileIndex);
     EXPECT_EQ(0u, threads[0].slice);
     EXPECT_EQ(subslice, threads[0].subslice);
     EXPECT_EQ(2u, threads[0].eu);
@@ -190,11 +192,12 @@ TEST(DebugSession, givenAllThreadsWhenGettingSingleThreadsThenCorrectThreadsAreR
     ze_device_thread_t physicalThread = {0, subslice, 2, UINT32_MAX};
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
-    auto threads = debugSession->getSingleThreads(physicalThread, hwInfo);
+    auto threads = debugSession->getSingleThreadsForDevice(0, physicalThread, hwInfo);
 
     EXPECT_EQ(numThreadsPerEu, threads.size());
 
     for (uint32_t i = 0; i < numThreadsPerEu; i++) {
+        EXPECT_EQ(0u, threads[i].tileIndex);
         EXPECT_EQ(0u, threads[i].slice);
         EXPECT_EQ(subslice, threads[i].subslice);
         EXPECT_EQ(2u, threads[i].eu);
@@ -215,7 +218,7 @@ TEST(DebugSession, givenAllEUsWhenGettingSingleThreadsThenCorrectThreadsAreRetur
     ze_device_thread_t physicalThread = {0, subslice, UINT32_MAX, 0};
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
 
-    auto threads = debugSession->getSingleThreads(physicalThread, hwInfo);
+    auto threads = debugSession->getSingleThreadsForDevice(0, physicalThread, hwInfo);
 
     EXPECT_EQ(numEuPerSubslice, threads.size());
 
@@ -239,7 +242,7 @@ TEST(DebugSession, givenAllSubslicesWhenGettingSingleThreadsThenCorrectThreadsAr
     ze_device_thread_t physicalThread = {0, UINT32_MAX, 0, 0};
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
 
-    auto threads = debugSession->getSingleThreads(physicalThread, hwInfo);
+    auto threads = debugSession->getSingleThreadsForDevice(0, physicalThread, hwInfo);
 
     EXPECT_EQ(numSubslicesPerSlice, threads.size());
 
@@ -263,11 +266,12 @@ TEST(DebugSession, givenAllSlicesWhenGettingSingleThreadsThenCorrectThreadsAreRe
     ze_device_thread_t physicalThread = {UINT32_MAX, 0, 0, 0};
     const uint32_t numSlices = hwInfo.gtSystemInfo.MaxSlicesSupported;
 
-    auto threads = debugSession->getSingleThreads(physicalThread, hwInfo);
+    auto threads = debugSession->getSingleThreadsForDevice(0, physicalThread, hwInfo);
 
     EXPECT_EQ(numSlices, threads.size());
 
     for (uint32_t i = 0; i < numSlices; i++) {
+        EXPECT_EQ(0u, threads[i].tileIndex);
         EXPECT_EQ(i, threads[i].slice);
         EXPECT_EQ(0u, threads[i].subslice);
         EXPECT_EQ(0u, threads[i].eu);
