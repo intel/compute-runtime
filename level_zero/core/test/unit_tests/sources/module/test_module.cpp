@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -640,7 +641,12 @@ HWTEST_F(ModuleLinkingTest, whenExternFunctionsAllocationIsPresentThenItsBeingAd
     Mock<Module> module(device, nullptr);
     MockGraphicsAllocation alloc;
     module.exportedFunctionsSurface = &alloc;
-    module.kernelImmDatas.push_back(std::make_unique<L0::KernelImmutableData>());
+
+    KernelInfo kernelInfo{};
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
+    module.kernelImmDatas.push_back(std::move(kernelImmData));
+
     module.translationUnit->programInfo.linkerInput.reset(new NEO::LinkerInput);
     module.linkBinary();
     ASSERT_EQ(1U, module.kernelImmDatas[0]->getResidencyContainer().size());
@@ -1575,5 +1581,34 @@ TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTb
     EXPECT_TRUE(allocation->isTbxWritable(std::numeric_limits<uint32_t>::max()));
     EXPECT_TRUE(allocation->isAubWritable(std::numeric_limits<uint32_t>::max()));
 }
+
+TEST_F(ModuleTests, givenImplicitArgsRelocationWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired) {
+    auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
+
+    char data[64]{};
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.pKernelHeap = data;
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+
+    auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
+    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
+    pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+    auto status = pModule->linkBinary();
+    EXPECT_TRUE(status);
+
+    EXPECT_EQ(sizeof(ImplicitArgs), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
+
+    EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+}
+
 } // namespace ult
 } // namespace L0

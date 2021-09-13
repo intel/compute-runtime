@@ -137,6 +137,7 @@ struct LinkerInput {
     bool isValid() const {
         return valid;
     }
+    bool areImplicitArgsRequired(uint32_t instructionsSegmentId) const;
 
     bool undefinedSymbolsAllowed = false;
 

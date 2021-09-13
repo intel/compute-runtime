@@ -500,11 +500,12 @@ void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSeg
 
 bool ModuleImp::linkBinary() {
     using namespace NEO;
-    if (this->translationUnit->programInfo.linkerInput == nullptr) {
+    auto linkerInput = this->translationUnit->programInfo.linkerInput.get();
+    if (linkerInput == nullptr) {
         isFullyLinked = true;
         return true;
     }
-    Linker linker(*this->translationUnit->programInfo.linkerInput);
+    Linker linker(*linkerInput);
     Linker::SegmentInfo globals;
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
@@ -518,15 +519,15 @@ bool ModuleImp::linkBinary() {
         constants.gpuAddress = static_cast<uintptr_t>(constantsForPatching->getGpuAddress());
         constants.segmentSize = constantsForPatching->getUnderlyingBufferSize();
     }
-    if (this->translationUnit->programInfo.linkerInput->getExportedFunctionsSegmentId() >= 0) {
-        auto exportedFunctionHeapId = this->translationUnit->programInfo.linkerInput->getExportedFunctionsSegmentId();
+    if (linkerInput->getExportedFunctionsSegmentId() >= 0) {
+        auto exportedFunctionHeapId = linkerInput->getExportedFunctionsSegmentId();
         this->exportedFunctionsSurface = this->kernelImmDatas[exportedFunctionHeapId]->getIsaGraphicsAllocation();
         exportedFunctions.gpuAddress = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddressToPatch());
         exportedFunctions.segmentSize = exportedFunctionsSurface->getUnderlyingBufferSize();
     }
     Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;
-    if (this->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
+    if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         patchedIsaTempStorage.reserve(this->kernelImmDatas.size());
         for (const auto &kernelInfo : this->translationUnit->programInfo.kernelInfos) {
             auto &kernHeapInfo = kernelInfo->heapInfo;
@@ -558,7 +559,9 @@ bool ModuleImp::linkBinary() {
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));
     isFullyLinked = true;
-    for (auto &kernImmData : this->kernelImmDatas) {
+    for (auto kernelId = 0u; kernelId < kernelImmDatas.size(); kernelId++) {
+        auto &kernImmData = kernelImmDatas[kernelId];
+
         kernImmData->getResidencyContainer().reserve(kernImmData->getResidencyContainer().size() +
                                                      ((this->exportedFunctionsSurface != nullptr) ? 1 : 0) + this->importedSymbolAllocations.size());
 
@@ -567,6 +570,9 @@ bool ModuleImp::linkBinary() {
         }
         kernImmData->getResidencyContainer().insert(kernImmData->getResidencyContainer().end(), this->importedSymbolAllocations.begin(),
                                                     this->importedSymbolAllocations.end());
+
+        auto &kernelDescriptor = const_cast<KernelDescriptor &>(kernImmData->getDescriptor());
+        kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = linkerInput->areImplicitArgsRequired(kernelId);
     }
     return true;
 }

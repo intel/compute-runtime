@@ -458,4 +458,12 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
     }
 }
 
+bool LinkerInput::areImplicitArgsRequired(uint32_t instructionsSegmentId) const {
+    if (relocations.size() > instructionsSegmentId) {
+        const auto &segmentRelocations = relocations[instructionsSegmentId];
+        return (segmentRelocations.end() != std::find_if(segmentRelocations.begin(), segmentRelocations.end(), [&](const auto &relocation) { return relocation.symbolName == implicitArgsRelocationSymbolName; }));
+    }
+    return false;
+}
+
 } // namespace NEO

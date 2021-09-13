@@ -1875,3 +1875,22 @@ TEST(LinkerTests, givenImplicitArgRelocationThenPatchRelocationWithSizeOfImplici
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
 }
+
+TEST(LinkerTests, givenImplicitArgRelocationThenImplicitArgsAreRequired) {
+    NEO::LinkerInput linkerInput;
+
+    EXPECT_FALSE(linkerInput.areImplicitArgsRequired(0u));
+
+    vISA::GenRelocEntry reloc = {};
+    std::string relocationName = implicitArgsRelocationSymbolName;
+    memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
+    reloc.r_offset = 8;
+    reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
+
+    vISA::GenRelocEntry relocs[] = {reloc};
+    constexpr uint32_t numRelocations = 1;
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
+    EXPECT_TRUE(decodeRelocSuccess);
+
+    EXPECT_TRUE(linkerInput.areImplicitArgsRequired(0u));
+}

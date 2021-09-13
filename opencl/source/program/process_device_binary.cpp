@@ -10,7 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/program_info.h"
@@ -122,10 +121,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
             MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelInfo->getGraphicsAllocation()),
                                                              *pDevice, kernelInfo->getGraphicsAllocation(), 0, isaSegmentsForPatching[segmentId].hostPointer,
                                                              static_cast<size_t>(kernHeapInfo.KernelHeapSize));
-            if (linkerInput->getRelocationsInInstructionSegments().size() > kernelId) {
-                const auto &relocations = linkerInput->getRelocationsInInstructionSegments()[kernelId];
-                kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = (relocations.end() != std::find_if(relocations.begin(), relocations.end(), [&](const auto &relocation) { return relocation.symbolName == implicitArgsRelocationSymbolName; }));
-            }
+            kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = linkerInput->areImplicitArgsRequired(kernelId);
         }
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->getSymbols(pDevice->getRootDeviceIndex())));
