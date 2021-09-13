@@ -146,9 +146,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         kernel->setGroupCount(pThreadGroupDimensions->groupCountX,
                               pThreadGroupDimensions->groupCountY,
                               pThreadGroupDimensions->groupCountZ);
-        kernel->patchWorkDim(pThreadGroupDimensions->groupCountX,
-                             pThreadGroupDimensions->groupCountY,
-                             pThreadGroupDimensions->groupCountZ);
     }
     NEO::GraphicsAllocation *eventAlloc = nullptr;
     uint64_t eventAddress = 0;

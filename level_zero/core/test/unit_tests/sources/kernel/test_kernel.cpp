@@ -1929,8 +1929,6 @@ HWTEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadD
     createKernel(kernel.get());
     kernel->setCrossThreadData(sizeof(uint32_t));
 
-    kernel->patchWorkDim(1, 1, 1);
-
     mockKernelImmData->mockKernelDescriptor->payloadMappings.dispatchTraits.workDim = 0x0u;
 
     auto destinationBuffer = ArrayRef<const uint8_t>(kernel->getCrossThreadData(), kernel->getCrossThreadDataSize());
@@ -1950,8 +1948,7 @@ HWTEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadD
     for (auto &[groupSizeX, groupSizeY, groupSizeZ, groupCountX, groupCountY, groupCountZ, expectedWorkDim] : sizesCountsWorkDim) {
         ze_result_t res = kernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
         EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-
-        kernel->patchWorkDim(groupCountX, groupCountY, groupCountZ);
+        kernel->setGroupCount(groupCountX, groupCountY, groupCountZ);
         EXPECT_EQ(*workDimInCrossThreadDataPtr, expectedWorkDim);
     }
 }

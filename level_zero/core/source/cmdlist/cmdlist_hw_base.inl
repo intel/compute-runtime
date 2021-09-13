@@ -95,9 +95,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         kernel->setGroupCount(pThreadGroupDimensions->groupCountX,
                               pThreadGroupDimensions->groupCountY,
                               pThreadGroupDimensions->groupCountZ);
-        kernel->patchWorkDim(pThreadGroupDimensions->groupCountX,
-                             pThreadGroupDimensions->groupCountY,
-                             pThreadGroupDimensions->groupCountZ);
     }
 
     if (isIndirect && pThreadGroupDimensions) {

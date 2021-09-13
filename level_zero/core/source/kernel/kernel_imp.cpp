@@ -280,6 +280,18 @@ void KernelImp::setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32
 
     uint32_t groupCount[3] = {groupCountX, groupCountY, groupCountZ};
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.numWorkGroups, groupCount);
+
+    uint32_t workDim = 1;
+    if (groupCountZ * groupSize[2] > 1) {
+        workDim = 3;
+    } else if (groupCountY * groupSize[1] > 1) {
+        workDim = 2;
+    }
+    auto workDimOffset = desc.payloadMappings.dispatchTraits.workDim;
+    if (NEO::isValidOffset(workDimOffset)) {
+        auto destinationBuffer = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
+        NEO::patchNonPointer(destinationBuffer, desc.payloadMappings.dispatchTraits.workDim, workDim);
+    }
 }
 
 ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
@@ -922,21 +934,6 @@ void KernelImp::patchGlobalOffset() {
     const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
     auto dst = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.globalWorkOffset, this->globalOffsets);
-}
-
-void KernelImp::patchWorkDim(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {
-    const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
-    auto dataOffset = kernelDescriptor.payloadMappings.dispatchTraits.workDim;
-    if (NEO::isValidOffset(dataOffset)) {
-        auto destinationBuffer = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
-        uint32_t workDim = 1;
-        if (groupCountZ * groupSize[2] > 1) {
-            workDim = 3;
-        } else if (groupCountY * groupSize[1] > 1) {
-            workDim = 2;
-        }
-        NEO::patchNonPointer(destinationBuffer, kernelDescriptor.payloadMappings.dispatchTraits.workDim, workDim);
-    }
 }
 
 Kernel *Kernel::create(uint32_t productFamily, Module *module,
