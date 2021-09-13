@@ -35,52 +35,51 @@ const PLATFORM XE_HP_SDV::platform = {
 
 const RuntimeCapabilityTable XE_HP_SDV::capabilityTable{
     EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_RCS, {true, true, false, true}},
-        {aub_stream::ENGINE_CCS, {true, true, false, true}}}, // directSubmissionEngines
-    {0, 0, 0, false, false, false},                           // kmdNotifyProperties
-    MemoryConstants::max48BitAddress,                         // gpuAddressSpace
-    83.333,                                                   // defaultProfilingTimerResolution
-    MemoryConstants::pageSize,                                // requiredPreemptionSurfaceSize
-    &isSimulationXEHP,                                        // isSimulation
-    PreemptionMode::ThreadGroup,                              // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                                   // defaultEngineType
-    0,                                                        // maxRenderFrequency
-    30,                                                       // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::XeHP_SDV,       // aubDeviceId
-    0,                                                        // extraQuantityThreadsPerEU
-    64,                                                       // slmSize
-    sizeof(XE_HP_SDV::GRF),                                   // grfSize
-    36u,                                                      // timestampValidBits
-    32u,                                                      // kernelTimestampValidBits
-    false,                                                    // blitterOperationsSupported
-    true,                                                     // ftrSupportsInteger64BitAtomics
-    true,                                                     // ftrSupportsFP64
-    true,                                                     // ftrSupports64BitMath
-    true,                                                     // ftrSvm
-    false,                                                    // ftrSupportsCoherency
-    false,                                                    // ftrSupportsVmeAvcTextureSampler
-    false,                                                    // ftrSupportsVmeAvcPreemption
-    false,                                                    // ftrRenderCompressedBuffers
-    false,                                                    // ftrRenderCompressedImages
-    true,                                                     // ftr64KBpages
-    true,                                                     // instrumentationEnabled
-    true,                                                     // forceStatelessCompilationFor32Bit
-    "core",                                                   // platformType
-    "",                                                       // deviceName
-    true,                                                     // sourceLevelDebuggerSupported
-    false,                                                    // supportsVme
-    true,                                                     // supportCacheFlushAfterWalker
-    true,                                                     // supportsImages
-    false,                                                    // supportsDeviceEnqueue
-    false,                                                    // supportsPipes
-    true,                                                     // supportsOcl21Features
-    false,                                                    // supportsOnDemandPageFaults
-    false,                                                    // supportsIndependentForwardProgress
-    false,                                                    // hostPtrTrackingEnabled
-    true,                                                     // levelZeroSupported
-    false,                                                    // isIntegratedDevice
-    true,                                                     // supportsMediaBlock
-    true                                                      // fusedEuEnabled
+        {aub_stream::ENGINE_CCS, {true, false, true, true, true, true}}}, // directSubmissionEngines
+    {0, 0, 0, false, false, false},                                       // kmdNotifyProperties
+    MemoryConstants::max48BitAddress,                                     // gpuAddressSpace
+    83.333,                                                               // defaultProfilingTimerResolution
+    MemoryConstants::pageSize,                                            // requiredPreemptionSurfaceSize
+    &isSimulationXEHP,                                                    // isSimulation
+    PreemptionMode::ThreadGroup,                                          // defaultPreemptionMode
+    aub_stream::ENGINE_CCS,                                               // defaultEngineType
+    0,                                                                    // maxRenderFrequency
+    30,                                                                   // clVersionSupport
+    CmdServicesMemTraceVersion::DeviceValues::XeHP_SDV,                   // aubDeviceId
+    0,                                                                    // extraQuantityThreadsPerEU
+    64,                                                                   // slmSize
+    sizeof(XE_HP_SDV::GRF),                                               // grfSize
+    36u,                                                                  // timestampValidBits
+    32u,                                                                  // kernelTimestampValidBits
+    false,                                                                // blitterOperationsSupported
+    true,                                                                 // ftrSupportsInteger64BitAtomics
+    true,                                                                 // ftrSupportsFP64
+    true,                                                                 // ftrSupports64BitMath
+    true,                                                                 // ftrSvm
+    false,                                                                // ftrSupportsCoherency
+    false,                                                                // ftrSupportsVmeAvcTextureSampler
+    false,                                                                // ftrSupportsVmeAvcPreemption
+    false,                                                                // ftrRenderCompressedBuffers
+    false,                                                                // ftrRenderCompressedImages
+    true,                                                                 // ftr64KBpages
+    true,                                                                 // instrumentationEnabled
+    true,                                                                 // forceStatelessCompilationFor32Bit
+    "core",                                                               // platformType
+    "",                                                                   // deviceName
+    true,                                                                 // sourceLevelDebuggerSupported
+    false,                                                                // supportsVme
+    true,                                                                 // supportCacheFlushAfterWalker
+    true,                                                                 // supportsImages
+    false,                                                                // supportsDeviceEnqueue
+    false,                                                                // supportsPipes
+    true,                                                                 // supportsOcl21Features
+    false,                                                                // supportsOnDemandPageFaults
+    false,                                                                // supportsIndependentForwardProgress
+    false,                                                                // hostPtrTrackingEnabled
+    true,                                                                 // levelZeroSupported
+    false,                                                                // isIntegratedDevice
+    true,                                                                 // supportsMediaBlock
+    true                                                                  // fusedEuEnabled
 };
 
 WorkaroundTable XE_HP_SDV::workaroundTable = {};
