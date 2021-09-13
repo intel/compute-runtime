@@ -1509,6 +1509,19 @@ TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCal
     EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0)), memoryManager.getLocalMemorySize(0u, 0xF));
 }
 
+TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoAndInvalidDeviceBitfieldThenReturnZero) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    drm->memoryInfo.reset(new MockMemoryInfo());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+
+    auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
+    ASSERT_NE(nullptr, memoryInfo);
+    EXPECT_EQ(0u, memoryManager.getLocalMemorySize(0u, 0u));
+}
+
 TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledButMemoryInfoIsNotAvailableThenSizeZeroIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();

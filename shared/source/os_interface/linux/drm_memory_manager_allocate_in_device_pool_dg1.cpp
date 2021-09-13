@@ -349,12 +349,4 @@ bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloca
     return true;
 }
 
-uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
-    auto memoryInfo = static_cast<MemoryInfoImpl *>(getDrm(rootDeviceIndex).getMemoryInfo());
-    if (!memoryInfo) {
-        return 0;
-    }
-    return memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0));
-}
-
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 #include "drm/i915_drm.h"
 
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
 namespace NEO {
@@ -33,7 +32,7 @@ struct MemoryInfoImpl : public MemoryInfo {
         return {invalidMemoryRegion(), invalidMemoryRegion()};
     }
 
-    size_t getMemoryRegionSize(uint32_t memoryBank) {
+    size_t getMemoryRegionSize(uint32_t memoryBank) override {
         auto index = (memoryBank > 0) ? Math::log2(memoryBank) + 1 : 0;
         if (index < regions.size()) {
             return regions[index].probed_size;

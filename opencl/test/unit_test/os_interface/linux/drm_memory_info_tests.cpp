@@ -16,6 +16,9 @@ using namespace NEO;
 struct MemoryInfoImpl : public NEO::MemoryInfo {
     MemoryInfoImpl() {}
     ~MemoryInfoImpl() override{};
+    size_t getMemoryRegionSize(uint32_t memoryBank) override {
+        return 0u;
+    }
 };
 
 TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlsAreCalled) {
