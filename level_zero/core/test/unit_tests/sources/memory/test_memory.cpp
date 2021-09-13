@@ -2886,13 +2886,21 @@ TEST_F(SharedAllocMultiDeviceTests, whenAllocatinSharedMemoryWithNonNullDeviceIn
     ze_host_mem_alloc_desc_t hostDesc = {};
     void *ptr = nullptr;
     size_t size = 1024;
+    ze_result_t res = ZE_RESULT_ERROR_UNKNOWN;
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_device_handle_t deviceHandle;
     EXPECT_EQ(currSvmAllocsManager->createHostUnifiedMemoryAllocationTimes, 0u);
-    ze_result_t res = context->allocSharedMem(driverHandle->devices[0]->toHandle(), &deviceDesc, &hostDesc, size, 0u, &ptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    for (uint32_t i = 0; i < numRootDevices; i++) {
+        res = context->allocSharedMem(driverHandle->devices[i]->toHandle(), &deviceDesc, &hostDesc, size, 0u, &ptr);
+        EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+        res = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_SHARED);
+        EXPECT_EQ(deviceHandle, driverHandle->devices[i]->toHandle());
+        res = context->freeMem(ptr);
+        EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    }
     EXPECT_EQ(currSvmAllocsManager->createHostUnifiedMemoryAllocationTimes, 0u);
-
-    res = context->freeMem(ptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
 struct MemAllocMultiSubDeviceTests : public ::testing::Test {

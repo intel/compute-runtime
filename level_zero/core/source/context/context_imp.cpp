@@ -136,8 +136,6 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         return ZE_RESULT_SUCCESS;
     }
 
-    neoDevice = this->driverHandle->devices[0]->getNEODevice();
-
     if (lookupTable.relaxedSizeAllowed == false &&
         (size > neoDevice->getDeviceInfo().maxMemAllocSize)) {
         *ptr = nullptr;
@@ -154,8 +152,6 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
-
-    neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
 
@@ -183,6 +179,12 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                        size_t size,
                                        size_t alignment,
                                        void **ptr) {
+
+    auto neoDevice = this->devices.begin()->second->getNEODevice();
+    if (hDevice != nullptr) {
+        neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+    }
+
     bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
     if (deviceDesc->pNext) {
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
@@ -196,14 +198,12 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         }
     }
 
-    auto neoDevice = this->devices.begin()->second->getNEODevice();
     if (relaxedSizeAllowed == false &&
         (size > neoDevice->getDeviceInfo().maxMemAllocSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
 
-    neoDevice = this->driverHandle->devices[0]->getNEODevice();
     uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
 
     uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
@@ -216,7 +216,6 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
 
-    neoDevice = this->devices.begin()->second->getNEODevice();
     auto deviceBitfields = this->deviceBitfields;
     NEO::Device *unifiedMemoryPropertiesDevice = nullptr;
     if (hDevice) {
