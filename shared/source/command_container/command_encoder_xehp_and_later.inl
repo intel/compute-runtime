@@ -24,6 +24,7 @@
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
@@ -162,14 +163,23 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
+    uint32_t sizeForImplicitArgsPatching = dispatchInterface->getSizeForImplicitArgsPatching();
+    uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     {
         auto heap = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);
         UNRECOVERABLE_IF(!heap);
         heap->align(WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 
-        auto ptr = container.getHeapSpaceAllowGrow(HeapType::INDIRECT_OBJECT, sizeThreadData);
+        auto ptr = container.getHeapSpaceAllowGrow(HeapType::INDIRECT_OBJECT, iohRequiredSize);
         UNRECOVERABLE_IF(!ptr);
         offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData);
+
+        auto pImplicitArgs = dispatchInterface->getImplicitArgs();
+        if (pImplicitArgs) {
+            offsetThreadData -= sizeof(ImplicitArgs);
+            pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
+            dispatchInterface->patchImplicitArgs(ptr);
+        }
 
         if (sizeCrossThreadData > 0) {
             memcpy_s(ptr, sizeCrossThreadData,

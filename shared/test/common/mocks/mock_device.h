@@ -118,8 +118,7 @@ class MockDevice : public RootDevice {
         return createDeviceInternals(device);
     }
 
-    template <typename T>
-    static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex = 0) {
+    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
         auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -127,6 +126,12 @@ class MockDevice : public RootDevice {
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
         }
+        return executionEnvironment;
+    }
+
+    template <typename T>
+    static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex = 0) {
+        auto executionEnvironment = prepareExecutionEnvironment(pHwInfo, rootDeviceIndex);
         return createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
     }
 

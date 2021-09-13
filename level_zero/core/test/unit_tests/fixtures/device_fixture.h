@@ -34,6 +34,7 @@ struct DeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
     virtual void SetUp();    // NOLINT(readability-identifier-naming)
     virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment);
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;

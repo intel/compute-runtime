@@ -1909,23 +1909,15 @@ HWTEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadData
 
 using KernelWorkDimTests = Test<ModuleImmutableDataFixture>;
 
-HWTEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadDataIsPatched) {
-    struct MockKernelWithMockCrossThreadData : public MockKernel {
-      public:
-        MockKernelWithMockCrossThreadData(MockModule *mockModule) : MockKernel(mockModule) {}
-        void setCrossThreadData(uint32_t dataSize) {
-            crossThreadData.reset(new uint8_t[dataSize]);
-            crossThreadDataSize = dataSize;
-            memset(crossThreadData.get(), 0x00, crossThreadDataSize);
-        }
-    };
+TEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadDataIsPatched) {
+
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData =
         std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
 
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
-    auto kernel = std::make_unique<MockKernelWithMockCrossThreadData>(module.get());
+    auto kernel = std::make_unique<MockKernel>(module.get());
     createKernel(kernel.get());
     kernel->setCrossThreadData(sizeof(uint32_t));
 
@@ -2047,5 +2039,94 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
     mockKernel.crossThreadData.release();
 }
 
+using KernelImplicitArgTests = Test<ModuleImmutableDataFixture>;
+
+TEST_F(KernelImplicitArgTests, givenImplicitArgsRequiredWhenCreatingKernelThenImplicitArgsAreCreated) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+    auto simd = mockKernelImmData->kernelDescriptor->kernelAttributes.simdSize;
+
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);
+    auto pImplicitArgs = kernel->getImplicitArgs();
+    ASSERT_NE(nullptr, pImplicitArgs);
+
+    ImplicitArgs expectedImplicitArgs{sizeof(ImplicitArgs)};
+    expectedImplicitArgs.simdWidth = simd;
+    EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+}
+
+TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParamsThenImplicitArgsAreUpdated) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+    auto simd = mockKernelImmData->kernelDescriptor->kernelAttributes.simdSize;
+
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);
+    auto pImplicitArgs = kernel->getImplicitArgs();
+    ASSERT_NE(nullptr, pImplicitArgs);
+
+    ImplicitArgs expectedImplicitArgs{sizeof(ImplicitArgs)};
+    expectedImplicitArgs.numWorkDim = 3;
+    expectedImplicitArgs.simdWidth = simd;
+    expectedImplicitArgs.localSizeX = 4;
+    expectedImplicitArgs.localSizeY = 5;
+    expectedImplicitArgs.localSizeZ = 6;
+    expectedImplicitArgs.globalSizeX = 12;
+    expectedImplicitArgs.globalSizeY = 10;
+    expectedImplicitArgs.globalSizeZ = 6;
+    expectedImplicitArgs.globalOffsetX = 1;
+    expectedImplicitArgs.globalOffsetY = 2;
+    expectedImplicitArgs.globalOffsetZ = 3;
+    expectedImplicitArgs.groupCountX = 3;
+    expectedImplicitArgs.groupCountY = 2;
+    expectedImplicitArgs.groupCountZ = 1;
+
+    kernel->setGroupSize(4, 5, 6);
+    kernel->setGroupCount(3, 2, 1);
+    kernel->setGlobalOffsetExp(1, 2, 3);
+    kernel->patchGlobalOffset();
+    EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+}
+
+TEST_F(KernelImplicitArgTests, givenKernelWithoutImplicitArgsWhenPatchingImplicitArgsThenNothingHappens) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+    EXPECT_EQ(nullptr, kernel->getImplicitArgs());
+
+    uint8_t initData[64]{};
+    uint8_t data[64]{};
+    int pattern = 0xcd;
+    memset(data, pattern, 64);
+    memset(initData, pattern, 64);
+
+    EXPECT_EQ(0u, kernel->getSizeForImplicitArgsPatching());
+    void *dataPtr = data;
+    kernel->patchImplicitArgs(dataPtr);
+
+    EXPECT_EQ(dataPtr, data);
+
+    EXPECT_EQ(0, memcmp(data, initData, 64));
+}
 } // namespace ult
 } // namespace L0

@@ -152,6 +152,10 @@ struct KernelImp : Kernel {
     ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) override;
     uint32_t getSchedulingHintExp();
 
+    NEO::ImplicitArgs *getImplicitArgs() const override { return pImplicitArgs.get(); }
+    uint32_t getSizeForImplicitArgsPatching() const override;
+    void patchImplicitArgs(void *&pOut) const override;
+
   protected:
     KernelImp() = default;
 
@@ -207,6 +211,7 @@ struct KernelImp : Kernel {
     bool kernelHasIndirectAccess = true;
 
     uint32_t schedulingHintExpFlag = 0u;
+    std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
 };
 
 } // namespace L0

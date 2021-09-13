@@ -54,6 +54,10 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     }
     void expectAnyMockFunctionCall();
 
+    NEO::ImplicitArgs *getImplicitArgs() const override { return nullptr; }
+    uint32_t getSizeForImplicitArgsPatching() const override { return 0; }
+    void patchImplicitArgs(void *&pOut) const override {}
+
     ::testing::NiceMock<MockGraphicsAllocation> mockAllocation;
     static constexpr uint32_t crossThreadSize = 0x40;
     static constexpr uint32_t perThreadSize = 0x20;

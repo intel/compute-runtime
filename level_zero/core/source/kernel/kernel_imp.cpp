@@ -292,6 +292,18 @@ void KernelImp::setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32
         auto destinationBuffer = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
         NEO::patchNonPointer(destinationBuffer, desc.payloadMappings.dispatchTraits.workDim, workDim);
     }
+
+    if (pImplicitArgs) {
+        pImplicitArgs->numWorkDim = workDim;
+
+        pImplicitArgs->globalSizeX = globalWorkSize[0];
+        pImplicitArgs->globalSizeY = globalWorkSize[1];
+        pImplicitArgs->globalSizeZ = globalWorkSize[2];
+
+        pImplicitArgs->groupCountX = groupCount[0];
+        pImplicitArgs->groupCountY = groupCount[1];
+        pImplicitArgs->groupCountZ = groupCount[2];
+    }
 }
 
 ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
@@ -756,6 +768,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto neoDevice = module->getDevice()->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &kernelDescriptor = kernelImmData->getDescriptor();
 
     this->schedulingHintExpFlag = hwHelper.getDefaultThreadArbitrationPolicy();
 
@@ -769,7 +782,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                                                               static_cast<size_t>(this->kernelImmData->getKernelInfo()->heapInfo.KernelHeapSize));
     }
 
-    for (const auto &argT : kernelImmData->getDescriptor().payloadMappings.explicitArgs) {
+    for (const auto &argT : kernelDescriptor.payloadMappings.explicitArgs) {
         switch (argT.type) {
         default:
             this->kernelArgHandlers.push_back(&KernelImp::setArgUnknown);
@@ -802,13 +815,13 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         this->surfaceStateHeapDataSize = kernelImmData->getSurfaceStateHeapSize();
     }
 
-    if (kernelImmData->getDescriptor().kernelAttributes.crossThreadDataSize != 0) {
-        this->crossThreadData.reset(new uint8_t[kernelImmData->getDescriptor().kernelAttributes.crossThreadDataSize]);
+    if (kernelDescriptor.kernelAttributes.crossThreadDataSize != 0) {
+        this->crossThreadData.reset(new uint8_t[kernelDescriptor.kernelAttributes.crossThreadDataSize]);
         memcpy_s(this->crossThreadData.get(),
-                 kernelImmData->getDescriptor().kernelAttributes.crossThreadDataSize,
+                 kernelDescriptor.kernelAttributes.crossThreadDataSize,
                  kernelImmData->getCrossThreadDataTemplate(),
-                 kernelImmData->getDescriptor().kernelAttributes.crossThreadDataSize);
-        this->crossThreadDataSize = kernelImmData->getDescriptor().kernelAttributes.crossThreadDataSize;
+                 kernelDescriptor.kernelAttributes.crossThreadDataSize);
+        this->crossThreadDataSize = kernelDescriptor.kernelAttributes.crossThreadDataSize;
     }
 
     if (kernelImmData->getDynamicStateHeapDataSize() != 0) {
@@ -820,8 +833,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         this->dynamicStateHeapDataSize = kernelImmData->getDynamicStateHeapDataSize();
     }
 
-    if (kernelImmData->getDescriptor().kernelAttributes.requiredWorkgroupSize[0] > 0) {
-        auto *reqdSize = kernelImmData->getDescriptor().kernelAttributes.requiredWorkgroupSize;
+    if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] > 0) {
+        auto *reqdSize = kernelDescriptor.kernelAttributes.requiredWorkgroupSize;
         UNRECOVERABLE_IF(reqdSize[1] == 0);
         UNRECOVERABLE_IF(reqdSize[2] == 0);
         auto result = setGroupSize(reqdSize[0], reqdSize[1], reqdSize[2]);
@@ -829,7 +842,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
             return result;
         }
     } else {
-        auto result = setGroupSize(kernelImmData->getDescriptor().kernelAttributes.simdSize, 1, 1);
+        auto result = setGroupSize(kernelDescriptor.kernelAttributes.simdSize, 1, 1);
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
@@ -837,7 +850,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     residencyContainer.resize(this->kernelArgHandlers.size(), nullptr);
 
-    auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
+    auto &kernelAttributes = kernelDescriptor.kernelAttributes;
     if ((kernelAttributes.perHwThreadPrivateMemorySize != 0U) && (false == module->shouldAllocatePrivateMemoryPerDispatch())) {
         this->privateMemoryGraphicsAllocation = allocatePrivateMemoryGraphicsAllocation();
         this->patchCrossthreadDataWithPrivateAllocation(this->privateMemoryGraphicsAllocation);
@@ -851,13 +864,20 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     residencyContainer.insert(residencyContainer.end(), kernelImmData->getResidencyContainer().begin(),
                               kernelImmData->getResidencyContainer().end());
 
-    kernelHasIndirectAccess = kernelImmData->getDescriptor().kernelAttributes.hasNonKernelArgLoad ||
-                              kernelImmData->getDescriptor().kernelAttributes.hasNonKernelArgStore ||
-                              kernelImmData->getDescriptor().kernelAttributes.hasNonKernelArgAtomic;
+    kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
+                              kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
+                              kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
 
     if (this->usesRayTracing()) {
         neoDevice->initializeRayTracing();
         this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
+    }
+    if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
+        pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
+        *pImplicitArgs = {};
+        pImplicitArgs->structSize = sizeof(NEO::ImplicitArgs);
+        pImplicitArgs->structVersion = 0;
+        pImplicitArgs->simdWidth = kernelDescriptor.kernelAttributes.simdSize;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -918,6 +938,11 @@ void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.localWorkSize, workgroupSize);
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.localWorkSize2, workgroupSize);
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.enqueuedLocalWorkSize, workgroupSize);
+    if (pImplicitArgs) {
+        pImplicitArgs->localSizeX = x;
+        pImplicitArgs->localSizeY = y;
+        pImplicitArgs->localSizeZ = z;
+    }
 }
 
 ze_result_t KernelImp::setGlobalOffsetExp(uint32_t offsetX,
@@ -934,6 +959,11 @@ void KernelImp::patchGlobalOffset() {
     const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
     auto dst = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.globalWorkOffset, this->globalOffsets);
+    if (pImplicitArgs) {
+        pImplicitArgs->globalOffsetX = globalOffsets[0];
+        pImplicitArgs->globalOffsetY = globalOffsets[1];
+        pImplicitArgs->globalOffsetZ = globalOffsets[2];
+    }
 }
 
 Kernel *Kernel::create(uint32_t productFamily, Module *module,
@@ -980,4 +1010,43 @@ uint32_t KernelImp::getSchedulingHintExp() {
     return this->schedulingHintExpFlag;
 }
 
+uint32_t KernelImp::getSizeForImplicitArgsPatching() const {
+    if (!pImplicitArgs) {
+        return 0;
+    }
+    auto implicitArgsSize = static_cast<uint32_t>(sizeof(NEO::ImplicitArgs));
+    const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
+    auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
+    Vec3<size_t> groupSize{this->groupSize[0], this->groupSize[1], this->groupSize[2]};
+    auto itemsInGroup = Math::computeTotalElementsCount(groupSize);
+    uint32_t localIdsSizeNeeded =
+        alignUp(static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
+                    kernelDescriptor.kernelAttributes.simdSize, grfSize, 3u, itemsInGroup)),
+                MemoryConstants::cacheLineSize);
+    return implicitArgsSize + localIdsSizeNeeded;
+}
+
+void KernelImp::patchImplicitArgs(void *&pOut) const {
+    if (!pImplicitArgs) {
+        return;
+    }
+    const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
+    auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
+    NEO::generateLocalIDs(
+        pOut,
+        static_cast<uint16_t>(kernelDescriptor.kernelAttributes.simdSize),
+        std::array<uint16_t, 3>{{static_cast<uint16_t>(groupSize[0]),
+                                 static_cast<uint16_t>(groupSize[1]),
+                                 static_cast<uint16_t>(groupSize[2])}},
+        std::array<uint8_t, 3>{{
+            kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
+            kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
+            kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2],
+        }},
+        false, grfSize);
+    auto sizeForLocalIdsProgramming = getSizeForImplicitArgsPatching() - sizeof(NEO::ImplicitArgs);
+    pOut = ptrOffset(pOut, sizeForLocalIdsProgramming);
+    memcpy_s(pOut, sizeof(NEO::ImplicitArgs), pImplicitArgs.get(), sizeof(NEO::ImplicitArgs));
+    pOut = ptrOffset(pOut, sizeof(NEO::ImplicitArgs));
+}
 } // namespace L0
