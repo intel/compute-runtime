@@ -561,11 +561,6 @@ bool HwHelperHw<GfxFamily>::isKmdMigrationSupported(const HardwareInfo &hwInfo) 
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isNewResidencyModelSupported() const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

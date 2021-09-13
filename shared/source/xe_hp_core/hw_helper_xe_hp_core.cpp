@@ -58,11 +58,6 @@ inline bool HwHelperHw<Family>::isPipeControlPriorToNonPipelinedStateCommandsWAR
 }
 
 template <>
-bool HwHelperHw<Family>::isNewResidencyModelSupported() const {
-    return true;
-}
-
-template <>
 bool HwHelperHw<Family>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
     if (hwInfo.platform.usRevId < HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo)) {
         return false;
