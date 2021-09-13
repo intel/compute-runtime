@@ -13,8 +13,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
-#include "hw_helpers.h"
-
 namespace L0 {
 
 Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {

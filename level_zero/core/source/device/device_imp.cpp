@@ -48,8 +48,6 @@
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
-#include "hw_helpers.h"
-
 namespace NEO {
 bool releaseFP64Override();
 } // namespace NEO

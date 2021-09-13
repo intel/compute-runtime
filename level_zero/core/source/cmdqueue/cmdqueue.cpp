@@ -16,7 +16,6 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 
-#include "hw_helpers.h"
 #include "igfxfmid.h"
 
 namespace L0 {
