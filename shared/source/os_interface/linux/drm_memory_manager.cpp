@@ -1290,4 +1290,31 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     return allocation.release();
 }
 
+BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
+                                                                 uint64_t gpuAddress,
+                                                                 size_t size,
+                                                                 uint32_t memoryBanks,
+                                                                 size_t maxOsContextCount) {
+    auto memoryInfo = drm->getMemoryInfo();
+    if (!memoryInfo) {
+        return nullptr;
+    }
+
+    uint32_t handle = 0;
+    auto ret = memoryInfo->createGemExtWithSingleRegion(drm, memoryBanks, size, handle);
+
+    if (ret != 0) {
+        return nullptr;
+    }
+
+    auto bo = new (std::nothrow) BufferObject(drm, handle, size, maxOsContextCount);
+    if (!bo) {
+        return nullptr;
+    }
+
+    bo->setAddress(gpuAddress);
+
+    return bo;
+}
+
 } // namespace NEO

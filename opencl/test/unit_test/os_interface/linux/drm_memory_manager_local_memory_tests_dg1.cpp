@@ -1718,4 +1718,27 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithUnifiedMemoryAllocati
     EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
     memoryManager->freeGraphicsMemory(allocation);
 }
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, whenPrintBOCreateDestroyResultFlagIsSetWhileCreatingBufferObjectInMemoryRegionThenDebugInformationIsPrinted) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+
+    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    auto gpuAddress = 0x1234u;
+    auto size = MemoryConstants::pageSize64k;
+
+    testing::internal::CaptureStdout();
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), gpuAddress, size, (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)), 1));
+    ASSERT_NE(nullptr, bo);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 65536, param: 0x100000001, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 65536\n");
+    EXPECT_EQ(expectedOutput, output);
+}
+
 } // namespace NEO

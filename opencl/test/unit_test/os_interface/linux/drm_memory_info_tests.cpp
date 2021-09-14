@@ -19,6 +19,12 @@ struct MemoryInfoImpl : public NEO::MemoryInfo {
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
         return 0u;
     }
+    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override {
+        return 0u;
+    }
+    uint32_t createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+        return 0u;
+    }
 };
 
 TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlsAreCalled) {

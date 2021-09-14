@@ -221,3 +221,48 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenGettingMemoryRegionClassAndInstan
     regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(1));
     EXPECT_EQ(32 * GB, regionSize);
 }
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenReturnCorrectValues) {
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probed_size = 8 * GB;
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probed_size = 16 * GB;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto memoryInfo = std::make_unique<MemoryInfoImpl>(regionInfo, 2);
+    ASSERT_NE(nullptr, memoryInfo);
+
+    uint32_t handle = 0;
+    auto ret = memoryInfo->createGemExt(drm.get(), &regionInfo, 2, 1024, handle);
+    EXPECT_EQ(1u, handle);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+    EXPECT_EQ(1024u, drm->createExt.size);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThenReturnCorrectValues) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probed_size = 8 * GB;
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probed_size = 16 * GB;
+
+    auto memoryInfo = std::make_unique<MemoryInfoImpl>(regionInfo, 2);
+    ASSERT_NE(nullptr, memoryInfo);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    uint32_t handle = 0;
+    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    EXPECT_EQ(1u, handle);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memory_class);
+    EXPECT_EQ(1024u, drm->createExt.size);
+}

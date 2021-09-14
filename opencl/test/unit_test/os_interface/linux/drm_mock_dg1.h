@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 
@@ -15,7 +17,10 @@ using namespace NEO;
 
 class DrmMockDg1 : public DrmMock {
   public:
-    DrmMockDg1(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {}
+    DrmMockDg1(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockDg1(rootDeviceEnvironment, defaultHwInfo.get()) {}
+    DrmMockDg1(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
+        rootDeviceEnvironment.setHwInfo(inputHwInfo);
+    }
 
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryMemoryRegionInfoSuccessCount = std::numeric_limits<uint32_t>::max();

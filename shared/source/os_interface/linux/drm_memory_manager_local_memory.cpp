@@ -13,10 +13,6 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     return false;
 }
 
-BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount) {
-    return nullptr;
-}
-
 DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr) {
     drm_prime_handle openFd = {0, 0, 0};
     openFd.fd = handle;

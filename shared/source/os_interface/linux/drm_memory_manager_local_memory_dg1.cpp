@@ -17,50 +17,6 @@
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 
 namespace NEO {
-
-BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
-                                                                 uint64_t gpuAddress,
-                                                                 size_t size,
-                                                                 uint32_t memoryBanks,
-                                                                 size_t maxOsContextCount) {
-    auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
-    if (!memoryInfo) {
-        return nullptr;
-    }
-    auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
-    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
-
-    drm_i915_gem_memory_class_instance memRegions{};
-    memRegions.memory_class = regionClassAndInstance.memory_class;
-    memRegions.memory_instance = regionClassAndInstance.memory_instance;
-
-    drm_i915_gem_object_param regionParam{};
-    regionParam.size = 1;
-    regionParam.data = reinterpret_cast<uintptr_t>(&memRegions);
-    regionParam.param = I915_OBJECT_PARAM | I915_PARAM_MEMORY_REGIONS;
-
-    drm_i915_gem_create_ext_setparam setparamRegion{};
-    setparamRegion.base.name = I915_GEM_CREATE_EXT_SETPARAM;
-    setparamRegion.param = regionParam;
-
-    drm_i915_gem_create_ext createExt{};
-    createExt.size = size;
-    createExt.extensions = reinterpret_cast<uintptr_t>(&setparamRegion);
-    auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
-    if (ret != 0) {
-        return nullptr;
-    }
-
-    auto bo = new (std::nothrow) BufferObject(drm, createExt.handle, size, maxOsContextCount);
-    if (!bo) {
-        return nullptr;
-    }
-
-    bo->setAddress(gpuAddress);
-
-    return bo;
-}
-
 GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const AllocationData &allocationData) {
     return nullptr;
 }

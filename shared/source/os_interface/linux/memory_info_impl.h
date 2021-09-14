@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -28,6 +29,8 @@ class MemoryInfoImpl : public MemoryInfo {
     MemoryInfoImpl(const drm_i915_memory_region_info *regionInfo, size_t count);
 
     void assignRegionsFromDistances(const void *distanceInfosPtr, size_t size);
+
+    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
 
     drm_i915_gem_memory_class_instance getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -71,6 +74,13 @@ class MemoryInfoImpl : public MemoryInfo {
                       << ", memory instance: " << region.region.memory_instance
                       << ", region size: " << region.probed_size << std::endl;
         }
+    }
+
+    uint32_t createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+        auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+        auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
+        auto ret = createGemExt(drm, &regionClassAndInstance, 1, allocSize, handle);
+        return ret;
     }
 
     const RegionContainer &getDrmRegionInfos() const { return drmQueryRegions; }
