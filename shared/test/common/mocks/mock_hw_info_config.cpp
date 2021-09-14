@@ -5,9 +5,11 @@
  *
  */
 
-#include "shared/test/unit_test/os_interface/os_agnostic_hw_info_config_tests.h"
+#include "shared/source/aub_mem_dump/definitions/aub_mem_dump.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
-#include "shared/source/helpers/hw_helper.h"
+namespace NEO {
 
 template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
@@ -161,45 +163,4 @@ std::vector<uint32_t> HwInfoConfigHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbi
     return std::vector<uint32_t>();
 }
 
-void OsAgnosticHwInfoConfigTest::SetUp() {
-    DeviceFixture::SetUp();
-}
-
-void OsAgnosticHwInfoConfigTest::TearDown() {
-    DeviceFixture::TearDown();
-}
-
-HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingObtainBlitterPreferenceThenFalseIsReturned) {
-    bool ret = hwConfig.obtainBlitterPreference(hardwareInfo);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsPageTableManagerSupportedThenFalseIsReturned) {
-    bool ret = hwConfig.isPageTableManagerSupported(hardwareInfo);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingGetSteppingFromHwRevIdThenInvalidSteppingIsReturned) {
-    uint32_t ret = hwConfig.getSteppingFromHwRevId(hardwareInfo);
-    EXPECT_EQ(CommonConstants::invalidStepping, ret);
-}
-
-HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
-    bool ret = hwConfig.isAdditionalStateBaseAddressWARequired(hardwareInfo);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned) {
-    bool ret = hwConfig.isMaxThreadsForWorkgroupWARequired(hardwareInfo);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsDefaultEngineTypeAdjustmentRequiredThenFalseIsReturned) {
-    bool ret = hwConfig.isDefaultEngineTypeAdjustmentRequired(hardwareInfo);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(OsAgnosticHwInfoConfigTest, givenHardwareInfoWhenCallingIsDisableOverdispatchAvailableThenFalseIsReturned) {
-    bool ret = hwConfig.isDisableOverdispatchAvailable(hardwareInfo);
-    EXPECT_FALSE(ret);
-}
+} //namespace NEO

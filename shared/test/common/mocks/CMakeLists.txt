@@ -46,6 +46,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_hw_info_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_io_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_migration_sync_data.h
