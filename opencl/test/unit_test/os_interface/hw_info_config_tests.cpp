@@ -263,3 +263,8 @@ HWTEST_F(HwInfoConfigTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAcces
     DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
     EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, hwInfoConfig.getLocalMemoryAccessMode(pInHwInfo));
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfAllocationSizeAdjustmentIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isAllocationSizeAdjustmentRequired(pInHwInfo));
+}

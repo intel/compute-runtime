@@ -190,4 +190,9 @@ LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getLocalMemoryAccessMode(const
     }
     return getDefaultLocalMemoryAccessMode(hwInfo);
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
 } // namespace NEO

@@ -163,4 +163,9 @@ std::vector<uint32_t> HwInfoConfigHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbi
     return std::vector<uint32_t>();
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } //namespace NEO
