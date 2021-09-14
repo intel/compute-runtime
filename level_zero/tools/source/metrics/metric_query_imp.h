@@ -65,6 +65,7 @@ struct MetricsLibrary {
 
     // Command buffer.
     bool getGpuCommands(CommandList &commandList, CommandBufferData_1_0 &commandBuffer);
+    bool getGpuCommands(CommandBufferData_1_0 &commandBuffer);
     uint32_t getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer);
 
     // Metric group configuration.
@@ -156,6 +157,7 @@ struct MetricQueryPoolImp : MetricQueryPool {
     MetricsLibrary &metricsLibrary;
     std::vector<MetricQueryImp> pool;
     NEO::GraphicsAllocation *pAllocation = nullptr;
+    uint32_t allocationSize = 0;
     zet_metric_query_pool_desc_t description = {};
     zet_metric_group_handle_t hMetricGroup = nullptr;
     QueryHandle_1_0 query = {};

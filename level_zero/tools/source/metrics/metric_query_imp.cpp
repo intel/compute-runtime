@@ -296,6 +296,15 @@ uint32_t MetricsLibrary::getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer
     return result ? commandBufferSize.GpuMemorySize : 0;
 }
 
+bool MetricsLibrary::getGpuCommands(CommandBufferData_1_0 &commandBuffer) {
+
+    // Obtain gpu commands from metrics library.
+    const bool result =
+        isInitialized() && (api.CommandBufferGet(&commandBuffer) == StatusCode::Success);
+    DEBUG_BREAK_IF(!result);
+    return result;
+}
+
 bool MetricsLibrary::getGpuCommands(CommandList &commandList,
                                     CommandBufferData_1_0 &commandBuffer) {
 
@@ -311,12 +320,6 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
     // Allocate command buffer.
     auto stream = commandList.commandContainer.getCommandStream();
     auto buffer = stream->getSpace(commandBuffer.Size);
-
-    // Validate command buffer space.
-    if (!buffer) {
-        DEBUG_BREAK_IF(true);
-        return false;
-    }
 
     // Fill attached command buffer with gpu commands.
     commandBuffer.Data = buffer;
@@ -530,9 +533,9 @@ bool MetricQueryPoolImp::allocateGpuMemory() {
     if (description.type == ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE) {
         // Get allocation size.
         const auto &deviceImp = *static_cast<DeviceImp *>(&metricContext.getDevice());
-        const uint32_t allocationSize = (!deviceImp.isSubdevice && deviceImp.isMultiDeviceCapable())
-                                            ? deviceImp.subDevices[0]->getMetricContext().getMetricsLibrary().getQueryReportGpuSize() * description.count * deviceImp.numSubDevices
-                                            : metricsLibrary.getQueryReportGpuSize() * description.count;
+        allocationSize = (!deviceImp.isSubdevice && deviceImp.isMultiDeviceCapable())
+                             ? deviceImp.subDevices[0]->getMetricContext().getMetricsLibrary().getQueryReportGpuSize() * description.count * deviceImp.numSubDevices
+                             : metricsLibrary.getQueryReportGpuSize() * description.count;
 
         if (allocationSize == 0) {
             return false;
@@ -713,37 +716,90 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_
                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                              const bool begin) {
 
-    bool writeCompletionEvent = hSignalEvent && !begin;
-    bool result = false;
+    bool result = true;
+    const bool writeCompletionEvent = hSignalEvent && !begin;
+    const size_t metricQueriesSize = metricQueries.size();
 
     // Make gpu allocation visible.
     commandList.commandContainer.addToResidencyContainer(pool.pAllocation);
 
-    // Obtain gpu commands.
-    CommandBufferData_1_0 commandBuffer = {};
-    commandBuffer.CommandsType = ObjectType::QueryHwCounters;
-    commandBuffer.QueryHwCounters.Handle = pool.query;
-    commandBuffer.QueryHwCounters.Begin = begin;
-    commandBuffer.QueryHwCounters.Slot = slot;
-    commandBuffer.Allocation.GpuAddress = pool.pAllocation->getGpuAddress();
-    commandBuffer.Allocation.CpuAddress = pool.pAllocation->getUnderlyingBuffer();
-    commandBuffer.Type = metricContext.isComputeUsed()
-                             ? GpuCommandBufferType::Compute
-                             : GpuCommandBufferType::Render;
-
     // Wait for events before executing query.
-    result = zeCommandListAppendWaitOnEvents(commandList.toHandle(), numWaitEvents, phWaitEvents) ==
-             ZE_RESULT_SUCCESS;
+    commandList.appendWaitOnEvents(numWaitEvents, phWaitEvents);
 
-    // Get query commands.
-    if (result) {
+    if (metricQueriesSize) {
+
+        const size_t allocationSizeForSubDevice = pool.allocationSize / metricQueriesSize;
+        void *buffer = nullptr;
+
+        // Revert iteration to be ensured that the last set of gpu commands overwrite the previous written sets of gpu commands,
+        // so only one of the sub-device contexts will be used to append to command list.
+        for (int32_t i = static_cast<int32_t>(metricQueriesSize - 1); i >= 0; --i) {
+
+            // Adjust cpu and gpu addresses for each sub-device's query object.
+            uint64_t gpuAddress = pool.pAllocation->getGpuAddress() + (i * allocationSizeForSubDevice);
+            uint8_t *cpuAddress = static_cast<uint8_t *>(pool.pAllocation->getUnderlyingBuffer()) + (i * allocationSizeForSubDevice);
+
+            auto &metricQueryImp = *static_cast<MetricQueryImp *>(MetricQuery::fromHandle(metricQueries[i]));
+            auto &metricLibrarySubDevice = metricQueryImp.metricsLibrary;
+            auto &metricContextSubDevice = metricQueryImp.metricContext;
+
+            // Obtain gpu commands.
+            CommandBufferData_1_0 commandBuffer = {};
+            commandBuffer.CommandsType = ObjectType::QueryHwCounters;
+            commandBuffer.QueryHwCounters.Handle = metricQueryImp.pool.query;
+            commandBuffer.QueryHwCounters.Begin = begin;
+            commandBuffer.QueryHwCounters.Slot = slot;
+            commandBuffer.Allocation.GpuAddress = gpuAddress;
+            commandBuffer.Allocation.CpuAddress = cpuAddress;
+            commandBuffer.Type = metricContextSubDevice.isComputeUsed()
+                                     ? GpuCommandBufferType::Compute
+                                     : GpuCommandBufferType::Render;
+
+            // Obtain required command buffer size.
+            commandBuffer.Size = metricLibrarySubDevice.getGpuCommandsSize(commandBuffer);
+
+            // Validate gpu commands size.
+            if (!commandBuffer.Size) {
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+
+            // Allocate command buffer only once.
+            if (buffer == nullptr) {
+                auto stream = commandList.commandContainer.getCommandStream();
+                buffer = stream->getSpace(commandBuffer.Size);
+            }
+
+            // Fill attached command buffer with gpu commands.
+            commandBuffer.Data = buffer;
+
+            // Obtain gpu commands from metrics library for each sub-device to update cpu and gpu addresses for
+            // each query object in metrics library, so that get data works properly.
+            if (!metricLibrarySubDevice.getGpuCommands(commandBuffer)) {
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+        }
+
+        // Write gpu commands for sub device index 0.
+    } else {
+        // Obtain gpu commands.
+        CommandBufferData_1_0 commandBuffer = {};
+        commandBuffer.CommandsType = ObjectType::QueryHwCounters;
+        commandBuffer.QueryHwCounters.Handle = pool.query;
+        commandBuffer.QueryHwCounters.Begin = begin;
+        commandBuffer.QueryHwCounters.Slot = slot;
+        commandBuffer.Allocation.GpuAddress = pool.pAllocation->getGpuAddress();
+        commandBuffer.Allocation.CpuAddress = pool.pAllocation->getUnderlyingBuffer();
+        commandBuffer.Type = metricContext.isComputeUsed()
+                                 ? GpuCommandBufferType::Compute
+                                 : GpuCommandBufferType::Render;
+
+        // Get query commands.
         result = metricsLibrary.getGpuCommands(commandList, commandBuffer);
     }
 
     // Write completion event.
     if (result && writeCompletionEvent) {
-        result = zeCommandListAppendSignalEvent(commandList.toHandle(), hSignalEvent) ==
-                 ZE_RESULT_SUCCESS;
+        result = commandList.appendSignalEvent(hSignalEvent) == ZE_RESULT_SUCCESS;
     }
 
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
@@ -780,7 +836,15 @@ ze_result_t MetricQueryImp::writeSkipExecutionQuery(CommandList &commandList, ze
 }
 
 ze_result_t MetricQuery::appendMemoryBarrier(CommandList &commandList) {
-    auto &metricContext = commandList.device->getMetricContext();
+
+    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
+
+    if (!pDeviceImp->isSubdevice && pDeviceImp->isMultiDeviceCapable()) {
+        // Use one of the sub-device contexts to append to command list.
+        pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
+    }
+
+    auto &metricContext = pDeviceImp->getMetricContext();
     auto &metricsLibrary = metricContext.getMetricsLibrary();
 
     // Obtain gpu commands.
