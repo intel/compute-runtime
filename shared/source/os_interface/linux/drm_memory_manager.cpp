@@ -1316,4 +1316,35 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
     return bo;
 }
 
+bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
+    std::array<std::unique_ptr<BufferObject>, EngineLimits::maxHandleCount> bos{};
+    auto &storageInfo = allocation->storageInfo;
+    auto boAddress = gpuAddress;
+    auto currentBank = 0u;
+    for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++, currentBank++) {
+        uint32_t memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
+        if (storageInfo.getNumBanks() > 1) {
+            //check if we have this bank, if not move to next one
+            //we may have holes in memoryBanks that we need to skip i.e. memoryBanks 1101 and 3 handle allocation
+            while (!(memoryBanks & (1u << currentBank))) {
+                currentBank++;
+            }
+            memoryBanks &= 1u << currentBank;
+        }
+        auto boSize = alignUp(allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
+        bos[handleId] = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(drm, boAddress, boSize, memoryBanks, maxOsContextCount));
+        if (nullptr == bos[handleId]) {
+            return false;
+        }
+        allocation->getBufferObjectToModify(currentBank) = bos[handleId].get();
+        if (storageInfo.multiStorage) {
+            boAddress += boSize;
+        }
+    }
+    for (auto &bo : bos) {
+        bo.release();
+    }
+    return true;
+}
+
 } // namespace NEO

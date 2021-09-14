@@ -9,9 +9,6 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 
 namespace NEO {
-bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
-    return false;
-}
 
 DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr) {
     drm_prime_handle openFd = {0, 0, 0};

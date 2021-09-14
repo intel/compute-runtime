@@ -599,7 +599,7 @@ TEST_F(DrmMemoryManagerLocalMemoryMemoryBankTest, givenDeviceMemoryWhenGraphicsA
     allocData.flags.useSystemMemory = false;
     allocData.type = GraphicsAllocation::AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
-
+    allocData.storageInfo.memoryBanks = 1u;
     memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_TRUE(memoryManager->memoryBankIsOne);
 }
@@ -1682,8 +1682,41 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithLargeBufferWhenAlloca
         EXPECT_EQ(boSize, bo->peekSize());
         EXPECT_EQ(boSize, 3 * MemoryConstants::pageSize64k);
     }
-
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithKernelIsaWhenAllocationInDevicePoolAndDeviceBitfieldWithHolesThenCorrectAllocationCreated) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.type = GraphicsAllocation::AllocationType::KERNEL_ISA;
+    allocData.storageInfo.memoryBanks = 0b1011;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto kernelIsaAllocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status));
+
+    EXPECT_NE(nullptr, kernelIsaAllocation);
+
+    auto gpuAddress = kernelIsaAllocation->getGpuAddress();
+    auto &bos = kernelIsaAllocation->getBOs();
+
+    EXPECT_NE(nullptr, bos[0]);
+    EXPECT_EQ(gpuAddress, bos[0]->peekAddress());
+    EXPECT_NE(nullptr, bos[1]);
+    EXPECT_EQ(gpuAddress, bos[1]->peekAddress());
+
+    EXPECT_EQ(nullptr, bos[2]);
+
+    EXPECT_NE(nullptr, bos[3]);
+    EXPECT_EQ(gpuAddress, bos[3]->peekAddress());
+
+    auto &storageInfo = kernelIsaAllocation->storageInfo;
+    EXPECT_EQ(0b1011u, storageInfo.memoryBanks.to_ulong());
+
+    memoryManager->freeGraphicsMemory(kernelIsaAllocation);
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithInvalidCacheRegionWhenAllocatingInDevicePoolThenReturnNullptr) {

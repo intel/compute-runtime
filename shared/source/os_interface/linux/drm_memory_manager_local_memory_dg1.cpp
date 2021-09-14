@@ -112,31 +112,6 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     }
 }
 
-bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
-    std::array<std::unique_ptr<BufferObject>, EngineLimits::maxHandleCount> bos{};
-    auto &storageInfo = allocation->storageInfo;
-    auto boAddress = gpuAddress;
-    for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++) {
-        uint32_t memoryBanks = 1u;
-        if (storageInfo.getNumBanks() > 1) {
-            memoryBanks &= 1u << handleId;
-        }
-        auto boSize = alignUp(allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
-        bos[handleId] = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(drm, boAddress, boSize, memoryBanks, maxOsContextCount));
-        if (nullptr == bos[handleId]) {
-            return false;
-        }
-        allocation->getBufferObjectToModify(handleId) = bos[handleId].get();
-        if (storageInfo.multiStorage) {
-            boAddress += boSize;
-        }
-    }
-    for (auto &bo : bos) {
-        bo.release();
-    }
-    return true;
-}
-
 void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     if (bo == nullptr)
         return nullptr;
