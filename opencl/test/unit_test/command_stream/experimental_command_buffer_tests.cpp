@@ -100,10 +100,9 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
         ASSERT_NE(nullptr, pipeControl);
         EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
         it++;
-    }
-
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
-        it++;
+        if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
+            it++;
+        }
     }
 
     //2nd PIPE_CONTROL with ts addr
@@ -138,10 +137,9 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
         pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
         ASSERT_NE(nullptr, pipeControl);
         EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
-    }
-
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
-        it++;
+        if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
+            it++;
+        }
     }
 
     //4th PIPE_CONTROL with ts addr
@@ -239,10 +237,11 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
     if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         it++;
+        if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
+            it++;
+        }
     }
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
-        it++;
-    }
+
     //2nd PIPE_CONTROL
     uint64_t timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + 2 * sizeof(uint64_t);
     uint32_t expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
@@ -257,10 +256,11 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     //omit SEMAPHORE_WAIT and 3rd PIPE_CONTROL
     if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         it++;
+        if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
+            it++;
+        }
     }
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
-        it++;
-    }
+
     it++;
     //get 4th PIPE_CONTROL
     timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + 3 * sizeof(uint64_t);
