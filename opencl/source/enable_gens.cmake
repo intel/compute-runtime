@@ -96,8 +96,6 @@ macro(macro_for_each_gen)
     apply_macro_for_each_platform()
 
     foreach(BRANCH ${BRANCH_DIR_LIST})
-      string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH}")
-      string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
       set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${GEN_TYPE_LOWER}/image_core_${GEN_TYPE_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
         list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})

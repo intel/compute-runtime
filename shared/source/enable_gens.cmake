@@ -75,9 +75,6 @@ macro(macro_for_each_gen)
     set(GENERATED_GENX_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/generated${BRANCH}${GEN_TYPE_LOWER})
 
     foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
-      string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH_DIR}")
-      string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
-
       foreach(SRC_IT ${CORE_SRCS_GENX_H_BASE} "hw_info_${GEN_TYPE_LOWER}.h")
         set(SRC_FILE ${CORE_GENX_PREFIX}${BRANCH_DIR}${SRC_IT})
         if(EXISTS ${SRC_FILE})
