@@ -8,6 +8,7 @@
 #include "shared/source/direct_submission/direct_submission_controller.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/os_interface/os_thread.h"
 
 #include <chrono>
 
@@ -20,13 +21,14 @@ DirectSubmissionController::DirectSubmissionController() {
         timeout = DebugManager.flags.DirectSubmissionControllerTimeout.get();
     }
 
-    directSubmissionControllingThread = std::thread(&DirectSubmissionController::controlDirectSubmissionsState, this);
+    directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
 };
 
 DirectSubmissionController::~DirectSubmissionController() {
     keepControlling.store(false);
-    if (directSubmissionControllingThread.joinable()) {
-        directSubmissionControllingThread.join();
+    if (directSubmissionControllingThread) {
+        directSubmissionControllingThread->join();
+        directSubmissionControllingThread.reset();
     }
 }
 
@@ -40,21 +42,23 @@ void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceive
     directSubmissions.erase(csr);
 }
 
-void DirectSubmissionController::controlDirectSubmissionsState() {
+void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
+    auto controller = reinterpret_cast<DirectSubmissionController *>(self);
+
     while (true) {
 
         auto start = std::chrono::steady_clock::now();
         int diff = 0u;
         do {
-            if (!keepControlling.load()) {
-                return;
+            if (!controller->keepControlling.load()) {
+                return nullptr;
             }
 
             auto timestamp = std::chrono::steady_clock::now();
             diff = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(timestamp - start).count());
-        } while (diff <= timeout);
+        } while (diff <= controller->timeout);
 
-        this->checkNewSubmissions();
+        controller->checkNewSubmissions();
     }
 }
 

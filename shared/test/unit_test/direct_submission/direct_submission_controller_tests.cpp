@@ -36,7 +36,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
 
     DirectSubmissionControllerMock controller;
     controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread.join();
+    controller.directSubmissionControllingThread->join();
+    controller.directSubmissionControllingThread.reset();
     controller.registerDirectSubmission(&csr);
 
     controller.checkNewSubmissions();
@@ -91,7 +92,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
     while (!controller.directSubmissions[&csr].isStopped) {
     }
 
-    EXPECT_TRUE(controller.directSubmissionControllingThread.joinable());
+    EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
     EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 9u);
 

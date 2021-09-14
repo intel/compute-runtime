@@ -8,13 +8,14 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
 #include <mutex>
-#include <thread>
 #include <unordered_map>
 
 namespace NEO {
 class MemoryManager;
 class CommandStreamReceiver;
+class Thread;
 
 class DirectSubmissionController {
   public:
@@ -30,13 +31,13 @@ class DirectSubmissionController {
         uint32_t taskCount = 0u;
     };
 
-    void controlDirectSubmissionsState();
+    static void *controlDirectSubmissionsState(void *self);
     void checkNewSubmissions();
 
     std::unordered_map<CommandStreamReceiver *, DirectSubmissionState> directSubmissions;
     std::mutex directSubmissionsMutex;
 
-    std::thread directSubmissionControllingThread;
+    std::unique_ptr<Thread> directSubmissionControllingThread;
     std::atomic_bool keepControlling = true;
 
     int timeout = 5;
