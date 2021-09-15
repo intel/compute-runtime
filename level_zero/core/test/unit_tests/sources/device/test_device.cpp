@@ -602,8 +602,8 @@ HWTEST_F(DeviceTest, whenPassingSchedulingHintExpStructToGetPropertiesThenProper
     }
 }
 
-HWTEST_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned) {
-    struct MockHwInfoConfig : NEO::HwInfoConfigHw<IGFX_SKYLAKE> {
+HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned, MatchAny) {
+    struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
         std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() override {
             return threadArbPolicies;
         }
@@ -642,8 +642,8 @@ HWTEST_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintE
     EXPECT_EQ(expected, schedulingHintProperties.schedulingHintFlags);
 }
 
-HWTEST_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned) {
-    struct MockHwInfoConfig : NEO::HwInfoConfigHw<IGFX_SKYLAKE> {
+HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned, MatchAny) {
+    struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
         std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() override {
             return threadArbPolicies;
         }
