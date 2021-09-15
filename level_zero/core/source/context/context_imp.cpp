@@ -494,7 +494,7 @@ ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
     }
 
     pMemAllocProperties->type = Context::parseUSMType(alloc->memoryType);
-    pMemAllocProperties->id = alloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+    pMemAllocProperties->id = alloc->getAllocId();
 
     if (phDevice != nullptr) {
         if (alloc->device == nullptr) {

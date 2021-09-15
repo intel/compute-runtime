@@ -33,6 +33,7 @@ struct SvmAllocationData {
         this->device = svmAllocData.device;
         this->size = svmAllocData.size;
         this->memoryType = svmAllocData.memoryType;
+        this->allocId = svmAllocData.allocId;
         for (auto allocation : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
             if (allocation) {
                 this->gpuAllocations.addAllocation(allocation);
@@ -46,9 +47,17 @@ struct SvmAllocationData {
     InternalMemoryType memoryType = InternalMemoryType::SVM;
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;
+    void setAllocId(uint32_t id) {
+        allocId = id;
+    }
+
+    uint32_t getAllocId() {
+        return allocId;
+    }
 
   protected:
     const uint32_t maxRootDeviceIndex;
+    uint32_t allocId = std::numeric_limits<uint32_t>::max();
 };
 
 struct SvmMapOperation {
@@ -139,6 +148,7 @@ class SVMAllocsManager {
     void *createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
+    std::atomic<uint32_t> allocationsCounter = 0;
 
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,

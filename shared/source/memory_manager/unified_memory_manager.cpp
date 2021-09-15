@@ -160,6 +160,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.memoryType = memoryProperties.memoryType;
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = nullptr;
+    allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
@@ -220,6 +221,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.memoryType = memoryProperties.memoryType;
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = memoryProperties.device;
+    allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
@@ -297,6 +299,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.cpuAllocation = nullptr;
     allocData.device = unifiedMemoryProperties.device;
     allocData.size = size;
+    allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
@@ -442,6 +445,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.cpuAllocation = allocationCpu;
     allocData.device = unifiedMemoryProperties.device;
     allocData.size = size;
+    allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
