@@ -45,11 +45,6 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     return nullptr;
 }
 
-GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
-    status = AllocationStatus::RetryInNonDevicePool;
-    return nullptr;
-}
-
 void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     return nullptr;
 }

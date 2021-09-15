@@ -1112,4 +1112,181 @@ void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
     bo->setLockedAddress(nullptr);
 }
 
+void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocation, const StorageInfo &storageInfo, bool compression) {
+    auto remainingSize = alignUp(allocation.getUnderlyingBufferSize(), MemoryConstants::pageSize64k);
+    auto handles = storageInfo.getNumBanks();
+    /* This logic is to colour resource as equally as possible.
+    Divide size by number of devices and align result up to 64kb page, then subtract it from whole size and allocate it on the first tile. First tile has it's chunk.
+    In the following iteration divide rest of a size by remaining devices and again subtract it.
+    Notice that if allocation size (in pages) is not divisible by 4 then remainder can be equal to 1,2,3 and by using this algorithm it can be spread efficiently.
+
+    For example: 18 pages allocation and 4 devices. Page size is 64kb.
+    Divide by 4 and align up to page size and result is 5 pages. After subtract, remaining size is 13 pages.
+    Now divide 13 by 3 and align up - result is 5 pages. After subtract, remaining size is 8 pages.
+    Divide 8 by 2 - result is 4 pages.
+    In last iteration remaining 4 pages go to last tile.
+    18 pages is coloured to (5, 5, 4, 4).
+
+    It was tested and doesn't require any debug*/
+    for (auto handleId = 0u; handleId < handles; handleId++) {
+        auto currentSize = alignUp(remainingSize / (handles - handleId), MemoryConstants::pageSize64k);
+        remainingSize -= currentSize;
+        StorageInfo limitedStorageInfo = storageInfo;
+        limitedStorageInfo.memoryBanks &= 1u << handleId;
+        auto gmm = new Gmm(clientContext,
+                           nullptr,
+                           currentSize,
+                           0u,
+                           false,
+                           compression,
+                           false,
+                           limitedStorageInfo);
+        allocation.setGmm(gmm, handleId);
+    }
+}
+
+void fillGmmsInAllocation(GmmClientContext *clientContext, DrmAllocation *allocation, const StorageInfo &storageInfo) {
+    auto alignedSize = alignUp(allocation->getUnderlyingBufferSize(), MemoryConstants::pageSize64k);
+    for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++) {
+        StorageInfo limitedStorageInfo = storageInfo;
+        limitedStorageInfo.memoryBanks &= 1u << handleId;
+        limitedStorageInfo.pageTablesVisibility &= 1u << handleId;
+        auto gmm = new Gmm(clientContext, nullptr, alignedSize, 0u, false, false, false, limitedStorageInfo);
+        allocation->setGmm(gmm, handleId);
+    }
+}
+
+uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner &heapAssigner, const HardwareInfo &hwInfo, GraphicsAllocation::AllocationType allocType, GfxPartition *gfxPartition,
+                       size_t &sizeAllocated, const void *hostPtr, bool resource48Bit, bool useFrontWindow) {
+    uint64_t gpuAddress = 0;
+    switch (allocType) {
+    case GraphicsAllocation::AllocationType::SVM_GPU:
+        gpuAddress = reinterpret_cast<uint64_t>(hostPtr);
+        sizeAllocated = 0;
+        break;
+    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
+    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
+    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA: {
+        auto heap = heapAssigner.get32BitHeapIndex(allocType, true, hwInfo, useFrontWindow);
+        gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocate(heap, sizeAllocated));
+    } break;
+    case GraphicsAllocation::AllocationType::WRITE_COMBINED:
+        sizeAllocated = 0;
+        break;
+    default:
+        AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(sizeAllocated);
+        if (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !resource48Bit) {
+            alignment.heap = HeapIndex::HEAP_EXTENDED;
+        }
+        gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocateWithCustomAlignment(alignment.heap, sizeAllocated, alignment.alignment));
+        break;
+    }
+    return gpuAddress;
+}
+
+GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+    status = AllocationStatus::RetryInNonDevicePool;
+    if (!this->localMemorySupported[allocationData.rootDeviceIndex] ||
+        allocationData.flags.useSystemMemory ||
+        (allocationData.flags.allow32Bit && this->force32bitAllocations) ||
+        allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY) {
+        return nullptr;
+    }
+
+    if (allocationData.type == GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY) {
+        auto allocation = this->createSharedUnifiedMemoryAllocation(allocationData);
+        status = allocation ? AllocationStatus::Success : AllocationStatus::Error;
+        return allocation;
+    }
+
+    std::unique_ptr<Gmm> gmm;
+    size_t sizeAligned = 0;
+    auto numHandles = allocationData.storageInfo.getNumBanks();
+    bool createSingleHandle = 1 == numHandles;
+    if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE) {
+        allocationData.imgInfo->useLocalMemory = true;
+        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo, allocationData.storageInfo);
+        sizeAligned = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
+    } else {
+        if (allocationData.type == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
+            sizeAligned = alignUp(allocationData.size + MemoryConstants::pageSize64k, 2 * MemoryConstants::megaByte) + 2 * MemoryConstants::megaByte;
+        } else {
+            sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+        }
+        if (createSingleHandle) {
+            gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
+                                        nullptr,
+                                        sizeAligned,
+                                        0u,
+                                        allocationData.flags.uncacheable,
+                                        allocationData.flags.preferRenderCompressed,
+                                        false,
+                                        allocationData.storageInfo);
+        }
+    }
+
+    auto sizeAllocated = sizeAligned;
+    auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+    auto gpuAddress = getGpuAddress(this->alignmentSelector, this->heapAssigner, *hwInfo,
+                                    allocationData.type, gfxPartition, sizeAllocated,
+                                    allocationData.hostPtr, allocationData.flags.resource48Bit, allocationData.flags.use32BitFrontWindow);
+
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, numHandles, allocationData.type, nullptr, nullptr, gpuAddress, sizeAligned, MemoryPool::LocalMemory);
+    if (createSingleHandle) {
+        allocation->setDefaultGmm(gmm.release());
+    } else if (allocationData.storageInfo.multiStorage) {
+        createColouredGmms(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
+                           *allocation,
+                           allocationData.storageInfo,
+                           allocationData.flags.preferRenderCompressed);
+    } else {
+        fillGmmsInAllocation(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocation.get(), allocationData.storageInfo);
+    }
+    allocation->storageInfo = allocationData.storageInfo;
+    allocation->setFlushL3Required(allocationData.flags.flushL3);
+    allocation->setUncacheable(allocationData.flags.uncacheable);
+    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizeAllocated);
+
+    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount)) {
+        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+            delete allocation->getGmm(handleId);
+        }
+        gfxPartition->freeGpuAddressRange(GmmHelper::decanonize(gpuAddress), sizeAllocated);
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
+    if (allocationData.type == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
+        auto cpuAddress = lockResource(allocation.get());
+        auto alignedCpuAddress = alignDown(cpuAddress, 2 * MemoryConstants::megaByte);
+        auto offset = ptrDiff(cpuAddress, alignedCpuAddress);
+        allocation->setAllocationOffset(offset);
+        allocation->setCpuPtrAndGpuAddress(cpuAddress, reinterpret_cast<uint64_t>(alignedCpuAddress));
+        DEBUG_BREAK_IF(allocation->storageInfo.multiStorage);
+        allocation->getBO()->setAddress(reinterpret_cast<uint64_t>(cpuAddress));
+    }
+    if (allocationData.flags.requiresCpuAccess) {
+        auto cpuAddress = lockResource(allocation.get());
+        allocation->setCpuPtrAndGpuAddress(cpuAddress, gpuAddress);
+    }
+    if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
+        allocation->setGpuBaseAddress(GmmHelper::canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
+    }
+    if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
+        for (auto bo : allocation->getBOs()) {
+            delete bo;
+        }
+        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+            delete allocation->getGmm(handleId);
+        }
+        gfxPartition->freeGpuAddressRange(GmmHelper::decanonize(gpuAddress), sizeAllocated);
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
+
+    status = AllocationStatus::Success;
+    return allocation.release();
+}
+
 } // namespace NEO

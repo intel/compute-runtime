@@ -951,12 +951,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenSupportedTypeWhenAllocatingInDevice
                 EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)), gpuAddress);
             } else {
                 const bool prefer2MBAlignment = allocation->getUnderlyingBufferSize() >= 2 * MemoryConstants::megaByte;
-                const bool prefer57bitAddressing = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !allocData.flags.resource48Bit;
 
                 auto heap = HeapIndex::HEAP_STANDARD64KB;
                 if (prefer2MBAlignment) {
                     heap = HeapIndex::HEAP_STANDARD2MB;
-                } else if (prefer57bitAddressing) {
+                } else if (memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !allocData.flags.resource48Bit) {
                     heap = HeapIndex::HEAP_EXTENDED;
                 }
 
@@ -1173,14 +1172,14 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
     MemoryManager::AllocationStatus allocationStatus;
 
     {
-        // Too small allocation, fallback to 64KB heap
+        // Too small allocation, fallback to 2MB heap
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
         DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(32 * MemoryConstants::megaByte);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD64KB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD2MB));
         memoryManager->freeGraphicsMemory(allocation);
     }
 
@@ -1635,4 +1634,102 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlig
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithLargeBufferWhenAllocatingInDevicePoolOnAllMemoryBanksThenCreateFourBufferObjectsWithDifferentGpuVirtualAddressesAndPartialSizes) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.flags.allocateMemory = true;
+    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocData.storageInfo.multiStorage = true;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_NE(0u, allocation->getGpuAddress());
+    EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    auto &bos = drmAllocation->getBOs();
+    auto boAddress = drmAllocation->getGpuAddress();
+    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
+        auto bo = bos[handleId];
+        ASSERT_NE(nullptr, bo);
+        auto boSize = allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation();
+        EXPECT_EQ(boAddress, bo->peekAddress());
+        EXPECT_EQ(boSize, bo->peekSize());
+        EXPECT_EQ(boSize, handleId == 0 || handleId == 1 ? 5 * MemoryConstants::pageSize64k : 4 * MemoryConstants::pageSize64k);
+        boAddress += boSize;
+    }
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithLargeBufferWhenAllocatingInDevicePoolOnAllMemoryBanksWithoutMultiStorageThenCreateFourBufferObjectsWithDifferentGpuVirtualAddressesAndPartialSizes) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 3 * MemoryConstants::pageSize64k;
+    allocData.flags.allocateMemory = true;
+    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_NE(0u, allocation->getGpuAddress());
+    EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    auto &bos = drmAllocation->getBOs();
+    auto boAddress = drmAllocation->getGpuAddress();
+    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
+        auto bo = bos[handleId];
+        ASSERT_NE(nullptr, bo);
+        auto boSize = allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation();
+        EXPECT_EQ(boAddress, bo->peekAddress());
+        EXPECT_EQ(boSize, bo->peekSize());
+        EXPECT_EQ(boSize, 3 * MemoryConstants::pageSize64k);
+    }
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithInvalidCacheRegionWhenAllocatingInDevicePoolThenReturnNullptr) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.flags.allocateMemory = true;
+    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocData.storageInfo.multiStorage = true;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.cacheRegion = 0xFFFF;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithUnifiedMemoryAllocationThenReturnNullptr) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.flags.allocateMemory = true;
+    allocData.type = GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+    memoryManager->freeGraphicsMemory(allocation);
+}
 } // namespace NEO

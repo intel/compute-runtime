@@ -145,49 +145,6 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     }
 }
 
-uint64_t getGpuAddress(HeapAssigner &heapAssigner, const HardwareInfo &hwInfo, GraphicsAllocation::AllocationType allocType, GfxPartition *gfxPartition,
-                       size_t &sizeAllocated, const void *hostPtr, bool resource48Bit, bool useFrontWindow) {
-    uint64_t gpuAddress = 0;
-    switch (allocType) {
-    case GraphicsAllocation::AllocationType::SVM_GPU:
-        gpuAddress = reinterpret_cast<uint64_t>(hostPtr);
-        sizeAllocated = 0;
-        break;
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
-    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
-    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
-    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA: {
-        auto heap = heapAssigner.get32BitHeapIndex(allocType, true, hwInfo, useFrontWindow);
-        gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocate(heap, sizeAllocated));
-    } break;
-    case GraphicsAllocation::AllocationType::WRITE_COMBINED:
-        sizeAllocated = 0;
-        break;
-    default:
-        const size_t customAlignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
-        const bool preferCustomAlignment = customAlignment > 0 && sizeAllocated >= customAlignment;
-        const bool prefer2MBAlignment = DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0 &&
-                                        sizeAllocated >= 2 * MemoryConstants::megaByte &&
-                                        (!preferCustomAlignment || customAlignment <= 2 * MemoryConstants::megaByte);
-        const bool prefer57bitAddressing = gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !resource48Bit;
-
-        auto heapIndex = HeapIndex::HEAP_STANDARD64KB;
-        size_t alignment = 0u;
-        if (prefer2MBAlignment) {
-            heapIndex = HeapIndex::HEAP_STANDARD2MB;
-        } else if (preferCustomAlignment) {
-            heapIndex = customAlignment > 2 * MemoryConstants::megaByte ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD64KB;
-            alignment = customAlignment;
-        } else if (prefer57bitAddressing) {
-            heapIndex = HeapIndex::HEAP_EXTENDED;
-        }
-
-        gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, sizeAllocated, alignment));
-        break;
-    }
-    return gpuAddress;
-}
-
 bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
     std::array<std::unique_ptr<BufferObject>, EngineLimits::maxHandleCount> bos{};
     auto &storageInfo = allocation->storageInfo;
@@ -211,81 +168,6 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
         bo.release();
     }
     return true;
-}
-
-GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
-    status = AllocationStatus::RetryInNonDevicePool;
-    if (!this->localMemorySupported[allocationData.rootDeviceIndex] ||
-        allocationData.flags.useSystemMemory ||
-        (allocationData.flags.allow32Bit && this->force32bitAllocations) ||
-        allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY) {
-        return nullptr;
-    }
-
-    std::unique_ptr<Gmm> gmm;
-    size_t sizeAligned = 0;
-    auto numHandles = allocationData.storageInfo.getNumBanks();
-    DEBUG_BREAK_IF(numHandles > 1);
-    if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE) {
-        allocationData.imgInfo->useLocalMemory = true;
-        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo, allocationData.storageInfo);
-        sizeAligned = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
-    } else {
-        if (allocationData.type == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
-            sizeAligned = alignUp(allocationData.size + MemoryConstants::pageSize64k, 2 * MemoryConstants::megaByte) + 2 * MemoryConstants::megaByte;
-        } else {
-            sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-        }
-        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
-                                    nullptr,
-                                    sizeAligned,
-                                    0,
-                                    allocationData.flags.uncacheable,
-                                    allocationData.flags.preferRenderCompressed,
-                                    false,
-                                    allocationData.storageInfo);
-    }
-
-    auto sizeAllocated = sizeAligned;
-    auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-    auto gpuAddress = getGpuAddress(this->heapAssigner, *hwInfo,
-                                    allocationData.type, gfxPartition, sizeAllocated,
-                                    allocationData.hostPtr, allocationData.flags.resource48Bit, allocationData.flags.use32BitFrontWindow);
-
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, numHandles, allocationData.type, nullptr, nullptr, gpuAddress, sizeAligned, MemoryPool::LocalMemory);
-    allocation->setDefaultGmm(gmm.release());
-    allocation->storageInfo = allocationData.storageInfo;
-    allocation->setFlushL3Required(allocationData.flags.flushL3);
-    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizeAllocated);
-
-    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount)) {
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
-            delete allocation->getGmm(handleId);
-        }
-        gfxPartition->freeGpuAddressRange(GmmHelper::decanonize(gpuAddress), sizeAllocated);
-        status = AllocationStatus::Error;
-        return nullptr;
-    }
-    if (allocationData.type == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
-        auto cpuAddress = lockResource(allocation.get());
-        auto alignedCpuAddress = alignDown(cpuAddress, 2 * MemoryConstants::megaByte);
-        auto offset = ptrDiff(cpuAddress, alignedCpuAddress);
-        allocation->setAllocationOffset(offset);
-        allocation->setCpuPtrAndGpuAddress(cpuAddress, reinterpret_cast<uint64_t>(alignedCpuAddress));
-        DEBUG_BREAK_IF(allocation->storageInfo.multiStorage);
-        allocation->getBO()->setAddress(reinterpret_cast<uint64_t>(cpuAddress));
-    }
-    if (allocationData.flags.requiresCpuAccess) {
-        auto cpuAddress = lockResource(allocation.get());
-        allocation->setCpuPtrAndGpuAddress(cpuAddress, gpuAddress);
-    }
-    if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
-        allocation->setGpuBaseAddress(GmmHelper::canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
-    }
-
-    status = AllocationStatus::Success;
-    return allocation.release();
 }
 
 void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
