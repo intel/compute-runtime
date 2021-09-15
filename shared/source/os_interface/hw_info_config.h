@@ -60,6 +60,7 @@ class HwInfoConfig {
     virtual bool allowStatelessCompression(const HardwareInfo &hwInfo) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -105,6 +106,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool allowStatelessCompression(const HardwareInfo &hwInfo) const override;
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
+    bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;
