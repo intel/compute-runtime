@@ -13,6 +13,12 @@
 
 namespace L0 {
 
+template <>
+void CommandListCoreFamily<IGFX_XE_HP_CORE>::clearComputeModePropertiesIfNeeded(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy) {
+    finalStreamState.stateComputeMode = {};
+    finalStreamState.stateComputeMode.setProperties(requiresCoherency, numGrfRequired, threadArbitrationPolicy);
+}
+
 template struct CommandListCoreFamily<IGFX_XE_HP_CORE>;
 
 template <>
