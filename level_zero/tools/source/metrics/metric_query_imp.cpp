@@ -208,7 +208,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDeviceIndex.SubDeviceIndex.Index = 0;
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = neoDevice.getNumSubDevices();
+        subDeviceCount.SubDeviceCount.Count = std::max(neoDevice.getNumSubDevices(), 1u);
 
     } else {
 
@@ -220,7 +220,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDeviceIndex.SubDeviceIndex.Index = static_cast<NEO::SubDevice *>(&neoDevice)->getSubDeviceIndex();
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = neoDevice.getRootDevice()->getNumSubDevices();
+        subDeviceCount.SubDeviceCount.Count = std::max(neoDevice.getRootDevice()->getNumSubDevices(), 1u);
     }
 }
 

@@ -29,13 +29,13 @@ std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device)
         // Root device.
         counter->subDevice.Enabled = false;
         counter->subDeviceIndex.Index = 0;
-        counter->subDeviceCount.Count = device->getNumSubDevices();
+        counter->subDeviceCount.Count = std::max(device->getNumSubDevices(), 1u);
     } else {
 
         // Sub device.
         counter->subDevice.Enabled = true;
         counter->subDeviceIndex.Index = static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex();
-        counter->subDeviceCount.Count = device->getRootDevice()->getNumSubDevices();
+        counter->subDeviceCount.Count = std::max(device->getRootDevice()->getNumSubDevices(), 1u);
     }
 
     // Adapter data.
