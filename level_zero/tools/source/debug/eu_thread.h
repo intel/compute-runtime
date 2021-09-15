@@ -11,6 +11,7 @@
 
 #include <level_zero/ze_api.h>
 
+#include <atomic>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -64,7 +65,8 @@ class EuThread {
 
     EuThread(ThreadId threadId) : threadId(threadId) {}
 
-    bool stopThread() {
+    bool stopThread(uint64_t memHandle) {
+        memoryHandle = memHandle;
         if (state == State::Stopped) {
             return false;
         }
@@ -113,6 +115,7 @@ class EuThread {
     }
 
     bool resumeThread() {
+        memoryHandle = invalidHandle;
         if (state != State::Stopped) {
             return false;
         }
@@ -143,10 +146,16 @@ class EuThread {
         return threadId;
     }
 
+    uint64_t getMemoryHandle() { return memoryHandle; }
+
+  public:
+    static constexpr uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();
+
   protected:
     ThreadId threadId;
     State state = State::Unavailable;
     uint8_t systemRoutineCounter = 0;
+    std::atomic<uint64_t> memoryHandle = invalidHandle;
 };
 
 static_assert(sizeof(EuThread::ThreadId) == sizeof(uint64_t));

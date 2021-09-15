@@ -56,19 +56,22 @@ TEST(EuThread, GivenEuThreadWhenChangingAndQueryingStatesThenStateIsChanged) {
     EXPECT_FALSE(euThread.isStopped());
     EXPECT_TRUE(euThread.isRunning());
 
-    bool result = euThread.stopThread();
+    bool result = euThread.stopThread(0x1234);
 
     EXPECT_TRUE(result);
     EXPECT_TRUE(euThread.isStopped());
     EXPECT_FALSE(euThread.isRunning());
+    EXPECT_EQ(0x1234u, euThread.getMemoryHandle());
 
-    result = euThread.stopThread();
+    result = euThread.stopThread(0x5678);
 
     EXPECT_FALSE(result);
     EXPECT_TRUE(euThread.isStopped());
     EXPECT_FALSE(euThread.isRunning());
+    EXPECT_EQ(0x5678u, euThread.getMemoryHandle());
 
     result = euThread.resumeThread();
+    EXPECT_EQ(EuThread::invalidHandle, euThread.getMemoryHandle());
 
     EXPECT_TRUE(result);
     EXPECT_FALSE(euThread.isStopped());
@@ -79,6 +82,7 @@ TEST(EuThread, GivenEuThreadWhenChangingAndQueryingStatesThenStateIsChanged) {
     EXPECT_FALSE(result);
     EXPECT_FALSE(euThread.isStopped());
     EXPECT_TRUE(euThread.isRunning());
+    EXPECT_EQ(EuThread::invalidHandle, euThread.getMemoryHandle());
 }
 
 TEST(EuThread, GivenEuThreadWhenToStringCalledThenCorrectStringReturned) {
@@ -106,7 +110,7 @@ TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithOddCounterThenTrueRet
     EuThread euThread(threadId);
 
     euThread.verifyStopped(1);
-    euThread.stopThread();
+    euThread.stopThread(1u);
 
     EXPECT_TRUE(euThread.verifyStopped(1));
     EXPECT_TRUE(euThread.isStopped());
@@ -118,7 +122,7 @@ TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithEvenCounterThenFalseR
     EuThread euThread(threadId);
 
     euThread.verifyStopped(1);
-    euThread.stopThread();
+    euThread.stopThread(1u);
 
     EXPECT_FALSE(euThread.verifyStopped(2));
     EXPECT_TRUE(euThread.isRunning());
@@ -134,7 +138,7 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithEv
     EuThread euThread(threadId);
 
     euThread.verifyStopped(1);
-    euThread.stopThread();
+    euThread.stopThread(1u);
 
     ::testing::internal::CaptureStderr();
 

@@ -344,7 +344,7 @@ TEST(DebugSession, givenAllStoppedThreadsWhenAreRequestedThreadsStoppedCalledThe
 
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
-        sessionMock->allThreads[thread]->stopThread();
+        sessionMock->allThreads[thread]->stopThread(1u);
     }
 
     ze_device_thread_t apiThread = {0, 0, 0, UINT32_MAX};
@@ -364,7 +364,7 @@ TEST(DebugSession, givenSomeStoppedThreadsWhenAreRequestedThreadsStoppedCalledTh
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         if (i % 2) {
-            sessionMock->allThreads[thread]->stopThread();
+            sessionMock->allThreads[thread]->stopThread(1u);
         }
     }
 
