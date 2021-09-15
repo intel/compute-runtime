@@ -1138,6 +1138,23 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     EXPECT_EQ(returnedSize, baseSize);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeControlPrecedingPostSyncCommandIsDisabledAndLocalMemoryIsEnabledThenSizeIsProperlyEstimated) {
+    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.featureTable.ftrLocalMemory = true;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo) ? 2 : 1;
+
+    auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
+                    (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
+                    HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize);
+
+    auto returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, {});
+    EXPECT_EQ(returnedSize, baseSize);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
     DebugManager.flags.EnableWalkerPartition.set(1u);
 
