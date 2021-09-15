@@ -58,11 +58,60 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanImpCreationWhenAllSysm
     sysmanImp->pDiagnosticsHandleContext = nullptr;
     sysmanImp->pPerformanceHandleContext = nullptr;
 
+    auto pLinuxSysmanImpTemp = static_cast<PublicLinuxSysmanImp *>(sysmanImp->pOsSysman);
+    pLinuxSysmanImpTemp->pSysfsAccess = pSysfsAccess;
+    pLinuxSysmanImpTemp->pProcfsAccess = pProcfsAccess;
+
     sysmanImp->init();
     // all sysman module contexts are null. Validating PowerHandleContext instead of all contexts
     EXPECT_EQ(sysmanImp->pPowerHandleContext, nullptr);
+    pLinuxSysmanImpTemp->pSysfsAccess = nullptr;
+    pLinuxSysmanImpTemp->pProcfsAccess = nullptr;
     delete sysmanImp;
     sysmanImp = nullptr;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndIfSysmanDeviceInitFailsThenErrorReturnedWhileQueryingSysmanAPIs) {
+    ze_device_handle_t hSysman = device->toHandle();
+    auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();
+
+    // L0::SysmanDeviceHandleContext::init() would return nullptr as:
+    // L0::SysmanDeviceHandleContext::init() --> sysmanDevice->init() --> pOsSysman->init() --> pSysfsAccess->getRealPath()
+    // pSysfsAccess->getRealPath() would fail because pSysfsAccess is not mocked in this test case.
+    auto pSysmanDeviceLocal = L0::SysmanDeviceHandleContext::init(hSysman);
+    EXPECT_EQ(pSysmanDeviceLocal, nullptr);
+    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceLocal);
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumSchedulers(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceProcessesGetState(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDevicePciGetBars(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumPowerDomains(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumFrequencyDomains(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumEngineGroups(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumStandbyDomains(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumFirmwares(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumMemoryModules(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumFabricPorts(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumTemperatureSensors(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumRasErrorSets(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumFans(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumDiagnosticTestSuites(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumPerformanceFactorDomains(hSysman, &count, nullptr));
+
+    zes_device_properties_t properties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceGetProperties(hSysman, &properties));
+    zes_device_state_t state;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceGetState(hSysman, &state));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceReset(hSysman, true));
+    zes_pci_properties_t pciProperties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDevicePciGetProperties(hSysman, &pciProperties));
+    zes_pci_state_t pciState;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDevicePciGetState(hSysman, &pciState));
+    zes_pci_stats_t pciStats;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDevicePciGetStats(hSysman, &pciStats));
+    zes_event_type_flags_t events = ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEventRegister(hSysman, events));
+    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
 }
 
 using MockDeviceSysmanGetTest = Test<DeviceFixture>;
@@ -72,12 +121,10 @@ TEST_F(MockDeviceSysmanGetTest, GivenValidSysmanHandleSetInDeviceStructWhenGetTh
     EXPECT_EQ(sysman, device->getSysmanHandle());
 }
 
-TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanInitThenValidSysmanHandleReceived) {
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleButSysmanInitFailsThenValidNullptrReceived) {
     ze_device_handle_t hSysman = device->toHandle();
     auto pSysmanDevice = L0::SysmanDeviceHandleContext::init(hSysman);
-    EXPECT_NE(pSysmanDevice, nullptr);
-    delete pSysmanDevice;
-    pSysmanDevice = nullptr;
+    EXPECT_EQ(pSysmanDevice, nullptr);
 }
 
 TEST_F(SysmanDeviceFixture, GivenSetValidDrmHandleForDeviceWhenDoingOsSysmanDeviceInitThenSameDrmHandleIsRetrieved) {
@@ -198,6 +245,12 @@ TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturned
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
+    ze_device_handle_t hSysman = device->toHandle();
+    auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();
+    auto pSysmanDeviceLocal = L0::SysmanDeviceHandleContext::init(hSysman);
+    EXPECT_EQ(pSysmanDeviceLocal, nullptr);
+    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceLocal);
+
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getSubDevices(&count, nullptr));
     std::vector<ze_device_handle_t> subDeviceHandles(count, nullptr);
@@ -206,6 +259,7 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValid
         L0::DeviceImp *subDeviceHandleImp = static_cast<DeviceImp *>(Device::fromHandle(subDeviceHandle));
         EXPECT_EQ(subDeviceHandleImp->getSysmanHandle(), device->getSysmanHandle());
     }
+    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermissionsReturnedByIsRootUserAreCorrect) {

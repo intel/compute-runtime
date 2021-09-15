@@ -14,13 +14,15 @@ namespace L0 {
 ze_result_t LinuxSysmanImp::init() {
     pFwUtilInterface = FirmwareUtil::create();
     pFsAccess = FsAccess::create();
-    UNRECOVERABLE_IF(nullptr == pFsAccess);
+    DEBUG_BREAK_IF(nullptr == pFsAccess);
 
-    pProcfsAccess = ProcfsAccess::create();
-    UNRECOVERABLE_IF(nullptr == pProcfsAccess);
+    if (pProcfsAccess == nullptr) {
+        pProcfsAccess = ProcfsAccess::create();
+    }
+    DEBUG_BREAK_IF(nullptr == pProcfsAccess);
 
     pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
-    UNRECOVERABLE_IF(nullptr == pDevice);
+    DEBUG_BREAK_IF(nullptr == pDevice);
     NEO::OSInterface &OsInterface = pDevice->getOsInterface();
     pDrm = OsInterface.getDriverModel()->as<NEO::Drm>();
     int myDeviceFd = pDrm->getFileDescriptor();
@@ -30,8 +32,10 @@ ze_result_t LinuxSysmanImp::init() {
         return result;
     }
 
-    pSysfsAccess = SysfsAccess::create(myDeviceName);
-    UNRECOVERABLE_IF(nullptr == pSysfsAccess);
+    if (pSysfsAccess == nullptr) {
+        pSysfsAccess = SysfsAccess::create(myDeviceName);
+    }
+    DEBUG_BREAK_IF(nullptr == pSysfsAccess);
 
     std::string realRootPath;
     result = pSysfsAccess->getRealPath("device", realRootPath);
@@ -42,7 +46,7 @@ ze_result_t LinuxSysmanImp::init() {
     PlatformMonitoringTech::create(pParentSysmanDeviceImp->deviceHandles, pFsAccess, rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
 
     pPmuInterface = PmuInterface::create(this);
-    UNRECOVERABLE_IF(nullptr == pPmuInterface);
+    DEBUG_BREAK_IF(nullptr == pPmuInterface);
 
     return ZE_RESULT_SUCCESS;
 }
