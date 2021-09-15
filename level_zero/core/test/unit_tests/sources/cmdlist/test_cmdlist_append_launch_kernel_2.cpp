@@ -725,6 +725,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithImplicitArgsWhenAppendLa
     expectedImplicitArgs.groupCountY = 2;
     expectedImplicitArgs.groupCountZ = 1;
     expectedImplicitArgs.localIdTablePtr = indirectHeap->getGraphicsAllocation()->getGpuAddress();
+    expectedImplicitArgs.printfBufferPtr = kernel->getPrintfBufferAllocation()->getGpuAddress();
 
     auto sizeForImplicitArgPatching = kernel->getSizeForImplicitArgsPatching();
 

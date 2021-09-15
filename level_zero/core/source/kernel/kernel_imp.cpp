@@ -856,6 +856,13 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         this->patchCrossthreadDataWithPrivateAllocation(this->privateMemoryGraphicsAllocation);
         this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation);
     }
+    if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
+        pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
+        *pImplicitArgs = {};
+        pImplicitArgs->structSize = sizeof(NEO::ImplicitArgs);
+        pImplicitArgs->structVersion = 0;
+        pImplicitArgs->simdWidth = kernelDescriptor.kernelAttributes.simdSize;
+    }
 
     this->createPrintfBuffer();
 
@@ -872,24 +879,22 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         neoDevice->initializeRayTracing();
         this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
     }
-    if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
-        pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
-        *pImplicitArgs = {};
-        pImplicitArgs->structSize = sizeof(NEO::ImplicitArgs);
-        pImplicitArgs->structVersion = 0;
-        pImplicitArgs->simdWidth = kernelDescriptor.kernelAttributes.simdSize;
-    }
 
     return ZE_RESULT_SUCCESS;
 }
 
 void KernelImp::createPrintfBuffer() {
-    if (this->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf) {
+    if (this->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf || pImplicitArgs) {
         this->printfBuffer = PrintfHandler::createPrintfBuffer(this->module->getDevice());
         this->residencyContainer.push_back(printfBuffer);
-        NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
-                          this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.printfSurfaceAddress,
-                          static_cast<uintptr_t>(this->printfBuffer->getGpuAddressToPatch()));
+        if (this->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf) {
+            NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
+                              this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.printfSurfaceAddress,
+                              static_cast<uintptr_t>(this->printfBuffer->getGpuAddressToPatch()));
+        }
+        if (pImplicitArgs) {
+            pImplicitArgs->printfBufferPtr = printfBuffer->getGpuAddress();
+        }
     }
 }
 

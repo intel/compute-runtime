@@ -2041,11 +2041,10 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
 
 using KernelImplicitArgTests = Test<ModuleImmutableDataFixture>;
 
-TEST_F(KernelImplicitArgTests, givenImplicitArgsRequiredWhenCreatingKernelThenImplicitArgsAreCreated) {
+TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenInitializeThenPrintfSurfaceIsCreatedAndProperlyPatchedInImplicitArgs) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
-
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
-    auto simd = mockKernelImmData->kernelDescriptor->kernelAttributes.simdSize;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesPrintf = false;
 
     createModuleFromBinary(0u, false, mockKernelImmData.get());
 
@@ -2058,9 +2057,31 @@ TEST_F(KernelImplicitArgTests, givenImplicitArgsRequiredWhenCreatingKernelThenIm
     auto pImplicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    ImplicitArgs expectedImplicitArgs{sizeof(ImplicitArgs)};
-    expectedImplicitArgs.simdWidth = simd;
-    EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+    auto printfSurface = kernel->getPrintfBufferAllocation();
+    ASSERT_NE(nullptr, printfSurface);
+
+    EXPECT_NE(0u, pImplicitArgs->printfBufferPtr);
+    EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->printfBufferPtr);
+}
+
+TEST_F(KernelImplicitArgTests, givenImplicitArgsRequiredWhenCreatingKernelThenImplicitArgsAreCreated) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);
+    auto pImplicitArgs = kernel->getImplicitArgs();
+    ASSERT_NE(nullptr, pImplicitArgs);
+
+    EXPECT_EQ(sizeof(ImplicitArgs), pImplicitArgs->structSize);
+    EXPECT_EQ(0u, pImplicitArgs->structVersion);
 }
 
 TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParamsThenImplicitArgsAreUpdated) {
@@ -2094,6 +2115,7 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     expectedImplicitArgs.groupCountX = 3;
     expectedImplicitArgs.groupCountY = 2;
     expectedImplicitArgs.groupCountZ = 1;
+    expectedImplicitArgs.printfBufferPtr = kernel->getPrintfBufferAllocation()->getGpuAddress();
 
     kernel->setGroupSize(4, 5, 6);
     kernel->setGroupCount(3, 2, 1);
@@ -2128,5 +2150,6 @@ TEST_F(KernelImplicitArgTests, givenKernelWithoutImplicitArgsWhenPatchingImplici
 
     EXPECT_EQ(0, memcmp(data, initData, 64));
 }
+
 } // namespace ult
 } // namespace L0
