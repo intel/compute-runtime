@@ -610,6 +610,138 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAp
     EXPECT_EQ(zetMetricQueryPoolDestroy(poolHandle), ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetCommandListAppendMetricQueryBeginEndIsCalledForSubDeviceThenReturnsSuccess) {
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableWalkerPartition.set(1);
+
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    zet_device_handle_t metricDeviceHandle = deviceImp.subDevices[0]->toHandle();
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.MetricsCount = 1;
+
+    Mock<IMetric_1_0> metric;
+    TMetricParams_1_0 metricParams = {};
+    metricParams.SymbolName = "Metric symbol name";
+    metricParams.ShortName = "Metric short name";
+    metricParams.LongName = "Metric long name";
+    metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    zet_metric_group_properties_t metricGroupProperties = {};
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+
+    zet_metric_query_handle_t queryHandle = {};
+    zet_metric_query_pool_handle_t poolHandle = {};
+    zet_metric_query_pool_desc_t poolDesc = {};
+    poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
+    poolDesc.count = 1;
+    poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
+
+    TypedValue_1_0 value = {};
+    value.Type = ValueType::Uint32;
+    value.ValueUInt32 = 64;
+
+    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
+    ContextHandle_1_0 metricsLibraryContextHandle = {&value};
+
+    openMetricsAdapterSubDevice(0);
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .Times(1)
+        .WillRepeatedly(Return(&metric));
+
+    EXPECT_CALL(metric, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(*mockMetricEnumerationSubDevices[0], isInitialized())
+        .Times(1)
+        .WillOnce(Return(true));
+
+    EXPECT_CALL(*mockMetricsLibrarySubDevices[0], getContextData(_, _))
+        .Times(1)
+        .WillOnce(Return(true));
+
+    EXPECT_CALL(*mockMetricsLibrary, load())
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockQueryCreate(_, _))
+        .Times(1)
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(metricsLibraryQueryHandle), Return(StatusCode::Success)));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockQueryDelete(_))
+        .Times(1)
+        .WillRepeatedly(Return(StatusCode::Success));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockGetParameter(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<2>(value), Return(StatusCode::Success)));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
+        .Times(1)
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
+        .Times(1)
+        .WillRepeatedly(Return(StatusCode::Success));
+
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDeviceHandle, metricGroupHandle, &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(poolHandle, nullptr);
+
+    EXPECT_EQ(zetMetricQueryCreate(poolHandle, 0, &queryHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(queryHandle, nullptr);
+
+    EXPECT_EQ(zetMetricQueryDestroy(queryHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricQueryPoolDestroy(poolHandle), ZE_RESULT_SUCCESS);
+}
+
 TEST_F(MultiDeviceMetricQueryPoolTest, givenFailedMetricsLibraryContextWhenZetMetricQueryPoolCreateIsCalledThenReturnFail) {
 
     zet_device_handle_t metricDevice = devices[0]->toHandle();

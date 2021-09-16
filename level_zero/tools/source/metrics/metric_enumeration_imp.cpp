@@ -131,11 +131,10 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
     }
 
     auto &device = metricContext.getDevice();
-    if (device.isMultiDeviceCapable()) {
+    const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+    if (!deviceImp.isSubdevice && deviceImp.isMultiDeviceCapable()) {
 
         // Open metrics device for each sub device.
-        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-
         for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
 
             auto &metricsDevice = deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().pMetricsDevice;
@@ -171,9 +170,9 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     if (pAdapter) {
 
         auto &device = metricContext.getDevice();
-        if (device.isMultiDeviceCapable()) {
+        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+        if (!deviceImp.isSubdevice && deviceImp.isMultiDeviceCapable()) {
 
-            const auto &deviceImp = *static_cast<DeviceImp *>(&device);
             for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
                 deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().cleanupMetricsDiscovery();
             }
@@ -205,13 +204,12 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
 ze_result_t MetricEnumeration::cacheMetricInformation() {
 
     auto &device = metricContext.getDevice();
-
-    if (device.isMultiDeviceCapable()) {
+    const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+    if (!deviceImp.isSubdevice && deviceImp.isMultiDeviceCapable()) {
 
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         // Get metric information from all sub devices.
-        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
         for (auto subDevice : deviceImp.subDevices) {
             result = subDevice->getMetricContext().getMetricEnumeration().cacheMetricInformation();
             if (ZE_RESULT_SUCCESS != result) {

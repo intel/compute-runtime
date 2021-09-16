@@ -270,10 +270,10 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto pDevice = Device::fromHandle(hDevice);
+    const auto pDeviceImp = static_cast<const DeviceImp *>(pDevice);
 
-    if (pDevice->isMultiDeviceCapable()) {
-        const auto deviceImp = static_cast<const DeviceImp *>(pDevice);
-        const uint32_t subDeviceCount = deviceImp->numSubDevices;
+    if (!pDeviceImp->isSubdevice && pDeviceImp->isMultiDeviceCapable()) {
+        const uint32_t subDeviceCount = pDeviceImp->numSubDevices;
         auto pMetricStreamer = new MetricStreamerImp();
         UNRECOVERABLE_IF(pMetricStreamer == nullptr);
 
@@ -284,7 +284,7 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
         for (uint32_t i = 0; i < subDeviceCount; i++) {
 
             auto metricGroupsSubDevice = metricGroupRootDevice->getMetricGroups()[i];
-            result = openForDevice(deviceImp->subDevices[i], metricGroupsSubDevice, desc, &metricStreamers[i]);
+            result = openForDevice(pDeviceImp->subDevices[i], metricGroupsSubDevice, desc, &metricStreamers[i]);
             if (result != ZE_RESULT_SUCCESS) {
                 for (uint32_t j = 0; j < i; j++) {
                     auto metricStreamerSubDevice = MetricStreamer::fromHandle(metricStreamers[j]);

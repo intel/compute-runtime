@@ -200,6 +200,7 @@ class MetricMultiDeviceContextFixture : public MultiDeviceFixture {
     void SetUp() override;
     void TearDown() override;
     void openMetricsAdapter();
+    void openMetricsAdapterSubDevice(uint32_t subDeviceIndex);
     void openMetricsAdapterGroup();
 
   public:
