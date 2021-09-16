@@ -30,4 +30,8 @@ uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {
     return maxAllocSize / 2;
 }
 
+std::string ApiSpecificConfig::getName() {
+    return "shared";
+}
+
 } // namespace NEO

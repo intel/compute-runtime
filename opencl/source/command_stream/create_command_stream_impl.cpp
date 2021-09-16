@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/os_interface/device_factory.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
@@ -29,12 +30,13 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
     if (csr < 0) {
         csr = CommandStreamReceiverType::CSR_HW;
     }
+
     switch (csr) {
     case CSR_HW:
         commandStreamReceiver = funcCreate(false, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
     case CSR_AUB:
-        commandStreamReceiver = AUBCommandStreamReceiver::create("aubfile", true, executionEnvironment, rootDeviceIndex, deviceBitfield);
+        commandStreamReceiver = AUBCommandStreamReceiver::create(ApiSpecificConfig::getName(), true, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
     case CSR_TBX:
         commandStreamReceiver = TbxCommandStreamReceiver::create("", false, executionEnvironment, rootDeviceIndex, deviceBitfield);
@@ -43,7 +45,7 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
         commandStreamReceiver = funcCreate(true, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
     case CSR_TBX_WITH_AUB:
-        commandStreamReceiver = TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment, rootDeviceIndex, deviceBitfield);
+        commandStreamReceiver = TbxCommandStreamReceiver::create(ApiSpecificConfig::getName(), true, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
     default:
         break;

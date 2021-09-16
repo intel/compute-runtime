@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/api_specific_config.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
@@ -19,7 +20,7 @@ CommandStreamReceiver *createDrmCommandStreamReceiver(bool withAubDump,
                                                       uint32_t rootDeviceIndex,
                                                       const DeviceBitfield deviceBitfield) {
     if (withAubDump) {
-        return new CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<GfxFamily>>("aubfile",
+        return new CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<GfxFamily>>(ApiSpecificConfig::getName(),
                                                                                          executionEnvironment,
                                                                                          rootDeviceIndex,
                                                                                          deviceBitfield);

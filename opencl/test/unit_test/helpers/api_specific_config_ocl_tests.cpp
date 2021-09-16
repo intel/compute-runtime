@@ -16,7 +16,11 @@ TEST(ApiSpecificConfigOclTests, WhenGettingApiTypeThenCorrectTypeIsReturned) {
 }
 
 TEST(ApiSpecificConfigOclTests, WhenGettingAUBPrefixByApiTypeOCLIsReturned) {
-    EXPECT_EQ(0, strcmp("ocl_", ApiSpecificConfig::getAubPrefixForSpecificApi()));
+    EXPECT_EQ(0, strcmp("ocl_", ApiSpecificConfig::getAubPrefixForSpecificApi().c_str()));
+}
+
+TEST(ApiSpecificConfigOclTests, WhenGettingNameOCLIsReturned) {
+    EXPECT_EQ(0, strcmp("ocl", ApiSpecificConfig::getName().c_str()));
 }
 
 TEST(ApiSpecificConfigOclTests, WhenCheckingIfStatelessCompressionIsSupportedThenReturnTrue) {

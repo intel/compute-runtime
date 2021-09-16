@@ -10,6 +10,7 @@
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include "shared/source/command_stream/device_command_stream.h"
+#include "shared/source/helpers/api_specific_config.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
@@ -25,7 +26,7 @@ CommandStreamReceiver *createWddmCommandStreamReceiver(bool withAubDump,
                                                        uint32_t rootDeviceIndex,
                                                        const DeviceBitfield deviceBitfield) {
     if (withAubDump) {
-        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>("aubfile",
+        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>(ApiSpecificConfig::getName(),
                                                                                           executionEnvironment,
                                                                                           rootDeviceIndex,
                                                                                           deviceBitfield);

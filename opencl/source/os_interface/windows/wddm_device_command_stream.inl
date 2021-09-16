@@ -166,7 +166,7 @@ CommandStreamReceiver *createWddmDeviceCommandStreamReceiver(bool withAubDump,
                                                              uint32_t rootDeviceIndex,
                                                              const DeviceBitfield deviceBitfield) {
     if (withAubDump) {
-        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>("aubfile",
+        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>(ApiSpecificConfig::getName(),
                                                                                           executionEnvironment,
                                                                                           rootDeviceIndex,
                                                                                           deviceBitfield);

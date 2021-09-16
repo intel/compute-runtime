@@ -29,8 +29,8 @@ ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::OCL;
 }
 
-const char *ApiSpecificConfig::getAubPrefixForSpecificApi() {
-    return "ocl_";
+std::string ApiSpecificConfig::getName() {
+    return "ocl";
 }
 
 uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {
