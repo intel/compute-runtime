@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
@@ -20,7 +21,6 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
-#include "mock_gmm_client_context.h"
 #include "test_traits_common.h"
 
 #include <functional>

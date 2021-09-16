@@ -53,7 +53,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/ult_device_factory.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/ult_device_factory.h
-               ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_SUFIX_DIR}/mock_gmm_client_context.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_cif.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_command_stream_receiver.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compiler_interface_spirv.cpp

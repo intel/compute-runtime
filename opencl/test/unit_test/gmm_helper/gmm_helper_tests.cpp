@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/gmm_types_converter.h"
@@ -31,7 +32,6 @@
 #include "GL/gl.h"
 #include "GL/glext.h"
 #include "igfxfmid.h"
-#include "mock_gmm_client_context.h"
 
 using MockExecutionEnvironmentGmmFixtureTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
 

@@ -102,7 +102,6 @@ endif()
 
 target_include_directories(igdrcl_libult_env PRIVATE
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
-                           ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}
 )
 
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_ENABLE_TESTED_HW ${IGDRCL_SRCS_ENABLE_TESTED_HW})

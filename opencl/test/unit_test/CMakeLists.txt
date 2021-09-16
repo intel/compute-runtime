@@ -120,7 +120,6 @@ target_link_libraries(igdrcl_tests igdrcl_mocks)
 
 target_include_directories(igdrcl_tests PRIVATE
                            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}
-                           ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}
                            ${ENGINE_NODE_DIR}
                            ${KHRONOS_GL_HEADERS_DIR}
                            ${CMAKE_CURRENT_SOURCE_DIR}/config

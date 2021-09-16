@@ -56,8 +56,8 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.h
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}mock_gmm_client_context.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}mock_gmm_client_context.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_experimental_command_buffer.h
     ${NEO_CORE_tests_compiler_mocks}
 )
