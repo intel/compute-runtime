@@ -107,6 +107,7 @@ class MockKernel : public Kernel {
     using Kernel::getDevice;
     using Kernel::getHardwareInfo;
     using Kernel::hasDirectStatelessAccessToHostMemory;
+    using Kernel::hasDirectStatelessAccessToSharedBuffer;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
     using Kernel::isSchedulerKernel;
     using Kernel::kernelArgHandlers;

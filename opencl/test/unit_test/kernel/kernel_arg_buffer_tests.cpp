@@ -333,6 +333,23 @@ TEST_F(KernelArgBufferTest, givenBufferWhenHasDirectStatelessAccessToHostMemoryI
     }
 }
 
+TEST_F(KernelArgBufferTest, givenSharedBufferWhenHasDirectStatelessAccessToSharedBufferIsCalledThenReturnCorrectValue) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::SHARED_BUFFER);
+
+    auto val = (cl_mem)&buffer;
+    auto pVal = &val;
+
+    for (auto pureStatefulBufferAccess : {false, true}) {
+        pKernelInfo->setBufferStateful(0, pureStatefulBufferAccess);
+
+        auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_EQ(!pureStatefulBufferAccess, pKernel->hasDirectStatelessAccessToSharedBuffer());
+    }
+}
+
 TEST_F(KernelArgBufferTest, givenBufferInHostMemoryWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnCorrectValue) {
     MockBuffer buffer;
     buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
@@ -460,6 +477,28 @@ TEST_F(KernelArgBufferTest, whenSettingAuxTranslationRequiredThenIsAuxTranslatio
         pKernel->setAuxTranslationRequired(auxTranslationRequired);
         EXPECT_EQ(auxTranslationRequired, pKernel->isAuxTranslationRequired());
     }
+}
+
+TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessToSharedBufferWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrue) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::SHARED_BUFFER);
+
+    auto val = (cl_mem)&buffer;
+    auto pVal = &val;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pKernel->hasDirectStatelessAccessToSharedBuffer());
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+
+    pKernel->updateAuxTranslationRequired();
+
+    EXPECT_TRUE(pKernel->isAuxTranslationRequired());
 }
 
 TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrue) {

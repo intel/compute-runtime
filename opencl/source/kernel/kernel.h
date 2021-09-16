@@ -514,6 +514,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void resolveArgs();
 
     void reconfigureKernel();
+    bool hasDirectStatelessAccessToSharedBuffer() const;
     bool hasDirectStatelessAccessToHostMemory() const;
     bool hasIndirectStatelessAccessToHostMemory() const;
 

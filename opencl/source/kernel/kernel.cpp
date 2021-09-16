@@ -2530,6 +2530,19 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
     }
 }
 
+bool Kernel::hasDirectStatelessAccessToSharedBuffer() const {
+    for (uint32_t i = 0; i < getKernelArgsNumber(); i++) {
+        const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[i];
+        if (BUFFER_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
+            auto buffer = castToObject<Buffer>(getKernelArg(i));
+            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == GraphicsAllocation::AllocationType::SHARED_BUFFER) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool Kernel::hasDirectStatelessAccessToHostMemory() const {
     for (uint32_t i = 0; i < getKernelArgsNumber(); i++) {
         const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[i];
@@ -2848,7 +2861,9 @@ bool Kernel::requiresLimitedWorkgroupSize() const {
 void Kernel::updateAuxTranslationRequired() {
     const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
     if (hwInfoConfig.allowStatelessCompression(getDevice().getHardwareInfo())) {
-        if (hasDirectStatelessAccessToHostMemory() || hasIndirectStatelessAccessToHostMemory()) {
+        if (hasDirectStatelessAccessToHostMemory() ||
+            hasIndirectStatelessAccessToHostMemory() ||
+            hasDirectStatelessAccessToSharedBuffer()) {
             setAuxTranslationRequired(true);
         }
     }
