@@ -56,8 +56,6 @@ cmake_minimum_required (VERSION 3.2 FATAL_ERROR)
 
 project(l0_gpu_driver)
 
-set(SKIP_NEO_UNIT_TESTS TRUE)
-
 add_subdirectory($REPO_DIR l0_gpu_driver)
 EOF
 
