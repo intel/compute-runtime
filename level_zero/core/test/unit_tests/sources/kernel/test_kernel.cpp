@@ -63,7 +63,7 @@ TEST(KernelArgTest, givenKernelWhenSetArgUnknownCalledThenSuccessRteurned) {
 
 using KernelImpSetGroupSizeTest = Test<DeviceFixture>;
 
-HWTEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFromCapabilityTable) {
+TEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFromCapabilityTable) {
     Mock<Kernel> mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
     mockKernel.descriptor.kernelAttributes.simdSize = 1;
@@ -92,7 +92,7 @@ HWTEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFro
     }
 }
 
-HWTEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeDisabledWhenSettingGroupSizeThenLocalIdsAreNotGenerated) {
+TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeDisabledWhenSettingGroupSizeThenLocalIdsAreNotGenerated) {
     Mock<Kernel> mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
     mockKernel.descriptor.kernelAttributes.simdSize = 1;
@@ -108,7 +108,7 @@ HWTEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeDisabledWhenS
     EXPECT_EQ(nullptr, mockKernel.perThreadDataForWholeThreadGroup);
 }
 
-HWTEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeWhenSettingGroupSizeThenInvalidGroupSizeDimensionErrorIsReturned) {
+TEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeWhenSettingGroupSizeThenInvalidGroupSizeDimensionErrorIsReturned) {
     Mock<Kernel> mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
     for (auto i = 0u; i < 3u; i++) {
@@ -121,7 +121,7 @@ HWTEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeWhenSettingGroupSizeT
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, ret);
 }
 
-HWTEST_F(KernelImpSetGroupSizeTest, givenZeroGroupSizeWhenSettingGroupSizeThenInvalidArgumentErrorIsReturned) {
+TEST_F(KernelImpSetGroupSizeTest, givenZeroGroupSizeWhenSettingGroupSizeThenInvalidArgumentErrorIsReturned) {
     Mock<Kernel> mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
     for (auto i = 0u; i < 3u; i++) {
@@ -278,7 +278,7 @@ class KernelImmutableDataTests : public ModuleImmutableDataFixture, public ::tes
     }
 };
 
-HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThenPrivateMemoryIsNull) {
+TEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThenPrivateMemoryIsNull) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 0u;
     bool isInternal = false;
 
@@ -294,7 +294,7 @@ HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThen
     EXPECT_EQ(nullptr, kernel->privateMemoryGraphicsAllocation);
 }
 
-HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPrivateMemoryIsCreated) {
+TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPrivateMemoryIsCreated) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
     bool isInternal = false;
 
@@ -316,7 +316,7 @@ HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPr
 
 using KernelImmutableDataIsaCopyTests = KernelImmutableDataTests;
 
-HWTEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedWhenModuleIsCreated) {
+TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedWhenModuleIsCreated) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -346,7 +346,7 @@ HWTEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopie
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 }
 
-HWTEST_F(KernelImmutableDataIsaCopyTests, whenInternalKernelIsCreatedThenIsaIsCopiedWhenCreateKernelIsCalled) {
+TEST_F(KernelImmutableDataIsaCopyTests, whenInternalKernelIsCreatedThenIsaIsCopiedWhenCreateKernelIsCalled) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -378,7 +378,7 @@ HWTEST_F(KernelImmutableDataIsaCopyTests, whenInternalKernelIsCreatedThenIsaIsCo
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 }
 
-HWTEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKernelThenIsaIsCopied) {
+TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKernelThenIsaIsCopied) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -401,7 +401,7 @@ HWTEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserK
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 }
 
-HWTEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInternalKernelThenIsaIsNotCopied) {
+TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInternalKernelThenIsaIsNotCopied) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -426,7 +426,7 @@ HWTEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInter
 
 using KernelImmutableDataWithNullHeapTests = KernelImmutableDataTests;
 
-HWTEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedForUserKernelWithNullKernelHeapThenIsaIsNotCopied) {
+TEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedForUserKernelWithNullKernelHeapThenIsaIsNotCopied) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -454,7 +454,7 @@ HWTEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedFor
     mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = previousKernelHeap;
 }
 
-HWTEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedForInternalKernelWithNullKernelHeapThenIsaIsNotCopied) {
+TEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedForInternalKernelWithNullKernelHeapThenIsaIsNotCopied) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -482,7 +482,7 @@ HWTEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedFor
     mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = previousKernelHeap;
 }
 
-HWTEST_F(KernelImmutableDataWithNullHeapTests, whenInternalKernelIsCreatedWithNullKernelHeapThenIsaIsNotCopied) {
+TEST_F(KernelImmutableDataWithNullHeapTests, whenInternalKernelIsCreatedWithNullKernelHeapThenIsaIsNotCopied) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -517,7 +517,7 @@ HWTEST_F(KernelImmutableDataWithNullHeapTests, whenInternalKernelIsCreatedWithNu
     mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = previousKernelHeap;
 }
 
-HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenContainerHasOneExtraSpaceForAllocation) {
+TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenContainerHasOneExtraSpaceForAllocation) {
     std::string testFile;
     retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
 
@@ -573,7 +573,7 @@ HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCo
     EXPECT_EQ(sizeContainerWithoutPrivateMemory + 1u, sizeContainerWithPrivateMemory);
 }
 
-HWTEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMemoryThenPrivateMemoryIsNotAllocated) {
+TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMemoryThenPrivateMemoryIsNotAllocated) {
     std::string testFile;
     retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
 
@@ -690,7 +690,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseThenRayTracingIsNotInitial
 
 using KernelIndirectPropertiesFromIGCTests = KernelImmutableDataTests;
 
-HWTEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicThenHasIndirectAccessIsSetToFalse) {
+TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicThenHasIndirectAccessIsSetToFalse) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
 
@@ -717,7 +717,7 @@ HWTEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKerne
     EXPECT_FALSE(kernel->hasIndirectAccess());
 }
 
-HWTEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoadStoreAtomicThenHasIndirectAccessIsSetToTrue) {
+TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoadStoreAtomicThenHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
 
@@ -806,7 +806,7 @@ class KernelPropertiesTests : public ModuleFixture, public ::testing::Test {
     MockKernel *kernel = nullptr;
 };
 
-HWTEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
+TEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
     size_t kernelSize = 0;
     ze_result_t res = kernel->getKernelName(&kernelSize, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -826,7 +826,7 @@ HWTEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
     delete[] kernelNameRetrieved;
 }
 
-HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
+TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     ze_kernel_properties_t kernelProperties = {};
 
     kernelProperties.requiredNumSubGroups = std::numeric_limits<uint32_t>::max();
@@ -875,7 +875,7 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.mid)));
 }
 
-HWTEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructToGetPropertiesThenPreferredMultipleIsReturned) {
+TEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructToGetPropertiesThenPreferredMultipleIsReturned) {
     ze_kernel_properties_t kernelProperties = {};
     kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
 
@@ -895,7 +895,7 @@ HWTEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructToGetProperti
     }
 }
 
-HWTEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructWithWrongStypeSuccessIsReturnedAndNoFieldsInPreferredGroupSizeStructAreSet) {
+TEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructWithWrongStypeSuccessIsReturnedAndNoFieldsInPreferredGroupSizeStructAreSet) {
     ze_kernel_properties_t kernelProperties = {};
     kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
 
@@ -913,7 +913,7 @@ HWTEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructWithWrongStyp
     EXPECT_EQ(preferredGroupProperties.preferredMultiple, dummyPreferredMultiple);
 }
 
-HWTEST_F(KernelPropertiesTests, givenValidKernelThenProfilePropertiesAreRetrieved) {
+TEST_F(KernelPropertiesTests, givenValidKernelThenProfilePropertiesAreRetrieved) {
     zet_profile_properties_t kernelProfileProperties = {};
 
     kernelProfileProperties.flags = std::numeric_limits<uint32_t>::max();
@@ -926,7 +926,7 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelThenProfilePropertiesAreRetrieve
     EXPECT_EQ(0U, kernelProfileProperties.numTokens);
 }
 
-HWTEST_F(KernelPropertiesTests, whenSettingValidKernelIndirectAccessFlagsThenFlagsAreSetCorrectly) {
+TEST_F(KernelPropertiesTests, whenSettingValidKernelIndirectAccessFlagsThenFlagsAreSetCorrectly) {
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
     EXPECT_EQ(false, unifiedMemoryControls.indirectDeviceAllocationsAllowed);
     EXPECT_EQ(false, unifiedMemoryControls.indirectHostAllocationsAllowed);
@@ -944,7 +944,7 @@ HWTEST_F(KernelPropertiesTests, whenSettingValidKernelIndirectAccessFlagsThenFla
     EXPECT_EQ(true, unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-HWTEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAccessWithDeviceFlagThenCorrectFlagIsReturned) {
+TEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAccessWithDeviceFlagThenCorrectFlagIsReturned) {
     ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
     auto res = kernel->setIndirectAccess(flags);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -957,7 +957,7 @@ HWTEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAcce
     EXPECT_FALSE(returnedFlags & ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED);
 }
 
-HWTEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAccessWithHostFlagThenCorrectFlagIsReturned) {
+TEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAccessWithHostFlagThenCorrectFlagIsReturned) {
     ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST;
     auto res = kernel->setIndirectAccess(flags);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -970,7 +970,7 @@ HWTEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAcce
     EXPECT_FALSE(returnedFlags & ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED);
 }
 
-HWTEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAccessWithSharedFlagThenCorrectFlagIsReturned) {
+TEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAccessWithSharedFlagThenCorrectFlagIsReturned) {
     ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
     auto res = kernel->setIndirectAccess(flags);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -982,7 +982,7 @@ HWTEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAcce
     EXPECT_FALSE(returnedFlags & ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST);
     EXPECT_TRUE(returnedFlags & ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED);
 }
-HWTEST_F(KernelPropertiesTests, givenValidKernelWithIndirectAccessFlagsAndDisableIndirectAccessSetToZeroThenFlagsAreSet) {
+TEST_F(KernelPropertiesTests, givenValidKernelWithIndirectAccessFlagsAndDisableIndirectAccessSetToZeroThenFlagsAreSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
 
@@ -1027,7 +1027,7 @@ HWTEST2_F(KernelPropertiesTests, whenHasRTCallsIsFalseThenUsesRayTracingIsFalse,
 
 using KernelIndirectPropertiesTests = KernelPropertiesTests;
 
-HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessThenIndirectAccessIsSet) {
+TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessThenIndirectAccessIsSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = true;
@@ -1049,7 +1049,7 @@ HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelTh
     EXPECT_TRUE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessButWithDisableIndirectAccessSetThenIndirectAccessIsNotSet) {
+TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessButWithDisableIndirectAccessSetThenIndirectAccessIsNotSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(1);
     kernel->kernelHasIndirectAccess = true;
@@ -1071,7 +1071,7 @@ HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelTh
     EXPECT_FALSE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessAndDisableIndirectAccessNotSetThenIndirectAccessIsSet) {
+TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessAndDisableIndirectAccessNotSetThenIndirectAccessIsSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = true;
@@ -1093,7 +1093,7 @@ HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelTh
     EXPECT_TRUE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatDoesNotHaveIndirectAccessThenIndirectAccessIsNotSet) {
+TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatDoesNotHaveIndirectAccessThenIndirectAccessIsNotSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = false;
@@ -1115,7 +1115,7 @@ HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelTh
     EXPECT_FALSE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-HWTEST_F(KernelPropertiesTests, givenValidKernelIndirectAccessFlagsSetThenExpectKernelIndirectAllocationsAllowedTrue) {
+TEST_F(KernelPropertiesTests, givenValidKernelIndirectAccessFlagsSetThenExpectKernelIndirectAllocationsAllowedTrue) {
     EXPECT_EQ(false, kernel->hasIndirectAllocationsAllowed());
 
     ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
@@ -1125,7 +1125,7 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelIndirectAccessFlagsSetThenExpect
     EXPECT_EQ(true, kernel->hasIndirectAllocationsAllowed());
 }
 
-HWTEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSizeIsZero) {
+TEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSizeIsZero) {
     ze_kernel_properties_t kernelProperties = {};
 
     kernelProperties.spillMemSize = std::numeric_limits<uint32_t>::max();
@@ -1148,7 +1148,7 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSi
     EXPECT_EQ(0u, kernelProperties.spillMemSize);
 }
 
-HWTEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurfaceThenPrivateMemSizeIsZero) {
+TEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurfaceThenPrivateMemSizeIsZero) {
     ze_kernel_properties_t kernelProperties = {};
 
     kernelProperties.spillMemSize = std::numeric_limits<uint32_t>::max();
@@ -1171,14 +1171,14 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurf
     EXPECT_EQ(0u, kernelProperties.privateMemSize);
 }
 
-HWTEST_F(KernelPropertiesTests, givenValidKernelAndLargeSlmIsSetThenForceLargeSlmIsTrue) {
+TEST_F(KernelPropertiesTests, givenValidKernelAndLargeSlmIsSetThenForceLargeSlmIsTrue) {
     EXPECT_EQ(NEO::SlmPolicy::SlmPolicyNone, kernel->getSlmPolicy());
     ze_result_t res = kernel->setCacheConfig(ZE_CACHE_CONFIG_FLAG_LARGE_SLM);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(NEO::SlmPolicy::SlmPolicyLargeSlm, kernel->getSlmPolicy());
 }
 
-HWTEST_F(KernelPropertiesTests, givenValidKernelAndLargeDataIsSetThenForceLargeDataIsTrue) {
+TEST_F(KernelPropertiesTests, givenValidKernelAndLargeDataIsSetThenForceLargeDataIsTrue) {
     EXPECT_EQ(NEO::SlmPolicy::SlmPolicyNone, kernel->getSlmPolicy());
     ze_result_t res = kernel->setCacheConfig(ZE_CACHE_CONFIG_FLAG_LARGE_DATA);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -1187,7 +1187,7 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelAndLargeDataIsSetThenForceLargeD
 
 using KernelLocalIdsTest = Test<ModuleFixture>;
 
-HWTEST_F(KernelLocalIdsTest, WhenKernelIsCreatedThenDefaultLocalIdGenerationbyRuntimeIsTrue) {
+TEST_F(KernelLocalIdsTest, WhenKernelIsCreatedThenDefaultLocalIdGenerationbyRuntimeIsTrue) {
     createKernel();
 
     EXPECT_TRUE(kernel->requiresGenerationOfLocalIdsByRuntime());
@@ -1839,7 +1839,7 @@ HWTEST2_F(SetKernelArg, givenSupportsMediaBlockAndIsMediaBlockImageWhenSetArgIma
 }
 
 using ImportHostPointerSetKernelArg = Test<ImportHostPointerModuleFixture>;
-HWTEST_F(ImportHostPointerSetKernelArg, givenHostPointerImportedWhenSettingKernelArgThenUseHostPointerAllocation) {
+TEST_F(ImportHostPointerSetKernelArg, givenHostPointerImportedWhenSettingKernelArgThenUseHostPointerAllocation) {
     createKernel();
 
     auto ret = driverHandle->importExternalPointer(hostPointer, MemoryConstants::pageSize);
@@ -1875,7 +1875,7 @@ class KernelGlobalWorkOffsetTests : public ModuleFixture, public ::testing::Test
     L0::Kernel *kernel = nullptr;
 };
 
-HWTEST_F(KernelGlobalWorkOffsetTests, givenCallToSetGlobalWorkOffsetThenOffsetsAreSet) {
+TEST_F(KernelGlobalWorkOffsetTests, givenCallToSetGlobalWorkOffsetThenOffsetsAreSet) {
     uint32_t globalOffsetx = 10;
     uint32_t globalOffsety = 20;
     uint32_t globalOffsetz = 30;
@@ -1889,7 +1889,7 @@ HWTEST_F(KernelGlobalWorkOffsetTests, givenCallToSetGlobalWorkOffsetThenOffsetsA
     EXPECT_EQ(globalOffsetz, kernelImp->getGlobalOffsets()[2]);
 }
 
-HWTEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadDataIsPatched) {
+TEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadDataIsPatched) {
     uint32_t globalOffsetx = 10;
     uint32_t globalOffsety = 20;
     uint32_t globalOffsetz = 30;
@@ -1910,7 +1910,6 @@ HWTEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadData
 using KernelWorkDimTests = Test<ModuleImmutableDataFixture>;
 
 TEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadDataIsPatched) {
-
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData =
