@@ -219,7 +219,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenGe
     clReleaseContext(context);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenCreatingCommandQueueForRootDeviceWithMultipleSubDevicesThenInvalidValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenNonZeroFamilyIdWhenCreatingCommandQueueForRootDeviceWithMultipleSubDevicesThenInvalidValueIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     initPlatform();
@@ -228,7 +228,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenCr
     const cl_device_id deviceId = rootDevice;
     auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, nullptr);
 
-    cl_command_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, static_cast<uint32_t>(EngineGroupType::Compute), CL_QUEUE_INDEX_INTEL, 0, 0};
+    cl_command_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, 1u, CL_QUEUE_INDEX_INTEL, 0, 0};
     EXPECT_EQ(2u, rootDevice->getNumGenericSubDevices());
     cl_int retVal;
     auto commandQueue = clCreateCommandQueueWithProperties(context, rootDevice, properties, &retVal);

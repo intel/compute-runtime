@@ -12,8 +12,8 @@
 namespace NEO {
 
 enum class EngineGroupType : uint32_t {
-    RenderCompute = 0,
-    Compute,
+    Compute = 0,
+    RenderCompute,
     Copy,
     MaxEngineGroups
 };

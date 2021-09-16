@@ -11,6 +11,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -21,6 +22,7 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
@@ -555,6 +557,36 @@ HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocati
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     auto mockDevice(MockDevice::create<MockDeviceThatFailsToCreateGlobalFenceAllocation>(executionEnvironment, 0));
     EXPECT_EQ(nullptr, mockDevice);
+}
+
+HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingFirstEngineGroupsThenReturnCcs) {
+    struct MyHwHelper : HwHelperHw<FamilyType> {
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
+            if (engineType == aub_stream::ENGINE_RCS) {
+                return EngineGroupType::RenderCompute;
+            }
+            if (EngineHelpers::isCcs(engineType)) {
+                return EngineGroupType::Compute;
+            }
+            UNRECOVERABLE_IF(true);
+        }
+    };
+    RAIIHwHelperFactory<MyHwHelper> overrideHwHelper{::defaultHwInfo->platform.eRenderCoreFamily};
+
+    MockOsContext rcsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}));
+    EngineControl rcsEngine{nullptr, &rcsContext};
+
+    MockOsContext ccsContext(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::Regular}));
+    EngineControl ccsEngine{nullptr, &ccsContext};
+
+    MockDevice device{};
+    ASSERT_EQ(nullptr, device.getNonEmptyEngineGroup(0u));
+    device.addEngineToEngineGroup(rcsEngine);
+    device.addEngineToEngineGroup(ccsEngine);
+
+    const auto firstGroup = device.getNonEmptyEngineGroup(0u);
+    EXPECT_EQ(1u, firstGroup->size());
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_CCS, firstGroup->at(0).getEngineType());
 }
 
 TEST(DeviceGetEngineTest, givenHwCsrModeWhenGetEngineThenDedicatedForInternalUsageEngineIsReturned) {

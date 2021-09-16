@@ -46,6 +46,7 @@ struct MockSubDevice : public SubDevice {
 
 class MockDevice : public RootDevice {
   public:
+    using Device::addEngineToEngineGroup;
     using Device::commandStreamReceivers;
     using Device::createDeviceInternals;
     using Device::createEngine;

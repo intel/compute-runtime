@@ -1677,7 +1677,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQu
     EXPECT_EQ(properties[3], queueBcs.getQueueIndexWithinFamily());
 }
 
-HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenCreatingQueueThenInitializeOsContext) {
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenCreatingQueueThenInitializeOsContext) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
     DebugManager.flags.DeferOsContextInitialization.set(1);
@@ -1689,7 +1689,27 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular).osContext;
     EXPECT_FALSE(osContext.isInitialized());
 
-    fillProperties(properties, 1, 0);
+    const auto ccsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getIndexOfNonEmptyEngineGroup(EngineGroupType::Compute));
+    fillProperties(properties, ccsFamilyIndex, 0);
+    MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
+    ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
+    EXPECT_TRUE(osContext.isInitialized());
+}
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenCreatingQueueThenInitializeOsContext) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
+    DebugManager.flags.DeferOsContextInitialization.set(1);
+
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
+    MockContext context{};
+    cl_command_queue_properties properties[5] = {};
+
+    OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_RCS, EngineUsage::Regular).osContext;
+    EXPECT_FALSE(osContext.isInitialized());
+
+    const auto rcsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getIndexOfNonEmptyEngineGroup(EngineGroupType::RenderCompute));
+    fillProperties(properties, rcsFamilyIndex, 0);
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
     ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
     EXPECT_TRUE(osContext.isInitialized());
