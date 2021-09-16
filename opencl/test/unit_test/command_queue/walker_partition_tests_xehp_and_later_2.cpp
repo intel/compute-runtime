@@ -148,11 +148,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningEstima
               estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationNativeSectionsWhenItIsCalledThenProperSizeIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationSelfCleanupSectionsWhenItIsCalledThenProperSizeIsReturned) {
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = false;
     testArgs.synchronizeBeforeExecution = false;
-    testArgs.nativeCrossTileAtomicSync = true;
+    testArgs.emitSelfCleanup = true;
 
     auto expectedUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
                             sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 2 +
@@ -172,12 +172,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationNativeSections
               estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationNativeSectionsWhenAtomicsUsedForNativeThenProperSizeIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationSelfCleanupSectionsWhenAtomicsUsedForSelfCleanupThenProperSizeIsReturned) {
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = false;
     testArgs.synchronizeBeforeExecution = false;
-    testArgs.nativeCrossTileAtomicSync = true;
-    testArgs.useAtomicsForNativeCleanup = true;
+    testArgs.emitSelfCleanup = true;
+    testArgs.useAtomicsForSelfCleanup = true;
 
     auto expectedUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
                             sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 2 +
@@ -828,11 +828,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenNativeCrossTileSyncWhenDebugForceDisableCrossTileSyncThenNativeOverridesDebugAndAddsOwnCleanupSection) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDebugForceDisableCrossTileSyncThenSelfCleanupOverridesDebugAndAddsOwnCleanupSection) {
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
     checkForProperCmdBufferAddressOffset = false;
-    testArgs.nativeCrossTileAtomicSync = true;
+    testArgs.emitSelfCleanup = true;
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
@@ -1028,12 +1028,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenNativeCrossTileSyncWhenD
     EXPECT_EQ(miSemaphoreWait->getSemaphoreDataDword(), 2 * testArgs.tileCount);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenNativeCrossTileSyncAndAtomicsUsedForNativeWhenDebugForceDisableCrossTileSyncThenNativeOverridesDebugAndAddsOwnCleanupSection) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUsedForCleanupWhenDebugForceDisableCrossTileSyncThenSelfCleanupOverridesDebugAndAddsOwnCleanupSection) {
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
     checkForProperCmdBufferAddressOffset = false;
-    testArgs.nativeCrossTileAtomicSync = true;
-    testArgs.useAtomicsForNativeCleanup = true;
+    testArgs.emitSelfCleanup = true;
+    testArgs.useAtomicsForSelfCleanup = true;
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
@@ -1240,9 +1240,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
     testArgs.tileCount = 4u;
-    testArgs.nativeCrossTileAtomicSync = false;
-    testArgs.useAtomicsForNativeCleanup = false;
-    testArgs.usePipeControlStall = false;
+    testArgs.emitSelfCleanup = false;
+    testArgs.useAtomicsForSelfCleanup = false;
+    testArgs.emitPipeControlStall = false;
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;

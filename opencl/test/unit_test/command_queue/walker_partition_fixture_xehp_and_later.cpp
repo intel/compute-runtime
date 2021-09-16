@@ -11,9 +11,9 @@ void WalkerPartitionTests::SetUp() {
     cmdBufferAddress = cmdBuffer;
 
     testArgs.synchronizeBeforeExecution = false;
-    testArgs.nativeCrossTileAtomicSync = false;
+    testArgs.emitSelfCleanup = false;
     testArgs.initializeWparidRegister = true;
-    testArgs.usePipeControlStall = true;
+    testArgs.emitPipeControlStall = true;
     testArgs.crossTileAtomicSynchronization = true;
 }
 

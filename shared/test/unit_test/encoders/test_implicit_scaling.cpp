@@ -46,64 +46,64 @@ TEST_F(ImplicitScalingTests, givenMultiTileApiEnabledWhenOsSupportOffAndForcedOn
     EXPECT_FALSE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
 }
 
-TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingAtomicsForNativeCleanupThenExpectFalse) {
-    EXPECT_FALSE(ImplicitScalingHelper::useAtomicsForNativeCleanup());
+TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingAtomicsForSelfCleanupThenExpectFalse) {
+    EXPECT_FALSE(ImplicitScalingHelper::isAtomicsUsedForSelfCleanup());
 }
 
-TEST_F(ImplicitScalingTests, givenForceNotUseAtomicsWhenCheckingAtomicsForNativeCleanupThenExpectFalse) {
-    DebugManager.flags.UseAtomicsForNativeSectionCleanup.set(0);
-    EXPECT_FALSE(ImplicitScalingHelper::useAtomicsForNativeCleanup());
+TEST_F(ImplicitScalingTests, givenForceNotUseAtomicsWhenCheckingAtomicsForSelfCleanupThenExpectFalse) {
+    DebugManager.flags.UseAtomicsForSelfCleanupSection.set(0);
+    EXPECT_FALSE(ImplicitScalingHelper::isAtomicsUsedForSelfCleanup());
 }
 
-TEST_F(ImplicitScalingTests, givenForceUseAtomicsWhenCheckingAtomicsForNativeCleanupThenExpectTrue) {
-    DebugManager.flags.UseAtomicsForNativeSectionCleanup.set(1);
-    EXPECT_TRUE(ImplicitScalingHelper::useAtomicsForNativeCleanup());
+TEST_F(ImplicitScalingTests, givenForceUseAtomicsWhenCheckingAtomicsForSelfCleanupThenExpectTrue) {
+    DebugManager.flags.UseAtomicsForSelfCleanupSection.set(1);
+    EXPECT_TRUE(ImplicitScalingHelper::isAtomicsUsedForSelfCleanup());
 }
 
-TEST_F(ImplicitScalingTests, givenDefaultSettingsIsFalseWhenCheckingProgramNativeCleanupThenExpectFalse) {
-    EXPECT_FALSE(ImplicitScalingHelper::programNativeCleanup(false));
+TEST_F(ImplicitScalingTests, givenDefaultSettingsIsFalseWhenCheckingProgramSelfCleanupThenExpectFalse) {
+    EXPECT_FALSE(ImplicitScalingHelper::isSelfCleanupRequired(false));
 }
 
-TEST_F(ImplicitScalingTests, givenDefaultSettingsIsTrueWhenCheckingProgramNativeCleanupThenExpectTrue) {
-    EXPECT_TRUE(ImplicitScalingHelper::programNativeCleanup(true));
+TEST_F(ImplicitScalingTests, givenDefaultSettingsIsTrueWhenCheckingProgramSelfCleanupThenExpectTrue) {
+    EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(true));
 }
 
-TEST_F(ImplicitScalingTests, givenForceNotProgramNativeCleanupWhenDefaultNativeCleanupIsTrueThenExpectFalse) {
-    DebugManager.flags.ProgramNativeCleanup.set(0);
-    EXPECT_FALSE(ImplicitScalingHelper::programNativeCleanup(true));
+TEST_F(ImplicitScalingTests, givenForceNotProgramSelfCleanupWhenDefaultSelfCleanupIsTrueThenExpectFalse) {
+    DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(0);
+    EXPECT_FALSE(ImplicitScalingHelper::isSelfCleanupRequired(true));
 }
 
-TEST_F(ImplicitScalingTests, givenForceProgramNativeCleanupWhenDefaultNativeCleanupIsFalseThenExpectTrue) {
-    DebugManager.flags.ProgramNativeCleanup.set(1);
-    EXPECT_TRUE(ImplicitScalingHelper::programNativeCleanup(false));
+TEST_F(ImplicitScalingTests, givenForceProgramSelfCleanupWhenDefaultSelfCleanupIsFalseThenExpectTrue) {
+    DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(1);
+    EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(false));
 }
 
 TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingToProgramWparidRegisterThenExpectTrue) {
-    EXPECT_TRUE(ImplicitScalingHelper::initWparidRegister());
+    EXPECT_TRUE(ImplicitScalingHelper::isWparidRegisterInitializationRequired());
 }
 
 TEST_F(ImplicitScalingTests, givenForceNotProgramWparidRegisterWhenCheckingRegisterProgramThenExpectFalse) {
     DebugManager.flags.WparidRegisterProgramming.set(0);
-    EXPECT_FALSE(ImplicitScalingHelper::initWparidRegister());
+    EXPECT_FALSE(ImplicitScalingHelper::isWparidRegisterInitializationRequired());
 }
 
 TEST_F(ImplicitScalingTests, givenForceProgramWparidRegisterWhenCheckingRegisterProgramThenExpectTrue) {
     DebugManager.flags.WparidRegisterProgramming.set(1);
-    EXPECT_TRUE(ImplicitScalingHelper::initWparidRegister());
+    EXPECT_TRUE(ImplicitScalingHelper::isWparidRegisterInitializationRequired());
 }
 
 TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingToUsePipeControlThenExpectTrue) {
-    EXPECT_TRUE(ImplicitScalingHelper::usePipeControl());
+    EXPECT_TRUE(ImplicitScalingHelper::isPipeControlStallRequired());
 }
 
 TEST_F(ImplicitScalingTests, givenForceNotUsePipeControlWhenCheckingPipeControlUseThenExpectFalse) {
     DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
-    EXPECT_FALSE(ImplicitScalingHelper::usePipeControl());
+    EXPECT_FALSE(ImplicitScalingHelper::isPipeControlStallRequired());
 }
 
 TEST_F(ImplicitScalingTests, givenForceUsePipeControlWhenCheckingPipeControlUseThenExpectTrue) {
     DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
-    EXPECT_TRUE(ImplicitScalingHelper::usePipeControl());
+    EXPECT_TRUE(ImplicitScalingHelper::isPipeControlStallRequired());
 }
 
 TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingSemaphoreUseThenExpectFalse) {

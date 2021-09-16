@@ -1088,7 +1088,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     WalkerPartition::WalkerPartitionArgs testArgs = {};
     testArgs.initializeWparidRegister = true;
     testArgs.crossTileAtomicSynchronization = true;
-    testArgs.usePipeControlStall = true;
+    testArgs.emitPipeControlStall = true;
     testArgs.partitionCount = 2u;
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
@@ -1171,7 +1171,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsMul
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
     testArgs.initializeWparidRegister = true;
-    testArgs.usePipeControlStall = true;
+    testArgs.emitPipeControlStall = true;
     testArgs.crossTileAtomicSynchronization = true;
     testArgs.partitionCount = 16u;
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
@@ -1386,7 +1386,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenDispatchPr
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhenEnqueuePartitionWalkerThenExpectNoNativeCrossTileSyncCleanup) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhenEnqueuePartitionWalkerThenExpectNoSelfCleanupSection) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     if (!OSInterface::osEnableLocalMemory) {

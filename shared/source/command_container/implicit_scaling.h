@@ -27,17 +27,17 @@ struct ImplicitScalingHelper {
     static bool isSemaphoreProgrammingRequired();
     static bool isCrossTileAtomicRequired();
     static bool isSynchronizeBeforeExecutionRequired();
-    static bool useAtomicsForNativeCleanup();
-    static bool programNativeCleanup(bool defaultNativeCleanup);
-    static bool initWparidRegister();
-    static bool usePipeControl();
+    static bool isAtomicsUsedForSelfCleanup();
+    static bool isSelfCleanupRequired(bool defaultSelfCleanup);
+    static bool isWparidRegisterInitializationRequired();
+    static bool isPipeControlStallRequired();
 };
 
 template <typename GfxFamily>
 struct ImplicitScalingDispatch {
     using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
-    static size_t getSize(bool nativeCrossTileAtomicSync,
+    static size_t getSize(bool emitSelfCleanup,
                           bool preferStaticPartitioning,
                           const DeviceBitfield &devices,
                           const Vec3<size_t> &groupStart,
@@ -47,7 +47,7 @@ struct ImplicitScalingDispatch {
                                  const DeviceBitfield &devices,
                                  uint32_t &partitionCount,
                                  bool useSecondaryBatchBuffer,
-                                 bool nativeCrossTileAtomicSync,
+                                 bool emitSelfCleanup,
                                  bool usesImages,
                                  uint64_t workPartitionAllocationGpuVa);
 };

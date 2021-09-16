@@ -416,10 +416,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithNativeCrossTileSyncWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithSelfCleanupWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
-    testArgs.nativeCrossTileAtomicSync = true;
+    testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
 
     checkForProperCmdBufferAddressOffset = false;
@@ -564,11 +564,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithNativeCrossTileSyncAndSyncDisabledWithFlagWhenConstructCommandBufferIsCalledThenStillProgramTheSync) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithSelfCleanupAndCrossTileSyncDisabledWithFlagWhenConstructCommandBufferIsCalledThenStillProgramTheSync) {
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
-    testArgs.nativeCrossTileAtomicSync = true;
+    testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -712,11 +712,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithNativeCrossTileSyncAndAtomicsForNativeWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithSelfCleanupAndAtomicsForSelfCleanupWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
-    testArgs.useAtomicsForNativeCleanup = true;
-    testArgs.nativeCrossTileAtomicSync = true;
+    testArgs.useAtomicsForSelfCleanup = true;
+    testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -866,12 +866,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithNativeCrossTileSyncAndSyncDisabledWithFlagWhenUsingAtomicForNativeAndConstructCommandBufferIsCalledThenStillProgramTheSync) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithSlefCleanupAndCrossTileSyncDisabledWithFlagWhenUsingAtomicForSelfCleanupAndConstructCommandBufferIsCalledThenStillProgramTheSync) {
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
-    testArgs.nativeCrossTileAtomicSync = true;
-    testArgs.useAtomicsForNativeCleanup = true;
+    testArgs.emitSelfCleanup = true;
+    testArgs.useAtomicsForSelfCleanup = true;
     testArgs.staticPartitioning = true;
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -1159,9 +1159,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.initializeWparidRegister = false;
-    testArgs.nativeCrossTileAtomicSync = false;
+    testArgs.emitSelfCleanup = false;
     testArgs.crossTileAtomicSynchronization = false;
-    testArgs.useAtomicsForNativeCleanup = false;
+    testArgs.useAtomicsForSelfCleanup = false;
     testArgs.staticPartitioning = true;
 
     checkForProperCmdBufferAddressOffset = false;
@@ -1218,10 +1218,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhenPipeControlProgrammingDisabledThenExpectNoPipeControlCommand) {
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
-    testArgs.nativeCrossTileAtomicSync = false;
-    testArgs.usePipeControlStall = false;
+    testArgs.emitSelfCleanup = false;
+    testArgs.emitPipeControlStall = false;
     testArgs.crossTileAtomicSynchronization = false;
-    testArgs.useAtomicsForNativeCleanup = false;
+    testArgs.useAtomicsForSelfCleanup = false;
     testArgs.staticPartitioning = true;
 
     checkForProperCmdBufferAddressOffset = false;

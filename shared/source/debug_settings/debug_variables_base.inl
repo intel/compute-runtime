@@ -239,8 +239,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disa
 DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWalkerInWparidMode, -1, "-1: default, 0: do not synchronize 1: synchronize all tiles prior to doing work distrubution")
 DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWithSemaphores, -1, "-1: default (disabled),  1: Emit Semaphores waiting after Walker completion in WPARID mode 0: do not emit semaphores after Walker")
 DECLARE_DEBUG_VARIABLE(int32_t, UseCrossAtomicSynchronization, -1, "-1: default (enabled), 1: Cross Tile Atomic Synchronization present 0: Cross tile atomic synchronization disabled")
-DECLARE_DEBUG_VARIABLE(int32_t, UseAtomicsForNativeSectionCleanup, -1, "-1: default (disabled), 0: use store data op, 1: use atomic op")
-DECLARE_DEBUG_VARIABLE(int32_t, ProgramNativeCleanup, -1, "-1: default (API dependent), 0: Do not program native cleanup, 1: program native cleanup")
+DECLARE_DEBUG_VARIABLE(int32_t, UseAtomicsForSelfCleanupSection, -1, "-1: default (disabled), 0: use store data op, 1: use atomic op")
+DECLARE_DEBUG_VARIABLE(int32_t, ProgramWalkerPartitionSelfCleanup, -1, "-1: default (API dependent), 0: Do not program self cleanup, 1: program self cleanup")
 DECLARE_DEBUG_VARIABLE(int32_t, WparidRegisterProgramming, -1, "-1: default (enabled), 0: do not program wparid register, 1: programing wparid register")
 DECLARE_DEBUG_VARIABLE(int32_t, UsePipeControlAfterPartitionedWalker, -1, "-1: default (enabled), 0: do not add PipeControl, 1: add PipeControl")
 

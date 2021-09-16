@@ -12,7 +12,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool nativeCrossTileAtomicSync,
+size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool emitSelfCleanup,
                                                    bool preferStaticPartitioning,
                                                    const DeviceBitfield &devices,
                                                    const Vec3<size_t> &groupStart,
@@ -34,12 +34,12 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool nativeCrossTileAtomicSyn
     args.partitionCount = partitionCount;
     args.tileCount = tileCount;
     args.synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
-    args.useAtomicsForNativeCleanup = ImplicitScalingHelper::useAtomicsForNativeCleanup();
-    args.nativeCrossTileAtomicSync = ImplicitScalingHelper::programNativeCleanup(nativeCrossTileAtomicSync);
-    args.initializeWparidRegister = ImplicitScalingHelper::initWparidRegister();
+    args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
+    args.emitSelfCleanup = ImplicitScalingHelper::isSelfCleanupRequired(emitSelfCleanup);
+    args.initializeWparidRegister = ImplicitScalingHelper::isWparidRegisterInitializationRequired();
     args.crossTileAtomicSynchronization = ImplicitScalingHelper::isCrossTileAtomicRequired();
     args.semaphoreProgrammingRequired = ImplicitScalingHelper::isSemaphoreProgrammingRequired();
-    args.usePipeControlStall = ImplicitScalingHelper::usePipeControl();
+    args.emitPipeControlStall = ImplicitScalingHelper::isPipeControlStallRequired();
     args.emitBatchBufferEnd = false;
     args.staticPartitioning = staticPartitioning;
 
@@ -52,7 +52,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                           const DeviceBitfield &devices,
                                                           uint32_t &partitionCount,
                                                           bool useSecondaryBatchBuffer,
-                                                          bool nativeCrossTileAtomicSync,
+                                                          bool emitSelfCleanup,
                                                           bool usesImages,
                                                           uint64_t workPartitionAllocationGpuVa) {
     uint32_t totalProgrammedSize = 0u;
@@ -67,12 +67,12 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
     args.partitionCount = partitionCount;
     args.tileCount = tileCount;
     args.synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
-    args.useAtomicsForNativeCleanup = ImplicitScalingHelper::useAtomicsForNativeCleanup();
-    args.nativeCrossTileAtomicSync = ImplicitScalingHelper::programNativeCleanup(nativeCrossTileAtomicSync);
-    args.initializeWparidRegister = ImplicitScalingHelper::initWparidRegister();
+    args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
+    args.emitSelfCleanup = ImplicitScalingHelper::isSelfCleanupRequired(emitSelfCleanup);
+    args.initializeWparidRegister = ImplicitScalingHelper::isWparidRegisterInitializationRequired();
     args.crossTileAtomicSynchronization = ImplicitScalingHelper::isCrossTileAtomicRequired();
     args.semaphoreProgrammingRequired = ImplicitScalingHelper::isSemaphoreProgrammingRequired();
-    args.usePipeControlStall = ImplicitScalingHelper::usePipeControl();
+    args.emitPipeControlStall = ImplicitScalingHelper::isPipeControlStallRequired();
     args.emitBatchBufferEnd = false;
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;
     args.staticPartitioning = staticPartitioning;

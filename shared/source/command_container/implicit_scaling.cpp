@@ -28,46 +28,49 @@ bool ImplicitScalingHelper::isImplicitScalingEnabled(const DeviceBitfield &devic
 
 bool ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired() {
     auto synchronizeBeforeExecution = false;
-    if (DebugManager.flags.SynchronizeWalkerInWparidMode.get() != -1) {
-        synchronizeBeforeExecution = static_cast<bool>(DebugManager.flags.SynchronizeWalkerInWparidMode.get());
+    int overrideSynchronizeBeforeExecution = DebugManager.flags.SynchronizeWalkerInWparidMode.get();
+    if (overrideSynchronizeBeforeExecution != -1) {
+        synchronizeBeforeExecution = !!overrideSynchronizeBeforeExecution;
     }
     return synchronizeBeforeExecution;
 }
 
 bool ImplicitScalingHelper::isSemaphoreProgrammingRequired() {
     auto semaphoreProgrammingRequired = ImplicitScaling::semaphoreProgrammingRequired;
-    if (NEO::DebugManager.flags.SynchronizeWithSemaphores.get() == 1) {
-        semaphoreProgrammingRequired = true;
+    int overrideSemaphoreProgrammingRequired = NEO::DebugManager.flags.SynchronizeWithSemaphores.get();
+    if (overrideSemaphoreProgrammingRequired != -1) {
+        semaphoreProgrammingRequired = !!overrideSemaphoreProgrammingRequired;
     }
     return semaphoreProgrammingRequired;
 }
 
 bool ImplicitScalingHelper::isCrossTileAtomicRequired() {
     auto crossTileAtomicSynchronization = ImplicitScaling::crossTileAtomicSynchronization;
-    if (NEO::DebugManager.flags.UseCrossAtomicSynchronization.get() == 0) {
-        crossTileAtomicSynchronization = false;
+    int overrideCrossTileAtomicSynchronization = NEO::DebugManager.flags.UseCrossAtomicSynchronization.get();
+    if (overrideCrossTileAtomicSynchronization != -1) {
+        crossTileAtomicSynchronization = !!overrideCrossTileAtomicSynchronization;
     }
     return crossTileAtomicSynchronization;
 }
 
-bool ImplicitScalingHelper::useAtomicsForNativeCleanup() {
+bool ImplicitScalingHelper::isAtomicsUsedForSelfCleanup() {
     bool useAtomics = false;
-    int overrideUseAtomics = DebugManager.flags.UseAtomicsForNativeSectionCleanup.get();
+    int overrideUseAtomics = DebugManager.flags.UseAtomicsForSelfCleanupSection.get();
     if (overrideUseAtomics != -1) {
         useAtomics = !!(overrideUseAtomics);
     }
     return useAtomics;
 }
 
-bool ImplicitScalingHelper::programNativeCleanup(bool defaultNativeCleanup) {
-    int overrideProgramNativeCleanup = DebugManager.flags.ProgramNativeCleanup.get();
-    if (overrideProgramNativeCleanup != -1) {
-        defaultNativeCleanup = !!(overrideProgramNativeCleanup);
+bool ImplicitScalingHelper::isSelfCleanupRequired(bool defaultSelfCleanup) {
+    int overrideProgramSelfCleanup = DebugManager.flags.ProgramWalkerPartitionSelfCleanup.get();
+    if (overrideProgramSelfCleanup != -1) {
+        defaultSelfCleanup = !!(overrideProgramSelfCleanup);
     }
-    return defaultNativeCleanup;
+    return defaultSelfCleanup;
 }
 
-bool ImplicitScalingHelper::initWparidRegister() {
+bool ImplicitScalingHelper::isWparidRegisterInitializationRequired() {
     bool initWparidRegister = true;
     int overrideInitWparidRegister = DebugManager.flags.WparidRegisterProgramming.get();
     if (overrideInitWparidRegister != -1) {
@@ -76,13 +79,13 @@ bool ImplicitScalingHelper::initWparidRegister() {
     return initWparidRegister;
 }
 
-bool ImplicitScalingHelper::usePipeControl() {
-    bool usePipeControl = true;
+bool ImplicitScalingHelper::isPipeControlStallRequired() {
+    bool emitPipeControl = true;
     int overrideUsePipeControl = DebugManager.flags.UsePipeControlAfterPartitionedWalker.get();
     if (overrideUsePipeControl != -1) {
-        usePipeControl = !!(overrideUsePipeControl);
+        emitPipeControl = !!(overrideUsePipeControl);
     }
-    return usePipeControl;
+    return emitPipeControl;
 }
 
 } // namespace NEO

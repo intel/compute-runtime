@@ -975,7 +975,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelThenExpectNativeCrossTileCleanupSection) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelThenExpectSelfCleanupSection) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -1028,9 +1028,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 
     WalkerPartition::WalkerPartitionArgs args = {};
     args.initializeWparidRegister = true;
-    args.usePipeControlStall = true;
+    args.emitPipeControlStall = true;
     args.partitionCount = partitionCount;
-    args.nativeCrossTileAtomicSync = true;
+    args.emitSelfCleanup = true;
 
     auto cleanupSectionOffset = WalkerPartition::computeControlSectionOffset<FamilyType>(args);
     uint64_t expectedCleanupGpuVa = cmdContainer->getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
