@@ -6,6 +6,7 @@
 
 set(NEO_CORE_PROGRAM
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/heap_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/print_formatter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/print_formatter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/program_info.cpp
