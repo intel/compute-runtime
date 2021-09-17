@@ -561,7 +561,7 @@ HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocati
 
 HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingFirstEngineGroupsThenReturnCcs) {
     struct MyHwHelper : HwHelperHw<FamilyType> {
-        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
             if (engineType == aub_stream::ENGINE_RCS) {
                 return EngineGroupType::RenderCompute;
             }
