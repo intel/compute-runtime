@@ -6,9 +6,9 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/global_environment.h"
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
-#include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/helpers/kernel_filename_helper.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

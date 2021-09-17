@@ -9,9 +9,9 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/test/unit_test/global_environment.h"
 
 #include "cl_api_tests.h"
 #include "compiler_options.h"

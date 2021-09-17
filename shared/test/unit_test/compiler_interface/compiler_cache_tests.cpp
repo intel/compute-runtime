@@ -11,9 +11,9 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/test/common/libult/global_environment.h"
 
 #include "opencl/source/compiler_interface/default_cl_cache_config.h"
-#include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

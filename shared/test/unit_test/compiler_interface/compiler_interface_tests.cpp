@@ -12,12 +12,12 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_cif.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/global_environment.h"
 #include "test.h"
 
 #include "gmock/gmock.h"

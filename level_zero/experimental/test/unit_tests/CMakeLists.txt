@@ -27,7 +27,6 @@ add_executable(
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.h
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/sources/builtin/create_ult_builtin_functions_lib.cpp
                ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
@@ -50,7 +49,6 @@ target_sources(
                PRIVATE
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/io_functions.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
                $<TARGET_OBJECTS:igdrcl_libult_common>
 )

@@ -8,9 +8,9 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/global_environment.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

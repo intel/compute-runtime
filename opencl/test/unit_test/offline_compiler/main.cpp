@@ -6,9 +6,8 @@
  */
 
 #include "shared/source/os_interface/os_library.h"
+#include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/test_files.h"
-
-#include "opencl/test/unit_test/custom_event_listener.h"
 
 #include "environment.h"
 #include "limits.h"

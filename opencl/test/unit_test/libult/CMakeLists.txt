@@ -47,9 +47,7 @@ add_library(igdrcl_libult_cs OBJECT EXCLUDE_FROM_ALL
 )
 
 set(IGDRCL_SRCS_LIB_ULT_ENV
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/custom_event_listener.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.h
+    ${NEO_SOURCE_DIR}/shared/test/common/helpers/custom_event_listener.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/main.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/options_unit_tests.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/command_queue/command_queue_fixture.cpp

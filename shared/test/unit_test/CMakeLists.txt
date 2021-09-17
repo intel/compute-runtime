@@ -28,7 +28,6 @@ if(NOT SKIP_UNIT_TESTS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
                  ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp

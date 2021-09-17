@@ -13,13 +13,13 @@
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
-#include "opencl/test/unit_test/custom_event_listener.h"
 #include "opencl/test/unit_test/linux/drm_wrap.h"
 #include "opencl/test/unit_test/linux/mock_os_layer.h"
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
@@ -40,6 +40,11 @@ namespace NEO {
 void __attribute__((destructor)) platformsDestructor();
 extern const DeviceDescriptor deviceDescriptorTable[];
 } // namespace NEO
+
+NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
+    return nullptr;
+}
+
 using namespace NEO;
 
 class DrmTestsFixture {

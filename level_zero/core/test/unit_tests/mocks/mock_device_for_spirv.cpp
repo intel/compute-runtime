@@ -9,8 +9,8 @@
 
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 
-#include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
