@@ -55,7 +55,7 @@ if(UNIX)
                      TARGET run_unit_tests
                      POST_BUILD
                      COMMAND echo running tests for linux dynamic library - .so in ${TargetDir}
-                     COMMAND igdrcl_linux_dll_tests ${IGDRCL_TESTS_LISTENER_OPTION}
+                     COMMAND igdrcl_linux_dll_tests ${NEO_TESTS_LISTENER_OPTION}
                      COMMAND WORKING_DIRECTORY ${TargetDir}
   )
 endif()
@@ -117,14 +117,6 @@ endif()
 
 target_link_libraries(igdrcl_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
-
-option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" OFF)
-
-if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
-  set(IGDRCL_TESTS_LISTENER_OPTION "--disable_default_listener")
-else()
-  set(IGDRCL_TESTS_LISTENER_OPTION "--enable_default_listener")
-endif()
 
 target_include_directories(igdrcl_tests PRIVATE
                            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}

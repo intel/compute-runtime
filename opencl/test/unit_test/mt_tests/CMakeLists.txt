@@ -8,12 +8,6 @@ project(igdrcl_mt_tests)
 
 set(OPENCL_MT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
-
-if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
-  set(igdrcl_mt_tests_LISTENER_OPTION "--disable_default_listener")
-endif()
-
 add_custom_target(run_mt_unit_tests)
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt

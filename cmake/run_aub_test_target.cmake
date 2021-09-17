@@ -63,7 +63,7 @@ if(NOT SKIP_NEO_UNIT_TESTS)
                      POST_BUILD
                      COMMAND WORKING_DIRECTORY ${TargetDir}
                      COMMAND echo Running AUB generation for ${product} in ${TargetDir}/${product}_aub
-                     COMMAND ${aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${IGDRCL_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
+                     COMMAND ${aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${NEO_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
   )
 endif()
 
