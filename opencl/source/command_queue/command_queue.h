@@ -313,7 +313,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return requiresCacheFlushAfterWalker;
     }
 
-    void updateBcsTaskCount(uint32_t newBcsTaskCount) { this->bcsTaskCount = newBcsTaskCount; }
+    void updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount);
     uint32_t peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const;
 
     void updateLatestSentEnqueueType(EnqueueProperties::Operation newEnqueueType) { this->latestSentEnqueueType = newEnqueueType; }
@@ -379,7 +379,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     EnqueueProperties::Operation latestSentEnqueueType = EnqueueProperties::Operation::None;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
-    uint32_t bcsTaskCount = 0;
+    CopyEngineState bcsState = {};
 
     bool perfCountersEnabled = false;
 

@@ -261,11 +261,11 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstruct
     setMockKernelArgs(std::array<Buffer *, 3>{{buffer0.get(), buffer1.get(), buffer2.get()}});
 
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    auto initialBcsTaskCount = mockCmdQ->bcsTaskCount;
+    auto initialBcsTaskCount = mockCmdQ->peekBcsTaskCount(bcsCsr->getOsContext().getEngineType());
 
     mockCmdQ->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    EXPECT_EQ(mockCmdQ->bcsTaskCount, initialBcsTaskCount + 1);
+    EXPECT_EQ(initialBcsTaskCount + 1, mockCmdQ->peekBcsTaskCount(bcsCsr->getOsContext().getEngineType()));
 
     // Gpgpu command buffer
     {
@@ -330,7 +330,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstruct
     setMockKernelArgs(std::array<Buffer *, 3>{{buffer0.get(), buffer1.get(), buffer2.get()}});
 
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    auto initialBcsTaskCount = mockCmdQ->bcsTaskCount;
+    auto initialBcsTaskCount = mockCmdQ->peekBcsTaskCount(bcsCsr->getOsContext().getEngineType());
 
     UserEvent userEvent;
     cl_event waitlist[] = {&userEvent};
@@ -338,7 +338,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstruct
     mockCmdQ->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, lws, 1, waitlist, nullptr);
     userEvent.setStatus(CL_COMPLETE);
 
-    EXPECT_EQ(mockCmdQ->bcsTaskCount, initialBcsTaskCount + 1);
+    EXPECT_EQ(initialBcsTaskCount + 1, mockCmdQ->peekBcsTaskCount(bcsCsr->getOsContext().getEngineType()));
 
     // Gpgpu command buffer
     {
@@ -1287,7 +1287,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventWithNotreadyBcsTaskCount
 
     *gpgpuCsr->getTagAddress() = gpgpuTaskCount;
     *bcsCsr->getTagAddress() = bcsTaskCount - 1;
-    commandQueue->updateBcsTaskCount(bcsTaskCount);
+    commandQueue->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), bcsTaskCount);
 
     Event event(commandQueue.get(), CL_COMMAND_WRITE_BUFFER, 1, gpgpuTaskCount);
     event.setupBcs(bcsCsr->getOsContext().getEngineType());
@@ -1427,7 +1427,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventFromCpuCopyWhenWaitingFo
     commandQueue->taskCount = 1;
 
     ultBcsCsr->taskCount = 2;
-    commandQueue->updateBcsTaskCount(2);
+    commandQueue->updateBcsTaskCount(ultBcsCsr->getOsContext().getEngineType(), 2);
 
     cl_event outEvent1, outEvent2;
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &outEvent1);

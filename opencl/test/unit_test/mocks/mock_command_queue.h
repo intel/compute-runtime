@@ -199,7 +199,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
   public:
     using BaseClass::bcsEngine;
-    using BaseClass::bcsTaskCount;
+    using BaseClass::bcsState;
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;

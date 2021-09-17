@@ -138,6 +138,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
     bool executionModelKernel = kernel->isParentKernel;
     auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
+    auto bcsCsrForAuxTranslation = commandQueue.getBcsForAuxTranslation();
 
     auto commandStreamReceiverOwnership = commandStreamReceiver.obtainUniqueOwnership();
     bool isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
@@ -204,13 +205,12 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        auto &bcsCsr = *commandQueue.getBcsForAuxTranslation();
         CsrDependencies csrDeps;
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, bcsCsr, CsrDependencies::DependenciesType::All);
+        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, *bcsCsrForAuxTranslation, CsrDependencies::DependenciesType::All);
 
         BlitProperties::setupDependenciesForAuxTranslation(kernelOperation->blitPropertiesContainer, *timestampPacketDependencies,
                                                            *currentTimestampPacketNodes, csrDeps,
-                                                           commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
+                                                           commandQueue.getGpgpuCommandStreamReceiver(), *bcsCsrForAuxTranslation);
     }
 
     const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
@@ -288,8 +288,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     uint32_t bcsTaskCount = 0u;
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        bcsTaskCount = commandQueue.getBcsForAuxTranslation()->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
-        commandQueue.updateBcsTaskCount(bcsTaskCount);
+        bcsTaskCount = bcsCsrForAuxTranslation->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+        commandQueue.updateBcsTaskCount(bcsCsrForAuxTranslation->getOsContext().getEngineType(), bcsTaskCount);
     }
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
 
@@ -326,9 +326,8 @@ void CommandWithoutKernel::dispatchBlitOperation() {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(blitProperties.csrDependencies, *bcsCsr);
     }
 
-    auto bcsTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
-
-    commandQueue.updateBcsTaskCount(bcsTaskCount);
+    const auto newTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+    commandQueue.updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
 }
 
 CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {

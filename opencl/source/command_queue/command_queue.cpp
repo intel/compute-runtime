@@ -87,6 +87,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
             auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
             bcsEngine = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
+            bcsState.engineType = bcsEngineType;
         }
     }
 
@@ -177,7 +178,7 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
 
     if (gpgpuHwTag >= gpgpuTaskCount) {
         if (bcsState.isValid()) {
-            return *getBcsCommandStreamReceiver(bcsState.engineType)->getTagAddress() >= bcsTaskCount;
+            return *getBcsCommandStreamReceiver(bcsState.engineType)->getTagAddress() >= peekBcsTaskCount(bcsState.engineType);
         }
 
         return true;
@@ -192,7 +193,7 @@ void CommandQueue::waitForLatestTaskCount() {
         deferredTimestampPackets->swapNodes(nodesToRelease);
     }
 
-    waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
+    waitUntilComplete(taskCount, this->bcsState.taskCount, flushStamp->peekStamp(), false);
 }
 
 void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
@@ -631,9 +632,14 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
     }
 }
 
+void CommandQueue::updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount) {
+    UNRECOVERABLE_IF(bcsEngine->getEngineType() != bcsEngineType);
+    this->bcsState.taskCount = newBcsTaskCount;
+}
+
 uint32_t CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const {
     UNRECOVERABLE_IF(bcsEngine->getEngineType() != bcsEngineType);
-    return this->bcsTaskCount;
+    return this->bcsState.taskCount;
 }
 
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
@@ -883,6 +889,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
 
     if (isEngineCopyOnly) {
         bcsEngine = &device->getEngine(engineType, EngineUsage::Regular);
+        bcsState.engineType = engineType;
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
