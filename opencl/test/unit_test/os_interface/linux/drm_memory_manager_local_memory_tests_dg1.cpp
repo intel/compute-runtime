@@ -171,6 +171,8 @@ class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
 };
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObjectInMemoryRegionIsCalledThenBufferObjectWithAGivenGpuAddressAndSizeIsCreatedAndAllocatedInASpecifiedMemoryRegion) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
     drm_i915_memory_region_info regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
@@ -210,22 +212,6 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObjectInMemoryRegionIsCalledWithoutMemoryInfoThenNullBufferObjectIsReturned) {
     mock->memoryInfo.reset(nullptr);
-
-    auto gpuAddress = 0x1234u;
-    auto size = MemoryConstants::pageSize;
-
-    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
-                                                                                            gpuAddress,
-                                                                                            size,
-                                                                                            MemoryBanks::MainBank,
-                                                                                            1));
-    EXPECT_EQ(nullptr, bo);
-}
-
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObjectInMemoryRegionIsCalledWithIncorrectRegionInfoThenNullBufferObjectIsReturned) {
-    drm_i915_memory_region_info regionInfo = {};
-
-    mock->memoryInfo.reset(new MemoryInfoImpl(&regionInfo, 0));
 
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize;

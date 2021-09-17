@@ -73,6 +73,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableFlushTaskSubmission, false, "true: driver use
 DECLARE_DEBUG_VARIABLE(bool, DoNotFreeResources, false, "true: driver stops freeing resources")
 DECLARE_DEBUG_VARIABLE(bool, AllowMixingRegularAndCooperativeKernels, false, "true: driver allows mixing regular and cooperative kernels in a single command list and in a single execute")
 DECLARE_DEBUG_VARIABLE(bool, AllowPatchingVfeStateInCommandLists, false, "true: MEDIA_VFE_STATE may be programmed in a command list")
+DECLARE_DEBUG_VARIABLE(bool, PrintMemoryRegionSizes, false, "print memory bank type, instance and it's size")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "DeviceId selected for testing")
 DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "-1: disable, 0+: tile mask, each bit corresponds to tile")
@@ -348,3 +349,4 @@ DECLARE_DEBUG_VARIABLE(bool, UseUmKmDataTranslator, false, "Use helper library f
 DECLARE_DEBUG_VARIABLE(bool, SkipFlushingEventsOnGetStatusCalls, false, "When set to 1, events are not causing internal flush when querying for CL_EVENT_COMMAND_EXECUTION_STATUS")
 DECLARE_DEBUG_VARIABLE(bool, AllowUnrestrictedSize, false, "Allow allocating memory with greater size than MAX_MEM_ALLOC_SIZE")
 DECLARE_DEBUG_VARIABLE(bool, ProgramAdditionalPipeControlBeforeStateComputeModeCommand, false, "Program additional PIPE CONTROL command before STATE_COMPUTE_MODE command")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideDrmRegion, -1, "-1: disable, 0+: override to given memory region for all allocations")

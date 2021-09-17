@@ -27,11 +27,8 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
     if (!memoryInfo) {
         return nullptr;
     }
-
-    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(memoryBanks);
-    if (regionClassAndInstance.memory_class == MemoryInfoImpl::invalidMemoryRegion()) {
-        return nullptr;
-    }
+    auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
 
     drm_i915_gem_memory_class_instance memRegions{};
     memRegions.memory_class = regionClassAndInstance.memory_class;
