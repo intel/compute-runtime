@@ -37,9 +37,10 @@ PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo,
         return new PrintfHandler(device);
     }
     auto mainKernel = multiDispatchInfo.peekMainKernel();
-    if ((mainKernel != nullptr) &&
-        mainKernel->checkIfIsParentKernelAndBlocksUsesPrintf()) {
-        return new PrintfHandler(device);
+    if (mainKernel != nullptr) {
+        if (mainKernel->checkIfIsParentKernelAndBlocksUsesPrintf() || mainKernel->getImplicitArgs()) {
+            return new PrintfHandler(device);
+        }
     }
     return nullptr;
 }

@@ -593,7 +593,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, givenCsrInBatchingModeWh
         size_t gws[3] = {1, 1, 1};
 
         MockContext context(pClDevice);
-        std::unique_ptr<MockParentKernel> kernelToRun(MockParentKernel::create(context, false, false, false, false, false));
+        MockParentKernel::CreateParams createParams{};
+        std::unique_ptr<MockParentKernel> kernelToRun(MockParentKernel::create(context, createParams));
 
         pCmdQ->enqueueKernel(kernelToRun.get(), 1, offset, gws, gws, 0, nullptr, nullptr);
 

@@ -948,7 +948,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
     cl_queue_properties queueProperties = {};
     auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pClDevice, queueProperties);
     context->setDefaultDeviceQueue(mockDevQueue.get());
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
+
+    MockParentKernel::CreateParams createParams{};
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, createParams));
     parentKernel->initialize();
 
     parentKernel->auxTranslationRequired = false;
@@ -967,7 +969,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelButNoDeviceQ
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     size_t gws[3] = {1, 0, 0};
 
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
+    MockParentKernel::CreateParams createParams{};
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, createParams));
     parentKernel->initialize();
 
     auto status = cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
