@@ -36,9 +36,11 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     if (subDevicesCount > 1) {
         strfilename << subDevicesCount << "tx";
     }
-    std::stringstream strExtendedFileName(filename.c_str());
+    std::stringstream strExtendedFileName;
+
+    strExtendedFileName << filename;
     if (DebugManager.flags.GenerateAubFilePerProcessId.get()) {
-        strExtendedFileName << "PID_" << SysCalls::getProcessId();
+        strExtendedFileName << "_PID_" << SysCalls::getProcessId();
     }
     strfilename << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << rootDeviceIndex << "_" << strExtendedFileName.str() << ".aub";
 

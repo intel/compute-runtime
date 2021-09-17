@@ -1008,7 +1008,7 @@ HWTEST_F(AubFileStreamTests, givenGenerateAubFilePerProcessIdDebugFlagAndAubComm
 
     DebugManager.flags.GenerateAubFilePerProcessId.set(1);
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", 1u);
-    std::stringstream strExtendedFileName("_1_aubfile");
-    strExtendedFileName << "_PID_" << SysCalls::getProcessId() << ".aub";
+    std::stringstream strExtendedFileName;
+    strExtendedFileName << "_1_aubfile_PID_" << SysCalls::getProcessId() << ".aub";
     EXPECT_NE(std::string::npos, fullName.find(strExtendedFileName.str()));
 }
