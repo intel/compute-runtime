@@ -257,10 +257,6 @@ void CommandStreamReceiver::cleanupResources() {
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
-    return waitForCompletionWithTimeout(getTagAddress(), enableTimeout, timeoutMicroseconds, taskCountToWait, 1u, 0u);
-}
-
-bool CommandStreamReceiver::waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait, uint32_t partitionCount, uint32_t offsetSize) {
     std::chrono::high_resolution_clock::time_point time1, time2;
     int64_t timeDiff = 0;
 
@@ -275,10 +271,9 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(volatile uint32_t *poll
         }
     }
 
-    volatile uint32_t *partitionAddress = pollAddress;
-
+    volatile uint32_t *partitionAddress = getTagAddress();
     time1 = std::chrono::high_resolution_clock::now();
-    for (uint32_t i = 0; i < partitionCount; i++) {
+    for (uint32_t i = 0; i < activePartitions; i++) {
         while (*partitionAddress < taskCountToWait && timeDiff <= timeoutMicroseconds) {
             if (WaitUtils::waitFunction(partitionAddress, taskCountToWait)) {
                 break;
@@ -290,16 +285,16 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(volatile uint32_t *poll
             }
         }
 
-        partitionAddress = ptrOffset(partitionAddress, offsetSize);
+        partitionAddress = ptrOffset(partitionAddress, CommonConstants::partitionAddressOffset);
     }
 
-    partitionAddress = pollAddress;
-    for (uint32_t i = 0; i < partitionCount; i++) {
+    partitionAddress = getTagAddress();
+    for (uint32_t i = 0; i < activePartitions; i++) {
         if (*partitionAddress < taskCountToWait) {
             return false;
         }
 
-        partitionAddress = ptrOffset(partitionAddress, offsetSize);
+        partitionAddress = ptrOffset(partitionAddress, CommonConstants::partitionAddressOffset);
     }
     return true;
 }

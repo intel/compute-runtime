@@ -14,6 +14,7 @@ using namespace NEO;
 template <typename GfxFamily>
 class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
   public:
+    using CommandStreamReceiver::activePartitions;
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::createPreemptionAllocation;
@@ -84,22 +85,18 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     struct WaitUserFenceResult {
         uint32_t called = 0u;
         uint32_t waitValue = 0u;
-        uint32_t partitionCount = 0;
-        uint32_t offsetSize = 0;
         int returnValue = 0;
         bool callParent = true;
     };
 
     WaitUserFenceResult waitUserFenceResult;
 
-    int waitUserFence(uint32_t waitValue, uint32_t partitionCount, uint32_t offsetSize) override {
+    int waitUserFence(uint32_t waitValue) override {
         waitUserFenceResult.called++;
         waitUserFenceResult.waitValue = waitValue;
-        waitUserFenceResult.partitionCount = partitionCount;
-        waitUserFenceResult.offsetSize = offsetSize;
 
         if (waitUserFenceResult.callParent) {
-            return DrmCommandStreamReceiver<GfxFamily>::waitUserFence(waitValue, partitionCount, offsetSize);
+            return DrmCommandStreamReceiver<GfxFamily>::waitUserFence(waitValue);
         } else {
             return waitUserFenceResult.returnValue;
         }

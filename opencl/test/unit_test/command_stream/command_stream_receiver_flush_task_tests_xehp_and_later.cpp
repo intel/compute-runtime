@@ -683,3 +683,38 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiverStream.getGraphicsAllocation()));
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenMultipleActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOn) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    flushTask(commandStreamReceiver, true);
+
+    parseCommands<FamilyType>(commandStream, 0);
+    parsePipeControl = true;
+    findHardwareCommands<FamilyType>();
+
+    uint64_t gpuAddressTagAllocation = commandStreamReceiver.getTagAllocation()->getGpuAddress();
+    uint32_t gpuAddressLow = static_cast<uint32_t>(gpuAddressTagAllocation & 0x0000FFFFFFFFULL);
+    uint32_t gpuAddressHigh = static_cast<uint32_t>(gpuAddressTagAllocation >> 32);
+    bool pipeControlTagUpdate = false;
+    bool pipeControlWorkloadPartition = false;
+    auto itorPipeControl = pipeControlList.begin();
+    while (itorPipeControl != pipeControlList.end()) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
+        if (pipeControl->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            pipeControlTagUpdate = true;
+            if (pipeControl->getWorkloadPartitionIdOffsetEnable()) {
+                pipeControlWorkloadPartition = true;
+                EXPECT_EQ(gpuAddressLow, pipeControl->getAddress());
+                EXPECT_EQ(gpuAddressHigh, pipeControl->getAddressHigh());
+                EXPECT_EQ(4u, pipeControl->getImmediateData());
+                break;
+            }
+        }
+    }
+    EXPECT_TRUE(pipeControlTagUpdate);
+    EXPECT_TRUE(pipeControlWorkloadPartition);
+}

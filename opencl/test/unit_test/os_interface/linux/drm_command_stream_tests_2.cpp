@@ -902,7 +902,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
     mock->ioctl_cnt.gemWait = 0;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(-1, mock->gemWaitTimeout);
@@ -925,7 +925,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutU
     mock->ioctl_cnt.gemWait = 0;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(1000, mock->gemWaitTimeout);
@@ -960,7 +960,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     }
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
@@ -994,7 +994,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
@@ -1023,7 +1023,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
-    EXPECT_ANY_THROW(testedCsr->waitForFlushStamp(handleToWait, 1, 0));
+    EXPECT_ANY_THROW(testedCsr->waitForFlushStamp(handleToWait));
 
     EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
@@ -1054,7 +1054,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);

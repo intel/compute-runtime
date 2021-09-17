@@ -319,7 +319,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCallingInsertAubWa
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     ASSERT_FALSE(aubCsr->pollForCompletionCalled);
-    aubCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false, 1, 0);
+    aubCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
     EXPECT_TRUE(aubCsr->pollForCompletionCalled);
 }
 

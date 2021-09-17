@@ -199,9 +199,7 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcs
     getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait,
                                                                           flushStampToWait,
                                                                           useQuickKmdSleep,
-                                                                          forcePowerSavingMode,
-                                                                          1u,
-                                                                          0u);
+                                                                          forcePowerSavingMode);
     DEBUG_BREAK_IF(getHwTag() < gpgpuTaskCountToWait);
 
     if (gtpinIsGTPinInitialized()) {
@@ -210,7 +208,7 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcs
 
     if (bcsEngine) {
         auto bcsCsr = getBcsCommandStreamReceiver(bcsEngine->getEngineType());
-        bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCountToWait, 0, false, false, 1u, 0u);
+        bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCountToWait, 0, false, false);
         bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(bcsTaskCountToWait);
     }
 

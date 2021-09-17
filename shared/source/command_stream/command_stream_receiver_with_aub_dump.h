@@ -40,8 +40,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     }
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                               bool useQuickKmdSleep, bool forcePowerSavingMode,
-                                               uint32_t partitionCount, uint32_t offsetSize) override;
+                                               bool useQuickKmdSleep, bool forcePowerSavingMode) override;
 
     size_t getPreferredTagPoolSize() const override { return 1; }
 

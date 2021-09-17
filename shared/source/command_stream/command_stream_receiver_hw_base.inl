@@ -230,6 +230,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             PipeControlArgs args(dispatchFlags.dcFlush);
             args.notifyEnable = isUsedNotifyEnableForPostSync();
             args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
+            args.workloadPartitionOffset = this->activePartitions > 1;
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 commandStreamTask,
                 PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
@@ -865,7 +866,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) {
+inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
     updateTagFromWait();
 
     int64_t waitTimeout = 0;
@@ -877,20 +878,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
                        "\nWaiting for task count %u at location %p. Current value: %u\n",
                        taskCountToWait, getTagAddress(), *getTagAddress());
 
-    bool status;
-    if (partitionCount > 1) {
-        status = waitForCompletionWithTimeout(getTagAddress(), enableTimeout, waitTimeout, taskCountToWait, partitionCount, offsetSize);
-    } else {
-        status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
-    }
+    bool status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
     if (!status) {
-        waitForFlushStamp(flushStampToWait, partitionCount, offsetSize);
+        waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
-        if (partitionCount > 1) {
-            status = waitForCompletionWithTimeout(getTagAddress(), false, 0, taskCountToWait, partitionCount, offsetSize);
-        } else {
-            status = waitForCompletionWithTimeout(false, 0, taskCountToWait);
-        }
+        status = waitForCompletionWithTimeout(false, 0, taskCountToWait);
     }
     UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);
 
@@ -1125,7 +1117,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
     lock.unlock();
     if (blocking) {
-        waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false, 1, 0);
+        waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
     }
 

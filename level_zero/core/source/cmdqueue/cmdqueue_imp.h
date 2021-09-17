@@ -37,7 +37,7 @@ struct CommandQueueImp : public CommandQueue {
 
         ze_result_t initialize(Device *device, size_t sizeRequested);
         void destroy(NEO::MemoryManager *memoryManager);
-        void switchBuffers(NEO::CommandStreamReceiver *csr, uint32_t partitionCount, uint32_t offsetSize);
+        void switchBuffers(NEO::CommandStreamReceiver *csr);
 
         NEO::GraphicsAllocation *getCurrentBufferAllocation() {
             return buffers[bufferUse];
@@ -61,9 +61,6 @@ struct CommandQueueImp : public CommandQueue {
         defaultQueueCmdBufferSize +
         MemoryConstants::cacheLineSize +
         NEO::CSRequirements::csOverfetchSize;
-
-    static constexpr uint32_t addressOffsetDwords = 2u;
-    static constexpr uint32_t addressOffset = sizeof(uint32_t) * addressOffsetDwords;
 
     CommandQueueImp() = delete;
     CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc);

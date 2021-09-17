@@ -439,7 +439,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSinglePartitionWhenCallingWaitKmdNot
     commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
     commandStreamReceiver.returnWaitForCompletionWithTimeout = false;
 
-    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false, 1, 0);
+    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
     EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
 }
 
@@ -448,8 +448,8 @@ HWTEST_F(UltCommandStreamReceiverTest, givenMultiplePartitionsWhenCallingWaitKmd
     commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
     commandStreamReceiver.returnWaitForCompletionWithTimeout = false;
 
-    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false, 2, 8);
-    EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountExplicitCalled);
+    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
 }
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTests;

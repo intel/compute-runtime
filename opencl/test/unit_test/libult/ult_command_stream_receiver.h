@@ -54,6 +54,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::sshState;
     using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::wasSubmittedToSingleSubdevice;
+    using BaseClass::CommandStreamReceiver::activePartitions;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::canUse4GbHeaps;
     using BaseClass::CommandStreamReceiver::checkForNewResources;
@@ -163,15 +164,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         waitForCompletionWithTimeoutTaskCountCalled++;
         if (callBaseWaitForCompletionWithTimeout) {
             return BaseClass::waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
-        }
-        return returnWaitForCompletionWithTimeout;
-    }
-
-    bool waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait, uint32_t partitionCount, uint32_t offsetSize) override {
-        latestWaitForCompletionWithTimeoutTaskCountExplicit.store(taskCountToWait);
-        waitForCompletionWithTimeoutTaskCountExplicitCalled++;
-        if (callBaseWaitForCompletionWithTimeout) {
-            return BaseClass::waitForCompletionWithTimeout(pollAddress, enableTimeout, timeoutMicroseconds, taskCountToWait, partitionCount, offsetSize);
         }
         return returnWaitForCompletionWithTimeout;
     }
@@ -292,10 +284,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     std::atomic<uint32_t> recursiveLockCounter;
     std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
-    std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCountExplicit{0};
-
     std::atomic<uint32_t> waitForCompletionWithTimeoutTaskCountCalled{0};
-    std::atomic<uint32_t> waitForCompletionWithTimeoutTaskCountExplicitCalled{0};
 
     LinearStream *lastFlushedCommandStream = nullptr;
 

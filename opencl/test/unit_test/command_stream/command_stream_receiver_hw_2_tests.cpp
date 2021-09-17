@@ -579,22 +579,17 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
         void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                   bool useQuickKmdSleep, bool forcePowerSavingMode,
-                                                   uint32_t partitionCount, uint32_t offsetSize) override {
+                                                   bool useQuickKmdSleep, bool forcePowerSavingMode) override {
             waitForTaskCountWithKmdNotifyFallbackCalled++;
             taskCountToWaitPassed = taskCountToWait;
             flushStampToWaitPassed = flushStampToWait;
             useQuickKmdSleepPassed = useQuickKmdSleep;
             forcePowerSavingModePassed = forcePowerSavingMode;
-            partitionCountPassed = partitionCount;
-            offsetSizePassed = offsetSize;
         }
 
         FlushStamp flushStampToWaitPassed = 0;
         uint32_t taskCountToWaitPassed = 0;
         uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
-        uint32_t partitionCountPassed = 0;
-        uint32_t offsetSizePassed = 0;
         bool useQuickKmdSleepPassed = false;
         bool forcePowerSavingModePassed = false;
     };
@@ -630,8 +625,7 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
     EXPECT_EQ(myMockCsr->flushStamp->peekStamp(), myMockCsr->flushStampToWaitPassed);
     EXPECT_FALSE(myMockCsr->useQuickKmdSleepPassed);
     EXPECT_FALSE(myMockCsr->forcePowerSavingModePassed);
-    EXPECT_EQ(1u, myMockCsr->partitionCountPassed);
-    EXPECT_EQ(0u, myMockCsr->offsetSizePassed);
+    EXPECT_EQ(1u, myMockCsr->activePartitions);
 }
 
 HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {

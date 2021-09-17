@@ -131,21 +131,28 @@ TEST_F(FenceSynchronizeTest, givenMultiplePartitionsWhenFenceIsResetThenAllParti
 
     auto fence = whitebox_cast(Fence::create(&cmdQueue, nullptr));
     EXPECT_NE(nullptr, fence);
-
-    fence->partitionCount = 2;
     auto alloc = &(fence->getAllocation());
     auto hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
+
+    for (uint32_t i = 0; i < 16; i++) {
+        EXPECT_EQ(Fence::STATE_CLEARED, *hostAddr);
+        hostAddr = ptrOffset(hostAddr, 8);
+    }
+
+    hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
+    fence->partitionCount = 2;
     *hostAddr = Fence::STATE_SIGNALED;
-    hostAddr = ptrOffset(hostAddr, CommandQueueImp::addressOffset);
+    hostAddr = ptrOffset(hostAddr, 8);
     *hostAddr = Fence::STATE_SIGNALED;
 
     ze_result_t result = fence->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
-    EXPECT_EQ(Fence::STATE_CLEARED, *hostAddr);
-    hostAddr = ptrOffset(hostAddr, CommandQueueImp::addressOffset);
-    EXPECT_EQ(Fence::STATE_CLEARED, *hostAddr);
+    for (uint32_t i = 0; i < 16; i++) {
+        EXPECT_EQ(Fence::STATE_CLEARED, *hostAddr);
+        hostAddr = ptrOffset(hostAddr, 8);
+    }
     EXPECT_EQ(1u, fence->partitionCount);
 
     fence->destroy();

@@ -60,7 +60,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
 void CommandQueueImp::reserveLinearStreamSize(size_t size) {
     UNRECOVERABLE_IF(commandStream == nullptr);
     if (commandStream->getAvailableSpace() < size) {
-        buffers.switchBuffers(csr, partitionCount, addressOffset);
+        buffers.switchBuffers(csr);
         NEO::GraphicsAllocation *nextBufferAllocation = buffers.getCurrentBufferAllocation();
         commandStream->replaceBuffer(nextBufferAllocation->getUnderlyingBuffer(),
                                      defaultQueueCmdBufferSize);
@@ -79,6 +79,7 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
     commandStream->getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
     commandStream->getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
 
+    csr->setActivePartitions(partitionCount);
     csr->submitBatchBuffer(batchBuffer, csr->getResidencyAllocations());
     buffers.setCurrentFlushStamp(csr->peekTaskCount(), csr->obtainCurrentFlushStamp());
 }
@@ -86,7 +87,7 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
 ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
     if ((timeout == std::numeric_limits<uint64_t>::max()) && useKmdWaitFunction) {
         auto &waitPair = buffers.getCurrentFlushStamp();
-        csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, false, partitionCount, addressOffset);
+        csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, false);
         postSyncOperations();
         return ZE_RESULT_SUCCESS;
     } else {
@@ -105,12 +106,7 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
         timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
     }
 
-    bool ready = false;
-    if (partitionCount > 1) {
-        ready = csr->waitForCompletionWithTimeout(csr->getTagAddress(), enableTimeout, timeoutMicroseconds, taskCountToWait, partitionCount, addressOffset);
-    } else {
-        ready = csr->waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
-    }
+    bool ready = csr->waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
     if (!ready) {
         return ZE_RESULT_NOT_READY;
     }
@@ -196,7 +192,7 @@ void CommandQueueImp::CommandBufferManager::destroy(NEO::MemoryManager *memoryMa
     }
 }
 
-void CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamReceiver *csr, uint32_t partitionCount, uint32_t offsetSize) {
+void CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamReceiver *csr) {
     if (bufferUse == BUFFER_ALLOCATION::FIRST) {
         bufferUse = BUFFER_ALLOCATION::SECOND;
     } else {
@@ -206,7 +202,7 @@ void CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamRece
     auto completionId = flushId[bufferUse];
     if (completionId.second != 0u) {
         UNRECOVERABLE_IF(csr == nullptr);
-        csr->waitForTaskCountWithKmdNotifyFallback(completionId.first, completionId.second, false, false, partitionCount, offsetSize);
+        csr->waitForTaskCountWithKmdNotifyFallback(completionId.first, completionId.second, false, false);
     }
 }
 

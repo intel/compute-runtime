@@ -50,7 +50,7 @@ void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batch
 }
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue, uint32_t partitionCount, uint32_t offsetSize) {
+int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue) {
     int ret = 0;
     StackVec<uint32_t, 32> ctxIds;
     uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
@@ -62,15 +62,15 @@ int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue, uint3
                 ctxIds.push_back(ctxId);
             }
         }
-        UNRECOVERABLE_IF(ctxIds.size() != partitionCount);
-        for (uint32_t i = 0; i < partitionCount; i++) {
+        UNRECOVERABLE_IF(ctxIds.size() != this->activePartitions);
+        for (uint32_t i = 0; i < this->activePartitions; i++) {
             ret |= this->drm->waitUserFence(ctxIds[i], tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout, 0u);
-            tagAddress += offsetSize;
+            tagAddress += CommonConstants::partitionAddressOffset;
         }
     } else {
-        for (uint32_t i = 0; i < partitionCount; i++) {
+        for (uint32_t i = 0; i < this->activePartitions; i++) {
             ret |= this->drm->waitUserFence(0u, tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout, 0u);
-            tagAddress += offsetSize;
+            tagAddress += CommonConstants::partitionAddressOffset;
         }
     }
 

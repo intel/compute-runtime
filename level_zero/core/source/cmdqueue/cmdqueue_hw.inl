@@ -139,6 +139,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     bool directSubmissionEnabled = isCopyOnlyCommandQueue ? csr->isBlitterDirectSubmissionEnabled() : csr->isDirectSubmissionEnabled();
+    partitionCount = csr->getActivePartitions();
 
     L0::Fence *fence = nullptr;
 
@@ -417,7 +418,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                                  workPartitionAddress);
         NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(child,
                                                  NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                                 addressOffset,
+                                                 CommonConstants::partitionAddressOffset,
                                                  true);
     }
 

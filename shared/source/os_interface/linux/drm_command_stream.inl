@@ -228,10 +228,10 @@ GmmPageTableMngr *DrmCommandStreamReceiver<GfxFamily>::createPageTableManager() 
 }
 
 template <typename GfxFamily>
-bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp, uint32_t partitionCount, uint32_t offsetSize) {
+bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
     auto waitValue = static_cast<uint32_t>(flushStamp);
     if (isUserFenceWaitActive()) {
-        waitUserFence(waitValue, partitionCount, offsetSize);
+        waitUserFence(waitValue);
     } else {
         this->drm->waitHandle(waitValue, kmdWaitTimeout);
     }

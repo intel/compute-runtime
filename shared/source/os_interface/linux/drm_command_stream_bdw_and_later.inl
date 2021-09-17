@@ -17,7 +17,7 @@ void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batch
 }
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue, uint32_t partitionCount, uint32_t offsetSize) {
+int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue) {
     uint32_t ctxId = 0u;
     uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
     if (useContextForUserFenceWait) {
