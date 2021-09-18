@@ -106,8 +106,9 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     this->kernelInfo = kernelInfo;
     this->kernelDescriptor = &kernelInfo->kernelDescriptor;
 
-    auto neoDevice = device->getNEODevice();
-    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto neoDevice = deviceImp->getActiveDevice();
+    auto memoryManager = neoDevice->getMemoryManager();
 
     auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
     const auto allocType = internalKernel ? NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL : NEO::GraphicsAllocation::AllocationType::KERNEL_ISA;

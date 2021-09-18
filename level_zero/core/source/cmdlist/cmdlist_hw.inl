@@ -132,7 +132,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     commandContainer.setReservedSshSize(getReserveSshSize());
-    auto returnValue = commandContainer.initialize(static_cast<DeviceImp *>(device)->neoDevice);
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice());
     ze_result_t returnType = parseErrorCode(returnValue);
     if (returnType == ZE_RESULT_SUCCESS) {
         if (!isCopyOnly()) {
