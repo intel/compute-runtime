@@ -20,13 +20,13 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
+#include "shared/test/unit_test/base_ult_config_listener.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "gmock/gmock.h"
 
@@ -75,8 +75,6 @@ extern std::string lastTest;
 bool generateRandomInput = false;
 
 void applyWorkarounds() {
-    platformsImpl = new std::vector<std::unique_ptr<Platform>>;
-    platformsImpl->reserve(1);
     {
         std::ofstream f;
         const std::string fileName("_tmp_");
@@ -381,7 +379,7 @@ int main(int argc, char **argv) {
     }
 
     listeners.Append(new MemoryLeakListener);
-    listeners.Append(new UltConfigListener);
+    listeners.Append(new BaseUltConfigListener);
 
     gEnvironment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));
 
@@ -450,8 +448,6 @@ int main(int argc, char **argv) {
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
 
     retVal = RUN_ALL_TESTS();
-
-    delete platformsImpl;
 
     return retVal;
 }

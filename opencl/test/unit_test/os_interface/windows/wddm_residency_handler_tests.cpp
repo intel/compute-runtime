@@ -27,26 +27,28 @@ struct WddmMemoryOperationsHandlerTest : public WddmTest {
     void SetUp() override {
         WddmTest::SetUp();
         wddmMemoryOperationsHandler = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        wddmAllocation.handle = 0x2u;
+        wddmAllocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmClientContext());
+        wddmFragmentedAllocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmClientContext());
+        wddmAllocation->handle = 0x2u;
 
         osHandleStorageFirst = std::make_unique<OsHandleWin>();
         osHandleStorageSecond = std::make_unique<OsHandleWin>();
 
-        wddmFragmentedAllocation.fragmentsStorage.fragmentCount = 2;
-        wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage = osHandleStorageFirst.get();
-        static_cast<OsHandleWin *>(wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage)->handle = 0x3u;
-        wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage = osHandleStorageSecond.get();
-        static_cast<OsHandleWin *>(wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage)->handle = 0x4u;
+        wddmFragmentedAllocation->fragmentsStorage.fragmentCount = 2;
+        wddmFragmentedAllocation->fragmentsStorage.fragmentStorageData[0].osHandleStorage = osHandleStorageFirst.get();
+        static_cast<OsHandleWin *>(wddmFragmentedAllocation->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->handle = 0x3u;
+        wddmFragmentedAllocation->fragmentsStorage.fragmentStorageData[1].osHandleStorage = osHandleStorageSecond.get();
+        static_cast<OsHandleWin *>(wddmFragmentedAllocation->fragmentsStorage.fragmentStorageData[1].osHandleStorage)->handle = 0x4u;
 
-        allocationPtr = &wddmAllocation;
+        allocationPtr = wddmAllocation.get();
 
-        allocationData.push_back(&wddmAllocation);
-        allocationData.push_back(&wddmFragmentedAllocation);
+        allocationData.push_back(wddmAllocation.get());
+        allocationData.push_back(wddmFragmentedAllocation.get());
     }
 
     std::unique_ptr<WddmMemoryOperationsHandler> wddmMemoryOperationsHandler;
-    MockWddmAllocation wddmAllocation;
-    MockWddmAllocation wddmFragmentedAllocation;
+    std::unique_ptr<MockWddmAllocation> wddmAllocation;
+    std::unique_ptr<MockWddmAllocation> wddmFragmentedAllocation;
     std::unique_ptr<OsHandleWin> osHandleStorageFirst;
     std::unique_ptr<OsHandleWin> osHandleStorageSecond;
     GraphicsAllocation *allocationPtr;
@@ -55,42 +57,42 @@ struct WddmMemoryOperationsHandlerTest : public WddmTest {
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenRegularAllocationWhenMakingResidentAllocationThenMakeResidentCalled) {
     EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenFragmentedAllocationWhenMakingResidentAllocationThenMakeResidentCalled) {
-    allocationPtr = &wddmFragmentedAllocation;
+    allocationPtr = wddmFragmentedAllocation.get();
 
     EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenMakingResidentAllocationThenMakeResidentCalled) {
     EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(allocationData)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, wddmAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenRegularAllocationWhenEvictingResidentAllocationThenEvictCalled) {
     EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, wddmAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenFragmentedAllocationWhenEvictingResidentAllocationThenEvictCalled) {
-    allocationPtr = &wddmFragmentedAllocation;
+    allocationPtr = wddmFragmentedAllocation.get();
 
     EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, wddmFragmentedAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenEvictingResidentAllocationThenEvictCalled) {
     EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(allocationData)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, wddmAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, wddmFragmentedAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
 }
 
 TEST(WddmResidentBufferTests, whenBuffersIsCreatedWithMakeResidentFlagSetThenItIsMadeResidentUponCreation) {

@@ -57,6 +57,7 @@ struct UnifiedSharingContextFixture : ::testing::Test {
 
 template <bool validMemoryManager>
 struct UnifiedSharingMockMemoryManager : MockMemoryManager {
+    using MockMemoryManager::MockMemoryManager;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override {
         if (!validMemoryManager) {
             return nullptr;
@@ -67,7 +68,7 @@ struct UnifiedSharingMockMemoryManager : MockMemoryManager {
                                                          rootDeviceIndex, false, false, false);
         graphicsAllocation->setSharedHandle(static_cast<osHandle>(reinterpret_cast<uint64_t>(handle)));
         graphicsAllocation->set32BitAllocation(false);
-        graphicsAllocation->setDefaultGmm(new MockGmm());
+        graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext()));
         return graphicsAllocation;
     }
 };
@@ -76,7 +77,7 @@ template <bool validContext, bool validMemoryManager>
 struct UnifiedSharingFixture : UnifiedSharingContextFixture<validContext> {
     void SetUp() override {
         UnifiedSharingContextFixture<validContext>::SetUp();
-        this->memoryManager = std::make_unique<UnifiedSharingMockMemoryManager<validMemoryManager>>();
+        this->memoryManager = std::make_unique<UnifiedSharingMockMemoryManager<validMemoryManager>>(*this->device->getExecutionEnvironment());
         this->memoryManagerBackup = std::make_unique<VariableBackup<MemoryManager *>>(&this->context->memoryManager, this->memoryManager.get());
     }
 

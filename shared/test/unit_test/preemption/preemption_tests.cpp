@@ -19,7 +19,6 @@
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gmock/gmock.h"
 
@@ -275,7 +274,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
 
         uint32_t allocateGraphicsMemoryCount = 0;
     };
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(nullptr, 0u);
     executionEnvironment->memoryManager = std::make_unique<FailingMemoryManager>(*executionEnvironment);
     if (executionEnvironment->memoryManager.get()->isLimitedGPU(0)) {
         GTEST_SKIP();

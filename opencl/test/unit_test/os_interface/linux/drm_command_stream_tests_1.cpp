@@ -894,7 +894,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
     auto mockMngr = new MockGmmPageTableMngr();
     executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(mockMngr);
-    auto gmm = std::make_unique<MockGmm>();
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
     GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
     EXPECT_CALL(*mockMngr, updateAuxTable(::testing::_)).Times(1).WillOnce(::testing::Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {ddiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
     auto result = executionEnvironment.rootDeviceEnvironments[0]->pageTableManager->updateAuxTable(0, gmm.get(), true);
@@ -909,7 +910,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpda
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
     auto mockMngr = new MockGmmPageTableMngr();
     executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(mockMngr);
-    auto gmm = std::make_unique<MockGmm>();
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
     GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
     EXPECT_CALL(*mockMngr, updateAuxTable(::testing::_)).Times(1).WillOnce(::testing::Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {ddiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
     auto result = executionEnvironment.rootDeviceEnvironments[0]->pageTableManager->updateAuxTable(0, gmm.get(), false);

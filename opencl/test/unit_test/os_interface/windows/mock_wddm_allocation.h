@@ -15,12 +15,12 @@ namespace NEO {
 
 class MockWddmAllocation : public WddmAllocation {
   public:
-    MockWddmAllocation() : MockWddmAllocation(EngineLimits::maxHandleCount) {}
-    MockWddmAllocation(uint32_t numGmms) : WddmAllocation(0, numGmms, GraphicsAllocation::AllocationType::UNKNOWN,
-                                                          nullptr, 0, nullptr, MemoryPool::MemoryNull, 0u, 3u),
-                                           gpuPtr(gpuAddress), handle(handles[0]) {
+    MockWddmAllocation(GmmClientContext *gmmClientContext) : MockWddmAllocation(gmmClientContext, EngineLimits::maxHandleCount) {}
+    MockWddmAllocation(GmmClientContext *gmmClientContext, uint32_t numGmms) : WddmAllocation(0, numGmms, GraphicsAllocation::AllocationType::UNKNOWN,
+                                                                                              nullptr, 0, nullptr, MemoryPool::MemoryNull, 0u, 3u),
+                                                                               gpuPtr(gpuAddress), handle(handles[0]) {
         for (uint32_t i = 0; i < numGmms; i++) {
-            setGmm(new MockGmm, i);
+            setGmm(new MockGmm(gmmClientContext), i);
             setHandle(ALLOCATION_HANDLE, i);
         }
     }

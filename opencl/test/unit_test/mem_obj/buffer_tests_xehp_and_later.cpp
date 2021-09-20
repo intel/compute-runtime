@@ -390,8 +390,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDev
             retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto allocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    auto gmm = new MockGmm();
+    auto &device = context.getDevice(0)->getDevice();
+    auto allocation = buffer->getGraphicsAllocation(device.getRootDeviceIndex());
+    auto gmm = new MockGmm(device.getGmmClientContext());
     gmm->isCompressionEnabled = true;
     allocation->setDefaultGmm(gmm);
 
@@ -399,7 +400,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDev
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
-    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, device, false, false);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, allocation->getDefaultGmm()));

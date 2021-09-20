@@ -30,7 +30,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
 
     auto nonSharedBuffer = new MockBuffer;
     MockGlSharing glSharing;
-    MockGmm mockGmm;
+    MockGmm mockGmm(pDevice->getGmmClientContext());
     glSharing.uploadDataToBufferInfo(1, 0, mockGmm.gmmResourceInfo->peekGmmResourceInfo());
     pContext->setSharingFunctions(glSharing.sharingFunctions.release());
     auto retVal = CL_SUCCESS;

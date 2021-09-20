@@ -27,6 +27,7 @@ class ImageSurfaceStateTests : public DeviceFixture,
     ImageSurfaceStateTests() = default;
     void SetUp() override {
         DeviceFixture::SetUp();
+        mockGmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
         gmmHelper = pDevice->getGmmHelper();
     }
 
@@ -34,7 +35,7 @@ class ImageSurfaceStateTests : public DeviceFixture,
         DeviceFixture::TearDown();
     }
 
-    MockGmm mockGmm;
+    std::unique_ptr<MockGmm> mockGmm;
     GmmHelper *gmmHelper = nullptr;
     NEO::ImageInfo imageInfo;
 };

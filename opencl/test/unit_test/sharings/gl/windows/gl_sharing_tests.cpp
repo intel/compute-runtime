@@ -900,11 +900,12 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(buffer->getCpuAddressForMemoryTransfer(), nullptr); // no cpu ptr
     auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    auto pClDevice = context.getDevice(0);
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(), handleId);
+        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmClientContext()), handleId);
     }
 
-    auto commandQueue = CommandQueue::create(&context, context.getDevice(0), 0, false, retVal);
+    auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     size_t offset = 1;
@@ -943,11 +944,12 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledTwiceThenReus
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(buffer->getCpuAddressForMemoryTransfer(), nullptr); // no cpu ptr
     auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    auto pClDevice = context.getDevice(0);
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(), handleId);
+        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmClientContext()), handleId);
     }
 
-    auto commandQueue = CommandQueue::create(&context, context.getDevice(0), 0, false, retVal);
+    auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto mappedPtr = clEnqueueMapBuffer(commandQueue, glBuffer, CL_TRUE, CL_MAP_READ, 0, buffer->getSize(),

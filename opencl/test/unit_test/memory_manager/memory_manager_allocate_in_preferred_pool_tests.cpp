@@ -1019,10 +1019,7 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyT
     localPlatformDevice = *defaultHwInfo;
     localPlatformDevice.featureTable.ftrLocalMemory = true;
 
-    platformsImpl->clear();
-    auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1u);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localPlatformDevice);
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(&localPlatformDevice, 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     MockMemoryManager memoryManager(false, true, *executionEnvironment);

@@ -574,7 +574,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenRenderCompressionWhenAppendingNewAllocati
     gmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
     gmm->isCompressionEnabled = true;
 
-    auto mcsGmm = new MockGmm();
+    auto mcsGmm = new MockGmm(context.getDevice(0)->getGmmClientContext());
     mcsGmm->isCompressionEnabled = true;
     mcsGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
     mcsGmm->gmmResourceInfo->getResourceFlags()->Gpu.UnifiedAuxSurface = true;

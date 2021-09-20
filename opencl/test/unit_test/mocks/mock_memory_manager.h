@@ -65,6 +65,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     MockMemoryManager() : MockMemoryManager(*(new MockExecutionEnvironment(defaultHwInfo.get()))) {
         mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));
+        mockExecutionEnvironment->initGmm();
     };
     MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new MockExecutionEnvironment(defaultHwInfo.get()))) {
         mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));

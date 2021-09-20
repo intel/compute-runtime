@@ -35,8 +35,9 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnC
 
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-
-    MockGmm gmm;
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
     gmm.isCompressionEnabled = true;
     allocPtr->setDefaultGmm(&gmm);
 
