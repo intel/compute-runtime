@@ -528,6 +528,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     }
     cl_int patchPrivateSurface();
 
+    bool containsStatelessWrites = true;
     const ExecutionEnvironment &executionEnvironment;
     Program *program;
     ClDevice &clDevice;
@@ -546,7 +547,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool usingImages = false;
     bool usingImagesOnly = false;
     bool auxTranslationRequired = false;
-    bool containsStatelessWrites = true;
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;
