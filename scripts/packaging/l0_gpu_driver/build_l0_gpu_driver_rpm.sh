@@ -20,8 +20,6 @@ fi
 BUILD_SRPM="${BUILD_SRPM:-1}"
 BUILD_RPM="${BUILD_RPM:-1}"
 
-USE_SOURCE_LEVEL_ZERO="${USE_SOURCE_LEVEL_ZERO:-1}"
-
 export BUILD_ID="${BUILD_ID:-1}"
 export CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
 
@@ -67,10 +65,6 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     perl -pi -e "s/^%global ver .*/%global ver ${VERSION}/" $SPEC
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC
     perl -pi -e "s/^%global build_id .*/%global build_id ${NEO_L0_VERSION_PATCH}/" $SPEC
-
-    if [ "${USE_SOURCE_LEVEL_ZERO}" == "1" ]; then
-      perl -pi -e "s,^%global neo_source_dir .*,%global neo_source_dir ${REPO_DIR}," $SPEC
-    fi
 
     rpmbuild --define "_topdir $BUILD_DIR" -bs $SPEC --define 'build_type ${CMAKE_BUILD_TYPE}' "${build_args[@]}"
     mkdir -p ${REPO_DIR}/../output/SRPMS
