@@ -3264,7 +3264,7 @@ HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsC
 
     char buffer[MemoryConstants::pageSize64k];
     GraphicsAllocation gfxAlloc(0, GraphicsAllocation::AllocationType::CONSTANT_SURFACE, buffer,
-                                MemoryConstants::pageSize64k, (osHandle)8, MemoryPool::MemoryNull, mockMaxOsContextCount);
+                                MemoryConstants::pageSize64k, (osHandle)8, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
 
     MockContext context(pClDevice);
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));

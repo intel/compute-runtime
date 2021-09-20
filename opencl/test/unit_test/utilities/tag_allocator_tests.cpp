@@ -236,7 +236,7 @@ TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThenRequestedNum
         using MockMemoryManager::MockMemoryManager;
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
             return new MemoryAllocation(0, TimestampPackets<uint32_t>::getAllocationType(), nullptr, nullptr, 0, MemoryConstants::pageSize,
-                                        1, MemoryPool::System4KBPages, false, false, mockMaxOsContextCount);
+                                        1, MemoryPool::System4KBPages, false, false, MemoryManager::maxOsContextCount);
         }
     };
 

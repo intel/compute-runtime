@@ -14,16 +14,16 @@
 using namespace NEO;
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspectionIdsAreSetToZero) {
-    MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, mockMaxOsContextCount);
-    for (auto i = 0u; i < mockMaxOsContextCount; i++) {
+    MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
         EXPECT_EQ(0u, graphicsAllocation.getInspectionId(i));
     }
 }
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenTaskCountsAreInitializedProperly) {
-    GraphicsAllocation graphicsAllocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, mockMaxOsContextCount);
-    GraphicsAllocation graphicsAllocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, mockMaxOsContextCount);
-    for (auto i = 0u; i < mockMaxOsContextCount; i++) {
+    GraphicsAllocation graphicsAllocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation graphicsAllocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation1.getTaskCount(i));
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation2.getTaskCount(i));
         EXPECT_EQ(MockGraphicsAllocation::objectNotResident, graphicsAllocation1.getResidencyTaskCount(i));
@@ -41,13 +41,13 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenOnly
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.updateTaskCount(1u, 0u);
     EXPECT_EQ(1u, graphicsAllocation.getTaskCount(0u));
-    for (auto i = 1u; i < mockMaxOsContextCount; i++) {
+    for (auto i = 1u; i < MemoryManager::maxOsContextCount; i++) {
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation.getTaskCount(i));
     }
     graphicsAllocation.updateTaskCount(2u, 1u);
     EXPECT_EQ(1u, graphicsAllocation.getTaskCount(0u));
     EXPECT_EQ(2u, graphicsAllocation.getTaskCount(1u));
-    for (auto i = 2u; i < mockMaxOsContextCount; i++) {
+    for (auto i = 2u; i < MemoryManager::maxOsContextCount; i++) {
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation.getTaskCount(i));
     }
 }
@@ -224,7 +224,7 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThen
                                       MemoryPool::SystemCpuInaccessible};
 
     for (auto pool : page4kPools) {
-        MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, (osHandle)1, pool, mockMaxOsContextCount);
+        MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, (osHandle)1, pool, MemoryManager::maxOsContextCount);
 
         EXPECT_EQ(MemoryConstants::pageSize, graphicsAllocation.getUsedPageSize());
     }
@@ -234,7 +234,7 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThen
                                        MemoryPool::LocalMemory};
 
     for (auto pool : page64kPools) {
-        MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, pool, mockMaxOsContextCount);
+        MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, pool, MemoryManager::maxOsContextCount);
 
         EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation.getUsedPageSize());
     }
