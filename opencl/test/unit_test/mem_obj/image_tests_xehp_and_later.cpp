@@ -663,3 +663,24 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenAppendin
     EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
     EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
 }
+
+HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction, CompressionParamsSupportedMatcher) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+    RENDER_SURFACE_STATE rss{};
+    platformsImpl->clear();
+    rss.setMemoryCompressionEnable(false);
+    rss.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
+    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
+    const auto expectedGetSurfaceStateCompressionFormatCalled = gmmClientContext->getSurfaceStateCompressionFormatCalled;
+    const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled + 1;
+
+    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
+                                                                 context->getDevice(0)->getGmmHelper(), false);
+
+    EXPECT_EQ(platform(), nullptr);
+    EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
+    EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
+    EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
+}
