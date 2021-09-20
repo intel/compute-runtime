@@ -61,6 +61,7 @@ class HwInfoConfig {
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isNewResidencyModelSupported() const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -107,6 +108,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const override;
+    bool isNewResidencyModelSupported() const override;
 
   protected:
     HwInfoConfigHw() = default;

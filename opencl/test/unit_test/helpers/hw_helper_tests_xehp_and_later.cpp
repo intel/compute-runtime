@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_helper.h"
@@ -98,11 +99,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatform
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenCheckTimestampPacketWriteThenReturnTrue) {
     auto &hwHelper = HwHelperHw<FamilyType>::get();
     EXPECT_TRUE(hwHelper.timestampPacketWriteSupported());
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenCheckNewResidencyModelSupportedThenReturnTrue) {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_TRUE(hwHelper.isNewResidencyModelSupported());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenAllFlagsSetWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEnginesAndOneBcsEngine) {
@@ -448,4 +444,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenPostSyncPi
         }
     }
     EXPECT_TRUE(foundPostSyncPipeControl);
+}
+
+using HwInfoConfigTestXeHpAndLater = ::testing::Test;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, givenXeHPAndLaterPlatformWhenCheckNewResidencyModelSupportedThenReturnTrue) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    EXPECT_TRUE(hwInfoConfig->isNewResidencyModelSupported());
 }

@@ -65,11 +65,6 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isNewResidencyModelSupported() const {
-    return true;
-}
-
-template <typename GfxFamily>
 const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
 

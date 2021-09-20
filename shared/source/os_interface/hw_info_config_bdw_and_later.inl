@@ -35,4 +35,9 @@ bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwI
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isNewResidencyModelSupported() const {
+    return false;
+}
+
 } // namespace NEO

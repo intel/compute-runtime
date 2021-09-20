@@ -51,11 +51,6 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isNewResidencyModelSupported() const {
-    return false;
-}
-
-template <typename GfxFamily>
 const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     return {
         {aub_stream::ENGINE_RCS, EngineUsage::Regular},

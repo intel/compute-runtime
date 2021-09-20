@@ -123,7 +123,6 @@ class HwHelper {
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
@@ -327,8 +326,6 @@ class HwHelperHw : public HwHelper {
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 
     bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const override;
-
-    bool isNewResidencyModelSupported() const override;
 
     bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
 
