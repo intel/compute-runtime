@@ -11,7 +11,7 @@ set(target_name linux_dll_tests)
 add_executable(igdrcl_${target_name}
                $<TARGET_OBJECTS:igdrcl_libult>
                $<TARGET_OBJECTS:igdrcl_libult_common>
-               $<TARGET_OBJECTS:igdrcl_libult_cs>
+               $<TARGET_OBJECTS:neo_libult_cs>
                $<TARGET_OBJECTS:mock_gmm>
                ${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrap.h

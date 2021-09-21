@@ -63,7 +63,7 @@ endif()
 set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:igdrcl_libult_common>
     $<TARGET_OBJECTS:igdrcl_libult>
-    $<TARGET_OBJECTS:igdrcl_libult_cs>
+    $<TARGET_OBJECTS:neo_libult_cs>
     $<TARGET_OBJECTS:igdrcl_libult_env>
     $<TARGET_OBJECTS:mock_gmm>
     $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>

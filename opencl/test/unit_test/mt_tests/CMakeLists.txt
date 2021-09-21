@@ -20,7 +20,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
                $<TARGET_OBJECTS:igdrcl_libult>
                $<TARGET_OBJECTS:igdrcl_libult_common>
-               $<TARGET_OBJECTS:igdrcl_libult_cs>
+               $<TARGET_OBJECTS:neo_libult_cs>
                $<TARGET_OBJECTS:igdrcl_libult_env>
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>

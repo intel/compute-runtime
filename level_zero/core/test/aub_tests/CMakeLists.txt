@@ -72,6 +72,7 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_fixtures>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
                $<TARGET_OBJECTS:igdrcl_libult_common>
+               $<TARGET_OBJECTS:neo_libult_cs>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
 )
@@ -83,7 +84,6 @@ endif()
 
 target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp

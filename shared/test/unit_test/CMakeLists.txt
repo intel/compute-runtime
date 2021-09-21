@@ -29,7 +29,6 @@ if(NOT SKIP_UNIT_TESTS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
                  ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
                  ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
@@ -38,6 +37,7 @@ if(NOT SKIP_UNIT_TESTS)
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                  $<TARGET_OBJECTS:mock_gmm>
                  $<TARGET_OBJECTS:igdrcl_libult_common>
+                 $<TARGET_OBJECTS:neo_libult_cs>
   )
 
   if(UNIX)

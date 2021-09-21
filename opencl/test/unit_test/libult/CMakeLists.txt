@@ -38,14 +38,6 @@ add_library(igdrcl_libult OBJECT EXCLUDE_FROM_ALL
             ${IGDRCL_SRCS_ENABLE_TESTED_HW}
 )
 
-set(IGDRCL_SRCS_LIB_ULT_CS
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.h
-)
-add_library(igdrcl_libult_cs OBJECT EXCLUDE_FROM_ALL
-            ${IGDRCL_SRCS_LIB_ULT_CS}
-)
-
 set(IGDRCL_SRCS_LIB_ULT_ENV
     ${NEO_SOURCE_DIR}/shared/test/common/helpers/custom_event_listener.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/main.cpp
@@ -107,11 +99,10 @@ target_include_directories(igdrcl_libult_env PRIVATE
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_ENABLE_TESTED_HW ${IGDRCL_SRCS_ENABLE_TESTED_HW})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_ENABLE_TESTED_HW_LINUX ${IGDRCL_SRCS_ENABLE_TESTED_HW_LINUX})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_LIB_ULT ${IGDRCL_SRCS_LIB_ULT})
-set_property(GLOBAL PROPERTY IGDRCL_SRCS_LIB_ULT_CS ${IGDRCL_SRCS_LIB_ULT_CS})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_LIB_ULT_ENV ${IGDRCL_SRCS_LIB_ULT_ENV})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_LIB_ULT_ENV_LINUX ${IGDRCL_SRCS_LIB_ULT_ENV_LINUX})
 
-foreach(target_name igdrcl_libult igdrcl_libult_cs igdrcl_libult_env)
+foreach(target_name igdrcl_libult igdrcl_libult_env)
   set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
   set_target_properties(${target_name} PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
   set_property(TARGET ${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})

@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/libult/create_command_stream.h"
+#include "shared/test/common/libult/create_command_stream.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/helpers/default_hw_info.h"
