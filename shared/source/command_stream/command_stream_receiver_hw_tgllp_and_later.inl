@@ -53,8 +53,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 
 template <>
 inline bool CommandStreamReceiverHw<Family>::isComputeModeNeeded() const {
-    return csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged ||
-           StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy);
+    return StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy);
 }
 
 template <>

@@ -47,7 +47,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    auto cmdsSize = 0u;
 
     overrideComputeModeRequest<FamilyType>(false, false, true);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
@@ -56,6 +56,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     overrideComputeModeRequest<FamilyType>(false, true, true);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_EQ(cmdsSize, retSize);
+
+    cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
     overrideComputeModeRequest<FamilyType>(true, true, true);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
@@ -214,7 +216,7 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithoutSharedHandles
     csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }
 
-HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithSharedHandlesWhenFlushTaskCalledThenAlwaysProgramCmds, ForceNonCoherentSupportedMatcher) {
+HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithSharedHandlesWhenFlushTaskCalledThenProgramCmdsWhenNeeded, ForceNonCoherentSupportedMatcher) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -232,7 +234,7 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithSharedHandlesWhe
         csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
     };
 
-    auto flushTaskAndFindCmds = [&](bool expectCoherent) {
+    auto flushTaskAndFindCmds = [&](bool expectCoherent, bool areCommandsProgrammed) {
         flushTask(expectCoherent);
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
@@ -252,20 +254,20 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithSharedHandlesWhe
                 EXPECT_NE(nullptr, pc);
             }
         }
-        EXPECT_TRUE(foundOne);
+        EXPECT_EQ(foundOne, areCommandsProgrammed);
     };
 
-    flushTaskAndFindCmds(false); // first time
-    flushTaskAndFindCmds(false); // not changed
-    flushTaskAndFindCmds(true);  // changed
-    flushTaskAndFindCmds(true);  // not changed
-    flushTaskAndFindCmds(false); // changed
-    flushTaskAndFindCmds(false); // not changed
+    flushTaskAndFindCmds(false, true);  // first time
+    flushTaskAndFindCmds(false, false); // not changed
+    flushTaskAndFindCmds(true, true);   // changed
+    flushTaskAndFindCmds(true, false);  // not changed
+    flushTaskAndFindCmds(false, true);  // changed
+    flushTaskAndFindCmds(false, false); // not changed
 
     csr->getMemoryManager()->freeGraphicsMemory(graphicsAlloc);
 }
 
-HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenProgramPcAndSCM, ForceNonCoherentSupportedMatcher) {
+HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndSCMAreNotProgrammed, ForceNonCoherentSupportedMatcher) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -284,22 +286,7 @@ HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyU
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
 
-    typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT expectedCoherentValue = STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
-    uint32_t expectedCoherentMask = FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask;
-
-    bool foundOne = false;
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
-        if (cmd) {
-            EXPECT_EQ(expectedCoherentValue, cmd->getForceNonCoherent());
-            EXPECT_TRUE(isValueSet(cmd->getMaskBits(), expectedCoherentMask));
-            EXPECT_FALSE(foundOne);
-            foundOne = true;
-            auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));
-            EXPECT_NE(nullptr, pc);
-        }
-    }
-    EXPECT_TRUE(foundOne);
+    EXPECT_EQ(0u, hwParser.cmdList.size());
 
     csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }

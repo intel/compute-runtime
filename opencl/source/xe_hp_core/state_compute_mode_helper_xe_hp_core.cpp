@@ -8,8 +8,10 @@
 #include "shared/source/helpers/state_compute_mode_helper.h"
 
 namespace NEO {
+
 template <>
 bool StateComputeModeHelper<XeHpFamily>::isStateComputeModeRequired(const CsrSizeRequestFlags &csrSizeRequestFlags, bool isThreadArbitionPolicyProgrammed) {
-    return false;
+    return csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.numGrfRequiredChanged;
 }
+
 } // namespace NEO
