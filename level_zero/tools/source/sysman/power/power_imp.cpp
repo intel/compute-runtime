@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,10 +35,11 @@ ze_result_t PowerImp::powerSetEnergyThreshold(double threshold) {
     return pOsPower->setEnergyThreshold(threshold);
 }
 
-PowerImp::PowerImp(OsSysman *pOsSysman) {
-    pOsPower = OsPower::create(pOsSysman);
+PowerImp::PowerImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceHandle(handle) {
+    ze_device_properties_t deviceProperties = {};
+    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+    pOsPower = OsPower::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsPower);
-
     init();
 }
 

@@ -10,10 +10,15 @@
 
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/power/linux/os_power_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 #include "sysman/linux/pmt/pmt.h"
 #include "sysman/power/power_imp.h"
 #include "sysman/sysman_imp.h"
+
+using ::testing::DoDefault;
+using ::testing::Matcher;
+using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -23,9 +28,9 @@ constexpr uint64_t mappedLength = 2048;
 const std::string deviceName("device");
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
 const std::string hwmonDir("device/hwmon");
-const std::string i915HwmonDir("device/hwmon/hwmon4");
+const std::string i915HwmonDir("device/hwmon/hwmon2");
 const std::string nonI915HwmonDir("device/hwmon/hwmon1");
-const std::vector<std::string> listOfMockedHwmonDirs = {"hwmon1", "hwmon2", "hwmon3", "hwmon4"};
+const std::vector<std::string> listOfMockedHwmonDirs = {"hwmon0", "hwmon1", "hwmon2", "hwmon3", "hwmon4"};
 const std::string sustainedPowerLimitEnabled("power1_max_enable");
 const std::string sustainedPowerLimit("power1_max");
 const std::string sustainedPowerLimitInterval("power1_max_interval");
@@ -39,11 +44,18 @@ constexpr uint64_t expectedEnergyCounter = 123456785u;
 constexpr uint32_t mockDefaultPowerLimitVal = 300000000;
 constexpr uint32_t mockMaxPowerLimitVal = 490000000;
 constexpr uint32_t mockMinPowerLimitVal = 10;
+const std::map<std::string, uint64_t> deviceKeyOffsetMapPower = {
+    {"PACKAGE_ENERGY", 0x400},
+    {"COMPUTE_TEMPERATURES", 0x68},
+    {"SOC_TEMPERATURES", 0x60},
+    {"CORE_TEMPERATURES", 0x6c}};
+
 class PowerSysfsAccess : public SysfsAccess {};
 
 template <>
 struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
 
+    ze_result_t getValStringHelper(const std::string file, std::string &val);
     ze_result_t getValString(const std::string file, std::string &val) {
         ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
         if (file.compare(i915HwmonDir + "/" + "name") == 0) {
@@ -65,16 +77,13 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
     uint64_t burstPowerLimitVal = 0;
     uint64_t energyCounterNodeVal = expectedEnergyCounter;
 
-    ze_result_t getValUnsignedLongReturnErrorForEnergyCounter(const std::string file, uint64_t &val) {
-        if (file.compare(i915HwmonDir + "/" + energyCounterNode) == 0) {
-            return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
     ze_result_t getValUnsignedLongReturnErrorForBurstPowerLimit(const std::string file, uint64_t &val) {
         if (file.compare(i915HwmonDir + "/" + burstPowerLimitEnabled) == 0) {
             val = burstPowerLimitEnabledVal;
+        }
+        if (file.compare(i915HwmonDir + "/" + burstPowerLimit) == 0) {
+
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -122,10 +131,6 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getValUnsignedLongReturnErrorUnknown(const std::string file, uint64_t &val) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
     ze_result_t setValUnsignedLongReturnErrorForBurstPowerLimit(const std::string file, const int val) {
         if (file.compare(i915HwmonDir + "/" + burstPowerLimit) == 0) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -136,6 +141,20 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
     ze_result_t setValUnsignedLongReturnErrorForBurstPowerLimitEnabled(const std::string file, const int val) {
         if (file.compare(i915HwmonDir + "/" + burstPowerLimitEnabled) == 0) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValUnsignedLongReturnErrorForSustainedPowerLimitEnabled(const std::string file, const int val) {
+        if (file.compare(i915HwmonDir + "/" + sustainedPowerLimitEnabled) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValUnsignedLongReturnInsufficientForSustainedPowerLimitEnabled(const std::string file, const int val) {
+        if (file.compare(i915HwmonDir + "/" + sustainedPowerLimitEnabled) == 0) {
+            return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -154,6 +173,7 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t getValUnsignedLongHelper(const std::string file, uint64_t &val);
     ze_result_t getValUnsignedLong(const std::string file, uint64_t &val) {
         ze_result_t result = ZE_RESULT_SUCCESS;
         if (file.compare(i915HwmonDir + "/" + sustainedPowerLimitEnabled) == 0) {
@@ -201,7 +221,9 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
 
     ze_result_t setVal(const std::string file, const int val) {
         ze_result_t result = ZE_RESULT_SUCCESS;
-        if (file.compare(i915HwmonDir + "/" + sustainedPowerLimit) == 0) {
+        if (file.compare(i915HwmonDir + "/" + sustainedPowerLimitEnabled) == 0) {
+            sustainedPowerLimitEnabledVal = static_cast<uint64_t>(val);
+        } else if (file.compare(i915HwmonDir + "/" + sustainedPowerLimit) == 0) {
             sustainedPowerLimitVal = static_cast<uint64_t>(val);
         } else if (file.compare(i915HwmonDir + "/" + sustainedPowerLimitInterval) == 0) {
             sustainedPowerLimitIntervalVal = static_cast<uint64_t>(val);
@@ -220,9 +242,6 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
             listOfEntries = listOfMockedHwmonDirs;
             return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-    ze_result_t getscanDirEntriesStatusReturnError(const std::string file, std::vector<std::string> &listOfEntries) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -316,8 +335,141 @@ struct Mock<PowerFsAccess> : public PowerFsAccess {
 
 class PublicLinuxPowerImp : public L0::LinuxPowerImp {
   public:
-    PublicLinuxPowerImp(OsSysman *pOsSysman) : LinuxPowerImp(pOsSysman) {}
+    PublicLinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId) {}
     using LinuxPowerImp::pPmt;
 };
+
+class SysmanDevicePowerFixture : public SysmanDeviceFixture {
+  protected:
+    std::unique_ptr<PublicLinuxPowerImp> pPublicLinuxPowerImp;
+    std::unique_ptr<Mock<PowerPmt>> pPmt;
+    std::unique_ptr<Mock<PowerFsAccess>> pFsAccess;
+    std::unique_ptr<Mock<PowerSysfsAccess>> pSysfsAccess;
+    SysfsAccess *pSysfsAccessOld = nullptr;
+    FsAccess *pFsAccessOriginal = nullptr;
+    OsPower *pOsPowerOriginal = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+        pFsAccess = std::make_unique<NiceMock<Mock<PowerFsAccess>>>();
+        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
+        pSysfsAccess = std::make_unique<NiceMock<Mock<PowerSysfsAccess>>>();
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        ON_CALL(*pFsAccess.get(), listDirectory(_, _))
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PowerFsAccess>::listDirectorySuccess));
+        ON_CALL(*pFsAccess.get(), getRealPath(_, _))
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PowerFsAccess>::getRealPathSuccess));
+        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValString));
+        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValUnsignedLong));
+        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValUnsignedInt));
+        ON_CALL(*pSysfsAccess.get(), write(_, _))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::setVal));
+        ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntries));
+        uint32_t subDeviceCount = 0;
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+
+        for (auto &deviceHandle : deviceHandles) {
+            ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+            Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+            auto pPmt = new NiceMock<Mock<PowerPmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                                     deviceProperties.subdeviceId);
+            pPmt->mockedInit(pFsAccess.get());
+            pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
+            pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
+        }
+
+        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    }
+    void TearDown() override {
+        SysmanDeviceFixture::TearDown();
+        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+    }
+
+    std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {
+        std::vector<zes_pwr_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
+};
+
+class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
+  protected:
+    std::unique_ptr<PublicLinuxPowerImp> pPublicLinuxPowerImp;
+    std::unique_ptr<Mock<PowerPmt>> pPmt;
+    std::unique_ptr<Mock<PowerFsAccess>> pFsAccess;
+    std::unique_ptr<Mock<PowerSysfsAccess>> pSysfsAccess;
+    SysfsAccess *pSysfsAccessOld = nullptr;
+    FsAccess *pFsAccessOriginal = nullptr;
+    OsPower *pOsPowerOriginal = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
+    void SetUp() override {
+        SysmanMultiDeviceFixture::SetUp();
+        pFsAccess = std::make_unique<NiceMock<Mock<PowerFsAccess>>>();
+        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
+        pSysfsAccess = std::make_unique<NiceMock<Mock<PowerSysfsAccess>>>();
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        ON_CALL(*pFsAccess.get(), listDirectory(_, _))
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PowerFsAccess>::listDirectorySuccess));
+        ON_CALL(*pFsAccess.get(), getRealPath(_, _))
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PowerFsAccess>::getRealPathSuccess));
+        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValString));
+        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValUnsignedLong));
+        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValUnsignedInt));
+        ON_CALL(*pSysfsAccess.get(), write(_, _))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::setVal));
+        ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntries));
+        uint32_t subDeviceCount = 0;
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+
+        for (auto &deviceHandle : deviceHandles) {
+            ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+            Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+            auto pPmt = new NiceMock<Mock<PowerPmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                                     deviceProperties.subdeviceId);
+            pPmt->mockedInit(pFsAccess.get());
+            pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
+            pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
+        }
+
+        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    }
+    void TearDown() override {
+        SysmanMultiDeviceFixture::TearDown();
+        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+    }
+
+    std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {
+        std::vector<zes_pwr_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
+};
+
 } // namespace ult
 } // namespace L0

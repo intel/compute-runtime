@@ -76,7 +76,7 @@ ze_result_t SysmanDeviceImp::init() {
         return result;
     }
     if (pPowerHandleContext) {
-        pPowerHandleContext->init();
+        pPowerHandleContext->init(deviceHandles);
     }
     if (pFrequencyHandleContext) {
         pFrequencyHandleContext->init(deviceHandles);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ class OsPower {
     virtual ze_result_t setEnergyThreshold(double threshold) = 0;
 
     virtual bool isPowerModuleSupported() = 0;
-    static OsPower *create(OsSysman *pOsSysman);
+    static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     virtual ~OsPower() = default;
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,13 +19,19 @@ PowerHandleContext::~PowerHandleContext() {
     }
 }
 
-void PowerHandleContext::init() {
-    Power *pPower = new PowerImp(pOsSysman);
+void PowerHandleContext::createHandle(ze_device_handle_t deviceHandle) {
+    Power *pPower = new PowerImp(pOsSysman, deviceHandle);
     if (pPower->initSuccess == true) {
         handleList.push_back(pPower);
     } else {
         delete pPower;
     }
+}
+ze_result_t PowerHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
+        createHandle(deviceHandle);
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
