@@ -99,7 +99,6 @@ class HwHelper {
     virtual bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const = 0;
     virtual uint32_t getMinimalSIMDSize() = 0;
     virtual bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const = 0;
-    virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const = 0;
@@ -277,8 +276,6 @@ class HwHelperHw : public HwHelper {
     static AuxTranslationMode getAuxTranslationMode(const HardwareInfo &hwInfo);
 
     bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const override;
-
-    bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const override;
 
     bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const override;
 

@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/state_compute_mode_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "pipe_control_args.h"
 
@@ -19,8 +20,8 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
         this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
 
-        auto &hwHelper = HwHelperHw<Family>::get();
-        if (hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+        auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
             auto pPipeControlSpace = stream.getSpaceForCmd<PIPE_CONTROL>();
 
             auto pipeControl = GfxFamily::cmdInitPipeControl;

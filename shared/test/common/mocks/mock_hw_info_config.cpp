@@ -178,4 +178,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } //namespace NEO

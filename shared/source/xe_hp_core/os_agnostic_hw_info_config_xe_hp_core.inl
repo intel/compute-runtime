@@ -91,3 +91,12 @@ LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMod
     }
     return LocalMemoryAccessMode::Default;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const {
+    if (hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 ||
+        DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.get() == 1) {
+        return true;
+    }
+    return false;
+}

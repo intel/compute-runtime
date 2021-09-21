@@ -1263,11 +1263,6 @@ HWTEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
     EXPECT_EQ(0u, hwHelper.getNumCacheRegions());
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenFalseIsReturned) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo));
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, whenCheckingForSmallKernelPreferenceThenFalseIsReturned) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(0u, this->pClDevice->getHardwareInfo()));
@@ -1330,22 +1325,4 @@ HWTEST2_F(HwHelperTest, givenXeHPAndBelowPlatformWhenCheckingIfAdditionalPipeCon
 HWTEST2_F(HwHelperTest, givenXeHPAndBelowPlatformPlatformWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnFalse, isXeHpCoreOrBelow) {
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(hwHelper.isEngineTypeRemappingToHwSpecificRequired());
-}
-
-HWTEST2_F(HwHelperTest, givenProgramAdditionalPipeControlBeforeStateComputeModeCommandWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned, IsXEHP) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
-
-    const auto &hwHelper = HwHelper::get(renderCoreFamily);
-    auto hwInfo = *defaultHwInfo;
-
-    EXPECT_TRUE(hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo));
-}
-
-HWTEST2_F(HwHelperTest, givenHwHelperWithMultipleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned, IsXEHP) {
-    const auto &hwHelper = HwHelper::get(renderCoreFamily);
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
-
-    EXPECT_TRUE(hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo));
 }

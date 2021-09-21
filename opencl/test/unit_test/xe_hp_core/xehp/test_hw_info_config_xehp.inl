@@ -95,3 +95,21 @@ XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSuppor
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
 }
+
+XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWithMultipleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo));
+}
+
+XEHPTEST_F(XeHPHwInfoConfig, givenProgramAdditionalPipeControlBeforeStateComputeModeCommandWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
+
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+
+    EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo));
+}
