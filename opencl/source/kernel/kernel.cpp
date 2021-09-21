@@ -1091,7 +1091,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
                                                                 hwHelper.getBarriersCountFromHasBarriers(barrierCount),
                                                                 workDim,
                                                                 localWorkSize);
-    auto isEngineInstanced = commandQueue->getCommandStreamReceiver(false).getOsContext().isEngineInstanced();
+    auto isEngineInstanced = commandQueue->getGpgpuCommandStreamReceiver().getOsContext().isEngineInstanced();
     maxWorkGroupCount = hwHelper.adjustMaxWorkGroupCount(maxWorkGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
     return maxWorkGroupCount;
 }

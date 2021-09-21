@@ -144,15 +144,6 @@ CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
     return nullptr;
 }
 
-CommandStreamReceiver &CommandQueue::getCommandStreamReceiver(bool blitAllowed) const {
-    if (blitAllowed) {
-        auto csr = getBcsCommandStreamReceiver();
-        UNRECOVERABLE_IF(!csr);
-        return *csr;
-    }
-    return getGpgpuCommandStreamReceiver();
-}
-
 CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const {
     const bool blitAllowed = blitEnqueueAllowed(args);
     const bool blitPreferred = blitEnqueuePreferred(args);
