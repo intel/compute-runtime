@@ -2563,6 +2563,10 @@ bool Kernel::hasDirectStatelessAccessToHostMemory() const {
 }
 
 bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
+    if (unifiedMemoryControls.indirectHostAllocationsAllowed) {
+        return true;
+    }
+
     if (!kernelInfo.hasIndirectStatelessAccess) {
         return false;
     }
@@ -2573,7 +2577,7 @@ bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
         }
     }
 
-    if (unifiedMemoryControls.indirectHostAllocationsAllowed) {
+    if (getContext().getSVMAllocsManager()) {
         return getContext().getSVMAllocsManager()->hasHostAllocations();
     }
 
