@@ -7,17 +7,12 @@
 
 #include "opencl/test/unit_test/libult/create_command_stream.h"
 
-#include "shared/source/command_stream/aub_command_stream_receiver.h"
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/command_stream/create_command_stream_impl.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 
 #include <cassert>
 
