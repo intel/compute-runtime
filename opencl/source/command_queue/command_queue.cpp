@@ -130,8 +130,9 @@ CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {
     return *gpgpuEngine->commandStreamReceiver;
 }
 
-CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver() const {
+CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const {
     if (bcsEngine) {
+        UNRECOVERABLE_IF(bcsEngine->getEngineType() != bcsEngineType);
         return bcsEngine->commandStreamReceiver;
     }
     return nullptr;
@@ -176,8 +177,7 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
 
     if (gpgpuHwTag >= gpgpuTaskCount) {
         if (bcsState.isValid()) {
-            DEBUG_BREAK_IF(bcsState.engineType != getBcsCommandStreamReceiver()->getOsContext().getEngineType());
-            return *getBcsCommandStreamReceiver()->getTagAddress() >= bcsTaskCount;
+            return *getBcsCommandStreamReceiver(bcsState.engineType)->getTagAddress() >= bcsTaskCount;
         }
 
         return true;
@@ -215,7 +215,8 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcs
         gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
     }
 
-    if (auto bcsCsr = getBcsCommandStreamReceiver()) {
+    if (bcsEngine) {
+        auto bcsCsr = getBcsCommandStreamReceiver(bcsEngine->getEngineType());
         bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCountToWait, 0, false, false, 1u, 0u);
         bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(bcsTaskCountToWait);
     }

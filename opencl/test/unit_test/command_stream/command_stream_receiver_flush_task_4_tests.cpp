@@ -503,6 +503,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 
     for (auto &rootDeviceEnvironment : deviceFactory->rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments) {
         rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+        REQUIRE_BLITTER_OR_SKIP(rootDeviceEnvironment->getHardwareInfo());
     }
 
     auto clCmdQ1 = clCreateCommandQueue(context.get(), deviceFactory->rootDevices[1], {}, nullptr);
@@ -512,12 +513,6 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     pCmdQ2 = castToObject<CommandQueue>(clCmdQ2);
     ASSERT_NE(nullptr, pCmdQ1);
     ASSERT_NE(nullptr, pCmdQ2);
-
-    if (!pCmdQ1->getBcsCommandStreamReceiver()) {
-        pCmdQ1->release();
-        pCmdQ2->release();
-        GTEST_SKIP();
-    }
 
     UserEvent userEvent1(&pCmdQ1->getContext());
 
@@ -608,7 +603,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     }
     {
         HardwareParse csHwParser;
-        csHwParser.parseCommands<FamilyType>(pCmdQ1->getBcsCommandStreamReceiver()->getCS(0));
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
 
         EXPECT_LE(1u, semaphores.size());
@@ -625,7 +620,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     }
     {
         HardwareParse csHwParser;
-        csHwParser.parseCommands<FamilyType>(pCmdQ2->getBcsCommandStreamReceiver()->getCS(0));
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
 
         EXPECT_LE(1u, semaphores.size());

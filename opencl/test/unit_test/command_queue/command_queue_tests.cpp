@@ -236,7 +236,7 @@ TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenD
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
 
-    EXPECT_EQ(nullptr, cmdQ.getBcsCommandStreamReceiver());
+    EXPECT_EQ(nullptr, cmdQ.bcsEngine);
 
     auto defaultCsr = mockDevice->getDefaultEngine().commandStreamReceiver;
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
@@ -260,8 +260,8 @@ TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsC
 
     MockCommandQueue cmdQ(nullptr, device.get(), 0, false);
 
-    EXPECT_NE(nullptr, cmdQ.getBcsCommandStreamReceiver());
-    EXPECT_EQ(bcsEngine.commandStreamReceiver, cmdQ.getBcsCommandStreamReceiver());
+    EXPECT_NE(nullptr, cmdQ.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
+    EXPECT_EQ(bcsEngine.commandStreamReceiver, cmdQ.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
 }
 
 INSTANTIATE_TEST_CASE_P(uint32_t,
@@ -1611,7 +1611,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
     fillProperties(properties, 1, 0);
     EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
     MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
-    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
+    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS));
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_TRUE(queueBcs.isQueueFamilySelected());
     EXPECT_EQ(properties[1], queueBcs.getQueueFamilyIndex());
@@ -1653,7 +1653,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
     fillProperties(properties, 1, 0);
     EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
     MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
-    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
+    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS));
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
     EXPECT_TRUE(queueBcs.isQueueFamilySelected());
@@ -1669,7 +1669,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQu
     fillProperties(properties, 0, 0);
     EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
     MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
-    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
+    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS));
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
     EXPECT_TRUE(queueBcs.isQueueFamilySelected());
@@ -1792,7 +1792,7 @@ struct CopyOnlyQueueTests : ::testing::Test {
 
 TEST_F(CopyOnlyQueueTests, givenBcsSelectedWhenCreatingCommandQueueThenItIsCopyOnly) {
     MockCommandQueue queue{context.get(), clDevice.get(), properties, false};
-    EXPECT_EQ(bcsEngine->commandStreamReceiver, queue.getBcsCommandStreamReceiver());
+    EXPECT_EQ(bcsEngine->commandStreamReceiver, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
     EXPECT_NE(nullptr, queue.timestampPacketContainer);
     EXPECT_TRUE(queue.isCopyOnly);
 }

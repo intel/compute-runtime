@@ -811,7 +811,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
         MockContext context(&clDevice1);
         MockCommandQueue cmdQ(&context, &clDevice1, nullptr, false);
 
-        EXPECT_EQ(nullptr, cmdQ.getBcsCommandStreamReceiver());
+        EXPECT_EQ(nullptr, cmdQ.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
     }
 }
 

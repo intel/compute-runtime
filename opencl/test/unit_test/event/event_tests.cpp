@@ -148,7 +148,7 @@ TEST(Event, givenBcsCsrSetInEventWhenPeekingBcsTaskCountThenReturnCorrectTaskCou
 
     EXPECT_EQ(0u, event.peekBcsTaskCountFromCommandQueue());
 
-    event.setupBcs(queue.getBcsCommandStreamReceiver()->getOsContext().getEngineType());
+    event.setupBcs(queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->getOsContext().getEngineType());
     EXPECT_EQ(19u, event.peekBcsTaskCountFromCommandQueue());
 }
 
