@@ -157,6 +157,23 @@ bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
     return requestedThreadsStopped;
 }
 
+void DebugSession::fillDevicesFromThread(ze_device_thread_t thread, std::vector<uint8_t> &devices) {
+    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+    UNRECOVERABLE_IF(devices.size() < deviceCount);
+
+    uint32_t deviceIndex = 0;
+    convertToPhysical(thread, deviceIndex);
+    bool singleDevice = (thread.slice != UINT32_MAX && deviceCount > 1) || deviceCount == 1;
+
+    if (singleDevice) {
+        devices[deviceIndex] = 1;
+    } else {
+        for (uint32_t i = 0; i < deviceCount; i++) {
+            devices[i] = 1;
+        }
+    }
+}
+
 bool DebugSession::isBindlessSystemRoutine() {
     if (debugArea.reserved1 &= 1) {
         return true;
