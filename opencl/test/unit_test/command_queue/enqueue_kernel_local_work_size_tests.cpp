@@ -48,7 +48,7 @@ struct EnqueueKernelRequiredWorkSize : public HelloWorldTest<HelloWorldFixtureFa
 // Kernel specifies the optional reqd_work_group_size() attribute but it wasn't
 // specified.  We'll permit the user to not specify the local work group size
 // and pick up the correct values instead.
-TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqeueingKernelThenLwsIsSetCorrectly) {
+TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqueueingKernelThenLwsIsSetCorrectly) {
     size_t globalWorkSize[3] = {32, 32, 32};
     size_t *localWorkSize = nullptr;
 
@@ -76,7 +76,7 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqeueing
 }
 
 // Fully specified
-TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqeueingKernelThenLwsIsSetCorrectly) {
+TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqueueingKernelThenLwsIsSetCorrectly) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 32};
     size_t localWorkSize[3] = {8, 2, 2};

@@ -1035,7 +1035,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenSvmAllocWithoutFlagsWhenMappingSvmThenM
     EXPECT_FALSE(svmMap->readOnlyMap);
 }
 
-HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvmPtrThenExpectSingleWalker) {
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqueueMapValidSvmPtrThenExpectSingleWalker) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
@@ -1075,7 +1075,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvm
     clReleaseEvent(event);
 }
 
-HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapSvmPtrTwiceThenExpectSingleWalker) {
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqueueMapSvmPtrTwiceThenExpectSingleWalker) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);

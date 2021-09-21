@@ -524,9 +524,9 @@ struct EnqueueWriteBufferHw : public ::testing::Test {
     uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
 };
 
-using EnqeueReadWriteStatelessTest = EnqueueWriteBufferHw;
+using EnqueueReadWriteStatelessTest = EnqueueWriteBufferHw;
 
-HWTEST_F(EnqeueReadWriteStatelessTest, WhenWritingBufferStatelessThenSuccessIsReturned) {
+HWTEST_F(EnqueueReadWriteStatelessTest, WhenWritingBufferStatelessThenSuccessIsReturned) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
@@ -544,9 +544,9 @@ HWTEST_F(EnqeueReadWriteStatelessTest, WhenWritingBufferStatelessThenSuccessIsRe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-using EnqeueWriteBufferStatefulTest = EnqueueWriteBufferHw;
+using EnqueueWriteBufferStatefulTest = EnqueueWriteBufferHw;
 
-HWTEST_F(EnqeueWriteBufferStatefulTest, WhenWritingBufferStatefulThenSuccessIsReturned) {
+HWTEST_F(EnqueueWriteBufferStatefulTest, WhenWritingBufferStatefulThenSuccessIsReturned) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);

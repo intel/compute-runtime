@@ -544,9 +544,9 @@ struct EnqueueFillBufferHw : public ::testing::Test {
     uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
 };
 
-using EnqeueFillBufferStatelessTest = EnqueueFillBufferHw;
+using EnqueueFillBufferStatelessTest = EnqueueFillBufferHw;
 
-HWTEST_F(EnqeueFillBufferStatelessTest, givenBuffersWhenFillingBufferStatelessThenSuccessIsReturned) {
+HWTEST_F(EnqueueFillBufferStatelessTest, givenBuffersWhenFillingBufferStatelessThenSuccessIsReturned) {
     auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     dstBuffer.size = static_cast<size_t>(bigSize);
     auto retVal = pCmdQ->enqueueFillBuffer(
@@ -562,9 +562,9 @@ HWTEST_F(EnqeueFillBufferStatelessTest, givenBuffersWhenFillingBufferStatelessTh
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-using EnqeueFillBufferStatefullTest = EnqueueFillBufferHw;
+using EnqueueFillBufferStatefullTest = EnqueueFillBufferHw;
 
-HWTEST_F(EnqeueFillBufferStatefullTest, givenBuffersWhenFillingBufferStatefullThenSuccessIsReturned) {
+HWTEST_F(EnqueueFillBufferStatefullTest, givenBuffersWhenFillingBufferStatefullThenSuccessIsReturned) {
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     dstBuffer.size = static_cast<size_t>(smallSize);
     auto retVal = pCmdQ->enqueueFillBuffer(
