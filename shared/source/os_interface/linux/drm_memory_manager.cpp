@@ -299,6 +299,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
         return nullptr;
     }
 
+    zeroCpuMemoryIfRequested(allocationData, res, size);
     obtainGpuAddress(allocationData, bo.get(), gpuAddress);
     emitPinningRequest(bo.get(), allocationData);
 

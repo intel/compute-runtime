@@ -415,6 +415,10 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.preferRenderCompressed = CompressionSelector::preferRenderCompressedBuffer(properties, *hwInfo);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
 
+    if (properties.allocationType == GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+        allocationData.flags.zeroMemory = 1;
+    }
+
     if (properties.allocationType == GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA) {
         allocationData.flags.use32BitFrontWindow = true;
     } else {

@@ -245,6 +245,11 @@ class MemoryManager {
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
     virtual void registerAllocationInOs(GraphicsAllocation *allocation) {}
     bool isAllocationTypeToCapture(GraphicsAllocation::AllocationType type) const;
+    void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
+        if (allocationData.flags.zeroMemory) {
+            memset(cpuPtr, 0, size);
+        }
+    }
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;

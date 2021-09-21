@@ -7,6 +7,7 @@
 
 #include "drm_memory_manager_tests.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
@@ -28,6 +29,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
+#include "shared/test/common/test_macros/matchers.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/memory_properties_helpers.h"
@@ -4421,11 +4423,24 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFromUserptrWhe
     EXPECT_EQ(allocation, nullptr);
 }
 
-TEST_F(DrmMemoryManagerTest, givenAllocateGraphicsMemoryWithPropertiesCalledWithDebugSurfaceTypeThenDebugSurfaceIsCreated) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAllocateGraphicsMemoryWithPropertiesCalledWithDebugSurfaceTypeThenDebugSurfaceIsCreated) {
     AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
     auto debugSurface = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
 
     EXPECT_NE(nullptr, debugSurface);
+
+    auto mem = debugSurface->getUnderlyingBuffer();
+    ASSERT_NE(nullptr, mem);
+
+    auto sipType = SipKernel::getSipKernelType(*device);
+    SipKernel::initSipKernel(sipType, *device);
+
+    auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*device).getStateSaveAreaHeader();
+    mem = ptrOffset(mem, stateSaveAreaHeader.size());
+    auto size = debugSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
+
+    EXPECT_THAT(mem, MemoryZeroed(size));
+
     memoryManager->freeGraphicsMemory(debugSurface);
 }
 
