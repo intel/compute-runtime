@@ -84,3 +84,18 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenSteppingWhenAskingForLocalMemoryAccessMode
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_EQ(LocalMemoryAccessMode::Default, hwInfoConfig.getLocalMemoryAccessMode(hwInfo));
 }
+
+XEHPTEST_F(TestXeHPHwInfoConfig, givenXEHPWhenHeapInLocalMemIsCalledThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restore;
+    auto hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+
+    {
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        EXPECT_FALSE(hwInfoConfig.heapInLocalMem(hwInfo));
+    }
+    {
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        EXPECT_TRUE(hwInfoConfig.heapInLocalMem(hwInfo));
+    }
+}

@@ -47,22 +47,6 @@ XEHPTEST_F(HwHelperTestsXeHP, givenXEHPWhenIsBankOverrideRequiredIsCalledThenCor
     }
 }
 
-XEHPTEST_F(HwHelperTestsXeHP, givenXEHPWhenHeapInLocalMemIsCalledThenCorrectValueIsReturned) {
-    DebugManagerStateRestore restore;
-    auto hwInfo = *defaultHwInfo;
-    auto &helper = HwHelper::get(renderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(helper.heapInLocalMem(hwInfo));
-    }
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EXPECT_TRUE(helper.heapInLocalMem(hwInfo));
-    }
-}
-
 XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = true;

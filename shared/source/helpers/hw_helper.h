@@ -109,7 +109,6 @@ class HwHelper {
     virtual bool isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
     virtual uint32_t getDefaultThreadArbitrationPolicy() const = 0;
-    virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
@@ -218,8 +217,6 @@ class HwHelperHw : public HwHelper {
     SipKernelType getSipKernelType(bool debuggingActive) const override;
 
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
-
-    bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
 
     bool hvAlign4Required() const override;
 

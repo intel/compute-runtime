@@ -50,11 +50,6 @@ bool HwHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) con
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::heapInLocalMem(const HardwareInfo &hwInfo) const {
-    return !(hwInfo.platform.eProductFamily == IGFX_XE_HP_SDV && isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo));
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::hvAlign4Required() const {
     return false;
 }

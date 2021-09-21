@@ -40,4 +40,9 @@ bool HwInfoConfigHw<gfxProduct>::isNewResidencyModelSupported() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO

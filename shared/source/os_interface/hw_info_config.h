@@ -63,6 +63,7 @@ class HwInfoConfig {
     virtual bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -111,6 +112,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const override;
     bool isNewResidencyModelSupported() const override;
     bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const override;
+    bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

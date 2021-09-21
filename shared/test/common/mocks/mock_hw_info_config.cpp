@@ -183,4 +183,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommands
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } //namespace NEO

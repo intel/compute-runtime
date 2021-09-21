@@ -27,6 +27,7 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/compiler_support.h"
@@ -518,7 +519,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (use32Allocator || isAllocationOnLimitedGPU ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwHelper::get(hwInfo->platform.eRenderCoreFamily).heapInLocalMem(*hwInfo) : false;
+        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwInfoConfig::get(hwInfo->platform.eProductFamily)->heapInLocalMem(*hwInfo) : false;
         return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMem);
     }
     if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {
