@@ -95,7 +95,7 @@ struct Event : _ze_event_handle_t {
 };
 
 template <typename TagSizeT>
-class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT> {
+class KernelTimestampsData : public NEO::TimestampPackets<TagSizeT> {
   public:
     uint32_t getPacketsUsed() const { return packetsUsed; }
     void setPacketsUsed(uint32_t value) { packetsUsed = value; }
@@ -139,7 +139,7 @@ struct EventImp : public Event {
     size_t getSinglePacketSize() const override { return NEO::TimestampPackets<TagSizeT>::getSinglePacketSize(); };
     ze_result_t hostEventSetValue(uint32_t eventValue) override;
 
-    std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
+    std::unique_ptr<KernelTimestampsData<TagSizeT>[]> kernelTimestampsData;
 
     Device *device;
     int index;
@@ -148,9 +148,8 @@ struct EventImp : public Event {
   protected:
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusKernelTimestamp();
-    ze_result_t queryStatusNonTimestamp();
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
-    void assignKernelEventCompletionData(void *address);
+    void assignTimestampData(void *address);
 };
 
 struct EventPool : _ze_event_pool_handle_t {

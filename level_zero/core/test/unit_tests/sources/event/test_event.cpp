@@ -640,15 +640,15 @@ TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventF
 }
 
 TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {
-    EXPECT_NE(nullptr, event->kernelEventCompletionData);
+    EXPECT_NE(nullptr, event->kernelTimestampsData);
     for (auto j = 0u; j < EventPacketsCount::maxKernelSplit; j++) {
         for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
-            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getContextStartValue(i));
-            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getGlobalStartValue(i));
-            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getContextEndValue(i));
-            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getGlobalEndValue(i));
+            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelTimestampsData[j].getContextStartValue(i));
+            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelTimestampsData[j].getGlobalStartValue(i));
+            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelTimestampsData[j].getContextEndValue(i));
+            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelTimestampsData[j].getGlobalEndValue(i));
         }
-        EXPECT_EQ(1u, event->kernelEventCompletionData[j].getPacketsUsed());
+        EXPECT_EQ(1u, event->kernelTimestampsData[j].getPacketsUsed());
     }
 
     EXPECT_EQ(1u, event->kernelCount);
@@ -692,7 +692,7 @@ TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsSetThenCorrectO
 }
 
 TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAreSet) {
-    EXPECT_NE(nullptr, event->kernelEventCompletionData);
+    EXPECT_NE(nullptr, event->kernelTimestampsData);
     event->hostSignal();
     ze_result_t result = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -702,12 +702,12 @@ TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrec
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
     for (auto j = 0u; j < EventPacketsCount::maxKernelSplit; j++) {
         for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
-            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getContextStartValue(i));
-            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getGlobalStartValue(i));
-            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getContextEndValue(i));
-            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getGlobalEndValue(i));
+            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelTimestampsData[j].getContextStartValue(i));
+            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelTimestampsData[j].getGlobalStartValue(i));
+            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelTimestampsData[j].getContextEndValue(i));
+            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelTimestampsData[j].getGlobalEndValue(i));
         }
-        EXPECT_EQ(1u, event->kernelEventCompletionData[j].getPacketsUsed());
+        EXPECT_EQ(1u, event->kernelTimestampsData[j].getPacketsUsed());
     }
     EXPECT_EQ(1u, event->kernelCount);
 }
@@ -799,7 +799,7 @@ TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithS
     uint32_t numPackets = 2;
 
     for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
-        event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
+        event->kernelTimestampsData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
         event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
     }
     uint32_t pCount = 0;
@@ -865,7 +865,7 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSe
     uint32_t pCount = 2;
 
     for (uint32_t packetId = 0; packetId < pCount; packetId++) {
-        event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
+        event->kernelTimestampsData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
         event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
     }
 
