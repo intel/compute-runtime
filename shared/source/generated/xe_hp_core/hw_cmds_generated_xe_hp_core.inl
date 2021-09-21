@@ -3621,7 +3621,7 @@ struct XY_BLOCK_COPY_BLT {
             /// DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t DestinationAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMOCSvalue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
             uint32_t DestinationCompressionType : BITFIELD_RANGE(28, 28);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
@@ -3882,12 +3882,12 @@ struct XY_BLOCK_COPY_BLT {
         return static_cast<AUXILIARY_SURFACE_MODE>(TheStructure.Common.DestinationAuxiliarysurfacemode);
     }
 
-    inline void setDestinationMOCSvalue(const uint32_t value) {
-        TheStructure.Common.DestinationMOCSvalue = value;
+    inline void setDestinationMOCS(const uint32_t value) {
+        TheStructure.Common.DestinationMOCS = value;
     }
 
-    inline uint32_t getDestinationMOCSvalue(void) const {
-        return (TheStructure.Common.DestinationMOCSvalue);
+    inline uint32_t getDestinationMOCS(void) const {
+        return (TheStructure.Common.DestinationMOCS);
     }
 
     inline void setDestinationCompressionType(const COMPRESSION_TYPE value) {
@@ -4353,7 +4353,7 @@ struct XY_FAST_COLOR_BLT {
             /// DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t DestinationAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMOCSvalue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
             uint32_t DestinationCompressionType : BITFIELD_RANGE(28, 28);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
@@ -4560,12 +4560,12 @@ struct XY_FAST_COLOR_BLT {
         return static_cast<DESTINATION_AUXILIARY_SURFACE_MODE>(TheStructure.Common.DestinationAuxiliarysurfacemode);
     }
 
-    inline void setDestinationMOCSvalue(const uint32_t value) {
-        TheStructure.Common.DestinationMOCSvalue = value;
+    inline void setDestinationMOCS(const uint32_t value) {
+        TheStructure.Common.DestinationMOCS = value;
     }
 
-    inline uint32_t getDestinationMOCSvalue(void) const {
-        return (TheStructure.Common.DestinationMOCSvalue);
+    inline uint32_t getDestinationMOCS(void) const {
+        return (TheStructure.Common.DestinationMOCS);
     }
 
     inline void setDestinationCompressionType(const DESTINATION_COMPRESSION_TYPE value) {

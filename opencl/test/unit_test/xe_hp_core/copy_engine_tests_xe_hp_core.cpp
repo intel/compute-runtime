@@ -189,10 +189,10 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
 
-    auto mocsIndex = clDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocs = clDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
 
-    EXPECT_EQ(mocsIndex, bltCmd->getDestinationMOCSvalue());
-    EXPECT_EQ(mocsIndex, bltCmd->getSourceMOCS());
+    EXPECT_EQ(mocs, bltCmd->getDestinationMOCS());
+    EXPECT_EQ(mocs, bltCmd->getSourceMOCS());
 }
 
 XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenSetMocsToValueOfDebugKey) {
@@ -218,7 +218,7 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
 
-    EXPECT_EQ(0u, bltCmd->getDestinationMOCSvalue());
+    EXPECT_EQ(0u, bltCmd->getDestinationMOCS());
     EXPECT_EQ(0u, bltCmd->getSourceMOCS());
 }
 
