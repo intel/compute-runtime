@@ -1856,6 +1856,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
         if (allocationProperties.allocationType == NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER) {
             cmdBufferAllocationsFound++;
             EXPECT_EQ(expectedBitfield, allocationProperties.subDevicesBitfield.to_ulong());
+            EXPECT_EQ(1u, allocationProperties.flags.multiOsContextCapable);
         }
     }
 

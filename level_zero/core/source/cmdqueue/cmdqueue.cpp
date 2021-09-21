@@ -167,7 +167,7 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
     size_t alignedSize = alignUp<size_t>(sizeRequested, MemoryConstants::pageSize64k);
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, alignedSize,
                                          NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER,
-                                         device->isMultiDeviceCapable(),
+                                         (device->getNEODevice()->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
                                          false,
                                          device->getNEODevice()->getDeviceBitfield()};
 
