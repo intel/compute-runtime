@@ -275,4 +275,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     return ZE_RESULT_SUCCESS;
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t partitionDataSize) {
+
+    const uint64_t workPartitionAllocationGpuVa = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
+    size_t estimatedSizeRequired = sizeof(typename GfxFamily::MI_LOAD_REGISTER_MEM) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    increaseCommandStreamSpace(estimatedSizeRequired);
+
+    NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer,
+                                             NEO::PartitionRegisters<GfxFamily>::wparidCCSOffset,
+                                             workPartitionAllocationGpuVa);
+    NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(commandContainer,
+                                             NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                             partitionDataSize,
+                                             true);
+}
+
 } // namespace L0

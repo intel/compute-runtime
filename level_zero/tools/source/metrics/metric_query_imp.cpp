@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
@@ -729,6 +730,7 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_
     if (metricQueriesSize) {
 
         const size_t allocationSizeForSubDevice = pool.allocationSize / metricQueriesSize;
+        static_cast<CommandListImp &>(commandList).appendMultiPartitionPrologue(static_cast<uint32_t>(allocationSizeForSubDevice));
         void *buffer = nullptr;
 
         // Revert iteration to be ensured that the last set of gpu commands overwrite the previous written sets of gpu commands,

@@ -21,5 +21,6 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_wait_on_events.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_blit.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_fill.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_multipartition_prologue.cpp
 )
 add_subdirectories()

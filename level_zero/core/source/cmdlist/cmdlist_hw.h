@@ -151,6 +151,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
                                             size_t size, ze_event_handle_t hSignalEvent,
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+    void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
