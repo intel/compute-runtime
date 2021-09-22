@@ -175,16 +175,6 @@ TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThe
     EXPECT_EQ(pLinuxSysmanImp->getPmuInterface(), pLinuxSysmanImp->pPmuInterface);
 }
 
-TEST_F(SysmanDeviceFixture, GivenXmlParserHandleWhenCallinggetXmlParserThenCreatedXmlParserHandleWillBeRetrieved) {
-    if (pLinuxSysmanImp->pXmlParser != nullptr) {
-        //delete previously allocated XmlParser
-        delete pLinuxSysmanImp->pXmlParser;
-        pLinuxSysmanImp->pXmlParser = nullptr;
-    }
-    pLinuxSysmanImp->pXmlParser = XmlParser::create();
-    EXPECT_EQ(pLinuxSysmanImp->getXmlParser(), pLinuxSysmanImp->pXmlParser);
-}
-
 TEST_F(SysmanDeviceFixture, GivenFwUtilInterfaceHandleWhenCallinggetFwUtilInterfaceThenCreatedFwUtilInterfaceHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pFwUtilInterface != nullptr) {
         //delete previously allocated FwUtilInterface

@@ -12,7 +12,6 @@
 namespace L0 {
 
 ze_result_t LinuxSysmanImp::init() {
-    pXmlParser = XmlParser::create();
     pFwUtilInterface = FirmwareUtil::create();
     pFsAccess = FsAccess::create();
     UNRECOVERABLE_IF(nullptr == pFsAccess);
@@ -50,10 +49,6 @@ ze_result_t LinuxSysmanImp::init() {
 
 PmuInterface *LinuxSysmanImp::getPmuInterface() {
     return pPmuInterface;
-}
-
-XmlParser *LinuxSysmanImp::getXmlParser() {
-    return pXmlParser;
 }
 
 FirmwareUtil *LinuxSysmanImp::getFwUtilInterface() {
@@ -139,10 +134,6 @@ LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pFsAccess) {
         delete pFsAccess;
         pFsAccess = nullptr;
-    }
-    if (nullptr != pXmlParser) {
-        delete pXmlParser;
-        pXmlParser = nullptr;
     }
     if (nullptr != pFwUtilInterface) {
         delete pFwUtilInterface;
