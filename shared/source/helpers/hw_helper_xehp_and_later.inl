@@ -177,4 +177,9 @@ inline bool HwHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_
     }
     return true;
 }
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
+    return true;
+}
 } // namespace NEO

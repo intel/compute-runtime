@@ -1318,3 +1318,23 @@ HWTEST2_F(HwHelperTest, givenXeHPAndBelowPlatformPlatformWhenCheckingIfEngineTyp
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(hwHelper.isEngineTypeRemappingToHwSpecificRequired());
 }
+
+HWTEST2_F(HwHelperTest, givenAtMostGen12lpPlatformiWhenCheckingIfScratchSpaceSurfaceStateAccessibleThenFalseIsReturned, IsAtMostGen12lp) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.isScratchSpaceSurfaceStateAccessible());
+}
+
+HWTEST2_F(HwHelperTest, givenAtLeastXeHpPlatformWhenCheckingIfScratchSpaceSurfaceStateAccessibleTheniTrueIsReturned, IsAtLeastXeHpCore) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_TRUE(hwHelper.isScratchSpaceSurfaceStateAccessible());
+}
+
+HWTEST_F(HwHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorrectValueIsReturned) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    RENDER_SURFACE_STATE renderSurfaceState;
+    uint64_t expectedBaseAddress = 0x1122334455667788;
+    renderSurfaceState.setSurfaceBaseAddress(expectedBaseAddress);
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(expectedBaseAddress, hwHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState));
+}

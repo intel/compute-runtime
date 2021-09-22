@@ -626,4 +626,8 @@ template <typename GfxFamily>
 void HwHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize) const {
 }
 
+template <typename GfxFamily>
+uint64_t HwHelperHw<GfxFamily>::getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const {
+    return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
+}
 } // namespace NEO

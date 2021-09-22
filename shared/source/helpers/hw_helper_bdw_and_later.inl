@@ -124,4 +124,8 @@ bool HwHelperHw<GfxFamily>::additionalPipeControlArgsRequired() const {
     return false;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
+    return false;
+}
 } // namespace NEO

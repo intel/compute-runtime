@@ -79,6 +79,7 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     virtual bool isBindlessSystemRoutine();
     virtual bool readModuleDebugArea() = 0;
+    virtual ze_result_t readSbaBuffer(EuThread::ThreadId threadId, SbaTrackedAddresses &sbaBuffer) = 0;
 
     void fillDevicesFromThread(ze_device_thread_t thread, std::vector<uint8_t> &devices);
 

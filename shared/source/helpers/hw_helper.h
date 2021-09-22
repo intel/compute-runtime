@@ -146,6 +146,9 @@ class HwHelper {
     virtual void adjustPreemptionSurfaceSize(size_t &csrSize) const = 0;
     virtual size_t getSamplerStateSize() const = 0;
 
+    virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
+    virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const = 0;
+
   protected:
     HwHelper() = default;
 };
@@ -366,6 +369,9 @@ class HwHelperHw : public HwHelper {
     void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const override;
 
     void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
+
+    bool isScratchSpaceSurfaceStateAccessible() const override;
+    uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;
