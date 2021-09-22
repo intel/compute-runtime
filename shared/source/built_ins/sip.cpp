@@ -27,6 +27,36 @@ const size_t SipKernel::maxDbgSurfaceSize = 0x1800000; // proper value should be
 
 SipClassType SipKernel::classType = SipClassType::Init;
 
+std::vector<char> readFile(const std::string &fileName, size_t &retSize) {
+    std::vector<char> retBuf;
+    FILE *fileDescriptor = nullptr;
+    long int size = 0;
+    size_t bytesRead = 0u;
+    retSize = 0;
+
+    fileDescriptor = IoFunctions::fopenPtr(fileName.c_str(), "rb");
+    if (fileDescriptor == NULL) {
+        return retBuf;
+    }
+
+    IoFunctions::fseekPtr(fileDescriptor, 0, SEEK_END);
+    size = IoFunctions::ftellPtr(fileDescriptor);
+    IoFunctions::rewindPtr(fileDescriptor);
+
+    retBuf.resize(size);
+
+    bytesRead = IoFunctions::freadPtr(retBuf.data(), 1, size, fileDescriptor);
+    IoFunctions::fclosePtr(fileDescriptor);
+
+    if (static_cast<long int>(bytesRead) != size || bytesRead == 0u) {
+        retBuf.clear();
+    } else {
+        retSize = bytesRead;
+    }
+
+    return retBuf;
+}
+
 SipKernel::~SipKernel() = default;
 
 SipKernel::SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah) : stateSaveAreaHeader(ssah), sipAllocation(sipAlloc), type(type) {
@@ -63,52 +93,62 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
         return true;
     }
 
-    FILE *fileDescriptor = nullptr;
-    long int size = 0;
     size_t bytesRead = 0u;
+    auto fileData = readFile(fileName, bytesRead);
 
-    fileDescriptor = IoFunctions::fopenPtr(fileName.c_str(), "rb");
-    if (fileDescriptor == NULL) {
-        return false;
-    }
+    if (bytesRead) {
+        void *alignedBuffer = alignedMalloc(bytesRead, MemoryConstants::pageSize);
+        memcpy_s(alignedBuffer, bytesRead, fileData.data(), bytesRead);
 
-    IoFunctions::fseekPtr(fileDescriptor, 0, SEEK_END);
-    size = IoFunctions::ftellPtr(fileDescriptor);
-    IoFunctions::rewindPtr(fileDescriptor);
+        const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
+        AllocationProperties properties = {rootDeviceIndex, bytesRead, allocType, device.getDeviceBitfield()};
+        properties.flags.use32BitFrontWindow = false;
 
-    void *alignedBuffer = alignedMalloc(size, MemoryConstants::pageSize);
+        auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        if (sipAllocation == nullptr) {
+            alignedFree(alignedBuffer);
+            return false;
+        }
 
-    bytesRead = IoFunctions::freadPtr(alignedBuffer, 1, size, fileDescriptor);
-    IoFunctions::fclosePtr(fileDescriptor);
-    if (static_cast<long int>(bytesRead) != size || bytesRead == 0u) {
+        auto &hwInfo = device.getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+                                                         device, sipAllocation, 0, alignedBuffer,
+                                                         bytesRead);
+
         alignedFree(alignedBuffer);
-        return false;
+
+        auto headerFilename = createHeaderFilename(fileName);
+        std::vector<char> stateSaveAreaHeader = readStateSaveAreaHeaderFromFile(headerFilename);
+
+        device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
+            std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
+        return true;
+    }
+    return false;
+}
+
+std::vector<char> SipKernel::readStateSaveAreaHeaderFromFile(const std::string &fileName) {
+    std::vector<char> data;
+    size_t bytesRead = 0u;
+    data = readFile(fileName, bytesRead);
+    return data;
+}
+
+std::string SipKernel::createHeaderFilename(const std::string &fileName) {
+    std::string_view coreName(fileName);
+    auto extensionPos = coreName.find('.');
+    std::string ext = "";
+
+    if (extensionPos != coreName.npos) {
+        ext = coreName.substr(extensionPos, coreName.size() - extensionPos);
+        coreName.remove_suffix(coreName.size() - extensionPos);
     }
 
-    const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
-    AllocationProperties properties = {rootDeviceIndex, bytesRead, allocType, device.getDeviceBitfield()};
-    properties.flags.use32BitFrontWindow = false;
-
-    auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-    if (sipAllocation == nullptr) {
-        alignedFree(alignedBuffer);
-        return false;
-    }
-
-    auto &hwInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-    MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
-                                                     device, sipAllocation, 0, alignedBuffer,
-                                                     bytesRead);
-
-    alignedFree(alignedBuffer);
-
-    std::vector<char> emptyStateSaveAreaHeader;
-    device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
-        std::make_unique<SipKernel>(type, sipAllocation, std::move(emptyStateSaveAreaHeader));
-
-    return true;
+    std::string headerFilename(coreName);
+    headerFilename += "_header" + ext;
+    return headerFilename;
 }
 
 bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device) {

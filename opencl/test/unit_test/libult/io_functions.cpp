@@ -20,6 +20,7 @@ freadFuncPtr freadPtr = &mockFread;
 
 uint32_t mockFopenCalled = 0;
 FILE *mockFopenReturned = reinterpret_cast<FILE *>(0x40);
+uint32_t failAfterNFopenCount = 0;
 uint32_t mockVfptrinfCalled = 0;
 uint32_t mockFcloseCalled = 0;
 uint32_t mockGetenvCalled = 0;
