@@ -48,9 +48,57 @@ rm -rf $BUILD_DIR
 mkdir -p $BUILD_DIR/debian
 
 COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/copyright"
+CONTROL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/control"
+SHLIBS="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/shlibs.local"
 
 cp -pR ${REPO_DIR}/scripts/packaging/opencl/${OS_TYPE}/debian/* $BUILD_DIR/debian/
 cp $COPYRIGHT $BUILD_DIR/debian/
+cp $CONTROL $BUILD_DIR/debian/
+if [ -f "${SHLIBS}" ]; then
+    cp $SHLIBS $BUILD_DIR/debian/
+fi
+
+if [ -z "${BRANCH_SUFFIX}" ]; then
+    GMM_VERSION=$(apt-cache policy intel-gmmlib | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${GMM_VERSION}" ]; then
+        perl -pi -e "s/^ intel-gmmlib(?=,|$)/ intel-gmmlib (=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+    GMM_DEVEL_VERSION=$(apt-cache policy intel-gmmlib-devel | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
+        perl -pi -e "s/^ intel-gmmlib-devel(?=,|$)/ intel-gmmlib-devel (=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+
+    IGC_VERSION=$(apt-cache policy intel-igc-opencl | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${IGC_VERSION}" ]; then
+        perl -pi -e "s/^ intel-igc-opencl(?=,|$)/ intel-igc-opencl (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+    IGC_DEVEL_VERSION=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
+        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+else
+    GMM_VERSION=$(apt-cache policy libigdgmm11 | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${GMM_VERSION}" ]; then
+        perl -pi -e "s/^ libigdgmm11(?=,|$)/ libigdgmm11 (=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+    GMM_DEVEL_VERSION=$(apt-cache policy libigdgmm-dev | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
+        perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+
+    IGC_VERSION=$(apt-cache policy libigdfcl1 | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${IGC_VERSION}" ]; then
+        perl -pi -e "s/^ libigdfcl1(?=,|$)/ libigdfcl1 (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+    IGC_DEVEL_VERSION=$(apt-cache policy libigdfcl-dev | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
+        perl -pi -e "s/^ libigdfcl-dev(?=,|$)/ libigdfcl-dev (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+    IGC_CORE_VERSION=$(apt-cache policy libigc1 | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${IGC_CORE_VERSION}" ]; then
+        perl -pi -e "s/^ libigc1(?=,|$)/ libigc1 (=$IGC_CORE_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+fi
 
 #needs a top level CMAKE file
 cat << EOF | tee $BUILD_DIR/CMakeLists.txt
