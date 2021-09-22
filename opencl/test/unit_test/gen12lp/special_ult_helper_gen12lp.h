@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,15 +9,13 @@
 
 #include "igfxfmid.h"
 
-#include <cstddef>
-
 namespace NEO {
-struct HardwareInfo;
 
 struct SpecialUltHelperGen12lp {
     static bool additionalCoherencyCheck(PRODUCT_FAMILY productFamily, bool coherency);
+    static bool isAdditionalCapabilityCoherencyFlagSettingRequired(PRODUCT_FAMILY productFamily);
     static bool shouldPerformimagePitchAlignment(PRODUCT_FAMILY productFamily);
-    static bool shouldTestDefaultImplementationOfSetupHardwareCapabilities(PRODUCT_FAMILY productFamily);
     static bool isPipeControlWArequired(PRODUCT_FAMILY productFamily);
 };
+
 } // namespace NEO

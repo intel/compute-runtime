@@ -50,7 +50,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpSkuWhenGettingCapabilityCoherency
         return;
     }
 
-    if (hardwareInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) {
+    if (SpecialUltHelperGen12lp::isAdditionalCapabilityCoherencyFlagSettingRequired(hardwareInfo.platform.eProductFamily)) {
         hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
         helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
         EXPECT_TRUE(coherency);
