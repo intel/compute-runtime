@@ -13,10 +13,8 @@
 #include "sku_info.h"
 
 namespace NEO {
-class Kernel;
 class Device;
 class GraphicsAllocation;
-struct MultiDispatchInfo;
 
 struct PreemptionFlags {
     PreemptionFlags() {
@@ -43,12 +41,9 @@ class PreemptionHelper {
     using INTERFACE_DESCRIPTOR_DATA = typename CmdFamily::INTERFACE_DESCRIPTOR_DATA;
 
     static PreemptionMode taskPreemptionMode(PreemptionMode devicePreemptionMode, const PreemptionFlags &flags);
-    static PreemptionMode taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo);
     static bool allowThreadGroupPreemption(const PreemptionFlags &flags);
     static bool allowMidThreadPreemption(const PreemptionFlags &flags);
     static void adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch);
-
-    static void setPreemptionLevelFlags(PreemptionFlags &flags, Device &device, Kernel *kernel);
 
     template <typename GfxFamily>
     static size_t getRequiredPreambleSize(const Device &device);

@@ -13,6 +13,7 @@
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -76,7 +77,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     auto parentKernel = multiDispatchInfo.peekParentKernel();
     auto mainKernel = multiDispatchInfo.peekMainKernel();
-    auto preemptionMode = PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), multiDispatchInfo);
+    auto preemptionMode = ClPreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), multiDispatchInfo);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         // Compute local workgroup sizes

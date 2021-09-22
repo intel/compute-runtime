@@ -23,6 +23,7 @@
 #include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/task_information.inl"
 #include "opencl/source/mem_obj/mem_obj.h"
@@ -56,7 +57,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         {},                                                                          //pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                //flushStampReference
         commandQueue.getThrottle(),                                                  //throttle
-        PreemptionHelper::taskPreemptionMode(device, multiDispatch),                 //preemptionMode
+        ClPreemptionHelper::taskPreemptionMode(device, multiDispatch),               //preemptionMode
         GrfConfig::NotApplicable,                                                    //numGrfRequired
         L3CachingSettings::NotApplicable,                                            //l3CacheSettings
         ThreadArbitrationPolicy::NotPresent,                                         //threadArbitrationPolicy

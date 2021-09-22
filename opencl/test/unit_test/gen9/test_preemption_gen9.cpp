@@ -9,6 +9,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 
+#include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_preemption_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -160,7 +161,7 @@ GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
 
     MockKernelWithInternals mockKernel(*pClDevice);
     MultiDispatchInfo multiDispatch(mockKernel.mockKernel);
-    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*pDevice, multiDispatch));
+    EXPECT_EQ(PreemptionMode::ThreadGroup, ClPreemptionHelper::taskPreemptionMode(*pDevice, multiDispatch));
 
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -178,7 +179,7 @@ GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
 
     MockKernelWithInternals mockKernel(*pClDevice);
     MultiDispatchInfo multiDispatch(mockKernel.mockKernel);
-    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*pDevice, multiDispatch));
+    EXPECT_EQ(PreemptionMode::ThreadGroup, ClPreemptionHelper::taskPreemptionMode(*pDevice, multiDispatch));
 
     UserEvent userEventObj;
     cl_event userEvent = &userEventObj;
@@ -379,7 +380,7 @@ GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKe
 
     MockKernelWithInternals mockKernel(*pClDevice);
     MultiDispatchInfo multiDispatch(mockKernel.mockKernel);
-    EXPECT_EQ(PreemptionMode::Disabled, PreemptionHelper::taskPreemptionMode(*pDevice, multiDispatch));
+    EXPECT_EQ(PreemptionMode::Disabled, ClPreemptionHelper::taskPreemptionMode(*pDevice, multiDispatch));
 
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
