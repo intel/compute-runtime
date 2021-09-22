@@ -409,7 +409,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     commandStreamRecieverOwnership.unlock();
 
     if (blocking) {
-        waitUntilComplete(blockQueue, (blockQueue ? nullptr : printfHandler.get()));
+        waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()));
     }
     if (migratedMemory) {
         getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
@@ -1249,7 +1249,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     commandStreamRecieverOwnership.unlock();
 
     if (blocking) {
-        waitUntilComplete(blockQueue, nullptr);
+        waitForAllEngines(blockQueue, nullptr);
     }
 }
 

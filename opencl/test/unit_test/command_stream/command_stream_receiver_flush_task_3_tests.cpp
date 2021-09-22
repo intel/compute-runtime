@@ -1031,7 +1031,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    commandQueue.waitUntilComplete(false, nullptr);
+    commandQueue.waitForAllEngines(false, nullptr);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -1059,7 +1059,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    commandQueue.waitUntilComplete(false, nullptr);
+    commandQueue.waitForAllEngines(false, nullptr);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());

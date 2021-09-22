@@ -187,15 +187,6 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
     return false;
 }
 
-void CommandQueue::waitForLatestTaskCount() {
-    TimestampPacketContainer nodesToRelease;
-    if (deferredTimestampPackets) {
-        deferredTimestampPackets->swapNodes(nodesToRelease);
-    }
-
-    waitUntilComplete(taskCount, this->bcsState.taskCount, flushStamp->peekStamp(), false);
-}
-
 void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
     WAIT_ENTER()
 
@@ -918,13 +909,18 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
     }
 }
 
-void CommandQueue::waitUntilComplete(bool blockedQueue, PrintfHandler *printfHandler) {
+void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) {
     if (blockedQueue) {
         while (isQueueBlocked()) {
         }
     }
 
-    waitForLatestTaskCount();
+    TimestampPacketContainer nodesToRelease;
+    if (deferredTimestampPackets) {
+        deferredTimestampPackets->swapNodes(nodesToRelease);
+    }
+
+    waitUntilComplete(taskCount, this->bcsState.taskCount, flushStamp->peekStamp(), false);
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();

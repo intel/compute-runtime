@@ -217,7 +217,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
     MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
-    MOCKABLE_VIRTUAL void waitUntilComplete(bool blockedQueue, PrintfHandler *printfHandler);
+    MOCKABLE_VIRTUAL void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler);
 
     static uint32_t getTaskLevelFromWaitList(uint32_t taskLevel,
                                              cl_uint numEventsInWaitList,
@@ -360,7 +360,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
-    void waitForLatestTaskCount();
 
     Context *context = nullptr;
     ClDevice *device = nullptr;
