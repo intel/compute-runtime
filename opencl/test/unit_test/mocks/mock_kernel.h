@@ -124,6 +124,7 @@ class MockKernel : public Kernel {
     using Kernel::parentEventOffset;
     using Kernel::patchBufferOffset;
     using Kernel::patchWithImplicitSurface;
+    using Kernel::pImplicitArgs;
     using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
     using Kernel::singleSubdevicePreferredInCurrentEnqueue;

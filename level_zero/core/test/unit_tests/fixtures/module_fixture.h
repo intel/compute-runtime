@@ -42,6 +42,8 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     };
 
     struct MockImmutableData : KernelImmutableData {
+        using KernelImmutableData::crossThreadDataSize;
+        using KernelImmutableData::crossThreadDataTemplate;
         using KernelImmutableData::kernelDescriptor;
         using KernelImmutableData::kernelInfo;
         MockImmutableData(uint32_t perHwThreadPrivateMemorySize) {
@@ -113,6 +115,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     class MockKernel : public WhiteBox<L0::KernelImp> {
       public:
+        using KernelImp::crossThreadData;
         using KernelImp::kernelArgHandlers;
         using KernelImp::kernelHasIndirectAccess;
         using KernelImp::privateMemoryGraphicsAllocation;

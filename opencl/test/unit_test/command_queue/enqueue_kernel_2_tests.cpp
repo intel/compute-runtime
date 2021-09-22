@@ -623,49 +623,91 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
 }
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenOutputPrinted) {
-    typedef typename FamilyType::PARSE PARSE;
+    testing::internal::CaptureStdout();
 
-    // In scenarios with 32bit allocator and 64 bit tests this code won't work
-    // due to inability to retrieve original buffer pointer as it is done in this test.
-    auto memoryManager = pDevice->getMemoryManager();
-    if (!memoryManager->peekForce32BitAllocations() && !memoryManager->isLimitedRange(0)) {
-        testing::internal::CaptureStdout();
+    auto userEvent = make_releaseable<UserEvent>(context);
 
-        auto userEvent = make_releaseable<UserEvent>(context);
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
+    std::string testString = "test";
+    mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
 
-        MockKernelWithInternals mockKernel(*pClDevice);
-        mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
-        std::string testString = "test";
-        mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
 
-        cl_uint workDim = 1;
-        size_t globalWorkOffset[3] = {0, 0, 0};
+    FillValues();
 
-        FillValues();
+    cl_event blockedEvent = userEvent.get();
+    cl_event outEvent{};
+    auto retVal = pCmdQ->enqueueKernel(
+        mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        1,
+        &blockedEvent,
+        &outEvent);
 
-        cl_event blockedEvent = userEvent.get();
-        auto retVal = pCmdQ->enqueueKernel(
-            mockKernel,
-            workDim,
-            globalWorkOffset,
-            globalWorkSize,
-            localWorkSize,
-            1,
-            &blockedEvent,
-            nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
-        ASSERT_EQ(CL_SUCCESS, retVal);
+    auto pOutEvent = castToObject<Event>(outEvent);
 
-        auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData());
-        auto printfAllocation = reinterpret_cast<uint32_t *>(*crossThreadData);
-        printfAllocation[0] = 8;
-        printfAllocation[1] = 0;
+    auto printfAllocation = reinterpret_cast<uint32_t *>(static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler()->getSurface()->getUnderlyingBuffer());
+    printfAllocation[0] = 8;
+    printfAllocation[1] = 0;
 
-        userEvent->setStatus(CL_COMPLETE);
+    pOutEvent->release();
 
-        std::string output = testing::internal::GetCapturedStdout();
-        EXPECT_STREQ("test", output.c_str());
-    }
+    userEvent->setStatus(CL_COMPLETE);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ("test", output.c_str());
+}
+
+HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithImplicitArgsWithoutPrintfInParentKernelBlockedByEventWhenEventUnblockedThenOutputPrinted) {
+    auto userEvent = make_releaseable<UserEvent>(context);
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+    std::string testString = "test";
+    mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = false;
+    mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
+    *mockKernel.mockKernel->pImplicitArgs = {};
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+
+    FillValues();
+
+    cl_event blockedEvent = userEvent.get();
+    cl_event outEvent{};
+    auto retVal = pCmdQ->enqueueKernel(
+        mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        1,
+        &blockedEvent,
+        &outEvent);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto pOutEvent = castToObject<Event>(outEvent);
+
+    auto printfAllocation = reinterpret_cast<uint32_t *>(static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler()->getSurface()->getUnderlyingBuffer());
+    printfAllocation[0] = 8;
+    printfAllocation[1] = 0;
+
+    pOutEvent->release();
+
+    testing::internal::CaptureStdout();
+    userEvent->setStatus(CL_COMPLETE);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_STREQ("test", output.c_str());
 }
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,

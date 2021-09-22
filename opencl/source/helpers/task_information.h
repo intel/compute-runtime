@@ -139,6 +139,7 @@ class CommandComputeKernel : public Command {
 
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
     Kernel *peekKernel() const { return kernel; }
+    PrintfHandler *peekPrintfHandler() const { return printfHandler.get(); }
 
   protected:
     std::vector<Surface *> surfaces;
