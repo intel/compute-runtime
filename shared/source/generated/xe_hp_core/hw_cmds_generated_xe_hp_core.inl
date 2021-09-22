@@ -5103,7 +5103,7 @@ typedef struct tagPOSTSYNC_DATA {
             // DWORD 0
             uint32_t Operation : BITFIELD_RANGE(0, 1);
             uint32_t DataportPipelineFlush : BITFIELD_RANGE(2, 2);
-            uint32_t L3Flush : BITFIELD_RANGE(3, 3);
+            uint32_t Reserved_3 : BITFIELD_RANGE(3, 3);
             uint32_t MocsReserved_4 : BITFIELD_RANGE(4, 4);
             uint32_t MocsIndexToMocsTables : BITFIELD_RANGE(5, 10);
             uint32_t Reserved_13 : BITFIELD_RANGE(11, 31);
@@ -5143,12 +5143,6 @@ typedef struct tagPOSTSYNC_DATA {
     }
     inline bool getDataportPipelineFlush(void) const {
         return TheStructure.Common.DataportPipelineFlush;
-    }
-    inline void setL3Flush(const bool value) {
-        TheStructure.Common.L3Flush = value;
-    }
-    inline bool getL3Flush(void) const {
-        return TheStructure.Common.L3Flush;
     }
     inline void setMocs(const uint32_t value) { // patched
         UNRECOVERABLE_IF(value > 0x7f);

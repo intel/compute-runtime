@@ -469,7 +469,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEventWhenInvokingAppendLaunchKerne
         auto &postSync = cmd->getPostSync();
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
         EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
-        EXPECT_EQ(true, postSync.getL3Flush());
         postSyncFound = true;
     }
     EXPECT_TRUE(postSyncFound);
@@ -516,7 +515,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventWhenInvokingAppendLa
         auto &postSync = cmd->getPostSync();
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
         EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
-        EXPECT_EQ(false, postSync.getL3Flush());
         postSyncFound = true;
     }
     EXPECT_TRUE(postSyncFound);

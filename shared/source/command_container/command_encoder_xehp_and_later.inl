@@ -238,7 +238,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     auto &postSync = walkerCmd.getPostSync();
     if (eventAddress != 0) {
         postSync.setDataportPipelineFlush(true);
-        postSync.setL3Flush(L3FlushEnable);
         if (isTimestampEvent) {
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
         } else {
