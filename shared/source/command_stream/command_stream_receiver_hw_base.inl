@@ -815,7 +815,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForMediaSampler(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
-    size += getCmdSizeForPerDssBackedBuffer(device.getHardwareInfo());
+    if (dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
+        size += getCmdSizeForPerDssBackedBuffer(device.getHardwareInfo());
+    }
     size += getCmdSizeForEpilogue(dispatchFlags);
     size += getCmdsSizeForHardwareContext();
     size += getCmdSizeForActivePartitionConfig();

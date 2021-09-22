@@ -813,6 +813,9 @@ struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public Command
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleStaticActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
@@ -830,6 +833,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleDynamicActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
     commandStreamReceiver.staticWorkPartitioningEnabled = false;
@@ -846,6 +852,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenSingleStaticActivePartitionWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
     commandStreamReceiver.activePartitions = 1;
     commandStreamReceiver.taskCount = 3;
     flushTask(commandStreamReceiver, true);
@@ -864,6 +873,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleStaticActivePartitionsWhenFlushingTaskTwiceThenExpectTagUpdatePipeControlWithPartitionFlagOnAndNoActivePartitionConfigAtSecondFlush) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;

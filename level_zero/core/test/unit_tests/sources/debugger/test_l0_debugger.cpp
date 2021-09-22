@@ -100,7 +100,9 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
     auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
 
     if (isHexadecimalArrayPreferred) {
-        auto &expectedStateSaveAreaHeader = neoDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)]->getStateSaveAreaHeader();
+        auto sipKernel = neoDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
+        ASSERT_NE(sipKernel, nullptr);
+        auto &expectedStateSaveAreaHeader = sipKernel->getStateSaveAreaHeader();
         EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
     } else {
         auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();

@@ -1431,6 +1431,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
@@ -1464,6 +1467,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);

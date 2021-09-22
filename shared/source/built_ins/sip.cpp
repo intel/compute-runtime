@@ -152,17 +152,18 @@ std::string SipKernel::createHeaderFilename(const std::string &fileName) {
 }
 
 bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device) {
+    uint32_t sipIndex = static_cast<uint32_t>(type);
+    uint32_t rootDeviceIndex = device.getRootDeviceIndex();
+    auto sipKenel = device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get();
+    if (sipKenel != nullptr) {
+        return true;
+    }
+
     uint32_t *sipKernelBinary = nullptr;
     size_t kernelBinarySize = 0u;
     auto &hwInfo = device.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     hwHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
-
-    uint32_t sipIndex = static_cast<uint32_t>(type);
-    uint32_t rootDeviceIndex = device.getRootDeviceIndex();
-    if (device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get() != nullptr) {
-        return true;
-    }
     const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
     AllocationProperties properties = {rootDeviceIndex, kernelBinarySize, allocType, device.getDeviceBitfield()};
     properties.flags.use32BitFrontWindow = false;

@@ -44,6 +44,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests, givenCsrWithSpecif
 
     MockCommandQueueHw<FamilyType> commandQueue(context.get(), rootDevice.get(), nullptr);
     commandQueue.gpgpuEngine = &engineControlForFusedQueue;
+    rootDevice->setPreemptionMode(PreemptionMode::Disabled);
     MockKernelWithInternals kernel(*rootDevice, context.get());
 
     size_t offset[3] = {0, 0, 0};

@@ -48,6 +48,8 @@ const SipKernel &SipKernel::getSipKernel(Device &device) {
     if (MockSipData::useMockSip) {
         return *MockSipData::mockSipKernel.get();
     } else {
+        auto sipType = SipKernel::getSipKernelType(device);
+        SipKernel::initSipKernel(sipType, device);
         return SipKernel::getSipKernelImpl(device);
     }
 }
