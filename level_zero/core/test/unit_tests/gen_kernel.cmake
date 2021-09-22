@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,27 +21,29 @@ function(level_zero_gen_kernels target platform_name suffix options)
   set(outputdir "${TargetDir}/level_zero/${suffix}/test_files/${NEO_ARCH}/")
 
   set(results)
-  foreach(filepath ${ARGN})
-    get_filename_component(filename ${filepath} NAME)
-    get_filename_component(basename ${filepath} NAME_WE)
-    get_filename_component(workdir ${filepath} DIRECTORY)
+  if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+    foreach(filepath ${ARGN})
+      get_filename_component(filename ${filepath} NAME)
+      get_filename_component(basename ${filepath} NAME_WE)
+      get_filename_component(workdir ${filepath} DIRECTORY)
 
-    set(outputpath_base "${outputdir}${basename}_${suffix}")
-    set(output_files
-        ${outputpath_base}.bin
-        ${outputpath_base}.gen
-    )
+      set(outputpath_base "${outputdir}${basename}_${suffix}")
+      set(output_files
+          ${outputpath_base}.bin
+          ${outputpath_base}.gen
+      )
 
-    add_custom_command(
-                       COMMAND echo generate ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
-                       OUTPUT ${output_files}
-                       COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
-                       WORKING_DIRECTORY ${workdir}
-                       DEPENDS ${filepath} ocloc
-    )
+      add_custom_command(
+                         COMMAND echo generate ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                         OUTPUT ${output_files}
+                         COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                         WORKING_DIRECTORY ${workdir}
+                         DEPENDS ${filepath} ocloc
+      )
 
-    list(APPEND results ${output_files})
-  endforeach()
+      list(APPEND results ${output_files})
+    endforeach()
+  endif()
   add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
   set_target_properties(${target} PROPERTIES FOLDER ${TARGET_NAME_L0})
 endfunction()
