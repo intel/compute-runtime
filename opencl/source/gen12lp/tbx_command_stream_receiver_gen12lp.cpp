@@ -5,14 +5,13 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.inl"
 #include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/memory_manager/memory_pool.h"
-
-#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 
 #include "aub_mem_dump.h"
 

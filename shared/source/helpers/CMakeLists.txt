@@ -50,6 +50,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hash.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.cpp
@@ -75,6 +77,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen_special.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen_sse4.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/neo_driver_version.h
     ${CMAKE_CURRENT_SOURCE_DIR}/non_copyable_or_moveable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/options.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pause_on_gpu_properties.h

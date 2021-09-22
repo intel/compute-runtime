@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw_base.inl"
+#include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_base.inl"
 
 namespace NEO {
 

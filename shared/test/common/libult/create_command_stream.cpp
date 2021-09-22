@@ -7,12 +7,11 @@
 
 #include "shared/test/common/libult/create_command_stream.h"
 
+#include "shared/source/command_stream/create_command_stream_impl.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-
-#include "opencl/source/command_stream/create_command_stream_impl.h"
 
 #include <cassert>
 

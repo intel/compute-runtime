@@ -11,15 +11,19 @@
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
 #include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/neo_driver_version.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -28,12 +32,6 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/helpers/hardware_context_controller.h"
-#include "opencl/source/helpers/neo_driver_version.h"
-#include "opencl/source/os_interface/ocl_reg_path.h"
-
-#include "driver_version.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 
@@ -57,7 +55,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
 
     auto subCaptureCommon = aubCenter->getSubCaptureCommon();
     UNRECOVERABLE_IF(nullptr == subCaptureCommon);
-    subCaptureManager = std::make_unique<AubSubCaptureManager>(fileName, *subCaptureCommon, oclRegPath);
+    subCaptureManager = std::make_unique<AubSubCaptureManager>(fileName, *subCaptureCommon, ApiSpecificConfig::getRegistryPath());
 
     aubManager = aubCenter->getAubManager();
 

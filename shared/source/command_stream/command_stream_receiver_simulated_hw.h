@@ -7,16 +7,15 @@
 
 #pragma once
 #include "shared/source/aub/aub_helper.h"
+#include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
 #include "shared/source/os_interface/os_context.h"
-
-#include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
-#include "opencl/source/helpers/hardware_context_controller.h"
 
 #include "aub_mem_dump.h"
 #include "third_party/aub_stream/headers/allocation_params.h"

@@ -6,11 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/mocks/mock_experimental_command_buffer.h"
-
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 
 namespace NEO {
 

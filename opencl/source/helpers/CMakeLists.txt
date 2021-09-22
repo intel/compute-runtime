@@ -30,8 +30,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_bdw_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/helper_options.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_ocl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}memory_properties_helpers.cpp

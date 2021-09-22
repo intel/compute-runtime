@@ -5,9 +5,8 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_bdw_and_later.inl"
 #include "shared/source/gen12lp/helpers_gen12lp.h"
-
-#include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw_bdw_and_later.inl"
 
 namespace NEO {
 typedef TGLLPFamily Family;

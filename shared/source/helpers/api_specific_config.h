@@ -19,6 +19,7 @@ struct ApiSpecificConfig {
     static ApiType getApiType();
     static std::string getName();
     static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);
+    static const char *getRegistryPath();
 
     static std::string getAubPrefixForSpecificApi() {
         return (getName() + "_");

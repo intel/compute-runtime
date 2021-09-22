@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -14,7 +15,6 @@
 #include "shared/test/common/libult/create_command_stream.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "test.h"
 

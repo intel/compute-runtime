@@ -5,10 +5,10 @@
  *
  */
 
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "test.h"
 

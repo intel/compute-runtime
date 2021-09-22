@@ -7,7 +7,7 @@
 
 #include "device_fixture.h"
 
-#include "opencl/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 
 #include "gtest/gtest.h"
 

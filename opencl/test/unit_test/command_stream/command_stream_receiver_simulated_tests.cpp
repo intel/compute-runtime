@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -14,8 +16,6 @@
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
-#include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"

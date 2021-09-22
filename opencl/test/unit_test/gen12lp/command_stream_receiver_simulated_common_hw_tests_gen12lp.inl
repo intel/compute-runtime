@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_stream.h"
 #include "test.h"

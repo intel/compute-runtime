@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
+#include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 
 namespace NEO {
 

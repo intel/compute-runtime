@@ -6,13 +6,13 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "test.h"
 
 #include "aub_mapper.h"
