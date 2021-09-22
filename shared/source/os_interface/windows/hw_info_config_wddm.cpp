@@ -17,14 +17,15 @@
 namespace NEO {
 
 int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
-    HwHelper &hwHelper = HwHelper::get(outHwInfo->platform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(outHwInfo->platform.eRenderCoreFamily);
+    auto &hwInfoConfig = *HwInfoConfig::get(outHwInfo->platform.eProductFamily);
 
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.ftrSVM;
 
     hwHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
-    hwHelper.setCapabilityCoherencyFlag(outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
+    hwInfoConfig.setCapabilityCoherencyFlag(*outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
     outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.ftrL3IACoherency;
 
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,

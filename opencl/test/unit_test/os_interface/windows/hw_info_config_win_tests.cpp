@@ -76,11 +76,10 @@ TEST_F(HwInfoConfigTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabl
 
 HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {
     HardwareInfo initialHwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(initialHwInfo.platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(initialHwInfo.platform.eProductFamily);
 
     bool initialCoherencyStatus = false;
-    hwHelper.setCapabilityCoherencyFlag(&outHwInfo, initialCoherencyStatus);
+    hwInfoConfig->setCapabilityCoherencyFlag(outHwInfo, initialCoherencyStatus);
 
     initialHwInfo.featureTable.ftrL3IACoherency = false;
     hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());

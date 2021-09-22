@@ -22,14 +22,6 @@ GEN8TEST_F(HwHelperTestGen8, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsRetu
     EXPECT_EQ(16u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN8TEST_F(HwHelperTestGen8, WhenSettingCapabilityCoherencyFlagThenFlagIsSet) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-    EXPECT_TRUE(coherency);
-}
-
 GEN8TEST_F(HwHelperTestGen8, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));

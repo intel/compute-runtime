@@ -86,18 +86,6 @@ bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphics
 }
 
 template <>
-void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-    coherencyFlag = true;
-    HwHelper &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
-    if (pHwInfo->platform.eProductFamily == IGFX_TIGERLAKE_LP && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *pHwInfo)) {
-        //stepping A devices - turn off coherency
-        coherencyFlag = false;
-    }
-
-    Gen12LPHelpers::adjustCoherencyFlag(pHwInfo->platform.eProductFamily, coherencyFlag);
-}
-
-template <>
 uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) const {
     if (Gen12LPHelpers::imagePitchAlignmentWaRequired(hwInfo->platform.eProductFamily)) {
         HwHelper &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);

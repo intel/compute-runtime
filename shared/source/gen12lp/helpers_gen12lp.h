@@ -25,7 +25,6 @@ enum class LocalMemoryAccessMode;
 namespace Gen12LPHelpers {
 bool pipeControlWaRequired(PRODUCT_FAMILY productFamily);
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily);
-void adjustCoherencyFlag(PRODUCT_FAMILY productFamily, bool &coherencyFlag);
 bool isLocalMemoryEnabled(const HardwareInfo &hwInfo);
 void initAdditionalGlobalMMIO(const CommandStreamReceiver &commandStreamReceiver, AubMemDump::AubStream &stream);
 uint64_t getPPGTTAdditionalBits(GraphicsAllocation *graphicsAllocation);

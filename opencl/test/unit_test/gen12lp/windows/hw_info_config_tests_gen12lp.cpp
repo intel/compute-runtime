@@ -62,3 +62,25 @@ GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenCompressionFtrEnabledWhenAski
     outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
     EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
 }
+
+GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenGen12LpSkuWhenGettingCapabilityCoherencyFlagThenExpectValidValue) {
+    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    bool coherency = false;
+    hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+
+    const bool checkDone = SpecialUltHelperGen12lp::additionalCoherencyCheck(outHwInfo.platform.eProductFamily, coherency);
+    if (checkDone) {
+        return;
+    }
+
+    if (SpecialUltHelperGen12lp::isAdditionalCapabilityCoherencyFlagSettingRequired(outHwInfo.platform.eProductFamily)) {
+        outHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, outHwInfo);
+        hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+        EXPECT_TRUE(coherency);
+        outHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, outHwInfo);
+        hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+        EXPECT_FALSE(coherency);
+    } else {
+        EXPECT_TRUE(coherency);
+    }
+}

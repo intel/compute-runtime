@@ -21,12 +21,6 @@ bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
 }
 
-void adjustCoherencyFlag(PRODUCT_FAMILY productFamily, bool &coherencyFlag) {
-    if (productFamily == IGFX_DG1) {
-        coherencyFlag = false;
-    }
-}
-
 bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) {
     return hwInfo.featureTable.ftrLocalMemory;
 }

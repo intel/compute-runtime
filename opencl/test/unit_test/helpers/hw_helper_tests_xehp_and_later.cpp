@@ -28,14 +28,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenGettingMaxBarriersPer
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, whenCapabilityCoherencyFlagSetTrueThenOverrideToFalse) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    bool coherency = true;
-    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-    EXPECT_FALSE(coherency);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGetGpuTimeStampInNSIsCalledThenOnlyLow32BitsFromTimeStampAreUsedAndCorrectValueIsReturned) {
 
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -451,4 +443,12 @@ using HwInfoConfigTestXeHpAndLater = ::testing::Test;
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, givenXeHPAndLaterPlatformWhenCheckNewResidencyModelSupportedThenReturnTrue) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     EXPECT_TRUE(hwInfoConfig->isNewResidencyModelSupported());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, whenCapabilityCoherencyFlagSetTrueThenOverrideToFalse) {
+    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+
+    bool coherency = true;
+    hwInfoConfig.setCapabilityCoherencyFlag(*defaultHwInfo, coherency);
+    EXPECT_FALSE(coherency);
 }

@@ -42,4 +42,9 @@ bool HwInfoConfigHw<gfxProduct>::isNewResidencyModelSupported() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+    coherencyFlag = false;
+}
+
 } // namespace NEO

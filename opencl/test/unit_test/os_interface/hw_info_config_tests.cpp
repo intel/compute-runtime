@@ -283,3 +283,11 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfHeapInLocalMemThenFalseIs
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.heapInLocalMem(pInHwInfo));
 }
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenSettingCapabilityCoherencyFlagThenFlagIsSet, IsAtMostGen11) {
+    auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    bool coherency = false;
+    hwInfoConfig.setCapabilityCoherencyFlag(pInHwInfo, coherency);
+    EXPECT_TRUE(coherency);
+}

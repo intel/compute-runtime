@@ -26,11 +26,6 @@ inline uint32_t HwHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
 }
 
 template <typename GfxFamily>
-void HwHelperHw<GfxFamily>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-    coherencyFlag = true;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
     return false;
 }

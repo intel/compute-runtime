@@ -64,6 +64,7 @@ class HwInfoConfig {
     virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
+    virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -113,6 +114,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isNewResidencyModelSupported() const override;
     bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const override;
     bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
+    void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) override;
 
   protected:
     HwInfoConfigHw() = default;

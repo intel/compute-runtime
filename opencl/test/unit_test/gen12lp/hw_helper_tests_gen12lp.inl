@@ -39,29 +39,6 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingMaxBarriersPerSliceThenCorrectSize
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpSkuWhenGettingCapabilityCoherencyFlagThenExpectValidValue) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-
-    const bool checkDone = SpecialUltHelperGen12lp::additionalCoherencyCheck(hardwareInfo.platform.eProductFamily, coherency);
-    if (checkDone) {
-        return;
-    }
-
-    if (SpecialUltHelperGen12lp::isAdditionalCapabilityCoherencyFlagSettingRequired(hardwareInfo.platform.eProductFamily)) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
-        helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-        EXPECT_TRUE(coherency);
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-        helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-        EXPECT_FALSE(coherency);
-    } else {
-        EXPECT_TRUE(coherency);
-    }
-}
-
 GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     auto stepping = hardwareInfo.platform.usRevId;
