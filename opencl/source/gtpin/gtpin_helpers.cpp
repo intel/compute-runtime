@@ -33,9 +33,9 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinCreateBuffer(context_handle_t context
     size_t size = alignUp(reqSize, MemoryConstants::cacheLineSize);
     GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
     if (gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
-        void *unfiedMemorySharedAllocation = clSharedMemAllocINTEL(pContext, pContext->getDevice(0), 0, size, 0, &diag);
+        void *unifiedMemorySharedAllocation = clSharedMemAllocINTEL(pContext, pContext->getDevice(0), 0, size, 0, &diag);
         auto allocationsManager = pContext->getSVMAllocsManager();
-        auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemorySharedAllocation);
+        auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
         *pResource = (resource_handle_t)graphicsAllocation;
     } else {
         void *hostPtr = pContext->getMemoryManager()->allocateSystemMemory(size, MemoryConstants::pageSize);
