@@ -1579,6 +1579,9 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
             case aub_stream::ENGINE_RCS:
                 return EngineGroupType::RenderCompute;
             case aub_stream::ENGINE_CCS:
+            case aub_stream::ENGINE_CCS1:
+            case aub_stream::ENGINE_CCS2:
+            case aub_stream::ENGINE_CCS3:
                 return EngineGroupType::Compute;
             case aub_stream::ENGINE_BCS:
                 return EngineGroupType::Copy;
