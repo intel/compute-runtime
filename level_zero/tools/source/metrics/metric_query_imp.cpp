@@ -653,9 +653,39 @@ ze_result_t MetricQueryImp::appendEnd(CommandList &commandList, ze_event_handle_
 ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
 
     const bool calculateSizeOnly = *pRawDataSize == 0;
-    const bool result = calculateSizeOnly
-                            ? metricsLibrary.getMetricQueryReportSize(*pRawDataSize)
-                            : metricsLibrary.getMetricQueryReport(pool.query, slot, *pRawDataSize, pRawData);
+    const size_t metricQueriesSize = metricQueries.size();
+    bool result = true;
+
+    if (metricQueriesSize > 0) {
+
+        if (calculateSizeOnly) {
+
+            auto pMetricQueryImp = static_cast<MetricQueryImp *>(MetricQuery::fromHandle(metricQueries[0]));
+            result = pMetricQueryImp->metricsLibrary.getMetricQueryReportSize(*pRawDataSize);
+            *pRawDataSize *= metricQueriesSize;
+
+        } else {
+
+            size_t sizePerSubDevice = *pRawDataSize / metricQueriesSize;
+            DEBUG_BREAK_IF(sizePerSubDevice == 0);
+
+            for (size_t i = 0; i < metricQueriesSize; ++i) {
+
+                auto pMetricQuery = MetricQuery::fromHandle(metricQueries[i]);
+                ze_result_t tmpResult = pMetricQuery->getData(&sizePerSubDevice, pRawData + (sizePerSubDevice * i));
+
+                if (tmpResult != ZE_RESULT_SUCCESS) {
+                    result = false;
+                    break;
+                }
+            }
+        }
+
+    } else {
+        result = calculateSizeOnly
+                     ? metricsLibrary.getMetricQueryReportSize(*pRawDataSize)
+                     : metricsLibrary.getMetricQueryReport(pool.query, slot, *pRawDataSize, pRawData);
+    }
 
     return result
                ? ZE_RESULT_SUCCESS
