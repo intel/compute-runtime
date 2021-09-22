@@ -28,7 +28,6 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
@@ -557,12 +556,11 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::getpollNotEqualValueForPollForComple
 }
 
 template <typename GfxFamily>
-AubSubCaptureStatus TbxCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
+AubSubCaptureStatus TbxCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const std::string &kernelName) {
     if (!subCaptureManager) {
         return {false, false};
     }
 
-    std::string kernelName = (dispatchInfo.empty() ? "" : dispatchInfo.peekMainKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
     auto status = subCaptureManager->checkAndActivateSubCapture(kernelName);
     if (status.isActive && !status.wasActiveInPreviousEnqueue) {
         dumpTbxNonWritable = true;

@@ -47,7 +47,6 @@ void printDebugString(bool showDebugLogs, Args &&...args) {
 
 class Kernel;
 class GraphicsAllocation;
-struct MultiDispatchInfo;
 class SettingsReader;
 
 template <typename T>

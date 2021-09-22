@@ -208,8 +208,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::map<GraphicsAllocation *, uint32_t> makeResidentAllocations;
     bool storeMakeResidentAllocations = false;
 
-    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
-        auto status = CommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(dispatchInfo);
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override {
+        auto status = CommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(kernelName);
         checkAndActivateAubSubCaptureCalled = true;
         return status;
     }

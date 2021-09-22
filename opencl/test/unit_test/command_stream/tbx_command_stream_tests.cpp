@@ -816,13 +816,9 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
     EXPECT_FALSE(tbxCsr.dumpTbxNonWritable);
 
-    auto status = tbxCsr.checkAndActivateAubSubCapture(multiDispatchInfo);
+    auto status = tbxCsr.checkAndActivateAubSubCapture("");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 
@@ -841,14 +837,9 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
     EXPECT_FALSE(tbxCsr.dumpTbxNonWritable);
 
-    auto status = tbxCsr.checkAndActivateAubSubCapture(multiDispatchInfo);
+    auto status = tbxCsr.checkAndActivateAubSubCapture("kernelName");
     EXPECT_TRUE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 
@@ -867,14 +858,9 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
     EXPECT_FALSE(tbxCsr.dumpTbxNonWritable);
 
-    auto status = tbxCsr.checkAndActivateAubSubCapture(multiDispatchInfo);
+    auto status = tbxCsr.checkAndActivateAubSubCapture("kernelName");
     EXPECT_TRUE(status.isActive);
     EXPECT_TRUE(status.wasActiveInPreviousEnqueue);
 
@@ -886,8 +872,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInNonSubCaptureModeWhenCheckAndActiva
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
     tbxCsr.setupContext(osContext);
 
-    MultiDispatchInfo dispatchInfo;
-    auto status = tbxCsr.checkAndActivateAubSubCapture(dispatchInfo);
+    auto status = tbxCsr.checkAndActivateAubSubCapture("");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }

@@ -382,7 +382,7 @@ ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
     return this->evictionAllocations;
 }
 
-AubSubCaptureStatus CommandStreamReceiver::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) { return {false, false}; }
+AubSubCaptureStatus CommandStreamReceiver::checkAndActivateAubSubCapture(const std::string &kernelName) { return {false, false}; }
 
 void CommandStreamReceiver::addAubComment(const char *comment) {}
 

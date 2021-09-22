@@ -900,7 +900,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
 
 void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo) {
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
-        auto status = getGpgpuCommandStreamReceiver().checkAndActivateAubSubCapture(multiDispatchInfo);
+        auto status = getGpgpuCommandStreamReceiver().checkAndActivateAubSubCapture(multiDispatchInfo.peekMainKernel()->getDescriptor().kernelMetadata.kernelName);
         if (!status.isActive) {
             // make each enqueue blocking when subcapture is not active to split batch buffer
             blocking = true;

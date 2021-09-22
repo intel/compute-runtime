@@ -167,7 +167,7 @@ class CommandStreamReceiver {
     void overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) { flatBatchBufferHelper.reset(newHelper); }
 
     MOCKABLE_VIRTUAL void initProgrammingFlags();
-    virtual AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo);
+    virtual AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName);
     void programForAubSubCapture(bool wasActiveInPreviousEnqueue, bool isActive);
     virtual void addAubComment(const char *comment);
 

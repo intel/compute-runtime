@@ -29,7 +29,6 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/helpers/neo_driver_version.h"
 #include "opencl/source/os_interface/ocl_reg_path.h"
@@ -783,8 +782,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
 }
 
 template <typename GfxFamily>
-AubSubCaptureStatus AUBCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
-    auto &kernelName = dispatchInfo.peekMainKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName;
+AubSubCaptureStatus AUBCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const std::string &kernelName) {
     auto status = subCaptureManager->checkAndActivateSubCapture(kernelName);
     if (status.isActive) {
         auto &subCaptureFile = subCaptureManager->getSubCaptureFileName(kernelName);

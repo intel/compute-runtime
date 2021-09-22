@@ -52,10 +52,10 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::makeNonResident(GraphicsAllocati
 }
 
 template <typename BaseCSR>
-AubSubCaptureStatus CommandStreamReceiverWithAUBDump<BaseCSR>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
-    auto status = BaseCSR::checkAndActivateAubSubCapture(dispatchInfo);
+AubSubCaptureStatus CommandStreamReceiverWithAUBDump<BaseCSR>::checkAndActivateAubSubCapture(const std::string &kernelName) {
+    auto status = BaseCSR::checkAndActivateAubSubCapture(kernelName);
     if (aubCSR) {
-        status = aubCSR->checkAndActivateAubSubCapture(dispatchInfo);
+        status = aubCSR->checkAndActivateAubSubCapture(kernelName);
     }
     BaseCSR::programForAubSubCapture(status.wasActiveInPreviousEnqueue, status.isActive);
     return status;

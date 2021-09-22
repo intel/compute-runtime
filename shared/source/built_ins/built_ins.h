@@ -28,9 +28,6 @@ namespace NEO {
 typedef std::vector<char> BuiltinResourceT;
 
 class Device;
-class Kernel;
-struct KernelInfo;
-struct MultiDispatchInfo;
 class Program;
 class SipKernel;
 class MemoryManager;

@@ -70,9 +70,9 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         }
     }
 
-    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override {
         checkAndActivateAubSubCaptureParameterization.wasCalled = true;
-        checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo = &dispatchInfo;
+        checkAndActivateAubSubCaptureParameterization.kernelName = &kernelName;
         return {false, false};
     }
 
@@ -101,7 +101,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
 
     struct CheckAndActivateAubSubCaptureParameterization {
         bool wasCalled = false;
-        const MultiDispatchInfo *receivedDispatchInfo = nullptr;
+        const std::string *kernelName = nullptr;
     } checkAndActivateAubSubCaptureParameterization;
 };
 
@@ -536,17 +536,15 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenCheckAndActivateAubSubCaptureIsCalledThenBaseCsrCommandStreamReceiverIsCalled) {
-    const DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-    csrWithAubDump->checkAndActivateAubSubCapture(multiDispatchInfo);
+    std::string kernelName = "";
+    csrWithAubDump->checkAndActivateAubSubCapture(kernelName);
 
     EXPECT_TRUE(csrWithAubDump->checkAndActivateAubSubCaptureParameterization.wasCalled);
-    EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo);
+    EXPECT_EQ(&kernelName, csrWithAubDump->checkAndActivateAubSubCaptureParameterization.kernelName);
 
     if (createAubCSR) {
         EXPECT_TRUE(csrWithAubDump->getAubMockCsr().checkAndActivateAubSubCaptureParameterization.wasCalled);
-        EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->getAubMockCsr().checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo);
+        EXPECT_EQ(&kernelName, csrWithAubDump->getAubMockCsr().checkAndActivateAubSubCaptureParameterization.kernelName);
     }
 }
 
