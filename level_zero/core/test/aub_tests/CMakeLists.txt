@@ -13,7 +13,6 @@ get_property(NEO_SHARED_aub_tests_configurations GLOBAL PROPERTY NEO_SHARED_aub_
 
 list(APPEND L0_AUB_TESTS__TARGET_OBJECTS
      ${CMAKE_CURRENT_SOURCE_DIR}/aub_hello_world_test.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/options_aub_tests.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
      ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
      ${NEO_SHARED_aub_tests_configurations}
