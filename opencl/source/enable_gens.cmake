@@ -25,29 +25,9 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
     experimental_command_buffer
     gpgpu_walker
     hardware_commands_helper
-    hw_info
     image
     sampler
 )
-
-macro(macro_for_each_platform)
-  string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-
-  foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
-    set(PLATFORM_FILE "hw_info_setup_${PLATFORM_IT_LOWER}.inl")
-    set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}${PLATFORM_FILE})
-    if(EXISTS ${SRC_FILE})
-      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
-    endif()
-    foreach(BRANCH ${BRANCH_DIR_LIST})
-      set(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.cpp")
-      set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_FILE})
-      if(EXISTS ${SRC_FILE})
-        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
-      endif()
-    endforeach()
-  endforeach()
-endmacro()
 
 macro(macro_for_each_gen)
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
@@ -86,8 +66,6 @@ macro(macro_for_each_gen)
         endif()
       endforeach()
     endforeach()
-
-    apply_macro_for_each_platform()
 
     foreach(BRANCH ${BRANCH_DIR_LIST})
       set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${GEN_TYPE_LOWER}/image_core_${GEN_TYPE_LOWER}.cpp)

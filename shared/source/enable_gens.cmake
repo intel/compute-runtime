@@ -19,6 +19,7 @@ set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
     create_device_command_stream_receiver
     direct_submission
     hw_helper
+    hw_info
     preamble
     preemption
     state_base_address
@@ -39,6 +40,11 @@ macro(macro_for_each_platform)
   string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
 
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
+    set(PLATFORM_FILE "hw_info_setup_${PLATFORM_IT_LOWER}.inl")
+    set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}${PLATFORM_FILE})
+    if(EXISTS ${SRC_FILE})
+      list(APPEND CORE_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
+    endif()
     foreach(BRANCH ${BRANCH_DIR_LIST})
 
       set(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h")
@@ -70,6 +76,11 @@ macro(macro_for_each_platform)
         list(APPEND CORE_SRCS_${GEN_TYPE}_H_BASE ${SRC_FILE})
       endif()
 
+      set(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.cpp")
+      set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_FILE})
+      if(EXISTS ${SRC_FILE})
+        list(APPEND CORE_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
+      endif()
     endforeach()
   endforeach()
 
