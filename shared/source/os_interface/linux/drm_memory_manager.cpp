@@ -702,7 +702,7 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
 
 void DrmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {
     DrmAllocation *drmMemory = static_cast<DrmAllocation *>(gfxAllocation);
-    auto maxOsContextCount = 1u;
+
     FragmentStorage fragment = {};
     fragment.driverAllocation = true;
     fragment.fragmentCpuPointer = gfxAllocation->getUnderlyingBuffer();
@@ -812,7 +812,6 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     BufferObject *allocatedBos[maxFragmentsCount];
     uint32_t numberOfBosAllocated = 0;
     uint32_t indexesOfAllocatedBos[maxFragmentsCount];
-    auto maxOsContextCount = 1u;
 
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         // If there is no fragment it means it already exists.
