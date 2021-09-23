@@ -1390,6 +1390,25 @@ TEST_F(MultipleDevicesTest, whenCallingGetMemoryPropertiesWithSubDevicesThenCorr
     EXPECT_EQ(memProperties.totalSize, device0->getNEODevice()->getDeviceInfo().globalMemSize);
 }
 
+TEST_F(MultipleDevicesTest, WhenGettingDevicePropertiesGetSubslicesPerSliceWhenImplicitScalingDisabledandEnabled) {
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.type = ZE_DEVICE_TYPE_GPU;
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSubSlicesSupported = 48;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSlicesSupported = 3;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = 8;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 1;
+
+    DebugManager.flags.EnableWalkerPartition.set(0);
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ(((device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount * device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount) / numSubDevices), deviceProperties.numSubslicesPerSlice);
+
+    DebugManager.flags.EnableWalkerPartition.set(1);
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ((device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount * device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount), deviceProperties.numSubslicesPerSlice);
+}
+
 TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
 

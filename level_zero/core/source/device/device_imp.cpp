@@ -432,7 +432,11 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     if (NEO::DebugManager.flags.DebugApiUsed.get() == 1) {
         pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.MaxSubSlicesSupported / hardwareInfo.gtSystemInfo.MaxSlicesSupported;
     } else {
-        pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount;
+        if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(this->getNEODevice()->getDeviceBitfield(), true) || (this->numSubDevices == 0)) {
+            pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount;
+        } else {
+            pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount / this->numSubDevices;
+        }
     }
 
     pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount * ((this->numSubDevices > 0) ? this->numSubDevices : 1);
