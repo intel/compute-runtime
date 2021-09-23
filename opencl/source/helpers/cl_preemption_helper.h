@@ -16,7 +16,6 @@ struct MultiDispatchInfo;
 class ClPreemptionHelper {
   public:
     static PreemptionMode taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo);
-    static void setPreemptionLevelFlags(PreemptionFlags &flags, Device &device, Kernel *kernel);
 };
 
 } // namespace NEO

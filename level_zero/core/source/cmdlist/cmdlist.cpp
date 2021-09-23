@@ -116,14 +116,7 @@ bool CommandList::isCopyOnly() const {
 }
 
 NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {
-    auto functionAttributes = kernel->getImmutableData()->getDescriptor().kernelAttributes;
-    NEO::PreemptionFlags flags = {};
-    flags.flags.disabledMidThreadPreemptionKernel = functionAttributes.flags.requiresDisabledMidThreadPreemption;
-    flags.flags.usesFencesForReadWriteImages = functionAttributes.flags.usesFencesForReadWriteImages;
-    flags.flags.deviceSupportsVmePreemption = device->getDeviceInfo().vmeAvcSupportsPreemption;
-    flags.flags.disablePerCtxtPreemptionGranularityControl = device->getHwInfo().workaroundTable.waDisablePerCtxtPreemptionGranularityControl;
-    flags.flags.disableLSQCROPERFforOCL = device->getHwInfo().workaroundTable.waDisableLSQCROPERFforOCL;
-
+    NEO::PreemptionFlags flags = NEO::PreemptionHelper::createPreemptionLevelFlags(*device->getNEODevice(), &kernel->getImmutableData()->getDescriptor(), false);
     return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
 }
 

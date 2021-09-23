@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 namespace NEO {
 
@@ -74,6 +75,20 @@ PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hw
     return DebugManager.flags.ForcePreemptionMode.get() == -1
                ? hwInfo.capabilityTable.defaultPreemptionMode
                : static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get());
+}
+
+PreemptionFlags PreemptionHelper::createPreemptionLevelFlags(Device &device, const KernelDescriptor *kernelDescriptor, bool schedulerKernel) {
+    PreemptionFlags flags = {};
+    if (kernelDescriptor) {
+        flags.flags.disabledMidThreadPreemptionKernel = kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption;
+        flags.flags.vmeKernel = kernelDescriptor->kernelAttributes.flags.usesVme;
+        flags.flags.usesFencesForReadWriteImages = kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages;
+        flags.flags.schedulerKernel = schedulerKernel;
+    }
+    flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
+    flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.waDisablePerCtxtPreemptionGranularityControl;
+    flags.flags.disableLSQCROPERFforOCL = device.getHardwareInfo().workaroundTable.waDisableLSQCROPERFforOCL;
+    return flags;
 }
 
 } // namespace NEO

@@ -20,8 +20,7 @@ using Gen8PreemptionEnqueueKernelTest = PreemptionEnqueueKernelTest;
 using Gen8ClPreemptionTests = DevicePreemptionTests;
 
 GEN8TEST_F(Gen8ClPreemptionTests, GivenEmptyFlagsWhenSettingPreemptionLevelFlagsThenThreadGroupPreemptionIsAllowed) {
-    PreemptionFlags flags = {};
-    ClPreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
+    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device->getDevice(), &kernel->getDescriptor(), kernel->isSchedulerKernel);
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
 }
 
@@ -71,8 +70,7 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    PreemptionFlags flags = {};
-    ClPreemptionHelper::setPreemptionLevelFlags(flags, *pDevice, mockKernel.mockKernel);
+    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*pDevice, &mockKernel.mockKernel->getDescriptor(), mockKernel.mockKernel->isSchedulerKernel);
     EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(pDevice->getPreemptionMode(), flags));
 
     UserEvent userEventObj;
@@ -94,8 +92,7 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKe
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    PreemptionFlags flags = {};
-    ClPreemptionHelper::setPreemptionLevelFlags(flags, *pDevice, mockKernel.mockKernel);
+    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*pDevice, &mockKernel.mockKernel->getDescriptor(), mockKernel.mockKernel->isSchedulerKernel);
     EXPECT_EQ(PreemptionMode::Disabled, PreemptionHelper::taskPreemptionMode(pDevice->getPreemptionMode(), flags));
 
     size_t gws[3] = {1, 0, 0};

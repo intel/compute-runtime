@@ -11,28 +11,20 @@
 
 namespace NEO {
 
-void ClPreemptionHelper::setPreemptionLevelFlags(PreemptionFlags &flags, Device &device, Kernel *kernel) {
-    if (kernel) {
-        const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
-        flags.flags.disabledMidThreadPreemptionKernel = kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption;
-        flags.flags.vmeKernel = kernel->isVmeKernel();
-        flags.flags.usesFencesForReadWriteImages = kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages;
-        flags.flags.schedulerKernel = kernel->isSchedulerKernel;
-    }
-    flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
-    flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.waDisablePerCtxtPreemptionGranularityControl;
-    flags.flags.disableLSQCROPERFforOCL = device.getHardwareInfo().workaroundTable.waDisableLSQCROPERFforOCL;
-}
-
 PreemptionMode ClPreemptionHelper::taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo) {
     PreemptionMode devMode = device.getPreemptionMode();
 
     for (const auto &di : multiDispatchInfo) {
         auto kernel = di.getKernel();
 
-        PreemptionFlags flags = {};
-        setPreemptionLevelFlags(flags, device, kernel);
+        const KernelDescriptor *kernelDescriptor = nullptr;
+        bool schedulerKernel = false;
+        if (kernel != nullptr) {
+            kernelDescriptor = &kernel->getDescriptor();
+            schedulerKernel = kernel->isSchedulerKernel;
+        }
 
+        PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device, kernelDescriptor, schedulerKernel);
         PreemptionMode taskMode = PreemptionHelper::taskPreemptionMode(devMode, flags);
         if (devMode > taskMode) {
             devMode = taskMode;

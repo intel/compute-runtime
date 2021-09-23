@@ -15,6 +15,7 @@
 namespace NEO {
 class Device;
 class GraphicsAllocation;
+struct KernelDescriptor;
 
 struct PreemptionFlags {
     PreemptionFlags() {
@@ -44,6 +45,7 @@ class PreemptionHelper {
     static bool allowThreadGroupPreemption(const PreemptionFlags &flags);
     static bool allowMidThreadPreemption(const PreemptionFlags &flags);
     static void adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch);
+    static PreemptionFlags createPreemptionLevelFlags(Device &device, const KernelDescriptor *kernelDescriptor, bool schedulerKernel);
 
     template <typename GfxFamily>
     static size_t getRequiredPreambleSize(const Device &device);
