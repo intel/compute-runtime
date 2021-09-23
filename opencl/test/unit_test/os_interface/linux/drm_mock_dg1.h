@@ -31,6 +31,7 @@ class DrmMockDg1 : public DrmMock {
     int gemCreateExtRetVal = 0;
 
     //DRM_IOCTL_I915_GEM_MMAP_OFFSET
+    __u64 mmapOffsetFlagsReceived = 0;
     __u64 offset = 0;
     int mmapOffsetRetVal = 0;
 
@@ -79,6 +80,7 @@ class DrmMockDg1 : public DrmMock {
 
         } else if (request == DRM_IOCTL_I915_GEM_MMAP_OFFSET) {
             auto mmap_arg = static_cast<drm_i915_gem_mmap_offset *>(arg);
+            mmapOffsetFlagsReceived = mmap_arg->flags;
             mmap_arg->offset = offset;
             return mmapOffsetRetVal;
         }

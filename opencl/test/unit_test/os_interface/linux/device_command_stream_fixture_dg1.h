@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,8 @@ class DrmMockCustomDg1 : public DrmMockCustom {
     __u64 mmapOffsetOffset = 0;
     __u64 mmapOffsetFlags = 0;
 
+    bool failOnMmapOffset = false;
+
     int ioctlExtra(unsigned long request, void *arg) override {
         switch (request) {
         case DRM_IOCTL_I915_GEM_CREATE_EXT: {
@@ -61,6 +63,9 @@ class DrmMockCustomDg1 : public DrmMockCustom {
             mmapOffsetOffset = mmapOffsetParams->offset;
             mmapOffsetFlags = mmapOffsetParams->flags;
             ioctlDg1_cnt.gemMmapOffset++;
+            if (failOnMmapOffset == true) {
+                return -1;
+            }
         } break;
         default: {
             std::cout << std::hex << DRM_IOCTL_I915_GEM_WAIT << std::endl;

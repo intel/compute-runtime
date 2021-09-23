@@ -19,16 +19,22 @@
 namespace NEO {
 
 bool retrieveMmapOffsetForBufferObject(Drm &drm, BufferObject &bo, uint64_t flags, uint64_t &offset) {
+    constexpr uint64_t mmapOffsetFixed = 4;
+
     drm_i915_gem_mmap_offset mmapOffset = {};
     mmapOffset.handle = bo.peekHandle();
-    mmapOffset.flags = flags;
+    mmapOffset.flags = mmapOffsetFixed;
 
     auto ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
     if (ret != 0) {
-        int err = drm.getErrno();
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-        DEBUG_BREAK_IF(ret != 0);
-        return false;
+        mmapOffset.flags = flags;
+        ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
+        if (ret != 0) {
+            int err = drm.getErrno();
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+            DEBUG_BREAK_IF(ret != 0);
+            return false;
+        }
     }
 
     offset = mmapOffset.offset;

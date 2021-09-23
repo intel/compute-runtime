@@ -170,6 +170,48 @@ class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager;
 };
 
+extern bool retrieveMmapOffsetForBufferObject(Drm &drm, BufferObject &bo, uint64_t flags, uint64_t &offset);
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectSucceedsThenReturnTrueAndCorrectOffset) {
+    BufferObject bo(mock, 1, 1024, 0);
+    mock->offset = 21;
+
+    uint64_t offset = 0;
+    auto ret = retrieveMmapOffsetForBufferObject(*mock, bo, 0, offset);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(21u, offset);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectFailsThenReturnFalse) {
+    BufferObject bo(mock, 1, 1024, 0);
+    mock->mmapOffsetRetVal = -1;
+
+    uint64_t offset = 0;
+    auto ret = retrieveMmapOffsetForBufferObject(*mock, bo, 0, offset);
+
+    EXPECT_FALSE(ret);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledThenApplyCorrectFlags) {
+    BufferObject bo(mock, 1, 1024, 0);
+
+    uint64_t offset = 0;
+    auto ret = retrieveMmapOffsetForBufferObject(*mock, bo, 0, offset);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(4u, mock->mmapOffsetFlagsReceived);
+
+    mock->mmapOffsetRetVal = -1;
+
+    for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
+        ret = retrieveMmapOffsetForBufferObject(*mock, bo, flags, offset);
+
+        EXPECT_FALSE(ret);
+        EXPECT_EQ(flags, mock->mmapOffsetFlagsReceived);
+    }
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObjectInMemoryRegionIsCalledThenBufferObjectWithAGivenGpuAddressAndSizeIsCreatedAndAllocatedInASpecifiedMemoryRegion) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
@@ -1433,7 +1475,7 @@ TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAll
     EXPECT_EQ(static_cast<uint32_t>(drmAllocation->getBO()->peekHandle()), mockDg1->mmapOffsetHandle);
     EXPECT_EQ(0u, mockDg1->mmapOffsetPad);
     EXPECT_EQ(0u, mockDg1->mmapOffsetOffset);
-    EXPECT_EQ((uint64_t)I915_MMAP_OFFSET_WC, mockDg1->mmapOffsetFlags);
+    EXPECT_EQ(4u, mockDg1->mmapOffsetFlags);
 
     memoryManager->unlockResource(allocation);
     EXPECT_EQ(nullptr, drmAllocation->getBO()->peekLockedAddress());
@@ -1441,10 +1483,26 @@ TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAll
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapOffsetThenReturnNullPtr) {
-    mockDg1->ioctlDg1_expected.gemMmapOffset = 1;
+TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapThenReturnNullPtr) {
+    mockDg1->ioctlDg1_expected.gemMmapOffset = 2;
     this->ioctlResExt = {mockDg1->ioctl_cnt.total, -1};
     mockDg1->ioctl_res_ext = &ioctlResExt;
+
+    BufferObject bo(mockDg1, 1, 0, 0);
+    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    EXPECT_NE(nullptr, drmAllocation.getBO());
+
+    auto ptr = memoryManager->lockResource(&drmAllocation);
+    EXPECT_EQ(nullptr, ptr);
+
+    memoryManager->unlockResource(&drmAllocation);
+    mockDg1->ioctl_res_ext = &mockDg1->NONE;
+}
+
+TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapFunctionOffsetThenReturnNullPtr) {
+    mockDg1->ioctlDg1_expected.gemMmapOffset = 2;
+    mockDg1->returnIoctlExtraErrorValue = true;
+    mockDg1->failOnMmapOffset = true;
 
     BufferObject bo(mockDg1, 1, 0, 0);
     DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
