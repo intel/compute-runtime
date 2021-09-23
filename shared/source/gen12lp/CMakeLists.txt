@@ -25,4 +25,7 @@ if(SUPPORT_ADLP)
   )
   set_property(GLOBAL APPEND PROPERTY CORE_SRCS_GENX_ALL_BASE ${HW_DEFINITIONS_ADLP})
 endif()
-add_subdirectories()
+
+if(SUPPORT_GEN12LP)
+  add_subdirectories()
+endif()
