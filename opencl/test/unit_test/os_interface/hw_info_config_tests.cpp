@@ -279,7 +279,7 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipe
     EXPECT_FALSE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(pInHwInfo));
 }
 
-HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfHeapInLocalMemThenFalseIsReturned) {
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfHeapInLocalMemThenFalseIsReturned, IsAtMostGen12lp) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.heapInLocalMem(pInHwInfo));
 }
