@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds.h"
-
-#include "opencl/source/helpers/windows/gmm_callbacks_tgllp_and_later.inl"
+#include "shared/source/helpers/windows/gmm_callbacks_tgllp_and_later.inl"
 
 namespace NEO {
 template struct DeviceCallbacks<TGLLPFamily>;

@@ -29,6 +29,7 @@ set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
 set(CORE_RUNTIME_SRCS_GENX_CPP_WINDOWS
     windows/command_stream_receiver
     windows/direct_submission
+    windows/gmm_callbacks
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_LINUX

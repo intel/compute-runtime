@@ -4,19 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(RUNTIME_SRCS_GENX_CPP_WINDOWS
-    windows/gmm_callbacks
-)
-
-set(RUNTIME_SRCS_GENX_CPP_LINUX
-)
-
-if(NOT DISABLE_WDDM_LINUX)
-  list(APPEND RUNTIME_SRCS_GENX_CPP_LINUX
-       ${RUNTIME_SRCS_GENX_CPP_WINDOWS}
-  )
-endif()
-
 set(RUNTIME_SRCS_GENX_CPP_BASE
     aub_mem_dump
     buffer
@@ -59,12 +46,10 @@ macro(macro_for_each_gen)
       endif()
     endif()
 
-    foreach(OS_IT "BASE" "WINDOWS" "LINUX")
-      foreach(SRC_IT ${RUNTIME_SRCS_GENX_CPP_${OS_IT}})
-        if(EXISTS ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
-          list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_${OS_IT} ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
-        endif()
-      endforeach()
+    foreach(SRC_IT ${RUNTIME_SRCS_GENX_CPP_BASE})
+      if(EXISTS ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
+        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
+      endif()
     endforeach()
 
     foreach(BRANCH ${BRANCH_DIR_LIST})

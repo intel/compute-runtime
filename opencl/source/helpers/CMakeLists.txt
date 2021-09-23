@@ -62,7 +62,6 @@ if(SUPPORT_XEHP_AND_LATER)
 endif()
 
 set(RUNTIME_SRCS_HELPERS_WINDOWS
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_properties_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper.h
 )
