@@ -9,8 +9,7 @@
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
-
-#include "opencl/source/os_interface/linux/drm_command_stream.h"
+#include "shared/source/os_interface/linux/drm_command_stream.h"
 
 namespace NEO {
 

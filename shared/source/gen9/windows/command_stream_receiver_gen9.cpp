@@ -6,9 +6,8 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
-
-#include "opencl/source/os_interface/windows/device_command_stream.inl"
-#include "opencl/source/os_interface/windows/wddm_device_command_stream.inl"
+#include "shared/source/os_interface/windows/device_command_stream.inl"
+#include "shared/source/os_interface/windows/wddm_device_command_stream.inl"
 
 namespace NEO {
 

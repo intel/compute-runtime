@@ -14,6 +14,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
     ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
@@ -32,6 +33,8 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_with_fallback.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.h

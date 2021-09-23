@@ -12,20 +12,26 @@ set(CORE_SRCS_GENX_H_BASE
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
+    aub_command_stream_receiver
     command_encoder
     command_stream_receiver_hw
+    command_stream_receiver_simulated_common_hw
+    create_device_command_stream_receiver
     direct_submission
     hw_helper
     preamble
     preemption
     state_base_address
+    tbx_command_stream_receiver
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_WINDOWS
+    windows/command_stream_receiver
     windows/direct_submission
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_LINUX
+    linux/command_stream_receiver
     linux/direct_submission
 )
 

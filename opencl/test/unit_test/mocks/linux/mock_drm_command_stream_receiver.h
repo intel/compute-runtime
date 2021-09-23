@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
-
-#include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 using namespace NEO;
 

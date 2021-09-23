@@ -12,8 +12,7 @@
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/helpers/api_specific_config.h"
-
-#include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
+#include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 
 #include "hw_cmds.h"
 #pragma warning(pop)

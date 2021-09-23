@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/os_interface/linux/device_command_stream.inl"
+#include "shared/source/os_interface/windows/device_command_stream.inl"
 
 namespace NEO {
 
@@ -14,6 +14,6 @@ CommandStreamReceiver *createCommandStreamReceiver(bool withAubDump,
                                                    ExecutionEnvironment &executionEnvironment,
                                                    uint32_t rootDeviceIndex,
                                                    const DeviceBitfield deviceBitfield) {
-    return createDrmCommandStreamReceiver<GfxFamily>(withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield);
+    return createWddmCommandStreamReceiver<GfxFamily>(withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield);
 }
 } // namespace NEO

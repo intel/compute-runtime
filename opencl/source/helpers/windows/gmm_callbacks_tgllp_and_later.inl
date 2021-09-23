@@ -10,8 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
-
-#include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
+#include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 
 namespace NEO {
 

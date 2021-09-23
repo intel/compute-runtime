@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_allocation.h"
-
-#include "opencl/source/os_interface/linux/drm_command_stream.h"
+#include "shared/source/os_interface/linux/drm_command_stream.h"
 
 namespace NEO {
 

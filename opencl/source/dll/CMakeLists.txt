@@ -12,7 +12,6 @@ endif()
 
 set(RUNTIME_SRCS_DLL_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create_deferred_deleter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create_memory_manager_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create_tbx_sockets.cpp
@@ -20,6 +19,7 @@ set(RUNTIME_SRCS_DLL_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_dll.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_devices.cpp
     ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
     ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr.cpp

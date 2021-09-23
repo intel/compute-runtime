@@ -9,6 +9,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cache_info_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_drm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.cpp
@@ -19,6 +20,9 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_buffer_object_extended.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_debug.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.h
@@ -68,6 +72,11 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/system_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}system_info_impl.h
 )
+if(SUPPORT_XEHP_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later.inl
+  )
+endif()
 
 if(DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX

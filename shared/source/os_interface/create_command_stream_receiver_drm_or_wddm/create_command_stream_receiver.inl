@@ -6,10 +6,9 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/linux/device_command_stream.inl"
 #include "shared/source/os_interface/os_interface.h"
-
-#include "opencl/source/os_interface/linux/device_command_stream.inl"
-#include "opencl/source/os_interface/windows/device_command_stream.inl"
+#include "shared/source/os_interface/windows/device_command_stream.inl"
 
 namespace NEO {
 

@@ -39,6 +39,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
                              ${NEO__IGC_INCLUDE_DIR}
                              ${KHRONOS_HEADERS_DIR}
                              ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
+                             ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/create_command_stream_receiver_${DRIVER_MODEL}
                              ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission/create_direct_submission_${DRIVER_MODEL}
   )
 

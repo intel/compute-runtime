@@ -213,6 +213,7 @@ if(BUILD_WITH_L0)
   add_library(${TARGET_NAME_L0}
               SHARED
               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+              ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
               ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp
               ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr.cpp
               ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
@@ -225,7 +226,6 @@ if(BUILD_WITH_L0)
 
   target_sources(${TARGET_NAME_L0}
                  PRIVATE
-                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_command_stream.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_deferred_deleter.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_memory_manager_${DRIVER_MODEL}.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_tbx_sockets.cpp
