@@ -11,9 +11,12 @@
 #include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
 
 namespace NEO {
+constexpr static auto gfxProduct = IGFX_ICELAKE_LP;
+
+#include "shared/source/gen11/os_agnostic_hw_info_config_icllp.inl"
 
 template <>
-int HwInfoConfigHw<IGFX_ICELAKE_LP>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     if (nullptr == osIface) {
         return 0;
     }
@@ -25,5 +28,5 @@ int HwInfoConfigHw<IGFX_ICELAKE_LP>::configureHardwareCustom(HardwareInfo *hwInf
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_ICELAKE_LP>;
+template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

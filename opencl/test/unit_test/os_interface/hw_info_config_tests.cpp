@@ -291,3 +291,18 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenSettingCapabilityCoherencyFlagT
     hwInfoConfig.setCapabilityCoherencyFlag(pInHwInfo, coherency);
     EXPECT_TRUE(coherency);
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isAdditionalMediaSamplerProgrammingRequired());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfInitialFlagsProgrammingIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isInitialFlagsProgrammingRequired());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfReturnedCmdSizeForMediaSamplerAdjustmentIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
+}

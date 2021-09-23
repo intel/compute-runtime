@@ -5,18 +5,18 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "test.h"
+
 using namespace NEO;
 
-TEST(IcllpHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
-    if (IGFX_ICELAKE_LP != productFamily) {
-        return;
-    }
+using IcllpHwInfoConfig = ::testing::Test;
+
+ICLLPTEST_F(IcllpHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    gtSystemInfo = {0};
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
@@ -25,6 +25,21 @@ TEST(IcllpHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectT
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
+}
+
+ICLLPTEST_F(IcllpHwInfoConfig, givenHwInfoConfigWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isAdditionalMediaSamplerProgrammingRequired());
+}
+
+ICLLPTEST_F(IcllpHwInfoConfig, givenHwInfoConfigWhenAskedIfInitialFlagsProgrammingIsRequiredThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isInitialFlagsProgrammingRequired());
+}
+
+ICLLPTEST_F(IcllpHwInfoConfig, givenHwInfoConfigWhenAskedIfReturnedCmdSizeForMediaSamplerAdjustmentIsRequiredThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
 }
 
 using IcllpHwInfo = ::testing::Test;

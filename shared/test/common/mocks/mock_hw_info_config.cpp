@@ -192,4 +192,19 @@ template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdditionalMediaSamplerProgrammingRequired() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isInitialFlagsProgrammingRequired() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
+    return false;
+}
+
 } //namespace NEO
