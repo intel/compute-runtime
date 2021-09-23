@@ -5,6 +5,7 @@ ver = xxx
 	dh $@ --builddir build/ --buildsystem=cmake+ninja
 
 RELEASE_WITH_REGKEYS ?= FALSE
+IGDRCL_FORCE_USE_LIBVA ?= FALSE
 
 override_dh_auto_configure:
 	dh_auto_configure -- ${NEO_BUILD_EXTRA_OPTS} \
@@ -12,6 +13,7 @@ override_dh_auto_configure:
 		-DNEO_VERSION_BUILD=$(ver) \
 		-DSKIP_UNIT_TESTS=${SKIP_UNIT_TESTS} \
 		-DRELEASE_WITH_REGKEYS=${RELEASE_WITH_REGKEYS} \
+		-DIGDRCL_FORCE_USE_LIBVA=${IGDRCL_FORCE_USE_LIBVA} \
 		-DL0_INSTALL_UDEV_RULES=1 \
 		-DUDEV_RULES_DIR=/etc/udev/rules.d/ \
 		-Wno-dev
