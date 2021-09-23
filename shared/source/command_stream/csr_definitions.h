@@ -123,5 +123,6 @@ struct CsrSizeRequestFlags {
     bool hasSharedHandles = false;
     bool numGrfRequiredChanged = false;
     bool specialPipelineSelectModeChanged = false;
+    bool activePartitionsChanged = false;
 };
 } // namespace NEO

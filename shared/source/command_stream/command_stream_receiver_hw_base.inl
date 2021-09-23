@@ -230,7 +230,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             PipeControlArgs args(dispatchFlags.dcFlush);
             args.notifyEnable = isUsedNotifyEnableForPostSync();
             args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
-            args.workloadPartitionOffset = this->activePartitions > 1;
+            args.workloadPartitionOffset = this->activePartitions > 1 && this->staticWorkPartitioningEnabled;
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 commandStreamTask,
                 PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
@@ -279,6 +279,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     csrSizeRequestFlags.numGrfRequiredChanged = this->lastSentNumGrfRequired != dispatchFlags.numGrfRequired;
     lastSentNumGrfRequired = dispatchFlags.numGrfRequired;
+
+    csrSizeRequestFlags.activePartitionsChanged = this->activePartitionsConfig != this->activePartitions;
+    this->activePartitionsConfig = this->activePartitions;
 
     if (dispatchFlags.threadArbitrationPolicy != ThreadArbitrationPolicy::NotPresent) {
         this->requiredThreadArbitrationPolicy = dispatchFlags.threadArbitrationPolicy;
@@ -356,6 +359,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
 
     programPreemption(commandStreamCSR, dispatchFlags);
+    programActivePartitionConfig();
 
     bool dshDirty = dshState.updateAndCheck(&dsh);
     bool iohDirty = iohState.updateAndCheck(&ioh);
@@ -811,6 +815,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForPerDssBackedBuffer(device.getHardwareInfo());
     size += getCmdSizeForEpilogue(dispatchFlags);
     size += getCmdsSizeForHardwareContext();
+    size += getCmdSizeForActivePartitionConfig();
 
     if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {

@@ -684,11 +684,148 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiverStream.getGraphicsAllocation()));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenMultipleActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOn) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public CommandStreamReceiverFlushTaskXeHPAndLaterTests {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        parsePipeControl = true;
+        CommandStreamReceiverFlushTaskXeHPAndLaterTests::SetUp();
+    }
 
+    template <typename GfxFamily>
+    void verifyPipeControl(UltCommandStreamReceiver<GfxFamily> &commandStreamReceiver, uint32_t expectedTaskCount, bool workLoadPartition) {
+        using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+        uint64_t gpuAddressTagAllocation = commandStreamReceiver.getTagAllocation()->getGpuAddress();
+        uint32_t gpuAddressLow = static_cast<uint32_t>(gpuAddressTagAllocation & 0x0000FFFFFFFFULL);
+        uint32_t gpuAddressHigh = static_cast<uint32_t>(gpuAddressTagAllocation >> 32);
+
+        bool pipeControlTagUpdate = false;
+        bool pipeControlWorkloadPartition = false;
+
+        auto itorPipeControl = pipeControlList.begin();
+        while (itorPipeControl != pipeControlList.end()) {
+            auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
+            if (pipeControl->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                pipeControlTagUpdate = true;
+                if (pipeControl->getWorkloadPartitionIdOffsetEnable()) {
+                    pipeControlWorkloadPartition = true;
+                }
+                EXPECT_EQ(gpuAddressLow, pipeControl->getAddress());
+                EXPECT_EQ(gpuAddressHigh, pipeControl->getAddressHigh());
+                EXPECT_EQ(expectedTaskCount, pipeControl->getImmediateData());
+                break;
+            }
+            itorPipeControl++;
+        }
+
+        EXPECT_TRUE(pipeControlTagUpdate);
+        if (workLoadPartition) {
+            EXPECT_TRUE(pipeControlWorkloadPartition);
+        } else {
+            EXPECT_FALSE(pipeControlWorkloadPartition);
+        }
+    }
+
+    template <typename GfxFamily>
+    void verifyActivePartitionConfig(UltCommandStreamReceiver<GfxFamily> &commandStreamReceiver, bool activePartitionExists) {
+        using MI_LOAD_REGISTER_MEM = typename GfxFamily::MI_LOAD_REGISTER_MEM;
+        using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+        uint64_t expectedWparidData = 0u;
+        if (activePartitionExists) {
+            expectedWparidData = commandStreamReceiver.getWorkPartitionAllocationGpuAddress();
+        }
+        uint32_t expectedWparidRegister = 0x221C;
+        uint32_t expectedAddressOffsetData = 8;
+        uint32_t expectedAddressOffsetRegister = 0x23B4;
+
+        bool wparidConfiguration = false;
+        bool addressOffsetConfiguration = false;
+
+        auto lrmList = getCommandsList<MI_LOAD_REGISTER_MEM>();
+        auto itorWparidRegister = lrmList.begin();
+        while (itorWparidRegister != lrmList.end()) {
+            auto loadRegisterMem = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(*itorWparidRegister);
+
+            if (loadRegisterMem->getRegisterAddress() == expectedWparidRegister) {
+                wparidConfiguration = true;
+                EXPECT_EQ(expectedWparidData, loadRegisterMem->getMemoryAddress());
+                break;
+            }
+            itorWparidRegister++;
+        }
+
+        auto itorAddressOffsetRegister = lriList.begin();
+        while (itorAddressOffsetRegister != lriList.end()) {
+            auto loadRegisterImm = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorAddressOffsetRegister);
+
+            if (loadRegisterImm->getRegisterOffset() == expectedAddressOffsetRegister) {
+                addressOffsetConfiguration = true;
+                EXPECT_EQ(expectedAddressOffsetData, loadRegisterImm->getDataDword());
+                break;
+            }
+            itorAddressOffsetRegister++;
+        }
+
+        if (activePartitionExists) {
+            EXPECT_TRUE(wparidConfiguration);
+            EXPECT_TRUE(addressOffsetConfiguration);
+        } else {
+            EXPECT_FALSE(wparidConfiguration);
+            EXPECT_FALSE(addressOffsetConfiguration);
+        }
+    }
+
+    template <typename GfxFamily>
+    void prepareLinearStream(LinearStream &parsedStream, size_t offset) {
+        cmdList.clear();
+        lriList.clear();
+        pipeControlList.clear();
+
+        parseCommands<GfxFamily>(parsedStream, offset);
+        findHardwareCommands<GfxFamily>();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleStaticActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndActivePartitionConfig) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
+    commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    EXPECT_TRUE(commandStreamReceiver.staticWorkPartitioningEnabled);
+    flushTask(commandStreamReceiver, true);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, true);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleDynamicActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    commandStreamReceiver.staticWorkPartitioningEnabled = false;
+    flushTask(commandStreamReceiver, true);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenSingleStaticActivePartitionWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.activePartitions = 1;
     commandStreamReceiver.taskCount = 3;
     flushTask(commandStreamReceiver, true);
 
@@ -696,25 +833,37 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     parsePipeControl = true;
     findHardwareCommands<FamilyType>();
 
-    uint64_t gpuAddressTagAllocation = commandStreamReceiver.getTagAllocation()->getGpuAddress();
-    uint32_t gpuAddressLow = static_cast<uint32_t>(gpuAddressTagAllocation & 0x0000FFFFFFFFULL);
-    uint32_t gpuAddressHigh = static_cast<uint32_t>(gpuAddressTagAllocation >> 32);
-    bool pipeControlTagUpdate = false;
-    bool pipeControlWorkloadPartition = false;
-    auto itorPipeControl = pipeControlList.begin();
-    while (itorPipeControl != pipeControlList.end()) {
-        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
-        if (pipeControl->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            pipeControlTagUpdate = true;
-            if (pipeControl->getWorkloadPartitionIdOffsetEnable()) {
-                pipeControlWorkloadPartition = true;
-                EXPECT_EQ(gpuAddressLow, pipeControl->getAddress());
-                EXPECT_EQ(gpuAddressHigh, pipeControl->getAddressHigh());
-                EXPECT_EQ(4u, pipeControl->getImmediateData());
-                break;
-            }
-        }
-    }
-    EXPECT_TRUE(pipeControlTagUpdate);
-    EXPECT_TRUE(pipeControlWorkloadPartition);
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleStaticActivePartitionsWhenFlushingTaskTwiceThenExpectTagUpdatePipeControlWithPartitionFlagOnAndNoActivePartitionConfigAtSecondFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
+    commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    EXPECT_TRUE(commandStreamReceiver.staticWorkPartitioningEnabled);
+    flushTask(commandStreamReceiver, true);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, true);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, true);
+
+    size_t usedBeforeCmdStream = commandStream.getUsed();
+    size_t usedBeforeCsrCmdStream = commandStreamReceiver.commandStream.getUsed();
+
+    flushTask(commandStreamReceiver, true);
+
+    prepareLinearStream<FamilyType>(commandStream, usedBeforeCmdStream);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 5, true);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, usedBeforeCsrCmdStream);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
 }

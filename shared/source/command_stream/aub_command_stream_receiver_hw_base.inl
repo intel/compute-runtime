@@ -302,7 +302,11 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             if (this->standalone) {
-                *this->tagAddress = this->peekLatestSentTaskCount();
+                volatile uint32_t *pollAddress = this->tagAddress;
+                for (uint32_t i = 0; i < this->activePartitions; i++) {
+                    *pollAddress = this->peekLatestSentTaskCount();
+                    pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+                }
             }
             return true;
         }
@@ -339,7 +343,11 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
     submitBatchBufferAub(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
     if (this->standalone) {
-        *this->tagAddress = this->peekLatestSentTaskCount();
+        volatile uint32_t *pollAddress = this->tagAddress;
+        for (uint32_t i = 0; i < this->activePartitions; i++) {
+            *pollAddress = this->peekLatestSentTaskCount();
+            pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+        }
     }
 
     if (subCaptureManager->isSubCaptureMode()) {

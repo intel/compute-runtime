@@ -1400,3 +1400,13 @@ INSTANTIATE_TEST_CASE_P(BcsDetaliedTest,
                         ::testing::Combine(
                             ::testing::ValuesIn(BlitterProperties),
                             ::testing::Values(BlitterConstants::BlitDirection::HostPtrToBuffer, BlitterConstants::BlitDirection::BufferToHostPtr)));
+
+HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActivePartitionsThenExpectNoAction) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    size_t expectedCmdSize = 0;
+    EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getCmdSizeForActivePartitionConfig());
+    size_t usedBefore = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.programActivePartitionConfig();
+    size_t usedAfter = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(usedBefore, usedAfter);
+}

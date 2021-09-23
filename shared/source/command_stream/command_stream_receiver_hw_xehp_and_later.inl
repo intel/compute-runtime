@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_hw_base.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
@@ -136,6 +137,29 @@ bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsGpuIdleImplicitFlu
 template <typename GfxFamily>
 GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation() {
     return nullptr;
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForActivePartitionConfig() const {
+    if (this->staticWorkPartitioningEnabled && csrSizeRequestFlags.activePartitionsChanged) {
+        return EncodeSetMMIO<GfxFamily>::sizeMEM +
+               EncodeSetMMIO<GfxFamily>::sizeIMM;
+    }
+    return 0;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
+    if (this->staticWorkPartitioningEnabled && csrSizeRequestFlags.activePartitionsChanged) {
+        uint64_t workPartitionAddress = getWorkPartitionAllocationGpuAddress();
+        EncodeSetMMIO<GfxFamily>::encodeMEM(commandStream,
+                                            PartitionRegisters<GfxFamily>::wparidCCSOffset,
+                                            workPartitionAddress);
+        EncodeSetMMIO<GfxFamily>::encodeIMM(commandStream,
+                                            PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                            CommonConstants::partitionAddressOffset,
+                                            true);
+    }
 }
 
 } // namespace NEO

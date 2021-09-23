@@ -118,4 +118,13 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const
     return 0;
 }
 
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForActivePartitionConfig() const {
+    return 0;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
+}
+
 } // namespace NEO

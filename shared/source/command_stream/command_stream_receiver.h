@@ -347,6 +347,7 @@ class CommandStreamReceiver {
     KernelExecutionType lastKernelExecutionType = KernelExecutionType::Default;
     MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::NotApplicable;
     uint32_t activePartitions = 1;
+    uint32_t activePartitionsConfig = 1;
 
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;

@@ -70,6 +70,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo);
+    size_t getCmdSizeForActivePartitionConfig() const;
 
     bool isComputeModeNeeded() const;
     bool isPipelineSelectAlreadyProgrammed() const;
@@ -147,6 +148,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programStallingPipeControlForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags);
     void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
+    void programActivePartitionConfig();
 
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;

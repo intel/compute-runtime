@@ -44,6 +44,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::makeResident;
     using BaseClass::perDssBackedBuffer;
     using BaseClass::postInitFlagsSetup;
+    using BaseClass::programActivePartitionConfig;
     using BaseClass::programEnginePrologue;
     using BaseClass::programPerDssBackedBuffer;
     using BaseClass::programPreamble;
@@ -55,6 +56,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;
+    using BaseClass::CommandStreamReceiver::activePartitionsConfig;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::canUse4GbHeaps;
     using BaseClass::CommandStreamReceiver::checkForNewResources;

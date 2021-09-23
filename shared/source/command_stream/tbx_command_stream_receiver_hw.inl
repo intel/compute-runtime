@@ -468,8 +468,12 @@ template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations() {
     this->flushBatchedSubmissions();
 
-    while (*this->getTagAddress() < this->latestFlushedTaskCount) {
-        downloadAllocation(*this->getTagAllocation());
+    volatile uint32_t *pollAddress = this->getTagAddress();
+    for (uint32_t i = 0; i < this->activePartitions; i++) {
+        while (*pollAddress < this->latestFlushedTaskCount) {
+            downloadAllocation(*this->getTagAllocation());
+        }
+        pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
     }
 
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
@@ -535,8 +539,12 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocation(GraphicsAllocatio
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations() {
-    while (*this->getTagAddress() < this->latestFlushedTaskCount) {
-        downloadAllocation(*this->getTagAllocation());
+    volatile uint32_t *pollAddress = this->getTagAddress();
+    for (uint32_t i = 0; i < this->activePartitions; i++) {
+        while (*pollAddress < this->latestFlushedTaskCount) {
+            downloadAllocation(*this->getTagAllocation());
+        }
+        pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
     }
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
         downloadAllocation(*graphicsAllocation);
