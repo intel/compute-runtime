@@ -33,11 +33,11 @@ components:
     revision: 0485b5dc951ddd09298c68dd7e520f51ba6db569
     type: git
   level_zero:
-    branch: master
     dest_dir: level_zero
-    repository: https://github.com/oneapi-src/level-zero
-    revision: v1.5.0
     type: git
+    branch: master
+    revision: v1.5.0
+    repository: https://github.com/oneapi-src/level-zero
   libva:
     dest_dir: libva
     type: git
@@ -54,5 +54,5 @@ components:
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-1770
+converter: M-1771
 version: '1'
