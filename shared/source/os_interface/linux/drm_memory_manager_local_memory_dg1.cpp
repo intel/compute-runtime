@@ -17,6 +17,24 @@
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 
 namespace NEO {
+
+bool retrieveMmapOffsetForBufferObject(Drm &drm, BufferObject &bo, uint64_t flags, uint64_t &offset) {
+    drm_i915_gem_mmap_offset mmapOffset = {};
+    mmapOffset.handle = bo.peekHandle();
+    mmapOffset.flags = flags;
+
+    auto ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
+    if (ret != 0) {
+        int err = drm.getErrno();
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF(ret != 0);
+        return false;
+    }
+
+    offset = mmapOffset.offset;
+    return true;
+}
+
 GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const AllocationData &allocationData) {
     return nullptr;
 }
@@ -63,17 +81,13 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
             return nullptr;
         }
 
-        drm_i915_gem_mmap_offset gemMmap{};
-        gemMmap.handle = bo->peekHandle();
-        gemMmap.flags = I915_MMAP_OFFSET_WB;
-
-        auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &gemMmap);
-        if (ret != 0) {
-            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+        uint64_t offset = 0;
+        if (!retrieveMmapOffsetForBufferObject(this->getDrm(allocationData.rootDeviceIndex), *bo, I915_MMAP_OFFSET_WB, offset)) {
+            this->munmapFunction(cpuPointer, size);
             return nullptr;
         }
 
-        [[maybe_unused]] auto retPtr = this->mmapFunction(cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(gemMmap.offset));
+        [[maybe_unused]] auto retPtr = this->mmapFunction(cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(offset));
         DEBUG_BREAK_IF(retPtr != cpuPointer);
 
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
@@ -127,16 +141,14 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     if (bo == nullptr)
         return nullptr;
 
-    drm_i915_gem_mmap_offset mmapOffset = {};
-    mmapOffset.handle = bo->peekHandle();
-    mmapOffset.flags = I915_MMAP_OFFSET_WC;
     auto rootDeviceIndex = this->getRootDeviceIndex(bo->drm);
 
-    if (getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset) != 0) {
+    uint64_t offset = 0;
+    if (!retrieveMmapOffsetForBufferObject(this->getDrm(rootDeviceIndex), *bo, I915_MMAP_OFFSET_WC, offset)) {
         return nullptr;
     }
 
-    auto addr = mmapFunction(nullptr, bo->peekSize(), PROT_WRITE | PROT_READ, MAP_SHARED, getDrm(rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(mmapOffset.offset));
+    auto addr = mmapFunction(nullptr, bo->peekSize(), PROT_WRITE | PROT_READ, MAP_SHARED, getDrm(rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(offset));
     DEBUG_BREAK_IF(addr == MAP_FAILED);
 
     bo->setLockedAddress(addr);
