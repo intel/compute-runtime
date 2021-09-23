@@ -306,3 +306,8 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfReturnedCmdSizeForMediaSa
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfExtraParametersAreInvalidThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.extraParametersInvalid(pInHwInfo));
+}

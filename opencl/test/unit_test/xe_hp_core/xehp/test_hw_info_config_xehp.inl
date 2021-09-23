@@ -74,6 +74,24 @@ XEHPTEST_F(XeHPHwInfoConfig, givenXeHpWhenCallingGetDeviceMemoryNameThenHbmIsRet
     EXPECT_THAT(deviceMemoryName, testing::HasSubstr(std::string("HBM")));
 }
 
+XEHPTEST_F(XeHPHwInfoConfig, givenA0OrA1SteppingWhenAskingIfExtraParametersAreInvalidThenReturnTrue) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    std::array<std::pair<uint32_t, bool>, 4> revisions = {
+        {{REVISION_A0, true},
+         {REVISION_A1, true},
+         {REVISION_B, false},
+         {REVISION_C, false}}};
+
+    for (const auto &[revision, paramBool] : revisions) {
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, hwInfo);
+
+        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+
+        EXPECT_EQ(paramBool, hwInfoConfig->extraParametersInvalid(hwInfo));
+    }
+}
+
 using XeHPHwHelperTest = HwHelperTest;
 
 XEHPTEST_F(XeHPHwHelperTest, givenXeHPMultiConfigWhenAllowRenderCompressionIsCalledThenCorrectValueIsReturned) {

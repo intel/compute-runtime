@@ -68,6 +68,7 @@ class HwInfoConfig {
     virtual bool isAdditionalMediaSamplerProgrammingRequired() const = 0;
     virtual bool isInitialFlagsProgrammingRequired() const = 0;
     virtual bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const = 0;
+    virtual bool extraParametersInvalid(const HardwareInfo &hwInfo) const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -121,6 +122,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isAdditionalMediaSamplerProgrammingRequired() const override;
     bool isInitialFlagsProgrammingRequired() const override;
     bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const override;
+    bool extraParametersInvalid(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

@@ -207,4 +207,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isReturnedCmdSizeForMediaSamplerAdjustmentReq
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } //namespace NEO
