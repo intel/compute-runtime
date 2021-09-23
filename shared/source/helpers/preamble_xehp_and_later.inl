@@ -147,4 +147,20 @@ uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool us
 template <>
 const uint32_t L3CNTLRegisterOffset<Family>::registerOffset = std::numeric_limits<uint32_t>::max();
 
+template <>
+struct DebugModeRegisterOffset<Family> {
+    enum {
+        registerOffset = 0x20d8,
+        debugEnabledValue = (1 << 5) | (1 << 21)
+    };
+};
+
+template <>
+struct TdDebugControlRegisterOffset<Family> {
+    enum {
+        registerOffset = 0xe400,
+        debugEnabledValue = (1 << 7) | (1 << 4) | (1 << 2) | (1 << 0)
+    };
+};
+
 } // namespace NEO

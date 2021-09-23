@@ -71,7 +71,7 @@ XEHPTEST_F(CommandQueueDebugCommandsForSldXeHP, givenSteppingA0OrBWhenGlobalSipI
                 if (miLoad->getRegisterOffset() == GlobalSipRegister<FamilyType>::registerOffset) {
                     globalSip.push_back(miLoad);
                     globalSipFound++;
-                } else if (miLoad->getRegisterOffset() == DebugModeRegisterOffset<FamilyType>::registerOffset) {
+                } else if (miLoad->getRegisterOffset() == 0x20d8u) {
                     debugModeFound++;
                 } else if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset<FamilyType>::registerOffset) {
                     tdCtlFound++;

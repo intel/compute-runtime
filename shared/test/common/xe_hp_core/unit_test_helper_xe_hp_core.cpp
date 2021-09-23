@@ -18,5 +18,25 @@ const AuxTranslationMode UnitTestHelper<Family>::requiredAuxTranslationMode = Au
 template <>
 const bool UnitTestHelper<Family>::additionalMiFlushDwRequired = true;
 
+template <>
+uint32_t UnitTestHelper<Family>::getDebugModeRegisterOffset() {
+    return 0x20d8;
+}
+
+template <>
+uint32_t UnitTestHelper<Family>::getDebugModeRegisterValue() {
+    return (1u << 5) | (1u << 21);
+}
+
+template <>
+uint32_t UnitTestHelper<Family>::getTdCtlRegisterOffset() {
+    return 0xe400;
+}
+
+template <>
+uint32_t UnitTestHelper<Family>::getTdCtlRegisterValue() {
+    return (1u << 7) | (1u << 4) | (1u << 2) | (1u << 0);
+}
+
 template struct UnitTestHelper<Family>;
 } // namespace NEO

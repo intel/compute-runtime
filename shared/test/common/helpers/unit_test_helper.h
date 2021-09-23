@@ -51,6 +51,11 @@ struct UnitTestHelper {
 
     static void setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value);
 
+    static uint32_t getDebugModeRegisterOffset();
+    static uint32_t getDebugModeRegisterValue();
+    static uint32_t getTdCtlRegisterOffset();
+    static uint32_t getTdCtlRegisterValue();
+
     static const bool tiledImagesSupported;
 
     static const uint32_t smallestTestableSimdSize;

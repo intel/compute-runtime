@@ -14,11 +14,13 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "test.h"
 
+#include "reg_configs_common.h"
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -106,7 +108,7 @@ HWTEST_F(PreambleTest, givenInactiveKernelDebuggingWhenPreambleKernelDebuggingCo
     EXPECT_EQ(0u, size);
 }
 
-HWTEST2_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectCommandsArePlacedIntoStream, IsAtMostXeHpCore) {
+HWTEST_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectCommandsArePlacedIntoStream) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
 
     auto bufferSize = PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true);
@@ -124,13 +126,13 @@ HWTEST2_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectComma
     auto it = cmdList.begin();
 
     MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(DebugModeRegisterOffset<FamilyType>::registerOffset, pCmd->getRegisterOffset());
-    EXPECT_EQ(DebugModeRegisterOffset<FamilyType>::debugEnabledValue, pCmd->getDataDword());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getDebugModeRegisterOffset(), pCmd->getRegisterOffset());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getDebugModeRegisterValue(), pCmd->getDataDword());
     it++;
 
     pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::registerOffset, pCmd->getRegisterOffset());
-    EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::debugEnabledValue, pCmd->getDataDword());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getTdCtlRegisterOffset(), pCmd->getRegisterOffset());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getTdCtlRegisterValue(), pCmd->getDataDword());
 }
 
 HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenProgramKernelDebuggingIsCalled) {
