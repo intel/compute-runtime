@@ -27,5 +27,9 @@ aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputT
     return inputType;
 }
 
+uint32_t getBcsIndex(aub_stream::EngineType engineType) {
+    return 0;
+}
+
 } // namespace EngineHelpers
 } // namespace NEO

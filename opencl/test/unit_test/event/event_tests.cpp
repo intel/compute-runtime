@@ -143,12 +143,12 @@ TEST(Event, givenBcsCsrSetInEventWhenPeekingBcsTaskCountThenReturnCorrectTaskCou
         new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockAlignedMallocManagerDevice>(&hwInfo)}};
     MockContext context{device.get()};
     MockCommandQueue queue{context};
-    queue.updateBcsTaskCount(queue.bcsEngine->getEngineType(), 19);
+    queue.updateBcsTaskCount(queue.bcsEngines[0]->getEngineType(), 19);
     Event event{&queue, CL_COMMAND_READ_BUFFER, 0, 0};
 
     EXPECT_EQ(0u, event.peekBcsTaskCountFromCommandQueue());
 
-    event.setupBcs(queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->getOsContext().getEngineType());
+    event.setupBcs(queue.bcsEngines[0]->getEngineType());
     EXPECT_EQ(19u, event.peekBcsTaskCountFromCommandQueue());
 }
 

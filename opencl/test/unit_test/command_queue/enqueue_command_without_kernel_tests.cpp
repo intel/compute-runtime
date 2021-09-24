@@ -207,7 +207,7 @@ HWTEST_F(EnqueueHandlerTest, givenBlitPropertyWhenEnqueueIsBlockedThenRegisterBl
     Surface *surfaces[] = {nullptr};
     mockCmdQ->enqueueBlocked(CL_COMMAND_READ_BUFFER, surfaces, size_t(0), multiDispatchInfo, timestampPacketDependencies,
                              blockedCommandsData, enqueuePropertiesForBlitEnqueue, eventsRequest,
-                             eventBuilder, std::unique_ptr<PrintfHandler>(nullptr), mockCmdQ->bcsEngine->commandStreamReceiver);
+                             eventBuilder, std::unique_ptr<PrintfHandler>(nullptr), mockCmdQ->getAnyBcs());
     EXPECT_TRUE(blockedCommandsDataForBlitEnqueue->blitEnqueue);
     EXPECT_EQ(blitProperties.srcAllocation, blockedCommandsDataForBlitEnqueue->blitPropertiesContainer.begin()->srcAllocation);
     EXPECT_EQ(blitProperties.dstAllocation, blockedCommandsDataForBlitEnqueue->blitPropertiesContainer.begin()->dstAllocation);
@@ -270,10 +270,11 @@ HWTEST_F(DispatchFlagsTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKerne
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
     mockCsr->skipBlitCalls = true;
-    mockCmdQ->bcsEngine = mockCmdQ->gpgpuEngine;
+    mockCmdQ->clearBcsEngines();
+    mockCmdQ->bcsEngines[0] = mockCmdQ->gpgpuEngine;
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), 0, 1, nullptr, retVal));
-    auto &bcsCsr = *mockCmdQ->bcsEngine->commandStreamReceiver;
+    auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;
 
     auto blocking = true;
     TimestampPacketDependencies timestampPacketDependencies;
@@ -315,10 +316,11 @@ HWTEST_F(DispatchFlagsTests, givenN1EnabledWhenDispatchingWithoutKernelThenAllow
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
     mockCsr->skipBlitCalls = true;
-    mockCmdQ->bcsEngine = mockCmdQ->gpgpuEngine;
+    mockCmdQ->clearBcsEngines();
+    mockCmdQ->bcsEngines[0] = mockCmdQ->gpgpuEngine;
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), 0, 1, nullptr, retVal));
-    auto &bcsCsr = *mockCmdQ->bcsEngine->commandStreamReceiver;
+    auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;
 
     TimestampPacketDependencies timestampPacketDependencies;
     EventsRequest eventsRequest(0, nullptr, nullptr);

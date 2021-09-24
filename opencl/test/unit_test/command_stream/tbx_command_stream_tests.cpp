@@ -899,7 +899,8 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCor
 
     MockCommandQueueHw<FamilyType> cmdQ(&context, pClDevice, nullptr);
     cmdQ.gpgpuEngine = &engineControl0;
-    cmdQ.bcsEngine = &engineControl1;
+    cmdQ.clearBcsEngines();
+    cmdQ.bcsEngines[0] = &engineControl1;
 
     cl_int error = CL_SUCCESS;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, error));

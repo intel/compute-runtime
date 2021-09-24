@@ -783,12 +783,12 @@ typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 
 struct EnqueueAuxKernelTests : public EnqueueKernelTest {
     template <typename FamilyType>
-    class MyCmdQ : public CommandQueueHw<FamilyType> {
+    class MyCmdQ : public MockCommandQueueHw<FamilyType> {
       public:
         using CommandQueueHw<FamilyType>::commandStream;
         using CommandQueueHw<FamilyType>::gpgpuEngine;
-        using CommandQueueHw<FamilyType>::bcsEngine;
-        MyCmdQ(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
+        using CommandQueueHw<FamilyType>::bcsEngines;
+        MyCmdQ(Context *context, ClDevice *device) : MockCommandQueueHw<FamilyType>(context, device, nullptr) {}
         void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection) override {
             CommandQueueHw<FamilyType>::dispatchAuxTranslationBuiltin(multiDispatchInfo, auxTranslationDirection);
             auxTranslationDirections.push_back(auxTranslationDirection);
@@ -803,7 +803,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
 
         void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             waitCalled++;
-            CommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
+            MockCommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
         }
 
         std::vector<AuxTranslationDirection> auxTranslationDirections;
@@ -935,7 +935,8 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
-    cmdQ.bcsEngine = cmdQ.gpgpuEngine;
+    cmdQ.clearBcsEngines();
+    cmdQ.bcsEngines[0] = cmdQ.gpgpuEngine;
 
     hwInfo->capabilityTable.blitterOperationsSupported = true;
 

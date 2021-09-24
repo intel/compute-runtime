@@ -18,7 +18,7 @@
 namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
-    using CommandQueue::bcsEngine;
+    using CommandQueue::bcsEngines;
     using CommandQueue::blitEnqueueAllowed;
     using CommandQueue::blitEnqueueImageAllowed;
     using CommandQueue::blitEnqueuePreferred;
@@ -35,6 +35,22 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::requiresCacheFlushAfterWalker;
     using CommandQueue::throttle;
     using CommandQueue::timestampPacketContainer;
+
+    void clearBcsEngines() {
+        std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
+    }
+
+    void insertBcsEngine(aub_stream::EngineType bcsEngineType) {
+        const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
+        const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::Regular);
+        bcsEngines[index] = engine;
+    }
+
+    size_t countBcsEngines() const {
+        return std::count_if(bcsEngines.begin(), bcsEngines.end(), [](const EngineControl *engine) {
+            return engine != nullptr;
+        });
+    }
 
     void setProfilingEnabled() {
         commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
@@ -198,7 +214,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass = CommandQueueHw<GfxFamily>;
 
   public:
-    using BaseClass::bcsEngine;
+    using BaseClass::bcsEngines;
     using BaseClass::bcsState;
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
@@ -216,6 +232,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     MockCommandQueueHw(Context *context,
                        ClDevice *device,
                        cl_queue_properties *properties) : BaseClass(context, device, properties, false) {
+    }
+
+    void clearBcsEngines() {
+        std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
     }
 
     cl_int flush() override {

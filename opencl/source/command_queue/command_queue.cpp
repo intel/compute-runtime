@@ -86,7 +86,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
             auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
             auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
-            bcsEngine = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
+            bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)] = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
             bcsState.engineType = bcsEngineType;
         }
     }
@@ -113,9 +113,9 @@ CommandQueue::~CommandQueue() {
             device->getPerformanceCounters()->shutdown();
         }
 
-        if (bcsEngine) {
+        if (auto mainBcs = bcsEngines[0]; mainBcs != nullptr) {
             auto &selectorCopyEngine = device->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
-            EngineHelpers::releaseBcsEngineType(bcsEngine->getEngineType(), selectorCopyEngine);
+            EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngine);
         }
     }
 
@@ -133,18 +133,25 @@ CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {
 }
 
 CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const {
-    if (bcsEngine) {
-        UNRECOVERABLE_IF(bcsEngine->getEngineType() != bcsEngineType);
-        return bcsEngine->commandStreamReceiver;
+    const EngineControl *engine = this->bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)];
+    if (engine == nullptr) {
+        return nullptr;
+    } else {
+        return engine->commandStreamReceiver;
+    }
+}
+
+CommandStreamReceiver *CommandQueue::getAnyBcs() const {
+    for (const EngineControl *engine : this->bcsEngines) {
+        if (engine != nullptr) {
+            return engine->commandStreamReceiver;
+        }
     }
     return nullptr;
 }
 
 CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
-    if (bcsEngine) {
-        return bcsEngine->commandStreamReceiver;
-    }
-    return nullptr;
+    return getAnyBcs();
 }
 
 CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const {
@@ -154,7 +161,7 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     const bool blit = blitAllowed && (blitPreferred || blitRequired);
 
     if (blit) {
-        return *bcsEngine->commandStreamReceiver;
+        return *getAnyBcs();
     } else {
         return getGpgpuCommandStreamReceiver();
     }
@@ -623,12 +630,12 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
 }
 
 void CommandQueue::updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount) {
-    UNRECOVERABLE_IF(bcsEngine->getEngineType() != bcsEngineType);
+    UNRECOVERABLE_IF(getAnyBcs()->getOsContext().getEngineType() != bcsEngineType);
     this->bcsState.taskCount = newBcsTaskCount;
 }
 
 uint32_t CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const {
-    UNRECOVERABLE_IF(bcsEngine->getEngineType() != bcsEngineType);
+    UNRECOVERABLE_IF(getAnyBcs()->getOsContext().getEngineType() != bcsEngineType);
     return this->bcsState.taskCount;
 }
 
@@ -733,7 +740,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
-    if (bcsEngine == nullptr) {
+    if (getAnyBcs() == nullptr) {
         return false;
     }
 
@@ -878,7 +885,8 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     const bool isEngineCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroupType);
 
     if (isEngineCopyOnly) {
-        bcsEngine = &device->getEngine(engineType, EngineUsage::Regular);
+        std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
+        bcsEngines[EngineHelpers::getBcsIndex(engineType)] = &device->getEngine(engineType, EngineUsage::Regular);
         bcsState.engineType = engineType;
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();

@@ -104,7 +104,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         mockProgram->setAllowNonUniform(true);
 
         gpgpuCsr = mockCmdQueue->gpgpuEngine->commandStreamReceiver;
-        bcsCsr = mockCmdQueue->bcsEngine->commandStreamReceiver;
+        bcsCsr = mockCmdQueue->bcsEngines[0]->commandStreamReceiver;
     }
 
     template <typename FamilyType>

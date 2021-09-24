@@ -226,6 +226,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
     CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const;
+    CommandStreamReceiver *getAnyBcs() const;
     CommandStreamReceiver *getBcsForAuxTranslation() const;
     MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const;
     Device &getDevice() const noexcept;
@@ -365,7 +366,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     Context *context = nullptr;
     ClDevice *device = nullptr;
     EngineControl *gpgpuEngine = nullptr;
-    EngineControl *bcsEngine = nullptr;
+    std::array<EngineControl *, bcsInfoMaskSize> bcsEngines = {};
 
     cl_command_queue_properties commandQueueProperties = 0;
     std::vector<uint64_t> propertiesVector;

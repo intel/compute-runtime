@@ -230,13 +230,13 @@ TEST(CommandQueue, givenDeviceWhenCreatingCommandQueueThenPickCsrFromDefaultEngi
 
 struct CommandQueueWithBlitOperationsTests : public ::testing::TestWithParam<uint32_t> {};
 
-TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenDontRegisterBcsCsr) {
+TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenDontRegisterAnyBcsCsrs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
 
-    EXPECT_EQ(nullptr, cmdQ.bcsEngine);
+    EXPECT_EQ(0u, cmdQ.countBcsEngines());
 
     auto defaultCsr = mockDevice->getDefaultEngine().commandStreamReceiver;
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
@@ -1150,8 +1150,8 @@ TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    if (!queue.bcsEngine) {
-        queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
+    if (queue.countBcsEngines() == 0) {
+        queue.bcsEngines[0] = &context.getDevice(0)->getDefaultEngine();
     }
     hwInfo->capabilityTable.blitterOperationsSupported = false;
 
@@ -1173,8 +1173,8 @@ TEST(CommandQueue, givenSimpleClCommandWhenCallingBlitEnqueueAllowedThenReturnCo
     MockContext context{};
 
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    if (!queue.bcsEngine) {
-        queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
+    if (queue.countBcsEngines() == 0) {
+        queue.bcsEngines[0] = &context.getDevice(0)->getDefaultEngine();
     }
 
     MultiGraphicsAllocation multiAlloc{1};
@@ -1205,8 +1205,8 @@ TEST(CommandQueue, givenImageTransferClCommandWhenCallingBlitEnqueueAllowedThenR
 
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    if (!queue.bcsEngine) {
-        queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
+    if (queue.countBcsEngines() == 0) {
+        queue.bcsEngines[0] = &context.getDevice(0)->getDefaultEngine();
     }
 
     MockImageBase image{};
@@ -1232,8 +1232,8 @@ TEST(CommandQueue, givenImageTransferClCommandWhenCallingBlitEnqueueAllowedThenR
 TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    if (!queue.bcsEngine) {
-        queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
+    if (queue.countBcsEngines() == 0) {
+        queue.bcsEngines[0] = &context.getDevice(0)->getDefaultEngine();
     }
 
     MultiGraphicsAllocation multiAlloc{1};
@@ -1796,6 +1796,7 @@ struct CopyOnlyQueueTests : ::testing::Test {
 TEST_F(CopyOnlyQueueTests, givenBcsSelectedWhenCreatingCommandQueueThenItIsCopyOnly) {
     MockCommandQueue queue{context.get(), clDevice.get(), properties, false};
     EXPECT_EQ(bcsEngine->commandStreamReceiver, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
+    EXPECT_EQ(1u, queue.countBcsEngines());
     EXPECT_NE(nullptr, queue.timestampPacketContainer);
     EXPECT_TRUE(queue.isCopyOnly);
 }
