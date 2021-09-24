@@ -152,14 +152,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     const uint32_t inlineDataSize = sizeof(INLINE_DATA);
     auto crossThreadData = dispatchInterface->getCrossThreadData();
 
+    uint32_t inlineDataProgrammingOffset = 0u;
+
     if (inlineDataProgramming) {
-        auto copySize = std::min(inlineDataSize, sizeCrossThreadData);
+        inlineDataProgrammingOffset = std::min(inlineDataSize, sizeCrossThreadData);
         auto dest = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
-        memcpy_s(dest, copySize, crossThreadData, copySize);
-        auto offset = std::min(inlineDataSize, sizeCrossThreadData);
-        sizeCrossThreadData -= copySize;
-        crossThreadData = ptrOffset(crossThreadData, offset);
-        inlineDataProgramming = copySize != 0;
+        memcpy_s(dest, inlineDataProgrammingOffset, crossThreadData, inlineDataProgrammingOffset);
+        sizeCrossThreadData -= inlineDataProgrammingOffset;
+        crossThreadData = ptrOffset(crossThreadData, inlineDataProgrammingOffset);
+        inlineDataProgramming = inlineDataProgrammingOffset != 0;
     }
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
@@ -186,10 +187,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                      crossThreadData, sizeCrossThreadData);
         }
         if (isIndirect) {
-            void *gpuPtr = reinterpret_cast<void *>(heap->getHeapGpuBase() + heap->getUsed() - sizeThreadData);
-            EncodeIndirectParams<Family>::setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, gpuPtr);
-            EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, gpuPtr, dispatchInterface->getGroupSize());
-            EncodeIndirectParams<Family>::setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, gpuPtr, dispatchInterface->getGroupSize());
+            void *gpuPtr = reinterpret_cast<void *>(heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset));
+            EncodeIndirectParams<Family>::encode(container, gpuPtr, dispatchInterface);
         }
 
         auto perThreadDataPtr = dispatchInterface->getPerThreadData();
