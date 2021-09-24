@@ -11,9 +11,6 @@
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/device_binary_format/elf/elf.h"
-#include "shared/source/device_binary_format/elf/elf_encoder.h"
-#include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/kernel_helpers.h"
@@ -77,37 +74,12 @@ ModuleTranslationUnit::~ModuleTranslationUnit() {
     }
 }
 
-std::vector<uint8_t> ModuleTranslationUnit::generateElfFromSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes) {
-    NEO::Elf::ElfEncoder<> elfEncoder(true, false, 1U);
-    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
+bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
+                                           const ze_module_constants_t *pConstants) {
+    UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
+    auto compilerInterface = device->getNEODevice()->getCompilerInterface();
+    UNRECOVERABLE_IF(nullptr == compilerInterface);
 
-    StackVec<uint32_t, 64> specConstIds;
-    StackVec<uint64_t, 64> specConstValues;
-    for (uint32_t i = 0; i < static_cast<uint32_t>(inputSpirVs.size()); i++) {
-        if (specConstantsValues.size() > 0) {
-            specConstIds.clear();
-            specConstValues.clear();
-            specConstIds.reserve(specConstantsValues.size());
-            specConstValues.reserve(specConstantsValues.size());
-            for (const auto &specConst : specConstantsValues) {
-                specConstIds.push_back(specConst.first);
-                specConstValues.push_back(specConst.second);
-            }
-            elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV_SC_IDS, NEO::Elf::SectionNamesOpenCl::spirvSpecConstIds,
-                                     ArrayRef<const uint8_t>::fromAny(specConstIds.begin(), specConstIds.size()));
-            elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV_SC_VALUES, NEO::Elf::SectionNamesOpenCl::spirvSpecConstValues,
-                                     ArrayRef<const uint8_t>::fromAny(specConstValues.begin(), specConstValues.size()));
-        }
-
-        auto sectionType = NEO::Elf::SHT_OPENCL_SPIRV;
-        NEO::ConstStringRef sectionName = NEO::Elf::SectionNamesOpenCl::spirvObject;
-        elfEncoder.appendSection(sectionType, sectionName, ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(inputSpirVs[i]), inputModuleSizes[i]));
-    }
-
-    return elfEncoder.encode();
-}
-
-std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions) {
     if (nullptr != buildOptions) {
         options = buildOptions;
     }
@@ -127,10 +99,8 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }
 
-    return internalOptions;
-}
+    NEO::TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
 
-bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize) {
     if (pConstants) {
         NEO::SpecConstantInfo specConstInfo;
         auto retVal = compilerInterface->getSpecConstantsInfo(*device->getNEODevice(), ArrayRef<const char>(input, inputSize), specConstInfo);
@@ -156,31 +126,18 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
             specConstantsValues[specConstantId] = specConstantValue;
         }
     }
-    return true;
-}
 
-bool ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) {
-    auto compilerInterface = device->getNEODevice()->getCompilerInterface();
-    UNRECOVERABLE_IF(nullptr == compilerInterface);
-
+    inputArgs.src = ArrayRef<const char>(input, inputSize);
+    inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
+    inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
     inputArgs.specializedValues = this->specConstantsValues;
-
     NEO::TranslationOutput compilerOuput = {};
-    NEO::TranslationOutput::ErrorCode compilerErr;
-
-    if (staticLink) {
-        compilerErr = compilerInterface->link(*device->getNEODevice(), inputArgs, compilerOuput);
-    } else {
-        compilerErr = compilerInterface->build(*device->getNEODevice(), inputArgs, compilerOuput);
-    }
-
+    auto compilerErr = compilerInterface->build(*device->getNEODevice(), inputArgs, compilerOuput);
     this->updateBuildLog(compilerOuput.frontendCompilerLog);
     this->updateBuildLog(compilerOuput.backendCompilerLog);
-
     if (NEO::TranslationOutput::ErrorCode::Success != compilerErr) {
         return false;
     }
-
     this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
     this->irBinarySize = compilerOuput.intermediateRepresentation.size;
     this->unpackedDeviceBinary = std::move(compilerOuput.deviceBinary.mem);
@@ -189,49 +146,6 @@ bool ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput inputArgs, bo
     this->debugDataSize = compilerOuput.debugData.size;
 
     return processUnpackedBinary();
-}
-
-bool ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
-                                            std::vector<const ze_module_constants_t *> specConstants) {
-    auto compilerInterface = device->getNEODevice()->getCompilerInterface();
-    UNRECOVERABLE_IF(nullptr == compilerInterface);
-
-    std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
-
-    for (uint32_t i = 0; i < static_cast<uint32_t>(specConstants.size()); i++) {
-        auto specConstantResult = this->processSpecConstantInfo(compilerInterface, specConstants[i], inputSpirVs[i], inputModuleSizes[i]);
-        if (!specConstantResult) {
-            return false;
-        }
-    }
-
-    NEO::TranslationInput linkInputArgs = {IGC::CodeType::elf, IGC::CodeType::oclGenBin};
-
-    auto spirvElfSource = generateElfFromSpirV(inputSpirVs, inputModuleSizes);
-
-    linkInputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(spirvElfSource.data()), spirvElfSource.size());
-    linkInputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
-    linkInputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-    return this->compileGenBinary(linkInputArgs, true);
-}
-
-bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
-                                           const ze_module_constants_t *pConstants) {
-    auto compilerInterface = device->getNEODevice()->getCompilerInterface();
-    UNRECOVERABLE_IF(nullptr == compilerInterface);
-
-    std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
-
-    auto specConstantResult = this->processSpecConstantInfo(compilerInterface, pConstants, input, inputSize);
-    if (!specConstantResult)
-        return false;
-
-    NEO::TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
-
-    inputArgs.src = ArrayRef<const char>(input, inputSize);
-    inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
-    inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-    return this->compileGenBinary(inputArgs, false);
 }
 
 bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inputSize) {
@@ -438,60 +352,19 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     std::string buildOptions;
     std::string internalBuildOptions;
 
-    if (desc->pNext) {
-        const ze_base_desc_t *expDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
-        if (expDesc->stype == ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC) {
-            if (desc->format != ZE_MODULE_FORMAT_IL_SPIRV) {
-                return false;
-            }
-            const ze_module_program_exp_desc_t *programExpDesc =
-                reinterpret_cast<const ze_module_program_exp_desc_t *>(expDesc);
-            std::vector<const char *> inputSpirVs;
-            std::vector<uint32_t> inputModuleSizes;
-            std::vector<const ze_module_constants_t *> specConstants;
+    this->createBuildOptions(desc->pBuildFlags, buildOptions, internalBuildOptions);
 
-            this->createBuildOptions(nullptr, buildOptions, internalBuildOptions);
-
-            for (uint32_t i = 0; i < static_cast<uint32_t>(programExpDesc->count); i++) {
-                std::string tmpBuildOptions;
-                std::string tmpInternalBuildOptions;
-                inputSpirVs.push_back(reinterpret_cast<const char *>(programExpDesc->pInputModules[i]));
-                auto inputSizesInfo = const_cast<size_t *>(programExpDesc->inputSizes);
-                uint32_t inputSize = static_cast<uint32_t>(inputSizesInfo[i]);
-                inputModuleSizes.push_back(inputSize);
-                if (programExpDesc->pConstants) {
-                    specConstants.push_back(programExpDesc->pConstants[i]);
-                }
-                if (programExpDesc->pBuildFlags) {
-                    this->createBuildOptions(programExpDesc->pBuildFlags[i], tmpBuildOptions, tmpInternalBuildOptions);
-                    buildOptions = buildOptions + tmpBuildOptions;
-                    internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
-                }
-            }
-
-            success = this->translationUnit->staticLinkSpirV(inputSpirVs,
-                                                             inputModuleSizes,
-                                                             buildOptions.c_str(),
-                                                             internalBuildOptions.c_str(),
-                                                             specConstants);
-        } else {
-            return false;
-        }
+    if (desc->format == ZE_MODULE_FORMAT_NATIVE) {
+        success = this->translationUnit->createFromNativeBinary(
+            reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);
+    } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
+        success = this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
+                                                        static_cast<uint32_t>(desc->inputSize),
+                                                        buildOptions.c_str(),
+                                                        internalBuildOptions.c_str(),
+                                                        desc->pConstants);
     } else {
-        this->createBuildOptions(desc->pBuildFlags, buildOptions, internalBuildOptions);
-
-        if (desc->format == ZE_MODULE_FORMAT_NATIVE) {
-            success = this->translationUnit->createFromNativeBinary(
-                reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);
-        } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
-            success = this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
-                                                            static_cast<uint32_t>(desc->inputSize),
-                                                            buildOptions.c_str(),
-                                                            internalBuildOptions.c_str(),
-                                                            desc->pConstants);
-        } else {
-            return false;
-        }
+        return false;
     }
 
     verifyDebugCapabilities();

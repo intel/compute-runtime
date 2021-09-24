@@ -35,14 +35,8 @@ struct ModuleTranslationUnit {
     virtual ~ModuleTranslationUnit();
     MOCKABLE_VIRTUAL bool buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
                                          const ze_module_constants_t *pConstants);
-    MOCKABLE_VIRTUAL bool staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
-                                          std::vector<const ze_module_constants_t *> specConstants);
     MOCKABLE_VIRTUAL bool createFromNativeBinary(const char *input, size_t inputSize);
     MOCKABLE_VIRTUAL bool processUnpackedBinary();
-    std::vector<uint8_t> generateElfFromSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes);
-    bool processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize);
-    std::string generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions);
-    bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink);
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();
     L0::Device *device = nullptr;
