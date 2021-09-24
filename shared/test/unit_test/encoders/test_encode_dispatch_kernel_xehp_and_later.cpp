@@ -924,7 +924,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     bool requiresUncachedMocs = false;
     bool isInternal = false;
     size_t regularEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, nullptr);
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
                                              NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
@@ -942,7 +942,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     DebugManager.flags.EnableWalkerPartition.set(-1);
 
     size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, nullptr);
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
                                              NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
 
@@ -986,7 +986,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     DebugManager.flags.EnableWalkerPartition.set(0);
     bool isInternal = false;
     size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
 
     DebugManager.flags.EnableWalkerPartition.set(1);
 
@@ -994,7 +994,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     bool requiresUncachedMocs = false;
 
     size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
                                              NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
 
@@ -1077,14 +1077,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     DebugManager.flags.EnableWalkerPartition.set(0);
     bool isInternal = false;
     size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
 
     DebugManager.flags.EnableWalkerPartition.set(1);
     isInternal = true;
     uint32_t partitionCount = 0;
     bool requiresUncachedMocs = false;
     size_t internalEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
     EXPECT_EQ(baseEstimateSize, internalEstimateSize);
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,

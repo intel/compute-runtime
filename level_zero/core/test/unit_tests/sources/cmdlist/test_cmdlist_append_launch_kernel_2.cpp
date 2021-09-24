@@ -1032,5 +1032,45 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppen
 
     EXPECT_EQ(0u, sizeForImplicitArgPatching);
 }
+
+HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchThenSizeIsProperlyEstimated) {
+
+    Mock<::L0::Kernel> kernel;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+
+    {
+        uint32_t groupSize[] = {1, 1, 1};
+        auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, false);
+        auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x4, nullptr, groupSize);
+        auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+        EXPECT_LE(sizeAfter - sizeBefore, estimate);
+    }
+    {
+        uint32_t groupSize[] = {1, 1, 2};
+        auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, false);
+        auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x4, nullptr, groupSize);
+        auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+        EXPECT_LE(sizeAfter - sizeBefore, estimate);
+    }
+    {
+        uint32_t groupSize[] = {1, 1, 1};
+        auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, true);
+        auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x2, nullptr, groupSize);
+        auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+        EXPECT_LE(sizeAfter - sizeBefore, estimate);
+    }
+    {
+        uint32_t groupSize[] = {1, 1, 2};
+        auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, true);
+        auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x2, nullptr, groupSize);
+        auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+        EXPECT_LE(sizeAfter - sizeBefore, estimate);
+    }
+}
 } // namespace ult
 } // namespace L0

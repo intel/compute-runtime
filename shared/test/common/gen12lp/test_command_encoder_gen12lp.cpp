@@ -109,10 +109,10 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEstimateCommandBuff
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     auto sizeWA = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(pDevice, Vec3<size_t>(0, 0, 0),
-                                                                                         Vec3<size_t>(1, 1, 1), false, false);
+                                                                                         Vec3<size_t>(1, 1, 1), false, false, false, nullptr);
     static_cast<MockOsContext *>(pDevice->getDefaultEngine().osContext)->engineType = aub_stream::ENGINE_CCS;
     auto size = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(pDevice, Vec3<size_t>(0, 0, 0),
-                                                                                       Vec3<size_t>(1, 1, 1), false, false);
+                                                                                       Vec3<size_t>(1, 1, 1), false, false, false, nullptr);
 
     auto expectedDiff = 2 * PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(pDevice->getHardwareInfo());
     auto diff = sizeWA - size;

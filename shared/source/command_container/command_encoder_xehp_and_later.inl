@@ -50,6 +50,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     const auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
     auto sizeCrossThreadData = dispatchInterface->getCrossThreadDataSize();
     auto sizePerThreadDataForWholeGroup = dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
+    auto pImplicitArgs = dispatchInterface->getImplicitArgs();
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
     size_t sshOffset = 0;
@@ -61,7 +62,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
     size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec,
-                                                                        isInternal, isCooperative);
+                                                                        isInternal, isCooperative, isIndirect, dispatchInterface);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
         auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *bbEnd = Family::cmdInitBatchBufferEnd;
@@ -175,7 +176,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         UNRECOVERABLE_IF(!ptr);
         offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData);
 
-        auto pImplicitArgs = dispatchInterface->getImplicitArgs();
         if (pImplicitArgs) {
             offsetThreadData -= sizeof(ImplicitArgs);
             pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
@@ -188,7 +188,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         }
         if (isIndirect) {
             void *gpuPtr = reinterpret_cast<void *>(heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset));
-            EncodeIndirectParams<Family>::encode(container, gpuPtr, dispatchInterface);
+            void *implicitArgsGpuPtr = nullptr;
+            if (pImplicitArgs) {
+                implicitArgsGpuPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(gpuPtr) + inlineDataProgrammingOffset - sizeof(ImplicitArgs));
+            }
+            EncodeIndirectParams<Family>::encode(container, gpuPtr, dispatchInterface, implicitArgsGpuPtr);
         }
 
         auto perThreadDataPtr = dispatchInterface->getPerThreadData();
@@ -432,13 +436,22 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart,
                                                                           const Vec3<size_t> &groupCount, bool isInternal,
-                                                                          bool isCooperative) {
+                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface) {
     size_t totalSize = sizeof(WALKER_TYPE);
     totalSize += PreemptionHelper::getPreemptionWaCsSize<Family>(*device);
     totalSize += EncodeStates<Family>::getAdjustStateComputeModeSize();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
+    if (isIndirect) {
+        UNRECOVERABLE_IF(dispatchInterface == nullptr);
+        totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), false);
+        if (dispatchInterface->getImplicitArgs()) {
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), true);
+        }
+    }
 
     if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getDeviceBitfield(), !isCooperative) &&
         !isInternal) {

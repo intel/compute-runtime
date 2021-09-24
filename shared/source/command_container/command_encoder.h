@@ -55,7 +55,7 @@ struct EncodeDispatchKernel {
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
     static size_t estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart, const Vec3<size_t> &groupCount,
-                                                       bool isInternal, bool isCooperative);
+                                                       bool isInternal, bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     size_t *lws,
@@ -170,7 +170,7 @@ struct EncodeIndirectParams {
     using MI_MATH = typename GfxFamily::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
 
-    static void encode(CommandContainer &container, void *crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface);
+    static void encode(CommandContainer &container, void *crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, void *implicitArgsGpuPtr);
     static void setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress);
     static void setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offset, void *crossThreadAddress, const uint32_t *groupSize);
     static void setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws);
@@ -178,6 +178,7 @@ struct EncodeIndirectParams {
     static size_t getCmdsSizeForIndirectParams();
     static size_t getCmdsSizeForSetGroupSizeIndirect();
     static size_t getCmdsSizeForSetGroupCountIndirect();
+    static size_t getCmdsSizeForSetWorkDimIndirect(const uint32_t *groupSize, bool misalignedPtr);
 };
 
 template <typename GfxFamily>

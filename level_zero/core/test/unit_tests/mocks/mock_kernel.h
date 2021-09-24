@@ -52,6 +52,7 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
     using ::L0::KernelImp::perThreadDataSize;
     using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
+    using ::L0::KernelImp::pImplicitArgs;
     using ::L0::KernelImp::printfBuffer;
     using ::L0::KernelImp::requiredWorkgroupOrder;
     using ::L0::KernelImp::residencyContainer;

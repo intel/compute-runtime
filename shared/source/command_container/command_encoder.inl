@@ -22,6 +22,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
@@ -513,11 +514,19 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
-void EncodeIndirectParams<Family>::encode(CommandContainer &container, void *crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface) {
+void EncodeIndirectParams<Family>::encode(CommandContainer &container, void *crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, void *implicitArgsGpuPtr) {
     const auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
     setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, crossThreadDataGpuVa);
     setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, crossThreadDataGpuVa, dispatchInterface->getGroupSize());
+    UNRECOVERABLE_IF(NEO::isValidOffset(kernelDescriptor.payloadMappings.dispatchTraits.workDim) && (kernelDescriptor.payloadMappings.dispatchTraits.workDim & 0b11) != 0u);
     setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, crossThreadDataGpuVa, dispatchInterface->getGroupSize());
+    if (implicitArgsGpuPtr) {
+        CrossThreadDataOffset groupCountOffset[] = {offsetof(ImplicitArgs, groupCountX), offsetof(ImplicitArgs, groupCountY), offsetof(ImplicitArgs, groupCountZ)};
+        CrossThreadDataOffset globalSizeOffset[] = {offsetof(ImplicitArgs, globalSizeX), offsetof(ImplicitArgs, globalSizeY), offsetof(ImplicitArgs, globalSizeZ)};
+        setGroupCountIndirect(container, groupCountOffset, implicitArgsGpuPtr);
+        setGlobalWorkSizeIndirect(container, globalSizeOffset, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+        setWorkDimIndirect(container, offsetof(ImplicitArgs, numWorkDim), implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+    }
 }
 
 template <typename Family>
@@ -536,6 +545,8 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
         auto dstPtr = ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), workDimOffset);
         constexpr uint32_t RESULT_REGISTER = CS_GPR_R0;
         constexpr AluRegisters RESULT_ALU_REGISTER = AluRegisters::R_0;
+        const uint32_t offset = static_cast<uint32_t>((1ull << 8 * (dstPtr & 0b11)) - 1);
+        const uint32_t memoryMask = std::numeric_limits<uint32_t>::max() - static_cast<uint32_t>((1ull << 8 * ((dstPtr & 0b11) + 1)) - 1) + offset;
 
         /*
          * if ( groupSize[2] > 1 || groupCount[2] > 1 ) { workdim = 3 }
@@ -544,7 +555,7 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
          */
 
         if (groupSize[2] > 1) {
-            EncodeSetMMIO<Family>::encodeIMM(container, RESULT_REGISTER, 3, true);
+            EncodeSetMMIO<Family>::encodeIMM(container, RESULT_REGISTER, 3 << (8 * (dstPtr & 0b11)), true);
         } else {
 
             constexpr uint32_t GROUP_COUNT_2_REGISTER = CS_GPR_R1;
@@ -567,6 +578,22 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
             constexpr uint32_t CONSTANT_TWO_REGISTER = CS_GPR_R6;
             constexpr AluRegisters CONSTANT_TWO_ALU_REGISTER = AluRegisters::R_6;
 
+            constexpr uint32_t BACKUP_REGISTER = CS_GPR_R7;
+            constexpr AluRegisters BACKUP_ALU_REGISTER = AluRegisters::R_7;
+
+            constexpr uint32_t MEMORY_MASK_REGISTER = CS_GPR_R8;
+            constexpr AluRegisters MEMORY_MASK_ALU_REGISTER = AluRegisters::R_8;
+
+            constexpr uint32_t OFFSET_REGISTER = CS_GPR_R8;
+            constexpr AluRegisters OFFSET_ALU_REGISTER = AluRegisters::R_8;
+
+            if (offset) {
+                EncodeSetMMIO<Family>::encodeMEM(container, BACKUP_REGISTER, dstPtr);
+                EncodeSetMMIO<Family>::encodeIMM(container, MEMORY_MASK_REGISTER, memoryMask, true);
+                EncodeMath<Family>::bitwiseAnd(container, MEMORY_MASK_ALU_REGISTER, BACKUP_ALU_REGISTER, BACKUP_ALU_REGISTER);
+                EncodeSetMMIO<Family>::encodeIMM(container, OFFSET_REGISTER, offset, true);
+            }
+
             EncodeSetMMIO<Family>::encodeIMM(container, CONSTANT_ONE_REGISTER, 1, true);
             EncodeSetMMIO<Family>::encodeIMM(container, CONSTANT_TWO_REGISTER, 2, true);
 
@@ -583,9 +610,21 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
             EncodeMath<Family>::greaterThan(container, SUM_ALU_REGISTER, CONSTANT_TWO_ALU_REGISTER, WORK_DIM_GE_2_ALU_REGISTER);
             EncodeMath<Family>::bitwiseAnd(container, WORK_DIM_GE_2_ALU_REGISTER, CONSTANT_ONE_ALU_REGISTER, WORK_DIM_GE_2_ALU_REGISTER);
 
-            EncodeSetMMIO<Family>::encodeIMM(container, RESULT_REGISTER, 1, true);
+            if (offset) {
+                EncodeMath<Family>::addition(container, CONSTANT_ONE_ALU_REGISTER, OFFSET_ALU_REGISTER, CONSTANT_ONE_ALU_REGISTER);
+                EncodeMath<Family>::addition(container, WORK_DIM_EQ_3_ALU_REGISTER, OFFSET_ALU_REGISTER, WORK_DIM_EQ_3_ALU_REGISTER);
+                EncodeMath<Family>::bitwiseAnd(container, WORK_DIM_EQ_3_ALU_REGISTER, CONSTANT_ONE_ALU_REGISTER, WORK_DIM_EQ_3_ALU_REGISTER);
+                EncodeMath<Family>::addition(container, WORK_DIM_GE_2_ALU_REGISTER, OFFSET_ALU_REGISTER, WORK_DIM_GE_2_ALU_REGISTER);
+                EncodeMath<Family>::bitwiseAnd(container, WORK_DIM_GE_2_ALU_REGISTER, CONSTANT_ONE_ALU_REGISTER, WORK_DIM_GE_2_ALU_REGISTER);
+            }
+
+            EncodeSetMMIO<Family>::encodeREG(container, RESULT_REGISTER, CONSTANT_ONE_REGISTER);
             EncodeMath<Family>::addition(container, RESULT_ALU_REGISTER, WORK_DIM_GE_2_ALU_REGISTER, RESULT_ALU_REGISTER);
             EncodeMath<Family>::addition(container, RESULT_ALU_REGISTER, WORK_DIM_EQ_3_ALU_REGISTER, RESULT_ALU_REGISTER);
+
+            if (offset) {
+                EncodeMath<Family>::addition(container, RESULT_ALU_REGISTER, BACKUP_ALU_REGISTER, RESULT_ALU_REGISTER);
+            }
         }
         EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RESULT_REGISTER, dstPtr);
     }
@@ -632,9 +671,23 @@ inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect(
 
 template <typename Family>
 inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect() {
-    return 3 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) + sizeof(MI_STORE_REGISTER_MEM));
+    constexpr uint32_t aluCmdSize = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
+    return 3 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) + aluCmdSize + sizeof(MI_STORE_REGISTER_MEM));
 }
 
+template <typename Family>
+inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(const uint32_t *groupSize, bool misaligedPtr) {
+    constexpr uint32_t aluCmdSize = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
+    auto requiredSize = sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_LOAD_REGISTER_IMM);
+    UNRECOVERABLE_IF(!groupSize);
+    if (groupSize[2] < 2) {
+        requiredSize += 2 * sizeof(MI_LOAD_REGISTER_IMM) + 3 * sizeof(MI_LOAD_REGISTER_REG) + 8 * aluCmdSize;
+        if (misaligedPtr) {
+            requiredSize += 2 * sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_LOAD_REGISTER_MEM) + 7 * aluCmdSize;
+        }
+    }
+    return requiredSize;
+}
 template <typename Family>
 void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
                                                         uint64_t compareAddress,
