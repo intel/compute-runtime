@@ -13,18 +13,6 @@
 namespace NEO {
 namespace Gen12LPHelpers {
 
-bool pipeControlWaRequired(PRODUCT_FAMILY productFamily) {
-    return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
-}
-
-bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {
-    return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
-}
-
-bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) {
-    return hwInfo.featureTable.ftrLocalMemory;
-}
-
 void initAdditionalGlobalMMIO(const CommandStreamReceiver &commandStreamReceiver, AubMemDump::AubStream &stream) {}
 
 uint64_t getPPGTTAdditionalBits(GraphicsAllocation *graphicsAllocation) {
@@ -41,17 +29,6 @@ void adjustAubGTTData(const CommandStreamReceiver &commandStreamReceiver, AubGTT
 bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     return hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
-}
-
-bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    return (((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo))) ||
-            ((hwInfo.platform.eProductFamily == IGFX_DG1) & (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo))) ||
-            ((hwInfo.platform.eProductFamily == IGFX_ROCKETLAKE) & (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo))));
-}
-
-bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) {
-    return (hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP || hwInfo.platform.eProductFamily == IGFX_DG1 || hwInfo.platform.eProductFamily == IGFX_ROCKETLAKE);
 }
 
 } // namespace Gen12LPHelpers

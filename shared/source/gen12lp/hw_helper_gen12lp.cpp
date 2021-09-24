@@ -37,16 +37,6 @@ bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &h
 }
 
 template <>
-bool HwHelperHw<Family>::is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::is3DPipelineSelectWARequired(hwInfo);
-}
-
-template <>
-bool HwHelperHw<Family>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
-    return Gen12LPHelpers::isForceEmuInt32DivRemSPWARequired(hwInfo);
-}
-
-template <>
 bool HwHelperHw<Family>::isWaDisableRccRhwoOptimizationRequired() const {
     return true;
 }
@@ -66,7 +56,7 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
 
 template <>
 bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::isLocalMemoryEnabled(hwInfo);
+    return hwInfo.featureTable.ftrLocalMemory;
 }
 
 template <>
@@ -87,12 +77,8 @@ bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphics
 
 template <>
 uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) const {
-    if (Gen12LPHelpers::imagePitchAlignmentWaRequired(hwInfo->platform.eProductFamily)) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-        if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo)) {
-            return 64u;
-        }
-        return 4u;
+    if (HwInfoConfig::get(hwInfo->platform.eProductFamily)->imagePitchAlignmentWARequired(*hwInfo)) {
+        return 64u;
     }
     return 4u;
 }
@@ -140,14 +126,11 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
-    if (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
-            PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-            cmd.setCommandStreamerStallEnable(true);
-            auto pipeControl = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
-            *pipeControl = cmd;
-        }
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo)) {
+        PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+        cmd.setCommandStreamerStallEnable(true);
+        auto pipeControl = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
+        *pipeControl = cmd;
     }
 }
 
@@ -198,8 +181,7 @@ uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3ena
 
 template <>
 bool MemorySynchronizationCommands<TGLLPFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    return (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return HwInfoConfig::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo);
 }
 
 template <>

@@ -14,20 +14,6 @@
 
 using HwHelperTestDg1 = HwHelperTest;
 
-DG1TEST_F(HwHelperTestDg1, givenDg1PlatformWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
-    hardwareInfo.featureTable.ftrLocalMemory = true;
-
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
-    EXPECT_TRUE(helper.isLocalMemoryEnabled(hardwareInfo));
-}
-
-DG1TEST_F(HwHelperTestDg1, givenDg1PlatformWithoutLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenFalseIsReturned) {
-    hardwareInfo.featureTable.ftrLocalMemory = false;
-
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
-    EXPECT_FALSE(helper.isLocalMemoryEnabled(hardwareInfo));
-}
-
 DG1TEST_F(HwHelperTestDg1, givenDg1PlatformWhenSetupHardwareCapabilitiesIsCalledThenThenSpecificImplementationIsUsed) {
     hardwareInfo.featureTable.ftrLocalMemory = true;
 
@@ -80,21 +66,6 @@ DG1TEST_F(HwHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundReq
             EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
         }
     }
-}
-
-DG1TEST_F(HwHelperTestDg1, givenDg1WhenSteppingA0ThenIntegerDivisionEmulationIsEnabled) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    uint32_t stepping = REVISION_A0;
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
-}
-
-DG1TEST_F(HwHelperTestDg1, givenDg1WhenSteppingB0ThenIntegerDivisionEmulationIsNotEnabled) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }
 
 DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledThenIsLockableIsSet) {

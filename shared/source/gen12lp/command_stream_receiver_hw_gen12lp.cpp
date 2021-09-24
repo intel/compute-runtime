@@ -45,8 +45,8 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
             size += sizeof(typename Family::PIPE_CONTROL);
         }
 
-        auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
-        if (hwHelper.is3DPipelineSelectWARequired(peekHwInfo()) && isRcs()) {
+        const auto &hwInfoConfig = *HwInfoConfig::get(peekHwInfo().platform.eProductFamily);
+        if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs()) {
             size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(peekHwInfo()));
         }
     }

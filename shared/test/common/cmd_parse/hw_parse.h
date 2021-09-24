@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
@@ -164,8 +165,8 @@ struct HardwareParse {
             }
             itorCmd = find<PIPELINE_SELECT *>(++itorCmd, cmdList.end());
         }
-        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-        if (hwHelper.is3DPipelineSelectWARequired(*defaultHwInfo)) {
+        const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+        if (hwInfoConfig.is3DPipelineSelectWARequired()) {
             auto maximalNumberOf3dSelectsRequired = 2;
             EXPECT_LE(numberOf3dSelects, maximalNumberOf3dSelectsRequired);
             EXPECT_EQ(numberOf3dSelects, numberOfGpgpuSelects);

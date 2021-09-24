@@ -1332,8 +1332,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::updateTagFromWait() {
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programAdditionalPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs, bool is3DPipeline) {
-    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
-    if (hwHelper.is3DPipelineSelectWARequired(peekHwInfo()) && isRcs()) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(peekHwInfo().platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs()) {
         auto localPipelineSelectArgs = pipelineSelectArgs;
         localPipelineSelectArgs.is3DPipelineRequired = is3DPipeline;
         PreambleHelper<GfxFamily>::programPipelineSelect(&csr, localPipelineSelectArgs, peekHwInfo());
@@ -1355,8 +1355,8 @@ inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompr
 
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isPipelineSelectAlreadyProgrammed() const {
-    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
-    return isComputeModeNeeded() && hwHelper.is3DPipelineSelectWARequired(peekHwInfo()) && isRcs();
+    const auto &hwInfoConfig = *HwInfoConfig::get(peekHwInfo().platform.eProductFamily);
+    return isComputeModeNeeded() && hwInfoConfig.is3DPipelineSelectWARequired() && isRcs();
 }
 
 template <typename GfxFamily>

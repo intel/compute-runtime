@@ -69,6 +69,10 @@ class HwInfoConfig {
     virtual bool isInitialFlagsProgrammingRequired() const = 0;
     virtual bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const = 0;
     virtual bool extraParametersInvalid(const HardwareInfo &hwInfo) const = 0;
+    virtual bool pipeControlWARequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool is3DPipelineSelectWARequired() const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -123,6 +127,10 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isInitialFlagsProgrammingRequired() const override;
     bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const override;
     bool extraParametersInvalid(const HardwareInfo &hwInfo) const override;
+    bool pipeControlWARequired(const HardwareInfo &hwInfo) const override;
+    bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const override;
+    bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const override;
+    bool is3DPipelineSelectWARequired() const override;
 
   protected:
     HwInfoConfigHw() = default;
