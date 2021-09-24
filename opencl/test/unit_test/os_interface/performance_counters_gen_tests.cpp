@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/os_interface/performance_counters.h"
+#include "shared/source/os_interface/performance_counters.h"
+
 #include "test.h"
 
 using namespace NEO;

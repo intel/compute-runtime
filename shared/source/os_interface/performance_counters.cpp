@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/os_interface/performance_counters.h"
+#include "shared/source/os_interface/performance_counters.h"
 
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"

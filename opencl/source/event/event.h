@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
@@ -17,7 +18,6 @@
 #include "opencl/source/event/hw_timestamps.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/task_information.h"
-#include "opencl/source/os_interface/performance_counters.h"
 
 #include <atomic>
 #include <cstdint>

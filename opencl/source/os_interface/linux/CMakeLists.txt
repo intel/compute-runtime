@@ -11,8 +11,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_init_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_metrics_library.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
 )
 
 if(UNIX)

@@ -13,8 +13,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_init_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_metrics_library.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
 )
 
 if(WIN32)
