@@ -401,7 +401,12 @@ int main(int argc, char **argv) {
 #if defined(__linux__)
     //ULTs timeout
     if (enable_alarm) {
-        unsigned int alarmTime = NEO::ultIterationMaxTime * ::testing::GTEST_FLAG(repeat);
+        auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
+        auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
+        if (ultIterationMaxTimeEnv != nullptr) {
+            currentUltIterationMaxTime = atoi(ultIterationMaxTimeEnv);
+        }
+        unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
 
         struct sigaction sa;
         sa.sa_handler = &handle_SIGALRM;
