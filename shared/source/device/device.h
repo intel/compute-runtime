@@ -70,7 +70,7 @@ class Device : public ReferenceTrackedObject<Device> {
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
-    OSTime *getOSTime() const { return osTime.get(); };
+    OSTime *getOSTime() const;
     double getProfilingTimerResolution();
     uint64_t getProfilingTimerClock();
     double getPlatformHostTimerResolution() const;
@@ -161,7 +161,6 @@ class Device : public ReferenceTrackedObject<Device> {
     DeviceInfo deviceInfo = {};
 
     HardwareCapabilities hardwareCapabilities = {};
-    std::unique_ptr<OSTime> osTime;
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;

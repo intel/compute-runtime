@@ -47,7 +47,10 @@ const char *MockDevice::getProductAbbrev() const {
 MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex)
     : RootDevice(executionEnvironment, rootDeviceIndex) {
     UltDeviceFactory::initializeMemoryManager(*executionEnvironment);
-    this->osTime = MockOSTime::create();
+
+    if (!getOSTime()) {
+        getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
+    }
     auto &hwInfo = getHardwareInfo();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
     initializeCaps();
@@ -62,8 +65,8 @@ bool MockDevice::createDeviceImpl() {
 }
 
 void MockDevice::setOSTime(OSTime *osTime) {
-    this->osTime.reset(osTime);
-};
+    getRootDeviceEnvironmentRef().osTime.reset(osTime);
+}
 
 void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
     executionEnvironment->memoryManager.reset(memoryManager);

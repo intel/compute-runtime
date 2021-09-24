@@ -229,15 +229,11 @@ bool Device::createDeviceImpl() {
     }
     executionEnvironment->memoryManager->setDefaultEngineIndex(getRootDeviceIndex(), defaultEngineIndexWithinMemoryManager);
 
-    auto osInterface = getRootDeviceEnvironment().osInterface.get();
-
-    if (!osTime) {
-        osTime = OSTime::create(osInterface);
-    }
+    getRootDeviceEnvironmentRef().initOsTime();
 
     initializeCaps();
 
-    if (osTime->getOSInterface()) {
+    if (getOSTime()->getOSInterface()) {
         if (hwInfo.capabilityTable.instrumentationEnabled) {
             performanceCounters = createPerformanceCountersFunc(this);
         }
@@ -365,11 +361,11 @@ const DeviceInfo &Device::getDeviceInfo() const {
 }
 
 double Device::getProfilingTimerResolution() {
-    return osTime->getDynamicDeviceTimerResolution(getHardwareInfo());
+    return getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
 }
 
 uint64_t Device::getProfilingTimerClock() {
-    return osTime->getDynamicDeviceTimerClock(getHardwareInfo());
+    return getOSTime()->getDynamicDeviceTimerClock(getHardwareInfo());
 }
 
 bool Device::isSimulation() const {
@@ -389,8 +385,10 @@ bool Device::isSimulation() const {
 }
 
 double Device::getPlatformHostTimerResolution() const {
-    if (osTime.get())
-        return osTime->getHostTimerResolution();
+    if (getOSTime()) {
+        return getOSTime()->getHostTimerResolution();
+    }
+
     return 0.0;
 }
 
@@ -569,4 +567,6 @@ void Device::initializeRayTracing() {
         rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, GraphicsAllocation::AllocationType::BUFFER, getDeviceBitfield()});
     }
 }
+
+OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get(); };
 } // namespace NEO

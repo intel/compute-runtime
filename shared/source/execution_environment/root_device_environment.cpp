@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -88,6 +89,12 @@ bool RootDeviceEnvironment::initAilConfiguration() {
 void RootDeviceEnvironment::initGmm() {
     if (!gmmHelper) {
         gmmHelper.reset(new GmmHelper(osInterface.get(), getHardwareInfo()));
+    }
+}
+
+void RootDeviceEnvironment::initOsTime() {
+    if (!osTime) {
+        osTime = OSTime::create(osInterface.get());
     }
 }
 
