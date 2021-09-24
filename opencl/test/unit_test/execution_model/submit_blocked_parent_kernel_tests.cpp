@@ -5,11 +5,11 @@
  *
  */
 
+#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
-#include "opencl/source/event/hw_timestamps.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"

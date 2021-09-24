@@ -7,10 +7,10 @@
 
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"
 
+#include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
-#include "opencl/source/utilities/logger.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

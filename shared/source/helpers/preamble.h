@@ -7,8 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/pipeline_select_helper.h"
-
-#include "opencl/source/kernel/kernel_execution_type.h"
+#include "shared/source/kernel/kernel_execution_type.h"
 
 #include "engine_group_types.h"
 #include "engine_node.h"

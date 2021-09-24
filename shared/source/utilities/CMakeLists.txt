@@ -20,10 +20,14 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/directory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_timestamps.h
     ${CMAKE_CURRENT_SOURCE_DIR}/iflist.h
     ${CMAKE_CURRENT_SOURCE_DIR}/idlist.h
     ${CMAKE_CURRENT_SOURCE_DIR}/io_functions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/logger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/perf_counter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/range.h

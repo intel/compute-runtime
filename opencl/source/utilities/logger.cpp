@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/utilities/logger.h"
+#include "shared/source/utilities/logger.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/timestamp_packet.h"

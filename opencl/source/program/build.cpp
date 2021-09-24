@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/time_measure_wrapper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -19,7 +20,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
-#include "opencl/source/utilities/logger.h"
 
 #include "compiler_options.h"
 

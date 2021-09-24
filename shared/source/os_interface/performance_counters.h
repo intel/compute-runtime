@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "opencl/source/event/perf_counter.h"
-#include "opencl/source/os_interface/metrics_library.h"
+#include "shared/source/utilities/metrics_library.h"
+#include "shared/source/utilities/perf_counter.h"
 
 #include <mutex>
 

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/memory_leak_listener.h"
@@ -21,7 +22,6 @@
 #include "shared/test/unit_test/base_ult_config_listener.h"
 
 #include "opencl/source/program/kernel_info.h"
-#include "opencl/source/utilities/logger.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"

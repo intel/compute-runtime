@@ -10,8 +10,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/utilities/directory.h"
-
-#include "opencl/source/utilities/logger.h"
+#include "shared/source/utilities/logger.h"
 
 #include <map>
 

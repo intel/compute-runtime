@@ -15,6 +15,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -24,7 +25,6 @@
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/properties_helper.h"
-#include "opencl/source/kernel/kernel_execution_type.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"

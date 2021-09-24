@@ -9,8 +9,7 @@
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble_base.inl"
-
-#include "opencl/source/kernel/kernel_execution_type.h"
+#include "shared/source/kernel/kernel_execution_type.h"
 
 namespace NEO {
 
