@@ -43,6 +43,68 @@ class MultiDeviceMetricQueryPoolTest : public MetricMultiDeviceFixture,
     std::unique_ptr<L0::DriverHandle> driverHandle;
 };
 
+TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptionsIsCalledThenReturnSubDeviceProperties) {
+
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    auto subDevice = ClientOptionsData_1_0{};
+    auto subDeviceIndex = ClientOptionsData_1_0{};
+    auto subDeviceCount = ClientOptionsData_1_0{};
+    auto workloadPartition = ClientOptionsData_1_0{};
+
+    // Sub devices
+    for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
+
+        auto &metricContext = deviceImp.subDevices[i]->getMetricContext();
+        auto &metricsLibrary = metricContext.getMetricsLibrary();
+
+        metricsLibrary.getSubDeviceClientOptions(subDevice, subDeviceIndex, subDeviceCount, workloadPartition);
+
+        EXPECT_EQ(subDevice.Type, MetricsLibraryApi::ClientOptionsType::SubDevice);
+        EXPECT_EQ(subDevice.SubDevice.Enabled, true);
+
+        EXPECT_EQ(subDeviceIndex.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceIndex);
+        EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, i);
+
+        EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
+        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, std::max(deviceImp.numSubDevices, 1u));
+
+        EXPECT_EQ(workloadPartition.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
+        EXPECT_EQ(workloadPartition.WorkloadPartition.Enabled, false);
+    }
+}
+
+TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWithWorkloadPartitionWhenGetSubDeviceClientOptionsIsCalledThenReturnSubDeviceProperties) {
+
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    auto subDevice = ClientOptionsData_1_0{};
+    auto subDeviceIndex = ClientOptionsData_1_0{};
+    auto subDeviceCount = ClientOptionsData_1_0{};
+    auto workloadPartition = ClientOptionsData_1_0{};
+
+    // Sub devices
+    for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
+
+        auto &metricContext = deviceImp.subDevices[i]->getMetricContext();
+        auto &metricsLibrary = metricContext.getMetricsLibrary();
+
+        metricsLibrary.enableWorkloadPartition();
+
+        metricsLibrary.getSubDeviceClientOptions(subDevice, subDeviceIndex, subDeviceCount, workloadPartition);
+
+        EXPECT_EQ(subDevice.Type, MetricsLibraryApi::ClientOptionsType::SubDevice);
+        EXPECT_EQ(subDevice.SubDevice.Enabled, true);
+
+        EXPECT_EQ(subDeviceIndex.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceIndex);
+        EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, i);
+
+        EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
+        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, std::max(deviceImp.numSubDevices, 1u));
+
+        EXPECT_EQ(workloadPartition.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
+        EXPECT_EQ(workloadPartition.WorkloadPartition.Enabled, true);
+    }
+}
+
 TEST_F(MultiDeviceMetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateIsCalledThenReturnsSuccess) {
 
     zet_device_handle_t metricDevice = devices[0]->toHandle();

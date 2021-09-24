@@ -56,6 +56,7 @@ struct MetricContext {
     virtual bool isComputeUsed() = 0;
     virtual uint32_t getSubDeviceIndex() = 0;
     virtual void setSubDeviceIndex(const uint32_t index) = 0;
+    virtual bool isMultiDeviceCapable() = 0;
 };
 
 struct Metric : _zet_metric_handle_t {

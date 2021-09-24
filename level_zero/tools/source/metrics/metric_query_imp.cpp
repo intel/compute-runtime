@@ -169,6 +169,7 @@ void MetricsLibrary::release() {
     api = {};
     callbacks = {};
     context = {};
+    isWorkloadPartitionEnabled = false;
     initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
@@ -193,13 +194,19 @@ bool MetricsLibrary::load() {
     return true;
 }
 
+void MetricsLibrary::enableWorkloadPartition() {
+    isWorkloadPartitionEnabled = true;
+}
+
 void MetricsLibrary::getSubDeviceClientOptions(
-    NEO::Device &neoDevice,
     ClientOptionsData_1_0 &subDevice,
     ClientOptionsData_1_0 &subDeviceIndex,
-    ClientOptionsData_1_0 &subDeviceCount) {
+    ClientOptionsData_1_0 &subDeviceCount,
+    ClientOptionsData_1_0 &workloadPartition) {
 
-    if (!neoDevice.isSubDevice()) {
+    const auto &deviceImp = *static_cast<DeviceImp *>(&metricContext.getDevice());
+
+    if (!deviceImp.isSubdevice) {
 
         // Root device.
         subDevice.Type = ClientOptionsType::SubDevice;
@@ -209,7 +216,10 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDeviceIndex.SubDeviceIndex.Index = 0;
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = std::max(neoDevice.getNumSubDevices(), 1u);
+        subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.neoDevice->getRootDevice()->getNumSubDevices(), 1u);
+
+        workloadPartition.Type = ClientOptionsType::WorkloadPartition;
+        workloadPartition.WorkloadPartition.Enabled = false;
 
     } else {
 
@@ -218,10 +228,13 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDevice.SubDevice.Enabled = true;
 
         subDeviceIndex.Type = ClientOptionsType::SubDeviceIndex;
-        subDeviceIndex.SubDeviceIndex.Index = static_cast<NEO::SubDevice *>(&neoDevice)->getSubDeviceIndex();
+        subDeviceIndex.SubDeviceIndex.Index = static_cast<NEO::SubDevice *>(deviceImp.neoDevice)->getSubDeviceIndex();
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = std::max(neoDevice.getRootDevice()->getNumSubDevices(), 1u);
+        subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.neoDevice->getRootDevice()->getNumSubDevices(), 1u);
+
+        workloadPartition.Type = ClientOptionsType::WorkloadPartition;
+        workloadPartition.WorkloadPartition.Enabled = isWorkloadPartitionEnabled;
     }
 }
 
@@ -230,7 +243,7 @@ bool MetricsLibrary::createContext() {
     const auto &hwHelper = device.getHwHelper();
     const auto &asyncComputeEngines = hwHelper.getGpgpuEngineInstances(device.getHwInfo());
     ContextCreateData_1_0 createData = {};
-    ClientOptionsData_1_0 clientOptions[5] = {};
+    ClientOptionsData_1_0 clientOptions[6] = {};
     ClientData_1_0 clientData = {};
     ClientType_1_0 clientType = {};
     ClientDataLinuxAdapter_1_0 adapter = {};
@@ -259,7 +272,7 @@ bool MetricsLibrary::createContext() {
     clientOptions[1].Tbs.Enabled = metricContext.getMetricStreamer() != nullptr;
 
     // Sub device client options #2
-    getSubDeviceClientOptions(*device.getNEODevice(), clientOptions[2], clientOptions[3], clientOptions[4]);
+    getSubDeviceClientOptions(clientOptions[2], clientOptions[3], clientOptions[4], clientOptions[5]);
 
     clientData.Linux.Adapter = &adapter;
     clientData.ClientOptions = clientOptions;
@@ -422,7 +435,7 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
     const auto &deviceImp = *static_cast<DeviceImp *>(device);
     auto metricPoolImp = new MetricQueryPoolImp(device->getMetricContext(), hMetricGroup, *pDesc);
 
-    if (!deviceImp.isSubdevice && deviceImp.isMultiDeviceCapable()) {
+    if (metricContext.isMultiDeviceCapable()) {
 
         auto emptyMetricGroups = std::vector<zet_metric_group_handle_t>();
         auto &metricGroups = hMetricGroup
@@ -436,12 +449,15 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
         for (size_t i = 0; i < deviceImp.numSubDevices; ++i) {
 
             auto &subDevice = deviceImp.subDevices[i];
+            auto &subDeviceMetricContext = subDevice->getMetricContext();
+
+            subDeviceMetricContext.getMetricsLibrary().enableWorkloadPartition();
 
             zet_metric_group_handle_t metricGroupHandle = useMetricGroupSubDevice
-                                                              ? metricGroups[subDevice->getMetricContext().getSubDeviceIndex()]
+                                                              ? metricGroups[subDeviceMetricContext.getSubDeviceIndex()]
                                                               : hMetricGroup;
 
-            auto metricPoolSubdeviceImp = new MetricQueryPoolImp(subDevice->getMetricContext(), metricGroupHandle, *pDesc);
+            auto metricPoolSubdeviceImp = new MetricQueryPoolImp(subDeviceMetricContext, metricGroupHandle, *pDesc);
 
             // Create metric query pool.
             if (!metricPoolSubdeviceImp->create()) {
@@ -534,7 +550,7 @@ bool MetricQueryPoolImp::allocateGpuMemory() {
     if (description.type == ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE) {
         // Get allocation size.
         const auto &deviceImp = *static_cast<DeviceImp *>(&metricContext.getDevice());
-        allocationSize = (!deviceImp.isSubdevice && deviceImp.isMultiDeviceCapable())
+        allocationSize = (metricContext.isMultiDeviceCapable())
                              ? deviceImp.subDevices[0]->getMetricContext().getMetricsLibrary().getQueryReportGpuSize() * description.count * deviceImp.numSubDevices
                              : metricsLibrary.getQueryReportGpuSize() * description.count;
 
@@ -867,7 +883,7 @@ ze_result_t MetricQuery::appendMemoryBarrier(CommandList &commandList) {
 
     DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
 
-    if (!pDeviceImp->isSubdevice && pDeviceImp->isMultiDeviceCapable()) {
+    if (pDeviceImp->metricContext->isMultiDeviceCapable()) {
         // Use one of the sub-device contexts to append to command list.
         pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
     }
@@ -893,9 +909,10 @@ ze_result_t MetricQuery::appendStreamerMarker(CommandList &commandList,
 
     DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
 
-    if (!pDeviceImp->isSubdevice && pDeviceImp->isMultiDeviceCapable()) {
+    if (pDeviceImp->metricContext->isMultiDeviceCapable()) {
         // Use one of the sub-device contexts to append to command list.
         pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
+        pDeviceImp->metricContext->getMetricsLibrary().enableWorkloadPartition();
     }
     auto &metricContext = pDeviceImp->getMetricContext();
     auto &metricsLibrary = metricContext.getMetricsLibrary();

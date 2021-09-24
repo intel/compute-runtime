@@ -401,8 +401,9 @@ TEST_F(MetricQueryPoolTest, givenRootDeviceWhenGetSubDeviceClientOptionsIsCalled
     auto subDevice = ClientOptionsData_1_0{};
     auto subDeviceIndex = ClientOptionsData_1_0{};
     auto subDeviceCount = ClientOptionsData_1_0{};
+    auto workloadPartition = ClientOptionsData_1_0{};
 
-    metricsLibrary.getSubDeviceClientOptions(*device->getNEODevice(), subDevice, subDeviceIndex, subDeviceCount);
+    metricsLibrary.getSubDeviceClientOptions(subDevice, subDeviceIndex, subDeviceCount, workloadPartition);
 
     // Root device
     EXPECT_EQ(subDevice.Type, MetricsLibraryApi::ClientOptionsType::SubDevice);
@@ -413,33 +414,9 @@ TEST_F(MetricQueryPoolTest, givenRootDeviceWhenGetSubDeviceClientOptionsIsCalled
 
     EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
     EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, std::max(device->getNEODevice()->getNumSubDevices(), 1u));
-}
 
-TEST_F(MetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptionsIsCalledThenReturnSubDeviceProperties) {
-
-    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 4);
-    auto rootDevice = deviceFactory->rootDevices[0];
-
-    auto &metricContext = device->getMetricContext();
-    auto &metricsLibrary = metricContext.getMetricsLibrary();
-    auto subDevice = ClientOptionsData_1_0{};
-    auto subDeviceIndex = ClientOptionsData_1_0{};
-    auto subDeviceCount = ClientOptionsData_1_0{};
-
-    // Sub devices
-    for (uint32_t i = 0, count = std::max(rootDevice->getNumSubDevices(), 1u); i < count; ++i) {
-
-        metricsLibrary.getSubDeviceClientOptions(*rootDevice->subdevices[i], subDevice, subDeviceIndex, subDeviceCount);
-
-        EXPECT_EQ(subDevice.Type, MetricsLibraryApi::ClientOptionsType::SubDevice);
-        EXPECT_EQ(subDevice.SubDevice.Enabled, true);
-
-        EXPECT_EQ(subDeviceIndex.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceIndex);
-        EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, i);
-
-        EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
-        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, std::max(rootDevice->getNumSubDevices(), 1u));
-    }
+    EXPECT_EQ(workloadPartition.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
+    EXPECT_EQ(workloadPartition.WorkloadPartition.Enabled, false);
 }
 
 TEST_F(MetricQueryPoolTest, givenUninitializedMetricEnumerationWhenGetQueryReportGpuSizeIsCalledThenReturnInvalidSize) {

@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/os_library.h"
 
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/source/inc/ze_intel_gpu.h"
@@ -67,6 +67,7 @@ struct MetricContextImp : public MetricContext {
     bool isComputeUsed() override;
     uint32_t getSubDeviceIndex() override;
     void setSubDeviceIndex(const uint32_t index) override;
+    bool isMultiDeviceCapable() override;
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -77,6 +78,7 @@ struct MetricContextImp : public MetricContext {
     MetricStreamer *pMetricStreamer = nullptr;
     uint32_t subDeviceIndex = 0;
     bool useCompute = false;
+    bool multiDeviceCapable = false;
 };
 
 MetricContextImp::MetricContextImp(Device &deviceInput)
@@ -91,6 +93,8 @@ MetricContextImp::MetricContextImp(Device &deviceInput)
     subDeviceIndex = isSubDevice
                          ? static_cast<NEO::SubDevice *>(deviceNeo)->getSubDeviceIndex()
                          : 0;
+
+    multiDeviceCapable = !isSubDevice && device.isMultiDeviceCapable();
 }
 
 MetricContextImp::~MetricContextImp() {
@@ -163,6 +167,10 @@ void MetricContextImp::setSubDeviceIndex(const uint32_t index) {
     subDeviceIndex = index;
 }
 
+bool MetricContextImp::isMultiDeviceCapable() {
+    return multiDeviceCapable;
+}
+
 ze_result_t
 MetricContextImp::activateMetricGroupsDeferred(const uint32_t count,
                                                zet_metric_group_handle_t *phMetricGroups) {
@@ -200,23 +208,12 @@ ze_result_t MetricContext::enableMetricApi() {
     for (auto rootDeviceHandle : rootDevices) {
 
         // Initialize root device.
-        auto rootDevice = L0::Device::fromHandle(rootDeviceHandle);
-        failed |= !rootDevice->getMetricContext().loadDependencies();
-
-        // Sub devices count.
-        uint32_t subDeviceCount = 0;
-        rootDevice->getSubDevices(&subDeviceCount, nullptr);
-
-        // Sub device instances.
-        subDevices.clear();
-        subDevices.resize(subDeviceCount);
-        rootDevice->getSubDevices(&subDeviceCount, subDevices.data());
+        auto rootDevice = static_cast<DeviceImp *>(L0::Device::fromHandle(rootDeviceHandle));
+        failed |= !rootDevice->metricContext->loadDependencies();
 
         // Initialize sub devices.
-        for (uint32_t i = 0; i < subDevices.size(); ++i) {
-
-            auto subDevice = L0::Device::fromHandle(subDevices[i]);
-            failed |= !subDevice->getMetricContext().loadDependencies();
+        for (uint32_t i = 0; i < rootDevice->numSubDevices; ++i) {
+            failed |= !rootDevice->subDevices[i]->getMetricContext().loadDependencies();
         }
     }
 

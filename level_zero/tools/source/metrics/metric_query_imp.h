@@ -45,10 +45,11 @@ struct MetricsLibrary {
     virtual bool load();
     bool isInitialized();
     ze_result_t getInitializationState();
-    void getSubDeviceClientOptions(NEO::Device &neoDevice,
-                                   ClientOptionsData_1_0 &subDevice,
+    void enableWorkloadPartition();
+    void getSubDeviceClientOptions(ClientOptionsData_1_0 &subDevice,
                                    ClientOptionsData_1_0 &subDeviceIndex,
-                                   ClientOptionsData_1_0 &subDeviceCount);
+                                   ClientOptionsData_1_0 &subDeviceCount,
+                                   ClientOptionsData_1_0 &workloadPartition);
     static const char *getFilename();
 
     // Deinitialization.
@@ -91,6 +92,7 @@ struct MetricsLibrary {
     NEO::OsLibrary *handle = nullptr;
     MetricContext &metricContext;
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
+    bool isWorkloadPartitionEnabled = false;
     std::mutex mutex;
 
     // Metrics library types.
