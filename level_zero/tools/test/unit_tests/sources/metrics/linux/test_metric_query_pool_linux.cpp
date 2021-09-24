@@ -8,8 +8,8 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"

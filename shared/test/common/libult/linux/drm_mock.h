@@ -7,18 +7,10 @@
 
 #pragma once
 
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/linux/mock_os_layer.h"
-
-#include "drm/i915_drm.h"
-#include "gtest/gtest.h"
 
 #include <cstdio>
 #include <fstream>

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "gtest/gtest.h"
 

@@ -11,11 +11,11 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 
 #include "drm/i915_drm.h"

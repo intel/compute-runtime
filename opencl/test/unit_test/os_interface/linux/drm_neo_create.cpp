@@ -9,8 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "drm/i915_drm.h"
 

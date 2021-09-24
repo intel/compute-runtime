@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/create_command_stream.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
@@ -28,7 +29,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
 #include "test.h"
 

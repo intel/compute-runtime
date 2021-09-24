@@ -90,7 +90,6 @@ if(UNIX)
   target_sources(compute_runtime_mockable_extra
                  PRIVATE
                  ${NEO_SOURCE_DIR}/opencl/source/dll/linux/allocator_helper.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_mock.cpp
                  ${NEO_SHARED_DIRECTORY}/tbx/tbx_sockets_imp.cpp
   )
   target_link_libraries(compute_runtime_mockable_extra

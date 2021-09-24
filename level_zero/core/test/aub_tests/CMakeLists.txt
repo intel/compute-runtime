@@ -102,7 +102,6 @@ if(UNIX)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_mock.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/allocator_helper.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
   )

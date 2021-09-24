@@ -8,8 +8,7 @@
 #pragma once
 
 #include "shared/test/common/helpers/default_hw_info.h"
-
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "gtest/gtest.h"
 

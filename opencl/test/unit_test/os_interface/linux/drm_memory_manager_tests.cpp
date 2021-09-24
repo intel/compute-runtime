@@ -29,6 +29,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/test_macros/matchers.h"
 
@@ -41,7 +42,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_cache_info.h"
 #include "test.h"
 
