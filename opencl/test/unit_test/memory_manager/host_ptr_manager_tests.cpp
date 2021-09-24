@@ -11,11 +11,11 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_host_ptr_manager.h"
 
 #include "opencl/test/unit_test/fixtures/memory_manager_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
 #include "opencl/test/unit_test/mocks/mock_internal_allocation_storage.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
