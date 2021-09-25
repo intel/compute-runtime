@@ -19,7 +19,7 @@ jobs:
           - [gcc-10, g++-10]
       fail-fast: false
     env:
-      WORKFLOW: VERIFY
+      WORKFLOW: ${{ github.workflow }}
     steps:
     - uses: actions/checkout@v2
       with:

@@ -17,7 +17,7 @@ jobs:
       matrix:
         compiler: [gcc-5, gcc-6, gcc-7, gcc-8]
     env:
-      WORKFLOW: CI
+      WORKFLOW: ${{ github.workflow }}
     steps:
     - uses: actions/checkout@v2
       with:
