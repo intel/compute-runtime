@@ -12,7 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [gcc-7, gcc-8, gcc-9, gcc-10]
+        compiler: 
+          - [gcc-7, g++-7]
+          - [gcc-8, g++-8]
+          - [gcc-9, g++-9]
+          - [gcc-10, g++-10]
       fail-fast: false
     env:
       WORKFLOW: VERIFY
@@ -23,13 +27,13 @@ jobs:
     - name: prepare image
       env:
         BUILD_OS: ubuntu-20.04
-        COMPILER: ${{ matrix.compiler }}
       working-directory: neo/scripts/actions
       run: ./run-action-docker-prepare.sh
     - name: build
       env:
+        CC: ${{ matrix.compiler[0] }}
+        CXX: ${{ matrix.compiler[1] }}
         BUILD_OS: ubuntu-20.04
-        COMPILER: ${{ matrix.compiler }}
       run: ./neo/scripts/actions/run-action-build.sh
     - name: prepare artifacts
       if: matrix.compiler == 'gcc-7'
