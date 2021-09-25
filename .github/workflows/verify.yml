@@ -40,6 +40,11 @@ jobs:
       run: |
         mkdir artifacts
         mv build/*.deb artifacts/
+    - name: upload tests
+      uses: actions/upload-artifact@v1
+      with:
+        name: tests
+        path: build/bin
     - name: upload artifacts
       if: matrix.compiler == 'gcc-7'
       uses: actions/upload-artifact@v1
