@@ -13,6 +13,7 @@ set(CORE_SRCS_GENX_H_BASE
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
     aub_command_stream_receiver
+    aub_mem_dump
     command_encoder
     command_stream_receiver_hw
     command_stream_receiver_simulated_common_hw

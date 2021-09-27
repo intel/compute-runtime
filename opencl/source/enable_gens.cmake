@@ -5,7 +5,6 @@
 #
 
 set(RUNTIME_SRCS_GENX_CPP_BASE
-    aub_mem_dump
     buffer
     cl_hw_helper
     command_queue
