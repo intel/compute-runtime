@@ -394,6 +394,8 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndMoreThanOneCcsWhenCreatin
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
     }
@@ -415,6 +417,24 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndMoreThanOneCcsWhenCreatin
         EXPECT_TRUE(isEngineInstanced(subDevice, engineType, 0, 1));
         EXPECT_TRUE(hasEngineInstancedEngines(subDevice, engineType));
     }
+}
+
+TEST_F(EngineInstancedDeviceTests, givenDebugFlagNotSetAndMoreThanOneCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenDontCreateEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto &hwInfo = rootDevice->getHardwareInfo();
+
+    EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+    EXPECT_EQ(0u, rootDevice->getNumSubDevices());
+    EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+    EXPECT_TRUE(hasAllEngines(rootDevice));
 }
 
 TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndZeroCcsesWhenCreatingRootDeviceWithoutGenericSubDevicesThenCreateEngineInstanced) {
@@ -782,6 +802,8 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
@@ -795,12 +817,30 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     EXPECT_EQ(ccsCount, rootDevice->getNumSubDevices());
 }
 
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDeviceWithoutDebugFlagWhenCreatingThenDontEnableAllEngineInstancedDevices) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+
+    EXPECT_FALSE(rootDevice->isEngineInstanced());
+    EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
+    EXPECT_EQ(0u, rootDevice->getNumSubDevices());
+}
+
 HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, IsAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
     }

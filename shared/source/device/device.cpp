@@ -83,8 +83,12 @@ bool Device::genericSubDevicesAllowed() {
 }
 
 bool Device::engineInstancedSubDevicesAllowed() {
-    if ((DebugManager.flags.EngineInstancedSubDevices.get() != 1) || engineInstanced ||
-        (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2)) {
+    bool notAllowed = !DebugManager.flags.EngineInstancedSubDevices.get();
+    notAllowed |= engineInstanced;
+    notAllowed |= (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2);
+    notAllowed |= ((HwHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
+
+    if (notAllowed) {
         return false;
     }
 

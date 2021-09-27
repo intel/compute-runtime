@@ -1188,6 +1188,8 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
     }
