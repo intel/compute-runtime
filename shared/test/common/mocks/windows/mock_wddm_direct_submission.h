@@ -13,6 +13,7 @@ namespace NEO {
 template <typename GfxFamily, typename Dispatcher>
 struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatcher> {
     using BaseClass = WddmDirectSubmission<GfxFamily, Dispatcher>;
+    using BaseClass::activeTiles;
     using BaseClass::allocateOsResources;
     using BaseClass::allocateResources;
     using BaseClass::commandBufferHeader;

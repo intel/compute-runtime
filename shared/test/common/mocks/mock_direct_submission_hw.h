@@ -15,6 +15,7 @@ namespace NEO {
 template <typename GfxFamily, typename Dispatcher>
 struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     using BaseClass = DirectSubmissionHw<GfxFamily, Dispatcher>;
+    using BaseClass::activeTiles;
     using BaseClass::allocateResources;
     using BaseClass::completionRingBuffers;
     using BaseClass::cpuCachelineFlush;
@@ -44,6 +45,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::hwInfo;
     using BaseClass::osContext;
+    using BaseClass::partitionedMode;
     using BaseClass::performDiagnosticMode;
     using BaseClass::ringBuffer;
     using BaseClass::ringBuffer2;

@@ -20,7 +20,8 @@ class BlitterDispatcher : public Dispatcher<GfxFamily> {
                                      uint64_t gpuAddress,
                                      uint64_t immediateData,
                                      const HardwareInfo &hwInfo,
-                                     bool useNotifyEnable);
+                                     bool useNotifyEnable,
+                                     bool partitionedWorkload);
     static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address);

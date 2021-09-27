@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
@@ -12,6 +13,7 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include <memory>
 
@@ -27,7 +29,11 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
     if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
         this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
     }
-
+    auto subDevices = device.getDeviceBitfield();
+    this->activeTiles = ImplicitScalingHelper::isImplicitScalingEnabled(subDevices, true)
+                            ? static_cast<uint32_t>(subDevices.count())
+                            : 1u;
+    this->partitionedMode = this->activeTiles > 1u;
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
     osContextLinux->getDrm().setDirectSubmissionActive(true);
 };
@@ -41,9 +47,9 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
-    this->currentTagData.tagAddress = this->semaphoreGpuVa + MemoryConstants::cacheLineSize;
+    this->currentTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
     this->currentTagData.tagValue = 0u;
-    this->tagAddress = reinterpret_cast<volatile uint32_t *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + MemoryConstants::cacheLineSize);
+    this->tagAddress = reinterpret_cast<volatile uint32_t *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
     return true;
 }
 
@@ -162,7 +168,11 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tag
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(uint32_t taskCountToWait) {
-    while (taskCountToWait > *this->tagAddress) {
+    auto pollAddress = this->tagAddress;
+    for (uint32_t i = 0; i < this->activeTiles; i++) {
+        while (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
+        }
+        pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
     }
 }
 

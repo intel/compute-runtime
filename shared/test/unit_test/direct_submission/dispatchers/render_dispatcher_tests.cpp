@@ -64,7 +64,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
     uint32_t gpuVaLow = static_cast<uint32_t>(gpuVa & 0x0000FFFFFFFFull);
     uint32_t gpuVaHigh = static_cast<uint32_t>(gpuVa >> 32);
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false, false);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);
@@ -117,4 +117,36 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeC
         }
     }
     EXPECT_TRUE(foundCacheFlush);
+}
+
+HWCMDTEST_F(IGFX_GEN12_CORE, RenderDispatcherTest,
+            givenRenderDispatcherPartitionedWorkloadFlagTrueWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValueAndPartitionParameter) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    uint64_t gpuVa = 0xBADA550000ull;
+    uint64_t value = 0x102030;
+    uint32_t gpuVaLow = static_cast<uint32_t>(gpuVa & 0x0000FFFFFFFFull);
+    uint32_t gpuVaHigh = static_cast<uint32_t>(gpuVa >> 32);
+
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false, true);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(cmdBuffer);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool foundMonitorFence = false;
+    for (auto &it : hwParse.pipeControlList) {
+        PIPE_CONTROL *pipeControl = reinterpret_cast<PIPE_CONTROL *>(it);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            foundMonitorFence = true;
+            EXPECT_EQ(gpuVaLow, pipeControl->getAddress());
+            EXPECT_EQ(gpuVaHigh, pipeControl->getAddressHigh());
+            EXPECT_EQ(value, pipeControl->getImmediateData());
+            EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
+            break;
+        }
+    }
+    EXPECT_TRUE(foundMonitorFence);
 }

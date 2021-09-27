@@ -27,7 +27,8 @@ inline void BlitterDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmd
                                                                uint64_t gpuAddress,
                                                                uint64_t immediateData,
                                                                const HardwareInfo &hwInfo,
-                                                               bool useNotifyEnable) {
+                                                               bool useNotifyEnable,
+                                                               bool partitionedWorkload) {
     MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = useNotifyEnable;
