@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,11 +34,11 @@ struct OSMemory {
 
     MOCKABLE_VIRTUAL ReservedCpuAddressRange reserveCpuAddressRange(size_t sizeToReserve, size_t alignment);
     MOCKABLE_VIRTUAL ReservedCpuAddressRange reserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, size_t alignment);
+
     MOCKABLE_VIRTUAL void releaseCpuAddressRange(const ReservedCpuAddressRange &reservedCpuAddressRange);
     virtual void getMemoryMaps(MemoryMaps &memoryMaps) = 0;
 
-  protected:
-    virtual void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) = 0;
+    virtual void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, bool topDownHint) = 0;
     virtual void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) = 0;
 };
 

@@ -109,6 +109,7 @@ else()
   target_sources(${TARGET_NAME} PRIVATE
                  ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
+                 ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
                  ${NEO_SOURCE_DIR}/shared/source/dll/windows/environment_variables.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp

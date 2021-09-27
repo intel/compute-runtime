@@ -60,8 +60,6 @@ class Wddm : public DriverModel {
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
     typedef HRESULT(WINAPI *DXCoreCreateAdapterFactoryFcn)(REFIID riid, void **ppFactory);
     typedef void(WINAPI *GetSystemInfoFcn)(SYSTEM_INFO *pSystemInfo);
-    typedef BOOL(WINAPI *VirtualFreeFcn)(LPVOID ptr, SIZE_T size, DWORD flags);
-    typedef LPVOID(WINAPI *VirtualAllocFcn)(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type);
 
     virtual ~Wddm();
 
@@ -104,12 +102,15 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void releaseReservedAddress(void *reservedAddress);
     MOCKABLE_VIRTUAL bool reserveValidAddressRange(size_t size, void *&reservedMem);
 
-    MOCKABLE_VIRTUAL void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type);
-    MOCKABLE_VIRTUAL int virtualFree(void *ptr, size_t size, unsigned long flags);
+    MOCKABLE_VIRTUAL void *virtualAlloc(void *inPtr, size_t size, bool topDownHint);
+    MOCKABLE_VIRTUAL void virtualFree(void *ptr, size_t size);
 
     MOCKABLE_VIRTUAL bool isShutdownInProgress();
 
     bool configureDeviceAddressSpace();
+    const FeatureTable &getFeatureTable() const {
+        return *featureTable;
+    }
 
     GT_SYSTEM_INFO *getGtSysInfo() const {
         DEBUG_BREAK_IF(!gtSystemInfo);
@@ -234,12 +235,11 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
 
     static GetSystemInfoFcn getSystemInfo;
-    static VirtualFreeFcn virtualFreeFnc;
-    static VirtualAllocFcn virtualAllocFnc;
 
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
     std::unique_ptr<WddmResidentAllocationsContainer> temporaryResources;
     std::unique_ptr<WddmResidencyLogger> residencyLogger;
+    std::unique_ptr<OSMemory> osMemory;
 };
 } // namespace NEO

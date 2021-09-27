@@ -80,8 +80,8 @@ class WddmMock : public Wddm {
     void setHeap32(uint64_t base, uint64_t size);
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
     bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) override;
-    void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override;
-    int virtualFree(void *ptr, size_t size, unsigned long flags) override;
+    void *virtualAlloc(void *inPtr, size_t size, bool topDownHint) override;
+    void virtualFree(void *ptr, size_t size) override;
     void releaseReservedAddress(void *reservedAddress) override;
     VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
     D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) override;

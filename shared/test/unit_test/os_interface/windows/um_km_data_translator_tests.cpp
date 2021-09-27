@@ -26,13 +26,15 @@ namespace NEO {
 extern const char *wslComputeHelperLibNameToLoad;
 }
 
-static const char *mockTokToStrAdapterString = "MOCK_ADAPTER_TOK_TO_STR";
-static const uint16_t mockTokToStrDriverBuildNumber = 0xabcd;
-static const uint32_t mockTokToStrProcessID = 0xabcdefbc;
+constexpr char *mockTokToStrAdapterString = "MOCK_ADAPTER_TOK_TO_STR";
+constexpr uint16_t mockTokToStrDriverBuildNumber = 0xabcd;
+constexpr uint32_t mockTokToStrProcessID = 0xabcdefbc;
+constexpr uint64_t mockTokToStrHeapBase = 0xabcdefbc;
 
-static const char *mockStrToTokAdapterString = "MOCK_ADAPTER_STR_TO_TOK";
-static const uint16_t mockStrToTokDriverBuildNumber = 0xbadc;
-static const uint32_t mockStrToTokProcessID = 0xcdbaebfc;
+constexpr char *mockStrToTokAdapterString = "MOCK_ADAPTER_STR_TO_TOK";
+constexpr uint16_t mockStrToTokDriverBuildNumber = 0xbadc;
+constexpr uint32_t mockStrToTokProcessID = 0xcdbaebfc;
+constexpr uint64_t mockStrToTokHeapBase = 0xabcdefbc;
 
 extern "C" {
 EXPORT size_t CCONV getSizeRequiredForStruct(TOK structId) {
@@ -47,6 +49,8 @@ EXPORT size_t CCONV getSizeRequiredForStruct(TOK structId) {
         return sizeof(CREATECONTEXT_PVTDATA);
     case TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT:
         return sizeof(GmmResourceInfoWinStruct);
+    case TOK_S_GMM_GFX_PARTITIONING:
+        return sizeof(GMM_GFX_PARTITIONING) + 4;
     }
     return 0;
 }
@@ -77,6 +81,11 @@ EXPORT bool CCONV tokensToStruct(TOK structId, void *dst, size_t dstSizeInBytes,
         gmmResourceInfo->GmmResourceInfoCommon.pPrivateData = mockTokToStrDriverBuildNumber;
         return true;
     } break;
+    case TOK_S_GMM_GFX_PARTITIONING: {
+        auto gfxPartitioning = new (dst) GMM_GFX_PARTITIONING{};
+        gfxPartitioning->Heap32->Base = mockTokToStrHeapBase;
+        return true;
+    } break;
     }
     return true;
 }
@@ -93,12 +102,19 @@ EXPORT size_t CCONV getSizeRequiredForTokens(TOK structId) {
         return sizeof(TOKSTR__CREATECONTEXT_PVTDATA);
     case TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT:
         return sizeof(TOKSTR_GmmResourceInfoWinStruct);
+    case TOK_S_GMM_GFX_PARTITIONING:
+        return sizeof(TOKSTR___GMM_GFX_PARTITIONING);
     }
+
     return 0;
 }
 
 EXPORT bool CCONV structToTokens(TOK structId, TokenHeader *dst, size_t dstSizeInBytes, const void *src, size_t srcSizeInBytes) {
     if (dstSizeInBytes < getSizeRequiredForTokens(structId)) {
+        return false;
+    }
+
+    if (srcSizeInBytes < getSizeRequiredForStruct(structId)) {
         return false;
     }
 
@@ -124,6 +140,11 @@ EXPORT bool CCONV structToTokens(TOK structId, TokenHeader *dst, size_t dstSizeI
         gmmResourceInfo->GmmResourceInfoCommon.pPrivateData.setValue(mockStrToTokDriverBuildNumber);
         return true;
     } break;
+    case TOK_S_GMM_GFX_PARTITIONING: {
+        auto gfxPartitioning = new (dst) TOKSTR___GMM_GFX_PARTITIONING{};
+        gfxPartitioning->Heap32->Base.setValue(mockStrToTokHeapBase);
+        return true;
+    } break;
     }
     return false;
 }
@@ -142,8 +163,9 @@ EXPORT void CCONV destroyStructRepresentation(TOK structId, void *src, size_t sr
     }
 }
 
+uint64_t translatorVersion = 0;
 EXPORT uint64_t CCONV getVersion() {
-    return 0;
+    return translatorVersion;
 }
 }
 
@@ -169,7 +191,7 @@ TEST(UmKmDataTranslator, whenUsingDefaultTranslatorThenTranslationIsDisabled) {
 
     COMMAND_BUFFER_HEADER srcCmdBufferHeader, dstCmdBufferHeader;
     memset(&srcCmdBufferHeader, 7, sizeof(srcCmdBufferHeader));
-    ret = translator.tranlateCommandBufferHeaderDataToInternalRepresentation(&dstCmdBufferHeader, sizeof(COMMAND_BUFFER_HEADER), srcCmdBufferHeader);
+    ret = translator.translateCommandBufferHeaderDataToInternalRepresentation(&dstCmdBufferHeader, sizeof(COMMAND_BUFFER_HEADER), srcCmdBufferHeader);
     EXPECT_TRUE(ret);
     EXPECT_EQ(0, memcmp(&dstCmdBufferHeader, &srcCmdBufferHeader, sizeof(COMMAND_BUFFER_HEADER)));
 
@@ -216,7 +238,7 @@ TEST(WslUmKmDataTranslator, whenQueryingForTranslationThenQueryIsForwardedToWslC
 
     COMMAND_BUFFER_HEADER srcCmdBufferHeader, dstCmdBufferHeader;
     memset(&srcCmdBufferHeader, 7, sizeof(srcCmdBufferHeader));
-    ret = translator->tranlateCommandBufferHeaderDataToInternalRepresentation(&dstCmdBufferHeader, sizeof(COMMAND_BUFFER_HEADER), srcCmdBufferHeader);
+    ret = translator->translateCommandBufferHeaderDataToInternalRepresentation(&dstCmdBufferHeader, sizeof(COMMAND_BUFFER_HEADER), srcCmdBufferHeader);
     EXPECT_TRUE(ret);
     EXPECT_EQ(mockTokToStrDriverBuildNumber, dstCmdBufferHeader.DriverBuildNumber);
 
@@ -235,4 +257,60 @@ TEST(WslUmKmDataTranslator, whenQueryingForTranslationThenQueryIsForwardedToWslC
     ASSERT_NE(nullptr, gmmResourceInfoHandle);
     EXPECT_EQ(mockTokToStrDriverBuildNumber, reinterpret_cast<GmmResourceInfoWinStruct *>(gmmResourceInfoHandle)->GmmResourceInfoCommon.pPrivateData);
     gmmHandleAllocator->destroyHandle(gmmResourceInfoHandle);
+}
+
+TEST(WslUmKmDataTranslator, whenTranslatingGraphicsPartitionThenResultIsBasedOnWslComputeHelperVersion) {
+    DebugManagerStateRestore debugSettingsRestore;
+
+    NEO::DebugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::wslComputeHelperLibNameToLoad = "";
+    NEO::Gdi gdi;
+    auto handle = validHandle;
+    gdi.queryAdapterInfo.mFunc = QueryAdapterInfoMock::queryadapterinfo;
+
+    ASSERT_EQ(translatorVersion, 0U);
+    auto translatorV0 = NEO::createUmKmDataTranslator(gdi, handle);
+    translatorVersion = 1;
+    auto translatorV1 = NEO::createUmKmDataTranslator(gdi, handle);
+    translatorVersion = 0;
+
+    EXPECT_EQ(sizeof(GMM_GFX_PARTITIONING), translatorV0->getSizeForGmmGfxPartitioningInternalRepresentation());
+    EXPECT_EQ(sizeof(GMM_GFX_PARTITIONING) + 4, translatorV1->getSizeForGmmGfxPartitioningInternalRepresentation());
+
+    GMM_GFX_PARTITIONING src = {}, dst = {};
+    src.Heap32->Base = 7;
+    dst.Heap32->Base = 0;
+    auto ret = translatorV0->translateGmmGfxPartitioningToInternalRepresentation(&dst, sizeof(GMM_GFX_PARTITIONING), src);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(7, dst.Heap32->Base);
+
+    src.Heap32->Base = 7;
+    dst.Heap32->Base = 0;
+    ret = translatorV1->translateGmmGfxPartitioningToInternalRepresentation(&dst, sizeof(GMM_GFX_PARTITIONING), src);
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(0, dst.Heap32->Base);
+
+    src.Heap32->Base = 7;
+    dst.Heap32->Base = 0;
+    ret = translatorV1->translateGmmGfxPartitioningToInternalRepresentation(&dst, sizeof(GMM_GFX_PARTITIONING) + 4, src);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(mockTokToStrHeapBase, dst.Heap32->Base);
+
+    src.Heap32->Base = 7;
+    dst.Heap32->Base = 0;
+    ret = translatorV0->translateGmmGfxPartitioningFromInternalRepresentation(dst, &src, sizeof(GMM_GFX_PARTITIONING));
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(7, dst.Heap32->Base);
+
+    src.Heap32->Base = 7;
+    dst.Heap32->Base = 0;
+    ret = translatorV1->translateGmmGfxPartitioningFromInternalRepresentation(dst, &src, sizeof(GMM_GFX_PARTITIONING));
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(0, dst.Heap32->Base);
+
+    src.Heap32->Base = 7;
+    dst.Heap32->Base = 0;
+    ret = translatorV1->translateGmmGfxPartitioningFromInternalRepresentation(dst, &src, sizeof(GMM_GFX_PARTITIONING) + 4);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(mockStrToTokHeapBase, dst.Heap32->Base);
 }

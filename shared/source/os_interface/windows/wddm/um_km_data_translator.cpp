@@ -31,8 +31,20 @@ size_t UmKmDataTranslator::getSizeForCommandBufferHeaderDataInternalRepresentati
     return sizeof(COMMAND_BUFFER_HEADER);
 }
 
-bool UmKmDataTranslator::tranlateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src) {
+bool UmKmDataTranslator::translateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src) {
     return (0 == memcpy_s(dst, dstSize, &src, sizeof(COMMAND_BUFFER_HEADER)));
+}
+
+size_t UmKmDataTranslator::getSizeForGmmGfxPartitioningInternalRepresentation() {
+    return sizeof(GMM_GFX_PARTITIONING);
+}
+
+bool UmKmDataTranslator::translateGmmGfxPartitioningToInternalRepresentation(void *dst, size_t dstSize, const GMM_GFX_PARTITIONING &src) {
+    return (0 == memcpy_s(dst, dstSize, &src, sizeof(src)));
+}
+
+bool UmKmDataTranslator::translateGmmGfxPartitioningFromInternalRepresentation(GMM_GFX_PARTITIONING &dst, const void *src, size_t srcSize) {
+    return (0 == memcpy_s(&dst, sizeof(GMM_GFX_PARTITIONING), src, srcSize));
 }
 
 } // namespace NEO

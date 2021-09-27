@@ -43,6 +43,7 @@ target_link_libraries(igdrcl_mt_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE
 if(WIN32)
   target_sources(igdrcl_mt_tests PRIVATE
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
+                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp
   )
 else()
   target_sources(igdrcl_mt_tests PRIVATE

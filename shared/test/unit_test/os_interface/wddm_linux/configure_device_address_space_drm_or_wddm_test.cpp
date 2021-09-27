@@ -25,8 +25,40 @@
 struct MockWddmLinux : NEO::Wddm {
     MockWddmLinux(std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceId, NEO::RootDeviceEnvironment &rootDeviceEnvironment)
         : NEO::Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {
+        constexpr uint64_t gfxHeap32Size = 4 * MemoryConstants::gigaByte; // 4GB
+        gfxPartition.SVM.Base = 0;
+        gfxPartition.SVM.Limit = MemoryConstants::max64BitAppAddress + 1;
+        decltype(gfxPartition.SVM) *precHeap = &gfxPartition.SVM;
+        for (auto heap : {&gfxPartition.Heap32[0], &gfxPartition.Heap32[1], &gfxPartition.Heap32[2], &gfxPartition.Heap32[3], &gfxPartition.Standard, &gfxPartition.Standard64KB}) {
+            heap->Base = precHeap->Limit;
+            heap->Limit = heap->Base + gfxHeap32Size;
+            precHeap = heap;
+        }
+        UNRECOVERABLE_IF(!isAligned<NEO::GfxPartition::heapGranularity>(precHeap->Limit));
     }
 
+    bool reserveValidAddressRange(size_t size, void *&reservedMem) override {
+        if (validAddressBase + size > MemoryConstants::max64BitAppAddress) {
+            validAddressRangeReservations.push_back(std::make_tuple(size, reservedMem, false));
+            return false;
+        }
+        reservedMem = reinterpret_cast<void *>(validAddressBase);
+        validAddressBase += size;
+        validAddressRangeReservations.push_back(std::make_tuple(size, reservedMem, true));
+        return true;
+    }
+
+    void releaseReservedAddress(void *reservedAddress) override {
+        Wddm::releaseReservedAddress(reservedAddress);
+        validAddressRangeReleases.push_back(reservedAddress);
+    }
+
+    uintptr_t validAddressBase = 128U * MemoryConstants::megaByte + 4U; // intentionally only DWORD alignment to improve alignment testing
+    std::vector<std::tuple<size_t, void *, bool>> validAddressRangeReservations;
+    std::vector<void *> validAddressRangeReleases;
+
+    using Wddm::featureTable;
+    using Wddm::gfxPartition;
     using Wddm::gfxPlatform;
     using Wddm::gmmMemory;
 };
@@ -45,152 +77,496 @@ struct MockWddmLinuxMemoryManager : NEO::WddmMemoryManager {
     using WddmMemoryManager::WddmMemoryManager;
 };
 
+struct WddmLinuxMockHwDeviceIdWddm : public NEO::HwDeviceIdWddm {
+    using HwDeviceIdWddm::HwDeviceIdWddm;
+    using HwDeviceIdWddm::umKmDataTranslator;
+};
+
 NTSTATUS __stdcall closeAdapterMock(CONST D3DKMT_CLOSEADAPTER *arg) {
     return 0;
 }
 
 template <typename T>
 struct RestorePoint {
-    RestorePoint(T &obj) : obj(obj), prev(obj) {
+    RestorePoint(T &obj) : obj(obj), prev(std::move(obj)) {
     }
 
     ~RestorePoint() {
-        std::swap(obj, prev);
+        obj = std::move(prev);
     }
 
     T &obj;
     T prev;
 };
 
-template <typename... Ts>
-struct MultiRestorePoint {
-    MultiRestorePoint(Ts &...objs) : restorePoints(objs...) {}
-    std::tuple<RestorePoint<Ts>...> restorePoints;
-};
+struct GdiMockConfig {
+    struct GdiMockCallbackWithReturn {
+        NTSTATUS returnValue = 0U;
+        void (*callback)() = nullptr;
+        int callCount = 0U;
+        void *context = nullptr;
+    };
 
-D3DDDI_RESERVEGPUVIRTUALADDRESS receivedReserveGpuVaArgs = {};
-std::pair<D3DKMT_CREATEALLOCATION, std::vector<D3DDDI_ALLOCATIONINFO2>> receivedCreateAllocationArgs = {};
-D3DDDI_MAPGPUVIRTUALADDRESS receivedMapGpuVirtualAddressArgs = {};
-D3DKMT_LOCK2 receivedLock2Args = {};
-D3DKMT_DESTROYALLOCATION2 receivedDestroyAllocation2Args = {};
-static constexpr auto mockAllocationHandle = 7U;
+    D3DDDI_RESERVEGPUVIRTUALADDRESS receivedReserveGpuVaArgs = {};
+    GdiMockCallbackWithReturn reserveGpuVaClb = {};
+
+    std::pair<D3DKMT_ESCAPE, std::unique_ptr<std::vector<uint8_t>>> receivedEscapeArgs = {};
+    GdiMockCallbackWithReturn escapeClb = {};
+
+    std::pair<D3DKMT_CREATEALLOCATION, std::unique_ptr<std::vector<D3DDDI_ALLOCATIONINFO2>>> receivedCreateAllocationArgs = {};
+    D3DDDI_MAPGPUVIRTUALADDRESS receivedMapGpuVirtualAddressArgs = {};
+    D3DKMT_LOCK2 receivedLock2Args = {};
+    D3DKMT_DESTROYALLOCATION2 receivedDestroyAllocation2Args = {};
+    uint32_t mockAllocationHandle = 7U;
+} gdiMockConfig;
 
 NTSTATUS __stdcall reserveDeviceAddressSpaceMock(D3DDDI_RESERVEGPUVIRTUALADDRESS *arg) {
-    receivedReserveGpuVaArgs = *arg;
-    return 0;
+    gdiMockConfig.receivedReserveGpuVaArgs = *arg;
+    gdiMockConfig.reserveGpuVaClb.callCount += 1;
+    if (gdiMockConfig.reserveGpuVaClb.callback) {
+        gdiMockConfig.reserveGpuVaClb.callback();
+    }
+    if (0 == gdiMockConfig.reserveGpuVaClb.returnValue) {
+        bool validArgs = true;
+        if (arg->BaseAddress) {
+            validArgs = validArgs && isAligned<MemoryConstants::pageSize64k>(arg->BaseAddress);
+            validArgs = validArgs && (0U == arg->MinimumAddress);
+            validArgs = validArgs && (0U == arg->MaximumAddress);
+        } else {
+            validArgs = validArgs && (0U == arg->BaseAddress);
+            validArgs = validArgs && isAligned<MemoryConstants::pageSize64k>(arg->MinimumAddress);
+            validArgs = validArgs && isAligned<MemoryConstants::pageSize64k>(arg->MaximumAddress);
+        }
+        validArgs = validArgs && isAligned<MemoryConstants::pageSize64k>(arg->Size);
+    }
+    return gdiMockConfig.reserveGpuVaClb.returnValue;
 }
 
 NTSTATUS __stdcall createAllocation2Mock(D3DKMT_CREATEALLOCATION *arg) {
-    receivedCreateAllocationArgs.first = *arg;
-    receivedCreateAllocationArgs.second.resize(0);
+    gdiMockConfig.receivedCreateAllocationArgs.first = *arg;
+    gdiMockConfig.receivedCreateAllocationArgs.second.reset();
     if (arg->NumAllocations) {
-        receivedCreateAllocationArgs.second.assign(arg->pAllocationInfo2, arg->pAllocationInfo2 + arg->NumAllocations);
-        arg->pAllocationInfo2[0].hAllocation = mockAllocationHandle;
+        gdiMockConfig.receivedCreateAllocationArgs.second.reset(new std::vector<D3DDDI_ALLOCATIONINFO2>(arg->pAllocationInfo2, arg->pAllocationInfo2 + arg->NumAllocations));
     }
+    arg->pAllocationInfo2[0].hAllocation = gdiMockConfig.mockAllocationHandle;
     return 0;
 }
 
 NTSTATUS __stdcall mapGpuVirtualAddressMock(D3DDDI_MAPGPUVIRTUALADDRESS *arg) {
-    receivedMapGpuVirtualAddressArgs = *arg;
+    gdiMockConfig.receivedMapGpuVirtualAddressArgs = *arg;
     return 0;
 }
 
 NTSTATUS __stdcall lock2Mock(D3DKMT_LOCK2 *arg) {
-    receivedLock2Args = *arg;
+    gdiMockConfig.receivedLock2Args = *arg;
     return 0;
 }
 
 NTSTATUS __stdcall destroyAllocations2Mock(const D3DKMT_DESTROYALLOCATION2 *arg) {
-    receivedDestroyAllocation2Args = *arg;
+    gdiMockConfig.receivedDestroyAllocation2Args = *arg;
     return 0;
 }
 
-TEST(WddmLinux, givenSvmAddressSpaceWhenConfiguringDeviceAddressSpaceThenReserveGpuVAForUSM) {
+NTSTATUS __stdcall escapeMock(const D3DKMT_ESCAPE *arg) {
+    gdiMockConfig.receivedEscapeArgs.first = *arg;
+    gdiMockConfig.receivedEscapeArgs.second.reset();
+    gdiMockConfig.escapeClb.callCount += 1;
+    if (arg->PrivateDriverDataSize) {
+        auto privateData = static_cast<uint8_t *>(arg->pPrivateDriverData);
+        gdiMockConfig.receivedEscapeArgs.second.reset(new std::vector<uint8_t>(privateData, privateData + arg->PrivateDriverDataSize));
+    }
+    if (gdiMockConfig.escapeClb.callback) {
+        gdiMockConfig.escapeClb.callback();
+    }
+    return gdiMockConfig.escapeClb.returnValue;
+}
 
+struct WddmLinuxTest : public ::testing::Test {
+    void SetUp() override {
+        mockRootDeviceEnvironment = std::make_unique<NEO::MockRootDeviceEnvironment>(mockExecEnv);
+        osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
+        osEnvironment->gdi->closeAdapter = closeAdapterMock;
+        auto hwDeviceIdIn = std::make_unique<WddmLinuxMockHwDeviceIdWddm>(NULL_HANDLE, LUID{}, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>());
+        this->hwDeviceId = hwDeviceIdIn.get();
+
+        auto wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), *mockRootDeviceEnvironment.get());
+        this->wddm = wddm.get();
+        mockGmmClientContext = NEO::GmmClientContext::create<NEO::MockGmmClientContext>(nullptr, NEO::defaultHwInfo.get());
+        wddm->gmmMemory = std::make_unique<MockGmmMemoryWddmLinux>(mockGmmClientContext.get());
+        *wddm->gfxPlatform = NEO::defaultHwInfo->platform;
+
+        mockExecEnv.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+        mockExecEnv.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(wddm));
+        mockExecEnv.rootDeviceEnvironments[0]->gmmHelper.reset(new NEO::GmmHelper(mockExecEnv.rootDeviceEnvironments[0]->osInterface.get(), mockExecEnv.rootDeviceEnvironments[0]->getHardwareInfo()));
+    }
+
+    size_t getMaxSvmSize() const {
+        auto maximumApplicationAddress = MemoryConstants::max64BitAppAddress;
+        auto productFamily = wddm->gfxPlatform->eProductFamily;
+        auto svmSize = NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
+                           ? maximumApplicationAddress + 1u
+                           : 0u;
+        return svmSize;
+    }
+
+    RestorePoint<GdiMockConfig> gdiRestorePoint{gdiMockConfig};
+
+    std::unique_ptr<NEO::OsEnvironmentWin> osEnvironment;
+    NEO::MockExecutionEnvironment mockExecEnv;
+    std::unique_ptr<NEO::MockRootDeviceEnvironment> mockRootDeviceEnvironment;
+    MockWddmLinux *wddm = nullptr;
+    WddmLinuxMockHwDeviceIdWddm *hwDeviceId = nullptr;
+    std::unique_ptr<NEO::GmmClientContext> mockGmmClientContext;
+};
+
+using WddmLinuxConfigureDeviceAddressSpaceTest = WddmLinuxTest;
+
+TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenSvmAddressSpaceThenReserveGpuVAForUSM) {
     if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress) {
         GTEST_SKIP();
     }
 
-    RestorePoint receivedReserveGpuVaArgsGlobalsRestorer{receivedReserveGpuVaArgs};
-
-    NEO::MockExecutionEnvironment mockExecEnv;
-    NEO::MockRootDeviceEnvironment mockRootDeviceEnvironment{mockExecEnv};
-    std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceIdIn;
-    auto osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
-    osEnvironment->gdi->closeAdapter = closeAdapterMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
-    hwDeviceIdIn.reset(new NEO::HwDeviceIdWddm(NULL_HANDLE, LUID{}, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>()));
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_TRUE(success);
 
-    MockWddmLinux wddm{std::move(hwDeviceIdIn), mockRootDeviceEnvironment};
-    auto mockGmmClientContext = NEO::GmmClientContext::create<NEO::MockGmmClientContext>(nullptr, NEO::defaultHwInfo.get());
-    wddm.gmmMemory = std::make_unique<MockGmmMemoryWddmLinux>(mockGmmClientContext.get());
-    *wddm.gfxPlatform = NEO::defaultHwInfo->platform;
-    wddm.configureDeviceAddressSpace();
-
-    auto maximumApplicationAddress = MemoryConstants::max64BitAppAddress;
-    auto productFamily = wddm.gfxPlatform->eProductFamily;
-    auto svmSize = NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
-                       ? maximumApplicationAddress + 1u
-                       : 0u;
-
-    EXPECT_EQ(MemoryConstants::pageSize64k, receivedReserveGpuVaArgs.BaseAddress);
-    EXPECT_EQ(0U, receivedReserveGpuVaArgs.MinimumAddress);
-    EXPECT_EQ(svmSize, receivedReserveGpuVaArgs.MaximumAddress);
-    EXPECT_EQ(svmSize - receivedReserveGpuVaArgs.BaseAddress, receivedReserveGpuVaArgs.Size);
-    EXPECT_EQ(wddm.getAdapter(), receivedReserveGpuVaArgs.hAdapter);
+    auto svmSize = this->getMaxSvmSize();
+    EXPECT_EQ(NEO::windowsMinAddress, gdiMockConfig.receivedReserveGpuVaArgs.BaseAddress);
+    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.MinimumAddress);
+    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.MaximumAddress);
+    EXPECT_EQ(svmSize - gdiMockConfig.receivedReserveGpuVaArgs.BaseAddress, gdiMockConfig.receivedReserveGpuVaArgs.Size);
+    EXPECT_EQ(this->wddm->getAdapter(), gdiMockConfig.receivedReserveGpuVaArgs.hAdapter);
 }
 
-TEST(WddmLinux, givenNonSvmAddressSpaceWhenConfiguringDeviceAddressSpaceThenReserveGpuVAForUSMIsNotCalled) {
+TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpaceThenMakeSureWholeGpuVAForUSMIsReserved) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
 
+    this->osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    gdiMockConfig.reserveGpuVaClb.returnValue = -2;
+    gdiMockConfig.reserveGpuVaClb.callback = []() { gdiMockConfig.reserveGpuVaClb.returnValue += 1; };
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_TRUE(success);
+
+    auto svmSize = this->getMaxSvmSize();
+    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.BaseAddress);
+    EXPECT_EQ(NEO::windowsMinAddress, gdiMockConfig.receivedReserveGpuVaArgs.MinimumAddress);
+    EXPECT_EQ(svmSize, gdiMockConfig.receivedReserveGpuVaArgs.MaximumAddress);
+    EXPECT_EQ(MemoryConstants::pageSize, gdiMockConfig.receivedReserveGpuVaArgs.Size);
+    EXPECT_EQ(wddm->getAdapter(), gdiMockConfig.receivedReserveGpuVaArgs.hAdapter);
+}
+
+TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenSvmAddressSpaceWhenCouldNotReserveGpuVAForSvmThenFail) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    this->osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+
+    gdiMockConfig.reserveGpuVaClb.returnValue = -1;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_FALSE(success);
+}
+
+TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenNonSvmAddressSpaceThenReserveGpuVAForUSMIsNotCalled) {
     if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) {
         GTEST_SKIP();
     }
 
-    RestorePoint receivedReserveGpuVaArgsGlobalsRestorer{receivedReserveGpuVaArgs};
-
-    NEO::MockExecutionEnvironment mockExecEnv;
-    NEO::MockRootDeviceEnvironment mockRootDeviceEnvironment{mockExecEnv};
-    std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceIdIn;
-    auto osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
-    osEnvironment->gdi->closeAdapter = closeAdapterMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
-    hwDeviceIdIn.reset(new NEO::HwDeviceIdWddm(NULL_HANDLE, LUID{}, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>()));
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_TRUE(success);
 
-    MockWddmLinux wddm{std::move(hwDeviceIdIn), mockRootDeviceEnvironment};
-    auto mockGmmClientContext = NEO::GmmClientContext::create<NEO::MockGmmClientContext>(nullptr, NEO::defaultHwInfo.get());
-    wddm.gmmMemory = std::make_unique<MockGmmMemoryWddmLinux>(mockGmmClientContext.get());
-    *wddm.gfxPlatform = NEO::defaultHwInfo->platform;
-    wddm.configureDeviceAddressSpace();
-
-    EXPECT_EQ(0U, receivedReserveGpuVaArgs.BaseAddress);
-    EXPECT_EQ(0U, receivedReserveGpuVaArgs.MinimumAddress);
-    EXPECT_EQ(0U, receivedReserveGpuVaArgs.MaximumAddress);
-    EXPECT_EQ(0U, receivedReserveGpuVaArgs.Size);
-    EXPECT_EQ(0U, receivedReserveGpuVaArgs.hAdapter);
+    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.BaseAddress);
+    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.MinimumAddress);
+    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.MaximumAddress);
+    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.Size);
+    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.hAdapter);
 }
 
-TEST(WddmLinux, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhenAllocatingThroughKmdIsPreferredThenAllocateThroughKmdAndLockAllocation) {
-    MultiRestorePoint gdiReceivedArgsRestorePoint(receivedReserveGpuVaArgs, receivedCreateAllocationArgs, receivedMapGpuVirtualAddressArgs, receivedLock2Args, receivedDestroyAllocation2Args);
+using WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest = WddmLinuxConfigureDeviceAddressSpaceTest;
 
-    std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceIdIn;
-    auto osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
-    NEO::MockExecutionEnvironment mockExecEnv;
-    NEO::MockRootDeviceEnvironment mockRootDeviceEnvironment{mockExecEnv};
-    osEnvironment->gdi->closeAdapter = closeAdapterMock;
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, whenFailedToReadProceesPartitionLayoutThenFail) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    osEnvironment->gdi->escape = escapeMock;
+    gdiMockConfig.escapeClb.returnValue = -1;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_FALSE(success);
+    EXPECT_EQ(1, gdiMockConfig.escapeClb.callCount);
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, whenFailedToTranslateProceesPartitionLayoutThenFail) {
+    struct MockTranslator : NEO::UmKmDataTranslator {
+        bool &wasCalled;
+        MockTranslator(bool &wasCalled) : wasCalled(wasCalled) { wasCalled = false; }
+
+        bool translateGmmGfxPartitioningFromInternalRepresentation(GMM_GFX_PARTITIONING &dst, const void *src, size_t srcSize) override {
+            wasCalled = true;
+            return false;
+        }
+    };
+
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    bool translatorWasCalled = false;
+    this->hwDeviceId->umKmDataTranslator.reset(new MockTranslator(translatorWasCalled));
+    osEnvironment->gdi->escape = escapeMock;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_FALSE(success);
+    EXPECT_TRUE(translatorWasCalled);
+    EXPECT_EQ(1, gdiMockConfig.escapeClb.callCount);
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenPreconfiguredAddressSpaceFromKmdThenUseIt) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    gdiMockConfig.escapeClb.callback = []() {
+        memset(gdiMockConfig.receivedEscapeArgs.first.pPrivateDriverData, 0xFF, gdiMockConfig.receivedEscapeArgs.first.PrivateDriverDataSize);
+    };
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_TRUE(success);
+    EXPECT_EQ(0xFFFFFFFFFFFFFFFFULL, this->wddm->gfxPartition.Standard.Base);
+    EXPECT_EQ(1, gdiMockConfig.escapeClb.callCount);
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdThenConfigureOneAndUpdateKmdItInKmd) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_TRUE(success);
+    EXPECT_NE(0xFFFFFFFFFFFFFFFFULL, this->wddm->gfxPartition.Standard.Base);
+    EXPECT_EQ(2, gdiMockConfig.escapeClb.callCount);
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdWhenFailedToReserveValidCpuAddressRangeThenFail) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    void *addr = nullptr;
+    auto bloatedAddressSpaceSuccesfully = this->wddm->reserveValidAddressRange(MemoryConstants::max64BitAppAddress - this->wddm->validAddressBase, addr);
+    ASSERT_TRUE(bloatedAddressSpaceSuccesfully);
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_FALSE(success);
+    EXPECT_EQ(1, gdiMockConfig.escapeClb.callCount);
+    ASSERT_EQ(2U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdWhenUpdatingItInKmdAndFailedToTranslateThenFail) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    struct MockTranslator : NEO::UmKmDataTranslator {
+        bool &wasCalled;
+        MockTranslator(bool &wasCalled) : wasCalled(wasCalled) { wasCalled = false; }
+
+        bool translateGmmGfxPartitioningToInternalRepresentation(void *dst, size_t dstSize, const GMM_GFX_PARTITIONING &src) override {
+            wasCalled = true;
+            return false;
+        }
+    };
+
+    bool translatorWasCalled = false;
+    this->hwDeviceId->umKmDataTranslator.reset(new MockTranslator(translatorWasCalled));
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_FALSE(success);
+    EXPECT_TRUE(translatorWasCalled);
+    EXPECT_EQ(1, gdiMockConfig.escapeClb.callCount);
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReleases.size());
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdWhenKmdGotJustUpdatedByDifferentClientThenUseItsAddressSpaceConfiguration) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    gdiMockConfig.escapeClb.callback = []() {
+        if (gdiMockConfig.escapeClb.callCount == 2) {
+            memset(gdiMockConfig.receivedEscapeArgs.first.pPrivateDriverData, 0xFF, gdiMockConfig.receivedEscapeArgs.first.PrivateDriverDataSize);
+        }
+    };
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_TRUE(success);
+    EXPECT_EQ(0xFFFFFFFFFFFFFFFFULL, this->wddm->gfxPartition.Standard.Base);
+    EXPECT_EQ(2, gdiMockConfig.escapeClb.callCount);
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReleases.size());
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdThenConfigureOneBasedOnAligmentAndSizeRequirements) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_TRUE(success);
+    ASSERT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+
+    auto reservedRange = this->wddm->validAddressRangeReservations[0];
+    auto reservedBase = reinterpret_cast<uintptr_t>(std::get<1>(reservedRange));
+    auto reservedSize = std::get<0>(reservedRange);
+    auto reservedEnd = reservedBase + reservedSize;
+
+    constexpr uint64_t gfxHeap32Size = 4 * MemoryConstants::gigaByte; // 4GB
+    const auto &gfxPartition = this->wddm->gfxPartition;
+    decltype(gfxPartition.SVM) precMem = {0, reservedBase};
+    const decltype(gfxPartition.SVM) *precHeap = &precMem;
+    for (auto heap : {&gfxPartition.Heap32[0], &gfxPartition.Heap32[1], &gfxPartition.Heap32[2], &gfxPartition.Heap32[3]}) {
+        EXPECT_LE(precHeap->Limit, heap->Base);
+        EXPECT_EQ(heap->Base + gfxHeap32Size, heap->Limit);
+        EXPECT_TRUE(isAligned<NEO::GfxPartition::heapGranularity>(precHeap->Base));
+        precHeap = heap;
+    }
+
+    for (auto heap : {&gfxPartition.Standard, &gfxPartition.Standard64KB}) {
+        EXPECT_LE(precHeap->Limit, heap->Base);
+        EXPECT_GE(heap->Limit + gfxHeap32Size, heap->Base);
+        EXPECT_TRUE(isAligned<NEO::GfxPartition::heapGranularity>(precHeap->Base));
+        precHeap = heap;
+    }
+    EXPECT_GE(reservedEnd, gfxPartition.Standard64KB.Limit);
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressSpacesThenReserveGpuVAForBoth) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+
+    std::vector<D3DDDI_RESERVEGPUVIRTUALADDRESS> allReserveGpuVaArgs;
+    gdiMockConfig.reserveGpuVaClb.context = &allReserveGpuVaArgs;
+    gdiMockConfig.reserveGpuVaClb.callback = []() {
+        auto &allArgs = *static_cast<decltype(allReserveGpuVaArgs) *>(gdiMockConfig.reserveGpuVaClb.context);
+        allArgs.push_back(gdiMockConfig.receivedReserveGpuVaArgs);
+    };
+
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_TRUE(success);
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+
+    ASSERT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    auto reservedCpuRange = this->wddm->validAddressRangeReservations[0];
+    auto reservedCpuBase = reinterpret_cast<uintptr_t>(std::get<1>(reservedCpuRange));
+    auto reservedCpuSize = std::get<0>(reservedCpuRange);
+    auto reservedCpuEnd = reservedCpuBase + reservedCpuSize;
+
+    ASSERT_EQ(2U, allReserveGpuVaArgs.size());
+    auto svmSize = this->getMaxSvmSize();
+    EXPECT_EQ(NEO::windowsMinAddress, allReserveGpuVaArgs[0].BaseAddress);
+    EXPECT_EQ(0U, allReserveGpuVaArgs[0].MinimumAddress);
+    EXPECT_EQ(0U, allReserveGpuVaArgs[0].MaximumAddress);
+    EXPECT_EQ(alignUp(reservedCpuBase - allReserveGpuVaArgs[0].BaseAddress, MemoryConstants::pageSize64k), allReserveGpuVaArgs[0].Size);
+    EXPECT_EQ(this->wddm->getAdapter(), allReserveGpuVaArgs[0].hAdapter);
+
+    EXPECT_EQ(alignDown(reservedCpuEnd, MemoryConstants::pageSize64k), allReserveGpuVaArgs[1].BaseAddress);
+    EXPECT_EQ(0U, allReserveGpuVaArgs[1].MinimumAddress);
+    EXPECT_EQ(0U, allReserveGpuVaArgs[1].MaximumAddress);
+    EXPECT_EQ(alignUp(svmSize - reservedCpuEnd, MemoryConstants::pageSize64k), allReserveGpuVaArgs[1].Size);
+    EXPECT_EQ(this->wddm->getAdapter(), allReserveGpuVaArgs[1].hAdapter);
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressSpacesWhenReservGpuVAForFirstOneFailsThenFail) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+    gdiMockConfig.reserveGpuVaClb.returnValue = -1;
+
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_FALSE(success);
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+
+    EXPECT_EQ(2, gdiMockConfig.reserveGpuVaClb.callCount);
+}
+
+TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressSpacesWhenReservGpuVAForSecondOneFailsThenFail) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress) {
+        GTEST_SKIP();
+    }
+
+    this->wddm->featureTable->ftrCCSRing = 1;
+    gdiMockConfig.reserveGpuVaClb.callback = []() {
+        if (gdiMockConfig.reserveGpuVaClb.callCount > 1) {
+            gdiMockConfig.reserveGpuVaClb.returnValue = -1;
+        };
+    };
+
+    osEnvironment->gdi->escape = escapeMock;
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_FALSE(success);
+    EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
+    EXPECT_EQ(0U, this->wddm->validAddressRangeReleases.size());
+
+    EXPECT_EQ(3, gdiMockConfig.reserveGpuVaClb.callCount);
+}
+
+TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhenAllocatingThroughKmdIsPreferredThenAllocateThroughKmdAndLockAllocation) {
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
     osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
     osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;
     osEnvironment->gdi->lock2 = lock2Mock;
     osEnvironment->gdi->destroyAllocation2 = destroyAllocations2Mock;
-    hwDeviceIdIn.reset(new NEO::HwDeviceIdWddm(NULL_HANDLE, LUID{}, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>()));
-
-    std::unique_ptr<MockWddmLinux> wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), mockRootDeviceEnvironment);
-    auto mockGmmClientContext = NEO::GmmClientContext::create<NEO::MockGmmClientContext>(nullptr, NEO::defaultHwInfo.get());
-    wddm->gmmMemory = std::make_unique<MockGmmMemoryWddmLinux>(mockGmmClientContext.get());
-    *wddm->gfxPlatform = NEO::defaultHwInfo->platform;
-    mockExecEnv.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-    mockExecEnv.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(wddm));
-    mockExecEnv.rootDeviceEnvironments[0]->gmmHelper.reset(new NEO::GmmHelper(mockExecEnv.rootDeviceEnvironments[0]->osInterface.get(), mockExecEnv.rootDeviceEnvironments[0]->getHardwareInfo()));
 
     MockWddmLinuxMemoryManager memoryManager{mockExecEnv};
 
@@ -201,12 +577,12 @@ TEST(WddmLinux, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhenAlloc
     EXPECT_NE(nullptr, alloc);
     memoryManager.freeGraphicsMemoryImpl(alloc);
 
-    ASSERT_EQ(1U, receivedCreateAllocationArgs.first.NumAllocations);
-    ASSERT_EQ(1U, receivedCreateAllocationArgs.second.size());
-    EXPECT_EQ(nullptr, receivedCreateAllocationArgs.second[0].pSystemMem);
-    EXPECT_EQ(0U, receivedMapGpuVirtualAddressArgs.BaseAddress);
-    EXPECT_EQ(mockAllocationHandle, receivedLock2Args.hAllocation);
+    ASSERT_EQ(1U, gdiMockConfig.receivedCreateAllocationArgs.first.NumAllocations);
+    EXPECT_EQ(nullptr, gdiMockConfig.receivedCreateAllocationArgs.second->operator[](0).pSystemMem);
+    EXPECT_EQ(0U, gdiMockConfig.receivedMapGpuVirtualAddressArgs.BaseAddress);
+    EXPECT_EQ(gdiMockConfig.mockAllocationHandle, gdiMockConfig.receivedLock2Args.hAllocation);
 }
+
 class MockOsTimeLinux : public NEO::OSTimeLinux {
   public:
     MockOsTimeLinux(NEO::OSInterface *osInterface, std::unique_ptr<NEO::DeviceTime> deviceTime) : NEO::OSTimeLinux(osInterface, std::move(deviceTime)) {}

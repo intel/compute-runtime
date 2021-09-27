@@ -36,6 +36,7 @@ set(IGDRCL_SRCS_tests_local
 
 if(WIN32)
   list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp)
+  list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp)
 else()
   if(NOT DISABLE_WDDM_LINUX)
     list(APPEND IGDRCL_SRCS_tests_local ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp

@@ -18,15 +18,15 @@ class WddmMockReserveAddress : public WddmMock {
   public:
     WddmMockReserveAddress(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {}
 
-    void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override {
+    void *virtualAlloc(void *inPtr, size_t size, bool topDownHint) override {
         if (returnGood != 0) {
-            return WddmMock::virtualAlloc(inPtr, size, flags, type);
+            return WddmMock::virtualAlloc(inPtr, size, topDownHint);
         }
 
         if (returnInvalidCount != 0) {
             returnInvalidIter++;
             if (returnInvalidIter > returnInvalidCount) {
-                return WddmMock::virtualAlloc(inPtr, size, flags, type);
+                return WddmMock::virtualAlloc(inPtr, size, topDownHint);
             }
             if (returnNullCount != 0) {
                 returnNullIter++;
@@ -41,12 +41,12 @@ class WddmMockReserveAddress : public WddmMock {
         return nullptr;
     }
 
-    int virtualFree(void *ptr, size_t size, unsigned long flags) override {
+    void virtualFree(void *ptr, size_t size) override {
         if ((ptr == reinterpret_cast<void *>(0x1000)) || (ptr == reinterpret_cast<void *>(0x0))) {
-            return 1;
+            return;
         }
 
-        return WddmMock::virtualFree(ptr, size, flags);
+        return WddmMock::virtualFree(ptr, size);
     }
 
     uint32_t returnGood = 0;

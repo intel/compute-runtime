@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ OSMemory::ReservedCpuAddressRange OSMemory::reserveCpuAddressRange(void *baseAdd
 
     reservedCpuAddressRange.sizeToReserve = sizeToReserve;
     reservedCpuAddressRange.actualReservedSize = sizeToReserve + alignment;
-    reservedCpuAddressRange.originalPtr = this->osReserveCpuAddressRange(baseAddress, reservedCpuAddressRange.actualReservedSize);
+    reservedCpuAddressRange.originalPtr = this->osReserveCpuAddressRange(baseAddress, reservedCpuAddressRange.actualReservedSize, false);
     reservedCpuAddressRange.alignedPtr = alignUp(reservedCpuAddressRange.originalPtr, alignment);
 
     return reservedCpuAddressRange;

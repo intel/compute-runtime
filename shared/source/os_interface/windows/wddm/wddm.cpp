@@ -46,14 +46,10 @@ namespace NEO {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
 extern Wddm::DXCoreCreateAdapterFactoryFcn getDXCoreCreateAdapterFactory();
 extern Wddm::GetSystemInfoFcn getGetSystemInfo();
-extern Wddm::VirtualAllocFcn getVirtualAlloc();
-extern Wddm::VirtualFreeFcn getVirtualFree();
 
 Wddm::DXCoreCreateAdapterFactoryFcn Wddm::dXCoreCreateAdapterFactory = getDXCoreCreateAdapterFactory();
 Wddm::CreateDXGIFactoryFcn Wddm::createDxgiFactory = getCreateDxgiFactory();
 Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
-Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
-Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
 Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
     : DriverModel(DriverModelType::WDDM), hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
@@ -67,6 +63,7 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceIdIn, RootDeviceEnvironment &
     this->enablePreemptionRegValue = NEO::readEnablePreemptionRegKey();
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     temporaryResources = std::make_unique<WddmResidentAllocationsContainer>(this);
+    osMemory = OSMemory::create();
 }
 
 Wddm::~Wddm() {
@@ -977,20 +974,19 @@ bool Wddm::isShutdownInProgress() {
 
 void Wddm::releaseReservedAddress(void *reservedAddress) {
     if (reservedAddress) {
-        [[maybe_unused]] auto status = virtualFree(reservedAddress, 0, MEM_RELEASE);
-        DEBUG_BREAK_IF(!status);
+        this->virtualFree(reservedAddress, 0);
     }
 }
 
 bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
-    reservedMem = virtualAlloc(nullptr, size, MEM_RESERVE, PAGE_READWRITE);
+    reservedMem = this->virtualAlloc(nullptr, size, false);
     if (reservedMem == nullptr) {
         return false;
     } else if (minAddress > reinterpret_cast<uintptr_t>(reservedMem)) {
         StackVec<void *, 100> invalidAddrVector;
         invalidAddrVector.push_back(reservedMem);
         do {
-            reservedMem = virtualAlloc(nullptr, size, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE);
+            reservedMem = this->virtualAlloc(nullptr, size, true);
             if (minAddress > reinterpret_cast<uintptr_t>(reservedMem) && reservedMem != nullptr) {
                 invalidAddrVector.push_back(reservedMem);
             } else {
@@ -998,8 +994,7 @@ bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
             }
         } while (1);
         for (auto &it : invalidAddrVector) {
-            [[maybe_unused]] auto status = virtualFree(it, 0, MEM_RELEASE);
-            DEBUG_BREAK_IF(!status);
+            this->virtualFree(it, 0);
         }
         if (reservedMem == nullptr) {
             return false;
@@ -1008,12 +1003,12 @@ bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
     return true;
 }
 
-void *Wddm::virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) {
-    return virtualAllocFnc(inPtr, size, static_cast<DWORD>(flags), static_cast<DWORD>(type));
+void *Wddm::virtualAlloc(void *inPtr, size_t size, bool topDownHint) {
+    return osMemory->osReserveCpuAddressRange(inPtr, size, topDownHint);
 }
 
-int Wddm::virtualFree(void *ptr, size_t size, unsigned long flags) {
-    return virtualFreeFnc(ptr, size, static_cast<DWORD>(flags));
+void Wddm::virtualFree(void *ptr, size_t size) {
+    osMemory->osReleaseCpuAddressRange(ptr, size);
 }
 
 void Wddm::waitOnPagingFenceFromCpu() {

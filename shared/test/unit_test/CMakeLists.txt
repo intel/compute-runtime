@@ -60,6 +60,7 @@ if(NOT SKIP_UNIT_TESTS)
     target_sources(${TARGET_NAME} PRIVATE
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
+                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxcore_factory.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.cpp

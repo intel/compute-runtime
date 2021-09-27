@@ -23,11 +23,4 @@ Wddm::GetSystemInfoFcn getGetSystemInfo() {
     return GetSystemInfo;
 }
 
-Wddm::VirtualFreeFcn getVirtualFree() {
-    return VirtualFree;
-}
-
-Wddm::VirtualAllocFcn getVirtualAlloc() {
-    return VirtualAlloc;
-}
 } // namespace NEO
