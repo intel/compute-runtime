@@ -10,7 +10,6 @@
 
 using Family = NEO::TGLLPFamily;
 
-#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_base.inl"
 #include "shared/source/helpers/hw_helper_bdw_and_later.inl"
@@ -33,7 +32,7 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
 
 template <>
 bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::isOffsetToSkipSetFFIDGPWARequired(hwInfo);
+    return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>

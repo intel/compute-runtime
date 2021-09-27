@@ -10,23 +10,12 @@
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_stream.h"
+#include "opencl/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 #include "test.h"
 
 using namespace NEO;
 
 using Gen12LPCommandStreamReceiverSimulatedCommonHwTests = Test<ClDeviceFixture>;
-
-template <typename FamilyType>
-class MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> {
-  public:
-    using CommandStreamReceiverSimulatedHw<FamilyType>::CommandStreamReceiverSimulatedHw;
-
-    void pollForCompletion() override {}
-    bool writeMemory(GraphicsAllocation &gfxAllocation) override { return true; }
-    void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {}
-    void writeMMIO(uint32_t offset, uint32_t value) override {}
-    void dumpAllocation(GraphicsAllocation &gfxAllocation) override {}
-};
 
 GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubCommandStreamReceiverWhewGlobalMmiosAreInitializedThenMOCSRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -142,4 +131,16 @@ GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubComman
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B094, 0x00170013)));
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B098, 0x00300010)));
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B09C, 0x00300010)));
+}
+
+GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenLmemCfgMmioIsWritten) {
+    MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csrSimulatedCommonHw.localMemoryEnabled = true;
+
+    auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
+    csrSimulatedCommonHw.stream = stream.get();
+
+    csrSimulatedCommonHw.initGlobalMMIO();
+
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000CF58, 0x80000000)));
 }

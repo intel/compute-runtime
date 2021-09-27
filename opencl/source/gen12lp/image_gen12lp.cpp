@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/gen12lp/hw_cmds.h"
 
 #include "opencl/source/mem_obj/image.h"

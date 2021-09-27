@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"

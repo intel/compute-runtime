@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_bdw_and_later.inl"
-#include "shared/source/gen12lp/helpers_gen12lp.h"
 
 namespace NEO {
 typedef TGLLPFamily Family;
@@ -17,12 +16,16 @@ void CommandStreamReceiverSimulatedCommonHw<Family>::initGlobalMMIO() {
         stream->writeMMIO(mmioPair.first, mmioPair.second);
     }
 
-    Gen12LPHelpers::initAdditionalGlobalMMIO(*this, *stream);
+    if (this->isLocalMemoryEnabled()) {
+        MMIOPair lmemCfg = {0x0000cf58, 0x80000000}; //LMEM_CFG
+        stream->writeMMIO(lmemCfg.first, lmemCfg.second);
+    }
 }
 
 template <>
 uint64_t CommandStreamReceiverSimulatedCommonHw<Family>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
-    return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | Gen12LPHelpers::getPPGTTAdditionalBits(gfxAllocation);
+    return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) |
+           ((gfxAllocation && gfxAllocation->getMemoryPool() == MemoryPool::LocalMemory) ? BIT(PageTableEntry::localMemoryBit) : 0);
 }
 
 template <>
@@ -30,7 +33,7 @@ void CommandStreamReceiverSimulatedCommonHw<Family>::getGTTData(void *memory, Au
     data = {};
     data.present = true;
 
-    Gen12LPHelpers::adjustAubGTTData(*this, data);
+    data.localMemory = this->isLocalMemoryEnabled();
 }
 
 template <>
