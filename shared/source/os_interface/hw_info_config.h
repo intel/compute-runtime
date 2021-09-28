@@ -73,6 +73,7 @@ class HwInfoConfig {
     virtual bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool is3DPipelineSelectWARequired() const = 0;
+    virtual bool isStorageInfoAdjustmentRequired() const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -131,6 +132,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const override;
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const override;
     bool is3DPipelineSelectWARequired() const override;
+    bool isStorageInfoAdjustmentRequired() const override;
 
   protected:
     HwInfoConfigHw() = default;

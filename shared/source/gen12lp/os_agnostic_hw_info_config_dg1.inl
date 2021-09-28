@@ -46,3 +46,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::is3DPipelineSelectWARequired() const {
     return true;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
+    return true;
+}

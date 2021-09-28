@@ -246,4 +246,9 @@ bool HwInfoConfigHw<gfxProduct>::is3DPipelineSelectWARequired() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
+    return false;
+}
+
 } // namespace NEO
