@@ -331,13 +331,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
+                                                                               NEO::GraphicsAllocation *srcAllocation,
+                                                                               size_t size, bool flushHost) {
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
     }
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstptr, srcptr, size, flushHost);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
     if (ret == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {
             executeCommandListImmediateWithFlushTask(false);

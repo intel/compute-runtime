@@ -977,8 +977,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstptr,
-                                                                      NEO::GraphicsAllocation *srcptr,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
+                                                                      NEO::GraphicsAllocation *srcAllocation,
                                                                       size_t size, bool flushHost) {
 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -991,32 +991,45 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
         isStateless = true;
     }
 
-    uint64_t dstAddress = dstptr->getGpuAddress();
-    uint64_t srcAddress = srcptr->getGpuAddress();
-    ze_result_t ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
-                                                   dstptr, 0,
-                                                   reinterpret_cast<void *>(&srcAddress),
-                                                   srcptr, 0,
-                                                   size - rightSize,
-                                                   middleElSize,
-                                                   Builtin::CopyBufferToBufferMiddle,
-                                                   nullptr,
-                                                   isStateless);
-    if (ret == ZE_RESULT_SUCCESS && rightSize) {
-        appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
-                                     dstptr, size - rightSize,
-                                     reinterpret_cast<void *>(&srcAddress),
-                                     srcptr, size - rightSize,
-                                     rightSize, 1UL,
-                                     Builtin::CopyBufferToBufferSide,
-                                     nullptr,
-                                     isStateless);
-    }
+    uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
+    uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
+    ze_result_t ret = ZE_RESULT_ERROR_UNKNOWN;
+    if (isCopyOnly()) {
+        ret = appendMemoryCopyBlit(dstAddress, dstAllocation, 0u,
+                                   srcAddress, srcAllocation, 0u,
+                                   size - rightSize);
 
-    if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
-        if (flushHost) {
-            NEO::PipeControlArgs args(true);
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        if (ret == ZE_RESULT_SUCCESS && rightSize) {
+            ret = appendMemoryCopyBlit(dstAddress, dstAllocation, size - rightSize,
+                                       srcAddress, srcAllocation, size - rightSize,
+                                       rightSize);
+        }
+    } else {
+        ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
+                                           dstAllocation, 0,
+                                           reinterpret_cast<void *>(&srcAddress),
+                                           srcAllocation, 0,
+                                           size - rightSize,
+                                           middleElSize,
+                                           Builtin::CopyBufferToBufferMiddle,
+                                           nullptr,
+                                           isStateless);
+        if (ret == ZE_RESULT_SUCCESS && rightSize) {
+            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
+                                               dstAllocation, size - rightSize,
+                                               reinterpret_cast<void *>(&srcAddress),
+                                               srcAllocation, size - rightSize,
+                                               rightSize, 1UL,
+                                               Builtin::CopyBufferToBufferSide,
+                                               nullptr,
+                                               isStateless);
+        }
+
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+            if (flushHost) {
+                NEO::PipeControlArgs args(true);
+                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+            }
         }
     }
 

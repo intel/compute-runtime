@@ -838,7 +838,11 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     void *srcBuffer = reinterpret_cast<void *>(0x1234);
     void *dstBuffer = reinterpret_cast<void *>(0x2345);
@@ -869,7 +873,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
 
 using ImageSupported = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingRenderThenSuccessIsReturned, ImageSupported) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeHpCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -883,7 +887,11 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToI
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -909,7 +917,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToI
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingCopyWintInvalidRegionArguementsThenErrorIsReturned, ImageSupported) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingCopyWintInvalidRegionArguementsThenErrorIsReturned, IsAtLeastXeHpCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -923,7 +931,11 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToI
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -950,7 +962,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToI
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyFromImageToImageUsingRenderThenSuccessIsReturned, ImageSupported) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeHpCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -964,7 +976,11 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyFromImageToImageUs
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -1003,7 +1019,11 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     void *srcBuffer = reinterpret_cast<void *>(0x1234);
     void *dstBuffer = reinterpret_cast<void *>(0x2345);

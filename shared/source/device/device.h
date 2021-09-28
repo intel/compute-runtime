@@ -66,6 +66,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
+    EngineControl *getInternalCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
