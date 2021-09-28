@@ -11,6 +11,7 @@
 #include "test.h"
 
 #include "level_zero/core/source/image/image_hw.h"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
@@ -957,5 +958,45 @@ HWTEST2_F(CommandListCreate, givenCommandListThenSshCorrectlyReserved, Supported
     auto size = helper.getRenderSurfaceStateSize();
     EXPECT_EQ(commandList.getReserveSshSize(), size);
 }
+
+using CommandListAppendMemoryCopyBlit = Test<CommandListFixture>;
+
+HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAndNoSpaceIsAvailableThenNextCommandBufferIsCreated, Platforms) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    uint64_t size = 1024;
+
+    ze_result_t res = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, res));
+
+    auto firstBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+
+    auto useSize = commandList->commandContainer.getCommandStream()->getAvailableSpace();
+    useSize -= sizeof(MI_BATCH_BUFFER_END);
+    commandList->commandContainer.getCommandStream()->getSpace(useSize);
+
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    void *srcPtr = reinterpret_cast<void *>(mockAllocationSrc.getGpuAddress());
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+
+    void *dstPtr = reinterpret_cast<void *>(mockAllocationDst.getGpuAddress());
+
+    auto result = commandList->appendMemoryCopy(dstPtr,
+                                                srcPtr,
+                                                size,
+                                                nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto secondBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+
+    EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
+}
+
 } // namespace ult
 } // namespace L0

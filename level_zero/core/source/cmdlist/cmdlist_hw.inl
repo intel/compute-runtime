@@ -877,6 +877,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     commandContainer.addToResidencyContainer(srcPtrAlloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
+    NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
+    bool blitterDirectSubmission = true; // assume direct submission enabled, since usually MI_BATCH_BUFFER_START is bigger than MI_BATCH_BUFFER_END
+    size_t estimatedSize = NEO::BlitCommandsHelper<GfxFamily>::template BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer,
+                                                                                                                                false,
+                                                                                                                                false,
+                                                                                                                                blitterDirectSubmission,
+                                                                                                                                *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    increaseCommandStreamSpace(estimatedSize);
+
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
     return ZE_RESULT_SUCCESS;
@@ -920,6 +929,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
     if (ret) {
         return ret;
     }
+
+    NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
+    bool blitterDirectSubmission = true; // assume direct submission enabled, since usually MI_BATCH_BUFFER_START is bigger than MI_BATCH_BUFFER_END
+    size_t estimatedSize = NEO::BlitCommandsHelper<GfxFamily>::template BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer,
+                                                                                                                                false,
+                                                                                                                                false,
+                                                                                                                                blitterDirectSubmission,
+                                                                                                                                *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    increaseCommandStreamSpace(estimatedSize);
 
     appendEventForProfiling(hSignalEvent, true);
     if (copyOneCommand) {
