@@ -369,9 +369,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             completionStamp.taskLevel = taskLevel;
 
             if (eventBuilder.getEvent() && isProfilingEnabled()) {
-                TimeStampData submitTimeStamp;
-                this->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
-                eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
                 eventBuilder.getEvent()->setSubmitTimeStamp();
                 eventBuilder.getEvent()->setStartTimeStamp();
             }
@@ -818,10 +815,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         DEBUG_BREAK_IF(device->getDeviceInfo().preemptionSupported != false);
     }
 
-    TimeStampData submitTimeStamp = {};
     if (isProfilingEnabled() && eventBuilder.getEvent()) {
-        this->getDevice().getOSTime()->getCpuTime(&submitTimeStamp.CPUTimeinNS);
-        eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
+        eventBuilder.getEvent()->setSubmitTimeStamp();
 
         auto hwTimestampNode = eventBuilder.getEvent()->getHwTimeStampNode();
         if (hwTimestampNode) {
@@ -1065,10 +1060,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     }
 
     if (eventBuilder.getEvent() && isProfilingEnabled()) {
-        TimeStampData submitTimeStamp;
-
-        getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
-        eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
+        eventBuilder.getEvent()->setSubmitTimeStamp();
         eventBuilder.getEvent()->setStartTimeStamp();
     }
 

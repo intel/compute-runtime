@@ -743,9 +743,9 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenGetEventProfilingI
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMMAND_MARKER, 0, 0);
+    event.queueTimeStamp.GPUTimeStamp = MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP;
 
     event.setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(cmdQ)));
-
     event.submitCommand(false);
     uint64_t submitTime = 0ULL;
     event.getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submitTime, 0);
@@ -1143,22 +1143,6 @@ TEST(EventCallback, WhenOverridingStatusThenEventUsesNewStatus) {
     EXPECT_EQ(-1, clb.getCallbackExecutionStatusTarget());
     clb.execute();
     EXPECT_EQ(-1, retStatus);
-}
-
-TEST_F(EventTest, WhenSettingTimeStampThenCorrectValuesAreSet) {
-    MyEvent ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
-    TimeStampData inTimeStamp = {1ULL, 2ULL};
-    ev.setSubmitTimeStamp(&inTimeStamp);
-    TimeStampData outtimeStamp = {0, 0};
-    outtimeStamp = ev.getSubmitTimeStamp();
-    EXPECT_EQ(1ULL, outtimeStamp.GPUTimeStamp);
-    EXPECT_EQ(2ULL, outtimeStamp.CPUTimeinNS);
-    inTimeStamp.GPUTimeStamp = 3;
-    inTimeStamp.CPUTimeinNS = 4;
-    ev.setQueueTimeStamp(&inTimeStamp);
-    outtimeStamp = ev.getQueueTimeStamp();
-    EXPECT_EQ(3ULL, outtimeStamp.GPUTimeStamp);
-    EXPECT_EQ(4ULL, outtimeStamp.CPUTimeinNS);
 }
 
 TEST_F(EventTest, WhenSettingCpuTimeStampThenCorrectTimeIsSet) {

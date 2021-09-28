@@ -87,6 +87,7 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     EventBuilder eventBuilder;
     eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady);
     auto ev = static_cast<MockEvent<UserEvent> *>(eventBuilder.getEvent());
+    ev->setProfilingEnabled(true);
     Surface *surfaces[] = {surface.get()};
     auto blocking = true;
     TimestampPacketDependencies timestampPacketDependencies;
@@ -95,13 +96,11 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     EnqueueProperties enqueueProperties(false, false, false, true, false, nullptr);
 
     EXPECT_EQ(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr);
 
     EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_NE(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
     delete ev;
 }
@@ -119,6 +118,7 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     EventBuilder eventBuilder;
     eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady);
     auto ev = static_cast<MockEvent<UserEvent> *>(eventBuilder.getEvent());
+    ev->setProfilingEnabled(true);
     Surface *surfaces[] = {surface.get()};
     auto blocking = true;
     TimestampPacketDependencies timestampPacketDependencies;
@@ -127,13 +127,11 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     EnqueueProperties enqueueProperties(false, false, false, true, false, nullptr);
 
     EXPECT_EQ(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr);
 
     EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_NE(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
     delete ev;
 }
