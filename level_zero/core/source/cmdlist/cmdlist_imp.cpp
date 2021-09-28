@@ -103,11 +103,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         NEO::CommandStreamReceiver *csr = nullptr;
         auto deviceImp = static_cast<DeviceImp *>(device);
         if (internalUsage) {
-            if (NEO::EngineGroupType::Copy == engineGroupType && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
-                csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
-            } else {
-                csr = deviceImp->getActiveDevice()->getInternalEngine().commandStreamReceiver;
-            }
+            csr = deviceImp->neoDevice->getInternalEngine().commandStreamReceiver;
         } else {
             device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
         }

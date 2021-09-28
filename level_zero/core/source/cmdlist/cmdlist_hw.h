@@ -104,8 +104,8 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents) override;
-    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
-                                    NEO::GraphicsAllocation *srcAllocation,
+    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr,
+                                    NEO::GraphicsAllocation *srcptr,
                                     size_t size,
                                     bool flushHost) override;
     ze_result_t appendMemoryCopyRegion(void *dstPtr,

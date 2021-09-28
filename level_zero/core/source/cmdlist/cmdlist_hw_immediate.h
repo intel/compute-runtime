@@ -65,8 +65,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendEventReset(ze_event_handle_t hEvent) override;
 
-    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
-                                    NEO::GraphicsAllocation *srcAllocation,
+    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr,
                                     size_t size, bool flushHost) override;
 
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent) override;
