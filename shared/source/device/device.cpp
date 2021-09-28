@@ -565,6 +565,16 @@ EngineControl &Device::getInternalEngine() {
     return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::Internal);
 }
 
+EngineControl *Device::getInternalCopyEngine() {
+    for (auto &engine : engines) {
+        if (engine.osContext->getEngineType() == aub_stream::ENGINE_BCS &&
+            engine.osContext->isInternalEngine()) {
+            return &engine;
+        }
+    }
+    return nullptr;
+}
+
 void Device::initializeRayTracing() {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
