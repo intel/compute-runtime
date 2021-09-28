@@ -2898,12 +2898,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
             uint64_t Reserved_203 : BITFIELD_RANGE(11, 11);
             uint64_t DynamicStateBaseAddress : BITFIELD_RANGE(12, 63);
             // DWORD 8-9
-            uint64_t IndirectObjectBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
-            uint64_t Reserved_257 : BITFIELD_RANGE(1, 3);
-            uint64_t IndirectObjectMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t IndirectObjectMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
-            uint64_t Reserved_267 : BITFIELD_RANGE(11, 11);
-            uint64_t IndirectObjectBaseAddress : BITFIELD_RANGE(12, 63);
+            uint64_t Reserved8 : BITFIELD_RANGE(0, 63);
             // DWORD 10-11
             uint64_t InstructionBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_321 : BITFIELD_RANGE(1, 3);
@@ -2982,8 +2977,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
         SURFACESTATEBASEADDRESS_INDEX = 0x4,
         DYNAMICSTATEBASEADDRESS_BYTEOFFSET = 0x18,
         DYNAMICSTATEBASEADDRESS_INDEX = 0x6,
-        INDIRECTOBJECTBASEADDRESS_BYTEOFFSET = 0x20,
-        INDIRECTOBJECTBASEADDRESS_INDEX = 0x8,
         INSTRUCTIONBASEADDRESS_BYTEOFFSET = 0x28,
         INSTRUCTIONBASEADDRESS_INDEX = 0xa,
         BINDLESSSURFACESTATEBASEADDRESS_BYTEOFFSET = 0x40,
@@ -3140,34 +3133,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
     }
     inline uint64_t getDynamicStateBaseAddress(void) const {
         return (TheStructure.Common.DynamicStateBaseAddress << DYNAMICSTATEBASEADDRESS_BIT_SHIFT);
-    }
-    inline void setIndirectObjectBaseAddressModifyEnable(const bool value) {
-        TheStructure.Common.IndirectObjectBaseAddressModifyEnable = value;
-    }
-    inline bool getIndirectObjectBaseAddressModifyEnable(void) const {
-        return (TheStructure.Common.IndirectObjectBaseAddressModifyEnable);
-    }
-    inline void setIndirectObjectMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved = value;
-    }
-    inline uint64_t getIndirectObjectMemoryObjectControlStateReserved(void) const {
-        return (TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved);
-    }
-    inline void setIndirectObjectMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getIndirectObjectMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables << 1);
-    }
-    typedef enum tagINDIRECTOBJECTBASEADDRESS {
-        INDIRECTOBJECTBASEADDRESS_BIT_SHIFT = 0xc,
-        INDIRECTOBJECTBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } INDIRECTOBJECTBASEADDRESS;
-    inline void setIndirectObjectBaseAddress(const uint64_t value) {
-        TheStructure.Common.IndirectObjectBaseAddress = value >> INDIRECTOBJECTBASEADDRESS_BIT_SHIFT;
-    }
-    inline uint64_t getIndirectObjectBaseAddress(void) const {
-        return (TheStructure.Common.IndirectObjectBaseAddress << INDIRECTOBJECTBASEADDRESS_BIT_SHIFT);
     }
     inline void setInstructionBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.InstructionBaseAddressModifyEnable = value;

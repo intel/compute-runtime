@@ -151,11 +151,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_EQ(0u, sbaCmd.getDynamicStateBaseAddress());
     EXPECT_EQ(0u, sbaCmd.getDynamicStateBufferSize());
 
-    EXPECT_FALSE(sbaCmd.getIndirectObjectBaseAddressModifyEnable());
-    EXPECT_FALSE(sbaCmd.getIndirectObjectBufferSizeModifyEnable());
-    EXPECT_EQ(0u, sbaCmd.getIndirectObjectBaseAddress());
-    EXPECT_EQ(0u, sbaCmd.getIndirectObjectBufferSize());
-
     EXPECT_FALSE(sbaCmd.getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(0u, sbaCmd.getSurfaceStateBaseAddress());
 
@@ -434,7 +429,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
 
     EXPECT_EQ(dsh.getCpuBase(), reinterpret_cast<void *>(cmd.getDynamicStateBaseAddress()));
     EXPECT_EQ(commandStreamReceiver.getMemoryManager()->getInternalHeapBaseAddress(commandStreamReceiver.rootDeviceIndex, ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()), cmd.getInstructionBaseAddress());
-    EXPECT_EQ(ioh.getCpuBase(), reinterpret_cast<void *>(cmd.getIndirectObjectBaseAddress()));
     EXPECT_EQ(ssh.getCpuBase(), reinterpret_cast<void *>(cmd.getSurfaceStateBaseAddress()));
 
     EXPECT_EQ(l1CacheOnMocs, cmd.getStatelessDataPortAccessMemoryObjectControlState());

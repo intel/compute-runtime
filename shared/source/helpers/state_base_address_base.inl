@@ -43,11 +43,6 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         stateBaseAddress->setDynamicStateBaseAddress(globalHeapsBaseAddress);
         stateBaseAddress->setDynamicStateBufferSize(MemoryConstants::pageSize64k);
 
-        stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
-        stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
-        stateBaseAddress->setIndirectObjectBaseAddress(indirectObjectHeapBaseAddress);
-        stateBaseAddress->setIndirectObjectBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
-
         stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
         stateBaseAddress->setSurfaceStateBaseAddress(globalHeapsBaseAddress);
 
@@ -64,18 +59,13 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             stateBaseAddress->setDynamicStateBufferSize(dsh->getHeapSizeInPages());
         }
 
-        if (ioh) {
-            stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
-            stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
-            stateBaseAddress->setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
-            stateBaseAddress->setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
-        }
-
         if (ssh) {
             stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
             stateBaseAddress->setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
         }
     }
+
+    appendIohParameters(stateBaseAddress, ioh, useGlobalHeapsBaseAddress, indirectObjectHeapBaseAddress);
 
     if (setInstructionStateBaseAddress) {
         stateBaseAddress->setInstructionBaseAddressModifyEnable(true);

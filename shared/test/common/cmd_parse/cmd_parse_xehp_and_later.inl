@@ -218,9 +218,6 @@ const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const Kerne
     auto inlineDataSize = 32u;
 
     auto offsetCrossThreadData = cmdWalker->getIndirectDataStartAddress();
-    auto baseAddress = is64bit ? 0u : cmdSBA->getIndirectObjectBaseAddress();
-    EXPECT_LT(offsetCrossThreadData, baseAddress + cmdSBA->getIndirectObjectBufferSize() * MemoryConstants::pageSize);
-
     offsetCrossThreadData -= static_cast<uint32_t>(ioh.getGraphicsAllocation()->getGpuAddressToPatch());
 
     // Get the base of cross thread

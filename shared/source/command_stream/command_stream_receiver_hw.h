@@ -87,6 +87,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         const LinearStream &ssh,
         uint64_t generalStateBase);
 
+    void collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh);
+
     void resetKmdNotifyHelper(KmdNotifyHelper *newHelper);
 
     CommandStreamReceiverType getType() override {

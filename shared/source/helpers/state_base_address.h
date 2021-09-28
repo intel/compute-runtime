@@ -40,6 +40,8 @@ struct StateBaseAddressHelper {
         bool useGlobalAtomics,
         bool areMultipleSubDevicesInContext);
 
+    static void appendIohParameters(STATE_BASE_ADDRESS *stateBaseAddress, const IndirectHeap *ioh, bool useGlobalHeapsBaseAddress, uint64_t indirectObjectHeapBaseAddress);
+
     static void appendStateBaseAddressParameters(
         STATE_BASE_ADDRESS *stateBaseAddress,
         const IndirectHeap *ssh,

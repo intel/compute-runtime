@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw_base.inl"
+#include "shared/source/helpers/address_patch.h"
+
+#include "hw_cmds.h"
 
 namespace NEO {
 
@@ -116,6 +119,15 @@ void CommandStreamReceiverHw<GfxFamily>::programPerDssBackedBuffer(LinearStream 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
     return 0;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh) {
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+
+    PatchInfoData indirectObjectPatchInfo = {ioh.getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::IndirectObjectHeap, commandBufferAddress,
+                                             commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    flatBatchBufferHelper->setPatchInfoData(indirectObjectPatchInfo);
 }
 
 template <typename GfxFamily>

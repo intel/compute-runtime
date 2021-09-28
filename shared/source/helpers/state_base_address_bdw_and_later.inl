@@ -13,4 +13,19 @@ template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper) {
 }
 
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::appendIohParameters(typename GfxFamily::STATE_BASE_ADDRESS *stateBaseAddress, const IndirectHeap *ioh, bool useGlobalHeapsBaseAddress, uint64_t indirectObjectHeapBaseAddress) {
+    if (useGlobalHeapsBaseAddress) {
+        stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
+        stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
+        stateBaseAddress->setIndirectObjectBaseAddress(indirectObjectHeapBaseAddress);
+        stateBaseAddress->setIndirectObjectBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+    } else if (ioh) {
+        stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
+        stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
+        stateBaseAddress->setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
+        stateBaseAddress->setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
+    }
+}
+
 } // namespace NEO

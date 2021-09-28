@@ -140,6 +140,10 @@ GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation(
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh) {
+}
+
+template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForActivePartitionConfig() const {
     if (this->staticWorkPartitioningEnabled && csrSizeRequestFlags.activePartitionsChanged) {
         return EncodeSetMMIO<GfxFamily>::sizeMEM +

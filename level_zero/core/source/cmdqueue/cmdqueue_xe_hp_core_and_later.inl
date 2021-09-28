@@ -64,7 +64,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             sbaAddresses.BindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
             sbaAddresses.DynamicStateBaseAddress = sbaCmd.getDynamicStateBaseAddress();
             sbaAddresses.GeneralStateBaseAddress = sbaCmd.getGeneralStateBaseAddress();
-            sbaAddresses.IndirectObjectBaseAddress = sbaCmd.getIndirectObjectBaseAddress();
             sbaAddresses.InstructionBaseAddress = sbaCmd.getInstructionBaseAddress();
             sbaAddresses.SurfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
 

@@ -2236,7 +2236,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         sbaAddresses.BindlessSurfaceStateBaseAddress = sba.getBindlessSurfaceStateBaseAddress();
         sbaAddresses.DynamicStateBaseAddress = sba.getDynamicStateBaseAddress();
         sbaAddresses.GeneralStateBaseAddress = sba.getGeneralStateBaseAddress();
-        sbaAddresses.IndirectObjectBaseAddress = sba.getIndirectObjectBaseAddress();
+        NEO::EncodeStateBaseAddress<GfxFamily>::setIohAddressForDebugger(sbaAddresses, sba);
         sbaAddresses.InstructionBaseAddress = sba.getInstructionBaseAddress();
         sbaAddresses.SurfaceStateBaseAddress = sba.getSurfaceStateBaseAddress();
 
