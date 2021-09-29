@@ -65,7 +65,6 @@ struct RootDeviceEnvironment {
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
     std::unique_ptr<GmmHelper> gmmHelper;
     std::unique_ptr<OSInterface> osInterface;
-    std::unique_ptr<GmmPageTableMngr> pageTableManager;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<AubCenter> aubCenter;
     std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;

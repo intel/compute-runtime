@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/flush_stamp.h"
@@ -667,14 +668,13 @@ bool CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *src
     return (isMemoryEqual == isEqualMemoryExpected);
 }
 
-bool CommandStreamReceiver::needsPageTableManager(aub_stream::EngineType engineType) const {
+bool CommandStreamReceiver::needsPageTableManager(EngineUsage engineTypeUsage) const {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto defaultEngineType = getChosenEngineType(*hwInfo);
-    if (engineType != defaultEngineType) {
+
+    if (engineTypeUsage != EngineUsage::Regular) {
         return false;
     }
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
-    if (rootDeviceEnvironment->pageTableManager.get() != nullptr) {
+    if (pageTableManager.get() != nullptr) {
         return false;
     }
     return HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);

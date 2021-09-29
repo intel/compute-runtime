@@ -23,6 +23,7 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -486,11 +487,13 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     }
 
     auto defaultGmm = gfxAllocation->getDefaultGmm();
-    if (defaultGmm) {
-        auto index = gfxAllocation->getRootDeviceIndex();
-        if (defaultGmm->isCompressionEnabled && executionEnvironment.rootDeviceEnvironments[index]->pageTableManager.get()) {
-            [[maybe_unused]] auto status = executionEnvironment.rootDeviceEnvironments[index]->pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
-            DEBUG_BREAK_IF(!status);
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHardwareInfo();
+    if (defaultGmm && defaultGmm->isCompressionEnabled && HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo)) {
+        for (auto engine : registeredEngines) {
+            if (engine.commandStreamReceiver->pageTableManager.get()) {
+                [[maybe_unused]] auto status = engine.commandStreamReceiver->pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
+                DEBUG_BREAK_IF(!status);
+            }
         }
     }
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {

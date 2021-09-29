@@ -23,7 +23,7 @@ bool GmmPageTableMngr::updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map) {
     ddiUpdateAuxTable.BaseGpuVA = gpuVa;
     ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
     ddiUpdateAuxTable.DoNotWait = true;
-    ddiUpdateAuxTable.Map = map ? 1u : 0u;
+    ddiUpdateAuxTable.Map = map;
 
     return updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
 }

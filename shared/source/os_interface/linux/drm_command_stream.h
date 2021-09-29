@@ -63,6 +63,8 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
 
     void printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
 
+    using CommandStreamReceiver::pageTableManager;
+
   protected:
     MOCKABLE_VIRTUAL void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
     MOCKABLE_VIRTUAL void exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId);

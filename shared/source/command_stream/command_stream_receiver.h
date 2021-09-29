@@ -104,7 +104,7 @@ class CommandStreamReceiver {
     ResidencyContainer &getEvictionAllocations();
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
-    bool needsPageTableManager(aub_stream::EngineType engineType) const;
+    bool needsPageTableManager(EngineUsage engineTypeUsage) const;
 
     void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage);
     MOCKABLE_VIRTUAL void waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount);
@@ -273,6 +273,8 @@ class CommandStreamReceiver {
     inline uint32_t getActivePartitions() const {
         return activePartitions;
     }
+
+    std::unique_ptr<GmmPageTableMngr> pageTableManager;
 
   protected:
     void cleanupResources();

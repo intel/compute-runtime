@@ -970,13 +970,13 @@ HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenInitial
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 1u));
     setCompressionEnabled(compressionEnabled, !compressionEnabled);
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[index]->pageTableManager.get());
 
     MockWddmCsr<FamilyType> mockWddmCsr(*executionEnvironment, index, 1);
     mockWddmCsr.createPageTableManager();
-    ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[index]->pageTableManager.get());
 
-    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(executionEnvironment->rootDeviceEnvironments[index]->pageTableManager.get());
+    ASSERT_NE(nullptr, mockWddmCsr.pageTableManager.get());
+
+    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(mockWddmCsr.pageTableManager.get());
     EXPECT_EQ(1u, mockMngr->setCsrHanleCalled);
     EXPECT_EQ(&mockWddmCsr, mockMngr->passedCsrHandle);
 
@@ -995,7 +995,9 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
     setCompressionEnabled(false, false);
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
     MockWddmCsr<FamilyType> mockWddmCsr(*executionEnvironment, 1, device->getDeviceBitfield());
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
+    for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
+        EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -1017,19 +1019,24 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     device->resetCommandStreamReceiver(mockWddmCsr);
 
     auto memoryManager = executionEnvironment->memoryManager.get();
-
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
+    for (auto engine : memoryManager->getRegisteredEngines()) {
+        EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
+    }
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockWddmCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(graphicsAllocation);
 
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
+    for (auto engine : memoryManager->getRegisteredEngines()) {
+        EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
+    }
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
 
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
+    for (auto engine : memoryManager->getRegisteredEngines()) {
+        EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
+    }
 
     mockWddmCsr->flushBatchedSubmissions();
     memoryManager->freeGraphicsMemory(graphicsAllocation);

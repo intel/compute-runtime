@@ -45,6 +45,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -2755,6 +2756,147 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNo
 }
 
 using PageTableManagerTest = ::testing::Test;
+using namespace ::testing;
+HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEnginesWithPageTableUpdateAuxTableAreCalled) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto csr2 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    EngineInstancesContainer regularEngines = {
+        {aub_stream::ENGINE_CCS, EngineUsage::Regular},
+        {aub_stream::ENGINE_BCS, EngineUsage::Regular},
+    };
+
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+    memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[1],
+                                                                                                       PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr2 = new NiceMock<MockGmmPageTableMngr>();
+
+    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
+    memoryManager->getRegisteredEngines()[1].commandStreamReceiver->pageTableManager.reset(mockMngr2);
+
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    gmm.isCompressionEnabled = true;
+    allocation.setDefaultGmm(&gmm);
+    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
+    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable2 = {};
+    GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
+    expectedDdiUpdateAuxTable.BaseGpuVA = allocation.getGpuAddress();
+    expectedDdiUpdateAuxTable.BaseResInfo = allocation.getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo();
+    expectedDdiUpdateAuxTable.DoNotWait = true;
+    expectedDdiUpdateAuxTable.Map = true;
+
+    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
+    EXPECT_CALL(*mockMngr2, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg2) {givenDdiUpdateAuxTable2 = *arg2; return GMM_SUCCESS; }));
+
+    bool result = memoryManager->mapAuxGpuVA(&allocation);
+    EXPECT_TRUE(result);
+
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable2, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+}
+HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorThenMapAuxGpuVaReturnFalse) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    EngineInstancesContainer regularEngines = {
+        {aub_stream::ENGINE_CCS, EngineUsage::Regular}};
+
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+
+    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
+
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    gmm.isCompressionEnabled = true;
+    allocation.setDefaultGmm(&gmm);
+
+    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) { return GMM_ERROR; }));
+
+    bool result = memoryManager->mapAuxGpuVA(&allocation);
+    EXPECT_FALSE(result);
+}
+
+HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThrow) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    EngineInstancesContainer regularEngines = {
+        {aub_stream::ENGINE_CCS, EngineUsage::Regular},
+    };
+
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(nullptr);
+
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    gmm.isCompressionEnabled = true;
+    allocation.setDefaultGmm(&gmm);
+
+    EXPECT_NO_THROW(memoryManager->mapAuxGpuVA(&allocation));
+}
+
+HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenReturnFalse) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    for (auto engine : memoryManager->getRegisteredEngines()) {
+        engine.commandStreamReceiver->pageTableManager.reset(nullptr);
+    }
+
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+
+    bool result = memoryManager->mapAuxGpuVA(&allocation);
+    EXPECT_FALSE(result);
+}
 
 HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhenMapAuxGpuVAIsCalledThenItReturnsTrue) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();

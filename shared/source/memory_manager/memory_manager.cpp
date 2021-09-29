@@ -495,11 +495,16 @@ GraphicsAllocation *MemoryManager::allocateInternalGraphicsMemoryWithHostCopy(ui
 }
 
 bool MemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
-    auto index = graphicsAllocation->getRootDeviceIndex();
-    if (executionEnvironment.rootDeviceEnvironments[index]->pageTableManager.get()) {
-        return executionEnvironment.rootDeviceEnvironments[index]->pageTableManager->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
+    bool ret = false;
+    for (auto engine : registeredEngines) {
+        if (engine.commandStreamReceiver->pageTableManager.get()) {
+            ret = engine.commandStreamReceiver->pageTableManager->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
+            if (!ret) {
+                break;
+            }
+        }
     }
-    return false;
+    return ret;
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {

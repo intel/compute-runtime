@@ -340,8 +340,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     programEngineModeCommands(commandStreamCSR, dispatchFlags);
-    if (executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager.get() && !pageTableManagerInitialized) {
-        pageTableManagerInitialized = executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager->initPageTableManagerRegisters(this);
+    if (pageTableManager.get() && !pageTableManagerInitialized) {
+        pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
     }
 
     programHardwareContext(commandStreamCSR);
@@ -1040,6 +1040,10 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     }
 
     programEnginePrologue(commandStream);
+
+    if (pageTableManager.get() && !pageTableManagerInitialized) {
+        pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
+    }
 
     for (auto &blitProperties : blitPropertiesContainer) {
         TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, blitProperties.csrDependencies);

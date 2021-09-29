@@ -551,7 +551,7 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(&localHwInfo);
     }
     executionEnvironment.initializeMemoryManager();
-    auto defaultEngineType = getChosenEngineType(localHwInfo);
+    auto regularEngineUsage = EngineUsage::Regular;
     std::unique_ptr<MockDevice> device;
     device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 0));
     auto &csr0 = device->getUltCommandStreamReceiver<FamilyType>();
@@ -562,14 +562,14 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
     hwInfo->capabilityTable.ftrRenderCompressedImages = false;
     device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 1));
     auto &csr1 = device->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(csr1.needsPageTableManager(defaultEngineType), csr1.createPageTableManagerCalled);
+    EXPECT_EQ(csr1.needsPageTableManager(regularEngineUsage), csr1.createPageTableManagerCalled);
 
     hwInfo = executionEnvironment.rootDeviceEnvironments[2]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
     hwInfo->capabilityTable.ftrRenderCompressedImages = true;
     device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 2));
     auto &csr2 = device->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(csr2.needsPageTableManager(defaultEngineType), csr2.createPageTableManagerCalled);
+    EXPECT_EQ(csr2.needsPageTableManager(regularEngineUsage), csr2.createPageTableManagerCalled);
 }
 
 HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocationThenReturnNull) {

@@ -1506,43 +1506,39 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
 
 using CommandStreamReceiverPageTableManagerTest = ::testing::Test;
 
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonDefaultEngineTypeWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonRegularEngineWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    auto defaultEngineType = getChosenEngineType(*hwInfo);
-    auto engineType = aub_stream::EngineType::ENGINE_BCS;
-    EXPECT_NE(defaultEngineType, engineType);
-    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());
-    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(engineType));
+    auto engineUsage = EngineUsage::Internal;
+    EXPECT_EQ(nullptr, commandStreamReceiver.pageTableManager.get());
+    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(engineUsage));
 }
 
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenRegularEngineTypeAndExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    auto defaultEngineType = getChosenEngineType(*hwInfo);
+    auto engineUsage = EngineUsage::Regular;
 
     GmmPageTableMngr *dummyPageTableManager = reinterpret_cast<GmmPageTableMngr *>(0x1234);
 
-    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(dummyPageTableManager);
-    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(defaultEngineType));
-    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.release();
+    commandStreamReceiver.pageTableManager.reset(dummyPageTableManager);
+    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(engineUsage));
+    commandStreamReceiver.pageTableManager.release();
 }
 
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndNonExisitingPageTableManagerWhenNeedsPageTableManagerIsCalledThenSupportOfPageTableManagerIsReturned) {
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenRegularEngineAndNonExisitingPageTableManagerWhenNeedsPageTableManagerIsCalledThenSupportOfPageTableManagerIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    auto defaultEngineType = getChosenEngineType(*hwInfo);
+    auto engineUsage = EngineUsage::Regular;
     bool supportsPageTableManager = HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
-    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());
+    EXPECT_EQ(nullptr, commandStreamReceiver.pageTableManager.get());
 
-    EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager(defaultEngineType));
+    EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager(engineUsage));
 }

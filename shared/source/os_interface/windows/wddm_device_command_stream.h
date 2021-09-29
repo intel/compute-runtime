@@ -35,6 +35,8 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     }
     GmmPageTableMngr *createPageTableManager() override;
 
+    using CommandStreamReceiver::pageTableManager;
+
   protected:
     void kmDafLockAllocations(ResidencyContainer &allocationsForResidency);
 

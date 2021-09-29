@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -452,12 +453,16 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     }
 
     kmDafListener->notifyMapGpuVA(featureTable->ftrKmdDaf, getAdapter(), device, handle, MapGPUVA.VirtualAddress, getGdi()->escape);
-
-    if (gmm->isCompressionEnabled && rootDeviceEnvironment.pageTableManager.get()) {
-        return rootDeviceEnvironment.pageTableManager->updateAuxTable(gpuPtr, gmm, true);
+    bool ret = true;
+    if (gmm->isCompressionEnabled && HwInfoConfig::get(gfxPlatform->eProductFamily)->isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
+        for (auto engine : rootDeviceEnvironment.executionEnvironment.memoryManager.get()->getRegisteredEngines()) {
+            if (engine.commandStreamReceiver->pageTableManager.get()) {
+                ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
+            }
+        }
     }
 
-    return true;
+    return ret;
 }
 
 D3DGPU_VIRTUAL_ADDRESS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress,

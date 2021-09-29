@@ -144,7 +144,7 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
 
     GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(rootDeviceEnvironment->getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks);
     gmmPageTableMngr->setCsrHandle(this);
-    rootDeviceEnvironment->pageTableManager.reset(gmmPageTableMngr);
+    this->pageTableManager.reset(gmmPageTableMngr);
     return gmmPageTableMngr;
 }
 
