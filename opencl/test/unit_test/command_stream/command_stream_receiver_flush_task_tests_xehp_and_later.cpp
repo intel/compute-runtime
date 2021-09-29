@@ -94,6 +94,33 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramAdditionalPipeControlBeforeStateComputeModeCommandDebugKeyAndStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
+
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
+    EXPECT_NE(stateBaseAddressItor, pipeControlItor);
+    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControlCmd->getDcFlushEnable());
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenNotReprogrammingSshButInitProgrammingFlagsThenBindingTablePoolIsProgrammed) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

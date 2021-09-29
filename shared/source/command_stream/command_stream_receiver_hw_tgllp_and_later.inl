@@ -61,6 +61,19 @@ inline void CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddres
     PipeControlArgs args(true);
     args.textureCacheInvalidationEnable = true;
     args.hdcPipelineFlush = true;
+
+    auto hwInfo = peekHwInfo();
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+        args.hdcPipelineFlush = true;
+        args.amfsFlushEnable = true;
+        args.instructionCacheInvalidateEnable = true;
+        args.dcFlushEnable = true;
+        args.constantCacheInvalidationEnable = true;
+        args.stateCacheInvalidationEnable = true;
+    }
+
     addPipeControlCmd(commandStream, args);
 }
 } // namespace NEO
