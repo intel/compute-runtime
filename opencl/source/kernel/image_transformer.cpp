@@ -8,9 +8,9 @@
 #include "opencl/source/kernel/image_transformer.h"
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/program/kernel_info.h"
 
 namespace NEO {
 void ImageTransformer::registerImage3d(uint32_t argIndex) {

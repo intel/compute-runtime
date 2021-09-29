@@ -14,6 +14,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -25,7 +26,6 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/source/program/kernel_info.h"
 
 namespace NEO {
 
@@ -43,7 +43,7 @@ void computeWorkgroupSize1D(
     size_t simdSize);
 
 void computeWorkgroupSizeND(
-    WorkSizeInfo wsInfo,
+    WorkSizeInfo &wsInfo,
     size_t workGroupSize[3],
     const size_t workItems[3],
     const uint32_t workDim);
@@ -93,6 +93,8 @@ inline cl_uint computeDimensions(const size_t workItems[3]) {
     return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2
                                                        : 1;
 }
+
+WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo);
 
 template <typename GfxFamily>
 class GpgpuWalkerHelper {

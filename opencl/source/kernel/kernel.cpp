@@ -25,6 +25,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
@@ -51,7 +52,6 @@
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/source/sampler/sampler.h"
 
 #include "patch_list.h"

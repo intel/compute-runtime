@@ -35,8 +35,6 @@ struct KernelArgumentType;
 class GraphicsAllocation;
 class MemoryManager;
 
-extern std::map<std::string, size_t> typeSizeMap;
-
 static const float YTilingRatioValue = 1.3862943611198906188344642429164f;
 
 struct WorkSizeInfo {
@@ -55,7 +53,7 @@ struct WorkSizeInfo {
     float targetRatio = 0;
 
     WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface);
-    WorkSizeInfo(const DispatchInfo &dispatchInfo);
+
     void setIfUseImg(const KernelInfo &kernelInfo);
     void setMinWorkGroupSize(const HardwareInfo *hwInfo);
     void checkRatio(const size_t workItems[3]);

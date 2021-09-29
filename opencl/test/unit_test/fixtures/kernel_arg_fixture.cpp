@@ -8,8 +8,8 @@
 #include "opencl/test/unit_test/fixtures/kernel_arg_fixture.h"
 
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/program/kernel_info.h"
 
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"

@@ -9,8 +9,7 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
-
-#include "opencl/source/program/kernel_info.h"
+#include "shared/source/program/kernel_info.h"
 
 #include <cstring>
 

@@ -90,10 +90,4 @@ void SamplerHw<GfxFamily>::setArg(void *memory, const HardwareInfo &hwInfo) {
 
     HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(samplerState, hwInfo);
 }
-
-template <typename GfxFamily>
-size_t SamplerHw<GfxFamily>::getSamplerStateSize() {
-    using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-    return sizeof(SAMPLER_STATE);
-}
 } // namespace NEO

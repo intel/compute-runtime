@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -15,7 +16,6 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/kernel_info_from_patchtokens.h"
 #include "test.h"
 

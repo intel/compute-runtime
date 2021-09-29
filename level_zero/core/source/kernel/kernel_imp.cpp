@@ -19,11 +19,11 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/program/kernel_info.h"
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/device/device.h"

@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/source/program/kernel_info.h"
 
 namespace NEO {
 

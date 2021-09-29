@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_helper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
@@ -129,7 +130,7 @@ void computePowerOfTwoLWS(const size_t workItems[3], WorkSizeInfo &workGroupInfo
     }
 }
 
-void choosePreferredWorkGroupSizeWithRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo wsInfo) {
+void choosePreferredWorkGroupSizeWithRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo &wsInfo) {
     float ratioDiff = 0;
     float localRatio = float(0xffffffff);
     ulong localWkgs = 0xffffffff;
@@ -172,7 +173,7 @@ void choosePreferredWorkGroupSizeWithRatio(uint32_t xyzFactors[3][1024], uint32_
         }
     }
 }
-void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo wsInfo, uint32_t workdim) {
+void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo &wsInfo, uint32_t workdim) {
     uint64_t localEuThrdsDispatched = 0xffffffffffffffff;
     uint64_t workGroups;
     for (uint32_t ZFactorsIdx = 0; ZFactorsIdx < xyzFactorsLen[2]; ++ZFactorsIdx) {
@@ -331,7 +332,7 @@ void computeWorkgroupSizeSquared(uint32_t maxWorkGroupSize, size_t workGroupSize
     }
 }
 
-void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const size_t workItems[3], const uint32_t workDim) {
+void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const size_t workItems[3], const uint32_t workDim) {
     for (int i = 0; i < 3; i++)
         workGroupSize[i] = 1;
 
@@ -422,7 +423,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
         if (kernel->requiresLimitedWorkgroupSize() && hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
             setSpecialWorkgroupSize(workGroupSize);
         } else if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
-            WorkSizeInfo wsInfo(dispatchInfo);
+            WorkSizeInfo wsInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
             if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers && !wsInfo.imgUsed && hwHelper.preferSmallWorkgroupSizeForKernel(kernel->getKernelInfo().heapInfo.KernelUnpaddedSize, hwInfo) &&
                 ((dispatchInfo.getDim() == 1) && (dispatchInfo.getGWS().x % wsInfo.simdSize * 2 == 0))) {
                 wsInfo.maxWorkGroupSize = wsInfo.simdSize * 2;
@@ -498,4 +499,25 @@ void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo)
         }
     }
 }
+
+WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo) {
+    auto &device = dispatchInfo.getClDevice();
+    const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo();
+    auto numThreadsPerSubSlice = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
+                                 device.getSharedDeviceInfo().numThreadsPerEU;
+    WorkSizeInfo wsInfo(dispatchInfo.getKernel()->getMaxKernelWorkGroupSize(),
+                        kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(),
+                        static_cast<uint32_t>(kernelInfo.getMaxSimdSize()),
+                        static_cast<uint32_t>(dispatchInfo.getKernel()->getSlmTotalSize()),
+                        &device.getHardwareInfo(),
+                        numThreadsPerSubSlice,
+                        static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize),
+                        false,
+                        false);
+    wsInfo.setIfUseImg(kernelInfo);
+    wsInfo.setMinWorkGroupSize(&device.getHardwareInfo());
+
+    return wsInfo;
+}
+
 } // namespace NEO

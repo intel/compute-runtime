@@ -17,10 +17,9 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
-
-#include "opencl/source/program/kernel_info.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/kernel/kernel.h"

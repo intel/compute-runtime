@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
@@ -20,8 +21,6 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/unit_test/base_ult_config_listener.h"
-
-#include "opencl/source/program/kernel_info.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"

@@ -8,13 +8,13 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
-#include "opencl/source/program/kernel_info.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context.h"

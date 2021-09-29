@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "cl_api_tests.h"

@@ -8,13 +8,13 @@
 #include "shared/source/helpers/get_info.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/validators.h"
-#include "opencl/source/program/kernel_info.h"
 
 #include "program.h"
 

@@ -7,8 +7,7 @@
 
 #include "shared/source/kernel/kernel_arg_descriptor_extended_device_side_enqueue.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
-
-#include "opencl/source/program/kernel_info.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "patch_g7.h"
 #include "patch_list.h"

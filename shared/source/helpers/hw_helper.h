@@ -144,6 +144,7 @@ class HwHelper {
     virtual bool isSipKernelAsHexadecimalArrayPreferred() const = 0;
     virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const = 0;
     virtual void adjustPreemptionSurfaceSize(size_t &csrSize) const = 0;
+    virtual size_t getSamplerStateSize() const = 0;
 
   protected:
     HwHelper() = default;
@@ -182,6 +183,11 @@ class HwHelperHw : public HwHelper {
     size_t getRenderSurfaceStateSize() const override {
         using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
         return sizeof(RENDER_SURFACE_STATE);
+    }
+
+    size_t getSamplerStateSize() const override {
+        using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
+        return sizeof(SAMPLER_STATE);
     }
 
     uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const override {
