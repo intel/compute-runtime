@@ -414,7 +414,7 @@ TEST_F(KernelArgBufferTest, givenInvalidKernelObjWhenHasDirectStatelessAccessToH
     EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
 }
 
-TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessAndKernelExecInfoWithUsmPtrsWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
+TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
     KernelInfo kernelInfo;
     EXPECT_FALSE(kernelInfo.hasIndirectStatelessAccess);
 
@@ -443,7 +443,7 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessAndKernelExecI
     }
 }
 
-TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessAndUsmAllocationsInSVMAllocsManagerWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
+TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
     KernelInfo kernelInfo;
     kernelInfo.hasIndirectStatelessAccess = true;
 
@@ -456,6 +456,9 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessAndUsmAllocati
         return;
     }
 
+    mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
+
     auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
     deviceProperties.device = &pClDevice->getDevice();
     auto unifiedDeviceMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
@@ -467,17 +470,6 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessAndUsmAllocati
 
     svmAllocationsManager->freeSVMAlloc(unifiedDeviceMemoryAllocation);
     svmAllocationsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
-}
-
-TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectHostAllocationsAllowedWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrue) {
-    KernelInfo kernelInfo;
-
-    MockKernel mockKernel(pProgram, kernelInfo, *pClDevice);
-    EXPECT_FALSE(mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed);
-    EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
-
-    mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed = true;
-    EXPECT_TRUE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 }
 
 TEST_F(KernelArgBufferTest, whenSettingAuxTranslationRequiredThenIsAuxTranslationRequiredReturnsCorrectValue) {
