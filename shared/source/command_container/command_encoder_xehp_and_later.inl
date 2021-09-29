@@ -71,7 +71,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     if (kernelDescriptor.extendedInfo) {
         bool specialModeRequired = kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired();
-        if (container.lastPipelineSelectModeRequired != specialModeRequired) {
+        if (PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(container.lastPipelineSelectModeRequired, specialModeRequired, hwInfo)) {
             container.lastPipelineSelectModeRequired = specialModeRequired;
             EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
         }
@@ -565,18 +565,10 @@ template <typename Family>
 void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
     auto pipelineSelectCmd = Family::cmdInitPipelineSelect;
+    auto isSpecialModeSelected = kernelDescriptor.extendedInfo && kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired();
 
-    if (kernelDescriptor.extendedInfo && kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired()) {
-        pipelineSelectCmd.setSystolicModeEnable(true);
-    } else {
-        pipelineSelectCmd.setSystolicModeEnable(false);
-    }
+    PreambleHelper<Family>::appendProgramPipelineSelect(&pipelineSelectCmd, isSpecialModeSelected, container.getDevice()->getHardwareInfo());
 
-    if (DebugManager.flags.OverrideSystolicPipelineSelect.get() != -1) {
-        pipelineSelectCmd.setSystolicModeEnable(DebugManager.flags.OverrideSystolicPipelineSelect.get());
-    }
-
-    pipelineSelectCmd.setMaskBits(pipelineSelectSystolicModeEnableMaskBits);
     pipelineSelectCmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 
     auto buffer = container.getCommandStream()->getSpace(sizeof(pipelineSelectCmd));

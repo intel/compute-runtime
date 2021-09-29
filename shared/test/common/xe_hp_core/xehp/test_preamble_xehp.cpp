@@ -114,3 +114,15 @@ XEHPTEST_F(XeHPPreambleVfeState, WhenProgramVFEStateIsCalledThenCorrectCfeStateA
     EXPECT_EQ(1u, cfeCmd.getNumberOfWalkers());
     EXPECT_EQ(expectedAddress, cfeCmd.getScratchSpaceBuffer());
 }
+
+using XeHPPipelineSelect = ::testing::Test;
+
+XEHPTEST_F(XeHPPipelineSelect, WhenAppendProgramPipelineSelectThenCorrectValuesSet) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
+    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, true, *defaultHwInfo);
+    EXPECT_TRUE(cmd.getSystolicModeEnable());
+    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, false, *defaultHwInfo);
+    EXPECT_FALSE(cmd.getSystolicModeEnable());
+    EXPECT_EQ(pipelineSelectSystolicModeEnableMaskBits, cmd.getMaskBits());
+}
