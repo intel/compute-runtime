@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
-typedef SKLFamily GfxFamily;
+typedef TGLLPFamily GfxFamily;
 
 template void ExperimentalCommandBuffer::injectBufferStart<GfxFamily>(LinearStream &parentStream, size_t cmdBufferOffset);
 template size_t ExperimentalCommandBuffer::getRequiredInjectionSize<GfxFamily>() noexcept;

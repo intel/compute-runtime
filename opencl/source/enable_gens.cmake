@@ -8,7 +8,6 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
     buffer
     cl_hw_helper
     command_queue
-    experimental_command_buffer
     gpgpu_walker
     hardware_commands_helper
     image

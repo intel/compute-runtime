@@ -19,6 +19,7 @@ set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
     command_stream_receiver_simulated_common_hw
     create_device_command_stream_receiver
     direct_submission
+    experimental_command_buffer
     hw_helper
     hw_info
     preamble
