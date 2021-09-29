@@ -799,6 +799,25 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
 
     DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.4");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+
+    EXPECT_TRUE(rootDevice->isEngineInstanced());
+    EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
+    EXPECT_EQ(0u, rootDevice->getNumSubDevices());
+}
+
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDeviceSingleEngineWhenCreatingThenDontEnableEngineInstancedDevices) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 1;
+
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
@@ -809,7 +828,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
 
     EXPECT_FALSE(rootDevice->isEngineInstanced());
     EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
-    EXPECT_EQ(ccsCount, rootDevice->getNumSubDevices());
+    EXPECT_EQ(0u, rootDevice->getNumSubDevices());
 }
 
 TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDeviceWithoutDebugFlagWhenCreatingThenDontEnableAllEngineInstancedDevices) {
