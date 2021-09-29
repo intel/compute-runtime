@@ -23,6 +23,7 @@ class DrmMockDg1 : public DrmMock {
 
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryMemoryRegionInfoSuccessCount = std::numeric_limits<uint32_t>::max();
+    bool queryMemoryRegionOnDrmTip = false;
 
     //DRM_IOCTL_I915_GEM_CREATE_EXT
     drm_i915_gem_create_ext createExt{};
@@ -46,7 +47,11 @@ class DrmMockDg1 : public DrmMock {
                 return EINVAL;
             }
             for (auto i = 0u; i < query->num_items; i++) {
-                handleQueryItem(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+                if (queryMemoryRegionOnDrmTip) {
+                    handleQueryItemOnDrmTip(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+                } else {
+                    handleQueryItem(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+                }
             }
             return 0;
         } else if (request == DRM_IOCTL_I915_GEM_CREATE_EXT) {
@@ -115,4 +120,6 @@ class DrmMockDg1 : public DrmMock {
             break;
         }
     }
+
+    void handleQueryItemOnDrmTip(drm_i915_query_item *queryItem);
 };

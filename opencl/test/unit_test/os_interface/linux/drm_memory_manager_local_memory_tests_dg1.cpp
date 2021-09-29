@@ -232,7 +232,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
                                                                                             1));
     ASSERT_NE(nullptr, bo);
 
-    EXPECT_EQ(1u, mock->ioctlCallsCount);
+    EXPECT_EQ(2u, mock->ioctlCallsCount);
 
     EXPECT_EQ(1u, mock->createExt.handle);
     EXPECT_EQ(size, mock->createExt.size);
@@ -1828,7 +1828,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, whenPrintBOCreateDestroyResultFlagIsSetW
     ASSERT_NE(nullptr, bo);
 
     std::string output = testing::internal::GetCapturedStdout();
-    std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 65536, param: 0x100000001, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 65536\n");
+    std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 65536, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_SETPARAM has returned: 0 BO-1 with size: 65536\n");
     EXPECT_EQ(expectedOutput, output);
 }
 

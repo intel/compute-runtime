@@ -68,13 +68,17 @@ class DrmMockCustomDg1 : public DrmMockCustom {
             }
         } break;
         default: {
-            std::cout << std::hex << DRM_IOCTL_I915_GEM_WAIT << std::endl;
-            std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
-            UNRECOVERABLE_IF(true);
+            auto ret = ioctlGemCreateExt(request, arg);
+            if (ret != 0) {
+                std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
+                UNRECOVERABLE_IF(true);
+            }
         } break;
         }
         return 0;
     }
+
+    int ioctlGemCreateExt(unsigned long request, void *arg);
 
     DrmMockCustomDg1() : DrmMockCustom() {
         ioctlDg1_cnt.reset();

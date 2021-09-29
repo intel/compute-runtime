@@ -16,14 +16,14 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 
+#include "drm_tip.h"
+
 namespace NEO {
 
 bool retrieveMmapOffsetForBufferObject(Drm &drm, BufferObject &bo, uint64_t flags, uint64_t &offset) {
-    constexpr uint64_t mmapOffsetFixed = 4;
-
     drm_i915_gem_mmap_offset mmapOffset = {};
     mmapOffset.handle = bo.peekHandle();
-    mmapOffset.flags = mmapOffsetFixed;
+    mmapOffset.flags = I915_MMAP_OFFSET_FIXED;
 
     auto ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
     if (ret != 0) {

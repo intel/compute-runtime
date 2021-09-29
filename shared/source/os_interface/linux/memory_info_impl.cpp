@@ -28,6 +28,22 @@ MemoryInfoImpl::MemoryInfoImpl(const drm_i915_memory_region_info *regionInfo, si
 }
 
 uint32_t MemoryInfoImpl::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
+    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu", allocSize);
+
+    if (DebugManager.flags.PrintBOCreateDestroyResult.get()) {
+        for (uint32_t i = 0; i < dataSize; i++) {
+            auto region = reinterpret_cast<drm_i915_gem_memory_class_instance *>(data)[i];
+            printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
+                             region.memory_class, region.memory_instance);
+        }
+        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
+    }
+
+    if (createGemExtMemoryRegions(drm, data, dataSize, allocSize, handle) == 0) {
+        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: %d BO-%u with size: %lu\n", 0, handle, allocSize);
+        return 0;
+    }
+
     drm_i915_gem_object_param regionParam{};
     regionParam.size = dataSize;
     regionParam.data = reinterpret_cast<uintptr_t>(data);
@@ -41,21 +57,9 @@ uint32_t MemoryInfoImpl::createGemExt(Drm *drm, void *data, uint32_t dataSize, s
     createExt.size = allocSize;
     createExt.extensions = reinterpret_cast<uintptr_t>(&setparamRegion);
 
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu, param: 0x%llX",
-                     allocSize, regionParam.param);
-
-    if (DebugManager.flags.PrintBOCreateDestroyResult.get()) {
-        for (uint32_t i = 0; i < dataSize; i++) {
-            auto region = reinterpret_cast<drm_i915_gem_memory_class_instance *>(data)[i];
-            printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
-                             region.memory_class, region.memory_instance);
-        }
-        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
-    }
-
     auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
 
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
+    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_SETPARAM has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
     handle = createExt.handle;
     return ret;
 }

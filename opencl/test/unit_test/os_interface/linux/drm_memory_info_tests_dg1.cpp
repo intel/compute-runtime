@@ -20,16 +20,21 @@ using namespace NEO;
 TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
 
-    drm->queryMemoryInfo();
-    EXPECT_EQ(2u, drm->ioctlCallsCount);
+    for (auto onDrmTip : {false, true}) {
+        auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+        ASSERT_NE(nullptr, drm);
 
-    auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
+        drm->queryMemoryRegionOnDrmTip = onDrmTip;
 
-    ASSERT_NE(nullptr, memoryInfo);
-    EXPECT_EQ(2u, memoryInfo->getDrmRegionInfos().size());
+        drm->queryMemoryInfo();
+        EXPECT_EQ(2u, drm->ioctlCallsCount);
+
+        auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
+
+        ASSERT_NE(nullptr, memoryInfo);
+        EXPECT_EQ(2u, memoryInfo->getDrmRegionInfos().size());
+    }
 }
 
 TEST(MemoryInfo, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMemoryInfoIsNotCreated) {
@@ -239,7 +244,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
     auto ret = memoryInfo->createGemExt(drm.get(), &regionInfo, 2, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
-    EXPECT_EQ(1u, drm->ioctlCallsCount);
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
     EXPECT_EQ(1024u, drm->createExt.size);
 }
 
@@ -262,7 +267,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
     auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
-    EXPECT_EQ(1u, drm->ioctlCallsCount);
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
     EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memory_class);
     EXPECT_EQ(1024u, drm->createExt.size);
 }

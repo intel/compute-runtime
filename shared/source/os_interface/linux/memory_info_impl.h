@@ -31,6 +31,7 @@ class MemoryInfoImpl : public MemoryInfo {
     void assignRegionsFromDistances(const void *distanceInfosPtr, size_t size);
 
     uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
+    uint32_t createGemExtMemoryRegions(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle);
 
     drm_i915_gem_memory_class_instance getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
