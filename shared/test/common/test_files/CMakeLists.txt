@@ -29,23 +29,34 @@ function(compile_kernels_gen platform_name_with_type revision_id platform_name s
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
 
-    set(output_files
-        ${outputpath_base}.spv
-        ${outputpath_base}.bin
-        ${outputpath_base}.gen
-    )
+    if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+      set(output_files
+          ${outputpath_base}.spv
+          ${outputpath_base}.bin
+          ${outputpath_base}.gen
+      )
 
-    add_custom_command(
-                       OUTPUT ${output_files}
-                       COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
-                       WORKING_DIRECTORY ${workdir}
-                       DEPENDS ${filepath} ocloc copy_compiler_files
-    )
+      add_custom_command(
+                         OUTPUT ${output_files}
+                         COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
+                         WORKING_DIRECTORY ${workdir}
+                         DEPENDS ${filepath} ocloc copy_compiler_files
+      )
 
-    list(APPEND compiled_kernels ${output_files})
+      list(APPEND compiled_kernels_${platform_name_with_type}_${revision_id} ${output_files})
+    else()
+      foreach(_file_name "spv" "bin" "gen")
+        set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/${suffix}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}")
+        add_custom_command(
+                           OUTPUT ${outputpath_base}.${_file_name}
+                           COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+        )
 
+        list(APPEND compiled_kernels_${platform_name_with_type}_${revision_id} ${outputpath_base}.${_file_name})
+      endforeach()
+    endif()
   endforeach()
-  list(APPEND compiled_kernels_${platform_name_with_type}_${revision_id} ${compiled_kernels})
   set(compiled_kernels_${platform_name_with_type}_${revision_id} ${compiled_kernels_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
@@ -98,9 +109,7 @@ macro(macro_for_each_gen)
       get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
       set(PLATFORM_LOWER ${DEFAULT_SUPPORTED_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
       foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
-        if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-          compile_kernels_gen(${family_name_with_type} ${REVISION_ID} ${PLATFORM_LOWER} ${family_name_with_type} ${KERNELS_TO_COMPILE})
-        endif()
+        compile_kernels_gen(${family_name_with_type} ${REVISION_ID} ${PLATFORM_LOWER} ${family_name_with_type} ${KERNELS_TO_COMPILE})
 
         add_custom_target(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} DEPENDS ${compiled_kernels_${family_name_with_type}_${REVISION_ID}})
         set_target_properties(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}/${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}/${REVISION_ID}")
