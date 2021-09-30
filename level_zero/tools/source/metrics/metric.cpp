@@ -48,8 +48,6 @@ struct MetricContextImp : public MetricContext {
     ~MetricContextImp() override;
 
     bool loadDependencies() override;
-    void setMetricCollectionEnabled(bool enable) override;
-    bool getMetricCollectionEnabled() override;
     bool isInitialized() override;
     void setInitializationState(const ze_result_t state) override;
     Device &getDevice() override;
@@ -79,7 +77,6 @@ struct MetricContextImp : public MetricContext {
     MetricStreamer *pMetricStreamer = nullptr;
     uint32_t subDeviceIndex = 0;
     bool useCompute = false;
-    bool metricCollectionIsEnabled = true;
 };
 
 MetricContextImp::MetricContextImp(Device &deviceInput)
@@ -118,14 +115,6 @@ bool MetricContextImp::loadDependencies() {
                                : ZE_RESULT_ERROR_UNKNOWN);
 
     return result;
-}
-
-void MetricContextImp::setMetricCollectionEnabled(bool enable) {
-    metricCollectionIsEnabled = enable;
-}
-
-bool MetricContextImp::getMetricCollectionEnabled() {
-    return metricCollectionIsEnabled;
 }
 
 bool MetricContextImp::isInitialized() {
@@ -212,10 +201,7 @@ ze_result_t MetricContext::enableMetricApi() {
 
         // Initialize root device.
         auto rootDevice = L0::Device::fromHandle(rootDeviceHandle);
-        auto &rootMetricContext = rootDevice->getMetricContext();
-        failed |= !rootMetricContext.loadDependencies();
-
-        rootMetricContext.setMetricCollectionEnabled(!rootDevice->isMultiDeviceCapable());
+        failed |= !rootDevice->getMetricContext().loadDependencies();
 
         // Sub devices count.
         uint32_t subDeviceCount = 0;

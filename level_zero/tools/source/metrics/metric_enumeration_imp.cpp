@@ -67,13 +67,9 @@ bool MetricEnumeration::isInitialized() {
 
 ze_result_t MetricEnumeration::initialize() {
     if (initializationState == ZE_RESULT_ERROR_UNINITIALIZED) {
-        if (!this->metricContext.getMetricCollectionEnabled()) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
-                                  "metrics collection is disabled on the root device\n");
-            initializationState = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        } else if (hMetricsDiscovery &&
-                   openMetricsDiscovery() == ZE_RESULT_SUCCESS &&
-                   cacheMetricInformation() == ZE_RESULT_SUCCESS) {
+        if (hMetricsDiscovery &&
+            openMetricsDiscovery() == ZE_RESULT_SUCCESS &&
+            cacheMetricInformation() == ZE_RESULT_SUCCESS) {
             initializationState = ZE_RESULT_SUCCESS;
         } else {
             initializationState = ZE_RESULT_ERROR_UNKNOWN;

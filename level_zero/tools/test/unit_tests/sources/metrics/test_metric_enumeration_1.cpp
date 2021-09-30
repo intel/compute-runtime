@@ -2657,19 +2657,6 @@ TEST_F(MetricEnumerationTest, givenSubDeviceWhenLoadDependenciesIsCalledThenOpen
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), false);
 }
 
-TEST_F(MetricEnumerationTest, givenMetricContextWhenEnablingOrDisablingCollectionThenExpectProperFlagSet) {
-
-    auto &metricContext = device->getMetricContext();
-    metricContext.setMetricCollectionEnabled(true);
-    EXPECT_EQ(metricContext.getMetricCollectionEnabled(), true);
-    metricContext.setMetricCollectionEnabled(false);
-    EXPECT_EQ(metricContext.getMetricCollectionEnabled(), false);
-
-    uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    EXPECT_EQ(metricGroupCount, 0u);
-}
-
 class MetricEnumerationTestMetricTypes : public MetricEnumerationTest,
                                          public ::testing::WithParamInterface<MetricsDiscovery::TMetricType> {
   public:

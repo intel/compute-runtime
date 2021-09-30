@@ -33,8 +33,6 @@ struct MetricContext {
     static std::unique_ptr<MetricContext> create(struct Device &device);
     static bool isMetricApiAvailable();
     virtual bool loadDependencies() = 0;
-    virtual void setMetricCollectionEnabled(bool enable) = 0;
-    virtual bool getMetricCollectionEnabled() = 0;
     virtual bool isInitialized() = 0;
     virtual void setInitializationState(const ze_result_t state) = 0;
     virtual Device &getDevice() = 0;
