@@ -11,9 +11,12 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/source/helpers/local_work_size.h"
+#include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -22,7 +25,6 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/arrayref.h"
 
-#include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/mem_obj/buffer.h"
 
 #include "level_zero/core/source/debugger/debugger_l0.h"

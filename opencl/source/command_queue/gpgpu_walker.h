@@ -14,7 +14,6 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -36,63 +35,16 @@ using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 template <typename GfxFamily>
 using MI_STORE_REG_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM_CMD;
 
-void computeWorkgroupSize1D(
-    uint32_t maxWorkGroupSize,
-    size_t workGroupSize[3],
-    const size_t workItems[3],
-    size_t simdSize);
-
-void computeWorkgroupSizeND(
-    WorkSizeInfo &wsInfo,
-    size_t workGroupSize[3],
-    const size_t workItems[3],
-    const uint32_t workDim);
-
-void computeWorkgroupSize2D(
-    uint32_t maxWorkGroupSize,
-    size_t workGroupSize[3],
-    const size_t workItems[3],
-    size_t simdSize);
-
-void computeWorkgroupSizeSquared(
-    uint32_t maxWorkGroupSize,
-    size_t workGroupSize[3],
-    const size_t workItems[3],
-    size_t simdSize,
-    const uint32_t workDim);
-
 Vec3<size_t> computeWorkgroupSize(
     const DispatchInfo &dispatchInfo);
 
 Vec3<size_t> generateWorkgroupSize(
     const DispatchInfo &dispatchInfo);
 
-Vec3<size_t> computeWorkgroupsNumber(
-    const Vec3<size_t> &gws,
-    const Vec3<size_t> &lws);
-
-Vec3<size_t> generateWorkgroupsNumber(
-    const Vec3<size_t> &gws,
-    const Vec3<size_t> &lws);
-
 Vec3<size_t> generateWorkgroupsNumber(
     const DispatchInfo &dispatchInfo);
 
-inline uint32_t calculateDispatchDim(const Vec3<size_t> &dispatchSize, const Vec3<size_t> &dispatchOffset) {
-    return std::max(1U, std::max(dispatchSize.getSimplifiedDim(), dispatchOffset.getSimplifiedDim()));
-}
-
-Vec3<size_t> canonizeWorkgroup(
-    const Vec3<size_t> &workgroup);
-
 void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo);
-
-void setSpecialWorkgroupSize(size_t workgroupSize[3]);
-
-inline cl_uint computeDimensions(const size_t workItems[3]) {
-    return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2
-                                                       : 1;
-}
 
 WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo);
 
