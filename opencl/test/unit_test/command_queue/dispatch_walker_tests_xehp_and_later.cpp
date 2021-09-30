@@ -1456,7 +1456,7 @@ struct XeHPAndLaterDispatchWalkerBasicTestStaticPartition : public XeHPAndLaterD
     }
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition, givenStaticPartitioningWhenEnqueueingKernelThenMultipleActivePartitionsAreSetInCsr) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition, givenStaticPartitioningWhenEnqueueingKernelThenNoMultipleActivePartitionsAreSetInCsr) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1466,7 +1466,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
-    EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
