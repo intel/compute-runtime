@@ -350,6 +350,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPreamble(commandStreamCSR, device, dispatchFlags, newL3Config);
     programMediaSampler(commandStreamCSR, dispatchFlags);
+    addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
 
     if (this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {

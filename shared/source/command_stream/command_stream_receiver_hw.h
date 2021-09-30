@@ -159,6 +159,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void addPipeControlCmd(LinearStream &commandStream, PipeControlArgs &args);
     void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);
     void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
+    void addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags);
     void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args);
     size_t getSshHeapSize();
     bool are4GbHeapsAvailable() const;
