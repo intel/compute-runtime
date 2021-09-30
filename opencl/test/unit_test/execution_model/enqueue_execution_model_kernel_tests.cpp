@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/per_thread_data.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
@@ -16,7 +17,6 @@
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"

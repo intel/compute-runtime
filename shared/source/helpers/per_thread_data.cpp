@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/helpers/per_thread_data.h"
+#include "shared/source/helpers/per_thread_data.h"
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/debug_helpers.h"

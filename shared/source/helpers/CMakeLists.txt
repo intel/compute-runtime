@@ -81,6 +81,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/non_copyable_or_moveable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/options.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pause_on_gpu_properties.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/populate_factory.h
