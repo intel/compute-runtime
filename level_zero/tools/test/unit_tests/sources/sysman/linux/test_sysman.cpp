@@ -272,5 +272,26 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermission
     }
 }
 
+class UnknownDriverModel : public DriverModel {
+  public:
+    UnknownDriverModel() : DriverModel(DriverModelType::UNKNOWN) {}
+    void setGmmInputArgs(void *args) override {}
+    uint32_t getDeviceHandle() const override { return 0u; }
+    PhysicalDevicePciBusInfo getPciBusInfo() const override {
+        PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+        return pciBusInfo;
+    }
+};
+
+using SysmanUnknownDriverModelTest = Test<DeviceFixture>;
+TEST_F(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysmanOnLinuxThenErrorIsReturned) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
+    auto &osInterface = device->getOsInterface();
+    osInterface.setDriverModel(std::make_unique<UnknownDriverModel>());
+    auto pSysmanDeviceImp = std::make_unique<SysmanDeviceImp>(device->toHandle());
+    auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxSysmanImp->init());
+}
+
 } // namespace ult
 } // namespace L0

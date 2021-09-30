@@ -24,6 +24,9 @@ ze_result_t LinuxSysmanImp::init() {
     pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     DEBUG_BREAK_IF(nullptr == pDevice);
     NEO::OSInterface &OsInterface = pDevice->getOsInterface();
+    if (OsInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     pDrm = OsInterface.getDriverModel()->as<NEO::Drm>();
     int myDeviceFd = pDrm->getFileDescriptor();
     std::string myDeviceName;
