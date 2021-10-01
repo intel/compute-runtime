@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests_dg1.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_dg1.h"
@@ -23,90 +24,6 @@
 #include "test.h"
 
 #include "gtest/gtest.h"
-
-using namespace NEO;
-
-TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIsCalledThenNullptrAndStatusRetryIsReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
-    TestedDrmMemoryManager memoryManager(executionEnvironment);
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
-    AllocationData allocData;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.useSystemMemory = true;
-    allocData.flags.allocateMemory = true;
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
-}
-
-TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenLockResourceIsCalledOnNullBufferObjectThenReturnNullPtr) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
-    TestedDrmMemoryManager memoryManager(executionEnvironment);
-    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
-
-    auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation.getBO());
-    EXPECT_EQ(nullptr, ptr);
-
-    memoryManager.unlockResourceInLocalMemoryImpl(drmAllocation.getBO());
-}
-
-TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenFreeGraphicsMemoryIsCalledOnAllocationWithNullBufferObjectThenEarlyReturn) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
-    TestedDrmMemoryManager memoryManager(executionEnvironment);
-
-    auto drmAllocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
-    EXPECT_NE(nullptr, drmAllocation);
-
-    memoryManager.freeGraphicsMemoryImpl(drmAllocation);
-}
-
-using DrmMemoryManagerWithLocalMemoryTest = Test<DrmMemoryManagerWithLocalMemoryFixture>;
-
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnAllocationInLocalMemoryThenReturnNullPtr) {
-    DrmAllocation drmAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
-
-    auto ptr = memoryManager->lockResource(&drmAllocation);
-    EXPECT_EQ(nullptr, ptr);
-
-    memoryManager->unlockResource(&drmAllocation);
-}
-
-using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
-
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThenAllocationIsFilledWithCorrectData) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-
-    std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
-
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), GraphicsAllocation::AllocationType::BUFFER, device->getDeviceBitfield()});
-    ASSERT_NE(nullptr, allocation);
-
-    auto ret = memoryManager->copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
-    EXPECT_TRUE(ret);
-
-    EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), dataToCopy.data(), dataToCopy.size()));
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenGetLocalMemoryIsCalledThenSizeOfLocalMemoryIsReturned) {
-    EXPECT_EQ(0 * GB, memoryManager->getLocalMemorySize(rootDeviceIndex, 0xF));
-}
 
 namespace NEO {
 
@@ -1830,6 +1747,23 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, whenPrintBOCreateDestroyResultFlagIsSetW
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 65536, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_SETPARAM has returned: 0 BO-1 with size: 65536\n");
     EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    ultHwConfig.forceOsAgnosticMemoryManager = false;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MakeAllBuffersResident.set(true);
+
+    initPlatform();
+    auto device = platform()->getClDevice(0u);
+
+    MockContext context(device, false);
+    auto retValue = CL_SUCCESS;
+    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
+    ASSERT_EQ(retValue, CL_SUCCESS);
+    clReleaseMemObject(clBuffer);
 }
 
 } // namespace NEO

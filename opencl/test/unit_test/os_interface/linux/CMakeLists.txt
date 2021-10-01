@@ -48,13 +48,12 @@ set(IGDRCL_SRCS_tests_os_interface_linux
 if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests_dg1.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_local_memory_tests_dg1.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_drm_tip.cpp
   )
 else()
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_info_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_manager_local_memory_tests.cpp
   )
 endif()
 if(NEO__LIBVA_FOUND)
