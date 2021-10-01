@@ -46,6 +46,8 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
 
     void addAubComment(const char *comment) override;
 
+    void pollForCompletion() override;
+
     std::unique_ptr<CommandStreamReceiver> aubCSR;
 };
 

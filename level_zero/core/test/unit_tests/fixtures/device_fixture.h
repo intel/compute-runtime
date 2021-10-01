@@ -15,12 +15,15 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 
+#include "opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h"
+
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 namespace NEO {
 struct UltDeviceFactory;
-}
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+} // namespace NEO
 
 namespace L0 {
 struct Context;
@@ -72,6 +75,24 @@ struct MultiDeviceFixture {
 struct ContextFixture : DeviceFixture {
     void SetUp() override;
     void TearDown() override;
+};
+
+struct AubCsrFixture : ContextFixture {
+    template <typename T>
+    void SetUpT() {
+        auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + NEO::defaultHwInfo->platform.eRenderCoreFamily];
+        variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
+        *csrCreateFcn = UltAubCommandStreamReceiver<T>::create;
+        ContextFixture::SetUp();
+    }
+    template <typename T>
+    void TearDownT() {
+        ContextFixture::TearDown();
+    }
+
+    void SetUp() override{};
+    void TearDown() override{};
+    std::unique_ptr<VariableBackup<CommandStreamReceiverCreateFunc>> variableBackup;
 };
 
 struct MultipleDevicesWithCustomHwInfo {

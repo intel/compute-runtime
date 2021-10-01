@@ -54,6 +54,12 @@ class UltAubCommandStreamReceiver : public AUBCommandStreamReceiverHw<GfxFamily>
         return BaseClass::blitBuffer(blitPropertiesContainer, blocking, profilingEnabled, device);
     }
 
+    void pollForCompletion() override {
+        pollForCompletionCalled++;
+        BaseClass::pollForCompletion();
+    }
+
     uint32_t blitBufferCalled = 0;
+    uint32_t pollForCompletionCalled = 0;
 };
 } // namespace NEO

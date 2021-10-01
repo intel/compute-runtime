@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
+#include "opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
 
@@ -1518,6 +1519,31 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->destroy();
 }
 
+using AubCsrTest = Test<AubCsrFixture>;
+
+HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPollForCompletionIsCalled) {
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    ze_command_queue_handle_t commandQueue = {};
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto aub_csr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
+    CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
+    queue->setCommandQueuePreemptionMode(PreemptionMode::Disabled);
+    EXPECT_EQ(aub_csr->pollForCompletionCalled, 0u);
+
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    auto commandListHandle = commandList->toHandle();
+    queue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(aub_csr->pollForCompletionCalled, 1u);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
 using CommandQueueSynchronizeTest = Test<ContextFixture>;
 
 template <typename GfxFamily>

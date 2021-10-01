@@ -474,6 +474,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     this->heapContainer.clear();
 
+    csr->pollForCompletion();
+
     return ZE_RESULT_SUCCESS;
 }
 

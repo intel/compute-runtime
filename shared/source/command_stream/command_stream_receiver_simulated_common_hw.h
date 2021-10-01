@@ -52,7 +52,6 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual bool expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual bool expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual bool expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length);
-    virtual void pollForCompletion() = 0;
     virtual void pollForCompletionImpl(){};
     virtual bool writeMemory(GraphicsAllocation &gfxAllocation) = 0;
     virtual void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) = 0;

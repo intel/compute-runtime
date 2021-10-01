@@ -85,4 +85,12 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::addAubComment(const char *commen
     }
     BaseCSR::addAubComment(comment);
 }
+
+template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::pollForCompletion() {
+    if (aubCSR) {
+        aubCSR->pollForCompletion();
+    }
+    BaseCSR::pollForCompletion();
+}
 } // namespace NEO
