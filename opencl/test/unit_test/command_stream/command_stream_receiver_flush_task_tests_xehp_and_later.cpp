@@ -9,6 +9,7 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_debugger.h"
 
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
@@ -119,6 +120,94 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
     EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControlCmd->getDcFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramAdditionalPipeControlBeforeStateComputeModeCommandDebugKeyAndStateSipWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
+
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+
+    auto sipType = SipKernel::getSipKernelType(*pDevice);
+    SipKernel::initSipKernel(sipType, *pDevice);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto pipeControlIterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControlCmd->getDcFlushEnable());
+    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+
+    auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);
+
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+
+    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipCmd->getSystemInstructionPointer());
+}
+
+HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramAdditionalPipeControlBeforeStateComputeModeCommandDebugKeyAndStateSipWhenA0SteppingIsActivatedThenOnlyGlobalSipIsProgrammed, IsXEHP) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
+
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+
+    hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
+    SipKernel::initSipKernel(sipType, *mockDevice);
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
+
+    flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
+
+    commandStreamReceiver.flushTask(
+        commandStream,
+        0,
+        dsh,
+        ioh,
+        ssh,
+        taskLevel,
+        flushTaskFlags,
+        *mockDevice);
+
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto itorLRI = findMmio<FamilyType>(cmdList.begin(), cmdList.end(), 0xE42C);
+    EXPECT_NE(cmdList.end(), itorLRI);
+
+    auto cmdLRI = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
+    auto sipAddress = cmdLRI->getDataDword() & 0xfffffff8;
+    auto sipAllocation = SipKernel::getSipKernel(*mockDevice).getSipAllocation();
+
+    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenNotReprogrammingSshButInitProgrammingFlagsThenBindingTablePoolIsProgrammed) {

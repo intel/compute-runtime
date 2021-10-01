@@ -166,4 +166,36 @@ void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
     }
 }
 
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
+    auto hwInfo = peekHwInfo();
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+        args.textureCacheInvalidationEnable = true;
+        args.hdcPipelineFlush = true;
+        args.amfsFlushEnable = true;
+        args.instructionCacheInvalidateEnable = true;
+        args.dcFlushEnable = true;
+        args.constantCacheInvalidationEnable = true;
+        args.stateCacheInvalidationEnable = true;
+    }
+
+    addPipeControlCmd(commandStream, args);
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
+    auto hwInfo = peekHwInfo();
+    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    bool debuggingEnabled = device.getDebugger() != nullptr;
+    PipeControlArgs args(true);
+
+    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo) && debuggingEnabled &&
+        !hwHelper.isSipWANeeded(hwInfo)) {
+        addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
+    }
+}
+
 } // namespace NEO

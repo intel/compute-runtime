@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/state_compute_mode_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
@@ -62,18 +63,7 @@ inline void CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddres
     args.textureCacheInvalidationEnable = true;
     args.hdcPipelineFlush = true;
 
-    auto hwInfo = peekHwInfo();
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
-        args.hdcPipelineFlush = true;
-        args.amfsFlushEnable = true;
-        args.instructionCacheInvalidateEnable = true;
-        args.dcFlushEnable = true;
-        args.constantCacheInvalidationEnable = true;
-        args.stateCacheInvalidationEnable = true;
-    }
-
-    addPipeControlCmd(commandStream, args);
+    addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
 }
+
 } // namespace NEO

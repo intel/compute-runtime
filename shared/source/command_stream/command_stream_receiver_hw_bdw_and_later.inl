@@ -91,11 +91,20 @@ bool CommandStreamReceiverHw<GfxFamily>::isMultiOsContextCapable() const {
 }
 
 template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
+    addPipeControlCmd(commandStream, args);
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
     PipeControlArgs args(true);
     args.textureCacheInvalidationEnable = true;
-    addPipeControlCmd(commandStream, args);
+
+    addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
 }
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {}
 
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsNewResourceImplicitFlush() const {

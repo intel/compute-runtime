@@ -13,13 +13,15 @@ template <>
 void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+    auto hwInfo = device.getHardwareInfo();
     bool debuggingEnabled = device.getDebugger() != nullptr;
 
     if (debuggingEnabled) {
-        HwHelper &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
 
-        if (hwHelper.isSipWANeeded(device.getHardwareInfo())) {
+        if (hwHelper.isSipWANeeded(hwInfo)) {
             auto mmio = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(preambleCmdStream.getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
             MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
 
@@ -71,13 +73,19 @@ template <>
 size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(const Device &device) {
     size_t size = 0;
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
-    if (debuggingEnabled) {
-        HwHelper &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+    auto hwInfo = device.getHardwareInfo();
 
-        if (hwHelper.isSipWANeeded(device.getHardwareInfo())) {
+    if (debuggingEnabled) {
+        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        if (hwHelper.isSipWANeeded(hwInfo)) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
             size += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
         } else {
+            auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+            if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+                size += sizeof(typename GfxFamily::PIPE_CONTROL);
+            }
             size += sizeof(typename GfxFamily::STATE_SIP);
         }
     }

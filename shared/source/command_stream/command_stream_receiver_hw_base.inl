@@ -451,6 +451,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         programAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false);
+        addPipeControlBeforeStateSip(commandStreamCSR, device);
         programStateSip(commandStreamCSR, device);
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
