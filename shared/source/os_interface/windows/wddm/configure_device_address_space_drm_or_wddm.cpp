@@ -155,9 +155,9 @@ bool ensureGpuAddressRangeIsReserved(uint64_t address, size_t size, D3DKMT_HANDL
     if (status != STATUS_SUCCESS) {
         // make sure address range is already reserved
         rangeDesc.BaseAddress = 0;
-        rangeDesc.MinimumAddress = alignDown(address, MemoryConstants::pageSize);
-        rangeDesc.MaximumAddress = alignUp(address + size, MemoryConstants::pageSize);
-        rangeDesc.Size = MemoryConstants::pageSize;
+        rangeDesc.MinimumAddress = alignDown(address, MemoryConstants::pageSize64k);
+        rangeDesc.MaximumAddress = alignUp(address + size, MemoryConstants::pageSize64k);
+        rangeDesc.Size = MemoryConstants::pageSize64k;
         status = gdi.reserveGpuVirtualAddress(&rangeDesc);
         if (status != STATUS_SUCCESS) {
             DEBUG_BREAK_IF(true);

@@ -130,6 +130,7 @@ NTSTATUS __stdcall reserveDeviceAddressSpaceMock(D3DDDI_RESERVEGPUVIRTUALADDRESS
         bool validArgs = true;
         if (arg->BaseAddress) {
             validArgs = validArgs && isAligned<MemoryConstants::pageSize64k>(arg->BaseAddress);
+            validArgs = validArgs && isAligned<MemoryConstants::pageSize64k>(arg->Size);
             validArgs = validArgs && (0U == arg->MinimumAddress);
             validArgs = validArgs && (0U == arg->MaximumAddress);
         } else {
@@ -138,6 +139,9 @@ NTSTATUS __stdcall reserveDeviceAddressSpaceMock(D3DDDI_RESERVEGPUVIRTUALADDRESS
             validArgs = validArgs && isAligned<MemoryConstants::pageSize64k>(arg->MaximumAddress);
         }
         validArgs = validArgs && isAligned<MemoryConstants::pageSize64k>(arg->Size);
+        if (false == validArgs) {
+            return -1;
+        }
     }
     return gdiMockConfig.reserveGpuVaClb.returnValue;
 }
@@ -238,7 +242,7 @@ TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenSvmAddressSpaceThenReserve
     EXPECT_EQ(this->wddm->getAdapter(), gdiMockConfig.receivedReserveGpuVaArgs.hAdapter);
 }
 
-TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpaceThenMakeSureWholeGpuVAForUSMIsReserved) {
+TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpaceThenMakeSureWholeGpuVAForUSMIsReservedAndProperlyAligned) {
     if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress) {
         GTEST_SKIP();
     }
@@ -253,7 +257,7 @@ TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpace
     EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.BaseAddress);
     EXPECT_EQ(NEO::windowsMinAddress, gdiMockConfig.receivedReserveGpuVaArgs.MinimumAddress);
     EXPECT_EQ(svmSize, gdiMockConfig.receivedReserveGpuVaArgs.MaximumAddress);
-    EXPECT_EQ(MemoryConstants::pageSize, gdiMockConfig.receivedReserveGpuVaArgs.Size);
+    EXPECT_EQ(MemoryConstants::pageSize64k, gdiMockConfig.receivedReserveGpuVaArgs.Size);
     EXPECT_EQ(wddm->getAdapter(), gdiMockConfig.receivedReserveGpuVaArgs.hAdapter);
 }
 
