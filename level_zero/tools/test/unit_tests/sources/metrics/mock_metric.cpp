@@ -395,7 +395,7 @@ StatusCode MockMetricsLibraryApi::ConfigurationDeactivate(const ConfigurationHan
 }
 
 StatusCode MockMetricsLibraryApi::ConfigurationDelete(const ConfigurationHandle_1_0 handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockConfigurationDeactivate(handle);
+    return Mock<MetricsLibrary>::g_mockApi->MockConfigurationDelete(handle);
 }
 
 StatusCode MockMetricsLibraryApi::GetData(GetReportData_1_0 *data) {

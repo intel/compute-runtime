@@ -433,5 +433,137 @@ TEST_F(MetricQueryPoolTest, givenUninitializedMetricEnumerationWhenGetQueryRepor
     EXPECT_EQ(invalidSize, 0u);
 }
 
+TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenActivateMetricGroupsIsCalledThenReturnsSuccess) {
+
+    zet_device_handle_t metricDevice = device->toHandle();
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.MetricsCount = 1;
+
+    Mock<IMetric_1_0> metric;
+    TMetricParams_1_0 metricParams = {};
+    metricParams.SymbolName = "Metric symbol name";
+    metricParams.ShortName = "Metric short name";
+    metricParams.LongName = "Metric long name";
+    metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    zet_metric_group_properties_t metricGroupProperties = {};
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+
+    TypedValue_1_0 value = {};
+    value.Type = ValueType::Uint32;
+    value.ValueUInt32 = 64;
+
+    ConfigurationHandle_1_0 metricsLibraryConfigurationHandle = {&value};
+    ContextHandle_1_0 metricsLibraryContextHandle = {&value};
+
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .Times(1)
+        .WillOnce(Return(&metric));
+
+    EXPECT_CALL(metricsSet, Activate())
+        .Times(1)
+        .WillOnce(Return(MetricsDiscovery::CC_OK));
+
+    EXPECT_CALL(metricsSet, Deactivate())
+        .Times(1)
+        .WillOnce(Return(MetricsDiscovery::CC_OK));
+
+    EXPECT_CALL(metric, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
+        .Times(1)
+        .WillOnce(Return(true));
+
+    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
+        .Times(1)
+        .WillOnce(Return(true));
+
+    EXPECT_CALL(*mockMetricsLibrary, load())
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
+        .Times(1)
+        .WillOnce(Return(StatusCode::Success));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationCreate(_, _))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<1>(metricsLibraryConfigurationHandle), Return(StatusCode::Success)));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .Times(1)
+        .WillOnce(Return(StatusCode::Success));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .Times(1)
+        .WillOnce(Return(StatusCode::Success));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDelete(_))
+        .Times(1)
+        .WillOnce(Return(StatusCode::Success));
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    // Metric group handle.
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Activate metric group.
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    // Activate metric groups.
+    device->activateMetricGroups();
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), metricDevice, 0, nullptr), ZE_RESULT_SUCCESS);
+}
+
 } // namespace ult
 } // namespace L0

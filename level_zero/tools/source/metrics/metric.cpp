@@ -35,7 +35,7 @@ struct MetricGroupDomains {
     bool activateEventMetricGroup(const zet_metric_group_handle_t hMetricGroup);
 
   protected:
-    MetricsLibrary &metricsLibrary;
+    MetricContext &metricContext;
 
     // Map holds activated domains and associated metric groups.
     // Content: <domain number, pair<metric group, is activated on gpu flag>
@@ -250,7 +250,7 @@ bool MetricContext::isMetricApiAvailable() {
 }
 
 MetricGroupDomains::MetricGroupDomains(MetricContext &metricContext)
-    : metricsLibrary(metricContext.getMetricsLibrary()) {}
+    : metricContext(metricContext) {}
 
 ze_result_t MetricGroupDomains::activateDeferred(const uint32_t subDeviceIndex,
                                                  const uint32_t count,
@@ -329,7 +329,7 @@ ze_result_t MetricGroupDomains::activate() {
 
 bool MetricGroupDomains::activateEventMetricGroup(const zet_metric_group_handle_t hMetricGroup) {
     // Obtain metric group configuration handle from metrics library.
-    auto hConfiguration = metricsLibrary.getConfiguration(hMetricGroup);
+    auto hConfiguration = metricContext.getMetricsLibrary().getConfiguration(hMetricGroup);
 
     // Validate metrics library handle.
     if (!hConfiguration.IsValid()) {
@@ -338,7 +338,7 @@ bool MetricGroupDomains::activateEventMetricGroup(const zet_metric_group_handle_
     }
 
     // Write metric group configuration to gpu.
-    const bool result = metricsLibrary.activateConfiguration(hConfiguration);
+    const bool result = metricContext.getMetricsLibrary().activateConfiguration(hConfiguration);
 
     DEBUG_BREAK_IF(!result);
     return result;
@@ -356,12 +356,12 @@ ze_result_t MetricGroupDomains::deactivate() {
                                          : false;
         auto hConfigurationEmpty = ConfigurationHandle_1_0{};
         auto hConfiguration = metricGroupEventBased
-                                  ? metricsLibrary.getConfiguration(hMetricGroup)
+                                  ? metricContext.getMetricsLibrary().getConfiguration(hMetricGroup)
                                   : hConfigurationEmpty;
 
         // Deactivate metric group configuration using metrics library.
         if (hConfiguration.IsValid() && metricGroupActivated) {
-            metricsLibrary.deactivateConfiguration(hConfiguration);
+            metricContext.getMetricsLibrary().deactivateConfiguration(hConfiguration);
         }
 
         // Mark domain as free.

@@ -702,7 +702,7 @@ ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
             pRawDataHeader->rawDataSizes = static_cast<uint32_t>(pRawDataHeader->rawDataOffsets + (sizeof(uint32_t) * metricQueriesSize));
             pRawDataHeader->rawDataOffset = static_cast<uint32_t>(pRawDataHeader->rawDataSizes + (sizeof(uint32_t) * metricQueriesSize));
 
-            size_t sizePerSubDevice = (*pRawDataSize - pRawDataHeader->rawDataOffset) / metricQueriesSize;
+            const size_t sizePerSubDevice = (*pRawDataSize - pRawDataHeader->rawDataOffset) / metricQueriesSize;
             DEBUG_BREAK_IF(sizePerSubDevice == 0);
             *pRawDataSize = pRawDataHeader->rawDataOffset;
 
@@ -712,18 +712,17 @@ ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
 
             for (size_t i = 0; i < metricQueriesSize; ++i) {
 
-                const uint32_t rawDataOffset = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] : 0;
+                size_t getDataSize = sizePerSubDevice;
+                const uint32_t rawDataOffset = (i != 0) ? (pRawDataSizesUnpacked[i - 1] + pRawDataOffsetsUnpacked[i - 1]) : 0;
                 auto pMetricQuery = MetricQuery::fromHandle(metricQueries[i]);
-                ze_result_t tmpResult = pMetricQuery->getData(&sizePerSubDevice, pRawDataUnpacked + rawDataOffset);
-
+                ze_result_t tmpResult = pMetricQuery->getData(&getDataSize, pRawDataUnpacked + rawDataOffset);
+                // Return at first error.
                 if (tmpResult != ZE_RESULT_SUCCESS) {
-                    result = false;
-                    break;
+                    return tmpResult;
                 }
-
-                pRawDataSizesUnpacked[i] = static_cast<uint32_t>(sizePerSubDevice);
+                pRawDataSizesUnpacked[i] = static_cast<uint32_t>(getDataSize);
                 pRawDataOffsetsUnpacked[i] = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] + pRawDataSizesUnpacked[i] : 0;
-                *pRawDataSize += sizePerSubDevice;
+                *pRawDataSize += getDataSize;
             }
         }
 

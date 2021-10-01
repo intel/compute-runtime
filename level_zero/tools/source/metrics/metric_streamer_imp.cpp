@@ -52,9 +52,8 @@ ze_result_t MetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDat
         for (size_t i = 0; i < metricStreamerSize; ++i) {
 
             size_t readSize = sizePerSubDevice;
-            auto metricStreamerHandle = metricStreamers[i];
-            const uint32_t rawDataOffset = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] : 0;
-            pMetricStreamer = MetricStreamer::fromHandle(metricStreamerHandle);
+            const uint32_t rawDataOffset = (i != 0) ? (pRawDataSizesUnpacked[i - 1] + pRawDataOffsetsUnpacked[i - 1]) : 0;
+            pMetricStreamer = MetricStreamer::fromHandle(metricStreamers[i]);
             result = pMetricStreamer->readData(maxReportCount, &readSize, pRawDataUnpacked + rawDataOffset);
             // Return at first error.
             if (result != ZE_RESULT_SUCCESS) {

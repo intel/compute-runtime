@@ -679,7 +679,13 @@ MetricContext &DeviceImp::getMetricContext() { return *metricContext; }
 
 void DeviceImp::activateMetricGroups() {
     if (metricContext != nullptr) {
-        metricContext->activateMetricGroups();
+        if (metricContext->isMultiDeviceCapable()) {
+            for (uint32_t i = 0; i < numSubDevices; i++) {
+                subDevices[i]->getMetricContext().activateMetricGroups();
+            }
+        } else {
+            metricContext->activateMetricGroups();
+        }
     }
 }
 uint32_t DeviceImp::getMaxNumHwThreads() const { return maxNumHwThreads; }

@@ -666,11 +666,14 @@ ze_result_t MetricGroupImp::calculateMetricValuesExp(const zet_metric_group_calc
             pMetricCounts[0] = *pTotalMetricValueCount;
 
         } else {
-            for (size_t i = 0; i < metricGroupCount; i++) {
+            UNRECOVERABLE_IF(*pSetCount > metricGroupCount);
+            const uint32_t maxTotalMetricValueCount = *pTotalMetricValueCount;
+            *pTotalMetricValueCount = 0;
+            for (size_t i = 0; i < *pSetCount; i++) {
                 auto &metricGroup = *static_cast<MetricGroupImp *>(metricGroups[i]);
                 const uint32_t dataSize = pRawDataSizesUnpacked[i];
                 const uint8_t *pRawDataOffset = pRawDataOffsetUnpacked + pRawDataOffsetsUnpacked[i];
-                pMetricCounts[i] = *pTotalMetricValueCount;
+                pMetricCounts[i] = maxTotalMetricValueCount;
                 result = metricGroup.getCalculatedMetricValues(type, dataSize, pRawDataOffset, pMetricCounts[i], pMetricValues);
 
                 if (!result) {
@@ -679,6 +682,9 @@ ze_result_t MetricGroupImp::calculateMetricValuesExp(const zet_metric_group_calc
                     }
                     break;
                 }
+
+                *pTotalMetricValueCount += pMetricCounts[i];
+                pMetricValues += pMetricCounts[i];
             }
         }
     }
