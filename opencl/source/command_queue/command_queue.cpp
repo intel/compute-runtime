@@ -649,10 +649,6 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
 
     previousNodes.swapNodes(*timestampPacketContainer);
 
-    if ((previousNodes.peekNodes().size() > 0) && (previousNodes.peekNodes()[0]->getAllocator() != allocator)) {
-        clearAllDependencies = false;
-    }
-
     if (clearAllDependencies) {
         previousNodes.moveNodesToNewContainer(*deferredTimestampPackets);
     }
