@@ -91,11 +91,11 @@ else()
   )
 endif()
 
-if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+if(I915_LOCAL_MEM_EXP)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_local_memory_dg1.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_create_multi_host_allocation_dg1.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_dg1.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_local_memory_exp.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_create_multi_host_allocation_exp.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_exp.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_tip.h
        ${CMAKE_CURRENT_SOURCE_DIR}/memory_info_impl.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/gem_create_ext_memory_regions.cpp

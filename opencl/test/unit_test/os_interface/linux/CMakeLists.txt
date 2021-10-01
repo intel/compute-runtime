@@ -45,9 +45,9 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
-if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+if(I915_LOCAL_MEM_EXP)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests_dg1.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests_exp.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_drm_tip.cpp
   )

@@ -11,7 +11,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
-#include "opencl/test/unit_test/os_interface/linux/drm_mock_dg1.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock_exp.h"
 
 #include "gtest/gtest.h"
 
@@ -22,7 +22,7 @@ TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemory
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     for (auto onDrmTip : {false, true}) {
-        auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+        auto drm = std::make_unique<DrmMockExp>(*executionEnvironment->rootDeviceEnvironments[0]);
         ASSERT_NE(nullptr, drm);
 
         drm->queryMemoryRegionOnDrmTip = onDrmTip;
@@ -40,7 +40,7 @@ TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemory
 TEST(MemoryInfo, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMemoryInfoIsNotCreated) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMockExp>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
     drm->i915QuerySuccessCount = 0;
@@ -53,7 +53,7 @@ TEST(MemoryInfo, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMem
 TEST(MemoryInfo, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreated) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMockExp>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
     drm->queryMemoryRegionInfoSuccessCount = 0;
@@ -61,14 +61,14 @@ TEST(MemoryInfo, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreat
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
-    drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm = std::make_unique<DrmMockExp>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
     drm->i915QuerySuccessCount = 1;
     drm->queryMemoryInfo();
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 
-    drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm = std::make_unique<DrmMockExp>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
     drm->queryMemoryRegionInfoSuccessCount = 1;
     drm->queryMemoryInfo();
@@ -236,7 +236,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMockExp>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto memoryInfo = std::make_unique<MemoryInfoImpl>(regionInfo, 2);
     ASSERT_NE(nullptr, memoryInfo);
 
@@ -262,7 +262,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMockExp>(*executionEnvironment->rootDeviceEnvironments[0]);
     uint32_t handle = 0;
     auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
     EXPECT_EQ(1u, handle);

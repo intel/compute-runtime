@@ -8,11 +8,11 @@
 #pragma once
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 
-class DrmMockCustomDg1 : public DrmMockCustom {
+class DrmMockCustomExp : public DrmMockCustom {
   public:
     using Drm::memoryInfo;
 
-    class IoctlsDg1 {
+    class IoctlsExp {
       public:
         void reset() {
             gemCreateExt = 0;
@@ -22,13 +22,13 @@ class DrmMockCustomDg1 : public DrmMockCustom {
         std::atomic<int32_t> gemMmapOffset;
     };
 
-    IoctlsDg1 ioctlDg1_cnt;
-    IoctlsDg1 ioctlDg1_expected;
+    IoctlsExp ioctlExp_cnt;
+    IoctlsExp ioctlExp_expected;
 
-    void testIoctlsDg1() {
+    void testIoctlsExp() {
 #define NEO_IOCTL_EXPECT_EQ(PARAM)                                          \
-    if (this->ioctlDg1_expected.PARAM >= 0) {                               \
-        EXPECT_EQ(this->ioctlDg1_expected.PARAM, this->ioctlDg1_cnt.PARAM); \
+    if (this->ioctlExp_expected.PARAM >= 0) {                               \
+        EXPECT_EQ(this->ioctlExp_expected.PARAM, this->ioctlExp_cnt.PARAM); \
     }
         NEO_IOCTL_EXPECT_EQ(gemMmapOffset);
 #undef NEO_IOCTL_EXPECT_EQ
@@ -54,7 +54,7 @@ class DrmMockCustomDg1 : public DrmMockCustom {
             createExtSize = createExtParams->size;
             createExtHandle = createExtParams->handle;
             createExtExtensions = createExtParams->extensions;
-            ioctlDg1_cnt.gemCreateExt++;
+            ioctlExp_cnt.gemCreateExt++;
         } break;
         case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
             auto mmapOffsetParams = reinterpret_cast<drm_i915_gem_mmap_offset *>(arg);
@@ -62,7 +62,7 @@ class DrmMockCustomDg1 : public DrmMockCustom {
             mmapOffsetPad = mmapOffsetParams->pad;
             mmapOffsetOffset = mmapOffsetParams->offset;
             mmapOffsetFlags = mmapOffsetParams->flags;
-            ioctlDg1_cnt.gemMmapOffset++;
+            ioctlExp_cnt.gemMmapOffset++;
             if (failOnMmapOffset == true) {
                 return -1;
             }
@@ -80,8 +80,8 @@ class DrmMockCustomDg1 : public DrmMockCustom {
 
     int ioctlGemCreateExt(unsigned long request, void *arg);
 
-    DrmMockCustomDg1() : DrmMockCustom() {
-        ioctlDg1_cnt.reset();
-        ioctlDg1_expected.reset();
+    DrmMockCustomExp() : DrmMockCustom() {
+        ioctlExp_cnt.reset();
+        ioctlExp_expected.reset();
     }
 };

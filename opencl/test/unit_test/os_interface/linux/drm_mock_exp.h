@@ -14,10 +14,10 @@
 
 using namespace NEO;
 
-class DrmMockDg1 : public DrmMock {
+class DrmMockExp : public DrmMock {
   public:
-    DrmMockDg1(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockDg1(rootDeviceEnvironment, defaultHwInfo.get()) {}
-    DrmMockDg1(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
+    DrmMockExp(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockExp(rootDeviceEnvironment, defaultHwInfo.get()) {}
+    DrmMockExp(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
         rootDeviceEnvironment.setHwInfo(inputHwInfo);
     }
 

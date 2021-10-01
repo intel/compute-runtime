@@ -5,14 +5,14 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture_dg1.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock_dg1.h"
+#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture_exp.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock_exp.h"
 
 // clang-format off
 #include "shared/source/os_interface/linux/drm_tip.h"
 // clang-format on
 
-void DrmMockDg1::handleQueryItemOnDrmTip(drm_i915_query_item *queryItem) {
+void DrmMockExp::handleQueryItemOnDrmTip(drm_i915_query_item *queryItem) {
     switch (queryItem->query_id) {
     case DRM_I915_QUERY_MEMORY_REGIONS:
         if (queryMemoryRegionInfoSuccessCount == 0) {
@@ -41,13 +41,13 @@ void DrmMockDg1::handleQueryItemOnDrmTip(drm_i915_query_item *queryItem) {
     }
 }
 
-int DrmMockCustomDg1::ioctlGemCreateExt(unsigned long request, void *arg) {
+int DrmMockCustomExp::ioctlGemCreateExt(unsigned long request, void *arg) {
     if (request == DRM_IOCTL_I915_GEM_CREATE_EXT) {
         auto createExtParams = reinterpret_cast<DRM_TIP::drm_i915_gem_create_ext *>(arg);
         createExtSize = createExtParams->size;
         createExtHandle = createExtParams->handle;
         createExtExtensions = createExtParams->extensions;
-        ioctlDg1_cnt.gemCreateExt++;
+        ioctlExp_cnt.gemCreateExt++;
         return 0;
     }
     return -1;
