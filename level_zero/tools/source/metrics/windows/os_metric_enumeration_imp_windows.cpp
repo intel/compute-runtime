@@ -65,4 +65,8 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
     return nullptr;
 }
 
+bool MetricEnumeration::isReportTriggerAvailable() {
+    return true;
+}
+
 } // namespace L0

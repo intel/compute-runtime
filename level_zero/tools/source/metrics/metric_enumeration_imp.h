@@ -29,6 +29,7 @@ struct MetricEnumeration {
 
     virtual ze_result_t loadMetricsDiscovery();
     static const char *getMetricsDiscoveryFilename();
+    static bool isReportTriggerAvailable();
 
   protected:
     ze_result_t initialize();

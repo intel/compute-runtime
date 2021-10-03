@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
 #include "test.h"
 
@@ -513,6 +514,70 @@ TEST_F(MetricEnumerationTestLinux, givenIncorrectDrmFileForFstatWhenGetMetricsAd
     NEO::SysCalls::fstatFuncRetVal = -1;
 
     EXPECT_EQ(mockMetricEnumeration->baseGetAdapterId(drmMajor, drmMinor), false);
+}
+
+TEST(MetricsApiDependencyTest, givenReportTriggerAvailableWhenIsReportTriggerAvailableIsCalledThenReturnSuccess) {
+
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    VariableBackup<NEO::IoFunctions::freadFuncPtr> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        *(static_cast<uint8_t *>(ptr)) = '0';
+        return size;
+    });
+
+    EXPECT_EQ(MetricEnumeration::isReportTriggerAvailable(), true);
+    EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1u);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 1u);
+}
+
+TEST(MetricsApiDependencyTest, givenPerfStreamParanoidFileNotAvailableWhenIsReportTriggerAvailableIsCalledThenFailIsReturned) {
+
+    VariableBackup<NEO::IoFunctions::fopenFuncPtr> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        return nullptr;
+    });
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    NEO::IoFunctions::mockFreadCalled = 0;
+    EXPECT_EQ(MetricEnumeration::isReportTriggerAvailable(), false);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 0u);
+    EXPECT_EQ(NEO::IoFunctions::mockFreadCalled, 0u);
+}
+
+TEST(MetricsApiDependencyTest, givenPerfStreamParanoidFileAvailableWithNoDataWhenIsReportTriggerAvailableIsCalledThenFailIsReturned) {
+
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    VariableBackup<NEO::IoFunctions::freadFuncPtr> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        return 0;
+    });
+    EXPECT_EQ(MetricEnumeration::isReportTriggerAvailable(), false);
+    EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1u);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 1u);
+}
+
+TEST(MetricsApiDependencyTest, givenPerfStreamParanoidFileAvailableWithDataOtherThanZeroWhenIsReportTriggerAvailableIsCalledThenFailIsReturned) {
+
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    VariableBackup<NEO::IoFunctions::freadFuncPtr> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        *(static_cast<uint8_t *>(ptr)) = '1';
+        return 1;
+    });
+    EXPECT_EQ(MetricEnumeration::isReportTriggerAvailable(), false);
+    EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1u);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 1u);
+}
+
+TEST(MetricsApiDependencyTest, givenReportTriggerAvailableWhenIsMetricApiAvailableIsCalledThenReturnSuccessForReportTriggerAvailability) {
+
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    VariableBackup<NEO::IoFunctions::freadFuncPtr> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        *(static_cast<uint8_t *>(ptr)) = '0';
+        return size;
+    });
+    MetricContext::isMetricApiAvailable();
+    EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1u);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 1u);
 }
 
 } // namespace ult

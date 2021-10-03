@@ -231,6 +231,12 @@ std::unique_ptr<MetricContext> MetricContext::create(Device &device) {
 bool MetricContext::isMetricApiAvailable() {
 
     std::unique_ptr<NEO::OsLibrary> library = nullptr;
+    bool reportTriggerAvailable = MetricEnumeration::isReportTriggerAvailable();
+    if (!reportTriggerAvailable) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                              "INFO: Metrics Initialization Failed !\n");
+        return false;
+    }
 
     // Check Metrics Discovery availability.
     library.reset(NEO::OsLibrary::load(MetricEnumeration::getMetricsDiscoveryFilename()));
