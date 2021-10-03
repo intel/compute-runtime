@@ -23,7 +23,7 @@ typedef struct igsc_device_info {
 namespace L0 {
 class FirmwareUtil {
   public:
-    static FirmwareUtil *create();
+    static FirmwareUtil *create(const std::string &pciBDF);
     virtual ze_result_t fwDeviceInit() = 0;
     virtual ze_result_t getFirstDevice(igsc_device_info *) = 0;
     virtual ze_result_t fwGetVersion(std::string &fwVersion) = 0;

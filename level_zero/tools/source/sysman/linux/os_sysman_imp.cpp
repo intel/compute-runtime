@@ -12,7 +12,6 @@
 namespace L0 {
 
 ze_result_t LinuxSysmanImp::init() {
-    pFwUtilInterface = FirmwareUtil::create();
     pFsAccess = FsAccess::create();
     DEBUG_BREAK_IF(nullptr == pFsAccess);
 
@@ -49,7 +48,11 @@ ze_result_t LinuxSysmanImp::init() {
     PlatformMonitoringTech::create(pParentSysmanDeviceImp->deviceHandles, pFsAccess, rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
 
     pPmuInterface = PmuInterface::create(this);
+
     DEBUG_BREAK_IF(nullptr == pPmuInterface);
+    auto loc = realRootPath.find_last_of('/');
+    std::string pciBDF = realRootPath.substr(loc + 1, std::string::npos);
+    pFwUtilInterface = FirmwareUtil::create(pciBDF);
 
     return ZE_RESULT_SUCCESS;
 }

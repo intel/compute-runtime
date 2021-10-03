@@ -294,7 +294,8 @@ TEST_F(SysmanDeviceFixture, GivenFwUtilInterfaceHandleWhenCallinggetFwUtilInterf
         delete pLinuxSysmanImp->pFwUtilInterface;
         pLinuxSysmanImp->pFwUtilInterface = nullptr;
     }
-    pLinuxSysmanImp->pFwUtilInterface = FirmwareUtil::create();
+    const std::string mockBdf = "0000:00:02.0";
+    pLinuxSysmanImp->pFwUtilInterface = FirmwareUtil::create(mockBdf);
     EXPECT_EQ(pLinuxSysmanImp->getFwUtilInterface(), pLinuxSysmanImp->pFwUtilInterface);
 }
 

@@ -68,13 +68,23 @@ ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
     }
 
     info->name[0] = '\0';
-    ret = deviceItreatorNext(iter, info);
-    if (ret == IGSC_SUCCESS) {
-        deviceItreatorDestroy(iter);
-        return ZE_RESULT_SUCCESS;
-    }
+    do {
+        ret = deviceItreatorNext(iter, info);
+        if (ret != IGSC_SUCCESS) {
+            deviceItreatorDestroy(iter);
+            return ZE_RESULT_ERROR_UNINITIALIZED;
+        }
+        if (info->domain == domain &&
+            info->bus == bus &&
+            info->dev == device &&
+            info->func == function) {
+            fwDevicePath.assign(info->name);
+            break;
+        }
+    } while (1);
+
     deviceItreatorDestroy(iter);
-    return ZE_RESULT_ERROR_UNKNOWN;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FirmwareUtilImp::fwDeviceInit() {
@@ -84,8 +94,6 @@ ze_result_t FirmwareUtilImp::fwDeviceInit() {
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    fwDevicePath.assign(info.name);
-
     ret = deviceInitByDevice(&fwDeviceHandle, fwDevicePath.c_str());
     if (ret != 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
@@ -164,7 +172,9 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     return ZE_RESULT_SUCCESS;
 }
 
-FirmwareUtilImp::FirmwareUtilImp(){};
+FirmwareUtilImp::FirmwareUtilImp(const std::string &pciBDF) {
+    sscanf(pciBDF.c_str(), "%04" SCNx16 ":%02" SCNx8 ":%02" SCNx8 ".%" SCNx8, &domain, &bus, &device, &function);
+};
 
 FirmwareUtilImp::~FirmwareUtilImp() {
     if (nullptr != libraryHandle) {
@@ -173,8 +183,8 @@ FirmwareUtilImp::~FirmwareUtilImp() {
     }
 };
 
-FirmwareUtil *FirmwareUtil::create() {
-    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp();
+FirmwareUtil *FirmwareUtil::create(const std::string &pciBDF) {
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(pciBDF);
     UNRECOVERABLE_IF(nullptr == pFwUtilImp);
     pFwUtilImp->libraryHandle = NEO::OsLibrary::load(fwUtilLibraryFile);
     if (pFwUtilImp->libraryHandle == nullptr || pFwUtilImp->loadEntryPoints() == false) {

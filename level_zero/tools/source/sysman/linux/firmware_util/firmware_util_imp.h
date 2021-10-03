@@ -12,6 +12,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util.h"
 
+#include <cinttypes>
 #include <string>
 #include <vector>
 
@@ -59,7 +60,7 @@ extern pIgscDeviceOpromVersion deviceOpromVersion;
 
 class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
   public:
-    FirmwareUtilImp();
+    FirmwareUtilImp(const std::string &pciBDF);
     ~FirmwareUtilImp();
     ze_result_t fwDeviceInit() override;
     ze_result_t getFirstDevice(igsc_device_info *) override;
@@ -79,5 +80,11 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     bool loadEntryPoints();
 
     NEO::OsLibrary *libraryHandle = nullptr;
+
+  private:
+    uint16_t domain = 0;
+    uint8_t bus = 0;
+    uint8_t device = 0;
+    uint8_t function = 0;
 };
 } // namespace L0
