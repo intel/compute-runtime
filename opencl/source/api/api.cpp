@@ -4327,6 +4327,20 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
     return program;
 }
 
+cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command_queue,
+                                                        cl_kernel kernel,
+                                                        cl_uint work_dim,
+                                                        const size_t *global_work_offset,
+                                                        const size_t *global_work_size,
+                                                        size_t *suggested_local_work_size) {
+    return clGetKernelSuggestedLocalWorkSizeINTEL(command_queue,
+                                                  kernel,
+                                                  work_dim,
+                                                  global_work_offset,
+                                                  global_work_size,
+                                                  suggested_local_work_size);
+}
+
 #define RETURN_FUNC_PTR_IF_EXIST(name)                                  \
     {                                                                   \
         if (!strcmp(funcName, #name)) {                                 \
@@ -4391,6 +4405,8 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clCreateCommandQueueWithPropertiesKHR);
 
     RETURN_FUNC_PTR_IF_EXIST(clSetProgramSpecializationConstant);
+
+    RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSizeKHR);
 
     ret = getAdditionalExtensionFunctionAddress(funcName);
     TRACING_EXIT(clGetExtensionFunctionAddress, &ret);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/api/cl_get_kernel_max_concurrent_work_group_count_intel_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_kernel_suggested_local_work_size_intel_tests.inl"
+#include "opencl/test/unit_test/api/cl_get_kernel_suggested_local_work_size_khr_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_kernel_work_group_info_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_mem_object_info_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_pipe_info_tests.inl"
