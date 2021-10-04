@@ -147,6 +147,25 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCapt
     EXPECT_TRUE(cmdQ.waitUntilCompleteCalled);
 }
 
+HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueMarkerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(1);
+
+    auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(aubCsr);
+
+    AubSubCaptureCommon subCaptureCommon;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureFilter.dumpKernelName = "invalid_kernel_name";
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("file_name.aub", subCaptureCommon);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockCmdQWithAubSubCapture<FamilyType> cmdQ(context, pClDevice);
+    cmdQ.enqueueMarkerWithWaitList(0, nullptr, nullptr);
+
+    EXPECT_TRUE(cmdQ.waitUntilCompleteCalled);
+}
+
 HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureGetsActivatedThenTimestampPacketDependenciesAreClearedAndNextRemainUncleared) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(1);
