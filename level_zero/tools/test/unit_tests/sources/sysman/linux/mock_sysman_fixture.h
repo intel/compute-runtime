@@ -134,6 +134,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
 class PublicFsAccess : public L0::FsAccess {
   public:
     using FsAccess::accessSyscall;
+    using FsAccess::statSyscall;
 };
 
 class PublicSysfsAccess : public L0::SysfsAccess {

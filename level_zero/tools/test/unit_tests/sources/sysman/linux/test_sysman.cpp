@@ -20,6 +20,20 @@ inline static int mockAccessSuccess(const char *pathname, int mode) {
     return 0;
 }
 
+inline static int mockStatFailure(const char *pathname, struct stat *sb) noexcept {
+    return -1;
+}
+
+inline static int mockStatSuccess(const char *pathname, struct stat *sb) noexcept {
+    sb->st_mode = S_IWUSR | S_IRUSR;
+    return 0;
+}
+
+inline static int mockStatNoPermissions(const char *pathname, struct stat *sb) noexcept {
+    sb->st_mode = 0;
+    return 0;
+}
+
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanImpCreationWhenAllSysmanInterfacesAreAssignedToNullThenExpectSysmanDeviceModuleContextsAreNull) {
     ze_device_handle_t hSysman = device->toHandle();
     SysmanDeviceImp *sysmanImp = new SysmanDeviceImp(hSysman);
@@ -159,6 +173,58 @@ TEST_F(SysmanDeviceFixture, GivenPublicSysfsAccessClassWhenCallingDirectoryExist
     std::string path = "invalidDiretory";
     EXPECT_FALSE(tempSysfsAccess->directoryExists(path));
     delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithUserHavingWritePermissionsThenSuccessIsReturned) {
+    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    tempFsAccess->statSyscall = mockStatSuccess;
+    char cwd[PATH_MAX];
+    std::string path = getcwd(cwd, PATH_MAX);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->canWrite(path));
+    delete tempFsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithUserHavingReadPermissionsThenSuccessIsReturned) {
+    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    tempFsAccess->statSyscall = mockStatSuccess;
+    char cwd[PATH_MAX];
+    std::string path = getcwd(cwd, PATH_MAX);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->canRead(path));
+    delete tempFsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithUserNotHavingWritePermissionsThenInsufficientIsReturned) {
+    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    tempFsAccess->statSyscall = mockStatNoPermissions;
+    char cwd[PATH_MAX];
+    std::string path = getcwd(cwd, PATH_MAX);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, tempFsAccess->canWrite(path));
+    delete tempFsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithUserNotHavingReadPermissionsThenInsufficientIsReturned) {
+    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    tempFsAccess->statSyscall = mockStatNoPermissions;
+    char cwd[PATH_MAX];
+    std::string path = getcwd(cwd, PATH_MAX);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, tempFsAccess->canRead(path));
+    delete tempFsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithInvalidPathThenErrorIsReturned) {
+    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    tempFsAccess->statSyscall = mockStatFailure;
+    std::string path = "invalidPath";
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->canRead(path));
+    delete tempFsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithInvalidPathThenErrorIsReturned) {
+    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    tempFsAccess->statSyscall = mockStatFailure;
+    std::string path = "invalidPath";
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->canRead(path));
+    delete tempFsAccess;
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingFsAccessExistsThenSuccessIsReturned) {
