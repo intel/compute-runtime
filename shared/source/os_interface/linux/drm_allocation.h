@@ -63,6 +63,10 @@ class DrmAllocation : public GraphicsAllocation {
         return bufferObjects[handleIndex];
     }
 
+    void resizeBufferObjects(uint32_t size) {
+        this->bufferObjects.resize(size);
+    }
+
     uint64_t peekInternalHandle(MemoryManager *memoryManager) override;
 
     bool setCacheRegion(Drm *drm, CacheRegion regionIndex);

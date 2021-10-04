@@ -1120,8 +1120,16 @@ void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
 }
 
 void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocation, const StorageInfo &storageInfo, bool compression) {
-    auto remainingSize = alignUp(allocation.getUnderlyingBufferSize(), MemoryConstants::pageSize64k);
+    DEBUG_BREAK_IF(storageInfo.colouringPolicy == ColouringPolicy::DeviceCountBased && storageInfo.colouringGranularity != MemoryConstants::pageSize64k);
+
+    auto remainingSize = alignUp(allocation.getUnderlyingBufferSize(), storageInfo.colouringGranularity);
     auto handles = storageInfo.getNumBanks();
+    auto banksCnt = storageInfo.getTotalBanksCnt();
+
+    if (storageInfo.colouringPolicy == ColouringPolicy::ChunkSizeBased) {
+        handles = static_cast<uint32_t>(remainingSize / storageInfo.colouringGranularity);
+        allocation.resizeGmms(handles);
+    }
     /* This logic is to colour resource as equally as possible.
     Divide size by number of devices and align result up to 64kb page, then subtract it from whole size and allocate it on the first tile. First tile has it's chunk.
     In the following iteration divide rest of a size by remaining devices and again subtract it.
@@ -1136,10 +1144,10 @@ void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocati
 
     It was tested and doesn't require any debug*/
     for (auto handleId = 0u; handleId < handles; handleId++) {
-        auto currentSize = alignUp(remainingSize / (handles - handleId), MemoryConstants::pageSize64k);
+        auto currentSize = alignUp(remainingSize / (handles - handleId), storageInfo.colouringGranularity);
         remainingSize -= currentSize;
         StorageInfo limitedStorageInfo = storageInfo;
-        limitedStorageInfo.memoryBanks &= 1u << handleId;
+        limitedStorageInfo.memoryBanks &= (1u << (handleId % banksCnt));
         auto gmm = new Gmm(clientContext,
                            nullptr,
                            currentSize,
@@ -1324,11 +1332,25 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
 }
 
 bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
-    std::array<std::unique_ptr<BufferObject>, EngineLimits::maxHandleCount> bos{};
+    BufferObjects bos{};
     auto &storageInfo = allocation->storageInfo;
     auto boAddress = gpuAddress;
     auto currentBank = 0u;
-    for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++, currentBank++) {
+    auto iterationOffset = 0u;
+    auto banksCnt = storageInfo.getTotalBanksCnt();
+
+    auto handles = storageInfo.getNumBanks();
+    if (storageInfo.colouringPolicy == ColouringPolicy::ChunkSizeBased) {
+        handles = allocation->getNumGmms();
+        allocation->resizeBufferObjects(handles);
+        bos.resize(handles);
+    }
+
+    for (auto handleId = 0u; handleId < handles; handleId++, currentBank++) {
+        if (currentBank == banksCnt) {
+            currentBank = 0;
+            iterationOffset += banksCnt;
+        }
         uint32_t memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
         if (storageInfo.getNumBanks() > 1) {
             //check if we have this bank, if not move to next one
@@ -1339,17 +1361,14 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
             memoryBanks &= 1u << currentBank;
         }
         auto boSize = alignUp(allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
-        bos[handleId] = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(drm, boAddress, boSize, memoryBanks, maxOsContextCount));
+        bos[handleId] = createBufferObjectInMemoryRegion(drm, boAddress, boSize, memoryBanks, maxOsContextCount);
         if (nullptr == bos[handleId]) {
             return false;
         }
-        allocation->getBufferObjectToModify(currentBank) = bos[handleId].get();
+        allocation->getBufferObjectToModify(currentBank + iterationOffset) = bos[handleId];
         if (storageInfo.multiStorage) {
             boAddress += boSize;
         }
-    }
-    for (auto &bo : bos) {
-        bo.release();
     }
     return true;
 }

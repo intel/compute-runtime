@@ -94,6 +94,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PauseOnEnqueue, -1, "-1: default, -2: always, x:
 DECLARE_DEBUG_VARIABLE(int32_t, PauseOnBlitCopy, -1, "-1: default, -2: always, x: pause on blit enqueue number x and ask for user confirmation before and after execution, counted from 0. Note that single blit enqueue may have multiple copy instructions")
 DECLARE_DEBUG_VARIABLE(int32_t, PauseOnGpuMode, -1, "-1: default (before and after), 0: before only, 1: after only")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiStorageResources, -1, "-1: default, 0: Disable, 1: Enable")
+DECLARE_DEBUG_VARIABLE(int32_t, MultiStorageGranularity, -1, "Forces chunk size based resource colouring with given granularity: -1 - disabled (default, subdevice count based colouring), >0 - enabled chunk size based colouring with granularity in kb (should be multiple of 64kb page size, because of alignment restrictions)")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxWidth, -1, "-1: default, >=0: Max width")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxHeight, -1, "-1: default, >=0: Max height")
 DECLARE_DEBUG_VARIABLE(int32_t, PostBlitCommand, -1, "-1: default, 0: MI_ARB_CHECK, 1: MI_FLUSH, 2: Nothing")

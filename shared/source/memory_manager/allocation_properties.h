@@ -39,6 +39,8 @@ struct AllocationProperties {
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
     ImageInfo *imgInfo = nullptr;
     bool multiStorageResource = false;
+    ColouringPolicy colouringPolicy = ColouringPolicy::DeviceCountBased;
+    size_t colouringGranularity = MemoryConstants::pageSize64k;
     DeviceBitfield subDevicesBitfield{};
     uint64_t gpuAddress = 0;
     OsContext *osContext = nullptr;

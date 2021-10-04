@@ -246,6 +246,8 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThe
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
     EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
     EXPECT_TRUE(storageInfo.multiStorage);
+    EXPECT_EQ(storageInfo.colouringGranularity, MemoryConstants::pageSize64k);
+    EXPECT_EQ(storageInfo.colouringPolicy, ColouringPolicy::DeviceCountBased);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferThenAllMemoryBanksAreOnAndPageTableClonningIsRequired) {
@@ -255,6 +257,8 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferThenAllMemory
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
     EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
     EXPECT_TRUE(storageInfo.multiStorage);
+    EXPECT_EQ(storageInfo.colouringGranularity, MemoryConstants::pageSize64k);
+    EXPECT_EQ(storageInfo.colouringPolicy, ColouringPolicy::DeviceCountBased);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSVMGPUThenAllMemoryBanksAreOnAndPageTableClonningIsRequired) {
@@ -264,6 +268,22 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSVMGPUThenAllMemory
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
     EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
     EXPECT_TRUE(storageInfo.multiStorage);
+    EXPECT_EQ(storageInfo.colouringGranularity, MemoryConstants::pageSize64k);
+    EXPECT_EQ(storageInfo.colouringPolicy, ColouringPolicy::DeviceCountBased);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenMultiStorageGranularityWhenCreatingStorageInfoThenProperGranularityIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MultiStorageGranularity.set(128);
+
+    AllocationProperties properties{mockRootDeviceIndex, false, 10 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::SVM_GPU, true, allTilesMask};
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_TRUE(storageInfo.cloningOfPageTables);
+    EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
+    EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
+    EXPECT_TRUE(storageInfo.multiStorage);
+    EXPECT_EQ(storageInfo.colouringGranularity, MemoryConstants::kiloByte * 128);
+    EXPECT_EQ(storageInfo.colouringPolicy, ColouringPolicy::ChunkSizeBased);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenTwoPagesAllocationSizeWhenCreatingStorageInfoForBufferThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {

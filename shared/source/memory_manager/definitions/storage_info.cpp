@@ -111,13 +111,25 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         break;
     case GraphicsAllocation::AllocationType::BUFFER:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
-    case GraphicsAllocation::AllocationType::SVM_GPU:
+    case GraphicsAllocation::AllocationType::SVM_GPU: {
+        auto colouringPolicy = properties.colouringPolicy;
+        auto granularity = properties.colouringGranularity;
+
+        if (DebugManager.flags.MultiStorageGranularity.get() != -1) {
+            colouringPolicy = ColouringPolicy::ChunkSizeBased;
+            granularity = DebugManager.flags.MultiStorageGranularity.get() * MemoryConstants::kiloByte;
+        }
+
+        DEBUG_BREAK_IF(colouringPolicy == ColouringPolicy::DeviceCountBased && granularity != MemoryConstants::pageSize64k);
+
         if (this->supportsMultiStorageResources &&
             properties.multiStorageResource &&
-            properties.size >= deviceCount * MemoryConstants::pageSize64k &&
+            properties.size >= deviceCount * granularity &&
             properties.subDevicesBitfield.count() != 1u) {
             storageInfo.memoryBanks = allTilesValue;
             storageInfo.multiStorage = true;
+            storageInfo.colouringPolicy = colouringPolicy;
+            storageInfo.colouringGranularity = granularity;
             if (DebugManager.flags.OverrideMultiStoragePlacement.get() != -1) {
                 storageInfo.memoryBanks = DebugManager.flags.OverrideMultiStoragePlacement.get();
             }
@@ -130,6 +142,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
         storageInfo.localOnlyRequired = true;
         break;
+    }
     case GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY:
         storageInfo.memoryBanks = allTilesValue;
         break;

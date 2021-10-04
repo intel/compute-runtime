@@ -268,6 +268,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setGmm(Gmm *gmm, uint32_t handleId) {
         gmms[handleId] = gmm;
     }
+    void resizeGmms(uint32_t size) {
+        gmms.resize(size);
+    }
 
     uint32_t getNumGmms() const {
         return static_cast<uint32_t>(gmms.size());
