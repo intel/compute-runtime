@@ -203,7 +203,6 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     struct DrmMock : public Drm {
         using Drm::ioctlStatistics;
     };
-    ::testing::internal::CaptureStdout();
 
     constexpr long long initialMin = std::numeric_limits<long long>::max();
     constexpr long long initialMax = 0;
@@ -288,6 +287,8 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY), destroyData->first);
     EXPECT_EQ(1u, destroyData->second.count);
     EXPECT_NE(0, destroyData->second.totalTime);
+
+    ::testing::internal::CaptureStdout();
 
     delete drm;
 
