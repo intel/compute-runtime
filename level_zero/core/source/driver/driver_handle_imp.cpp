@@ -139,6 +139,26 @@ DriverHandleImp::~DriverHandleImp() {
     }
 }
 
+void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &neoDevice) {
+    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto entry = this->deviceBitfields.find(rootDeviceIndex);
+    entry->second = neoDevice->getDeviceBitfield();
+}
+
+void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice) {
+    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
+
+    if (enableProgramDebugging) {
+        if (neoDevice->getDebugger() != nullptr) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
+            UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
+        }
+        rootDeviceEnvironment->debugger = DebuggerL0::create(neoDevice.get());
+    }
+}
+
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
     bool multiOsContextDriver = false;
     for (auto &neoDevice : neoDevices) {
@@ -157,14 +177,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
         auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
 
-        if (enableProgramDebugging) {
-            if (neoDevice->getDebugger() != nullptr) {
-                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                                      "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
-                UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
-            }
-            rootDeviceEnvironment->debugger = DebuggerL0::create(neoDevice.get());
-        }
+        enableRootDeviceDebugger(neoDevice);
 
         this->rootDeviceIndices.insert(rootDeviceIndex);
         this->deviceBitfields.insert({rootDeviceIndex, neoDevice->getDeviceBitfield()});

@@ -338,6 +338,25 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermission
     }
 }
 
+TEST_F(SysmanMultiDeviceFixture, GivenSysmanEnvironmentVariableSetWhenCreateL0DeviceThenSysmanHandleCreateIsAttempted) {
+    driverHandle->enableSysman = true;
+    // In SetUp of SysmanMultiDeviceFixture, sysman handle for device is already created, so new sysman handle should not be created
+    static_cast<DeviceImp *>(device)->createSysmanHandle(true);
+    EXPECT_EQ(device->getSysmanHandle(), pSysmanDevice);
+
+    static_cast<DeviceImp *>(device)->createSysmanHandle(false);
+    EXPECT_EQ(device->getSysmanHandle(), pSysmanDevice);
+
+    // delete previously allocated sysman handle and then attempt to create sysman handle again
+    delete pSysmanDevice;
+    device->setSysmanHandle(nullptr);
+    static_cast<DeviceImp *>(device)->createSysmanHandle(true);
+    EXPECT_EQ(device->getSysmanHandle(), nullptr);
+
+    static_cast<DeviceImp *>(device)->createSysmanHandle(false);
+    EXPECT_EQ(device->getSysmanHandle(), nullptr);
+}
+
 class UnknownDriverModel : public DriverModel {
   public:
     UnknownDriverModel() : DriverModel(DriverModelType::UNKNOWN) {}

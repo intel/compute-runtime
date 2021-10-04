@@ -137,6 +137,7 @@ struct DeviceImp : public Device {
     NEO::SpinLock peerAllocationsMutex;
     std::map<NEO::SvmAllocationData *, MemAdviseFlags> memAdviseSharedAllocations;
     NEO::AllocationsList allocationsForReuse;
+    void createSysmanHandle(bool isSubDevice);
 
   protected:
     NEO::GraphicsAllocation *debugSurface = nullptr;

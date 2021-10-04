@@ -692,8 +692,28 @@ uint32_t DeviceImp::getMaxNumHwThreads() const { return maxNumHwThreads; }
 
 const NEO::HardwareInfo &DeviceImp::getHwInfo() const { return neoDevice->getHardwareInfo(); }
 
+// Use this method to reinitialize L0::Device *device, that was created during zeInit, with the help of Device::create
+Device *Device::deviceReinit(DriverHandle *driverHandle, L0::Device *device, std::unique_ptr<NEO::Device> &neoDevice, ze_result_t *returnValue) {
+    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
+    auto pNeoDevice = neoDevice.release();
+
+    auto subDevicesMask = static_cast<uint32_t>(rootDeviceEnvironment->deviceAffinityMask.getGenericSubDevicesMask().to_ulong());
+    return Device::create(driverHandle, pNeoDevice, subDevicesMask, false, returnValue, device);
+}
+
 Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice, ze_result_t *returnValue) {
-    auto device = new DeviceImp;
+    return Device::create(driverHandle, neoDevice, currentDeviceMask, isSubDevice, returnValue, nullptr);
+}
+
+Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice, ze_result_t *returnValue, L0::Device *deviceL0) {
+    L0::DeviceImp *device = nullptr;
+    if (deviceL0 == nullptr) {
+        device = new DeviceImp;
+    } else {
+        device = static_cast<L0::DeviceImp *>(deviceL0);
+    }
+
     UNRECOVERABLE_IF(device == nullptr);
 
     device->setDriverHandle(driverHandle);
@@ -731,7 +751,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         ze_device_handle_t subDevice = Device::create(driverHandle,
                                                       device->neoDevice->getSubDevice(i),
                                                       0,
-                                                      true, returnValue);
+                                                      true, returnValue, nullptr);
         if (subDevice == nullptr) {
             return nullptr;
         }
@@ -783,10 +803,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
             ->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
     }
 
-    if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !isSubDevice) {
-        device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
-    }
-
+    device->createSysmanHandle(isSubDevice);
+    device->resourcesReleased = false;
     return device;
 }
 
@@ -801,6 +819,7 @@ void DeviceImp::releaseResources() {
     for (uint32_t i = 0; i < this->numSubDevices; i++) {
         delete this->subDevices[i];
     }
+    this->subDevices.clear();
     this->numSubDevices = 0;
 
     if (this->pageFaultCommandList) {

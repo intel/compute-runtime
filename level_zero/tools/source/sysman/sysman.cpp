@@ -16,6 +16,15 @@
 
 namespace L0 {
 
+void DeviceImp::createSysmanHandle(bool isSubDevice) {
+    if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !isSubDevice) {
+        if (this->getSysmanHandle() == nullptr) {
+            // Sysman handles are created only during zeInit time device creation. And destroyed during L0::device destroy.
+            this->setSysmanHandle(L0::SysmanDeviceHandleContext::init(this->toHandle()));
+        }
+    }
+}
+
 SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
     SysmanDeviceImp *sysmanDevice = new SysmanDeviceImp(coreDevice);
     DEBUG_BREAK_IF(!sysmanDevice);

@@ -41,6 +41,20 @@ extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 namespace L0 {
 namespace ult {
 
+TEST(L0DeviceTest, GivenCreatedDeviceHandleWhenCallingdeviceReinitThenNewDeviceHandleIsNotCreated) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue);
+    ASSERT_NE(nullptr, device);
+    static_cast<DeviceImp *>(device)->releaseResources();
+
+    auto newNeoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    EXPECT_EQ(device, Device::deviceReinit(device->getDriverHandle(), device, newNeoDevice, &returnValue));
+    delete device;
+}
+
 TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPageFaultCmdListImmediateWithInitializedCmdQIsCreated) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     DebugManagerStateRestore restorer;
