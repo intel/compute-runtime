@@ -1276,3 +1276,135 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     }
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferredAndWalkerWithNonUniformStartWhenDynamicPartitionSelectedThenExpectReconfigureWparidToStatic) {
+    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdStartingX(1u);
+
+    checkForProperCmdBufferAddressOffset = false;
+    bool preferredStaticPartitioning = true;
+    bool staticPartitioning = false;
+    auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, preferredStaticPartitioning, false, &staticPartitioning);
+    EXPECT_FALSE(staticPartitioning);
+    EXPECT_EQ(1u, partitionCount);
+    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
+
+    testArgs.partitionCount = partitionCount;
+    testArgs.staticPartitioning = staticPartitioning;
+    testArgs.preferredStaticPartitioning = preferredStaticPartitioning;
+    testArgs.workPartitionAllocationGpuVa = 0x800BADA55000;
+
+    auto expectedCommandUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
+                                   sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 2 +
+                                   sizeof(WalkerPartition::LOAD_REGISTER_REG<FamilyType>) +
+                                   sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
+                                   sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
+                                   sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
+                                   sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                                   sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
+                                   sizeof(WalkerPartition::LOAD_REGISTER_MEM<FamilyType>);
+
+    EXPECT_EQ(expectedCommandUsedSize, computeControlSectionOffset<FamilyType>(testArgs));
+
+    auto walkerSectionCommands = sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) +
+                                 sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+    auto totalProgrammedSize = expectedCommandUsedSize + sizeof(BatchBufferControlData);
+
+    testArgs.tileCount = 2;
+    uint64_t gpuVirtualAddress = 0x8000123000;
+    WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
+                                                                              gpuVirtualAddress,
+                                                                              &walker,
+                                                                              totalBytesProgrammed,
+                                                                              testArgs);
+
+    EXPECT_EQ(totalProgrammedSize, totalBytesProgrammed);
+
+    auto expectedMask = 0xFFFFu;
+    auto expectedRegister = 0x21FCu;
+    auto loadRegisterImmediate = genCmdCast<WalkerPartition::LOAD_REGISTER_IMM<FamilyType> *>(cmdBufferAddress);
+    ASSERT_NE(nullptr, loadRegisterImmediate);
+    EXPECT_EQ(expectedRegister, loadRegisterImmediate->getRegisterOffset());
+    EXPECT_EQ(expectedMask, loadRegisterImmediate->getDataDword());
+    auto parsedOffset = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>);
+
+    auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    auto miAtomicAddress = gpuVirtualAddress + expectedCommandUsedSize;
+    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(miAtomicAddress, miAtomicProgrammedAddress);
+    EXPECT_TRUE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    auto loadRegisterReg = genCmdCast<WalkerPartition::LOAD_REGISTER_REG<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, loadRegisterReg);
+    EXPECT_TRUE(loadRegisterReg->getMmioRemapEnableDestination());
+    EXPECT_TRUE(loadRegisterReg->getMmioRemapEnableSource());
+    EXPECT_EQ(wparidCCSOffset, loadRegisterReg->getDestinationRegisterAddress());
+    EXPECT_EQ(generalPurposeRegister4, loadRegisterReg->getSourceRegisterAddress());
+    parsedOffset += sizeof(WalkerPartition::LOAD_REGISTER_REG<FamilyType>);
+
+    auto miSetPredicate = genCmdCast<WalkerPartition::MI_SET_PREDICATE<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSetPredicate);
+    EXPECT_EQ(MI_SET_PREDICATE<FamilyType>::PREDICATE_ENABLE_WPARID::PREDICATE_ENABLE_WPARID_NOOP_ON_NON_ZERO_VALUE, miSetPredicate->getPredicateEnableWparid());
+    parsedOffset += sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>);
+
+    auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, batchBufferStart);
+    EXPECT_TRUE(batchBufferStart->getPredicationEnable());
+    //address routes to WALKER section which is before control section
+    auto address = batchBufferStart->getBatchBufferStartAddress();
+    EXPECT_EQ(address, gpuVirtualAddress + expectedCommandUsedSize - walkerSectionCommands);
+    parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+
+    miSetPredicate = genCmdCast<WalkerPartition::MI_SET_PREDICATE<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSetPredicate);
+    EXPECT_EQ(MI_SET_PREDICATE<FamilyType>::PREDICATE_ENABLE_WPARID::PREDICATE_ENABLE_WPARID_NOOP_NEVER, miSetPredicate->getPredicateEnableWparid());
+    EXPECT_EQ(MI_SET_PREDICATE<FamilyType>::PREDICATE_ENABLE::PREDICATE_ENABLE_PREDICATE_DISABLE, miSetPredicate->getPredicateEnable());
+    parsedOffset += sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>);
+
+    auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
+
+    miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    auto miAtomicTileAddress = gpuVirtualAddress + expectedCommandUsedSize + sizeof(uint32_t);
+    auto miAtomicTileProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(miAtomicTileAddress, miAtomicTileProgrammedAddress);
+    EXPECT_FALSE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSemaphoreWait);
+    EXPECT_EQ(miAtomicTileAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
+    EXPECT_EQ(2u, miSemaphoreWait->getSemaphoreDataDword());
+    parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    auto loadRegisterMem = genCmdCast<WalkerPartition::LOAD_REGISTER_MEM<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, loadRegisterMem);
+    EXPECT_EQ(testArgs.workPartitionAllocationGpuVa, loadRegisterMem->getMemoryAddress());
+    EXPECT_EQ(wparidCCSOffset, loadRegisterMem->getRegisterAddress());
+    parsedOffset += sizeof(WalkerPartition::LOAD_REGISTER_MEM<FamilyType>);
+
+    //final batch buffer start that routes at the end of the batch buffer
+    auto batchBufferStartFinal = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    EXPECT_NE(nullptr, batchBufferStartFinal);
+    EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + totalProgrammedSize);
+    parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+
+    auto computeWalker = genCmdCast<WalkerPartition::COMPUTE_WALKER<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, computeWalker);
+    parsedOffset += sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+
+    batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, batchBufferStart);
+    EXPECT_FALSE(batchBufferStart->getPredicationEnable());
+    EXPECT_EQ(gpuVirtualAddress, batchBufferStart->getBatchBufferStartAddress());
+    parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+}

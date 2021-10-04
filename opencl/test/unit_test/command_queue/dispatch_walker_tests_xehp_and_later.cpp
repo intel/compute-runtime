@@ -1459,7 +1459,7 @@ struct XeHPAndLaterDispatchWalkerBasicTestStaticPartition : public XeHPAndLaterD
     }
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition, givenStaticPartitioningWhenEnqueueingKernelThenNoMultipleActivePartitionsAreSetInCsr) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition, givenStaticPartitioningWhenEnqueueingKernelThenMultipleActivePartitionsAreSetInCsr) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
@@ -1472,7 +1472,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     }
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
@@ -1480,6 +1480,50 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     ASSERT_NE(nullptr, computeWalker);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
     EXPECT_EQ(8u, computeWalker->getPartitionSize());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
+            givenStaticPartitioningWhenEnqueueingNonUnifromKernelThenMultipleActivePartitionsAreSetInCsrAndWparidRegisterIsReconfiguredToStatic) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    if (!OSInterface::osEnableLocalMemory) {
+        GTEST_SKIP();
+    }
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    size_t gws[] = {129, 1, 1};
+    size_t lws[] = {8, 1, 1};
+    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
+    kernel->mockProgram->allowNonUniform = true;
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ->commandStream);
+
+    auto firstComputeWalkerItor = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), firstComputeWalkerItor);
+    auto computeWalker = reinterpret_cast<COMPUTE_WALKER *>(*firstComputeWalkerItor);
+    EXPECT_EQ(COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+    EXPECT_EQ(8u, computeWalker->getPartitionSize());
+
+    auto nextCmdItor = firstComputeWalkerItor;
+    ++nextCmdItor;
+
+    auto secondComputeWalkerItor = find<COMPUTE_WALKER *>(nextCmdItor, hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), secondComputeWalkerItor);
+    computeWalker = reinterpret_cast<COMPUTE_WALKER *>(*secondComputeWalkerItor);
+    EXPECT_EQ(COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
+
+    auto workPartitionAllocationGpuVa = commandStreamReceiver.getWorkPartitionAllocationGpuAddress();
+    auto expectedRegister = 0x221Cu;
+    auto loadRegisterMem = hwParser.getCommand<MI_LOAD_REGISTER_MEM>(firstComputeWalkerItor, secondComputeWalkerItor);
+    ASSERT_NE(nullptr, loadRegisterMem);
+    EXPECT_EQ(workPartitionAllocationGpuVa, loadRegisterMem->getMemoryAddress());
+    EXPECT_EQ(expectedRegister, loadRegisterMem->getRegisterAddress());
 }
 
 using NonDefaultPlatformGpuWalkerTest = XeHPAndLaterDispatchWalkerBasicTest;

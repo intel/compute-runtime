@@ -138,6 +138,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                              false,
                                                              kernel.usesImages(),
                                                              workPartitionAllocationGpuVa);
+        if (queueCsr.isStaticWorkPartitioningEnabled()) {
+            queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), partitionCount));
+        }
         auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
         timestampPacket->setPacketsUsed(partitionCount);
     } else {

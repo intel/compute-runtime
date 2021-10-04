@@ -28,35 +28,35 @@ ClDeviceVector toClDeviceVector(ClDevice &clDevice);
 ////////////////////////////////////////////////////////////////////////////////
 class MockProgram : public Program {
   public:
-    using Program::createProgramFromBinary;
-    using Program::deviceBuildInfos;
-    using Program::internalOptionsToExtract;
-    using Program::kernelDebugEnabled;
-    using Program::linkBinary;
-    using Program::separateBlockKernels;
-    using Program::setBuildStatus;
-    using Program::updateNonUniformFlag;
-
+    using Program::allowNonUniform;
     using Program::applyAdditionalOptions;
     using Program::areSpecializationConstantsInitialized;
     using Program::blockKernelManager;
     using Program::buildInfos;
     using Program::context;
     using Program::createdFrom;
+    using Program::createProgramFromBinary;
     using Program::debugData;
     using Program::debugDataSize;
+    using Program::deviceBuildInfos;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
+    using Program::internalOptionsToExtract;
     using Program::irBinary;
     using Program::irBinarySize;
     using Program::isSpirV;
+    using Program::kernelDebugEnabled;
+    using Program::linkBinary;
     using Program::options;
     using Program::packDeviceBinary;
     using Program::Program;
+    using Program::separateBlockKernels;
+    using Program::setBuildStatus;
     using Program::sourceCode;
     using Program::specConstantsIds;
     using Program::specConstantsSizes;
     using Program::specConstantsValues;
+    using Program::updateNonUniformFlag;
 
     MockProgram(const ClDeviceVector &deviceVector) : Program(nullptr, false, deviceVector) {
     }
