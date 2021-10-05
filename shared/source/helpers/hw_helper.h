@@ -127,7 +127,6 @@ class HwHelper {
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual bool isBlitterForImagesSupported(const HardwareInfo &hwInfo) const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
-    virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
                                                                              size_t initialTagCount, CommandStreamReceiverType csrType,
                                                                              DeviceBitfield deviceBitfield) const = 0;
@@ -359,8 +358,6 @@ class HwHelperHw : public HwHelper {
     void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const override;
 
     bool additionalPipeControlArgsRequired() const override;
-
-    bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
 
     bool isEngineTypeRemappingToHwSpecificRequired() const override;
 

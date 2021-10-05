@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
 
@@ -452,7 +453,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     igcFeWa.get()->SetFtrGTX(device.getHardwareInfo().featureTable.ftrGTX);
     igcFeWa.get()->SetFtr5Slice(device.getHardwareInfo().featureTable.ftr5Slice);
 
-    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(isMidThreadPreemptionSupported(device.getHardwareInfo()));
+    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(CompilerHwInfoConfig::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
     igcFeWa.get()->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.ftrIoMmuPageFaulting);
     igcFeWa.get()->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.ftrWddm2Svm);
     igcFeWa.get()->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.ftrPooledEuEnabled);

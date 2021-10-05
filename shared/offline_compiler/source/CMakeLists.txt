@@ -27,6 +27,9 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.h
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_bdw_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
     ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp

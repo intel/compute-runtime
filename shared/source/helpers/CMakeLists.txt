@@ -27,6 +27,9 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.cpp

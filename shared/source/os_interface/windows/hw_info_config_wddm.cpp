@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -19,7 +20,7 @@ namespace NEO {
 int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
     auto &hwHelper = HwHelper::get(outHwInfo->platform.eRenderCoreFamily);
     auto &hwInfoConfig = *HwInfoConfig::get(outHwInfo->platform.eProductFamily);
-
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(outHwInfo->platform.eProductFamily);
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.ftrSVM;
 
     hwHelper.adjustDefaultEngineType(outHwInfo);
@@ -29,7 +30,7 @@ int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo
     outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.ftrL3IACoherency;
 
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  hwHelper.isMidThreadPreemptionSupported(*outHwInfo),
+                                                  compilerHwInfoConfig->isMidThreadPreemptionSupported(*outHwInfo),
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuThreadGroupLevelPreempt),
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidBatchPreempt));
 

@@ -14,6 +14,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/file_io.h"
@@ -609,7 +610,10 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     igcFeWa.get()->SetFtrGTX(hwInfo.featureTable.ftrGTX);
     igcFeWa.get()->SetFtr5Slice(hwInfo.featureTable.ftr5Slice);
 
-    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(isMidThreadPreemptionSupported(hwInfo));
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (compilerHwInfoConfig) {
+        igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
+    }
     igcFeWa.get()->SetFtrIoMmuPageFaulting(hwInfo.featureTable.ftrIoMmuPageFaulting);
     igcFeWa.get()->SetFtrWddm2Svm(hwInfo.featureTable.ftrWddm2Svm);
     igcFeWa.get()->SetFtrPooledEuEnabled(hwInfo.featureTable.ftrPooledEuEnabled);

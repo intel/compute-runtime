@@ -9,6 +9,7 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_math_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp

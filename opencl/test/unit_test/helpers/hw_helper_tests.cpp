@@ -1015,19 +1015,6 @@ HWTEST2_F(HwHelperTest, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLo
     EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, graphicsAllocation));
 }
 
-HWTEST_F(HwHelperTest, whenIsMidThreadPreemptionSupportedIsCalledThenCorrectResultIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = true;
-    auto midThreadPreemptionSupported = hwHelper.isMidThreadPreemptionSupported(hwInfo);
-    EXPECT_TRUE(midThreadPreemptionSupported);
-
-    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = false;
-    midThreadPreemptionSupported = hwHelper.isMidThreadPreemptionSupported(hwInfo);
-    EXPECT_FALSE(midThreadPreemptionSupported);
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {
     if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();

@@ -17,8 +17,4 @@ void OfflineCompiler::resolveExtraSettings() {
     }
 }
 
-bool OfflineCompiler::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) {
-    return hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt;
-}
-
 } // namespace NEO

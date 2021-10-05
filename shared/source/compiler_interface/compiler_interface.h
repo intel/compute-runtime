@@ -183,7 +183,5 @@ class CompilerInterface {
         bool requiresIgc = (IGC::CodeType::oclC != translationSrc) || ((IGC::CodeType::spirV != translationDst) && (IGC::CodeType::llvmBc != translationDst) && (IGC::CodeType::llvmLl != translationDst));
         return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable() || (false == requiresIgc));
     }
-
-    bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo);
 };
 } // namespace NEO

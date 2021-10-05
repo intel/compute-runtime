@@ -96,7 +96,6 @@ class OfflineCompiler {
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
     void setStatelessToStatefullBufferOffsetFlag();
     void resolveExtraSettings();
-    bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo);
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     MOCKABLE_VIRTUAL int buildSourceCode();

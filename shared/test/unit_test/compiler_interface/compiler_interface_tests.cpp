@@ -1163,16 +1163,6 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenInterfaceVe
     setFclDebugVars(prevDebugVars);
 }
 
-HWTEST_F(CompilerInterfaceTest, whenIsMidThreadPreemptionSupportedIsCalledThenCorrectResultIsReturned) {
-    auto device = this->pDevice;
-    auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
-    UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(hwInfo, false);
-    EXPECT_FALSE(pCompilerInterface->isMidThreadPreemptionSupported(hwInfo));
-
-    UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(hwInfo, true);
-    EXPECT_TRUE(pCompilerInterface->isMidThreadPreemptionSupported(hwInfo));
-}
-
 struct SpecConstantsTranslationCtxMock {
     bool returnFalse = false;
 

@@ -1036,20 +1036,6 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
     EXPECT_FALSE(mockOfflineCompiler->inputFileSpirV);
 }
 
-TEST(OfflineCompilerTest, whenIsMidThreadPreemptionSupportedIsCalledThenCorrectResultIsReturned) {
-    MockOfflineCompiler offlineCompiler;
-
-    if (!hardwarePrefix[IGFX_SKYLAKE]) {
-        GTEST_SKIP();
-    }
-    offlineCompiler.getHardwareInfo("skl");
-    offlineCompiler.hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = false;
-    EXPECT_FALSE(offlineCompiler.isMidThreadPreemptionSupported(offlineCompiler.hwInfo));
-
-    offlineCompiler.hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = true;
-    EXPECT_TRUE(offlineCompiler.isMidThreadPreemptionSupported(offlineCompiler.hwInfo));
-}
-
 TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {
     MockOfflineCompiler mockOfflineCompiler;
     std::vector<std::string> argv = {
