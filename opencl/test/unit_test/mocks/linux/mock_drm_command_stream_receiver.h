@@ -101,4 +101,12 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
             return waitUserFenceResult.returnValue;
         }
     }
+
+    bool callHwFlush = true;
+
+    void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+        if (callHwFlush) {
+            DrmCommandStreamReceiver<GfxFamily>::flushInternal(batchBuffer, allocationsForResidency);
+        }
+    }
 };
