@@ -127,10 +127,6 @@ struct EncodeMath {
                            AluRegisters firstOperandRegister,
                            AluRegisters secondOperandRegister,
                            AluRegisters finalResultRegister);
-    static void bitwiseOr(CommandContainer &container,
-                          AluRegisters firstOperandRegister,
-                          AluRegisters secondOperandRegister,
-                          AluRegisters finalResultRegister);
 };
 
 template <typename GfxFamily>

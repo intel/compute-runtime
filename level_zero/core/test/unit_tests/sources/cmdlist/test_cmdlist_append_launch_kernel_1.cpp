@@ -712,14 +712,12 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
 
     itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
-
-    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
-    EXPECT_NE(itor, cmdList.end());
-    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
-    EXPECT_NE(itor, cmdList.end());
-
     itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+
     itor++; //MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
     EXPECT_NE(itor, cmdList.end());
     itor++;
@@ -727,6 +725,13 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
 
     itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
+    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+
+    itor++; //MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
+    EXPECT_NE(itor, cmdList.end());
+    itor++;
+    EXPECT_NE(itor, cmdList.end());
     itor++;
     EXPECT_NE(itor, cmdList.end());
     itor++;
@@ -734,7 +739,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
 
     itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
-    itor++;
+    itor++; //MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
     EXPECT_NE(itor, cmdList.end());
     itor++;
     EXPECT_NE(itor, cmdList.end());

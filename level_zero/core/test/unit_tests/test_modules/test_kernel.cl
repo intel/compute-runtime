@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,4 +33,19 @@ kernel void test(const global float *a, const global float *b,
     int2 coord = {get_global_id(0), get_global_id(1)};
 
     printf("local_id = %d, global_id = %d \n", local_id, global_id);
+}
+
+__kernel void test_get_global_sizes(__global uint *outGlobalSize) {
+    outGlobalSize[0] = get_global_size(0);
+    outGlobalSize[1] = get_global_size(1);
+    outGlobalSize[2] = get_global_size(2);
+}
+
+__kernel void test_get_work_dim(__global uint *outWorkDim) {
+    outWorkDim[0] = get_work_dim();
+}
+__kernel void test_get_group_count(__global uint *outGroupCount) {
+    outGroupCount[0] = get_num_groups(0);
+    outGroupCount[1] = get_num_groups(1);
+    outGroupCount[2] = get_num_groups(2);
 }

@@ -335,7 +335,7 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedW
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
     uint32_t copyForGlobalSurface = 1u;
-    uint32_t copyForIsa = 1u;
+    uint32_t copyForIsa = 4u;
     uint32_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
                                                                  copyForGlobalSurface + copyForIsa;
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,

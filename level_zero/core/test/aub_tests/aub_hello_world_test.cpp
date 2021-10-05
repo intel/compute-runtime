@@ -8,23 +8,14 @@
 #include "test.h"
 
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "test_mode.h"
 
 namespace L0 {
 namespace ult {
 
-class AUBHelloWorldL0 : public AUBFixtureL0,
-                        public ::testing::Test {
-  protected:
-    void SetUp() override {
-        AUBFixtureL0::SetUp(NEO::defaultHwInfo.get());
-    }
-    void TearDown() override {
-        AUBFixtureL0::TearDown();
-    }
-};
-
+using AUBHelloWorldL0 = Test<AUBFixtureL0>;
 TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) {
     uint8_t size = 8;
     uint8_t val = 255;
