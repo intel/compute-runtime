@@ -102,8 +102,8 @@ BindlessHeapsHelper *RootDeviceEnvironment::getBindlessHeapsHelper() const {
     return bindlessHeapsHelper.get();
 }
 
-void RootDeviceEnvironment::createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex) {
-    bindlessHeapsHelper = std::make_unique<BindlessHeapsHelper>(memoryManager, availableDevices, rootDeviceIndex);
+void RootDeviceEnvironment::createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+    bindlessHeapsHelper = std::make_unique<BindlessHeapsHelper>(memoryManager, availableDevices, rootDeviceIndex, deviceBitfield);
 }
 
 CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {

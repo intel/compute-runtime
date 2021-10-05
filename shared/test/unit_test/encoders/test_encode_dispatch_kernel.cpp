@@ -1158,7 +1158,8 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessKernelWhenBindlessModeE
     commandContainer->setDirtyStateForAllHeaps(false);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -1195,7 +1196,8 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindfulKernelWhenBindlessModeEn
     commandContainer->setDirtyStateForAllHeaps(false);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -1232,7 +1234,8 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessModeEnabledWhenDispatch
     commandContainer->setDirtyStateForAllHeaps(false);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -1282,7 +1285,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchin
     samplerState.init();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1315,7 +1319,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSampler
     memset(&samplerState, 2, sizeof(SAMPLER_STATE));
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

@@ -60,7 +60,7 @@ struct RootDeviceEnvironment {
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
-    void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex);
+    void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
     std::unique_ptr<GmmHelper> gmmHelper;

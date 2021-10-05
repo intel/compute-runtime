@@ -63,7 +63,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -84,7 +85,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -106,7 +108,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRe
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -124,7 +127,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGr
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -142,8 +146,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBl
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
-
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
@@ -160,7 +164,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAl
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;

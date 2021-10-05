@@ -1408,7 +1408,8 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
     neoDevice->incRefInternal();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex());
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
     Mock<Module> mockModule(&mockDevice, nullptr);
     kernel.module = &mockModule;
     NEO::MockGraphicsAllocation alloc;
@@ -1441,7 +1442,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessT
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex());
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
 
     auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
     size_t size = hwHelper.getRenderSurfaceStateSize();
@@ -1475,7 +1477,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulTh
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex());
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
 
     auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
     size_t size = hwHelper.getRenderSurfaceStateSize();
@@ -1750,7 +1753,8 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfac
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex());
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
     auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
     const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
