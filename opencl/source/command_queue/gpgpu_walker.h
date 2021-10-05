@@ -12,12 +12,12 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/timestamp_packet.h"
-#include "shared/source/helpers/vec.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
@@ -34,19 +34,6 @@ template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 template <typename GfxFamily>
 using MI_STORE_REG_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM_CMD;
-
-Vec3<size_t> computeWorkgroupSize(
-    const DispatchInfo &dispatchInfo);
-
-Vec3<size_t> generateWorkgroupSize(
-    const DispatchInfo &dispatchInfo);
-
-Vec3<size_t> generateWorkgroupsNumber(
-    const DispatchInfo &dispatchInfo);
-
-void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo);
-
-WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo);
 
 template <typename GfxFamily>
 class GpgpuWalkerHelper {

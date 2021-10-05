@@ -6,6 +6,8 @@
 
 set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_local_work_size.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_local_work_size.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.h
@@ -42,7 +44,6 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_bdw_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.h
 )

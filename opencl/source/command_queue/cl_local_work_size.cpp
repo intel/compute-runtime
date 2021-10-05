@@ -1,24 +1,21 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/local_work_size.h"
+#include "opencl/source/command_queue/cl_local_work_size.h"
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/program/kernel_info.h"
+#include "shared/source/helpers/local_work_size.h"
 
-#include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/source/kernel/kernel.h"
 
 #include <cmath>
 #include <cstdint>
@@ -72,7 +69,7 @@ Vec3<size_t> generateWorkgroupsNumber(const DispatchInfo &dispatchInfo) {
     return generateWorkgroupsNumber(dispatchInfo.getGWS(), dispatchInfo.getLocalWorkgroupSize());
 }
 
-void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo) {
+void provideLocalWorkGroupSizeHints(Context *context, const DispatchInfo &dispatchInfo) {
     if (context != nullptr && context->isProvidingPerformanceHints() && dispatchInfo.getDim() <= 3) {
         size_t preferredWorkGroupSize[3];
 
