@@ -122,9 +122,9 @@ XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWithMultipleCSSWhenIsPipeControlPr
     EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo));
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenProgramAdditionalPipeControlBeforeStateComputeModeCommandWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
+XEHPTEST_F(XeHPHwInfoConfig, givenProgramPipeControlPriorToNonPipelinedStateCommandWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
+    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
