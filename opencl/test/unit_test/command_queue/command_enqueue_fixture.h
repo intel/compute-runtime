@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -15,7 +16,6 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 namespace NEO {
 

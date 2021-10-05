@@ -14,8 +14,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"

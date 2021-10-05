@@ -46,7 +46,6 @@ add_library(compute_runtime_mockable_extra
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_resource_info.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
             ${NEO_SHARED_DIRECTORY}/debug_settings/debug_settings_manager.cpp

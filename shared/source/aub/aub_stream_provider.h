@@ -8,8 +8,6 @@
 #pragma once
 #include "aub_mem_dump.h"
 
-#include <string>
-
 namespace NEO {
 
 class AubStreamProvider {

@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+
 #include "test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"

@@ -38,8 +38,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_lrca_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.cpp

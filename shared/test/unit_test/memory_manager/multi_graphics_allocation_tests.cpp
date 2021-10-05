@@ -9,11 +9,10 @@
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_migration_sync_data.h"
 #include "shared/test/common/mocks/mock_multi_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"
 
