@@ -9,9 +9,10 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
-#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "pipe_control_args.h"
 
 namespace NEO {
 
