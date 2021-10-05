@@ -18,19 +18,6 @@
 #undef RegOpenKeyExA
 #undef RegQueryValueExA
 #pragma warning(disable : 4273)
-LSTATUS APIENTRY RegOpenKeyExA(
-    HKEY hKey,
-    LPCSTR lpSubKey,
-    DWORD ulOptions,
-    REGSAM samDesired,
-    PHKEY phkResult);
-LSTATUS APIENTRY RegQueryValueExA(
-    HKEY hKey,
-    LPCSTR lpValueName,
-    LPDWORD lpReserved,
-    LPDWORD lpType,
-    LPBYTE lpData,
-    LPDWORD lpcbData);
 #else
 #include <cstdint>
 #if __clang__
