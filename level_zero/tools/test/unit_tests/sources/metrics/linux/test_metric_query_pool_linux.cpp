@@ -65,6 +65,148 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenGetContextDataIsCalled
     EXPECT_EQ(contextData.ClientData->Linux.Adapter->Type, LinuxAdapterType::DrmFileDescriptor);
 }
 
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenActivateConfigurationIsCalledThenReturnsSuccess) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .WillOnce(Return(StatusCode::Success));
+    EXPECT_TRUE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenActivateConfigurationIsCalledAndMetricLibraryActivateFailsThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .WillOnce(Return(StatusCode::Failed));
+    EXPECT_FALSE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenInCorrectConfigurationWhenActivateConfigurationIsCalledThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = nullptr;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    ON_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .WillByDefault(Return(StatusCode::Success));
+    EXPECT_FALSE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenMetricLibraryIsInIncorrectInitializedStateWhenActivateConfigurationIsCalledThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_ERROR_UNKNOWN;
+
+    ON_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .WillByDefault(Return(StatusCode::Success));
+    EXPECT_FALSE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenDeActivateConfigurationIsCalledThenReturnsSuccess) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .WillOnce(Return(StatusCode::Success));
+    EXPECT_TRUE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenDeActivateConfigurationIsCalledAndMetricLibraryDeActivateFailsThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .WillOnce(Return(StatusCode::Failed));
+    EXPECT_FALSE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenInCorrectConfigurationWhenDeActivateConfigurationIsCalledThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = nullptr;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    ON_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .WillByDefault(Return(StatusCode::Success));
+    EXPECT_FALSE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenMetricLibraryIsInIncorrectInitializedStateWhenDeActivateConfigurationIsCalledThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_ERROR_UNKNOWN;
+
+    ON_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .WillByDefault(Return(StatusCode::Success));
+    EXPECT_FALSE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenCacheConfigurationIsCalledThenCacheingIsSuccessfull) {
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup0;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .WillOnce(Return(&metricsConcurrentGroup0));
+
+    EXPECT_CALL(metricsConcurrentGroup0, GetParams())
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup0, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDelete(_))
+        .WillOnce(Return(StatusCode::Success));
+
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+
+    mockMetricsLibrary->deleteAllConfigurations();
+    mockMetricsLibrary->cacheConfiguration(metricGroups[0], dummyConfigurationHandle);
+    EXPECT_EQ(mockMetricsLibrary->getConfiguration(metricGroups[0]).data, dummyConfigurationHandle.data);
+}
+
+TEST_F(MetricQueryPoolLinuxTest, WhenMetricLibraryGetFileNameIsCalledThenCorrectFilenameIsReturned) {
+    EXPECT_STREQ(MetricsLibrary::getFilename(), "libigdml.so.1");
+}
+
 class MetricEnumerationTestLinux : public MetricContextFixture,
                                    public ::testing::Test {
   public:
