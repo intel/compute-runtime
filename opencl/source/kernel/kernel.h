@@ -43,7 +43,7 @@ class MultiDeviceKernel;
 
 class Kernel : public ReferenceTrackedObject<Kernel> {
   public:
-    static const uint32_t kernelBinaryAlignement = 64;
+    static const uint32_t kernelBinaryAlignment = 64;
 
     enum kernelArgType {
         NONE_OBJ,

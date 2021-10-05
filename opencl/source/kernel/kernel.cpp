@@ -1952,11 +1952,11 @@ size_t Kernel::getInstructionHeapSizeForExecutionModel() const {
 
     size_t totalSize = 0;
     if (isParentKernel) {
-        totalSize = kernelBinaryAlignement - 1; // for initial alignment
+        totalSize = kernelBinaryAlignment - 1; // for initial alignment
         for (uint32_t i = 0; i < blockCount; i++) {
             const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
             totalSize += pBlockInfo->heapInfo.KernelHeapSize;
-            totalSize = alignUp(totalSize, kernelBinaryAlignement);
+            totalSize = alignUp(totalSize, kernelBinaryAlignment);
         }
     }
     return totalSize;
