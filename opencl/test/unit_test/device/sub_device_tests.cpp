@@ -19,7 +19,9 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
 using namespace NEO;
@@ -874,6 +876,45 @@ HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingC
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(buffer);
     EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
+}
+
+HWTEST_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenCreatingProgramThenAssignAllSubDevices) {
+    constexpr uint32_t genericDevicesCount = 2;
+    constexpr uint32_t ccsCount = 2;
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    const char *source = "text";
+    size_t sourceSize = strlen(source);
+
+    auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
+    auto clSubDevice = clRootDevice->getSubDevice(0);
+    auto clSubSubDevice0 = clSubDevice->getSubDevice(0);
+    auto clSubSubDevice1 = clSubDevice->getSubDevice(1);
+
+    cl_device_id device_ids[] = {clSubDevice, clSubSubDevice0, clSubSubDevice1};
+    ClDeviceVector deviceVector{device_ids, 3};
+    MockContext context(deviceVector);
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+    auto program = std::unique_ptr<MockProgram>(Program::create<MockProgram>(
+        &context,
+        1,
+        &source,
+        &sourceSize,
+        retVal));
+
+    ASSERT_NE(nullptr, program.get());
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_TRUE(program->deviceBuildInfos.find(clSubDevice) != program->deviceBuildInfos.end());
+
+    auto &associatedSubDevices = program->deviceBuildInfos[clSubDevice].associatedSubDevices;
+    ASSERT_EQ(2u, associatedSubDevices.size());
+    EXPECT_EQ(clSubSubDevice0, associatedSubDevices[0]);
+    EXPECT_EQ(clSubSubDevice1, associatedSubDevices[1]);
 }
 
 TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) {

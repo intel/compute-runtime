@@ -54,12 +54,10 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
             maxRootDeviceIndex = device->getRootDeviceIndex();
         }
         deviceBuildInfos[device] = {};
-        if (device->getNumGenericSubDevices() > 1) {
-            for (auto i = 0u; i < device->getNumGenericSubDevices(); i++) {
-                auto subDevice = device->getNearestGenericSubDevice(i);
-                if (isDeviceAssociated(*subDevice)) {
-                    deviceBuildInfos[device].associatedSubDevices.push_back(subDevice);
-                }
+        for (auto i = 0u; i < device->getNumSubDevices(); i++) {
+            auto subDevice = device->getSubDevice(i);
+            if (isDeviceAssociated(*subDevice)) {
+                deviceBuildInfos[device].associatedSubDevices.push_back(subDevice);
             }
         }
     }
