@@ -124,8 +124,109 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
     auto &metricContext = device->getMetricContext();
-    EXPECT_EQ(metricContext.loadDependencies(), true);
-    EXPECT_EQ(metricContext.isInitialized(), true);
+    EXPECT_TRUE(metricContext.loadDependencies());
+    EXPECT_TRUE(metricContext.isInitialized());
+
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupProperties.domain, 0u);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
+    EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+
+    EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+}
+
+TEST_F(MetricStreamerTest, givenRawReportSizeAsZeroWhenZetMetricStreamerOpenIsCalledThenReturnsSuccess) {
+
+    zet_device_handle_t metricDeviceHandle = device->toHandle();
+
+    ze_event_handle_t eventHandle = {};
+
+    zet_metric_streamer_handle_t streamerHandle = {};
+    zet_metric_streamer_desc_t streamerDesc = {};
+
+    streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+    streamerDesc.notifyEveryNReports = 32768;
+    streamerDesc.samplingPeriod = 1000;
+
+    Mock<MetricGroup> metricGroup;
+    zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
+    zet_metric_group_properties_t metricGroupProperties = {};
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.RawReportSize = 0;
+
+    openMetricsAdapter();
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(1)
+        .WillOnce(Return(ZE_RESULT_SUCCESS));
+
+    EXPECT_CALL(*mockMetricsLibrary, load())
+        .Times(1)
+        .WillOnce(Return(true));
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsConcurrentGroup, OpenIoStream(_, _, _, _))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsConcurrentGroup, CloseIoStream())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    auto &metricContext = device->getMetricContext();
+    EXPECT_TRUE(metricContext.loadDependencies());
+    EXPECT_TRUE(metricContext.isInitialized());
 
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
@@ -609,6 +710,99 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, reportCount, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
 
     // Metric streamer close.
+    EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCalledWithMaxReportCountOverTheSupportedThenReturnsSuccess) {
+
+    zet_device_handle_t metricDeviceHandle = device->toHandle();
+    ze_event_handle_t eventHandle = {};
+    zet_metric_streamer_handle_t streamerHandle = {};
+    zet_metric_streamer_desc_t streamerDesc = {};
+
+    streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+    streamerDesc.notifyEveryNReports = 32768;
+    streamerDesc.samplingPeriod = 1000;
+    Mock<MetricGroup> metricGroup;
+    zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
+    zet_metric_group_properties_t metricGroupProperties = {};
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.RawReportSize = 256;
+
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsConcurrentGroup, OpenIoStream(_, _, _, _))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsConcurrentGroup, ReadIoStream(_, _, _))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsConcurrentGroup, CloseIoStream())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupProperties.domain, 0u);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
+    EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+
+    size_t rawSize = 0;
+    uint32_t reportCount = 65537;
+    EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, reportCount, &rawSize, nullptr), ZE_RESULT_SUCCESS);
+
+    std::vector<uint8_t> rawData;
+    rawData.resize(rawSize);
+    EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, reportCount, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
+
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
