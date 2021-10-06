@@ -54,6 +54,8 @@ class TagNodeBase : public NonCopyableOrMovableClass {
 
     bool isProfilingCapable() const { return profilingCapable; }
 
+    const TagAllocatorBase *getAllocator() const { return allocator; }
+
     // TagType specific calls
     virtual void assignDataToAllTimestamps(uint32_t packetIndex, void *source) = 0;
 

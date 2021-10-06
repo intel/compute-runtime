@@ -1726,7 +1726,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenSubmissionT
     {
         TimestampPacketContainer previousNodes;
         mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, *bcsCsr);
-        EXPECT_EQ(0u, previousNodes.peekNodes().size());
+        EXPECT_EQ(1u, previousNodes.peekNodes().size());
     }
 
     {
