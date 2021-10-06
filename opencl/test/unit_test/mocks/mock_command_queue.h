@@ -215,7 +215,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
   public:
     using BaseClass::bcsEngines;
-    using BaseClass::bcsState;
+    using BaseClass::bcsStates;
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;
@@ -228,6 +228,11 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::requiresCacheFlushAfterWalker;
     using BaseClass::throttle;
     using BaseClass::timestampPacketContainer;
+
+    void clearBcsStates() {
+        CopyEngineState unusedState{};
+        std::fill(bcsStates.begin(), bcsStates.end(), unusedState);
+    }
 
     MockCommandQueueHw(Context *context,
                        ClDevice *device,

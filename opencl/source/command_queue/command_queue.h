@@ -380,7 +380,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     EnqueueProperties::Operation latestSentEnqueueType = EnqueueProperties::Operation::None;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
-    CopyEngineState bcsState = {};
+    std::array<CopyEngineState, bcsInfoMaskSize> bcsStates = {};
 
     bool perfCountersEnabled = false;
 

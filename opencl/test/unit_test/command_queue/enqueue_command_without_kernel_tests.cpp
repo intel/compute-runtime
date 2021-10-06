@@ -261,17 +261,17 @@ HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectThrot
     EXPECT_EQ(mockCmdQ->throttle, mockCsr->passedDispatchFlags.throttle);
 }
 
-HWTEST_F(DispatchFlagsTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKernelThenDoImplicitFlush) {
+HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKernelThenDoImplicitFlush) {
     using CsrType = MockCsrHw2<FamilyType>;
     DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
     DebugManager.flags.EnableTimestampPacket.set(1);
+
     SetUpImpl<CsrType>();
+    REQUIRE_BLITTER_OR_SKIP(&device->getHardwareInfo());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
     mockCsr->skipBlitCalls = true;
-    mockCmdQ->clearBcsEngines();
-    mockCmdQ->bcsEngines[0] = mockCmdQ->gpgpuEngine;
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), 0, 1, nullptr, retVal));
     auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;
@@ -306,18 +306,17 @@ HWTEST_F(DispatchFlagsTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKerne
     EXPECT_EQ(GrfConfig::NotApplicable, mockCsr->passedDispatchFlags.numGrfRequired);
 }
 
-HWTEST_F(DispatchFlagsTests, givenN1EnabledWhenDispatchingWithoutKernelThenAllowOutOfOrderExecution) {
+HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenAllowOutOfOrderExecution) {
     using CsrType = MockCsrHw2<FamilyType>;
     DebugManager.flags.EnableTimestampPacket.set(1);
     DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
 
     SetUpImpl<CsrType>();
+    REQUIRE_BLITTER_OR_SKIP(&device->getHardwareInfo());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
     mockCsr->skipBlitCalls = true;
-    mockCmdQ->clearBcsEngines();
-    mockCmdQ->bcsEngines[0] = mockCmdQ->gpgpuEngine;
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), 0, 1, nullptr, retVal));
     auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;

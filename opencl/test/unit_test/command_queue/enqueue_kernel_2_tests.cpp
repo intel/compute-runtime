@@ -932,13 +932,11 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
     auto hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(hwInfo);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
-    cmdQ.clearBcsEngines();
-    cmdQ.bcsEngines[0] = cmdQ.gpgpuEngine;
-
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
 
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer;

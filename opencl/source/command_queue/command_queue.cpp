@@ -87,7 +87,6 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
             auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
             bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)] = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
-            bcsState.engineType = bcsEngineType;
         }
     }
 
@@ -630,13 +629,15 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
 }
 
 void CommandQueue::updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount) {
-    UNRECOVERABLE_IF(getAnyBcs()->getOsContext().getEngineType() != bcsEngineType);
-    this->bcsState.taskCount = newBcsTaskCount;
+    CopyEngineState &state = bcsStates[EngineHelpers::getBcsIndex(bcsEngineType)];
+    state.engineType = bcsEngineType;
+    state.taskCount = newBcsTaskCount;
 }
 
 uint32_t CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const {
-    UNRECOVERABLE_IF(getAnyBcs()->getOsContext().getEngineType() != bcsEngineType);
-    return this->bcsState.taskCount;
+    const CopyEngineState &state = bcsStates[EngineHelpers::getBcsIndex(bcsEngineType)];
+    DEBUG_BREAK_IF(!state.isValid());
+    return state.taskCount;
 }
 
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
@@ -887,7 +888,6 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     if (isEngineCopyOnly) {
         std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
         bcsEngines[EngineHelpers::getBcsIndex(engineType)] = &device->getEngine(engineType, EngineUsage::Regular);
-        bcsState.engineType = engineType;
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
@@ -927,8 +927,13 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
         deferredTimestampPackets->swapNodes(nodesToRelease);
     }
 
-    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
-    waitUntilComplete(taskCount, states, flushStamp->peekStamp(), false);
+    StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
+    for (CopyEngineState &state : this->bcsStates) {
+        if (state.isValid()) {
+            activeBcsStates.push_back(state);
+        }
+    }
+    waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false);
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();
