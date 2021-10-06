@@ -234,6 +234,14 @@ class Drm : public DriverModel {
 
     std::unique_lock<std::mutex> lockBindFenceMutex();
 
+    void setPciDomain(uint32_t domain) {
+        pciDomain = domain;
+    }
+
+    uint32_t getPciDomain() {
+        return pciDomain;
+    }
+
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
@@ -275,6 +283,7 @@ class Drm : public DriverModel {
 
     drm_i915_gem_context_param_sseu sseu{};
     ADAPTER_BDF adapterBDF{};
+    uint32_t pciDomain = 0;
 
     TopologyMap topologyMap;
     struct IoctlStatisticsEntry {

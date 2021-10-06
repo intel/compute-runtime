@@ -45,7 +45,7 @@ TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     {
-        drm.setPciPath("ab:cd.e");
+        drm.setPciPath("0000:ab:cd.e");
         EXPECT_EQ(0, drm.queryAdapterBDF());
         auto adapterBdf = drm.getAdapterBDF();
         EXPECT_EQ(0xabu, adapterBdf.Bus);
@@ -60,7 +60,7 @@ TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned
     }
 
     {
-        drm.setPciPath("01:23.4");
+        drm.setPciPath("0000:01:23.4");
         EXPECT_EQ(0, drm.queryAdapterBDF());
         auto adapterBdf = drm.getAdapterBDF();
         EXPECT_EQ(0x1u, adapterBdf.Bus);

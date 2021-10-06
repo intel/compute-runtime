@@ -514,7 +514,7 @@ void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int
 std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     executionEnvironment.osEnvironment = std::make_unique<OsEnvironment>();
-    std::string devicePrefix = std::string(Os::pciDevicesDirectory) + "/pci-0000:";
+    std::string devicePrefix = std::string(Os::pciDevicesDirectory) + "/pci-";
     const char *renderDeviceSuffix = "-render";
     size_t numRootDevices = 0u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
@@ -534,7 +534,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
 
             auto pciPath = NEO::getPciPath(fileDescriptor);
 
-            appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.value_or("00:02.0").c_str());
+            appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.value_or("0000:00:02.0").c_str());
             if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
                 break;
             }
@@ -743,13 +743,15 @@ Drm::~Drm() {
 }
 
 int Drm::queryAdapterBDF() {
-    constexpr int pciBusInfoTokensNum = 3;
-    uint32_t bus, device, function;
+    constexpr int pciBusInfoTokensNum = 4;
+    uint32_t domain, bus, device, function;
 
-    if (std::sscanf(hwDeviceId->getPciPath(), "%02x:%02x.%01x", &bus, &device, &function) != pciBusInfoTokensNum) {
+    if (std::sscanf(hwDeviceId->getPciPath(), "%04x:%02x:%02x.%01x",
+                    &domain, &bus, &device, &function) != pciBusInfoTokensNum) {
         adapterBDF.Data = std::numeric_limits<uint32_t>::max();
         return 1;
     }
+    setPciDomain(domain);
     adapterBDF.Bus = bus;
     adapterBDF.Function = function;
     adapterBDF.Device = device;

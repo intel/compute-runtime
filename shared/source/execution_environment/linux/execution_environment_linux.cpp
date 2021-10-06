@@ -19,9 +19,15 @@ bool comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnv
     // BDF sample format is : 00:02.0
     rootDeviceEnvironment1.get()->osInterface->getDriverModel()->as<NEO::Drm>()->queryAdapterBDF();
     auto bdfDevice1 = rootDeviceEnvironment1.get()->osInterface->getDriverModel()->as<NEO::Drm>()->getAdapterBDF();
+    auto domain1 = rootDeviceEnvironment1.get()->osInterface->getDriverModel()->as<NEO::Drm>()->getPciDomain();
 
     rootDeviceEnvironment2.get()->osInterface->getDriverModel()->as<NEO::Drm>()->queryAdapterBDF();
     auto bdfDevice2 = rootDeviceEnvironment2.get()->osInterface->getDriverModel()->as<NEO::Drm>()->getAdapterBDF();
+    auto domain2 = rootDeviceEnvironment2.get()->osInterface->getDriverModel()->as<NEO::Drm>()->getPciDomain();
+
+    if (domain1 != domain2) {
+        return (domain1 < domain2);
+    }
 
     if (bdfDevice1.Bus != bdfDevice2.Bus) {
         return (bdfDevice1.Bus < bdfDevice2.Bus);

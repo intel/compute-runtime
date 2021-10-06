@@ -146,16 +146,16 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDevice
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
 
     entryIndex = 0;
     openCounter = 2;
     hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(2u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevices) {
@@ -170,14 +170,14 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
     EXPECT_STREQ("/dev/dri/renderD128", lastOpenedPath.c_str());
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
 
     openCounter = 2;
     hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
     EXPECT_EQ(2u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
     EXPECT_STREQ("00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
@@ -352,7 +352,7 @@ TEST_F(DrmSimpleTests, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateM
     EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
     EXPECT_STREQ("00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
@@ -370,9 +370,9 @@ TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevice
     EXPECT_STREQ("/dev/dri/by-path/pci-0000:test2-render", lastOpenedPath.c_str());
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
