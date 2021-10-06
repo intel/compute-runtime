@@ -168,7 +168,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     TagNodeBase *hwTimeStamps = nullptr;
 
-    auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
@@ -405,7 +405,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     queueOwnership.unlock();
-    commandStreamRecieverOwnership.unlock();
+    commandStreamReceiverOwnership.unlock();
 
     if (blocking) {
         waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()));
@@ -1161,7 +1161,7 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 template <typename GfxFamily>
 template <uint32_t cmdType>
 void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
-    auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     EventBuilder eventBuilder;
@@ -1240,7 +1240,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
 
     queueOwnership.unlock();
-    commandStreamRecieverOwnership.unlock();
+    commandStreamReceiverOwnership.unlock();
 
     if (blocking) {
         waitForAllEngines(blockQueue, nullptr);
