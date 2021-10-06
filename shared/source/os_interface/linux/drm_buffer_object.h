@@ -90,6 +90,9 @@ class BufferObject {
     void setCacheRegion(CacheRegion regionIndex) { cacheRegion = regionIndex; }
     CacheRegion peekCacheRegion() const { return cacheRegion; }
 
+    void setCachePolicy(CachePolicy memType) { cachePolicy = memType; }
+    CachePolicy peekCachePolicy() const { return cachePolicy; }
+
   protected:
     Drm *drm = nullptr;
     bool perContextVmsUsed = false;
@@ -115,6 +118,7 @@ class BufferObject {
     uint64_t unmapSize = 0;
 
     CacheRegion cacheRegion = CacheRegion::Default;
+    CachePolicy cachePolicy = CachePolicy::WriteBack;
 
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;

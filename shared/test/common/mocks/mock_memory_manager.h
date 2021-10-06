@@ -141,6 +141,11 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     }
     void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size()); }
 
+    void setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags) override {
+        memAdviseFlags = flags;
+        MemoryManager::setMemAdvise(gfxAllocation, flags);
+    }
+
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
@@ -178,6 +183,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;
+    MemAdviseFlags memAdviseFlags{};
 };
 
 class GMockMemoryManager : public MockMemoryManager {

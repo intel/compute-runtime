@@ -201,6 +201,13 @@ bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
     return useKmdMigration;
 }
 
+void DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags) {
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+
+    CachePolicy memType = flags.cached_memory ? CachePolicy::WriteBack : CachePolicy::Uncached;
+    drmAllocation->setCachePolicy(memType);
+}
+
 NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, uint32_t rootDeviceIndex) {
     drm_i915_gem_userptr userptr = {};
     userptr.user_ptr = address;

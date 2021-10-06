@@ -23,6 +23,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
@@ -736,7 +737,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_handle_t hDevice,
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
-    MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     flags.memadvise_flags = 0;
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
@@ -776,8 +777,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
             break;
         }
 
-        NEO::PageFaultManager *pageFaultManager = nullptr;
-        pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        auto memoryManager = device->getDriverHandle()->getMemoryManager();
+        auto pageFaultManager = memoryManager->getPageFaultManager();
         if (pageFaultManager) {
             /* If Read Only and Device Preferred Hints have been cleared, then cpu_migration of Shared memory can be re-enabled*/
             if (flags.cpu_migration_blocked) {
@@ -789,6 +790,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
             /* Given MemAdvise hints, use different gpu Domain Handler for the Page Fault Handling */
             pageFaultManager->setGpuDomainHandler(L0::handleGpuDomainTransferForHwWithHints);
         }
+
+        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
+        memoryManager->setMemAdvise(alloc, flags);
+
         deviceImp->memAdviseSharedAllocations[allocData] = flags;
         return ZE_RESULT_SUCCESS;
     }

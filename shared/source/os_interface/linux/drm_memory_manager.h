@@ -65,6 +65,8 @@ class DrmMemoryManager : public MemoryManager {
 
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;
 
+    void setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags) override;
+
     std::unique_lock<std::mutex> acquireAllocLock();
     std::vector<GraphicsAllocation *> &getSysMemAllocs();
     std::vector<GraphicsAllocation *> &getLocalMemAllocs(uint32_t rootDeviceIndex);

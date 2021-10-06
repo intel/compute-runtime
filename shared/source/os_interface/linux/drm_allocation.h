@@ -13,6 +13,7 @@ namespace NEO {
 class BufferObject;
 class OsContext;
 class Drm;
+enum class CachePolicy : uint32_t;
 enum class CacheRegion : uint16_t;
 
 struct OsHandleLinux : OsHandle {
@@ -66,6 +67,7 @@ class DrmAllocation : public GraphicsAllocation {
 
     bool setCacheRegion(Drm *drm, CacheRegion regionIndex);
     bool setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex);
+    void setCachePolicy(CachePolicy memType);
 
     void *getMmapPtr() { return this->mmapPtr; }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }
