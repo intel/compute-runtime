@@ -162,14 +162,11 @@ void PerformanceCounters::deleteQuery(QueryHandle_1_0 &handle) {
 //////////////////////////////////////////////////////
 // PerformanceCounters::getGpuCommandsSize
 //////////////////////////////////////////////////////
-uint32_t PerformanceCounters::getGpuCommandsSize(CommandQueue &commandQueue, const bool reservePerfCounters) {
-
+uint32_t PerformanceCounters::getGpuCommandsSize(PerformanceCounters *performanceCounters, aub_stream::EngineType engineType, const bool reservePerfCounters) {
     uint32_t size = 0;
 
     if (reservePerfCounters) {
-
-        const auto performanceCounters = commandQueue.getPerfCounters();
-        const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType())
+        const auto commandBufferType = EngineHelpers::isCcs(engineType)
                                            ? MetricsLibraryApi::GpuCommandBufferType::Compute
                                            : MetricsLibraryApi::GpuCommandBufferType::Render;
 

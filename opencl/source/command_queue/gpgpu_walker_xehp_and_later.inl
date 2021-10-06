@@ -159,7 +159,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
         size += static_cast<size_t>(ImplicitScalingDispatch<GfxFamily>::getSize(false, staticPartitioning, devices, groupStart, groupCount));
     }
 
-    size += PerformanceCounters::getGpuCommandsSize(commandQueue, reservePerfCounters);
+    size += PerformanceCounters::getGpuCommandsSize(commandQueue.getPerfCounters(), commandQueue.getGpgpuEngine().osContext->getEngineType(), reservePerfCounters);
 
     return size;
 }

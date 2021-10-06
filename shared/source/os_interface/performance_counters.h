@@ -9,6 +9,8 @@
 #include "shared/source/utilities/metrics_library.h"
 #include "shared/source/utilities/perf_counter.h"
 
+#include "engine_node.h"
+
 #include <mutex>
 
 namespace NEO {
@@ -17,7 +19,6 @@ namespace NEO {
 // Forward declaration.
 //////////////////////////////////////////////////////
 class TagNodeBase;
-class CommandQueue;
 
 //////////////////////////////////////////////////////
 // Performance counters implementation.
@@ -47,7 +48,7 @@ class PerformanceCounters {
     //////////////////////////////////////////////////////
     // Gpu commands.
     //////////////////////////////////////////////////////
-    static uint32_t getGpuCommandsSize(CommandQueue &commandQueue, const bool reservePerfCounters);
+    static uint32_t getGpuCommandsSize(PerformanceCounters *performanceCounters, aub_stream::EngineType engineType, const bool reservePerfCounters);
     uint32_t getGpuCommandsSize(const MetricsLibraryApi::GpuCommandBufferType commandBufferType, const bool begin);
     bool getGpuCommands(const MetricsLibraryApi::GpuCommandBufferType commandBufferType, TagNodeBase &performanceCounters, const bool begin, const uint32_t bufferSize, void *pBuffer);
 
