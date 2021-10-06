@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,17 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/helpers/memory_properties_helpers_base.inl"
+#include "opencl/source/helpers/cl_memory_properties_helpers_base.inl"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 
-void MemoryPropertiesHelper::addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
+void ClMemoryPropertiesHelper::addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
 }
 
-bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
-                                                   cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
-                                                   cl_mem_alloc_flags_intel &allocflags, ObjType objectType, Context &context) {
+bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
+                                                     cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
+                                                     cl_mem_alloc_flags_intel &allocflags, MemoryPropertiesHelper::ObjType objectType, Context &context) {
     Device *pDevice = &context.getDevice(0)->getDevice();
 
     if (properties != nullptr) {
@@ -38,7 +38,7 @@ bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel
         }
     }
 
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, pDevice);
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, pDevice);
 
     switch (objectType) {
     case MemoryPropertiesHelper::ObjType::BUFFER:
@@ -51,18 +51,6 @@ bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel
         break;
     }
     return true;
-}
-
-void MemoryPropertiesHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo, bool deviceOnlyVisibilty) {
-    fillCachePolicyInProperties(allocationProperties,
-                                memoryProperties.flags.locallyUncachedResource,
-                                memoryProperties.flags.readOnly,
-                                deviceOnlyVisibilty,
-                                0);
-}
-
-uint32_t MemoryPropertiesHelper::getCacheRegion(const MemoryProperties &memoryProperties) {
-    return 0;
 }
 
 } // namespace NEO

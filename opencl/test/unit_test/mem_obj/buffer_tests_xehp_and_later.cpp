@@ -17,7 +17,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -448,7 +448,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationWitho
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     std::unique_ptr<Buffer> buffer(Buffer::createBufferHw(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice()),
         0,
         0,
         sizeof(srcMemory),

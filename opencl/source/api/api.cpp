@@ -33,8 +33,8 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/helpers/queue_helpers.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/kernel/kernel.h"
@@ -1187,7 +1187,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
         auto pClDevice = pContext->getDevice(0);
         surfaceFormat = Image::getSurfaceFormatFromTable(memFlags, imageFormat,
                                                          pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        retVal = Image::validate(pContext, MemoryPropertiesHelper::createMemoryProperties(memFlags, 0, 0, &pClDevice->getDevice()),
+        retVal = Image::validate(pContext, ClMemoryPropertiesHelper::createMemoryProperties(memFlags, 0, 0, &pClDevice->getDevice()),
                                  surfaceFormat, imageDesc, nullptr);
     }
     if (CL_SUCCESS == retVal) {
@@ -3809,9 +3809,9 @@ void *clHostMemAllocINTEL(
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
-    if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                       allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
-                                                       *neoContext)) {
+    if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
+                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
@@ -3851,9 +3851,9 @@ void *clDeviceMemAllocINTEL(
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
-    if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                       allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
-                                                       *neoContext)) {
+    if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
+                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
@@ -3905,9 +3905,9 @@ void *clSharedMemAllocINTEL(
     }
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, neoContext->getRootDeviceIndices(), subDeviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
-    if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                       allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
-                                                       *neoContext)) {
+    if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
+                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }

@@ -24,7 +24,7 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
@@ -733,7 +733,7 @@ class DrmMockBuffer : public MockBufferStorage, public Buffer {
 
     DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc)
         : Buffer(
-              nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+              nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
               CL_MEM_USE_HOST_PTR, 0, size, data, data,
               GraphicsAllocationHelper::toMultiGraphicsAllocation(alloc), true, false, false),
           data(data),

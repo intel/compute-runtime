@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
@@ -1031,7 +1032,7 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyT
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, deviceFactory.rootDevices[0]);
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, deviceFactory.rootDevices[0]);
     AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(mockRootDeviceIndex, imgInfo, true, memoryProperties, localPlatformDevice, mockDeviceBitfield, true);
     allocProperties.allocationType = GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY;
 

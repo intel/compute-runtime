@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/image.h"
@@ -57,7 +57,7 @@ class PackedYuvImageTest : public testing::Test,
         auto surfaceFormat = Image::getSurfaceFormatFromTable(
             flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         retVal = Image::validate(
-            &context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+            &context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
             surfaceFormat, &imageDesc, nullptr);
     }
 
@@ -77,7 +77,7 @@ TEST_P(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenCreati
         flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,

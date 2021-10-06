@@ -8,7 +8,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -54,7 +54,7 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         image.reset(Image::create(
             &context,
-            MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+            ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
             flags,
             0,
             surfaceFormat,
@@ -196,7 +196,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto bigImage = std::unique_ptr<Image>(Image::create(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,

@@ -12,7 +12,7 @@
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -930,7 +930,7 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
       public:
         MockImage(Context *context, cl_mem_flags flags, GraphicsAllocation *allocation, const ClSurfaceFormatInfo &surfaceFormat,
                   const cl_image_format &imageFormat, const cl_image_desc &imageDesc)
-            : Image(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0,
+            : Image(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0,
                     0, nullptr, nullptr,
                     imageFormat, imageDesc,
                     true,

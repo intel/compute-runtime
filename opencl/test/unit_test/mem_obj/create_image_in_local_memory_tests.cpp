@@ -11,7 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -75,7 +75,7 @@ TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledT
         .WillRepeatedly(::testing::Invoke(gmockMemoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
     std::unique_ptr<Image> image(Image::create(
-        context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, memory, retVal));
 
     ASSERT_NE(nullptr, image);

@@ -8,14 +8,14 @@
 #include "shared/source/helpers/bit_helpers.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 
 #include "CL/cl_ext_intel.h"
 
 namespace NEO {
 
-MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags flags, cl_mem_flags_intel flagsIntel,
-                                                                cl_mem_alloc_flags_intel allocflags, const Device *pDevice) {
+MemoryProperties ClMemoryPropertiesHelper::createMemoryProperties(cl_mem_flags flags, cl_mem_flags_intel flagsIntel,
+                                                                  cl_mem_alloc_flags_intel allocflags, const Device *pDevice) {
     MemoryProperties memoryProperties;
 
     if (isValueSet(flags, CL_MEM_READ_WRITE)) {
@@ -91,33 +91,4 @@ MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags fla
 
     return memoryProperties;
 }
-
-AllocationProperties MemoryPropertiesHelper::getAllocationProperties(
-    uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
-    GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
-    DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty) {
-
-    auto deviceBitfield = adjustDeviceBitfield(rootDeviceIndex, memoryProperties, subDevicesBitfieldParam);
-    AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource, deviceBitfield);
-    fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo, deviceOnlyVisibilty);
-    return allocationProperties;
-}
-
-void MemoryPropertiesHelper::fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
-                                                         bool deviceOnlyVisibilty, uint32_t cacheRegion) {
-    allocationProperties.flags.uncacheable = uncached;
-    auto cacheFlushRequired = !uncached && !readOnly && !deviceOnlyVisibilty;
-    allocationProperties.flags.flushL3RequiredForRead = cacheFlushRequired;
-    allocationProperties.flags.flushL3RequiredForWrite = cacheFlushRequired;
-    allocationProperties.cacheRegion = cacheRegion;
-}
-
-DeviceBitfield MemoryPropertiesHelper::adjustDeviceBitfield(uint32_t rootDeviceIndex, const MemoryProperties &memoryProperties,
-                                                            DeviceBitfield deviceBitfieldIn) {
-    if (rootDeviceIndex == memoryProperties.pDevice->getRootDeviceIndex()) {
-        return deviceBitfieldIn & memoryProperties.pDevice->getDeviceBitfield();
-    }
-    return deviceBitfieldIn;
-}
-
 } // namespace NEO

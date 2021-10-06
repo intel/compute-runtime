@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -75,7 +75,7 @@ HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCor
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
         flags,
         0,
         surfaceFormat,

@@ -24,7 +24,7 @@
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -2125,7 +2125,7 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
     cl_int retVal;
     MockContext context;
     std::unique_ptr<NEO::Image> imageNV12(
-        Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(imageNV12->getMediaPlaneType(), 0u);
 
@@ -2141,7 +2141,7 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
     imageDesc.mem_object = imageNV12.get();
 
     std::unique_ptr<NEO::Image> imageY(
-        Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(imageY->getMediaPlaneType(), 0u);
 

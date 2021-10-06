@@ -56,7 +56,7 @@ GEN8TEST_F(GEN8AUBParentKernelFixture, WhenEnqueuingParentKernelThenExpectations
     desc.image_row_pitch = 0;
     desc.image_slice_pitch = 0;
 
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &pClDevice->getDevice());
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &pClDevice->getDevice());
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> image(Image::create(
         pContext,

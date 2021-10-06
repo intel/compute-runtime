@@ -9,7 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/kernel_arg_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
@@ -99,7 +99,7 @@ TEST_F(KernelImageArgTest, givenImageWithNumSamplesWhenSetArgIsCalledThenPatchNu
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
 
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto sampleImg = Image::create(context.get(), memoryProperties, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -125,7 +125,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> img(
-        Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->setAccessQualifier(0, KernelArgMetadata::AccessReadOnly);
     cl_mem memObj = img.get();
@@ -175,7 +175,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckC
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> img(
-        Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->setAccessQualifier(0, NEO::KernelArgMetadata::AccessWriteOnly);
     cl_mem memObj = img.get();
@@ -198,7 +198,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndReadOnlyArgWhenCheckCo
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> img(
-        Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->setAccessQualifier(0, NEO::KernelArgMetadata::AccessReadOnly);
     cl_mem memObj = img.get();
@@ -217,7 +217,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndWriteOnlyArgWhenCheck
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> img(
-        Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->setAccessQualifier(0, NEO::KernelArgMetadata::AccessWriteOnly);
     cl_mem memObj = img.get();
@@ -234,7 +234,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
 
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto img = Image::create(context.get(), memoryProperties, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -266,7 +266,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSettedArgWhenUnSetCalledThenArgIsUnset
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> img(
-        Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     cl_mem memObj = img.get();
 
@@ -306,7 +306,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSharedImageWhenSetArgCalledThenUsingSh
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> img(
-        Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     cl_mem memObj = img.get();
 

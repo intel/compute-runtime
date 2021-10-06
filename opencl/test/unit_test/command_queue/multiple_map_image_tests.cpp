@@ -118,7 +118,7 @@ struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
 
         cl_int retVal = CL_SUCCESS;
         auto img = Image::create(
-            context, MemoryPropertiesHelper::createMemoryProperties(Traits::flags, 0, 0, &context->getDevice(0)->getDevice()),
+            context, ClMemoryPropertiesHelper::createMemoryProperties(Traits::flags, 0, 0, &context->getDevice(0)->getDevice()),
             Traits::flags, 0, surfaceFormat, &Traits::imageDesc, Traits::hostPtr, retVal);
         auto mockImage = static_cast<MockImage<FamilyType> *>(img);
 

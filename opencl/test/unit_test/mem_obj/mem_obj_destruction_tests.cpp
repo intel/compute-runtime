@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/api/api.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
@@ -46,7 +46,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
 
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), size});
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
-                            MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &device->getDevice()),
+                            ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &device->getDevice()),
                             CL_MEM_READ_WRITE, 0, size,
                             nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
         csr = device->getDefaultEngine().commandStreamReceiver;
@@ -227,7 +227,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         MemObjSizeArray region = {{1, 1, 1}};
         cl_map_flags mapFlags = CL_MAP_READ;
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
-                            MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice()),
+                            ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice()),
                             CL_MEM_READ_WRITE, 0, size,
                             storage, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
         memObj->addMappedPtr(storage, 1, mapFlags, region, origin, 0);

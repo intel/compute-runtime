@@ -11,7 +11,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 #include "CL/cl.h"

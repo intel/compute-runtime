@@ -11,7 +11,7 @@
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
@@ -232,7 +232,7 @@ HWTEST_F(EnqueueThreadingImage, WhenEnqueuingCopyBufferToImageThenKernelHasOwner
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, dstImage.get());
 
@@ -259,11 +259,11 @@ HWTEST_F(EnqueueThreadingImage, WhenEnqueuingCopyImageThenKernelHasOwnership) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> srcImage(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
     std::unique_ptr<Image> dstImage(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
@@ -292,7 +292,7 @@ HWTEST_F(EnqueueThreadingImage, WhenEnqueuingCopyImageToBufferThenKernelHasOwner
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> srcImage(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
@@ -334,7 +334,7 @@ HWTEST_F(EnqueueThreadingImage, WhenEnqueuingFillImageThenKernelHasOwnership) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> image(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
@@ -383,7 +383,7 @@ HWTEST_F(EnqueueThreadingImage, WhenEnqueuingReadImageThenKernelHasOwnership) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> image(Image::create(
-        context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
@@ -436,7 +436,7 @@ HWTEST_F(EnqueueThreadingImage, WhenEnqueuingWriteImageThenKernelHasOwnership) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> image(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 

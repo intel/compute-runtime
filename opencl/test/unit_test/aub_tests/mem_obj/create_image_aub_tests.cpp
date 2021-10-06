@@ -102,7 +102,7 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
 
     image.reset(Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -180,7 +180,7 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
 
     image.reset(Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -305,7 +305,7 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
         data += passedRowPitch;
     }
 
-    image.reset(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+    image.reset(Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                               flags, 0, surfaceFormat, &imageDesc, pHostPtr, retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(image->getImageDesc().image_row_pitch, imgInfo.rowPitch);
@@ -375,7 +375,7 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
     }
     image.reset(Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -472,7 +472,7 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
     }
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    image.reset(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+    image.reset(Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                               flags, 0, surfaceFormat, &imageDesc, host_ptr, retVal));
 
     depthToCopy = imageDesc.image_depth;
