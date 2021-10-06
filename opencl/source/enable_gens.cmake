@@ -19,12 +19,6 @@ macro(macro_for_each_gen)
     set(GENX_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER})
     # Add default GEN files
 
-    foreach(SRC_IT "state_compute_mode_helper_${GEN_TYPE_LOWER}.cpp")
-      if(EXISTS ${GENX_PREFIX}/${SRC_IT})
-        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${SRC_IT})
-      endif()
-    endforeach()
-
     if(EXISTS "${GENX_PREFIX}/additional_files_${GEN_TYPE_LOWER}.cmake")
       include("${GENX_PREFIX}/additional_files_${GEN_TYPE_LOWER}.cmake")
     endif()
