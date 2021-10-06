@@ -21,7 +21,6 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::bcsEngines;
     using CommandQueue::blitEnqueueAllowed;
     using CommandQueue::blitEnqueueImageAllowed;
-    using CommandQueue::blitEnqueuePreferred;
     using CommandQueue::bufferCpuCopyAllowed;
     using CommandQueue::device;
     using CommandQueue::gpgpuEngine;

@@ -217,6 +217,7 @@ HWTEST_F(EnqueueWriteImageTest, givenDeviceWithBlitterSupportWhenEnqueueWriteIma
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_FULL_BLITTER_OR_SKIP(hwInfo);
     size_t origin[] = {0, 0, 0};
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Image> image(Image2dHelper<>::create(context));

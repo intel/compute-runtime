@@ -1301,11 +1301,44 @@ TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenR
     EXPECT_FALSE(queue.blitEnqueueAllowed(args));
 }
 
-TEST(CommandQueue, givenLocalToLocalCopyBufferCommandWhenCallingBlitEnqueuePreferredThenReturnValueBasedOnDebugFlagAndHwPreference) {
-    const bool preferBlitterHw = ClHwHelper::get(::defaultHwInfo->platform.eRenderCoreFamily).preferBlitterForLocalToLocalTransfers();
+template <bool blitter, bool selectBlitterWithQueueFamilies>
+struct CsrSelectionCommandQueueTests : ::testing::Test {
+    void SetUp() override {
+        HardwareInfo hwInfo = *::defaultHwInfo;
+        hwInfo.capabilityTable.blitterOperationsSupported = blitter;
+        if (blitter) {
+            REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+        }
+
+        device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
+        clDevice = std::make_unique<MockClDevice>(device);
+        context = std::make_unique<MockContext>(clDevice.get());
+
+        cl_command_queue_properties queueProperties[5] = {};
+        if (selectBlitterWithQueueFamilies) {
+            queueProperties[0] = CL_QUEUE_FAMILY_INTEL;
+            queueProperties[1] = device->getIndexOfNonEmptyEngineGroup(EngineGroupType::Copy);
+            queueProperties[2] = CL_QUEUE_INDEX_INTEL;
+            queueProperties[3] = 0;
+        }
+
+        queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
+    }
+
+    MockDevice *device;
+    std::unique_ptr<MockClDevice> clDevice;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<MockCommandQueue> queue;
+};
+
+using CsrSelectionCommandQueueWithoutBlitterTests = CsrSelectionCommandQueueTests<false, false>;
+using CsrSelectionCommandQueueWithBlitterTests = CsrSelectionCommandQueueTests<true, false>;
+using CsrSelectionCommandQueueWithQueueFamiliesBlitterTests = CsrSelectionCommandQueueTests<true, true>;
+
+TEST_F(CsrSelectionCommandQueueWithoutBlitterTests, givenBlitterNotPresentWhenSelectingBlitterThenReturnGpgpuCsr) {
     DebugManagerStateRestore restore{};
-    MockContext context{};
-    MockCommandQueue queue{context};
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
@@ -1313,24 +1346,104 @@ TEST(CommandQueue, givenLocalToLocalCopyBufferCommandWhenCallingBlitEnqueuePrefe
     MockBuffer dstMemObj{dstGraphicsAllocation};
     builtinOpParams.srcMemObj = &srcMemObj;
     builtinOpParams.dstMemObj = &dstMemObj;
+
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
+    }
+}
+
+TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentButDisabledWithDebugFlagWhenSelectingBlitterThenReturnGpgpuCsr) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    builtinOpParams.srcMemObj = &srcMemObj;
+    builtinOpParams.dstMemObj = &dstMemObj;
+
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
+    }
+}
+
+TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndLocalToLocalCopyBufferCommandWhenSelectingBlitterThenReturnValueBasedOnDebugFlagAndHwPreference) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+    const bool hwPreference = ClHwHelper::get(::defaultHwInfo->platform.eRenderCoreFamily).preferBlitterForLocalToLocalTransfers();
+    const auto &hwPreferenceCsr = hwPreference ? *queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS) : queue->getGpgpuCommandStreamReceiver();
+
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    builtinOpParams.srcMemObj = &srcMemObj;
+    builtinOpParams.dstMemObj = &dstMemObj;
+
     srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
     dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
 
     DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
-    EXPECT_EQ(preferBlitterHw, queue.blitEnqueuePreferred(args));
-
+    EXPECT_EQ(&hwPreferenceCsr, &queue->selectCsrForBuiltinOperation(args));
     DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
-    EXPECT_FALSE(queue.blitEnqueuePreferred(args));
-
+    EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
     DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
-    EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+    EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
 }
 
-TEST(CommandQueue, givenNotLocalToLocalCopyBufferCommandWhenCallingBlitEnqueuePreferredThenReturnTrueRegardlessOfDebugFlag) {
+TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndNotLocalToLocalCopyBufferCommandWhenSelectingCsrThenUseBcsRegardlessOfDebugFlag) {
     DebugManagerStateRestore restore{};
-    MockContext context{};
-    MockCommandQueue queue{context};
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+    const auto &bcsCsr = *queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS);
+
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
@@ -1344,35 +1457,125 @@ TEST(CommandQueue, givenNotLocalToLocalCopyBufferCommandWhenCallingBlitEnqueuePr
         dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
     }
-
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
         dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
     }
-
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
         dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
-        EXPECT_TRUE(queue.blitEnqueuePreferred(args));
+        EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
+    }
+}
+
+TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenInvalidTransferDirectionWhenSelectingCsrThenThrowError) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    builtinOpParams.srcMemObj = &srcMemObj;
+    builtinOpParams.dstMemObj = &dstMemObj;
+
+    CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+    args.direction = static_cast<TransferDirection>(0xFF);
+    EXPECT_ANY_THROW(queue->selectCsrForBuiltinOperation(args));
+}
+
+TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelectedWithQueueFamiliesWhenSelectingBlitterThenSelectBlitter) {
+    DebugManagerStateRestore restore{};
+
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    builtinOpParams.srcMemObj = &srcMemObj;
+    builtinOpParams.dstMemObj = &dstMemObj;
+
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
+    }
+}
+
+TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelectedWithQueueFamiliesButDisabledWithDebugFlagWhenSelectingBlitterThenIgnoreDebugFlagAndSelectBlitter) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    builtinOpParams.srcMemObj = &srcMemObj;
+    builtinOpParams.dstMemObj = &dstMemObj;
+
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
     }
 }
 

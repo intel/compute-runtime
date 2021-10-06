@@ -157,16 +157,53 @@ CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
 }
 
 CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const {
-    const bool blitAllowed = blitEnqueueAllowed(args);
-    const bool blitPreferred = blitEnqueuePreferred(args);
-    const bool blitRequired = isCopyOnly;
-    const bool blit = blitAllowed && (blitPreferred || blitRequired);
-
-    if (blit) {
+    if (isCopyOnly) {
         return *getAnyBcs();
-    } else {
+    }
+
+    if (!blitEnqueueAllowed(args)) {
         return getGpgpuCommandStreamReceiver();
     }
+
+    bool preferBcs = true;
+    aub_stream::EngineType preferredBcsEngineType = aub_stream::EngineType::NUM_ENGINES;
+    switch (args.direction) {
+    case TransferDirection::LocalToLocal: {
+        const auto &clHwHelper = ClHwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+        preferBcs = clHwHelper.preferBlitterForLocalToLocalTransfers();
+        if (auto flag = DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get(); flag != -1) {
+            preferBcs = static_cast<bool>(flag);
+        }
+        if (preferBcs) {
+            preferredBcsEngineType = aub_stream::EngineType::ENGINE_BCS;
+        }
+        break;
+    }
+    case TransferDirection::HostToHost:
+    case TransferDirection::HostToLocal:
+    case TransferDirection::LocalToHost: {
+        preferBcs = true;
+        preferredBcsEngineType = EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(),
+                                                                 device->getSelectorCopyEngine(), false);
+        break;
+    }
+    default:
+        UNRECOVERABLE_IF(true);
+    }
+
+    CommandStreamReceiver *selectedCsr = nullptr;
+    if (preferBcs) {
+        selectedCsr = getBcsCommandStreamReceiver(preferredBcsEngineType);
+        if (selectedCsr == nullptr) {
+            selectedCsr = getAnyBcs();
+        }
+    }
+    if (selectedCsr == nullptr) {
+        selectedCsr = &getGpgpuCommandStreamReceiver();
+    }
+
+    UNRECOVERABLE_IF(selectedCsr == nullptr);
+    return *selectedCsr;
 }
 
 Device &CommandQueue::getDevice() const noexcept {
@@ -752,10 +789,6 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
-    if (getAnyBcs() == nullptr) {
-        return false;
-    }
-
     bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
     if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
         blitEnqueueAllowed = DebugManager.flags.EnableBlitterForEnqueueOperations.get();
@@ -787,18 +820,6 @@ bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
     default:
         return false;
     }
-}
-
-bool CommandQueue::blitEnqueuePreferred(const CsrSelectionArgs &args) const {
-    if (args.direction == TransferDirection::LocalToLocal) {
-        if (DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get() != -1) {
-            return static_cast<bool>(DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get());
-        }
-        const auto &clHwHelper = ClHwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-        return clHwHelper.preferBlitterForLocalToLocalTransfers();
-    }
-
-    return true;
 }
 
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {

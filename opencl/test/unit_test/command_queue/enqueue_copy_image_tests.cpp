@@ -218,6 +218,7 @@ HWTEST_F(EnqueueCopyImageTest, givenDeviceWithBlitterSupportWhenEnqueueCopyImage
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_FULL_BLITTER_OR_SKIP(hwInfo);
 
     size_t srcOrigin[] = {0, 0, 0};
     size_t dstOrigin[] = {0, 0, 0};

@@ -368,7 +368,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
     bool blitEnqueueAllowed(const CsrSelectionArgs &args) const;
-    bool blitEnqueuePreferred(const CsrSelectionArgs &args) const;
     MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
