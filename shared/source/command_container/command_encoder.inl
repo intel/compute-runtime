@@ -514,7 +514,7 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
-void EncodeIndirectParams<Family>::encode(CommandContainer &container, void *crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, void *implicitArgsGpuPtr) {
+void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, uint64_t implicitArgsGpuPtr) {
     const auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
     setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, crossThreadDataGpuVa);
     setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, crossThreadDataGpuVa, dispatchInterface->getGroupSize());
@@ -530,19 +530,19 @@ void EncodeIndirectParams<Family>::encode(CommandContainer &container, void *cro
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress) {
+void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress) {
     for (int i = 0; i < 3; ++i) {
         if (NEO::isUndefinedOffset(offsets[i])) {
             continue;
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), GPUGPU_DISPATCHDIM[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), GPUGPU_DISPATCHDIM[i], ptrOffset(crossThreadAddress, offsets[i]));
     }
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset workDimOffset, void *crossThreadAddress, const uint32_t *groupSize) {
+void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset workDimOffset, uint64_t crossThreadAddress, const uint32_t *groupSize) {
     if (NEO::isValidOffset(workDimOffset)) {
-        auto dstPtr = ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), workDimOffset);
+        auto dstPtr = ptrOffset(crossThreadAddress, workDimOffset);
         constexpr uint32_t RESULT_REGISTER = CS_GPR_R0;
         constexpr AluRegisters RESULT_ALU_REGISTER = AluRegisters::R_0;
         const uint32_t offset = static_cast<uint32_t>((1ull << 8 * (dstPtr & 0b11)) - 1);
@@ -650,12 +650,12 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws) {
+void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws) {
     for (int i = 0; i < 3; ++i) {
         if (NEO::isUndefinedOffset(offsets[i])) {
             continue;
         }
-        EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIM[i], lws[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
+        EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIM[i], lws[i], ptrOffset(crossThreadAddress, offsets[i]));
     }
 }
 

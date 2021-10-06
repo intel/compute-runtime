@@ -187,10 +187,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                      crossThreadData, sizeCrossThreadData);
         }
         if (isIndirect) {
-            void *gpuPtr = reinterpret_cast<void *>(heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset));
-            void *implicitArgsGpuPtr = nullptr;
+            auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
+            uint64_t implicitArgsGpuPtr = 0u;
             if (pImplicitArgs) {
-                implicitArgsGpuPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(gpuPtr) + inlineDataProgrammingOffset - sizeof(ImplicitArgs));
+                implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - sizeof(ImplicitArgs);
             }
             EncodeIndirectParams<Family>::encode(container, gpuPtr, dispatchInterface, implicitArgsGpuPtr);
         }

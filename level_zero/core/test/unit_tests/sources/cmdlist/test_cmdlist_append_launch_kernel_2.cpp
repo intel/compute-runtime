@@ -1043,7 +1043,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
         uint32_t groupSize[] = {1, 1, 1};
         auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, false);
         auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x4, nullptr, groupSize);
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x4, 0u, groupSize);
         auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
@@ -1051,7 +1051,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
         uint32_t groupSize[] = {1, 1, 2};
         auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, false);
         auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x4, nullptr, groupSize);
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x4, 0u, groupSize);
         auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
@@ -1059,7 +1059,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
         uint32_t groupSize[] = {1, 1, 1};
         auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, true);
         auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x2, nullptr, groupSize);
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x2, 0u, groupSize);
         auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
@@ -1067,7 +1067,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
         uint32_t groupSize[] = {1, 1, 2};
         auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, true);
         auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x2, nullptr, groupSize);
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x2, 0u, groupSize);
         auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
