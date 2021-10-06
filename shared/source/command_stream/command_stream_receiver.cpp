@@ -668,12 +668,9 @@ bool CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *src
     return (isMemoryEqual == isEqualMemoryExpected);
 }
 
-bool CommandStreamReceiver::needsPageTableManager(EngineUsage engineTypeUsage) const {
+bool CommandStreamReceiver::needsPageTableManager() const {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
-    if (engineTypeUsage != EngineUsage::Regular) {
-        return false;
-    }
     if (pageTableManager.get() != nullptr) {
         return false;
     }

@@ -317,7 +317,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         commandStreamReceiver->initializeDefaultsForInternalEngine();
     }
 
-    if (commandStreamReceiver->needsPageTableManager(engineUsage)) {
+    if (commandStreamReceiver->needsPageTableManager()) {
         commandStreamReceiver->createPageTableManager();
     }
 

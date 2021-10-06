@@ -1506,39 +1506,27 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
 
 using CommandStreamReceiverPageTableManagerTest = ::testing::Test;
 
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonRegularEngineWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
-    auto engineUsage = EngineUsage::Internal;
-    EXPECT_EQ(nullptr, commandStreamReceiver.pageTableManager.get());
-    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(engineUsage));
-}
-
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenRegularEngineTypeAndExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.initializeMemoryManager();
-    DeviceBitfield deviceBitfield(1);
-    MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
-    auto engineUsage = EngineUsage::Regular;
 
     GmmPageTableMngr *dummyPageTableManager = reinterpret_cast<GmmPageTableMngr *>(0x1234);
 
     commandStreamReceiver.pageTableManager.reset(dummyPageTableManager);
-    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(engineUsage));
+    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager());
     commandStreamReceiver.pageTableManager.release();
 }
 
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenRegularEngineAndNonExisitingPageTableManagerWhenNeedsPageTableManagerIsCalledThenSupportOfPageTableManagerIsReturned) {
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonExisitingPageTableManagerWhenNeedsPageTableManagerIsCalledThenSupportOfPageTableManagerIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    auto engineUsage = EngineUsage::Regular;
     bool supportsPageTableManager = HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
     EXPECT_EQ(nullptr, commandStreamReceiver.pageTableManager.get());
 
-    EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager(engineUsage));
+    EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager());
 }
