@@ -194,7 +194,8 @@ ze_result_t WddmFrequencyImp::setOcFrequencyTarget(double currentOcFrequency) {
 
 ze_result_t WddmFrequencyImp::getOcVoltageTarget(double *pCurrentVoltageTarget, double *pCurrentVoltageOffset) {
     ze_result_t status = ZE_RESULT_SUCCESS;
-    uint32_t value = 0;
+    uint32_t unsignedValue = 0;
+    int32_t signedValue = 0;
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
@@ -209,8 +210,8 @@ ze_result_t WddmFrequencyImp::getOcVoltageTarget(double *pCurrentVoltageTarget, 
         return status;
     }
 
-    memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    *pCurrentVoltageTarget = currentVoltageTarget = static_cast<double>(value);
+    memcpy_s(&unsignedValue, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    *pCurrentVoltageTarget = currentVoltageTarget = static_cast<double>(unsignedValue);
 
     request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageOffset;
 
@@ -220,8 +221,8 @@ ze_result_t WddmFrequencyImp::getOcVoltageTarget(double *pCurrentVoltageTarget, 
         return status;
     }
 
-    memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    *pCurrentVoltageOffset = currentVoltageOffset = static_cast<double>(value);
+    memcpy_s(&signedValue, sizeof(int32_t), response.dataBuffer, sizeof(int32_t));
+    *pCurrentVoltageOffset = currentVoltageOffset = static_cast<double>(signedValue);
 
     return status;
 }
