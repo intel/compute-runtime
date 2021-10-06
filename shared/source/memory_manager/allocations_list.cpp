@@ -28,9 +28,9 @@ AllocationsList::AllocationsList()
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, GraphicsAllocation::AllocationType allocationType) {
     ReusableAllocationRequirements req;
     req.requiredMinimalSize = requiredMinimalSize;
-    commandStreamReceiver == nullptr ? req.csrTagAddress = nullptr : req.csrTagAddress = commandStreamReceiver->getTagAddress();
+    req.csrTagAddress = (commandStreamReceiver == nullptr) ? nullptr : commandStreamReceiver->getTagAddress();
     req.allocationType = allocationType;
-    commandStreamReceiver == nullptr ? req.contextId = UINT32_MAX : req.contextId = commandStreamReceiver->getOsContext().getContextId();
+    req.contextId = (commandStreamReceiver == nullptr) ? UINT32_MAX : commandStreamReceiver->getOsContext().getContextId();
     req.requiredPtr = requiredPtr;
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));

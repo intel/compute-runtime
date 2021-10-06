@@ -281,6 +281,7 @@ class CommandStreamReceiver {
     void printDeviceIndex();
     void checkForNewResources(uint32_t submittedTaskCount, uint32_t allocationTaskCount, GraphicsAllocation &gfxAllocation);
     bool checkImplicitFlushForGpuIdle();
+    MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
@@ -297,6 +298,7 @@ class CommandStreamReceiver {
     ResidencyContainer residencyAllocations;
     ResidencyContainer evictionAllocations;
     MutexType ownershipMutex;
+    MutexType hostPtrSurfaceCreationMutex;
     ExecutionEnvironment &executionEnvironment;
 
     LinearStream commandStream;

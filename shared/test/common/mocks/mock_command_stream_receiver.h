@@ -117,6 +117,11 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         makeResidentCalledTimes++;
     }
 
+    std::unique_lock<CommandStreamReceiver::MutexType> obtainHostPtrSurfaceCreationLock() override {
+        ++hostPtrSurfaceCreationMutexLockCount;
+        return CommandStreamReceiver::obtainHostPtrSurfaceCreationLock();
+    }
+
     void postInitFlagsSetup() override {}
 
     std::vector<char> instructionHeapReserveredData;
@@ -131,6 +136,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool callParentGetTagAddress = true;
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;
+    int hostPtrSurfaceCreationMutexLockCount = 0;
 };
 
 template <typename GfxFamily>

@@ -1113,6 +1113,22 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
     EXPECT_EQ(allocationPtr, hostSurfaceAllocationPtr);
 }
 
+TEST_F(CreateAllocationForHostSurfaceTest, whenCreatingAllocationFromHostPtrSurfaceThenLockMutex) {
+    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    size_t size = sizeof(memory);
+    HostPtrSurface surface(const_cast<char *>(memory), size, true);
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&commandStreamReceiver, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
+    commandStreamReceiver.osContext = osContext;
+    EXPECT_EQ(0, commandStreamReceiver.hostPtrSurfaceCreationMutexLockCount);
+    commandStreamReceiver.createAllocationForHostSurface(surface, true);
+    EXPECT_EQ(1, commandStreamReceiver.hostPtrSurfaceCreationMutexLockCount);
+}
+
 TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyAllowedIsCreatedThenCopyAllocationIsCreatedAndMemoryCopied) {
     const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     size_t size = sizeof(memory);
