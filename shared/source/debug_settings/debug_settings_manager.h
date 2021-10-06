@@ -33,12 +33,20 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
         NEO::printDebugString(flag, __VA_ARGS__);
 
 namespace NEO {
+
+template <typename StreamT, typename... Args>
+void flushDebugStream(StreamT stream, Args &&...args) {
+    fflush(stream);
+}
+
 template <typename... Args>
 void printDebugString(bool showDebugLogs, Args &&...args) {
     if (showDebugLogs) {
         fprintf(std::forward<Args>(args)...);
+        flushDebugStream(args...);
     }
 }
+
 #if defined(__clang__)
 #define NO_SANITIZE __attribute__((no_sanitize("undefined")))
 #else
