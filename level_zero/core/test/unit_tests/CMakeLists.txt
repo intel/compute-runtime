@@ -24,7 +24,6 @@ add_executable(${TARGET_NAME}
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.h
                ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
 )
 
 target_sources(${TARGET_NAME} PRIVATE

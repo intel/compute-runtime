@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
 
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"

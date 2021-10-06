@@ -82,7 +82,6 @@ if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
 endif()
 
 target_sources(${TARGET_NAME} PRIVATE
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp

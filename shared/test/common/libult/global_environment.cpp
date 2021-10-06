@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
 
+TestEnvironment *gEnvironment;
 TestEnvironment::TestEnvironment() {
     igcDebugVarStack.reserve(3);
     fclDebugVarStack.reserve(3);

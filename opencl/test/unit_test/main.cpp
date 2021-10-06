@@ -13,6 +13,7 @@
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
@@ -24,7 +25,6 @@
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/ult_config_listener.h"
@@ -62,7 +62,6 @@ bool disabled = false;
 } // namespace NEO
 
 using namespace NEO;
-TestEnvironment *gEnvironment;
 
 PRODUCT_FAMILY productFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
 GFXCORE_FAMILY renderCoreFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eRenderCoreFamily;
