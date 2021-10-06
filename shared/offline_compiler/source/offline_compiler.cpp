@@ -448,7 +448,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         return retVal;
     }
 
-    if (options.find(CompilerOptions::generateDebugInfo.str()) != std::string::npos) {
+    if (CompilerOptions::contains(options, CompilerOptions::generateDebugInfo.str())) {
         if (hwInfo.platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             internalOptions = CompilerOptions::concatenate(internalOptions, CompilerOptions::debugKernelEnable);
         }
