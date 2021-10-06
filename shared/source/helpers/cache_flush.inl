@@ -10,9 +10,6 @@
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/utilities/range.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/source/kernel/kernel.h"
-
 #include "hw_cmds.h"
 
 namespace NEO {

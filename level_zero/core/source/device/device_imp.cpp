@@ -30,8 +30,6 @@
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include "opencl/source/mem_obj/mem_obj.h"
-#include "opencl/source/os_interface/ocl_reg_path.h"
-#include "opencl/source/program/program.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cache/cache_reservation.h"

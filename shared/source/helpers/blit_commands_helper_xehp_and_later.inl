@@ -12,8 +12,6 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper_base.inl"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
-
 namespace NEO {
 
 template <typename GfxFamily>
