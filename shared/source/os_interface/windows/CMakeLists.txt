@@ -19,6 +19,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
     ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_drm_stub.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win.cpp
