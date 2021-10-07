@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -143,12 +144,38 @@ class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
     std::unique_ptr<VariableBackup<UltHwConfig>> backup;
 };
 
+struct MockMemoryInfoImpl : public NEO::MemoryInfo {
+    MockMemoryInfoImpl() {}
+    ~MockMemoryInfoImpl() override{};
+    size_t getMemoryRegionSize(uint32_t memoryBank) override {
+        return 1024u;
+    }
+    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override {
+        if (allocSize == 0) {
+            return EINVAL;
+        }
+        handle = 1u;
+        return 0u;
+    }
+    uint32_t createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+        if (allocSize == 0) {
+            return EINVAL;
+        }
+        handle = 1u;
+        return 0u;
+    }
+};
+
 class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
   public:
     std::unique_ptr<TestedDrmMemoryManager> memoryManager;
     DrmMockCustom *mock;
 
     void SetUp() {
+        SetUp(false);
+    }
+
+    void SetUp(bool enableLocalMem) {
         DebugManager.flags.DeferOsContextInitialization.set(0);
 
         executionEnvironment = new ExecutionEnvironment;
@@ -162,8 +189,9 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
             i++;
         }
         mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
+        mock->memoryInfo.reset(new MockMemoryInfoImpl());
         constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
-        memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
+        memoryManager.reset(new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment));
 
         ASSERT_NE(nullptr, memoryManager);
         if (memoryManager->getgemCloseWorker()) {
@@ -182,5 +210,15 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     DebugManagerStateRestore restore;
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
+};
+
+class DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation : public DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
+  public:
+    void SetUp() {
+        DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::SetUp(true);
+    }
+    void TearDown() {
+        DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::TearDown();
+    }
 };
 } // namespace NEO
