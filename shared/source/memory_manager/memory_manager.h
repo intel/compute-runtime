@@ -219,6 +219,12 @@ class MemoryManager {
         return !force32bitAllocations && hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     }
 
+    virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
+    virtual void createDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
+    void reInitLatestContextId() {
+        latestContextId = std::numeric_limits<uint32_t>::max();
+    }
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
@@ -253,6 +259,7 @@ class MemoryManager {
             memset(cpuPtr, 0, size);
         }
     }
+    void updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex);
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;
@@ -268,6 +275,7 @@ class MemoryManager {
     EngineControlContainer registeredEngines;
     std::unique_ptr<HostPtrManager> hostPtrManager;
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
+    std::map<uint32_t, uint32_t> rootDeviceIndexToContextId; // This map will contain initial value of latestContextId for each rootDeviceIndex
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
     std::vector<std::unique_ptr<GfxPartition>> gfxPartitions;
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> internalLocalMemoryUsageBankSelector;

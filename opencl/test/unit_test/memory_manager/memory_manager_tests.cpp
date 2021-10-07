@@ -675,6 +675,47 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenForce32bitallocationI
     EXPECT_TRUE(memoryManager.peekForce32BitAllocations());
 }
 
+TEST(OsAgnosticMemoryManager, givenMultipleRootDevicesWhenUpdateLatestContextIdForRootDeviceThenRootDeviceIndexToContextIdUpdateProperly) {
+    class TestedOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        using OsAgnosticMemoryManager::latestContextId;
+        using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+        using OsAgnosticMemoryManager::rootDeviceIndexToContextId;
+        using OsAgnosticMemoryManager::updateLatestContextIdForRootDevice;
+    };
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    TestedOsAgnosticMemoryManager memoryManager(executionEnvironment);
+    uint32_t rootDeviceArray[] = {0, 1, 2, 3};
+    for (auto &rootDeviceIndex : rootDeviceArray) {
+        for (int count = 0; count < 10; count++) {
+            memoryManager.updateLatestContextIdForRootDevice(rootDeviceIndex);
+            ++memoryManager.latestContextId;
+        }
+    }
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[0], std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[1], 9u);
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[2], 19u);
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[3], 29u);
+
+    memoryManager.reInitLatestContextId();
+    for (int count = 0; count < 10; count++) {
+        memoryManager.updateLatestContextIdForRootDevice(2);
+        ++memoryManager.latestContextId;
+    }
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[2], 19u);
+}
+
+TEST(OsAgnosticMemoryManager, givenCreateOrReleaseDeviceSpecificMemResourcesWhenCreatingMemoryManagerObjectThenTheseMethodsAreEmpty) {
+    class TestedOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+    };
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    TestedOsAgnosticMemoryManager memoryManager(executionEnvironment);
+    memoryManager.releaseDeviceSpecificMemResources(1);
+    memoryManager.createDeviceSpecificMemResources(1);
+}
+
 class MyOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
   public:
     bool peek32bit() override {

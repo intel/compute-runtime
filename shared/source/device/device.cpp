@@ -47,12 +47,14 @@ Device::~Device() {
     for (auto &engine : engines) {
         engine.commandStreamReceiver->flushBatchedSubmissions();
     }
+    engines.clear();
 
     for (auto subdevice : subdevices) {
         if (subdevice) {
             delete subdevice;
         }
     }
+    subdevices.clear();
 
     syncBufferHandler.reset();
     commandStreamReceivers.clear();

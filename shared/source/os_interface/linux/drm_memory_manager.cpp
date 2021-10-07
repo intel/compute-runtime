@@ -80,7 +80,6 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
     }
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
-        BufferObject *bo = nullptr;
         if (forcePinEnabled || validateHostPtrMemory) {
             auto cpuAddrBo = alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize);
             UNRECOVERABLE_IF(cpuAddrBo == nullptr);
@@ -89,23 +88,33 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
             reinterpret_cast<uint32_t *>(cpuAddrBo)[1] = 0;          // MI_NOOP
             memoryForPinBBs.push_back(cpuAddrBo);
             DEBUG_BREAK_IF(memoryForPinBBs[rootDeviceIndex] == nullptr);
-            bo = allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, 0, rootDeviceIndex);
-            if (bo) {
-                if (isLimitedRange(rootDeviceIndex)) {
-                    bo->gpuAddress = acquireGpuRange(bo->size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
-                }
-            } else {
-                alignedFreeWrapper(memoryForPinBBs[rootDeviceIndex]);
-                memoryForPinBBs[rootDeviceIndex] = nullptr;
-                DEBUG_BREAK_IF(true);
-                UNRECOVERABLE_IF(validateHostPtrMemory);
-            }
         }
-
-        pinBBs.push_back(bo);
+        pinBBs.push_back(createRootDeviceBufferObject(rootDeviceIndex));
     }
 
     initialized = true;
+}
+
+BufferObject *DrmMemoryManager::createRootDeviceBufferObject(uint32_t rootDeviceIndex) {
+    BufferObject *bo = nullptr;
+    if (forcePinEnabled || validateHostPtrMemory) {
+        bo = allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, 0, rootDeviceIndex);
+        if (bo) {
+            if (isLimitedRange(rootDeviceIndex)) {
+                bo->gpuAddress = acquireGpuRange(bo->size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+            }
+        } else {
+            alignedFreeWrapper(memoryForPinBBs[rootDeviceIndex]);
+            memoryForPinBBs[rootDeviceIndex] = nullptr;
+            DEBUG_BREAK_IF(true);
+            UNRECOVERABLE_IF(validateHostPtrMemory);
+        }
+    }
+    return bo;
+}
+
+void DrmMemoryManager::createDeviceSpecificMemResources(uint32_t rootDeviceIndex) {
+    pinBBs[rootDeviceIndex] = createRootDeviceBufferObject(rootDeviceIndex);
 }
 
 DrmMemoryManager::~DrmMemoryManager() {
@@ -116,18 +125,27 @@ DrmMemoryManager::~DrmMemoryManager() {
     }
 }
 
+void DrmMemoryManager::releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) {
+    return releaseBufferObject(rootDeviceIndex);
+}
+
+void DrmMemoryManager::releaseBufferObject(uint32_t rootDeviceIndex) {
+    if (auto bo = pinBBs[rootDeviceIndex]) {
+        if (isLimitedRange(rootDeviceIndex)) {
+            releaseGpuRange(reinterpret_cast<void *>(bo->gpuAddress), bo->size, rootDeviceIndex);
+        }
+        DrmMemoryManager::unreference(bo, true);
+        pinBBs[rootDeviceIndex] = nullptr;
+    }
+}
+
 void DrmMemoryManager::commonCleanup() {
     if (gemCloseWorker) {
         gemCloseWorker->close(false);
     }
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < pinBBs.size(); ++rootDeviceIndex) {
-        if (auto bo = pinBBs[rootDeviceIndex]) {
-            if (isLimitedRange(rootDeviceIndex)) {
-                releaseGpuRange(reinterpret_cast<void *>(bo->gpuAddress), bo->size, rootDeviceIndex);
-            }
-            DrmMemoryManager::unreference(bo, true);
-        }
+        releaseBufferObject(rootDeviceIndex);
     }
     pinBBs.clear();
 }

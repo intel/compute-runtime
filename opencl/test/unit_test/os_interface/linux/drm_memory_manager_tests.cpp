@@ -295,6 +295,36 @@ TEST_F(DrmMemoryManagerTest, WhenMemoryManagerIsCreatedThenPinBbIsCreated) {
     EXPECT_NE(nullptr, memoryManager->pinBBs[rootDeviceIndex]);
 }
 
+TEST_F(DrmMemoryManagerTest, GivenMemoryManagerIsCreatedWhenInvokingReleaseMemResourcesBasedOnGpuDeviceThenPinBbIsRemoved) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    auto drmMemoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    EXPECT_NE(nullptr, drmMemoryManager->pinBBs[rootDeviceIndex]);
+    auto length = drmMemoryManager->pinBBs.size();
+    drmMemoryManager->releaseDeviceSpecificMemResources(rootDeviceIndex);
+    EXPECT_EQ(length, drmMemoryManager->pinBBs.size());
+    EXPECT_EQ(nullptr, drmMemoryManager->pinBBs[rootDeviceIndex]);
+}
+
+TEST_F(DrmMemoryManagerTest, GivenMemoryManagerIsCreatedWhenInvokingCreatMemResourcesBasedOnGpuDeviceThenPinBbIsCreated) {
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.gemClose = 2;
+
+    auto drmMemoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    auto rootDeviceBufferObjectOld = drmMemoryManager->pinBBs[rootDeviceIndex];
+    EXPECT_NE(nullptr, rootDeviceBufferObjectOld);
+    auto length = drmMemoryManager->pinBBs.size();
+    auto memoryManagerTest = static_cast<MemoryManager *>(drmMemoryManager.get());
+    drmMemoryManager->releaseDeviceSpecificMemResources(rootDeviceIndex);
+    EXPECT_EQ(length, drmMemoryManager->pinBBs.size());
+    EXPECT_EQ(nullptr, drmMemoryManager->pinBBs[rootDeviceIndex]);
+
+    memoryManagerTest->createDeviceSpecificMemResources(rootDeviceIndex);
+    EXPECT_EQ(length, drmMemoryManager->pinBBs.size());
+    EXPECT_NE(nullptr, drmMemoryManager->pinBBs[rootDeviceIndex]);
+}
+
 TEST_F(DrmMemoryManagerTest, givenNotAllowedForcePinWhenMemoryManagerIsCreatedThenPinBBIsNotCreated) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
                                                                                                     false,

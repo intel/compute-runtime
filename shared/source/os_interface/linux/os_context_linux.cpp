@@ -102,5 +102,7 @@ OsContextLinux::~OsContextLinux() {
             drm.destroyDrmContext(drmContextId);
         }
     }
+    drmContextIds.clear();
+    drmVmIds.clear();
 }
 } // namespace NEO

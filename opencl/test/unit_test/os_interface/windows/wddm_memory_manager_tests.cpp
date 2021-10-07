@@ -1571,6 +1571,13 @@ TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledW
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
+TEST_F(MockWddmMemoryManagerTest, givenCreateOrReleaseDeviceSpecificMemResourcesWhenCreatingMemoryManagerObjectThenTheseMethodsAreEmpty) {
+    wddm->init();
+    MockWddmMemoryManager memoryManager(*executionEnvironment);
+    memoryManager.createDeviceSpecificMemResources(1);
+    memoryManager.releaseDeviceSpecificMemResources(1);
+}
+
 TEST_F(MockWddmMemoryManagerTest, givenWddmMemoryManagerWhenVerifySharedHandleThenVerifySharedHandleIsCalled) {
     wddm->init();
     MockWddmMemoryManager memoryManager(*executionEnvironment);

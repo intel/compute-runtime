@@ -74,6 +74,7 @@ MemoryManager::~MemoryManager() {
     for (auto &engine : registeredEngines) {
         engine.osContext->decRefInternal();
     }
+    registeredEngines.clear();
     if (reservedMemory) {
         MemoryManager::alignedFreeWrapper(reservedMemory);
     }
@@ -262,11 +263,24 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
     return false;
 }
 
+void MemoryManager::updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex) {
+    // rootDeviceIndexToContextId map would contain the first entry for context for each rootDevice
+    auto entry = rootDeviceIndexToContextId.insert(std::pair<uint32_t, uint32_t>(rootDeviceIndex, latestContextId));
+    if (entry.second == false) {
+        if (latestContextId == std::numeric_limits<uint32_t>::max()) {
+            // If we are here, it means we are reinitializing the contextId.
+            latestContextId = entry.first->second;
+        }
+    }
+}
+
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
                                                      const EngineDescriptor &engineDescriptor) {
+    auto rootDeviceIndex = commandStreamReceiver->getRootDeviceIndex();
+    updateLatestContextIdForRootDevice(rootDeviceIndex);
+
     auto contextId = ++latestContextId;
-    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->osInterface.get(),
-                                       contextId, engineDescriptor);
+    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), contextId, engineDescriptor);
     osContext->incRefInternal();
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);
