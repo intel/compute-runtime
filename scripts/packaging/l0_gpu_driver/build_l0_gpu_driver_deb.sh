@@ -58,9 +58,11 @@ if [ -f "${SHLIBS}" ]; then
     cp $SHLIBS $BUILD_DIR/debian/
 fi
 
-LEVEL_ZERO_DEVEL_VERSION=$(apt-cache policy level-zero-devel | grep Installed | cut -f2- -d ':' | xargs)
+LEVEL_ZERO_DEVEL_NAME=${LEVEL_ZERO_DEVEL_NAME:-level-zero-devel}
+
+LEVEL_ZERO_DEVEL_VERSION=$(apt-cache policy ${LEVEL_ZERO_DEVEL_NAME} | grep Installed | cut -f2- -d ':' | xargs)
 if [ ! -z "${LEVEL_ZERO_DEVEL_VERSION}" ]; then
-    perl -pi -e "s/^ level-zero-devel(?=,|$)/ level-zero-devel (=$LEVEL_ZERO_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    perl -pi -e "s/^ level-zero-devel(?=,|$)/ ${LEVEL_ZERO_DEVEL_NAME} (=$LEVEL_ZERO_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
 fi
 
 if [ -z "${BRANCH_SUFFIX}" ]; then

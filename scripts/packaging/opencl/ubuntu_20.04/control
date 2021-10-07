@@ -13,7 +13,7 @@ Standards-Version: 4.3.0
 Homepage: https://github.com/intel/compute-runtime
 
 Package: intel-opencl-icd
-Architecture: amd64
+Architecture: amd64 arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
