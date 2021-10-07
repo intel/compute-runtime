@@ -70,18 +70,24 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         return memoryAllocation;
     }
 
+    auto alignment = allocationData.alignment;
+    if (allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) {
+        alignment = MemoryConstants::pageSize2Mb;
+        sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize2Mb);
+    }
+
     if (allocationData.type == GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
         sizeAligned *= allocationData.storageInfo.getNumBanks();
     }
 
-    auto ptr = allocateSystemMemory(sizeAligned, allocationData.alignment ? alignUp(allocationData.alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
+    auto ptr = allocateSystemMemory(sizeAligned, alignment ? alignUp(alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
     if (ptr != nullptr) {
         memoryAllocation = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size,
                                                   counter, MemoryPool::System4KBPages, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
 
         if (allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) {
-            //add 2MB padding in case mapPtr is not 2MB aligned
-            size_t reserveSize = sizeAligned + allocationData.alignment;
+            //add  padding in case mapPtr is not aligned
+            size_t reserveSize = sizeAligned + alignment;
             void *gpuPtr = reserveCpuAddressRange(reserveSize, allocationData.rootDeviceIndex);
             if (!gpuPtr) {
                 delete memoryAllocation;
@@ -89,7 +95,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
                 return nullptr;
             }
             memoryAllocation->setReservedAddressRange(gpuPtr, reserveSize);
-            gpuPtr = alignUp(gpuPtr, allocationData.alignment);
+            gpuPtr = alignUp(gpuPtr, alignment);
             memoryAllocation->setCpuPtrAndGpuAddress(ptr, reinterpret_cast<uint64_t>(gpuPtr));
         }
 
@@ -436,7 +442,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         adjustedAllocationData.alignment = MemoryConstants::pageSize64k;
         allocation = static_cast<MemoryAllocation *>(allocate32BitGraphicsMemoryImpl(adjustedAllocationData, true));
     } else if (allocationData.type == GraphicsAllocation::AllocationType::SVM_GPU) {
-        auto storage = allocateSystemMemory(allocationData.size, allocationData.alignment);
+        auto storage = allocateSystemMemory(allocationData.size, MemoryConstants::pageSize2Mb);
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, storage, storage, reinterpret_cast<uint64_t>(allocationData.hostPtr),
                                           allocationData.size, counter, MemoryPool::LocalMemory, false, allocationData.flags.flushL3, maxOsContextCount);
         counter++;

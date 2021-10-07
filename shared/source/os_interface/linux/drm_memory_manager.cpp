@@ -268,7 +268,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     size_t alignedVirtualAdressRangeSize = cSize;
     auto svmCpuAllocation = allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU;
     if (svmCpuAllocation) {
-        //add 2MB padding in case reserved addr is not 2MB aligned
+        //add padding in case reserved addr is not aligned
         alignedStorageSize = alignUp(cSize, cAlignment);
         alignedVirtualAdressRangeSize = alignedStorageSize + cAlignment;
     }
