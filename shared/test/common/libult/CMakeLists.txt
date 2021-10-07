@@ -66,9 +66,12 @@ set(igdrcl_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/abort.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_tbx_sockets.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/debug_settings_reader_creator.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/global_environment.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/global_environment.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/io_functions.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/options_unit_tests.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.h

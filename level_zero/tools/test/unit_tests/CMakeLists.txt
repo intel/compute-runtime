@@ -37,7 +37,6 @@ target_sources(${TARGET_NAME} PRIVATE
 )
 
 target_sources(${TARGET_NAME} PRIVATE
-               ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/io_functions.cpp
                $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
                $<TARGET_OBJECTS:igdrcl_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>

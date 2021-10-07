@@ -82,10 +82,7 @@ if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
 endif()
 
 target_sources(${TARGET_NAME} PRIVATE
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
 )
 
 if(UNIX)
