@@ -306,9 +306,10 @@ void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t erro
     std::string errorString = (errorStringSize && pErrorString) ? std::string(pErrorString, pErrorString + errorStringSize) : "";
     if (errorString[0] != '\0') {
         if (buildLog.empty()) {
-            buildLog.assign(errorString);
+            buildLog.assign(errorString.c_str());
         } else {
-            buildLog.append("\n" + errorString);
+            buildLog.append("\n");
+            buildLog.append(errorString.c_str());
         }
     }
 }

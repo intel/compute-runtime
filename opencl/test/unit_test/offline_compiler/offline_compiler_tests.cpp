@@ -25,6 +25,7 @@
 #include "mock/mock_offline_compiler.h"
 
 #include <algorithm>
+#include <array>
 #include <fstream>
 
 extern Environment *gEnvironment;
@@ -871,7 +872,7 @@ TEST(OfflineCompilerTest, WhenStoringBinaryThenStoredCorrectly) {
     delete[] pDstBinary;
 }
 
-TEST(OfflineCompilerTest, WhenUpdatingBuildLogThenMessageIsAppended) {
+TEST(OfflineCompilerTest, givenErrorStringsWithoutExtraNullCharactersWhenUpdatingBuildLogThenMessageIsCorrect) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
@@ -882,6 +883,26 @@ TEST(OfflineCompilerTest, WhenUpdatingBuildLogThenMessageIsAppended) {
     std::string FinalString = "Build failure";
     mockOfflineCompiler->updateBuildLog(FinalString.c_str(), FinalString.length());
     EXPECT_EQ(0, (ErrorString + "\n" + FinalString).compare(mockOfflineCompiler->getBuildLog().c_str()));
+}
+
+TEST(OfflineCompilerTest, givenErrorStringsWithExtraNullCharactersWhenUpdatingBuildLogThenMessageIsCorrect) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::array<char, sizeof("Error: undefined variable\0")> errorMessageArray = {"Error: undefined variable\0"};
+    std::string expectedBuildLogString = "Error: undefined variable";
+    EXPECT_EQ(errorMessageArray.size(), std::string("Error: undefined variable").length() + 2);
+
+    mockOfflineCompiler->updateBuildLog(errorMessageArray.data(), errorMessageArray.size());
+    EXPECT_EQ(mockOfflineCompiler->getBuildLog(), expectedBuildLogString);
+
+    std::array<char, sizeof("Build failure\0")> additionalErrorMessageArray = {"Build failure\0"};
+    expectedBuildLogString = "Error: undefined variable\n"
+                             "Build failure";
+    EXPECT_EQ(additionalErrorMessageArray.size(), std::string("Build failure").length() + 2);
+
+    mockOfflineCompiler->updateBuildLog(additionalErrorMessageArray.data(), additionalErrorMessageArray.size());
+    EXPECT_EQ(mockOfflineCompiler->getBuildLog(), expectedBuildLogString);
 }
 
 TEST(OfflineCompilerTest, GivenSourceCodeWhenBuildingThenSuccessIsReturned) {
