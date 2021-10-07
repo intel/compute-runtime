@@ -141,10 +141,9 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 }
 
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
-    auto address = tagAddress;
+    auto address = getTagAddress();
     if (address) {
-        while (*address < requiredTaskCount)
-            ;
+        baseWaitFunction(address, false, 0, requiredTaskCount);
     }
     internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
 }
@@ -258,9 +257,6 @@ void CommandStreamReceiver::cleanupResources() {
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
-    std::chrono::high_resolution_clock::time_point time1, time2;
-    int64_t timeDiff = 0;
-
     if (this->latestSentTaskCount < taskCountToWait) {
         this->flushTagUpdate();
     }
@@ -272,7 +268,14 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
         }
     }
 
-    volatile uint32_t *partitionAddress = getTagAddress();
+    return baseWaitFunction(getTagAddress(), enableTimeout, timeoutMicroseconds, taskCountToWait);
+}
+
+bool CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+    std::chrono::high_resolution_clock::time_point time1, time2;
+    int64_t timeDiff = 0;
+
+    volatile uint32_t *partitionAddress = pollAddress;
     time1 = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < activePartitions; i++) {
         while (*partitionAddress < taskCountToWait && timeDiff <= timeoutMicroseconds) {
@@ -289,7 +292,7 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
         partitionAddress = ptrOffset(partitionAddress, CommonConstants::partitionAddressOffset);
     }
 
-    partitionAddress = getTagAddress();
+    partitionAddress = pollAddress;
     for (uint32_t i = 0; i < activePartitions; i++) {
         if (*partitionAddress < taskCountToWait) {
             return false;
@@ -529,7 +532,13 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->setTagAllocation(tagAllocation);
-    *this->tagAddress = DebugManager.flags.EnableNullHardware.get() ? -1 : initialHardwareTag;
+    auto initValue = DebugManager.flags.EnableNullHardware.get() ? static_cast<uint32_t>(-1) : initialHardwareTag;
+    auto tagAddress = this->tagAddress;
+    uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
+    for (uint32_t i = 0; i < subDevices; i++) {
+        *tagAddress = initValue;
+        tagAddress = ptrOffset(tagAddress, CommonConstants::partitionAddressOffset);
+    }
     *this->debugPauseStateAddress = DebugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 
     PRINT_DEBUG_STRING(DebugManager.flags.PrintTagAllocationAddress.get(), stdout,

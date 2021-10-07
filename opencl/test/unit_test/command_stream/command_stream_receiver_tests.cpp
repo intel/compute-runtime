@@ -790,7 +790,8 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    DeviceBitfield devices(0b11);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
     EXPECT_TRUE(csr->getTagAddress() == nullptr);
@@ -798,12 +799,17 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
     EXPECT_TRUE(csr->getTagAddress() != nullptr);
-    EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
+    auto tagAddress = csr->getTagAddress();
+    for (uint32_t i = 0; i < 2; i++) {
+        EXPECT_EQ(*tagAddress, initialHardwareTag);
+        tagAddress = ptrOffset(tagAddress, 8);
+    }
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledInMultiRootDeviceEnvironmentThenTagAllocationIsBeingAllocated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 10u);
-    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    DeviceBitfield devices(0b1111);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
 
     EXPECT_EQ(nullptr, csr->getTagAllocation());
@@ -814,7 +820,11 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
     EXPECT_TRUE(csr->getTagAddress() != nullptr);
-    EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
+    auto tagAddress = csr->getTagAddress();
+    for (uint32_t i = 0; i < 4; i++) {
+        EXPECT_EQ(*tagAddress, initialHardwareTag);
+        tagAddress = ptrOffset(tagAddress, 8);
+    }
 
     auto tagsMultiAllocation = csr->getTagsMultiAllocation();
     auto graphicsAllocation0 = tagsMultiAllocation->getGraphicsAllocation(0);
@@ -1008,7 +1018,7 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckDisabledWhen
     csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = false;
-    csr.mockTagAddress = 1u;
+    csr.mockTagAddress[0] = 1u;
     csr.taskCount = 1u;
     EXPECT_FALSE(csr.checkImplicitFlushForGpuIdle());
 }
@@ -1022,7 +1032,7 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckEnabledWhenG
     csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = true;
-    csr.mockTagAddress = 1u;
+    csr.mockTagAddress[0] = 1u;
     csr.taskCount = 1u;
     EXPECT_TRUE(csr.checkImplicitFlushForGpuIdle());
 }
@@ -1036,11 +1046,47 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuNotIdleImplicitFlushCheckEnabledWh
     csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = true;
-    csr.mockTagAddress = 1u;
+    csr.mockTagAddress[0] = 1u;
     csr.taskCount = 2u;
     EXPECT_FALSE(csr.checkImplicitFlushForGpuIdle());
 
-    csr.mockTagAddress = 2u;
+    csr.mockTagAddress[0] = 2u;
+}
+
+namespace CpuIntrinsicsTests {
+extern std::atomic<uint32_t> pauseCounter;
+extern volatile uint32_t *pauseAddress;
+extern uint32_t pauseValue;
+extern uint32_t pauseOffset;
+} // namespace CpuIntrinsicsTests
+
+TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingForTaskCountForCleaningTemporaryAllocationsThenExpectAllPartitionTaskCountsAreChecked) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(0b11);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.callParentGetTagAddress = false;
+
+    csr.mockTagAddress[0] = 0u;
+    csr.mockTagAddress[2] = 0u;
+    csr.taskCount = 3u;
+    csr.activePartitions = 2;
+
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
+
+    CpuIntrinsicsTests::pauseAddress = &csr.mockTagAddress[0];
+    CpuIntrinsicsTests::pauseValue = 3u;
+    CpuIntrinsicsTests::pauseOffset = 8;
+
+    CpuIntrinsicsTests::pauseCounter = 0;
+    csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
+    EXPECT_EQ(1u, csr.baseWaitFunctionCalled);
+    EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
+
+    CpuIntrinsicsTests::pauseAddress = nullptr;
 }
 
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {

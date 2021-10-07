@@ -26,6 +26,7 @@ using namespace NEO;
 class MockCommandStreamReceiver : public CommandStreamReceiver {
   public:
     using CommandStreamReceiver::activePartitions;
+    using CommandStreamReceiver::baseWaitFunction;
     using CommandStreamReceiver::checkForNewResources;
     using CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using CommandStreamReceiver::CommandStreamReceiver;
@@ -102,7 +103,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         if (callParentGetTagAddress) {
             return CommandStreamReceiver::getTagAddress();
         }
-        return const_cast<volatile uint32_t *>(&mockTagAddress);
+        return const_cast<volatile uint32_t *>(&mockTagAddress[0]);
     }
 
     bool createPreemptionAllocation() override {
@@ -124,11 +125,18 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     void postInitFlagsSetup() override {}
 
+    bool baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
+        baseWaitFunctionCalled++;
+        return CommandStreamReceiver::baseWaitFunction(pollAddress, enableTimeout, timeoutMicroseconds, taskCountToWait);
+    }
+
+    uint32_t mockTagAddress[8] = {};
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
-    uint32_t mockTagAddress = 0;
     uint32_t makeResidentCalledTimes = 0;
+    int hostPtrSurfaceCreationMutexLockCount = 0;
+    uint32_t baseWaitFunctionCalled = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
     bool downloadAllocationsCalled = false;
@@ -136,7 +144,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool callParentGetTagAddress = true;
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;
-    int hostPtrSurfaceCreationMutexLockCount = 0;
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {
