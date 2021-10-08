@@ -585,6 +585,15 @@ ze_result_t MetricGroupImp::closeIoStream() {
 ze_result_t MetricGroupImp::calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                                   const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                                   zet_typed_value_t *pMetricValues) {
+
+    const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
+    if (pRawHeader->magic == MetricGroupCalculateHeader::magicValue) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                              "INFO: The call is not supported for multiple devices\n"
+                              "INFO: Please use zetMetricGroupCalculateMultipleMetricValuesExp instead\n");
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     const bool calculateCountOnly = *pMetricValueCount == 0;
     const bool result = calculateCountOnly
                             ? getCalculatedMetricCount(rawDataSize, *pMetricValueCount)
