@@ -138,6 +138,19 @@ struct AuxBuiltinsMatcher {
     }
 };
 
+HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinThenResourceSizeIsNonZero, MatchAny) {
+    class MockBuiltinsLib : BuiltinsLib {
+      public:
+        BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
+            return BuiltinsLib::getBuiltinResource(builtin, requestedCodeType, device);
+        }
+    };
+    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+
+    EXPECT_EQ(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported,
+              mockBuiltinsLib->getBuiltinResource(EBuiltInOps::AuxTranslation, BuiltinCode::ECodeType::Binary, *pDevice).size() != 0);
+}
+
 INSTANTIATE_TEST_CASE_P(,
                         AuxBuiltInTests,
                         testing::ValuesIn({KernelObjForAuxTranslation::Type::MEM_OBJ, KernelObjForAuxTranslation::Type::GFX_ALLOC}));
@@ -1430,7 +1443,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuilt
         }
     };
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::AuxTranslation, BuiltinCode::ECodeType::Binary, *pDevice).size());
+
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferRect, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());

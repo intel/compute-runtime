@@ -10,7 +10,8 @@
 
 template <>
 struct TestTraits<IGFX_GEN11_CORE> {
-    static constexpr bool auxBuiltinsSupported = true;
+    static constexpr bool auxBuiltinsSupported = false;
     static constexpr bool programOnlyChangedFieldsInComputeStateMode = true;
     static constexpr bool iohInSbaSupported = true;
+    static constexpr bool auxTranslationSupported = false;
 };
