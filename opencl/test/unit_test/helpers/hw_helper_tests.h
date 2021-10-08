@@ -18,8 +18,6 @@ using namespace NEO;
 
 using HwHelperTest = Test<ClDeviceFixture>;
 
-void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo);
-
 struct ComputeSlmTestInput {
     uint32_t expected;
     uint32_t slmSize;

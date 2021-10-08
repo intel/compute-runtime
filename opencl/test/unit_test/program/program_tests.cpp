@@ -2210,13 +2210,11 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
     }
 }
 
-TEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimizationIsMatchingThePlatformEnablingStatus) {
+HWTEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimizationIsMatchingThePlatformEnablingStatus) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInitInternalOptions();
 
-    HardwareCapabilities hwCaps = {0};
-    HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily).setupHardwareCapabilities(&hwCaps, pDevice->getHardwareInfo());
-    if (hwCaps.isStatelesToStatefullWithOffsetSupported) {
+    if (HwHelperHw<FamilyType>::get().isStatelesToStatefullWithOffsetSupported()) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));
     } else {
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));

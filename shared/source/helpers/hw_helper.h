@@ -32,7 +32,6 @@ class Gmm;
 struct AllocationData;
 struct AllocationProperties;
 struct EngineControl;
-struct HardwareCapabilities;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
 
@@ -49,7 +48,6 @@ class HwHelper {
     virtual uint32_t getPitchAlignmentForImage(const HardwareInfo *hwInfo) const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
-    virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
@@ -147,6 +145,9 @@ class HwHelper {
 
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
     virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const = 0;
+    virtual size_t getMax3dImageWidthOrHeight() const = 0;
+    virtual uint64_t getMaxMemAllocSize() const = 0;
+    virtual bool isStatelesToStatefullWithOffsetSupported() const = 0;
 
   protected:
     HwHelper() = default;
@@ -212,8 +213,6 @@ class HwHelperHw : public HwHelper {
     uint32_t getMaxNumSamplers() const override;
 
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
-
-    void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) override;
 
     bool isL3Configurable(const HardwareInfo &hwInfo) override;
 
@@ -369,6 +368,10 @@ class HwHelperHw : public HwHelper {
 
     bool isScratchSpaceSurfaceStateAccessible() const override;
     uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const override;
+
+    size_t getMax3dImageWidthOrHeight() const override;
+    uint64_t getMaxMemAllocSize() const override;
+    bool isStatelesToStatefullWithOffsetSupported() const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

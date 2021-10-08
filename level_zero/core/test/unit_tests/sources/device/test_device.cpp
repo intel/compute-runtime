@@ -810,12 +810,11 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     deviceProperties.maxMemAllocSize = 0;
     device->getProperties(&deviceProperties);
     EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
-    HardwareCapabilities hwCaps = {0};
+
     auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&hwCaps, *defaultHwInfo);
     auto expectedSize = this->neoDevice->getDeviceInfo().globalMemSize;
     if (!this->neoDevice->getDeviceInfo().sharedSystemAllocationsSupport) {
-        expectedSize = std::min(expectedSize, hwCaps.maxMemAllocSize);
+        expectedSize = std::min(expectedSize, hwHelper.getMaxMemAllocSize());
     }
     EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
 }

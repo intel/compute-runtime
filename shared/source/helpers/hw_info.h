@@ -68,13 +68,6 @@ struct RuntimeCapabilityTable {
     bool fusedEuEnabled;
 };
 
-struct HardwareCapabilities {
-    size_t image3DMaxWidth;
-    size_t image3DMaxHeight;
-    uint64_t maxMemAllocSize;
-    bool isStatelesToStatefullWithOffsetSupported;
-};
-
 struct HardwareInfo {
     HardwareInfo() = default;
     HardwareInfo(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable,

@@ -31,13 +31,6 @@ GEN11TEST_F(HwHelperTestGen11, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN11TEST_F(HwHelperTestGen11, givenGen11PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    // Test default method implementation
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
-}
-
 GEN11TEST_F(HwHelperTestGen11, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->engines.size());

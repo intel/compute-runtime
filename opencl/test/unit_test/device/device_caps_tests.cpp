@@ -504,18 +504,14 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     EXPECT_EQ(sharedCaps.globalMemSize, expectedSize);
 }
 
-TEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSupportedWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
+HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSupportedWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getSharedDeviceInfo();
 
-    HardwareCapabilities hwCaps = {0};
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&hwCaps, *defaultHwInfo);
-
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
-    expectedSize = std::min(expectedSize, hwCaps.maxMemAllocSize);
+    expectedSize = std::min(expectedSize, HwHelperHw<FamilyType>::get().getMaxMemAllocSize());
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }
 

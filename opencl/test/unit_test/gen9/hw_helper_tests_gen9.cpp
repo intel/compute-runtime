@@ -36,13 +36,6 @@ GEN9TEST_F(HwHelperTestGen9, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) 
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN9TEST_F(HwHelperTestGen9, givenGen9PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    // Test default method implementation
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
-}
-
 GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenDbgCsrLocalTypeIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
 

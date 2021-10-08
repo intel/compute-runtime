@@ -57,18 +57,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, GiveCcsNodeThenDefaultEng
     EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenSetupHardwareCapabilitiesIsCalledThenThenSpecificImplementationIsUsed) {
-    hardwareInfo.featureTable.ftrLocalMemory = true;
-
-    HardwareCapabilities hwCaps = {0};
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.setupHardwareCapabilities(&hwCaps, hardwareInfo);
-
-    EXPECT_EQ(16384u, hwCaps.image3DMaxHeight);
-    EXPECT_EQ(16384u, hwCaps.image3DMaxWidth);
-    EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWithLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
     hardwareInfo.featureTable.ftrLocalMemory = true;
 

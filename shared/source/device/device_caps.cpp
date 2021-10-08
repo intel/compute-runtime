@@ -74,7 +74,7 @@ void Device::initializeCaps() {
 
     if (!deviceInfo.sharedSystemAllocationsSupport) {
         deviceInfo.maxMemAllocSize = ApiSpecificConfig::getReducedMaxAllocSize(deviceInfo.maxMemAllocSize);
-        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
+        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, hwHelper.getMaxMemAllocSize());
     }
 
     // Some specific driver model configurations may impose additional limitations

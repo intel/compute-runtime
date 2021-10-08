@@ -34,17 +34,6 @@ GEN8TEST_F(HwHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) 
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN8TEST_F(HwHelperTestGen8, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCalledThenSpecificImplementationIsUsed) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    HardwareCapabilities hwCaps = {0};
-    helper.setupHardwareCapabilities(&hwCaps, hardwareInfo);
-
-    EXPECT_EQ(2048u, hwCaps.image3DMaxHeight);
-    EXPECT_EQ(2048u, hwCaps.image3DMaxWidth);
-    EXPECT_EQ(2 * MemoryConstants::gigaByte - 8 * MemoryConstants::megaByte, hwCaps.maxMemAllocSize);
-    EXPECT_FALSE(hwCaps.isStatelesToStatefullWithOffsetSupported);
-}
-
 GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->engines.size());

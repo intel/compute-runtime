@@ -42,11 +42,18 @@ size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
 }
 
 template <>
-void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
-    caps->image3DMaxHeight = 2048;
-    caps->image3DMaxWidth = 2048;
-    caps->maxMemAllocSize = 2 * MemoryConstants::gigaByte - 8 * MemoryConstants::megaByte;
-    caps->isStatelesToStatefullWithOffsetSupported = false;
+size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
+    return 2048;
+}
+
+template <>
+uint64_t HwHelperHw<Family>::getMaxMemAllocSize() const {
+    return (2 * MemoryConstants::gigaByte) - (8 * MemoryConstants::kiloByte);
+}
+
+template <>
+bool HwHelperHw<Family>::isStatelesToStatefullWithOffsetSupported() const {
+    return false;
 }
 
 template <>

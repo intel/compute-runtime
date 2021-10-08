@@ -88,7 +88,6 @@ class Device : public ReferenceTrackedObject<Device> {
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
     RootDeviceEnvironment &getRootDeviceEnvironmentRef() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
-    const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
     bool isFullRangeSvm() const {
         return getRootDeviceEnvironment().isFullRangeSvm();
     }
@@ -161,7 +160,6 @@ class Device : public ReferenceTrackedObject<Device> {
 
     DeviceInfo deviceInfo = {};
 
-    HardwareCapabilities hardwareCapabilities = {};
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;

@@ -38,13 +38,20 @@ bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t s
 }
 
 template <typename Family>
-void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
-    caps->image3DMaxHeight = 16384;
-    caps->image3DMaxWidth = 16384;
+size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
+    return 16384;
+}
+
+template <typename Family>
+uint64_t HwHelperHw<Family>::getMaxMemAllocSize() const {
     //With statefull messages we have an allocation cap of 4GB
     //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
-    caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
-    caps->isStatelesToStatefullWithOffsetSupported = true;
+    return (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
+}
+
+template <typename Family>
+bool HwHelperHw<Family>::isStatelesToStatefullWithOffsetSupported() const {
+    return true;
 }
 
 template <typename Family>

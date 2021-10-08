@@ -162,7 +162,6 @@ Debugger *ClDevice::getDebugger() { return device.getDebugger(); }
 SourceLevelDebugger *ClDevice::getSourceLevelDebugger() { return device.getSourceLevelDebugger(); }
 ExecutionEnvironment *ClDevice::getExecutionEnvironment() const { return device.getExecutionEnvironment(); }
 const RootDeviceEnvironment &ClDevice::getRootDeviceEnvironment() const { return device.getRootDeviceEnvironment(); }
-const HardwareCapabilities &ClDevice::getHardwareCapabilities() const { return device.getHardwareCapabilities(); }
 bool ClDevice::isFullRangeSvm() const { return device.isFullRangeSvm(); }
 bool ClDevice::areSharedSystemAllocationsAllowed() const { return device.areSharedSystemAllocationsAllowed(); }
 uint32_t ClDevice::getRootDeviceIndex() const { return device.getRootDeviceIndex(); }

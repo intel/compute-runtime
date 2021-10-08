@@ -14,18 +14,6 @@
 
 using HwHelperTestDg1 = HwHelperTest;
 
-DG1TEST_F(HwHelperTestDg1, givenDg1PlatformWhenSetupHardwareCapabilitiesIsCalledThenThenSpecificImplementationIsUsed) {
-    hardwareInfo.featureTable.ftrLocalMemory = true;
-
-    HardwareCapabilities hwCaps = {0};
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.setupHardwareCapabilities(&hwCaps, hardwareInfo);
-
-    EXPECT_EQ(2048u, hwCaps.image3DMaxHeight);
-    EXPECT_EQ(2048u, hwCaps.image3DMaxWidth);
-    EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
-}
-
 DG1TEST_F(HwHelperTestDg1, givenDg1A0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);

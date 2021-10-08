@@ -83,7 +83,7 @@ void Program::initInternalOptions(std::string &internalOptions) const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 
-    auto enableStatelessToStatefullWithOffset = pClDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
+    auto enableStatelessToStatefullWithOffset = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily).isStatelesToStatefullWithOffsetSupported();
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
