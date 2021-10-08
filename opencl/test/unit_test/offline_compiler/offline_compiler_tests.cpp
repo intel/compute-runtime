@@ -370,25 +370,6 @@ TEST_F(OfflineCompilerTests, givenDebugOptionThenInternalOptionShouldContainKern
     EXPECT_THAT(internalOptions, ::testing::HasSubstr("-cl-kernel-debug-enable"));
 }
 
-TEST_F(OfflineCompilerTests, givenDashGInBiggerOptionStringWhenInitializingThenInternalOptionsShouldNotContainKernelDebugEnable) {
-
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-options",
-        "-gNotRealDashGOption",
-        "-file",
-        "test_files/copybuffer.cl",
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
-
-    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
-    mockOfflineCompiler->initialize(argv.size(), argv);
-
-    std::string internalOptions = mockOfflineCompiler->internalOptions;
-    EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr("-cl-kernel-debug-enable")));
-}
-
 TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorrectExtensionsArePassed) {
     std::string clStdOptionValues[] = {"", "-cl-std=CL1.2", "-cl-std=CL2.0", "-cl-std=CL3.0"};
 
