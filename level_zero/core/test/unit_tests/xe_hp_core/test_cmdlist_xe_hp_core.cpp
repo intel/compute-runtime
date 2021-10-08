@@ -232,8 +232,8 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithTimestampEventAnd
         cmdList, ptrOffset(pCommandList->commandContainer.getCommandStream()->getCpuBase(), 0), pCommandList->commandContainer.getCommandStream()->getUsed()));
 
     EXPECT_LT(1u, pCommandList->partitionCount);
-    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorLri);
+    auto itorLri = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_LE(2u, itorLri.size());
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
     uint32_t postSyncCount = 0u;

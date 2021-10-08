@@ -146,6 +146,13 @@ void programEventL3Flush(ze_event_handle_t hEvent,
         eventAddress, Event::STATE_SIGNALED,
         commandContainer.getDevice()->getHardwareInfo(),
         args);
+
+    if (partitionCount > 1) {
+        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(),
+                                                 NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                                 CommonConstants::partitionAddressOffset,
+                                                 true);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
