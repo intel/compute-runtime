@@ -386,6 +386,50 @@ TEST(DebugSession, givenApiThreadAndSingleTileWhenFillingDevicesThenVectorEntryI
     EXPECT_EQ(1u, devices[0]);
 }
 
+TEST(DebugSession, givenDifferentCombinationsOfThreadsAndMemoryTypeCheckExpectedMemoryAccess) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x1000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    ze_result_t retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread = {1, 1, UINT32_MAX, UINT32_MAX};
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread = {0, 0, 0, 1};
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        sessionMock->allThreads[thread]->stopThread(1u);
+    }
+
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+}
+
 using DebugSessionMultiTile = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(DebugSessionMultiTile, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValueReturned) {
