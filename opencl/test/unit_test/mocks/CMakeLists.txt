@@ -29,8 +29,7 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_ocl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_internal_allocation_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp

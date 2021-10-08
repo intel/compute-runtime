@@ -40,11 +40,11 @@ add_library(compute_runtime_mockable_extra
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_deferred_deleter.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_device.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context_base.cpp
+            ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_resource_info_common.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_sip.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_resource_info.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
             ${NEO_SHARED_DIRECTORY}/debug_settings/debug_settings_manager.cpp
 )
@@ -86,7 +86,8 @@ endif()
 if(UNIX)
   target_sources(compute_runtime_mockable_extra
                  PRIVATE
-                 ${NEO_SOURCE_DIR}/opencl/source/dll/linux/allocator_helper.cpp
+                 ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info_impl.cpp
+                 ${NEO_SHARED_DIRECTORY}/gmm_helper${BRANCH_DIR_SUFFIX}resource_info_${DRIVER_MODEL}.cpp
                  ${NEO_SHARED_DIRECTORY}/tbx/tbx_sockets_imp.cpp
   )
   target_link_libraries(compute_runtime_mockable_extra

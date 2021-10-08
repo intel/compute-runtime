@@ -61,6 +61,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_deferred_deleter.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_device.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context_base.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_resource_info_common.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_sip.cpp
                ${NEO_SHARED_DIRECTORY}/debug_settings/debug_settings_manager.cpp
                ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface.cpp
@@ -97,7 +98,6 @@ if(UNIX)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/allocator_helper.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
   )
 else()

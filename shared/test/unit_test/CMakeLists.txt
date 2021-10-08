@@ -97,6 +97,7 @@ if(NOT SKIP_UNIT_TESTS)
   endif()
 
   add_subdirectory(${NEO_SHARED_TEST_DIRECTORY}/common "${NEO_BUILD_DIR}/shared/test/common")
+  add_subdirectory_unique(mocks)
 
   if(NOT SKIP_SHARED_UNIT_TESTS)
     add_subdirectories()

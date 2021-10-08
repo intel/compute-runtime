@@ -19,4 +19,8 @@ std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvir
     }
     return DrmMemoryManager::create(executionEnvironment);
 }
+size_t getSizeToReserve() {
+    // 4 x sizeof(Heap32) + 2 x sizeof(Standard/Standard64k)
+    return (4 * 4 + 2 * 4) * GB;
+}
 } // namespace NEO

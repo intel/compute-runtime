@@ -16,4 +16,7 @@ std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvir
         return std::make_unique<WddmMemoryManager>(executionEnvironment);
     }
 }
+size_t getSizeToReserve() {
+    return (maxNBitValue(47) + 1) / 4;
+}
 } // namespace NEO

@@ -11,4 +11,8 @@ namespace NEO {
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel) {
     return DrmMemoryManager::create(executionEnvironment);
 }
+
+size_t getSizeToReserve() {
+    return (maxNBitValue(47) + 1) / 4;
+}
 } // namespace NEO
