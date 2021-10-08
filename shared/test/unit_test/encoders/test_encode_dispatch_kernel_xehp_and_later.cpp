@@ -916,6 +916,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -979,6 +981,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1070,6 +1073,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

@@ -27,6 +27,7 @@ if(NOT SKIP_UNIT_TESTS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/ult_specific_config.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
                  ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/api_specific_config_shared_tests.cpp
