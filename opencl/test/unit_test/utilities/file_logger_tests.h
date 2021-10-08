@@ -12,6 +12,8 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/logger.h"
 
+#include "opencl/source/utilities/cl_logger.h"
+
 #include <map>
 
 template <DebugFunctionalityLevel DebugLevel>
@@ -57,6 +59,9 @@ class TestFileLogger : public NEO::FileLogger<DebugLevel> {
 
 using FullyEnabledFileLogger = TestFileLogger<DebugFunctionalityLevel::Full>;
 using FullyDisabledFileLogger = TestFileLogger<DebugFunctionalityLevel::None>;
+
+using FullyEnabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::Full>;
+using FullyDisabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::None>;
 
 template <bool DebugFunctionality>
 class TestLoggerApiEnterWrapper : public NEO::LoggerApiEnterWrapper<DebugFunctionality> {

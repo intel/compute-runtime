@@ -10,12 +10,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/timestamp_packet.h"
 
-#include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/event/event.h"
-#include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/source/kernel/kernel.h"
-#include "opencl/source/mem_obj/mem_obj.h"
-
 #include <memory>
 #include <string>
 
@@ -32,7 +26,6 @@ FileLogger<DebugLevel>::FileLogger(std::string filename, const DebugVariables &f
     std::remove(logFileName.c_str());
 
     dumpKernels = flags.DumpKernels.get();
-    dumpKernelArgsEnabled = flags.DumpKernelArgs.get();
     logApiCalls = flags.LogApiCalls.get();
     logAllocationMemoryPool = flags.LogAllocationMemoryPool.get();
     logAllocationType = flags.LogAllocationType.get();
@@ -43,6 +36,7 @@ FileLogger<DebugLevel>::~FileLogger() = default;
 
 template <DebugFunctionalityLevel DebugLevel>
 void FileLogger<DebugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {
+    std::unique_lock<std::mutex> theLock(mtx);
     std::ofstream outFile(filename, mode);
     if (outFile.is_open()) {
         outFile.write(str, length);
@@ -69,7 +63,6 @@ void FileLogger<DebugLevel>::logApiCall(const char *function, bool enter, int32_
     }
 
     if (logApiCalls) {
-        std::unique_lock<std::mutex> theLock(mtx);
         std::thread::id thisThread = std::this_thread::get_id();
 
         std::stringstream ss;
@@ -110,7 +103,6 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
 
         auto str = ss.str();
 
-        std::unique_lock<std::mutex> theLock(mtx);
         writeToFile(logFileName, str.c_str(), str.size(), std::ios::app);
     }
 }
@@ -123,38 +115,6 @@ size_t FileLogger<DebugLevel>::getInput(const size_t *input, int32_t index) {
 }
 
 template <DebugFunctionalityLevel DebugLevel>
-const std::string FileLogger<DebugLevel>::getEvents(const uintptr_t *input, uint32_t numOfEvents) {
-    if (false == enabled()) {
-        return "";
-    }
-
-    std::stringstream os;
-    for (uint32_t i = 0; i < numOfEvents; i++) {
-        if (input != nullptr) {
-            cl_event event = ((cl_event *)input)[i];
-            os << "cl_event " << event << ", Event " << (Event *)event << ", ";
-        }
-    }
-    return os.str();
-}
-
-template <DebugFunctionalityLevel DebugLevel>
-const std::string FileLogger<DebugLevel>::getMemObjects(const uintptr_t *input, uint32_t numOfObjects) {
-    if (false == enabled()) {
-        return "";
-    }
-
-    std::stringstream os;
-    for (uint32_t i = 0; i < numOfObjects; i++) {
-        if (input != nullptr) {
-            cl_mem mem = const_cast<cl_mem>(reinterpret_cast<const cl_mem *>(input)[i]);
-            os << "cl_mem " << mem << ", MemObj " << static_cast<MemObj *>(mem) << ", ";
-        }
-    }
-    return os.str();
-}
-
-template <DebugFunctionalityLevel DebugLevel>
 void FileLogger<DebugLevel>::dumpBinaryProgram(int32_t numDevices, const size_t *lengths, const unsigned char **binaries) {
     if (false == enabled()) {
         return;
@@ -163,90 +123,8 @@ void FileLogger<DebugLevel>::dumpBinaryProgram(int32_t numDevices, const size_t 
     if (dumpKernels) {
         if (lengths != nullptr && binaries != nullptr &&
             lengths[0] != 0 && binaries[0] != nullptr) {
-            std::unique_lock<std::mutex> theLock(mtx);
             writeToFile("programBinary.bin", reinterpret_cast<const char *>(binaries[0]), lengths[0], std::ios::trunc | std::ios::binary);
         }
-    }
-}
-
-template <DebugFunctionalityLevel DebugLevel>
-void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
-    if (false == enabled()) {
-        return;
-    }
-    if (dumpKernelArgsEnabled && kernel != nullptr) {
-        std::unique_lock<std::mutex> theLock(mtx);
-        std::ofstream outFile;
-        const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
-        const auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
-        for (unsigned int i = 0; i < explicitArgs.size(); i++) {
-            std::string type;
-            std::string fileName;
-            const char *ptr = nullptr;
-            size_t size = 0;
-            uint64_t flags = 0;
-            std::unique_ptr<char[]> argVal = nullptr;
-
-            const auto &arg = explicitArgs[i];
-            if (arg.getTraits().getAddressQualifier() == KernelArgMetadata::AddrLocal) {
-                type = "local";
-            } else if (arg.is<ArgDescriptor::ArgTImage>()) {
-                type = "image";
-                auto clMem = (const cl_mem)kernel->getKernelArg(i);
-                auto memObj = castToObject<MemObj>(clMem);
-                if (memObj != nullptr) {
-                    ptr = static_cast<char *>(memObj->getCpuAddress());
-                    size = memObj->getSize();
-                    flags = memObj->getFlags();
-                }
-            } else if (arg.is<ArgDescriptor::ArgTSampler>()) {
-                type = "sampler";
-            } else if (arg.is<ArgDescriptor::ArgTPointer>()) {
-                type = "buffer";
-                auto clMem = (const cl_mem)kernel->getKernelArg(i);
-                auto memObj = castToObject<MemObj>(clMem);
-                if (memObj != nullptr) {
-                    ptr = static_cast<char *>(memObj->getCpuAddress());
-                    size = memObj->getSize();
-                    flags = memObj->getFlags();
-                }
-            } else {
-                type = "immediate";
-                auto crossThreadData = kernel->getCrossThreadData();
-                auto crossThreadDataSize = kernel->getCrossThreadDataSize();
-                argVal = std::unique_ptr<char[]>(new char[crossThreadDataSize]);
-
-                size_t totalArgSize = 0;
-                for (const auto &element : arg.as<ArgDescValue>().elements) {
-                    auto pSource = ptrOffset(crossThreadData, element.offset);
-                    auto pDestination = ptrOffset(argVal.get(), element.sourceOffset);
-                    memcpy_s(pDestination, element.size, pSource, element.size);
-                    totalArgSize += element.size;
-                }
-                size = totalArgSize;
-                ptr = argVal.get();
-            }
-
-            if (ptr && size) {
-                fileName = kernelDescriptor.kernelMetadata.kernelName + "_arg_" + std::to_string(i) + "_" + type + "_size_" + std::to_string(size) + "_flags_" + std::to_string(flags) + ".bin";
-                writeToFile(fileName, ptr, size, std::ios::trunc | std::ios::binary);
-            }
-        }
-    }
-}
-
-template <DebugFunctionalityLevel DebugLevel>
-void FileLogger<DebugLevel>::dumpKernelArgs(const MultiDispatchInfo *multiDispatchInfo) {
-    if (enabled() == false) {
-        return;
-    }
-
-    if (dumpKernelArgsEnabled == false || multiDispatchInfo == nullptr) {
-        return;
-    }
-
-    for (auto &dispatchInfo : *multiDispatchInfo) {
-        dumpKernelArgs(dispatchInfo.getKernel());
     }
 }
 

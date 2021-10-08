@@ -40,6 +40,7 @@
 #include "opencl/source/memory_manager/migration_controller.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/program/printf_handler.h"
+#include "opencl/source/utilities/cl_logger.h"
 
 #include "pipe_control_args.h"
 
@@ -427,7 +428,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
                                                           KernelOperation *blockedCommandsData,
                                                           TimestampPacketDependencies &timestampPacketDependencies) {
     TagNodeBase *hwPerfCounter = nullptr;
-    FileLoggerInstance().dumpKernelArgs(&multiDispatchInfo);
+    getClFileLogger().dumpKernelArgs(&multiDispatchInfo);
 
     printfHandler.reset(PrintfHandler::create(multiDispatchInfo, *device));
     if (printfHandler) {

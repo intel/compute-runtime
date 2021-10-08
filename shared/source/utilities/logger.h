@@ -39,14 +39,10 @@ class FileLogger {
     void logApiCall(const char *function, bool enter, int32_t errorCode);
     void logAllocation(GraphicsAllocation const *graphicsAllocation);
     size_t getInput(const size_t *input, int32_t index);
-    const std::string getEvents(const uintptr_t *input, uint32_t numOfEvents);
-    const std::string getMemObjects(const uintptr_t *input, uint32_t numOfObjects);
 
     MOCKABLE_VIRTUAL void writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode);
 
     void dumpBinaryProgram(int32_t numDevices, const size_t *lengths, const unsigned char **binaries);
-    void dumpKernelArgs(const Kernel *kernel);
-    void dumpKernelArgs(const MultiDispatchInfo *multiDispatchInfo);
 
     const std::string getSizes(const uintptr_t *input, uint32_t workDim, bool local) {
         if (false == enabled()) {
@@ -145,7 +141,6 @@ class FileLogger {
     std::mutex mtx;
     std::string logFileName;
     bool dumpKernels = false;
-    bool dumpKernelArgsEnabled = false;
     bool logApiCalls = false;
     bool logAllocationMemoryPool = false;
     bool logAllocationType = false;

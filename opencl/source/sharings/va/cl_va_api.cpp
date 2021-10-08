@@ -16,6 +16,7 @@
 #include "opencl/source/sharings/va/va_device.h"
 #include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/source/sharings/va/va_surface.h"
+#include "opencl/source/utilities/cl_logger.h"
 
 #include "CL/cl.h"
 
@@ -96,10 +97,10 @@ clEnqueueAcquireVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
     API_ENTER(&status);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
-                   "memObjects", FileLoggerInstance().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
+                   "memObjects", getClFileLogger().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
 
@@ -123,10 +124,10 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
     API_ENTER(&status);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
-                   "memObjects", FileLoggerInstance().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
+                   "memObjects", getClFileLogger().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
 
