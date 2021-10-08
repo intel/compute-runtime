@@ -68,6 +68,8 @@ if(NOT SKIP_NEO_UNIT_TESTS)
 endif()
 
 if(NOT SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
+  add_dependencies(run_${product}_${revision_id}_aub_tests prepare_l0_test_kernels)
+
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
     set(l0_aub_test_cmd_prefix $<TARGET_FILE:ze_intel_gpu_aub_tests>)
   else()

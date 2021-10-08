@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-function(level_zero_gen_kernels target platform_name suffix options)
+function(level_zero_gen_kernels target_list platform_name suffix options)
 
   if(NOT DEFINED cloc_cmd_prefix)
     if(WIN32)
@@ -20,7 +20,6 @@ function(level_zero_gen_kernels target platform_name suffix options)
 
   set(outputdir "${TargetDir}/level_zero/${suffix}/test_files/${NEO_ARCH}/")
 
-  set(results)
   if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
     foreach(filepath ${ARGN})
       get_filename_component(filename ${filepath} NAME)
@@ -41,9 +40,8 @@ function(level_zero_gen_kernels target platform_name suffix options)
                          DEPENDS ${filepath} ocloc
       )
 
-      list(APPEND results ${output_files})
+      list(APPEND ${target_list} ${output_files})
     endforeach()
   endif()
-  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER ${TARGET_NAME_L0})
+  set(${target_list} ${${target_list}} PARENT_SCOPE)
 endfunction()
