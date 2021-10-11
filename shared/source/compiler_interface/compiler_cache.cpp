@@ -8,6 +8,7 @@
 #include "shared/source/compiler_interface/compiler_cache.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/casts.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
@@ -36,9 +37,9 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
     hash.update(&*internalOptions.begin(), internalOptions.size());
 
     hash.update("----", 4);
-    hash.update(reinterpret_cast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
+    hash.update(r_pod_cast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
     hash.update("----", 4);
-    hash.update(reinterpret_cast<const char *>(&hwInfo.featureTable.packed), sizeof(hwInfo.featureTable.packed));
+    hash.update(r_pod_cast<const char *>(&hwInfo.featureTable.packed), sizeof(hwInfo.featureTable.packed));
     hash.update("----", 4);
     hash.update(reinterpret_cast<const char *>(&hwInfo.workaroundTable), sizeof(hwInfo.workaroundTable));
 

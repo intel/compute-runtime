@@ -27,6 +27,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/casts.h
     ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config.cpp
