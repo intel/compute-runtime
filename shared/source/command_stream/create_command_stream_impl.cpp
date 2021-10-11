@@ -59,4 +59,11 @@ bool prepareDeviceEnvironmentsImpl(ExecutionEnvironment &executionEnvironment) {
     return DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
 }
 
+bool prepareDeviceEnvironmentImpl(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex) {
+    if (DeviceFactory::isHwModeSelected()) {
+        return DeviceFactory::prepareDeviceEnvironment(executionEnvironment, osPciPath, rootDeviceIndex);
+    }
+    return false;
+}
+
 } // namespace NEO

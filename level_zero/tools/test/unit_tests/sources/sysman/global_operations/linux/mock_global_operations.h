@@ -52,6 +52,16 @@ const std::string mockFunctionResetPath("/MOCK_FUNCTION_LEVEL_RESET_PATH");
 const std::string mockDeviceDir("/MOCK_DEVICE_DIR");
 const std::string mockDeviceName("/MOCK_DEVICE_NAME");
 
+struct GlobalOperationsEngineHandleContext : public EngineHandleContext {
+    GlobalOperationsEngineHandleContext(OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}
+};
+template <>
+struct Mock<GlobalOperationsEngineHandleContext> : public GlobalOperationsEngineHandleContext {
+    void initMock() {}
+    Mock<GlobalOperationsEngineHandleContext>(OsSysman *pOsSysman) : GlobalOperationsEngineHandleContext(pOsSysman) {}
+    MOCK_METHOD(void, init, (), (override));
+};
+
 class GlobalOperationsSysfsAccess : public SysfsAccess {};
 
 template <>

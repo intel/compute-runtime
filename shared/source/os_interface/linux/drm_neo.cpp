@@ -512,6 +512,15 @@ void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int
 }
 
 std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironment &executionEnvironment) {
+    std::string str = "";
+    return Drm::discoverDevices(executionEnvironment, str);
+}
+
+std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath) {
+    return Drm::discoverDevices(executionEnvironment, osPciPath);
+}
+
+std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironment &executionEnvironment, std::string &osPciPath) {
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     executionEnvironment.osEnvironment = std::make_unique<OsEnvironment>();
     size_t numRootDevices = 0u;
@@ -558,6 +567,13 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
                 continue;
             }
             std::string pciPath(devicePathView.substr(rdsPos - 12, 12));
+
+            if (!osPciPath.empty()) {
+                if (osPciPath.compare(pciPath) != 0) {
+                    // if osPciPath is non-empty, then interest is only in discovering device having same bdf as ocPciPath. Skip all other devices.
+                    continue;
+                }
+            }
 
             if (DebugManager.flags.ForceDeviceId.get() != "unk") {
                 if (devicePathView.find(DebugManager.flags.ForceDeviceId.get().c_str()) == std::string::npos) {

@@ -11,8 +11,13 @@
 
 namespace NEO {
 
-bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
-    auto returnValue = prepareDeviceEnvironmentsImpl(executionEnvironment);
+bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex) {
+    bool returnValue = false;
+    if (osPciPath.empty()) {
+        returnValue = prepareDeviceEnvironmentsImpl(executionEnvironment);
+    } else {
+        returnValue = prepareDeviceEnvironmentImpl(executionEnvironment, osPciPath, rootDeviceIndex);
+    }
 
     if (DebugManager.flags.Force32BitDriverSupport.get() != -1) {
         return returnValue;
@@ -37,6 +42,15 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     }
 
     return returnValue && executionEnvironment.rootDeviceEnvironments.size() > 0;
+}
+
+bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
+    std::string path = "";
+    return prepareDeviceEnvironments(executionEnvironment, path, 0u);
+}
+
+bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex) {
+    return prepareDeviceEnvironments(executionEnvironment, osPciPath, rootDeviceIndex);
 }
 
 } // namespace NEO

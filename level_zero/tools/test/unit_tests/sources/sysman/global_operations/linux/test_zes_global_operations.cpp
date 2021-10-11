@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/helpers/ult_hw_config.h"
+
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 #include "mock_global_operations.h"
@@ -40,9 +42,11 @@ constexpr uint32_t totalProcessStates = 5u; // Three process States for three pi
 constexpr uint32_t totalProcessStatesForFaultyClients = 3u;
 class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
   protected:
+    std::unique_ptr<Mock<GlobalOperationsEngineHandleContext>> pEngineHandleContext;
     std::unique_ptr<Mock<GlobalOperationsSysfsAccess>> pSysfsAccess;
     std::unique_ptr<Mock<GlobalOperationsProcfsAccess>> pProcfsAccess;
     std::unique_ptr<Mock<GlobalOperationsFsAccess>> pFsAccess;
+    EngineHandleContext *pEngineHandleContextOld = nullptr;
     SysfsAccess *pSysfsAccessOld = nullptr;
     ProcfsAccess *pProcfsAccessOld = nullptr;
     FsAccess *pFsAccessOld = nullptr;
@@ -53,15 +57,23 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
+        pEngineHandleContextOld = pSysmanDeviceImp->pEngineHandleContext;
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pProcfsAccessOld = pLinuxSysmanImp->pProcfsAccess;
         pFsAccessOld = pLinuxSysmanImp->pFsAccess;
+
+        pEngineHandleContext = std::make_unique<NiceMock<Mock<GlobalOperationsEngineHandleContext>>>(pOsSysman);
         pSysfsAccess = std::make_unique<NiceMock<Mock<GlobalOperationsSysfsAccess>>>();
         pProcfsAccess = std::make_unique<NiceMock<Mock<GlobalOperationsProcfsAccess>>>();
         pFsAccess = std::make_unique<NiceMock<Mock<GlobalOperationsFsAccess>>>();
+
+        pSysmanDeviceImp->pEngineHandleContext = pEngineHandleContext.get();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess.get();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+        ON_CALL(*pEngineHandleContext.get(), init())
+            .WillByDefault(::testing::Invoke(pEngineHandleContext.get(), &Mock<GlobalOperationsEngineHandleContext>::initMock));
         ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getValString));
         ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
@@ -103,6 +115,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         }
         pGlobalOperationsImp->pOsGlobalOperations = pOsGlobalOperationsPrev;
         pGlobalOperationsImp = nullptr;
+        pSysmanDeviceImp->pEngineHandleContext = pEngineHandleContextOld;
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccessOld;
@@ -413,6 +426,26 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetAndIfNeoDeviceCreateFailsThenErrorIsReturned) {
+    // Pretend another process has the device open
+    pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
+    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+
+    // Return process list without open fd on first call, but with open fd on subsequent calls
+    EXPECT_CALL(*pProcfsAccess.get(), listProcesses(Matcher<std::vector<::pid_t> &>(_)))
+        .WillOnce(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockProcessListDeviceUnused))
+        .WillRepeatedly(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockProcessListDeviceInUse));
+    EXPECT_CALL(*pProcfsAccess.get(), kill(pProcfsAccess->ourDevicePid))
+        .WillOnce(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
+    EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
+        .WillOnce(::testing::Return(ZE_RESULT_SUCCESS));
+    pGlobalOperationsImp->init();
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+    ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult = false;
+    ze_result_t result = zesDeviceReset(device, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetAndBindFailsThenFailureIsReturned) {
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
@@ -553,6 +586,24 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(SysmanGlobalOperationsTest, GivenValidDevicePciPathWhenPreparingDeviceEnvironmentThenPrepareDeviceEnvironmentReturnsTrue) {
+    auto device1 = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
+    std::string pciPath1 = "0000:00:02.0";
+    EXPECT_TRUE(DeviceFactory::prepareDeviceEnvironment(*device1->getExecutionEnvironment(), pciPath1, 0u));
+}
+
+TEST(SysmanGlobalOperationsTest, GivenValidDevicePciPathWhoseFileDescriptorOpenFailedThenPrepareDeviceEnvironmentReturnsFalse) {
+    auto device2 = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
+    std::string pciPath2 = "0000:00:03.0";
+    EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironment(*device2->getExecutionEnvironment(), pciPath2, 0u));
+}
+
+TEST(SysmanGlobalOperationsTest, GivenNotExisitingPciPathWhenPrepareDeviceEnvironmentIsCalledThenFalseIsReturned) {
+    auto device3 = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
+    std::string pciPath3 = "0000:00:04.0";
+    EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironment(*device3->getExecutionEnvironment(), pciPath3, 0u));
 }
 
 } // namespace ult

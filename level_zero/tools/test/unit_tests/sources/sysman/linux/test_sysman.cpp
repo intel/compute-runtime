@@ -311,6 +311,11 @@ TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturned
     EXPECT_EQ(pciRootPort2, "device");
 }
 
+TEST_F(SysmanDeviceFixture, GivenNullDrmHandleWhenGettingDrmHandleThenValidDrmHandleIsReturned) {
+    pLinuxSysmanImp->releaseLocalDrmHandle();
+    EXPECT_NO_THROW(pLinuxSysmanImp->getDrm());
+}
+
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
     ze_device_handle_t hSysman = device->toHandle();
     auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();

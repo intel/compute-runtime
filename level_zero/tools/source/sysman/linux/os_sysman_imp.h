@@ -40,16 +40,19 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *getSysmanDeviceImp();
     std::string getPciRootPortDirectoryPath(std::string realPciPath);
     void releasePmtObject();
+    ze_result_t createPmtHandles();
+    void releaseLocalDrmHandle();
 
   protected:
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
-    NEO::Drm *pDrm = nullptr;
     Device *pDevice = nullptr;
+    NEO::Drm *pDrm = nullptr;
     PmuInterface *pPmuInterface = nullptr;
     FirmwareUtil *pFwUtilInterface = nullptr;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
+    ze_result_t initLocalDeviceAndDrmHandles();
 
   private:
     LinuxSysmanImp() = delete;

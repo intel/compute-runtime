@@ -95,6 +95,24 @@ bool DeviceFactory::isHwModeSelected() {
     }
 }
 
+static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
+                                    std::unique_ptr<NEO::HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
+    if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(hwDeviceId), rootDeviceIndex)) {
+        return false;
+    }
+
+    if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
+            maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+    }
+
+    if (DebugManager.flags.OverrideRevision.get() != -1) {
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
+            static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+    }
+    return true;
+}
+
 bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
 
@@ -108,18 +126,8 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
     uint32_t rootDeviceIndex = 0u;
 
     for (auto &hwDeviceId : hwDeviceIds) {
-        if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(hwDeviceId), rootDeviceIndex)) {
+        if (initHwDeviceIdResources(executionEnvironment, std::move(hwDeviceId), rootDeviceIndex) == false) {
             return false;
-        }
-
-        if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
-                maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
-        }
-
-        if (DebugManager.flags.OverrideRevision.get() != -1) {
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
-                static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
         }
 
         rootDeviceIndex++;
@@ -130,6 +138,34 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
     executionEnvironment.calculateMaxOsContextCount();
 
     return true;
+}
+
+bool DeviceFactory::prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex) {
+    using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
+
+    HwDeviceIds hwDeviceIds = OSInterface::discoverDevice(executionEnvironment, osPciPath);
+    if (hwDeviceIds.empty()) {
+        return false;
+    }
+
+    executionEnvironment.prepareRootDeviceEnvironment(rootDeviceIndex);
+
+    // HwDeviceIds should contain only one entry corresponding to osPciPath
+    UNRECOVERABLE_IF(hwDeviceIds.size() > 1);
+    return initHwDeviceIdResources(executionEnvironment, std::move(hwDeviceIds[0]), rootDeviceIndex);
+}
+
+std::unique_ptr<Device> DeviceFactory::createDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex) {
+    std::unique_ptr<Device> device;
+    if (!NEO::prepareDeviceEnvironment(executionEnvironment, osPciPath, rootDeviceIndex)) {
+        return device;
+    }
+
+    executionEnvironment.memoryManager->createDeviceSpecificMemResources(rootDeviceIndex);
+    executionEnvironment.memoryManager->reInitLatestContextId();
+    device = createRootDeviceFunc(executionEnvironment, rootDeviceIndex);
+
+    return device;
 }
 
 std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvironment &executionEnvironment) {

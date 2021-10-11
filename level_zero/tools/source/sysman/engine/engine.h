@@ -32,9 +32,9 @@ class Engine : _zes_engine_handle_t {
 
 struct EngineHandleContext {
     EngineHandleContext(OsSysman *pOsSysman);
-    ~EngineHandleContext();
+    MOCKABLE_VIRTUAL ~EngineHandleContext();
 
-    void init();
+    MOCKABLE_VIRTUAL void init();
     void releaseEngines();
 
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine);

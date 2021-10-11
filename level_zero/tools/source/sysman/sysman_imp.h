@@ -68,6 +68,8 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t deviceEventRegister(zes_event_type_flags_t events) override;
     bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
 
+    void updateSubDeviceHandlesLocally();
+
   private:
     template <typename T>
     void inline freeResource(T *&resource) {

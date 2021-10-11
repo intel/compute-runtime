@@ -20,16 +20,13 @@ ze_result_t LinuxSysmanImp::init() {
     }
     DEBUG_BREAK_IF(nullptr == pProcfsAccess);
 
-    pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
-    DEBUG_BREAK_IF(nullptr == pDevice);
-    NEO::OSInterface &OsInterface = pDevice->getOsInterface();
-    if (OsInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto result = initLocalDeviceAndDrmHandles();
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
     }
-    pDrm = OsInterface.getDriverModel()->as<NEO::Drm>();
     int myDeviceFd = pDrm->getFileDescriptor();
     std::string myDeviceName;
-    ze_result_t result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, myDeviceName);
+    result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, myDeviceName);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
@@ -39,22 +36,22 @@ ze_result_t LinuxSysmanImp::init() {
     }
     DEBUG_BREAK_IF(nullptr == pSysfsAccess);
 
+    pPmuInterface = PmuInterface::create(this);
+
+    DEBUG_BREAK_IF(nullptr == pPmuInterface);
+    pFwUtilInterface = FirmwareUtil::create(pDrm->getPciPath());
+    return createPmtHandles();
+}
+
+ze_result_t LinuxSysmanImp::createPmtHandles() {
     std::string realRootPath;
-    result = pSysfsAccess->getRealPath("device", realRootPath);
+    auto result = pSysfsAccess->getRealPath("device", realRootPath);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
     auto rootPciPathOfGpuDevice = getPciRootPortDirectoryPath(realRootPath);
     PlatformMonitoringTech::create(pParentSysmanDeviceImp->deviceHandles, pFsAccess, rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
-
-    pPmuInterface = PmuInterface::create(this);
-
-    DEBUG_BREAK_IF(nullptr == pPmuInterface);
-    auto loc = realRootPath.find_last_of('/');
-    std::string pciBDF = realRootPath.substr(loc + 1, std::string::npos);
-    pFwUtilInterface = FirmwareUtil::create(pciBDF);
-
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 PmuInterface *LinuxSysmanImp::getPmuInterface() {
@@ -80,9 +77,27 @@ SysfsAccess &LinuxSysmanImp::getSysfsAccess() {
     return *pSysfsAccess;
 }
 
+ze_result_t LinuxSysmanImp::initLocalDeviceAndDrmHandles() {
+    pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
+    DEBUG_BREAK_IF(nullptr == pDevice);
+    NEO::OSInterface &OsInterface = pDevice->getOsInterface();
+    if (OsInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    pDrm = OsInterface.getDriverModel()->as<NEO::Drm>();
+    return ZE_RESULT_SUCCESS;
+}
+
 NEO::Drm &LinuxSysmanImp::getDrm() {
+    if (pDrm == nullptr) {
+        initLocalDeviceAndDrmHandles();
+    }
     UNRECOVERABLE_IF(nullptr == pDrm);
     return *pDrm;
+}
+
+void LinuxSysmanImp::releaseLocalDrmHandle() {
+    pDrm = nullptr;
 }
 
 Device *LinuxSysmanImp::getDeviceHandle() {

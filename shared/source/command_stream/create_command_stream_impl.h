@@ -14,4 +14,5 @@ extern CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &exec
                                                       uint32_t rootDeviceIndex,
                                                       const DeviceBitfield deviceBitfield);
 extern bool prepareDeviceEnvironmentsImpl(ExecutionEnvironment &executionEnvironment);
+extern bool prepareDeviceEnvironmentImpl(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex);
 } // namespace NEO

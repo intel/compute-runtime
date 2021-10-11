@@ -17,6 +17,8 @@ std::vector<std::string> Directory::getFiles(const std::string &path) {
     if (path == "./test_files/linux/by-path") {
         files.push_back("./test_files/linux/by-path/pci-0000:00:02.0-card");
         files.push_back("./test_files/linux/by-path/pci-0000:00:02.0-render");
+        files.push_back("./test_files/linux/by-path/pci-0000:00:03.0-card");
+        files.push_back("./test_files/linux/by-path/pci-0000:00:03.0-render");
         return files;
     }
     if (path == "./test_files/linux/devices/device/drm") {

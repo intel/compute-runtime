@@ -234,6 +234,8 @@ class Drm : public DriverModel {
     const TopologyMap &getTopologyMap();
 
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
+    static std::vector<std::unique_ptr<HwDeviceId>> discoverDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath);
+    static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment, std::string &osPciPath);
 
     std::unique_lock<std::mutex> lockBindFenceMutex();
 

@@ -25,14 +25,21 @@ ExecutionEnvironment::ExecutionEnvironment() {
     WaitUtils::init();
 }
 
+void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment) {
+    if (rootDeviceEnvironment == nullptr) {
+        return;
+    }
+    SipKernel::freeSipKernels(rootDeviceEnvironment, memoryManager.get());
+    if (rootDeviceEnvironment->builtins.get()) {
+        rootDeviceEnvironment->builtins.get()->freeSipKernels(memoryManager.get());
+    }
+}
+
 ExecutionEnvironment::~ExecutionEnvironment() {
     if (memoryManager) {
         memoryManager->commonCleanup();
         for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
-            SipKernel::freeSipKernels(rootDeviceEnvironment.get(), memoryManager.get());
-            if (rootDeviceEnvironment->builtins.get()) {
-                rootDeviceEnvironment->builtins.get()->freeSipKernels(memoryManager.get());
-            }
+            releaseRootDeviceEnvironmentResources(rootDeviceEnvironment.get());
         }
     }
     rootDeviceEnvironments.clear();
@@ -109,6 +116,10 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
             rootDeviceEnvironments[rootDeviceIndex] = std::make_unique<RootDeviceEnvironment>(*this);
         }
     }
+}
+
+void ExecutionEnvironment::prepareRootDeviceEnvironment(const uint32_t rootDeviceIndexForReInit) {
+    rootDeviceEnvironments[rootDeviceIndexForReInit] = std::make_unique<RootDeviceEnvironment>(*this);
 }
 
 void ExecutionEnvironment::parseAffinityMask() {

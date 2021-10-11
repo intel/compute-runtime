@@ -28,6 +28,58 @@ bool operator==(const HardwareInfo &hwInfoIn, const HardwareInfo &hwInfoOut) {
     return result;
 }
 
+TEST(PrepareDeviceEnvironmentTest, givenPrepareDeviceEnvironmentWhenCsrIsSetToVariousTypesThenFunctionReturnsExpectedValueOfHardwareInfo) {
+    const HardwareInfo *hwInfo = nullptr;
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+    DebugManagerStateRestore stateRestorer;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    uint32_t expectedDevices = 1;
+    DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
+    for (int productFamilyIndex = 0; productFamilyIndex < IGFX_MAX_PRODUCT; productFamilyIndex++) {
+        const char *hwPrefix = hardwarePrefix[productFamilyIndex];
+        auto hwInfoConfig = hwInfoConfigFactory[productFamilyIndex];
+        if (hwPrefix == nullptr || hwInfoConfig == nullptr) {
+            continue;
+        }
+        const std::string productFamily(hwPrefix);
+
+        for (int csrTypes = -1; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+            CommandStreamReceiverType csrType;
+            if (csrTypes != -1) {
+                csrType = static_cast<CommandStreamReceiverType>(csrTypes);
+                DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+            } else {
+                csrType = CSR_HW;
+                DebugManager.flags.SetCommandStreamReceiver.set(-1);
+            }
+
+            DebugManager.flags.ProductFamilyOverride.set(productFamily);
+            platformsImpl->clear();
+            ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
+
+            std::string pciPath = "0000:00:02.0";
+            exeEnv->rootDeviceEnvironments.resize(1u);
+            const auto ret = prepareDeviceEnvironment(*exeEnv, pciPath, 0u);
+            EXPECT_EQ(expectedDevices, exeEnv->rootDeviceEnvironments.size());
+            for (auto i = 0u; i < expectedDevices; i++) {
+                hwInfo = exeEnv->rootDeviceEnvironments[i]->getHardwareInfo();
+
+                switch (csrType) {
+                case CSR_HW:
+                case CSR_HW_WITH_AUB:
+                case CSR_TYPES_NUM:
+                    EXPECT_TRUE(ret);
+                    EXPECT_NE(nullptr, hwInfo);
+                    break;
+                default:
+                    EXPECT_FALSE(ret);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 struct PrepareDeviceEnvironmentsTest : ::testing::Test {
     void SetUp() override {
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;

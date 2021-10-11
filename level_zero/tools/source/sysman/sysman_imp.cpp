@@ -60,9 +60,9 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pOsSysman);
 }
 
-ze_result_t SysmanDeviceImp::init() {
+void SysmanDeviceImp::updateSubDeviceHandlesLocally() {
     uint32_t subDeviceCount = 0;
-    // We received a device handle. Check for subdevices in this device
+    deviceHandles.clear();
     Device::fromHandle(hCoreDevice)->getSubDevices(&subDeviceCount, nullptr);
     if (subDeviceCount == 0) {
         deviceHandles.resize(1, hCoreDevice);
@@ -70,6 +70,11 @@ ze_result_t SysmanDeviceImp::init() {
         deviceHandles.resize(subDeviceCount, nullptr);
         Device::fromHandle(hCoreDevice)->getSubDevices(&subDeviceCount, deviceHandles.data());
     }
+}
+
+ze_result_t SysmanDeviceImp::init() {
+    // We received a device handle. Check for subdevices in this device
+    updateSubDeviceHandlesLocally();
 
     auto result = pOsSysman->init();
     if (ZE_RESULT_SUCCESS != result) {

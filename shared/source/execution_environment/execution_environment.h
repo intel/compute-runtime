@@ -25,6 +25,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     MOCKABLE_VIRTUAL bool initializeMemoryManager();
     void calculateMaxOsContextCount();
     virtual void prepareRootDeviceEnvironments(uint32_t numRootDevices);
+    void prepareRootDeviceEnvironment(const uint32_t rootDeviceIndexForReInit);
     void parseAffinityMask();
     void sortNeoDevices();
     void setDebuggingEnabled() {
@@ -37,6 +38,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<DirectSubmissionController> directSubmissionController;
     std::unique_ptr<OsEnvironment> osEnvironment;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
+    void releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment);
 
   protected:
     bool debuggingEnabled = false;

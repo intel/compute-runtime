@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 
+#include "shared/source/os_interface/device_factory.h"
+
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
@@ -119,6 +121,44 @@ static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSy
     }
 }
 
+void LinuxGlobalOperationsImp::releaseSysmanDeviceResources() {
+    pLinuxSysmanImp->getSysmanDeviceImp()->pEngineHandleContext->releaseEngines();
+    pLinuxSysmanImp->getSysmanDeviceImp()->pRasHandleContext->releaseRasHandles();
+    pLinuxSysmanImp->releasePmtObject();
+    pLinuxSysmanImp->releaseLocalDrmHandle();
+}
+
+void LinuxGlobalOperationsImp::releaseDeviceResources() {
+    releaseSysmanDeviceResources();
+    auto device = static_cast<DeviceImp *>(getDevice());
+    device->releaseResources();
+    executionEnvironment->memoryManager->releaseDeviceSpecificMemResources(rootDeviceIndex);
+    executionEnvironment->releaseRootDeviceEnvironmentResources(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get());
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].reset();
+}
+
+void LinuxGlobalOperationsImp::reInitSysmanDeviceResources() {
+    pLinuxSysmanImp->getSysmanDeviceImp()->updateSubDeviceHandlesLocally();
+    pLinuxSysmanImp->createPmtHandles();
+    pLinuxSysmanImp->getSysmanDeviceImp()->pRasHandleContext->init(pLinuxSysmanImp->getSysmanDeviceImp()->deviceHandles);
+    pLinuxSysmanImp->getSysmanDeviceImp()->pEngineHandleContext->init();
+}
+
+ze_result_t LinuxGlobalOperationsImp::initDevice() {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto device = static_cast<DeviceImp *>(getDevice());
+
+    auto neoDevice = NEO::DeviceFactory::createDevice(*executionEnvironment, devicePciBdf, rootDeviceIndex);
+    if (neoDevice == nullptr) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+    static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->updateRootDeviceBitFields(neoDevice);
+    static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->enableRootDeviceDebugger(neoDevice);
+    Device::deviceReinit(device->getDriverHandle(), device, neoDevice, &result);
+    reInitSysmanDeviceResources();
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     std::string resetPath;
     std::string resetName;
@@ -159,10 +199,8 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         }
     }
 
-    pLinuxSysmanImp->getSysmanDeviceImp()->pEngineHandleContext->releaseEngines();
-    pLinuxSysmanImp->getSysmanDeviceImp()->pRasHandleContext->releaseRasHandles();
-    pLinuxSysmanImp->releasePmtObject();
-    static_cast<DeviceImp *>(getDevice())->releaseResources();
+    ExecutionEnvironmentRefCountRestore restorer(executionEnvironment);
+    releaseDeviceResources();
     for (auto &&fd : myPidFds) {
         // Close open filedescriptors to the device
         // before unbinding device.
@@ -227,7 +265,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         return result;
     }
 
-    return ZE_RESULT_SUCCESS;
+    return initDevice();
 }
 
 // Processes in the form of clients are present in sysfs like this:
@@ -407,6 +445,10 @@ LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+    auto device = static_cast<DeviceImp *>(pDevice);
+    devicePciBdf = device->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
+    executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
+    rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
 }
 
 OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {

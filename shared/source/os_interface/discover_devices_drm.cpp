@@ -14,4 +14,8 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
     return Drm::discoverDevices(executionEnvironment);
 }
 
+std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath) {
+    return Drm::discoverDevice(executionEnvironment, osPciPath);
+}
+
 } // namespace NEO
