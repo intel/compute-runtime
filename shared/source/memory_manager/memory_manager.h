@@ -209,7 +209,7 @@ class MemoryManager {
     virtual void registerSysMemAlloc(GraphicsAllocation *allocation){};
     virtual void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex){};
 
-    virtual void setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags){};
+    virtual bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) { return true; }
 
     bool isExternalAllocation(GraphicsAllocation::AllocationType allocationType);
     LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);

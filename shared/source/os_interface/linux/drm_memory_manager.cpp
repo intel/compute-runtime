@@ -201,11 +201,10 @@ bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
     return useKmdMigration;
 }
 
-void DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags) {
-    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) {
+    auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
 
-    CachePolicy memType = flags.cached_memory ? CachePolicy::WriteBack : CachePolicy::Uncached;
-    drmAllocation->setCachePolicy(memType);
+    return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
 }
 
 NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, uint32_t rootDeviceIndex) {

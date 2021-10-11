@@ -141,9 +141,12 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     }
     void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size()); }
 
-    void setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags) override {
+    bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) override {
         memAdviseFlags = flags;
-        MemoryManager::setMemAdvise(gfxAllocation, flags);
+        if (failSetMemAdvise) {
+            return false;
+        }
+        return MemoryManager::setMemAdvise(gfxAllocation, flags, rootDeviceIndex);
     }
 
     uint32_t freeGraphicsMemoryCalled = 0u;
@@ -172,6 +175,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failReserveAddress = false;
     bool failAllocateSystemMemory = false;
     bool failAllocate32Bit = false;
+    bool failSetMemAdvise = false;
     bool cpuCopyRequired = false;
     bool forceRenderCompressed = false;
     bool forceFailureInPrimaryAllocation = false;

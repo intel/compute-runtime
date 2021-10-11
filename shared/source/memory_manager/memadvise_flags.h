@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-typedef union {
+typedef union MemAdviseFlagsTag {
     uint8_t memadvise_flags; /* all memadvise_flags */
     struct
     {
@@ -24,6 +24,10 @@ typedef union {
             reserved1 : 1,
             reserved0 : 1;
     };
+    MemAdviseFlagsTag() {
+        memadvise_flags = 0;
+        cached_memory = 1;
+    }
 } MemAdviseFlags;
 
 } // namespace NEO

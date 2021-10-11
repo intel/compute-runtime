@@ -4389,6 +4389,32 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenSetCachePolicyIsCalledThenUpdatePo
     }
 }
 
+TEST(DrmAllocationTest, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCalledThenUpdatePolicyInBufferObject) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    EXPECT_EQ(CachePolicy::WriteBack, bo.peekCachePolicy());
+
+    MemAdviseFlags memAdviseFlags{};
+    EXPECT_TRUE(memAdviseFlags.cached_memory);
+
+    for (auto cached : {true, false, true}) {
+        memAdviseFlags.cached_memory = cached;
+
+        EXPECT_TRUE(allocation.setMemAdvise(&drm, memAdviseFlags));
+
+        EXPECT_EQ(cached ? CachePolicy::WriteBack : CachePolicy::Uncached, bo.peekCachePolicy());
+
+        EXPECT_EQ(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+    }
+}
+
 TEST(DrmAllocationTest, givenBoWhenMarkingForCaptureThenBosAreMarked) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -4726,7 +4752,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUp
         MemAdviseFlags flags{};
         flags.cached_memory = isCached;
 
-        memoryManager.setMemAdvise(&drmAllocation, flags);
+        EXPECT_TRUE(memoryManager.setMemAdvise(&drmAllocation, flags, rootDeviceIndex));
         EXPECT_EQ(isCached ? CachePolicy::WriteBack : CachePolicy::Uncached, bo.peekCachePolicy());
     }
 }

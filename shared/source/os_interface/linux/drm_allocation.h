@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
@@ -73,6 +74,8 @@ class DrmAllocation : public GraphicsAllocation {
     bool setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex);
     void setCachePolicy(CachePolicy memType);
 
+    bool setMemAdvise(Drm *drm, MemAdviseFlags flags);
+
     void *getMmapPtr() { return this->mmapPtr; }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }
     size_t getMmapSize() { return this->mmapSize; }
@@ -89,6 +92,7 @@ class DrmAllocation : public GraphicsAllocation {
   protected:
     BufferObjects bufferObjects{};
     StackVec<uint32_t, 1> registeredBoBindHandles;
+    MemAdviseFlags enabledMemAdviseFlags{};
 
     void *mmapPtr = nullptr;
     size_t mmapSize = 0u;
