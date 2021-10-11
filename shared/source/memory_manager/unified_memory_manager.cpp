@@ -396,14 +396,15 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     auto rootDeviceIndex = unifiedMemoryProperties.device
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
-    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
+    size_t alignedSizeCpu = alignUp<size_t>(size, MemoryConstants::pageSize2Mb);
+    size_t alignedSizeGpu = alignUp<size_t>(size, MemoryConstants::pageSize64k);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        true, // allocateMemory
-                                       alignedSize, GraphicsAllocation::AllocationType::SVM_CPU,
+                                       alignedSizeCpu, GraphicsAllocation::AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
-    cpuProperties.alignment = MemoryConstants::pageSize64k;
+    cpuProperties.alignment = MemoryConstants::pageSize2Mb;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false, cacheRegion);
     GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties);
@@ -426,7 +427,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
 
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        false,
-                                       alignedSize,
+                                       alignedSizeGpu,
                                        GraphicsAllocation::AllocationType::SVM_GPU,
                                        false,
                                        multiStorageAllocation,
