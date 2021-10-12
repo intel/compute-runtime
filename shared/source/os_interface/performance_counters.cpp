@@ -11,8 +11,6 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/tag_allocator.h"
 
-#include "opencl/source/command_queue/command_queue.h"
-
 using namespace MetricsLibraryApi;
 
 namespace NEO {

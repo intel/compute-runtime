@@ -6,11 +6,12 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/validators.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/error_mappers.h"
-#include "opencl/source/helpers/validators.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

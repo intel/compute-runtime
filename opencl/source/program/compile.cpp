@@ -15,7 +15,7 @@
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/platform/platform.h"
 
 #include "compiler_options.h"

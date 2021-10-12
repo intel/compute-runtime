@@ -29,7 +29,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/os_interface/ocl_reg_path.h"
 

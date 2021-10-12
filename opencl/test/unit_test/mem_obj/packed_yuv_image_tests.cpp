@@ -8,8 +8,8 @@
 #include "shared/source/helpers/aligned_memory.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
-#include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

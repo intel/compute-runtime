@@ -40,6 +40,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/enable_product.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}engine_node_helper_extra.cpp
@@ -122,6 +123,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/topology_map.h
     ${CMAKE_CURRENT_SOURCE_DIR}/uint16_avx2.h
     ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/validators.h
     ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}hw_cmds.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}engine_group_types.h

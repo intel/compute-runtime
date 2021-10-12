@@ -14,7 +14,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/buffer.h"
 
 #include "CL/cl.h"

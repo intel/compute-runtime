@@ -17,7 +17,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 

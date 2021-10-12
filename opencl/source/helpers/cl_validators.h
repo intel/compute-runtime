@@ -74,16 +74,6 @@ inline cl_int validateObjects(Type *object, Types... rest) {
     return CL_SUCCESS != retVal ? retVal : validateObjects(rest...);
 }
 
-template <typename T = void>
-bool areNotNullptr() {
-    return true;
-}
-
-template <typename T, typename... RT>
-bool areNotNullptr(T t, RT... rt) {
-    return (t != nullptr) && areNotNullptr<RT...>(rt...);
-}
-
 cl_int validateYuvOperation(const size_t *origin, const size_t *region);
 bool isPackedYuvImage(const cl_image_format *imageFormat);
 bool isNV12Image(const cl_image_format *imageFormat);

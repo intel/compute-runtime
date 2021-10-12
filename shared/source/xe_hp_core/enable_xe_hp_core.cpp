@@ -6,10 +6,9 @@
  */
 
 #include "shared/source/helpers/compiler_hw_info_config_bdw_and_later.inl"
+#include "shared/source/helpers/enable_product.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
-
-#include "opencl/source/helpers/enable_product.inl"
 
 namespace NEO {
 

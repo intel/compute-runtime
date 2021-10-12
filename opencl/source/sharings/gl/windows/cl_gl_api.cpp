@@ -16,7 +16,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj.h"

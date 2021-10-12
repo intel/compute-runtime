@@ -29,7 +29,7 @@
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_init.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/create.inl"

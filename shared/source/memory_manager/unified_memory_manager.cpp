@@ -13,8 +13,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "opencl/source/mem_obj/mem_obj_helper.h"
-
 namespace NEO {
 
 void SVMAllocsManager::MapBasedAllocationTracker::insert(SvmAllocationData allocationsPair) {

@@ -21,6 +21,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_library.h"
 
@@ -52,16 +53,6 @@
 #endif
 
 namespace NEO {
-
-template <typename T = void>
-bool areNotNullptr() {
-    return true;
-}
-
-template <typename T, typename... RT>
-bool areNotNullptr(T t, RT... rt) {
-    return (t != nullptr) && areNotNullptr<RT...>(rt...);
-}
 
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 

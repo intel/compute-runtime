@@ -21,12 +21,13 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_memory_properties_helpers_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_preemption_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_preemption_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_validators.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_validators.h
     ${CMAKE_CURRENT_SOURCE_DIR}/convert_color.h
     ${CMAKE_CURRENT_SOURCE_DIR}/destructor_callbacks.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/enable_product.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info_status_mapper.h
@@ -48,8 +49,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/task_information.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/task_information.h
     ${CMAKE_CURRENT_SOURCE_DIR}/task_information.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/validators.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/validators.h
 )
 
 if(SUPPORT_XEHP_AND_LATER)
