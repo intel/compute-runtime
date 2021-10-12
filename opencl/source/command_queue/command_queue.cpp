@@ -181,10 +181,9 @@ volatile uint32_t *CommandQueue::getHwTagAddress() const {
 }
 
 bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) const {
-    uint32_t gpgpuHwTag = getHwTag();
-    DEBUG_BREAK_IF(gpgpuHwTag == CompletionStamp::notReady);
+    DEBUG_BREAK_IF(getHwTag() == CompletionStamp::notReady);
 
-    if (gpgpuHwTag >= gpgpuTaskCount) {
+    if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), gpgpuTaskCount)) {
         if (bcsState.isValid()) {
             return *getBcsCommandStreamReceiver(bcsState.engineType)->getTagAddress() >= peekBcsTaskCount(bcsState.engineType);
         }

@@ -292,15 +292,7 @@ bool CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, boo
         partitionAddress = ptrOffset(partitionAddress, CommonConstants::partitionAddressOffset);
     }
 
-    partitionAddress = pollAddress;
-    for (uint32_t i = 0; i < activePartitions; i++) {
-        if (*partitionAddress < taskCountToWait) {
-            return false;
-        }
-
-        partitionAddress = ptrOffset(partitionAddress, CommonConstants::partitionAddressOffset);
-    }
-    return true;
+    return testTaskCountReady(pollAddress, taskCountToWait);
 }
 
 void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
@@ -719,6 +711,17 @@ bool CommandStreamReceiver::checkImplicitFlushForGpuIdle() {
         }
     }
     return false;
+}
+
+bool CommandStreamReceiver::testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait) {
+    for (uint32_t i = 0; i < activePartitions; i++) {
+        if (*pollAddress < taskCountToWait) {
+            return false;
+        }
+
+        pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+    }
+    return true;
 }
 
 } // namespace NEO

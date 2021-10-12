@@ -22,8 +22,7 @@ bool DeferrableAllocationDeletion::apply() {
         for (auto &engine : memoryManager.getRegisteredEngines()) {
             auto contextId = engine.osContext->getContextId();
             if (graphicsAllocation.isUsedByOsContext(contextId)) {
-                auto currentContextTaskCount = *engine.commandStreamReceiver->getTagAddress();
-                if (graphicsAllocation.getTaskCount(contextId) <= currentContextTaskCount) {
+                if (engine.commandStreamReceiver->testTaskCountReady(engine.commandStreamReceiver->getTagAddress(), graphicsAllocation.getTaskCount(contextId))) {
                     graphicsAllocation.releaseUsageInOsContext(contextId);
                 } else {
                     isStillUsed = true;

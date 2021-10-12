@@ -270,3 +270,27 @@ TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConc
 
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
+
+TEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachingReusableAllocationThenCheckTaskCountFinishedOnAllTiles) {
+    csr->setActivePartitions(2u);
+    auto tagAddress = csr->getTagAddress();
+    *tagAddress = 0xFF;
+    tagAddress = ptrOffset(tagAddress, 8);
+    *tagAddress = 0x0;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    EXPECT_EQ(allocation, csr->getAllocationsForReuse().peekHead());
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
+    allocation->updateTaskCount(1u, csr->getOsContext().getContextId());
+
+    std::unique_ptr<GraphicsAllocation> allocationReusable = csr->getAllocationsForReuse().detachAllocation(0, nullptr, csr, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY);
+    EXPECT_EQ(nullptr, allocationReusable.get());
+
+    *tagAddress = 0x1;
+    allocationReusable = csr->getAllocationsForReuse().detachAllocation(0, nullptr, csr, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY);
+    EXPECT_EQ(allocation, allocationReusable.get());
+
+    memoryManager->freeGraphicsMemory(allocationReusable.release());
+}

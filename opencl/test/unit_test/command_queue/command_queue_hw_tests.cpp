@@ -856,6 +856,38 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
     ev->decRefInternal();
 }
 
+HWTEST_F(CommandQueueHwTest, GivenMultiTileQueueWhenEventNotCompletedAndFinishIsCalledThenItGetsCompletedOnAllTilesAndItStatusIsUpdatedAfterFinishCall) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+
+    auto &csr = this->pCmdQ->getGpgpuCommandStreamReceiver();
+    csr.setActivePartitions(2u);
+    auto tagAddress = csr.getTagAddress();
+    *ptrOffset(tagAddress, 8) = *tagAddress;
+
+    struct ClbFuncTempStruct {
+        static void CL_CALLBACK ClbFuncT(cl_event e, cl_int execStatus, void *valueForUpdate) {
+            *static_cast<cl_int *>(valueForUpdate) = 1;
+        }
+    };
+    auto value = 0u;
+
+    auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, CompletionStamp::notReady + 1);
+    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::ClbFuncT, &value);
+    EXPECT_GT(3u, csr.peekTaskCount());
+
+    *tagAddress = CompletionStamp::notReady + 1;
+    tagAddress = ptrOffset(tagAddress, 8);
+    *tagAddress = CompletionStamp::notReady + 1;
+
+    cl_int ret = clFinish(this->pCmdQ);
+    ASSERT_EQ(CL_SUCCESS, ret);
+
+    ev->updateExecutionStatus();
+    EXPECT_EQ(1u, value);
+    ev->decRefInternal();
+}
+
 void CloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
     for (auto &srcDi : src) {
         dst.push(srcDi);

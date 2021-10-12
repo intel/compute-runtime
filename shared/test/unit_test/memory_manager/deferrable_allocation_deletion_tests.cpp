@@ -170,3 +170,27 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByUnregisteredEngine
     EXPECT_TRUE(deletion.apply());
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }
+
+TEST_F(DeferrableAllocationDeletionTest, givenMultiTileWhenTaskCompletedOnSingleTileThenDoNotFreeGraphicsAllocation) {
+    device->getDefaultEngine().commandStreamReceiver->setActivePartitions(2u);
+    auto hwTagNextTile = ptrOffset(hwTag, 8);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->updateTaskCount(1u, defaultOsContextId);
+
+    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+    DeferrableAllocationDeletion deletion{*memoryManager, *allocation};
+
+    *hwTag = 0u;
+    *hwTagNextTile = 0u;
+    EXPECT_FALSE(deletion.apply());
+    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+
+    *hwTag = 1u;
+    EXPECT_FALSE(deletion.apply());
+    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+
+    *hwTagNextTile = 1u;
+    EXPECT_TRUE(deletion.apply());
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
+}
