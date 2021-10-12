@@ -68,12 +68,17 @@ class DrmMockCustomExp : public DrmMockCustom {
             }
         } break;
         default: {
-            std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
-            UNRECOVERABLE_IF(true);
+            auto ret = ioctlGemCreateExt(request, arg);
+            if (ret != 0) {
+                std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
+                UNRECOVERABLE_IF(true);
+            }
         } break;
         }
         return 0;
     }
+
+    int ioctlGemCreateExt(unsigned long request, void *arg);
 
     DrmMockCustomExp() : DrmMockCustom() {
         ioctlExp_cnt.reset();

@@ -100,8 +100,7 @@ if(I915_LOCAL_MEM_EXP)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_exp.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_tip.h
        ${CMAKE_CURRENT_SOURCE_DIR}/memory_info_impl.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/gem_create_ext_memory_regions.cpp
   )
 else()
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX

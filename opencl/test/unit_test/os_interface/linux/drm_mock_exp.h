@@ -23,11 +23,12 @@ class DrmMockExp : public DrmMock {
 
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryMemoryRegionInfoSuccessCount = std::numeric_limits<uint32_t>::max();
+    bool queryMemoryRegionOnDrmTip = false;
 
     //DRM_IOCTL_I915_GEM_CREATE_EXT
     drm_i915_gem_create_ext createExt{};
+    drm_i915_gem_create_ext_setparam setparamRegion{};
     drm_i915_gem_memory_class_instance memRegions{};
-    uint32_t numRegions = 0;
     int gemCreateExtRetVal = 0;
 
     //DRM_IOCTL_I915_GEM_MMAP_OFFSET
@@ -46,19 +47,52 @@ class DrmMockExp : public DrmMock {
                 return EINVAL;
             }
             for (auto i = 0u; i < query->num_items; i++) {
-                handleQueryItem(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+                if (queryMemoryRegionOnDrmTip) {
+                    handleQueryItemOnDrmTip(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+                } else {
+                    handleQueryItem(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+                }
             }
             return 0;
+        } else if (request == DRM_IOCTL_I915_GEM_CREATE_EXT) {
+            auto createExtParams = static_cast<drm_i915_gem_create_ext *>(arg);
+            if (createExtParams->size == 0) {
+                return EINVAL;
+            }
+            this->createExt.size = createExtParams->size;
+            this->createExt.handle = createExtParams->handle = 1u;
+            auto extensions = reinterpret_cast<drm_i915_gem_create_ext_setparam *>(createExtParams->extensions);
+            if (extensions == nullptr) {
+                return EINVAL;
+            }
+            this->setparamRegion = *extensions;
+            if (this->setparamRegion.base.name != I915_GEM_CREATE_EXT_SETPARAM) {
+                return EINVAL;
+            }
+            if ((this->setparamRegion.param.size == 0) ||
+                (this->setparamRegion.param.param != (I915_OBJECT_PARAM | I915_PARAM_MEMORY_REGIONS))) {
+                return EINVAL;
+            }
+            auto data = reinterpret_cast<drm_i915_gem_memory_class_instance *>(this->setparamRegion.param.data);
+            if (data == nullptr) {
+                return EINVAL;
+            }
+            this->memRegions = *data;
+            if ((this->memRegions.memory_class != I915_MEMORY_CLASS_SYSTEM) && (this->memRegions.memory_class != I915_MEMORY_CLASS_DEVICE)) {
+                return EINVAL;
+            }
+            return gemCreateExtRetVal;
+
         } else if (request == DRM_IOCTL_I915_GEM_MMAP_OFFSET) {
             auto mmap_arg = static_cast<drm_i915_gem_mmap_offset *>(arg);
             mmapOffsetFlagsReceived = mmap_arg->flags;
             mmap_arg->offset = offset;
             return mmapOffsetRetVal;
         }
-        return handleKernelSpecificRequests(request, arg);
+        return -1;
     }
 
-    virtual void handleQueryItem(drm_i915_query_item *queryItem) {
+    void handleQueryItem(drm_i915_query_item *queryItem) {
         switch (queryItem->query_id) {
         case DRM_I915_QUERY_MEMORY_REGIONS:
             if (queryMemoryRegionInfoSuccessCount == 0) {
@@ -87,28 +121,5 @@ class DrmMockExp : public DrmMock {
         }
     }
 
-    virtual int handleKernelSpecificRequests(unsigned long request, void *arg) {
-        if (request == DRM_IOCTL_I915_GEM_CREATE_EXT) {
-            auto createExtParams = static_cast<drm_i915_gem_create_ext *>(arg);
-            if (createExtParams->size == 0) {
-                return EINVAL;
-            }
-            createExtParams->handle = 1u;
-            this->createExt = *createExtParams;
-            auto extMemRegions = reinterpret_cast<drm_i915_gem_create_ext_memory_regions *>(createExt.extensions);
-            if (extMemRegions->base.name != I915_GEM_CREATE_EXT_MEMORY_REGIONS) {
-                return EINVAL;
-            }
-            this->numRegions = extMemRegions->num_regions;
-            this->memRegions = *reinterpret_cast<drm_i915_gem_memory_class_instance *>(extMemRegions->regions);
-            if (this->numRegions == 0) {
-                return EINVAL;
-            }
-            if ((this->memRegions.memory_class != I915_MEMORY_CLASS_SYSTEM) && (this->memRegions.memory_class != I915_MEMORY_CLASS_DEVICE)) {
-                return EINVAL;
-            }
-            return gemCreateExtRetVal;
-        }
-        return -1;
-    }
+    void handleQueryItemOnDrmTip(drm_i915_query_item *queryItem);
 };

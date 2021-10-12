@@ -148,11 +148,19 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
                                                                                             1));
     ASSERT_NE(nullptr, bo);
-    EXPECT_EQ(1u, mock->ioctlCallsCount);
+
+    EXPECT_EQ(2u, mock->ioctlCallsCount);
+
     EXPECT_EQ(1u, mock->createExt.handle);
     EXPECT_EQ(size, mock->createExt.size);
 
-    EXPECT_EQ(1u, mock->numRegions);
+    EXPECT_EQ(I915_GEM_CREATE_EXT_SETPARAM, mock->setparamRegion.base.name);
+
+    auto regionParam = mock->setparamRegion.param;
+    EXPECT_EQ(0u, regionParam.handle);
+    EXPECT_EQ(1u, regionParam.size);
+    EXPECT_EQ(I915_OBJECT_PARAM | I915_PARAM_MEMORY_REGIONS, regionParam.param);
+
     auto memRegions = mock->memRegions;
     EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, memRegions.memory_class);
     EXPECT_EQ(0u, memRegions.memory_instance);
@@ -1074,6 +1082,28 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithUnifiedMemoryAllocati
     ASSERT_EQ(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, whenPrintBOCreateDestroyResultFlagIsSetWhileCreatingBufferObjectInMemoryRegionThenDebugInformationIsPrinted) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+
+    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    auto gpuAddress = 0x1234u;
+    auto size = MemoryConstants::pageSize64k;
+
+    testing::internal::CaptureStdout();
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), gpuAddress, size, (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)), 1));
+    ASSERT_NE(nullptr, bo);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 65536, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_SETPARAM has returned: 0 BO-1 with size: 65536\n");
+    EXPECT_EQ(expectedOutput, output);
 }
 
 TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
