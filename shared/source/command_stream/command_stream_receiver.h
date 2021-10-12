@@ -219,6 +219,7 @@ class CommandStreamReceiver {
     virtual void flushTagUpdate() = 0;
     virtual void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvents, bool isStartOfDispatch, bool isEndOfDispatch) = 0;
     virtual void updateTagFromWait() = 0;
+    virtual bool isUpdateTagFromWaitEnabled() = 0;
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();

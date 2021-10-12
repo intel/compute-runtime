@@ -530,6 +530,38 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     EXPECT_EQ(1u, mockCsr->peekLatestFlushedTaskCount());
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitWhenFlushBatchedIsCalledThenFlushedTaskCountIsNotModifed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCsr);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags,
+                       *pDevice);
+
+    EXPECT_EQ(1u, mockCsr->peekLatestSentTaskCount());
+    EXPECT_EQ(0u, mockCsr->peekLatestFlushedTaskCount());
+
+    mockCsr->flushBatchedSubmissions();
+
+    EXPECT_EQ(1u, mockCsr->peekLatestSentTaskCount());
+    EXPECT_EQ(0u, mockCsr->peekLatestFlushedTaskCount());
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTaskIsCalledThenFlushedTaskCountIsModifed) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -1024,12 +1056,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
     DebugManager.flags.UpdateTaskCountFromWait.set(1);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
+    commandQueue.taskCount = 10;
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->taskCount.store(10);
+    mockCsr->latestFlushedTaskCount.store(5);
 
     commandQueue.waitForAllEngines(false, nullptr);
 
@@ -1052,12 +1087,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
     };
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
+    commandQueue.taskCount = 10;
 
     auto mockCsr = new MockCsrHwDirectSubmission(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->taskCount.store(10);
+    mockCsr->latestFlushedTaskCount.store(5);
 
     commandQueue.waitForAllEngines(false, nullptr);
 

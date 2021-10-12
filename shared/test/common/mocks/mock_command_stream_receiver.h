@@ -59,6 +59,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     void flushTagUpdate() override{};
     void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvents, bool startOfDispatch, bool endOfDispatch) override{};
     void updateTagFromWait() override{};
+    bool isUpdateTagFromWaitEnabled() override { return false; };
 
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
 
@@ -164,6 +165,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::isPreambleSent;
     using CommandStreamReceiver::lastSentCoherencyRequest;
+    using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::mediaVfeStateDirty;
     using CommandStreamReceiver::nTo1SubmissionModelEnabled;
     using CommandStreamReceiver::pageTableManagerInitialized;
