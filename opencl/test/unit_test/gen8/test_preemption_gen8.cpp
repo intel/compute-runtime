@@ -7,12 +7,12 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_preemption_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 
 using namespace NEO;
 

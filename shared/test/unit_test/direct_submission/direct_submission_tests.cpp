@@ -15,11 +15,11 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_direct_submission_diagnostic_collector.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "test.h"
 
 using DirectSubmissionTest = Test<DirectSubmissionFixture>;

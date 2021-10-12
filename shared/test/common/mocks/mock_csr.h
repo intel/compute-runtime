@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
-
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 
 #include "gmock/gmock.h"
 

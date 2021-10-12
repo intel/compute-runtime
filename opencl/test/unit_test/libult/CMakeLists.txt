@@ -21,8 +21,6 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SOURCE_DIR}/opencl/source/dll/debug_manager.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_command_stream_receiver.h
     ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
 )
 

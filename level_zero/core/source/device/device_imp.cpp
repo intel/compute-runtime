@@ -29,8 +29,6 @@
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
-#include "opencl/source/mem_obj/mem_obj.h"
-
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"

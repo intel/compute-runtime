@@ -7,10 +7,10 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context_imp.h"

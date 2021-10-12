@@ -80,6 +80,8 @@ set(igdrcl_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_aub_command_stream_receiver.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_page_table_mngr.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp

@@ -7,8 +7,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 
-#include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"
 #include "test.h"
 

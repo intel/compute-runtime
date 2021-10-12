@@ -9,10 +9,9 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_svm_manager.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context_imp.h"
@@ -588,7 +587,6 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
          whenExecutingImmediateCommandListsHavingHostAllocationWithMigrationThenMemoryFromMakeResidentIsMovedToGpu) {
-    MockCommandQueue cmdQ;
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
 
@@ -625,7 +623,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
-    auto sharedPtr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    auto sharedPtr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, device);
     EXPECT_NE(nullptr, sharedPtr);
 
     auto allocation = svmManager->getSVMAlloc(sharedPtr);

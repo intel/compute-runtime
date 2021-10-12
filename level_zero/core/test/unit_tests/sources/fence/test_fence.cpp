@@ -6,8 +6,8 @@
  */
 
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_csr.h"
 
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "test.h"
 
 #include "level_zero/core/source/fence/fence.h"

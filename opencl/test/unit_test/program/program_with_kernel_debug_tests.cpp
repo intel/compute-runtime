@@ -9,10 +9,10 @@
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/kernel_filename_helper.h"
 #include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_source_level_debugger.h"
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_tests.h"
 #include "test.h"

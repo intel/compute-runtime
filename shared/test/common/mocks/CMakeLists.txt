@@ -27,6 +27,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.h
@@ -60,6 +61,8 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_physical_address_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_source_level_debugger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_svm_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
@@ -80,6 +83,7 @@ if(WIN32)
   )
 else()
   list(APPEND NEO_CORE_tests_mocks
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
   )

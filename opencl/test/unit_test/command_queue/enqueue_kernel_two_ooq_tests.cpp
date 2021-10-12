@@ -6,11 +6,11 @@
  */
 
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
 
 using namespace NEO;
