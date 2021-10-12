@@ -131,17 +131,17 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
+    if (kernelInfo->heapInfo.pKernelHeap != nullptr && internalKernel == false) {
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
+                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
+                                                              static_cast<size_t>(kernelIsaSize));
+    }
+
     if (device->getL0Debugger()) {
         NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
         if (memoryOperationsIface) {
             memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
         }
-    }
-
-    if (kernelInfo->heapInfo.pKernelHeap != nullptr && internalKernel == false) {
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
-                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
-                                                              static_cast<size_t>(kernelIsaSize));
     }
 
     this->crossThreadDataSize = this->kernelDescriptor->kernelAttributes.crossThreadDataSize;
