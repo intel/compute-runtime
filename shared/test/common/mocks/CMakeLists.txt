@@ -45,6 +45,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_partition.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h

@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
@@ -22,4 +24,6 @@ void PageFaultManager::transferToCpu(void *ptr, size_t size, void *cmdQ) {
 }
 void PageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
 }
+CompilerCacheConfig getDefaultCompilerCacheConfig() { return {}; }
+const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) { return nullptr; }
 } // namespace NEO

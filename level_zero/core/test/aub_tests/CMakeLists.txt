@@ -82,10 +82,6 @@ if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
   )
 endif()
 
-target_sources(${TARGET_NAME} PRIVATE
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
-)
-
 if(UNIX)
   if(NOT DISABLE_WDDM_LINUX)
     target_sources(${TARGET_NAME} PRIVATE

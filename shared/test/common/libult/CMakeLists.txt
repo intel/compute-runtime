@@ -81,6 +81,7 @@ set(igdrcl_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_memory_manager.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_page_table_mngr.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp

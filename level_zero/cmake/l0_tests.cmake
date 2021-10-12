@@ -44,7 +44,6 @@ add_library(compute_runtime_mockable_extra
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_sip.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
             ${NEO_SHARED_DIRECTORY}/debug_settings/debug_settings_manager.cpp
 )
