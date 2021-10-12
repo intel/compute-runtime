@@ -99,9 +99,12 @@ HWTEST_F(AUBcommandstreamTests, GivenVecsWhenTestingNoopIdThenAubIsCorrect) {
     testNoopIdXcs<FamilyType>(aub_stream::ENGINE_VECS);
 }
 
-TEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsResident) {
+HWTEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsResident) {
     uint8_t buffer[0x10000];
     size_t size = sizeof(buffer);
+
+    static_cast<AUBCommandStreamReceiverHw<FamilyType> &>(*pCommandStreamReceiver).initializeEngine();
+
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
@@ -111,6 +114,9 @@ TEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsResi
 HWTEST_F(AUBcommandstreamTests, GivenSingleAllocationWhenCreatingResidentAllocationThenAubIsCorrect) {
     uint32_t buffer = 0xdeadbeef;
     size_t size = sizeof(buffer);
+
+    static_cast<AUBCommandStreamReceiverHw<FamilyType> &>(*pCommandStreamReceiver).initializeEngine();
+
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(&buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
     pCommandStreamReceiver->processResidency(allocationsForResidency, 0u);
@@ -125,6 +131,8 @@ HWTEST_F(AUBcommandstreamTests, GivenMultipleAllocationsWhenCreatingResidentAllo
     for (size_t index = 0; index < sizeBuffer; ++index) {
         buffer[index] = static_cast<uint8_t>(index);
     }
+
+    static_cast<AUBCommandStreamReceiverHw<FamilyType> &>(*pCommandStreamReceiver).initializeEngine();
 
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, sizeBuffer);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
