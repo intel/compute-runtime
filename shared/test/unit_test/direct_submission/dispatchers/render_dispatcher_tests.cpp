@@ -150,3 +150,7 @@ HWCMDTEST_F(IGFX_GEN12_CORE, RenderDispatcherTest,
     }
     EXPECT_TRUE(foundMonitorFence);
 }
+
+HWTEST_F(RenderDispatcherTest, givenRenderWhenCheckingForMultiTileSynchronizationSupportThenExpectTrue) {
+    EXPECT_TRUE(RenderDispatcher<FamilyType>::isMultiTileSynchronizationSupported());
+}

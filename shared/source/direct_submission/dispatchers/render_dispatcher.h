@@ -28,5 +28,8 @@ class RenderDispatcher : public Dispatcher<GfxFamily> {
     static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address);
     static size_t getSizeCacheFlush(const HardwareInfo &hwInfo);
     static size_t getSizeTlbFlush();
+    static bool isMultiTileSynchronizationSupported() {
+        return true;
+    }
 };
 } // namespace NEO

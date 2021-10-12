@@ -30,13 +30,19 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
         this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
     }
     auto subDevices = device.getDeviceBitfield();
-    this->activeTiles = ImplicitScalingHelper::isImplicitScalingEnabled(subDevices, true)
-                            ? static_cast<uint32_t>(subDevices.count())
-                            : 1u;
+    bool dispatcherSupport = Dispatcher::isMultiTileSynchronizationSupported();
+    if (ImplicitScalingHelper::isImplicitScalingEnabled(subDevices, true) && dispatcherSupport) {
+        this->activeTiles = static_cast<uint32_t>(subDevices.count());
+    }
     this->partitionedMode = this->activeTiles > 1u;
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
     osContextLinux->getDrm().setDirectSubmissionActive(true);
-};
+
+    if (this->partitionedMode) {
+        this->workPartitionAllocation = device.getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation();
+        UNRECOVERABLE_IF(this->workPartitionAllocation == nullptr);
+    }
+}
 
 template <typename GfxFamily, typename Dispatcher>
 inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {

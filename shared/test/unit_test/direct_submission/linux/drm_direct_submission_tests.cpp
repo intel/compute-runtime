@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
@@ -15,6 +16,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests.h"
@@ -72,6 +74,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::tagAddress;
     using BaseClass::updateTagValue;
     using BaseClass::wait;
+    using BaseClass::workPartitionAllocation;
 
     MockDrmDirectSubmission(Device &device, OsContext &osContext) : DrmDirectSubmission<GfxFamily, Dispatcher>(device, osContext) {
         this->disableMonitorFence = false;
@@ -311,8 +314,30 @@ HWTEST_F(DrmDirectSubmissionTest, givenMultipleActiveTilesWhenWaitingForTagUpdat
     EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenMultiTileWhenCreatingDirectSubmissionThenExpectActiveTilesMatchSubDeviceCount) {
+HWTEST_F(DrmDirectSubmissionTest, givenRenderDispatcherAndMultiTileDeviceWhenCreatingDirectSubmissionThenExpectActiveTilesMatchSubDeviceCount) {
     using Dispatcher = RenderDispatcher<FamilyType>;
+
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+    device->deviceBitfield.set(0b11);
+    device->rootCsrCreated = true;
+    device->numSubDevices = 2;
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
+    ultCsr->staticWorkPartitioningEnabled = true;
+    ultCsr->createWorkPartitionAllocation(*device);
+
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+
+    EXPECT_EQ(2u, directSubmission.activeTiles);
+    EXPECT_TRUE(directSubmission.partitionedMode);
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherAndMultiTileDeviceWhenCreatingDirectSubmissionThenExpectActiveTilesEqualsOne) {
+    using Dispatcher = BlitterDispatcher<FamilyType>;
 
     VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
     device->deviceBitfield.set(0b11);
@@ -320,8 +345,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenMultiTileWhenCreatingDirectSubmissionThen
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
                                                                      *osContext.get());
 
-    EXPECT_EQ(2u, directSubmission.activeTiles);
-    EXPECT_TRUE(directSubmission.partitionedMode);
+    EXPECT_EQ(1u, directSubmission.activeTiles);
+    EXPECT_FALSE(directSubmission.partitionedMode);
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
