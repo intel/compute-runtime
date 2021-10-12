@@ -66,8 +66,8 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::pageTableManager;
 
   protected:
-    MOCKABLE_VIRTUAL void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
-    MOCKABLE_VIRTUAL void exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId);
+    MOCKABLE_VIRTUAL int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
+    MOCKABLE_VIRTUAL int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId);
     MOCKABLE_VIRTUAL int waitUserFence(uint32_t waitValue);
     bool isUserFenceWaitActive();
 

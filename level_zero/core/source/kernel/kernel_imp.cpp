@@ -616,6 +616,10 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(requestedAddress);
     if (driverHandle->isRemoteResourceNeeded(requestedAddress, alloc, allocData, device)) {
+        if (allocData == nullptr) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
         alloc = driverHandle->getPeerAllocation(device, allocData, requestedAddress, &gpuAddress);
         if (alloc == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;

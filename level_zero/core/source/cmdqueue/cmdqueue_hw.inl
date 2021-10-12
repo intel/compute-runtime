@@ -461,8 +461,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         memset(paddingPtr, 0, padding);
     }
 
-    submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd,
-                      anyCommandListWithCooperativeKernels);
+    auto ret = submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd,
+                                 anyCommandListWithCooperativeKernels);
 
     this->taskCount = csr->peekTaskCount();
 
@@ -475,6 +475,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     this->heapContainer.clear();
 
     csr->pollForCompletion();
+    if (ret) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
 
     return ZE_RESULT_SUCCESS;
 }

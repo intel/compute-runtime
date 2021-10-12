@@ -139,6 +139,15 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     int hostPtrSurfaceCreationMutexLockCount = 0;
 };
 
+class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {
+  public:
+    MockCommandStreamReceiverWithFailingSubmitBatch(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+    int submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return -1;
+    }
+};
+
 template <typename GfxFamily>
 class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
   public:

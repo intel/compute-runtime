@@ -188,6 +188,18 @@ class DrmMockNonFailing : public DrmMock {
     int handleRemainingRequests(unsigned long request, void *arg) override { return 0; }
 };
 
+class DrmMockReturnErrorNotSupported : public DrmMock {
+  public:
+    using DrmMock::DrmMock;
+    int ioctl(unsigned long request, void *arg) override {
+        if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
+            return -1;
+        }
+        return 0;
+    }
+    int getErrno() override { return EOPNOTSUPP; }
+};
+
 class DrmMockEngine : public DrmMock {
   public:
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();

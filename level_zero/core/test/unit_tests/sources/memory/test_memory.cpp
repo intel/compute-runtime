@@ -1850,8 +1850,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
 }
 
 TEST_F(MultipleDevicePeerAllocationTest,
-       whenPeerAllocationForDeviceAllocationIsRequestedWithoutSettingEnableCrossDeviceAccessThenNullptrIsReturned) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(false);
+       whenPeerAllocationForDeviceAllocationIsRequestedWhenSettingEnableCrossDeviceAccessToZeroThenNullptrIsReturned) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 

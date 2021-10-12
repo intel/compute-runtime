@@ -113,6 +113,7 @@ struct DeviceImp : public Device {
     uint32_t maxNumHwThreads = 0;
     uint32_t numSubDevices = 0;
     std::vector<Device *> subDevices;
+    std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
     DriverHandle *driverHandle = nullptr;
     CommandList *pageFaultCommandList = nullptr;
 

@@ -120,11 +120,15 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
     } else {
         this->flushStamp->setStamp(bb->peekHandle());
     }
-    this->flushInternal(batchBuffer, allocationsForResidency);
+    auto ret = this->flushInternal(batchBuffer, allocationsForResidency);
 
     if (this->gemCloseWorkerOperationMode == gemCloseWorkerMode::gemCloseWorkerActive) {
         bb->reference();
         this->getMemoryManager()->peekGemCloseWorker()->push(bb);
+    }
+
+    if (ret) {
+        return false;
     }
 
     return true;
@@ -153,7 +157,7 @@ void DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(ResidencyContainer &
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId) {
+int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId) {
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
     BufferObject *bb = alloc->getBO();
@@ -167,7 +171,7 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
         this->execObjectsStorage.resize(requiredSize);
     }
 
-    int err = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
+    int ret = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
                        batchBuffer.startOffset, execFlags,
                        batchBuffer.requiresCoherency,
                        this->osContext,
@@ -175,9 +179,10 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
                        drmContextId,
                        this->residency.data(), this->residency.size(),
                        this->execObjectsStorage.data());
-    UNRECOVERABLE_IF(err != 0);
 
     this->residency.clear();
+
+    return ret;
 }
 
 template <typename GfxFamily>

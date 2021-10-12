@@ -26,6 +26,8 @@
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "gtest/gtest.h"
@@ -1471,7 +1473,95 @@ TEST_F(MultipleDevicesTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
     EXPECT_TRUE(canAccess);
 }
 
-TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerSuccessfullyCompletes) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = true;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsTrue) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+}
+
+TEST_F(MultipleDevicesTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerReturnsSameValueEachTime) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+
+    res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+}
+
+TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerReturnsFalse) {
+    struct MockDeviceFail : public Mock<DeviceImp> {
+        struct MockCommandQueueImp : public Mock<CommandQueue> {
+            ze_result_t destroy() {
+                return ZE_RESULT_SUCCESS;
+            }
+
+            ze_result_t executeCommandLists(uint32_t numCommandLists,
+                                            ze_command_list_handle_t *phCommandLists,
+                                            ze_fence_handle_t hFence, bool performMigration) { return ZE_RESULT_ERROR_UNKNOWN; }
+        };
+
+        MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+            this->driverHandle = device->getDriverHandle();
+        }
+
+        ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
+                                       ze_command_queue_handle_t *commandQueue) {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createCommandList(const ze_command_list_desc_t *desc,
+                                      ze_command_list_handle_t *commandList) {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        MockCommandList commandList;
+        MockCommandQueueImp commandQueue;
+    };
+
+    MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(canAccess);
+    delete device0;
+}
+
+TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -1906,7 +1996,8 @@ struct MultipleDevicesDifferentLocalMemorySupportTest : public MultipleDevicesTe
     L0::Device *deviceWithoutLocalMemory = nullptr;
 };
 
-TEST_F(MultipleDevicesDifferentLocalMemorySupportTest, givenTwoDevicesWithDifferentLocalMemorySupportThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesDifferentLocalMemorySupportTest, givenTwoDevicesWithDifferentLocalMemorySupportThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     ze_bool_t canAccess = true;
     ze_result_t res = deviceWithLocalMemory->canAccessPeer(deviceWithoutLocalMemory->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -1936,7 +2027,8 @@ struct MultipleDevicesDifferentFamilyAndLocalMemorySupportTest : public Multiple
     L0::Device *deviceKBL = nullptr;
 };
 
-TEST_F(MultipleDevicesDifferentFamilyAndLocalMemorySupportTest, givenTwoDevicesFromDifferentFamiliesThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesDifferentFamilyAndLocalMemorySupportTest, givenTwoDevicesFromDifferentFamiliesThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     PRODUCT_FAMILY deviceSKLFamily = deviceSKL->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     PRODUCT_FAMILY deviceKBLFamily = deviceKBL->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     EXPECT_NE(deviceSKLFamily, deviceKBLFamily);
@@ -1962,7 +2054,8 @@ struct MultipleDevicesSameFamilyAndLocalMemorySupportTest : public MultipleDevic
     L0::Device *device1 = nullptr;
 };
 
-TEST_F(MultipleDevicesSameFamilyAndLocalMemorySupportTest, givenTwoDevicesFromSameFamilyThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesSameFamilyAndLocalMemorySupportTest, givenTwoDevicesFromSameFamilyThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     PRODUCT_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     PRODUCT_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     EXPECT_EQ(device0Family, device1Family);

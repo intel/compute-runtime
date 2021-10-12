@@ -163,3 +163,83 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
 };
 
 using DrmCommandStreamEnhancedTest = DrmCommandStreamEnhancedTemplate<DrmMockCustom>;
+
+template <typename T>
+class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
+  public:
+    std::unique_ptr<DebugManagerStateRestore> dbgState;
+    MockExecutionEnvironment *executionEnvironment;
+    T *mock;
+    CommandStreamReceiver *csr = nullptr;
+    const uint32_t rootDeviceIndex = 0u;
+
+    DrmMemoryManager *mm = nullptr;
+    std::unique_ptr<MockDevice> device;
+
+    template <typename GfxFamily>
+    void SetUpT() {
+        executionEnvironment = new MockExecutionEnvironment();
+        executionEnvironment->incRefInternal();
+        executionEnvironment->initGmm();
+        this->dbgState = std::make_unique<DebugManagerStateRestore>();
+        //make sure this is disabled, we don't want to test this now
+        DebugManager.flags.EnableForcePin.set(false);
+
+        mock = new T();
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex);
+
+        csr = new TestedDrmCommandStreamReceiverWithFailingExec<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);
+        ASSERT_NE(nullptr, csr);
+        mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                  DebugManager.flags.EnableForcePin.get(),
+                                  true,
+                                  *executionEnvironment);
+        ASSERT_NE(nullptr, mm);
+        executionEnvironment->memoryManager.reset(mm);
+        constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
+        constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        constructPlatform()->peekExecutionEnvironment()->initializeMemoryManager();
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
+        device->resetCommandStreamReceiver(csr);
+        ASSERT_NE(nullptr, device);
+    }
+
+    template <typename GfxFamily>
+    void TearDownT() {
+        executionEnvironment->decRefInternal();
+    }
+
+    template <typename GfxFamily>
+    void makeResidentBufferObjects(OsContext *osContext, DrmAllocation *drmAllocation) {
+        drmAllocation->bindBOs(osContext, 0u, &static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency, false);
+    }
+
+    template <typename GfxFamily>
+    bool isResident(BufferObject *bo) const {
+        auto &residency = this->getResidencyVector<GfxFamily>();
+        return std::find(residency.begin(), residency.end(), bo) != residency.end();
+    }
+
+    template <typename GfxFamily>
+    const std::vector<BufferObject *> &getResidencyVector() const {
+        return static_cast<const TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency;
+    }
+
+  protected:
+    class MockBufferObject : public BufferObject {
+        friend DrmCommandStreamEnhancedTemplate<T>;
+
+      protected:
+        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, 0, 16u) {
+            this->size = alignUp(size, 4096);
+        }
+    };
+
+    MockBufferObject *createBO(size_t size) {
+        return new MockBufferObject(this->mock, size);
+    }
+};
+
+using DrmCommandStreamEnhancedWithFailingExec = DrmCommandStreamEnhancedWithFailingExecTemplate<DrmMockCustom>;

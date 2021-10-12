@@ -68,8 +68,8 @@ void CommandQueueImp::reserveLinearStreamSize(size_t size) {
     }
 }
 
-void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
-                                        bool isCooperative) {
+int CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+                                       bool isCooperative) {
     UNRECOVERABLE_IF(csr == nullptr);
 
     NEO::BatchBuffer batchBuffer(commandStream->getGraphicsAllocation(), offset, 0u, nullptr, false, false,
@@ -80,8 +80,14 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
     commandStream->getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
 
     csr->setActivePartitions(partitionCount);
-    csr->submitBatchBuffer(batchBuffer, csr->getResidencyAllocations());
+    auto ret = csr->submitBatchBuffer(batchBuffer, csr->getResidencyAllocations());
+    if (ret) {
+        return ret;
+    }
+
     buffers.setCurrentFlushStamp(csr->peekTaskCount(), csr->obtainCurrentFlushStamp());
+
+    return ret;
 }
 
 ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {

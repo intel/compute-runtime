@@ -85,14 +85,14 @@ CommandStreamReceiver::~CommandStreamReceiver() {
     getMemoryManager()->unregisterEngineForCsr(this);
 }
 
-bool CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+int CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     this->latestSentTaskCount = taskCount + 1;
 
-    auto ret = this->flush(batchBuffer, allocationsForResidency);
+    auto flushed = this->flush(batchBuffer, allocationsForResidency);
     this->latestFlushedTaskCount = taskCount + 1;
     taskCount++;
 
-    return ret;
+    return !flushed;
 }
 
 void CommandStreamReceiver::makeResident(MultiGraphicsAllocation &gfxAllocation) {

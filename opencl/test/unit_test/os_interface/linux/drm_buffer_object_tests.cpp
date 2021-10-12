@@ -384,6 +384,32 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoCreatedThenBindInfoIsInitia
     }
 }
 
+TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectReturnsError) {
+    auto executionEnvironment = new ExecutionEnvironment;
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    DrmMockReturnErrorNotSupported *drm = new DrmMockReturnErrorNotSupported(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(drm, 0, 0, osContextCount);
+
+    std::unique_ptr<OsContextLinux> osContext;
+    osContext.reset(new OsContextLinux(*drm, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
+
+    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    auto ret = bo.exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage);
+    EXPECT_NE(0, ret);
+}
+
 TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectBindInfoIsUpdated) {
     auto executionEnvironment = new ExecutionEnvironment;
     executionEnvironment->setDebuggingEnabled();

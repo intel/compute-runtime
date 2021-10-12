@@ -35,6 +35,7 @@
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
@@ -67,17 +68,83 @@ void DeviceImp::setDriverHandle(DriverHandle *driverHandle) {
 ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
     *value = false;
 
+    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() != -1) {
+        *value = static_cast<bool>(NEO::DebugManager.flags.EnableCrossDeviceAccess.get());
+        return ZE_RESULT_SUCCESS;
+    }
+
     DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
-    if (this->getNEODevice()->getRootDeviceIndex() == pPeerDevice->getNEODevice()->getRootDeviceIndex()) {
-        *value = true;
-    }
+    uint32_t peerRootDeviceIndex = pPeerDevice->getNEODevice()->getRootDeviceIndex();
 
-    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 1) {
+    if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) != this->crossAccessEnabledDevices.end()) {
+        *value = this->crossAccessEnabledDevices[peerRootDeviceIndex];
+    } else if (this->getNEODevice()->getRootDeviceIndex() == peerRootDeviceIndex) {
         *value = true;
-    }
+    } else {
+        ze_command_list_handle_t commandList = nullptr;
+        ze_command_list_desc_t listDescriptor = {};
+        listDescriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
+        listDescriptor.pNext = nullptr;
+        listDescriptor.flags = 0;
+        listDescriptor.commandQueueGroupOrdinal = 0;
 
-    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 0) {
-        *value = false;
+        ze_command_queue_handle_t commandQueue = nullptr;
+        ze_command_queue_desc_t queueDescriptor = {};
+        queueDescriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+        queueDescriptor.pNext = nullptr;
+        queueDescriptor.flags = 0;
+        queueDescriptor.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
+        queueDescriptor.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+        queueDescriptor.ordinal = 0;
+        queueDescriptor.index = 0;
+
+        this->createCommandList(&listDescriptor, &commandList);
+        this->createCommandQueue(&queueDescriptor, &commandQueue);
+
+        auto driverHandle = this->getDriverHandle();
+        DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
+
+        ze_context_handle_t context;
+        ze_context_desc_t contextDesc = {};
+        contextDesc.stype = ZE_STRUCTURE_TYPE_CONTEXT_DESC;
+        driverHandleImp->createContext(&contextDesc, 0u, nullptr, &context);
+        ContextImp *contextImp = static_cast<ContextImp *>(context);
+
+        void *memory = nullptr;
+        void *peerMemory = nullptr;
+
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+        deviceDesc.ordinal = 0;
+        deviceDesc.flags = 0;
+        deviceDesc.pNext = nullptr;
+
+        ze_device_mem_alloc_desc_t peerDeviceDesc = {};
+        peerDeviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+        peerDeviceDesc.ordinal = 0;
+        peerDeviceDesc.flags = 0;
+        peerDeviceDesc.pNext = nullptr;
+
+        contextImp->allocDeviceMem(this->toHandle(), &deviceDesc, 8, 1, &memory);
+        contextImp->allocDeviceMem(hPeerDevice, &peerDeviceDesc, 8, 1, &peerMemory);
+
+        L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr);
+        L0::CommandList::fromHandle(commandList)->close();
+
+        auto ret = L0::CommandQueue::fromHandle(commandQueue)->executeCommandLists(1, &commandList, nullptr, true);
+        if (ret == ZE_RESULT_SUCCESS) {
+            this->crossAccessEnabledDevices[peerRootDeviceIndex] = true;
+            pPeerDevice->crossAccessEnabledDevices[this->getNEODevice()->getRootDeviceIndex()] = true;
+            L0::CommandQueue::fromHandle(commandQueue)->synchronize(std::numeric_limits<uint64_t>::max());
+            *value = true;
+        }
+
+        contextImp->freeMem(peerMemory);
+        contextImp->freeMem(memory);
+
+        L0::Context::fromHandle(context)->destroy();
+        L0::CommandQueue::fromHandle(commandQueue)->destroy();
+        L0::CommandList::fromHandle(commandList)->destroy();
     }
 
     return ZE_RESULT_SUCCESS;

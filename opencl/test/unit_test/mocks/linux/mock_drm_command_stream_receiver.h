@@ -104,9 +104,33 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 
     bool callHwFlush = true;
 
-    void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+    int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
         if (callHwFlush) {
-            DrmCommandStreamReceiver<GfxFamily>::flushInternal(batchBuffer, allocationsForResidency);
+            return DrmCommandStreamReceiver<GfxFamily>::flushInternal(batchBuffer, allocationsForResidency);
         }
+        return 0;
+    }
+};
+
+template <typename GfxFamily>
+class TestedDrmCommandStreamReceiverWithFailingExec : public TestedDrmCommandStreamReceiver<GfxFamily> {
+  public:
+    TestedDrmCommandStreamReceiverWithFailingExec(gemCloseWorkerMode mode,
+                                                  ExecutionEnvironment &executionEnvironment,
+                                                  const DeviceBitfield deviceBitfield)
+        : TestedDrmCommandStreamReceiver<GfxFamily>(mode,
+                                                    executionEnvironment,
+                                                    deviceBitfield) {
+    }
+    TestedDrmCommandStreamReceiverWithFailingExec(ExecutionEnvironment &executionEnvironment,
+                                                  uint32_t rootDeviceIndex,
+                                                  const DeviceBitfield deviceBitfield)
+        : TestedDrmCommandStreamReceiver<GfxFamily>(executionEnvironment,
+                                                    rootDeviceIndex,
+                                                    deviceBitfield) {
+    }
+
+    int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId) override {
+        return -1;
     }
 };

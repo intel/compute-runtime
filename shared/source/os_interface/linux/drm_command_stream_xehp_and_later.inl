@@ -12,7 +12,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
+int DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
     auto useImmediateExt = this->drm->isDirectSubmissionActive();
 
     if (DebugManager.flags.EnableImmediateVmBindExt.get() != -1) {
@@ -38,15 +38,20 @@ void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batch
                 printf("Drm Submission of contextIndex: %u, with context id %u\n", contextIndex, drmContextIds[contextIndex]);
             }
 
-            this->exec(batchBuffer, tileIterator, drmContextIds[contextIndex]);
+            int ret = this->exec(batchBuffer, tileIterator, drmContextIds[contextIndex]);
+            if (ret) {
+                return ret;
+            }
 
             contextIndex++;
 
             if (DebugManager.flags.EnableWalkerPartition.get() == 0 || batchBuffer.useSingleSubdevice) {
-                return;
+                return 0;
             }
         }
     }
+
+    return 0;
 }
 
 template <typename GfxFamily>

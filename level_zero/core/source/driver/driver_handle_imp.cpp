@@ -440,15 +440,15 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                                                             NEO::SvmAllocationData *allocData,
                                                             void *ptr,
                                                             uintptr_t *peerGpuAddress) {
-    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() != 1) {
+    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 0) {
         return nullptr;
     }
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    NEO::GraphicsAllocation *alloc = nullptr;
 
     NEO::SvmAllocationData *peerAllocData = nullptr;
     void *peerPtr = nullptr;
-    NEO::GraphicsAllocation *alloc = nullptr;
 
     std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
 

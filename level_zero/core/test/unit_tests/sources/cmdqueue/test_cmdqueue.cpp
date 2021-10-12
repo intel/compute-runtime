@@ -264,6 +264,25 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBufferReturnsError) {
+    auto csr = std::make_unique<MockCommandStreamReceiverWithFailingSubmitBatch>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ResidencyContainer container;
+    int ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    EXPECT_NE(ret, 0);
+
+    commandQueue->destroy();
+}
+
 TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitializedWithExpectedSize) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
