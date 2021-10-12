@@ -324,6 +324,70 @@ TEST_F(EventPoolOpenIPCHandleFailTests, givenFailureToAllocateMemoryWhenOpeningI
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
+class MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager : public FailMemoryManager {
+  public:
+    MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : FailMemoryManager(executionEnvironment) {}
+
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+        return &mockAllocation0;
+    }
+
+    GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override {
+        if (calls == 0) {
+            calls++;
+            return &mockAllocation1;
+        }
+        return nullptr;
+    }
+
+    void freeGraphicsMemory(GraphicsAllocation *gfxAllocation) override {
+    }
+
+    NEO::MockGraphicsAllocation mockAllocation0;
+    NEO::MockGraphicsAllocation mockAllocation1;
+    uint32_t calls = 0;
+};
+
+using MultiDeviceEventPoolOpenIPCHandleFailTests = Test<MultiDeviceFixture>;
+
+TEST_F(MultiDeviceEventPoolOpenIPCHandleFailTests,
+       givenFailureToAllocateMemoryWhenOpeningIpcHandleForEventPoolWithMultipleDevicesThenOutOfHostMemoryIsReturned) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        numEvents};
+
+    auto deviceHandle = driverHandle->devices[0]->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    {
+        NEO::MemoryManager *prevMemoryManager = nullptr;
+        NEO::MemoryManager *currMemoryManager = nullptr;
+
+        prevMemoryManager = driverHandle->getMemoryManager();
+        NEO::MockDevice *neoDevice = static_cast<NEO::MockDevice *>(driverHandle->devices[0]->getNEODevice());
+        currMemoryManager = new MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager(*neoDevice->executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
+
+        ze_event_pool_handle_t ipcEventPoolHandle = {};
+        res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
+        EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY);
+
+        driverHandle->setMemoryManager(prevMemoryManager);
+        delete currMemoryManager;
+    }
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+}
+
 TEST_F(EventPoolCreate, GivenNullptrDeviceAndNumberOfDevicesWhenCreatingEventPoolThenReturnError) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
