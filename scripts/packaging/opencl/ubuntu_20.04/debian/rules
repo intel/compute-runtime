@@ -4,6 +4,7 @@
 	dh $@ --builddir build/ --buildsystem=cmake+ninja
 
 NEO_DISABLE_BUILTINS_COMPILATION ?= FALSE
+RELEASE_WITH_REGKEYS ?= FALSE
 
 override_dh_auto_configure:
 	dh_auto_configure -- ${NEO_BUILD_EXTRA_OPTS} \
@@ -15,7 +16,7 @@ override_dh_auto_configure:
 		-DSKIP_UNIT_TESTS=${SKIP_UNIT_TESTS} \
 		-DNEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION} \
 		-DBUILD_WITH_L0=0 \
-		-DRELEASE_WITH_REGKEYS=1 \
+		-DRELEASE_WITH_REGKEYS=${RELEASE_WITH_REGKEYS} \
 		-Wno-dev
 
 override_dh_auto_build:
