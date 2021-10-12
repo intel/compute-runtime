@@ -254,6 +254,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         if (ultHwConfig.csrFailInitDirectSubmission) {
             return false;
         }
+        initDirectSubmissionCalled++;
         return BaseClass::CommandStreamReceiver::initDirectSubmission(device, osContext);
     }
 
@@ -295,6 +296,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t latestSentTaskCountValueDuringFlush = 0;
     uint32_t blitBufferCalled = 0;
     uint32_t createPerDssBackedBufferCalled = 0;
+    uint32_t initDirectSubmissionCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
     BlitPropertiesContainer receivedBlitProperties = {};

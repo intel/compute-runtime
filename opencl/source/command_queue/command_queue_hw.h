@@ -92,9 +92,11 @@ class CommandQueueHw : public CommandQueue {
 
         gpgpuEngine->osContext->ensureContextInitialized();
         gpgpuEngine->commandStreamReceiver->initDirectSubmission(device->getDevice(), *gpgpuEngine->osContext);
-        if (const EngineControl *mainBcsEngine = bcsEngines[0]; mainBcsEngine != nullptr) {
-            mainBcsEngine->osContext->ensureContextInitialized();
-            mainBcsEngine->commandStreamReceiver->initDirectSubmission(device->getDevice(), *mainBcsEngine->osContext);
+        for (const EngineControl *engine : bcsEngines) {
+            if (engine != nullptr) {
+                engine->osContext->ensureContextInitialized();
+                engine->commandStreamReceiver->initDirectSubmission(device->getDevice(), *engine->osContext);
+            }
         }
     }
 

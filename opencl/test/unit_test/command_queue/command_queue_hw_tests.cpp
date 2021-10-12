@@ -234,6 +234,16 @@ HWTEST_F(CommandQueueHwTest, GivenCommandQueueWhenProcessDispatchForMarkerCalled
     EXPECT_GT(csr.makeResidentCalledTimes, 0u);
 }
 
+HWTEST_F(CommandQueueHwTest, GivenCommandQueueWhenItIsCreatedThenInitDirectSubmissionIsCalledOnAllBcsEngines) {
+    MockCommandQueueHw<FamilyType> queue(pContext, pClDevice, nullptr);
+    for (auto engine : queue.bcsEngines) {
+        if (engine != nullptr) {
+            auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine->commandStreamReceiver);
+            EXPECT_EQ(1u, csr->initDirectSubmissionCalled);
+        }
+    }
+}
+
 HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnTrue) {
     auto pHwQ = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
 
