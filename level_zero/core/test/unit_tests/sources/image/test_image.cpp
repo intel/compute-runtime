@@ -402,7 +402,7 @@ HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingImageThenSuccessIsReturned, Imag
     neoDevice->injectMemoryManager(currMemoryManager);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = L0::Device::create(driverHandle.get(), neoDevice, 0, false, &result);
+    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
 
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
     auto ret = imageHW->initialize(device, &desc);
@@ -453,7 +453,7 @@ HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsRet
     neoDevice->injectMemoryManager(currMemoryManager);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = L0::Device::create(driverHandle.get(), neoDevice, 0, false, &result);
+    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
 
     L0::Image *imageHandle;
 

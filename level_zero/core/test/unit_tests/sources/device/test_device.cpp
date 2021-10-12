@@ -48,7 +48,7 @@ TEST(L0DeviceTest, GivenCreatedDeviceHandleWhenCallingdeviceReinitThenNewDeviceH
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue);
+    auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);
     ASSERT_NE(nullptr, device);
     static_cast<DeviceImp *>(device)->releaseResources();
 
@@ -67,7 +67,7 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     hwInfo.featureTable.ftrLocalMemory = true;
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     auto deviceImp = static_cast<DeviceImp *>(device.get());
     ASSERT_NE(nullptr, deviceImp->pageFaultCommandList);
@@ -93,7 +93,7 @@ TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInit
     EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
     EXPECT_FALSE(NEO::MockSipData::called);
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
 
     EXPECT_EQ(NEO::SipKernelType::Csr, NEO::MockSipData::calledType);
@@ -140,7 +140,7 @@ TEST(L0DeviceTest, givenDisabledPreemptionWhenCreatingDeviceThenSipKernelIsNotIn
     EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
     EXPECT_FALSE(NEO::MockSipData::called);
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
 
     EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
@@ -158,7 +158,7 @@ TEST(L0DeviceTest, givenDeviceWithoutFCLCompilerLibraryThenInvalidDependencyRetu
     auto oldFclDllName = Os::frontEndDllName;
     Os::frontEndDllName = "invalidFCL";
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
@@ -176,7 +176,7 @@ TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryThenInvalidDependencyRetu
     auto oldIgcDllName = Os::igcDllName;
     Os::igcDllName = "invalidIGC";
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
@@ -196,7 +196,7 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyRetu
     Os::frontEndDllName = "invalidFCL";
     Os::igcDllName = "invalidIGC";
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
@@ -210,7 +210,7 @@ TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsRet
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -248,7 +248,7 @@ TEST(L0DeviceTest, givenFilledTopologyForZeroSubDeviceWhenGettingApiSliceForHigh
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -274,7 +274,7 @@ TEST(L0DeviceTest, givenInvalidPhysicalSliceIdWhenGettingApiSliceIdThenFalseIsRe
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -300,7 +300,7 @@ TEST(L0DeviceTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThenFalseIsRe
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -327,7 +327,7 @@ TEST(L0DeviceTest, givenEmptyTopologyWhenGettingApiSliceIdThenFalseIsReturned) {
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -345,7 +345,7 @@ TEST(L0DeviceTest, givenDeviceWithoutSubDevicesWhenGettingPhysicalSliceIdThenCor
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -374,7 +374,7 @@ TEST(L0DeviceTest, givenTopologyNotAvaialbleWhenGettingPhysicalSliceIdThenFalseI
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -2184,7 +2184,7 @@ TEST(zeDevice, givenImagesSupportedWhenGettingImagePropertiesThenValidValuesAreR
     NEO::MockCompilerEnableGuard mock(true);
     DriverHandleImp driverHandle{};
     NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, 1, false, &errorValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));
     DeviceInfo &deviceInfo = neoDevice->deviceInfo;
 
     deviceInfo.imageSupport = true;
@@ -2215,7 +2215,7 @@ TEST(zeDevice, givenNoImagesSupportedWhenGettingImagePropertiesThenZeroValuesAre
     NEO::MockCompilerEnableGuard mock(true);
     DriverHandleImp driverHandle{};
     NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, 1, false, &errorValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));
     DeviceInfo &deviceInfo = neoDevice->deviceInfo;
 
     neoDevice->deviceInfo.imageSupport = false;

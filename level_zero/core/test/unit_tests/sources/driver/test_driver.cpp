@@ -187,7 +187,7 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     neoDevice->injectMemoryManager(currMemoryManager);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = L0::Device::create(driverHandle.get(), neoDevice, 0, false, &result);
+    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
 
     context->addDeviceAndSubDevices(device);
 

@@ -757,19 +757,16 @@ const NEO::HardwareInfo &DeviceImp::getHwInfo() const { return neoDevice->getHar
 
 // Use this method to reinitialize L0::Device *device, that was created during zeInit, with the help of Device::create
 Device *Device::deviceReinit(DriverHandle *driverHandle, L0::Device *device, std::unique_ptr<NEO::Device> &neoDevice, ze_result_t *returnValue) {
-    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
-    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
     auto pNeoDevice = neoDevice.release();
 
-    auto subDevicesMask = static_cast<uint32_t>(rootDeviceEnvironment->deviceAffinityMask.getGenericSubDevicesMask().to_ulong());
-    return Device::create(driverHandle, pNeoDevice, subDevicesMask, false, returnValue, device);
+    return Device::create(driverHandle, pNeoDevice, false, returnValue, device);
 }
 
-Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice, ze_result_t *returnValue) {
-    return Device::create(driverHandle, neoDevice, currentDeviceMask, isSubDevice, returnValue, nullptr);
+Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool isSubDevice, ze_result_t *returnValue) {
+    return Device::create(driverHandle, neoDevice, isSubDevice, returnValue, nullptr);
 }
 
-Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice, ze_result_t *returnValue, L0::Device *deviceL0) {
+Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool isSubDevice, ze_result_t *returnValue, L0::Device *deviceL0) {
     L0::DeviceImp *device = nullptr;
     if (deviceL0 == nullptr) {
         device = new DeviceImp;
@@ -807,13 +804,12 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
     }
 
     for (uint32_t i = 0; i < device->neoDevice->getNumSubDevices(); i++) {
-        if (!((1UL << i) & currentDeviceMask)) {
+        if (!device->neoDevice->getSubDevice(i)) {
             continue;
         }
 
         ze_device_handle_t subDevice = Device::create(driverHandle,
                                                       device->neoDevice->getSubDevice(i),
-                                                      0,
                                                       true, returnValue, nullptr);
         if (subDevice == nullptr) {
             return nullptr;

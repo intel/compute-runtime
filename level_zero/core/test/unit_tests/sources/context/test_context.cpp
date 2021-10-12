@@ -71,12 +71,16 @@ TEST_F(MultiDeviceContextTests,
     res = deviceImp1->getSubDevices(&subDeviceCount1, subDevices1.data());
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
+    uint32_t subSubDeviceCount1 = 0;
+    res = static_cast<DeviceImp *>(subDevices1[0])->getSubDevices(&subSubDeviceCount1, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
     res = driverHandle->createContext(&desc, 1u, &device1, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
-    uint32_t expectedDeviceCountInContext = 1 + subDeviceCount1;
+    uint32_t expectedDeviceCountInContext = 1 + subDeviceCount1 + (subDeviceCount1 * subSubDeviceCount1);
     EXPECT_EQ(contextImp->getDevices().size(), expectedDeviceCountInContext);
 
     EXPECT_FALSE(contextImp->isDeviceDefinedForThisContext(L0::Device::fromHandle(device0)));
@@ -86,7 +90,12 @@ TEST_F(MultiDeviceContextTests,
 
     EXPECT_TRUE(contextImp->isDeviceDefinedForThisContext(L0::Device::fromHandle(device1)));
     for (auto subDevice : subDevices1) {
-        EXPECT_TRUE(contextImp->isDeviceDefinedForThisContext(L0::Device::fromHandle(subDevice)));
+        auto l0SubDevice = static_cast<DeviceImp *>(subDevice);
+        EXPECT_TRUE(contextImp->isDeviceDefinedForThisContext(l0SubDevice));
+
+        for (auto &subSubDevice : l0SubDevice->subDevices) {
+            EXPECT_TRUE(contextImp->isDeviceDefinedForThisContext(L0::Device::fromHandle(subSubDevice)));
+        }
     }
 
     res = L0::Context::fromHandle(hContext)->destroy();

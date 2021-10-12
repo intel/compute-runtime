@@ -175,7 +175,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         }
 
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
-        auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
 
         enableRootDeviceDebugger(neoDevice);
 
@@ -184,8 +183,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         auto pNeoDevice = neoDevice.release();
 
-        auto subDevicesMask = static_cast<uint32_t>(rootDeviceEnvironment->deviceAffinityMask.getGenericSubDevicesMask().to_ulong());
-        auto device = Device::create(this, pNeoDevice, subDevicesMask, false, &returnValue);
+        auto device = Device::create(this, pNeoDevice, false, &returnValue);
         this->devices.push_back(device);
 
         multiOsContextDriver |= device->isMultiDeviceCapable();
