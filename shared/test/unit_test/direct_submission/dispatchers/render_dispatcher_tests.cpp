@@ -119,7 +119,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeC
     EXPECT_TRUE(foundCacheFlush);
 }
 
-HWCMDTEST_F(IGFX_GEN12_CORE, RenderDispatcherTest,
+HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
             givenRenderDispatcherPartitionedWorkloadFlagTrueWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValueAndPartitionParameter) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
