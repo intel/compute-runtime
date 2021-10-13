@@ -10,7 +10,6 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
-#include "opencl/test/unit_test/mocks/mock_hw_helper.h"
 #include "test.h"
 
 extern PRODUCT_FAMILY productFamily;

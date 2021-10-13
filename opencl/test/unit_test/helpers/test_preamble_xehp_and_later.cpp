@@ -89,20 +89,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreemptionWatermarkXeHPAndLater, givenPreambleThenP
     EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 }
 
-struct KernelCommandsXeHPAndLater : public PreambleVfeState,
-                                    public ClDeviceFixture {
+struct KernelCommandsXeHPAndLater : public PreambleVfeState {
     void SetUp() override {
         PreambleVfeState::SetUp();
-        ClDeviceFixture::SetUp();
+        pDevice->incRefInternal();
+        pClDevice = new MockClDevice{pDevice};
+        ASSERT_NE(nullptr, pClDevice);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        pClDevice->decRefInternal();
         PreambleVfeState::TearDown();
     }
 
+    MockClDevice *pClDevice = nullptr;
     std::unique_ptr<MockProgram> program;
     KernelInfo kernelInfo;
 };

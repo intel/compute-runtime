@@ -15,10 +15,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "gmock/gmock.h"
 

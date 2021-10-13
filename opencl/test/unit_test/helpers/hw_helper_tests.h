@@ -10,13 +10,13 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-using HwHelperTest = Test<ClDeviceFixture>;
+using HwHelperTest = Test<DeviceFixture>;
 
 struct ComputeSlmTestInput {
     uint32_t expected;

@@ -20,7 +20,6 @@
 #include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
 #include "hw_cmds.h"

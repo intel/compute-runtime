@@ -12,7 +12,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "gtest/gtest.h"

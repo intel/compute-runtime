@@ -16,12 +16,13 @@
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 #include "engine_node.h"
 #include "pipe_control_args.h"
 
-using HwHelperTestXeHPAndLater = HwHelperTest;
+using HwHelperTestXeHPAndLater = Test<ClDeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenGettingMaxBarriersPerSliceThen32IsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);

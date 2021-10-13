@@ -12,9 +12,6 @@
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-
 #include "test_traits_common.h"
 
 using namespace NEO;
