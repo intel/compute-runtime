@@ -118,11 +118,6 @@ std::string HwHelperHw<Family>::getExtensions() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isBlitterForImagesSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 

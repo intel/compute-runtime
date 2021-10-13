@@ -16,6 +16,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -796,8 +797,8 @@ bool CommandQueue::blitEnqueuePreferred(const CsrSelectionArgs &args) const {
 
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {
     const auto &hwInfo = device->getHardwareInfo();
-    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto blitEnqueueImageAllowed = hwHelper.isBlitterForImagesSupported(hwInfo);
+    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto blitEnqueueImageAllowed = hwInfoConfig->isBlitterForImagesSupported();
 
     if (DebugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
         blitEnqueueImageAllowed = DebugManager.flags.EnableBlitterForEnqueueImageOperations.get();

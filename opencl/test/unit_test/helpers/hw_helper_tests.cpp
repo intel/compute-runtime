@@ -1208,8 +1208,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingPlanarYuvHeigh
 }
 
 HWTEST_F(HwHelperTest, givenHwHelperWhenIsBlitterForImagesSupportedIsCalledThenFalseIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isBlitterForImagesSupported(*defaultHwInfo));
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_FALSE(hwInfoConfig.isBlitterForImagesSupported());
 }
 
 TEST_F(HwHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsReturned) {

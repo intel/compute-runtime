@@ -766,7 +766,7 @@ HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImage
     DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
     REQUIRE_BLITTER_OR_SKIP(hwInfo);
     size_t origin[] = {0, 0, 0};
@@ -786,7 +786,7 @@ HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImage
         DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), image.get(), CL_TRUE, origin, region);
-        auto supportExpected = hwHelper.isBlitterForImagesSupported(*hwInfo);
+        auto supportExpected = hwInfoConfig->isBlitterForImagesSupported();
         EXPECT_EQ(supportExpected, mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {

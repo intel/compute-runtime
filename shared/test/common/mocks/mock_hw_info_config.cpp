@@ -237,4 +237,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isStorageInfoAdjustmentRequired() const {
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isBlitterForImagesSupported() const {
+    return false;
+}
+
 } //namespace NEO

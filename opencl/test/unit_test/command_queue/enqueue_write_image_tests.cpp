@@ -215,7 +215,7 @@ HWTEST_F(EnqueueWriteImageTest, givenDeviceWithBlitterSupportWhenEnqueueWriteIma
     DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
     size_t origin[] = {0, 0, 0};
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
@@ -234,7 +234,7 @@ HWTEST_F(EnqueueWriteImageTest, givenDeviceWithBlitterSupportWhenEnqueueWriteIma
         DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueWriteImageHelper<>::enqueueWriteImage(mockCmdQ.get(), image.get(), CL_FALSE, origin, region);
-        auto supportExpected = hwHelper.isBlitterForImagesSupported(*hwInfo);
+        auto supportExpected = hwInfoConfig->isBlitterForImagesSupported();
         EXPECT_EQ(supportExpected, mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {

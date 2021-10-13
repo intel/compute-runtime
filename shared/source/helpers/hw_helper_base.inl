@@ -593,11 +593,6 @@ bool HwHelperHw<GfxFamily>::isSubDeviceEngineSupported(const HardwareInfo &hwInf
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isBlitterForImagesSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 size_t HwHelperHw<GfxFamily>::getPreemptionAllocationAlignment() const {
     return 256 * MemoryConstants::kiloByte;
 }
