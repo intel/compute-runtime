@@ -221,16 +221,28 @@ Kernel *BuiltinFunctionsLibImpl::getImageFunction(ImageBuiltin func) {
 std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) {
     using BuiltInCodeType = NEO::BuiltinCode::ECodeType;
 
-    auto builtInCodeType = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() ? BuiltInCodeType::Intermediate : BuiltInCodeType::Binary;
-    auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, builtInCodeType, *device->getNEODevice());
+    StackVec<BuiltInCodeType, 2> supportedTypes{};
+    if (!NEO::DebugManager.flags.RebuildPrecompiledKernels.get()) {
+        supportedTypes.push_back(BuiltInCodeType::Binary);
+    }
+    supportedTypes.push_back(BuiltInCodeType::Intermediate);
+
+    NEO::BuiltinCode builtinCode{};
+
+    for (auto &builtinCodeType : supportedTypes) {
+        builtinCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, builtinCodeType, *device->getNEODevice());
+        if (!builtinCode.resource.empty()) {
+            break;
+        }
+    }
 
     ze_result_t res;
     std::unique_ptr<Module> module;
     ze_module_handle_t moduleHandle;
     ze_module_desc_t moduleDesc = {};
-    moduleDesc.format = builtInCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtInCode.resource[0]);
-    moduleDesc.inputSize = builtInCode.resource.size();
+    moduleDesc.format = builtinCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtinCode.resource[0]);
+    moduleDesc.inputSize = builtinCode.resource.size();
     res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
     UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
 

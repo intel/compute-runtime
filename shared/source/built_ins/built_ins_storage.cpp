@@ -188,16 +188,12 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::
 BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
     BuiltinResourceT bc;
     auto &hwInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     std::string resourceNameGeneric = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType));
-    std::string resourceNameForPlatformType = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType),
-                                                                        getFamilyNameWithType(hwInfo),
-                                                                        hwHelper.getDefaultRevisionId(hwInfo));
     std::string resourceNameForPlatformTypeAndStepping = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType),
                                                                                    getFamilyNameWithType(hwInfo),
                                                                                    hwInfo.platform.usRevId);
 
-    for (auto &rn : {resourceNameForPlatformTypeAndStepping, resourceNameForPlatformType, resourceNameGeneric}) { // first look for dedicated version, only fallback to generic one
+    for (auto &rn : {resourceNameForPlatformTypeAndStepping, resourceNameGeneric}) { // first look for dedicated version, only fallback to generic one
         for (auto &s : allStorages) {
             bc = s.get()->load(rn);
             if (bc.size() != 0) {
