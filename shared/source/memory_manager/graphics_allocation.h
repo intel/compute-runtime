@@ -229,13 +229,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::RING_BUFFER ||
                allocationType == AllocationType::SEMAPHORE_BUFFER ||
                allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+               allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
                allocationType == AllocationType::DEBUG_MODULE_AREA;
     }
     static bool isLockable(AllocationType allocationType) {
         return isCpuAccessRequired(allocationType) ||
                isIsaAllocationType(allocationType) ||
                allocationType == AllocationType::BUFFER_HOST_MEMORY ||
-               allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
                allocationType == AllocationType::SHARED_RESOURCE_COPY;
     }
 

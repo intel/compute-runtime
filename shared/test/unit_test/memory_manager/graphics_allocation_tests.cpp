@@ -152,6 +152,10 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsTimestampPacketThenCpuAccessIsR
     EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER));
 }
 
+TEST(GraphicsAllocationTest, whenAllocationTypeIsGpuTimestampDeviceBufferThenCpuAccessIsRequired) {
+    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER));
+}
+
 TEST(GraphicsAllocationTest, whenAllocationRequiresCpuAccessThenAllocationIsLockable) {
     auto firstAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::UNKNOWN);
     auto lastAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::COUNT);
