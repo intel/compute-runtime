@@ -165,6 +165,25 @@ HWTEST_F(MultipleMapBufferTest, givenReadOnlyMapWhenUnmappedOnGpuThenEnqueueMark
     EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
 }
 
+HWTEST_F(MultipleMapBufferTest, givenWriteInvalidateMapWhenMappedOnGpuThenCallEnqueueMarker) {
+    auto buffer = createMockBuffer<FamilyType>(true);
+    auto cmdQ = createMockCmdQ<FamilyType>();
+    EXPECT_FALSE(buffer->mappingOnCpuAllowed());
+
+    size_t offset = 1;
+    size_t size = 3;
+    void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE_INVALIDATE_REGION, offset, size, 0, nullptr, nullptr, nullptr);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(cmdQ->readBufferCalled, 0u);
+    EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
+
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(cmdQ->writeBufferCalled, 1u);
+    EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
+}
+
 HWTEST_F(MultipleMapBufferTest, givenNotMappedPtrWhenUnmapedOnGpuThenReturnError) {
     auto buffer = createMockBuffer<FamilyType>(true);
     auto cmdQ = createMockCmdQ<FamilyType>();
@@ -243,6 +262,23 @@ HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDo
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
     EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
     EXPECT_EQ(0u, buffer->transferFromHostPtrCalled);
+}
+
+HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenWriteInvalidateMappedOnCpuThenDontMakeCpuCopy) {
+    auto buffer = createMockBuffer<FamilyType>(false);
+    auto cmdQ = createMockCmdQ<FamilyType>();
+    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
+
+    size_t offset = 1;
+    size_t size = 3;
+    void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE_INVALIDATE_REGION, offset, size, 0, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->transferToHostPtrCalled);
+
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->transferFromHostPtrCalled);
 }
 
 HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {

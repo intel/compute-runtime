@@ -107,13 +107,17 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         switch (transferProperties.cmdType) {
         case CL_COMMAND_MAP_BUFFER:
             if (!transferProperties.memObj->isMemObjZeroCopy()) {
-                transferProperties.memObj->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
+                if (transferProperties.mapFlags != CL_MAP_WRITE_INVALIDATE_REGION) {
+                    transferProperties.memObj->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
+                }
                 eventCompleted = true;
             }
             break;
         case CL_COMMAND_MAP_IMAGE:
             if (!transferProperties.memObj->isMemObjZeroCopy()) {
-                transferProperties.memObj->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
+                if (transferProperties.mapFlags != CL_MAP_WRITE_INVALIDATE_REGION) {
+                    transferProperties.memObj->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
+                }
                 eventCompleted = true;
             }
             break;

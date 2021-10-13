@@ -192,6 +192,30 @@ HWTEST_F(MultipleMapImageTest, givenReadOnlyMapWhenUnmappedOnGpuThenEnqueueMarke
     EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
 }
 
+HWTEST_F(MultipleMapImageTest, givenWriteInvalidateMapWhenMappedOnGpuThenEnqueueMarker) {
+    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+        GTEST_SKIP();
+    }
+    auto image = createMockImage<Image3dDefaults, FamilyType>();
+    auto cmdQ = createMockCmdQ<FamilyType>();
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+
+    MemObjOffsetArray origin = {{1, 2, 1}};
+    MemObjSizeArray region = {{3, 4, 1}};
+    void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, &origin[0], &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(1u, image->mapOperationsHandler.size());
+    EXPECT_EQ(cmdQ->readImageCalled, 0u);
+    EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
+
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), image.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, image->mapOperationsHandler.size());
+    EXPECT_EQ(cmdQ->writeImageCalled, 1u);
+    EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
+    EXPECT_EQ(cmdQ->enqueueRegion, region);
+    EXPECT_EQ(cmdQ->enqueueOrigin, origin);
+}
+
 HWTEST_F(MultipleMapImageTest, givenNotMappedPtrWhenUnmapedThenReturnError) {
     auto image = createMockImage<Image2dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
@@ -262,7 +286,7 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedPt
     EXPECT_EQ(image->copyOrigin, origin);
 }
 
-HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDontMakeCpuCopy) {
+HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenReadOnlyUnmappedOnCpuThenDontMakeCpuCopy) {
     auto image = createMockImage<Image1dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     image->isZeroCopy = false;
@@ -281,6 +305,27 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDon
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), image.get(), mappedPtr, 0, nullptr, nullptr);
     EXPECT_EQ(0u, image->mapOperationsHandler.size());
     EXPECT_EQ(0u, image->transferFromHostPtrCalled);
+}
+
+HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenWriteInvalidateMappedOnCpuThenDontMakeCpuCopy) {
+    auto image = createMockImage<Image1dDefaults, FamilyType>();
+    auto cmdQ = createMockCmdQ<FamilyType>();
+    image->isZeroCopy = false;
+
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
+
+    MemObjOffsetArray origin = {{1, 0, 0}};
+    MemObjSizeArray region = {{3, 1, 1}};
+    void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, &origin[0], &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(1u, image->mapOperationsHandler.size());
+    EXPECT_EQ(0u, image->transferToHostPtrCalled);
+
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), image.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, image->mapOperationsHandler.size());
+    EXPECT_EQ(1u, image->transferFromHostPtrCalled);
+    EXPECT_EQ(image->copyRegion, region);
+    EXPECT_EQ(image->copyOrigin, origin);
 }
 
 HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {
