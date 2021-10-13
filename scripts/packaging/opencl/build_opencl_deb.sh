@@ -81,28 +81,6 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
     if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
         perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
     fi
-else
-    GMM_VERSION=$(apt-cache policy libigdgmm11 | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${GMM_VERSION}" ]; then
-        perl -pi -e "s/^ libigdgmm11(?=,|$)/ libigdgmm11 (=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
-    fi
-    GMM_DEVEL_VERSION=$(apt-cache policy libigdgmm-dev | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
-        perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
-    fi
-
-    IGC_VERSION=$(apt-cache policy libigdfcl1 | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${IGC_VERSION}" ]; then
-        perl -pi -e "s/^ libigdfcl1(?=,|$)/ libigdfcl1 (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
-    fi
-    IGC_DEVEL_VERSION=$(apt-cache policy libigdfcl-dev | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
-        perl -pi -e "s/^ libigdfcl-dev(?=,|$)/ libigdfcl-dev (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
-    fi
-    IGC_CORE_VERSION=$(apt-cache policy libigc1 | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${IGC_CORE_VERSION}" ]; then
-        perl -pi -e "s/^ libigc1(?=,|$)/ libigc1 (=$IGC_CORE_VERSION)/" "$BUILD_DIR/debian/control"
-    fi
 fi
 
 #needs a top level CMAKE file
