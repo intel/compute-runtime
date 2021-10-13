@@ -986,7 +986,7 @@ HWTEST_F(ModuleLinkingTest, givenNotFullyLinkedModuleWhenCreatingKernelThenError
 
     auto retVal = module.createKernel(nullptr, nullptr);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, retVal);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED, retVal);
 }
 
 using ModulePropertyTest = Test<ModuleFixture>;

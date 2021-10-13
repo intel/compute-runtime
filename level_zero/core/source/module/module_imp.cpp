@@ -574,7 +574,7 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
                                     ze_kernel_handle_t *phFunction) {
     ze_result_t res;
     if (!isFullyLinked) {
-        return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+        return ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED;
     }
     auto kernel = Kernel::create(productFamily, this, desc, &res);
 
