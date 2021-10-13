@@ -125,6 +125,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void initializeRayTracing();
 
     virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
+    const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
 
   protected:
     Device() = delete;

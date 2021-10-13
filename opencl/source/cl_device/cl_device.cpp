@@ -35,23 +35,24 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
     compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, emptyOpenClCFeatures);
     compilerExtensionsWithFeatures = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, deviceInfo.openclCFeatures);
 
-    auto numAvailableDevices = device.getNumSubDevices();
-    if (numAvailableDevices > 1) {
-        for (uint32_t i = 0; i < numAvailableDevices; i++) {
-            auto &coreSubDevice = static_cast<SubDevice &>(*device.getSubDevice(i));
-            auto pClSubDevice = std::make_unique<ClDevice>(coreSubDevice, rootClDevice, platform);
-            pClSubDevice->incRefInternal();
-            pClSubDevice->decRefApi();
-
-            auto &deviceInfo = pClSubDevice->deviceInfo;
-            deviceInfo.parentDevice = this;
-            deviceInfo.partitionType[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
-            deviceInfo.partitionType[1] = CL_DEVICE_AFFINITY_DOMAIN_NUMA;
-            deviceInfo.partitionType[2] = 0;
-
-            subDevices.push_back(std::move(pClSubDevice));
+    for (auto &subDevice : device.getSubDevices()) {
+        if (!subDevice) {
+            continue;
         }
+
+        auto pClSubDevice = std::make_unique<ClDevice>(*subDevice, rootClDevice, platform);
+        pClSubDevice->incRefInternal();
+        pClSubDevice->decRefApi();
+
+        auto &deviceInfo = pClSubDevice->deviceInfo;
+        deviceInfo.parentDevice = this;
+        deviceInfo.partitionType[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
+        deviceInfo.partitionType[1] = CL_DEVICE_AFFINITY_DOMAIN_NUMA;
+        deviceInfo.partitionType[2] = 0;
+
+        subDevices.push_back(std::move(pClSubDevice));
     }
+
     if (getSharedDeviceInfo().debuggerActive && getSourceLevelDebugger()) {
         auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
         getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);

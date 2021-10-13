@@ -850,6 +850,23 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     EXPECT_EQ(0u, rootDevice->getNumSubDevices());
 }
 
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskWhenCreatingClSubDevicesThenSkipDisabledDevices) {
+    constexpr uint32_t genericDevicesCount = 3;
+    constexpr uint32_t ccsCount = 1;
+
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
+
+    ASSERT_EQ(2u, clRootDevice->getNumSubDevices());
+    EXPECT_EQ(0b1u, clRootDevice->getSubDevice(0)->getDeviceBitfield().to_ulong());
+    EXPECT_EQ(0b100u, clRootDevice->getSubDevice(1)->getDeviceBitfield().to_ulong());
+}
+
 HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, IsAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
