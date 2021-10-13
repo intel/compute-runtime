@@ -77,6 +77,37 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getSynchronousMode());
 }
 
+TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddDisabledNeoDevies) {
+    constexpr uint32_t numSubDevices = 3;
+    constexpr uint32_t numMaskedSubDevices = 2;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
+
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->parseAffinityMask();
+    auto deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, numSubDevices, *executionEnvironment.release());
+    auto rootDevice = deviceFactory->rootDevices[0];
+    EXPECT_NE(nullptr, rootDevice);
+    EXPECT_EQ(numMaskedSubDevices, rootDevice->getNumSubDevices());
+
+    auto driverHandle = std::make_unique<DriverHandleImp>();
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), rootDevice, false, &returnValue));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+    ASSERT_EQ(numMaskedSubDevices, deviceImp->numSubDevices);
+
+    EXPECT_EQ(0b1u, deviceImp->subDevices[0]->getNEODevice()->getDeviceBitfield().to_ulong());
+    EXPECT_EQ(0b100u, deviceImp->subDevices[1]->getNEODevice()->getDeviceBitfield().to_ulong());
+}
+
 TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInitialized) {
     NEO::MockCompilerEnableGuard mock(true);
     ze_result_t returnValue = ZE_RESULT_SUCCESS;

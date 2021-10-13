@@ -803,13 +803,13 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device->setDebugSurface(debugSurface);
     }
 
-    for (uint32_t i = 0; i < device->neoDevice->getNumSubDevices(); i++) {
-        if (!device->neoDevice->getSubDevice(i)) {
+    for (auto &neoSubDevice : device->neoDevice->getSubDevices()) {
+        if (!neoSubDevice) {
             continue;
         }
 
         ze_device_handle_t subDevice = Device::create(driverHandle,
-                                                      device->neoDevice->getSubDevice(i),
+                                                      neoSubDevice,
                                                       true, returnValue, nullptr);
         if (subDevice == nullptr) {
             return nullptr;
