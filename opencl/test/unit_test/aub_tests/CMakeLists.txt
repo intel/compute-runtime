@@ -52,7 +52,7 @@ if(WIN32)
 endif()
 
 target_include_directories(igdrcl_aub_tests PRIVATE
-                           ${CMAKE_CURRENT_SOURCE_DIR}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/aub_tests
                            ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
 )
 
@@ -60,7 +60,6 @@ target_sources(igdrcl_aub_tests PRIVATE
                ${NEO_SHARED_TEST_DIRECTORY}/unit_test/page_fault_manager/default_asan_options.cpp
                ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
                ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
 
 if(WIN32)

@@ -13,7 +13,6 @@ get_property(NEO_SHARED_aub_tests_configurations GLOBAL PROPERTY NEO_SHARED_aub_
 
 list(APPEND L0_AUB_TESTS__TARGET_OBJECTS
      ${CMAKE_CURRENT_SOURCE_DIR}/aub_hello_world_test.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
      ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
      ${NEO_SHARED_aub_tests_configurations}
      ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
@@ -131,7 +130,7 @@ else()
 endif()
 
 target_include_directories(${TARGET_NAME} PRIVATE
-                           ${CMAKE_CURRENT_SOURCE_DIR}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/aub_tests
                            ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/gmm_memory

@@ -29,9 +29,9 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                ${CMAKE_CURRENT_SOURCE_DIR}/white_box.h
                ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+               ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
                ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/gen_kernel.cmake
 )
@@ -85,6 +85,7 @@ target_include_directories(${TARGET_NAME}
                            $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/core/os_interface
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
 )
 
 if(UNIX)
@@ -93,7 +94,6 @@ if(UNIX)
                              PRIVATE
                              $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/core/os_interface/linux
                              $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools/linux
-                             ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/linux
   )
 else()
   target_include_directories(${TARGET_NAME}
@@ -101,7 +101,6 @@ else()
                              PRIVATE
                              $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/core/os_interface/windows
                              $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools/windows
-                             ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/windows
   )
 endif()
 

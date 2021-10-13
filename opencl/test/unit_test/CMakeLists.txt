@@ -29,6 +29,7 @@ add_dependencies(unit_tests copy_test_files_per_product)
 set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
@@ -123,7 +124,7 @@ target_include_directories(igdrcl_tests PRIVATE
                            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}
                            ${ENGINE_NODE_DIR}
                            ${KHRONOS_GL_HEADERS_DIR}
-                           ${CMAKE_CURRENT_SOURCE_DIR}/config
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
 )
 
 target_link_libraries(igdrcl_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})

@@ -11,8 +11,8 @@ set(OPENCL_MT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_custom_target(run_mt_unit_tests)
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
                ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
@@ -27,7 +27,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
 )
 
 target_include_directories(igdrcl_mt_tests PRIVATE
-                           ${CMAKE_CURRENT_SOURCE_DIR}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                            ${NEO_SOURCE_DIR}/opencl/source/gen_common
 )
