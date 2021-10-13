@@ -6,14 +6,11 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/built_ins/built_in_tests_shared.inl"
 
 #include "test.h"
-
-#include "gtest/gtest.h"
-
-#include <string>
 
 using namespace NEO;
 
@@ -49,4 +46,31 @@ TEST(BuiltInTestsL0, givenUseBindlessBuiltinDisabledInL0ApiWhenBinExtensionPasse
 
 TEST(BuiltInTestsL0, givenUseBindlessBuiltinEnabledInL0ApiWhenBinExtensionPassedThenNameHasBindlessPrefix) {
     givenUseBindlessBuiltinEnabledWhenBinExtensionPassedThenNameHasBindlessPrefix();
+}
+
+using BuiltInTestL0 = Test<DeviceFixture>;
+
+TEST_F(BuiltInTestL0, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceForNotRegisteredRevisionThenResourceSizeIsZero) {
+    class MockBuiltinsLib : BuiltinsLib {
+      public:
+        BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
+            return BuiltinsLib::getBuiltinResource(builtin, requestedCodeType, device);
+        }
+    };
+
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;
+    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferRect, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferToImage3d, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyImage3dToBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyImageToImage1d, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyImageToImage2d, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyImageToImage3d, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillImage1d, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillImage2d, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillImage3d, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Binary, *pDevice).size());
 }
