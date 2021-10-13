@@ -252,7 +252,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         postSync.setDestinationAddress(eventAddress);
 
         auto gmmHelper = device->getRootDeviceEnvironment().getGmmHelper();
-        postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        if (MemorySynchronizationCommands<Family>::isDcFlushAllowed()) {
+            postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        } else {
+            postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+        }
 
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
     }
