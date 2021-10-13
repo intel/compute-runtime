@@ -9,12 +9,12 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/engine_info_impl.h"
+#include "shared/source/os_interface/linux/local_memory_helper.h"
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "drm_neo.h"
 #include "drm_query_flags.h"
-#include "drm_tip.h"
 
 #include <fstream>
 
@@ -30,25 +30,6 @@ std::string getIoctlParamStringRemaining(int param) {
     return std::to_string(param);
 }
 
-std::unique_ptr<uint8_t[]> translateDataQueryOnDrmTip(uint8_t *dataQuery, int32_t &length) {
-    auto dataOnDrmTip = reinterpret_cast<DRM_TIP::drm_i915_query_memory_regions *>(dataQuery);
-    auto lengthOnDrmTrip = static_cast<int32_t>(sizeof(DRM_TIP::drm_i915_query_memory_regions) + dataOnDrmTip->num_regions * sizeof(DRM_TIP::drm_i915_memory_region_info));
-    if (length == lengthOnDrmTrip) {
-        auto lengthTranslated = static_cast<int32_t>(sizeof(drm_i915_query_memory_regions) + dataOnDrmTip->num_regions * sizeof(drm_i915_memory_region_info));
-        auto dataQueryTranslated = std::make_unique<uint8_t[]>(lengthTranslated);
-        auto dataTranslated = reinterpret_cast<drm_i915_query_memory_regions *>(dataQueryTranslated.get());
-        dataTranslated->num_regions = dataOnDrmTip->num_regions;
-        for (uint32_t i = 0; i < dataTranslated->num_regions; i++) {
-            dataTranslated->regions[i].region.memory_class = dataOnDrmTip->regions[i].region.memory_class;
-            dataTranslated->regions[i].region.memory_instance = dataOnDrmTip->regions[i].region.memory_instance;
-            dataTranslated->regions[i].probed_size = dataOnDrmTip->regions[i].probed_size;
-            dataTranslated->regions[i].unallocated_size = dataOnDrmTip->regions[i].unallocated_size;
-        }
-        length = lengthTranslated;
-        return dataQueryTranslated;
-    }
-    return nullptr;
-}
 } // namespace IoctlHelper
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
@@ -66,13 +47,11 @@ bool Drm::queryMemoryInfo() {
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty, length);
     if (dataQuery) {
-        auto dataQueryTranslated = IoctlHelper::translateDataQueryOnDrmTip(dataQuery.get(), length);
-        if (dataQueryTranslated) {
-            dataQuery.reset(dataQueryTranslated.release());
-        }
-        auto data = reinterpret_cast<drm_i915_query_memory_regions *>(dataQuery.get());
-        DEBUG_BREAK_IF(static_cast<size_t>(length) != sizeof(drm_i915_query_memory_regions) + data->num_regions * sizeof(drm_i915_memory_region_info));
-        this->memoryInfo.reset(new MemoryInfoImpl(data->regions, data->num_regions));
+        auto pHwInfo = getRootDeviceEnvironment().getHardwareInfo();
+        auto localMemHelper = LocalMemoryHelper::get(pHwInfo->platform.eProductFamily);
+        auto data = localMemHelper->translateIfRequired(dataQuery.release(), length);
+        auto memRegions = reinterpret_cast<drm_i915_query_memory_regions *>(data.get());
+        this->memoryInfo.reset(new MemoryInfoImpl(memRegions->regions, memRegions->num_regions));
         return true;
     }
     return false;
