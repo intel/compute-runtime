@@ -67,5 +67,5 @@ template struct CmdParse<GenGfxFamily>;
 namespace NEO {
 template void HardwareParse::findHardwareCommands<BDWFamily>();
 template void HardwareParse::findHardwareCommands<BDWFamily>(IndirectHeap *);
-template const void *HardwareParse::getStatelessArgumentPointer<BDWFamily>(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
+template const void *HardwareParse::getStatelessArgumentPointer<BDWFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
 } // namespace NEO

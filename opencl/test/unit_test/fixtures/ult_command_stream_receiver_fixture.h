@@ -13,22 +13,22 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 
 namespace NEO {
 
 struct UltCommandStreamReceiverTest
     : public ClDeviceFixture,
-      public HardwareParse,
+      public ClHardwareParse,
       ::testing::Test {
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
 
         size_t sizeStream = 512;
         size_t alignmentStream = 0x1000;
@@ -73,7 +73,7 @@ struct UltCommandStreamReceiverTest
         alignedFree(iohBuffer);
         alignedFree(dshBuffer);
         alignedFree(cmdBuffer);
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         ClDeviceFixture::TearDown();
     }
 

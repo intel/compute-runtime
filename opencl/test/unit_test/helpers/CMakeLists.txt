@@ -9,6 +9,7 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config_ocl_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/base_object_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_parse.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder_tests.cpp

@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -15,6 +14,7 @@
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 
 namespace NEO {
@@ -35,16 +35,16 @@ struct CommandDeviceFixture : public ClDeviceFixture,
 
 struct CommandEnqueueBaseFixture : CommandDeviceFixture,
                                    public IndirectHeapFixture,
-                                   public HardwareParse {
+                                   public ClHardwareParse {
     using IndirectHeapFixture::SetUp;
     void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
         CommandDeviceFixture::SetUp(cmdQueueProperties);
         IndirectHeapFixture::SetUp(pCmdQ);
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         IndirectHeapFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }

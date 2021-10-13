@@ -208,7 +208,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
         event2);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    HardwareParse::parseCommands<FamilyType>(*pCmdQ2);
+    ClHardwareParse::parseCommands<FamilyType>(*pCmdQ2);
 
     // Compute our memory expecations based on kernel execution
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];

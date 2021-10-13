@@ -8,11 +8,11 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-struct EnqueueBufferWindowsTest : public HardwareParse,
+struct EnqueueBufferWindowsTest : public ClHardwareParse,
                                   public ::testing::Test {
     EnqueueBufferWindowsTest(void)
         : buffer(nullptr) {

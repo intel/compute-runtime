@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -18,6 +17,7 @@
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
@@ -603,7 +603,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScra
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     csr.getMemoryManager()->setForce32BitAllocations(false);
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
     uint32_t scratchSize = 4096u;
@@ -923,7 +923,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTwoEnqueueProgrammedWithinS
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    HardwareParse hwParse;
+    ClHardwareParse hwParse;
 
     MockKernelWithInternals mockKernel(*pClDevice);
     size_t gws[3] = {1, 0, 0};
@@ -1640,7 +1640,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInser
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
@@ -1665,7 +1665,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetToMinusTwoWhenDispatchWalker
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
@@ -1689,7 +1689,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsert
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
@@ -1713,7 +1713,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertP
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
@@ -1737,7 +1737,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenIn
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
@@ -1762,7 +1762,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenDontI
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
@@ -1786,7 +1786,7 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchWalkersThenInse
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
@@ -1814,7 +1814,7 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatcMultiplehWalkers
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 

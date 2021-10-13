@@ -14,9 +14,6 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
-#include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/kernel/kernel.h"
-
 #include "gtest/gtest.h"
 
 namespace NEO {
@@ -72,14 +69,12 @@ struct HardwareParse {
     }
 
     template <typename FamilyType>
-    void parseCommands(NEO::CommandQueue &commandQueue) {
-        auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
+    void parseCommands(NEO::CommandStreamReceiver &commandStreamReceiver, NEO::LinearStream &commandStream) {
         auto &commandStreamCSR = commandStreamReceiver.getCS();
 
         parseCommands<FamilyType>(commandStreamCSR, startCSRCS);
         startCSRCS = commandStreamCSR.getUsed();
 
-        auto &commandStream = commandQueue.getCS(1024);
         if (previousCS != &commandStream) {
             startCS = 0;
         }
@@ -132,7 +127,7 @@ struct HardwareParse {
     }
 
     template <typename FamilyType>
-    const void *getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
+    const void *getStatelessArgumentPointer(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
 
     template <typename CmdType>
     CmdType *getCommand(GenCmdList::iterator itorStart, GenCmdList::iterator itorEnd) {

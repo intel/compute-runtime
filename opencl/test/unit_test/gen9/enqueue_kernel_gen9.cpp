@@ -6,11 +6,11 @@
  */
 
 #include "shared/source/gen9/reg_configs.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/helpers/static_size3.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
@@ -28,7 +28,7 @@ GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKe
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, StatickSize3<1, 1, 1>(), nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdQ);
 
     auto cmd = findMmioCmd<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), DebugControlReg2::address);
@@ -47,7 +47,7 @@ GEN9TEST_F(Gen9EnqueueTest, givenKernelNotRequiringIndependentForwardProgressWhe
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, StatickSize3<1, 1, 1>(), nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdQ);
 
     auto cmd = findMmioCmd<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), DebugControlReg2::address);

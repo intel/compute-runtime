@@ -537,7 +537,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
     flushTask(commandStreamReceiver);
 
     auto &commandStreamCSR = commandStreamReceiver.commandStream;
-    HardwareParse::parseCommands<FamilyType>(commandStreamCSR, 0);
+    parseCommands<FamilyType>(commandStreamCSR, 0);
     HardwareParse::findHardwareCommands<FamilyType>();
 
     ASSERT_NE(nullptr, cmdStateBaseAddress);

@@ -14,7 +14,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/tag_allocator.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -26,6 +25,7 @@
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -1196,7 +1196,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t lws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1215,7 +1215,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t lws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1238,7 +1238,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelTha
     SingleSubdeviceKernel subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
     cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1256,7 +1256,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t lws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1275,7 +1275,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsCre
     size_t lws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1295,7 +1295,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     auto timestampPacket = cmdQ->timestampPacketContainer->peekNodes().at(0);
@@ -1315,7 +1315,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1334,7 +1334,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenThereIsNoL
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1399,7 +1399,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhe
     size_t lws[] = {8, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1438,7 +1438,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1474,7 +1474,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
     EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1537,7 +1537,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, NonDefaultPlatformGpuWalkerTest, givenNonDefaultPla
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     auto &cmdStream = cmdQ->getCS(0);
     TagNode<TimestampPackets<uint32_t>> timestamp;
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);

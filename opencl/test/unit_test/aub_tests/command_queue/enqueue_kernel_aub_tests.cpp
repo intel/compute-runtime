@@ -49,16 +49,16 @@ cl_uint TestSimdTable[] = {
 namespace ULT {
 struct AUBHelloWorld
     : public HelloWorldFixture<AUBHelloWorldFixtureFactory>,
-      public HardwareParse,
+      public ClHardwareParse,
       public ::testing::Test {
 
     void SetUp() override {
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::TearDown();
     }
 };
@@ -206,18 +206,18 @@ INSTANTIATE_TEST_CASE_P(
 
 struct AUBSimpleArg
     : public SimpleArgFixture<AUBSimpleArgFixtureFactory>,
-      public HardwareParse,
+      public ClHardwareParse,
       public ::testing::Test {
 
     using SimpleArgKernelFixture::SetUp;
 
     void SetUp() override {
         SimpleArgFixture<AUBSimpleArgFixtureFactory>::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         SimpleArgFixture<AUBSimpleArgFixtureFactory>::TearDown();
     }
 };
@@ -461,7 +461,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
     void *bufferGpuAddress = nullptr;
     std::unique_ptr<Buffer> outBuffer;
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
 };
 
 using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;

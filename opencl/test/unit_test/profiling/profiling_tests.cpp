@@ -804,7 +804,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
 
     static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
-    HardwareParse parse;
+    ClHardwareParse parse;
     auto &cmdList = parse.cmdList;
     parse.parseCommands<FamilyType>(*pCmdQ);
 
@@ -855,7 +855,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
 
     static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
-    HardwareParse parse;
+    ClHardwareParse parse;
     auto &cmdList = parse.cmdList;
     parse.parseCommands<FamilyType>(*pCmdQ);
 
@@ -963,7 +963,7 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
 
     static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse parse;
+    ClHardwareParse parse;
     auto &cmdList = parse.cmdList;
     parse.parseCommands<FamilyType>(*pCmdQ);
 
@@ -1033,7 +1033,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
     auto pEvent = static_cast<MockEvent<Event> *>(event);
     EXPECT_EQ(pEvent->getHwTimeStampNode()->getGpuAddress(), timeStampGpuAddress);
     EXPECT_EQ(pEvent->getHwPerfCounterNode()->getGpuAddress(), perfCountersGpuAddress);
-    HardwareParse parse;
+    ClHardwareParse parse;
     auto &cmdList = parse.cmdList;
     parse.parseCommands<FamilyType>(*pCmdQ);
 
@@ -1138,7 +1138,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommandQue
 
     cmdQHw->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
-    HardwareParse parse;
+    ClHardwareParse parse;
     auto &cmdList = parse.cmdList;
     parse.parseCommands<FamilyType>(*pCmdQ);
 
