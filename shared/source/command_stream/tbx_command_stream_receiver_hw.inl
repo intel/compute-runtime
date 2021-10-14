@@ -68,6 +68,8 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
+    isEngineInitialized = true;
+
     if (hardwareContextController) {
         hardwareContextController->initialize();
         return;
@@ -405,6 +407,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) {
+    UNRECOVERABLE_IF(!isEngineInitialized);
 
     AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
 
@@ -418,6 +421,8 @@ void TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
+    UNRECOVERABLE_IF(!isEngineInitialized);
+
     if (!this->isTbxWritable(gfxAllocation)) {
         return false;
     }

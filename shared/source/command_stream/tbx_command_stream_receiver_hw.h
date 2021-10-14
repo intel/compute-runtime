@@ -97,5 +97,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     bool dumpTbxNonWritable = false;
+    bool isEngineInitialized = false;
 };
 } // namespace NEO

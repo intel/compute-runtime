@@ -115,6 +115,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     constexpr static uint32_t getMaskAndValueForPollForCompletion();
 
     bool dumpAubNonWritable = false;
+    bool isEngineInitialized = false;
     ExternalAllocationsContainer externalAllocations;
 
     uint32_t pollForCompletionTaskCount = 0u;

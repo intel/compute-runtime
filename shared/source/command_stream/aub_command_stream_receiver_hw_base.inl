@@ -168,6 +168,7 @@ const std::string AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     auto streamLocked = getAubStream()->lockStream();
+    isEngineInitialized = true;
 
     if (hardwareContextController) {
         hardwareContextController->initialize();
@@ -626,6 +627,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpu
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) {
+    UNRECOVERABLE_IF(!isEngineInitialized);
+
     {
         std::ostringstream str;
         str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " size: " << std::dec << size;
@@ -644,6 +647,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
+    UNRECOVERABLE_IF(!isEngineInitialized);
+
     if (!this->isAubWritable(gfxAllocation)) {
         return false;
     }
