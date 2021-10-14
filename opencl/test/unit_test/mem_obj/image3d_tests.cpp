@@ -7,12 +7,12 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 using namespace NEO;
@@ -91,7 +91,8 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
     bool defaultTiling = DebugManager.flags.ForceLinearImages.get();
     imageDesc.image_height = 1;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
+    auto imageDescriptor = Image::convertDescriptor(imageDesc);
+    auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
     MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice());
 

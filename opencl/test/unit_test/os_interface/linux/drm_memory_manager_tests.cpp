@@ -32,6 +32,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/matchers.h"
 
 #include "opencl/source/event/event.h"
@@ -40,7 +41,6 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_cache_info.h"
 #include "test.h"
@@ -1533,12 +1533,11 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D; // tiled
-    imgDesc.image_width = 512;
-    imgDesc.image_height = 512;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D; // tiled
+    imgDesc.imageWidth = 512;
+    imgDesc.imageHeight = 512;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 
@@ -1950,10 +1949,10 @@ TEST_F(DrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphic
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = MemoryConstants::pageSize;
-    imgDesc.image_height = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image1D;
+    imgDesc.imageWidth = MemoryConstants::pageSize;
+    imgDesc.imageHeight = 1;
 
     cl_image_format imageFormat = {};
     imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
@@ -1961,15 +1960,15 @@ TEST_F(DrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphic
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     MockContext context(device);
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = &Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features)->surfaceFormat;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
-    imgInfo.rowPitch = imgDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
-    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.image_height;
+    imgInfo.rowPitch = imgDesc.imageWidth * surfaceFormat->ImageElementSizeInBytes;
+    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.imageHeight;
     imgInfo.size = imgInfo.slicePitch;
     imgInfo.linearStorage = true;
 
-    auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
+    auto hostPtr = alignedMalloc(imgDesc.imageWidth * imgDesc.imageHeight * 4, MemoryConstants::pageSize);
     bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_FALSE(copyRequired);
 
@@ -2462,12 +2461,11 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 512;
-    imgDesc.image_height = 512;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 512;
+    imgDesc.imageHeight = 512;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 
@@ -5229,10 +5227,10 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForImageThenLocalMemoryAllocationIsReturnedFromStandard64KbHeap) {
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 512;
-    imgDesc.image_height = 512;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 512;
+    imgDesc.imageHeight = 512;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;

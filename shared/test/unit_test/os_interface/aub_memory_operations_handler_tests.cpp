@@ -8,8 +8,7 @@
 #include "shared/test/unit_test/os_interface/aub_memory_operations_handler_tests.h"
 
 #include "shared/test/common/mocks/mock_aub_manager.h"
-
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "aub_mem_dump.h"
 

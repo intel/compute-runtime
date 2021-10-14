@@ -44,6 +44,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_experimental_command_buffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_partition.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_partition.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h

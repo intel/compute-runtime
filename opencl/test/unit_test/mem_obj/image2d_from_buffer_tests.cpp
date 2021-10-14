@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -16,7 +17,6 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
@@ -338,7 +338,8 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
 
     EXPECT_EQ(this->size, bufferGraphicsAllocation->getUnderlyingBufferSize());
 
-    auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, &imageFromBuffer->getSurfaceFormatInfo());
+    auto imageDescriptor = Image::convertDescriptor(imageDesc);
+    auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &imageFromBuffer->getSurfaceFormatInfo().surfaceFormat);
     auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), imgInfo);
 
     EXPECT_TRUE(queryGmm->gmmResourceInfo->getSizeAllocation() >= this->size);
@@ -369,7 +370,8 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
 
     EXPECT_EQ(this->size, bufferGraphicsAllocation->getUnderlyingBufferSize());
 
-    auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, &imageFromBuffer->getSurfaceFormatInfo());
+    auto imageDescriptor = Image::convertDescriptor(imageDesc);
+    auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &imageFromBuffer->getSurfaceFormatInfo().surfaceFormat);
     auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), imgInfo);
 
     EXPECT_TRUE(queryGmm->gmmResourceInfo->getSizeAllocation() >= this->size);
@@ -408,7 +410,8 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
 
     EXPECT_EQ(bufferSize, bufferGraphicsAllocation->getUnderlyingBufferSize());
 
-    auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, &imageFromBuffer->getSurfaceFormatInfo());
+    auto imageDescriptor = Image::convertDescriptor(imageDesc);
+    auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &imageFromBuffer->getSurfaceFormatInfo().surfaceFormat);
     auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), imgInfo);
 
     EXPECT_GT(queryGmm->gmmResourceInfo->getSizeAllocation(), bufferSize);

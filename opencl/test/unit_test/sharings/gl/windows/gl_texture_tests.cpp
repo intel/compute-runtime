@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/helpers/gmm_types_converter.h"
@@ -16,7 +17,6 @@
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
@@ -55,8 +55,8 @@ class GlSharingTextureTests : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
         imgDesc = {};
-        imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
-        imgDesc.image_width = 10;
+        imgDesc.imageType = ImageType::Image1D;
+        imgDesc.imageWidth = 10;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
         tempMM = new TempMM(*executionEnvironment);
@@ -80,7 +80,7 @@ class GlSharingTextureTests : public ::testing::Test {
     }
 
     ExecutionEnvironment *executionEnvironment;
-    cl_image_desc imgDesc;
+    ImageDescriptor imgDesc;
     TempMM *tempMM;
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> clContext;

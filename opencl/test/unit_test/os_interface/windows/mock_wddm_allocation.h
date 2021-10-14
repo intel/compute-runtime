@@ -8,8 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
-
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 namespace NEO {
 

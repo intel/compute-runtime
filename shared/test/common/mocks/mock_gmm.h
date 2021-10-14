@@ -7,17 +7,15 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/helpers/surface_formats.h"
-#include "opencl/source/mem_obj/image.h"
-
 namespace NEO {
 namespace MockGmmParams {
-static ClSurfaceFormatInfo mockSurfaceFormat;
+static SurfaceFormatInfo mockSurfaceFormat = {GMM_FORMAT_R8G8B8A8_UNORM_TYPE, GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM, 0, 4, 1, 4};
 }
 
 class MockGmm : public Gmm {
@@ -31,25 +29,23 @@ class MockGmm : public Gmm {
         return std::unique_ptr<Gmm>(new Gmm(clientContext, imgInfo, {}));
     }
 
-    static ImageInfo initImgInfo(cl_image_desc &imgDesc, int baseMipLevel, const ClSurfaceFormatInfo *surfaceFormat) {
+    static ImageInfo initImgInfo(ImageDescriptor &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {
         ImageInfo imgInfo = {};
         imgInfo.baseMipLevel = baseMipLevel;
-        imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
+        imgInfo.imgDesc = imgDesc;
         if (!surfaceFormat) {
-            ArrayRef<const ClSurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
-            MockGmmParams::mockSurfaceFormat = readWriteSurfaceFormats[0]; // any valid format
-            imgInfo.surfaceFormat = &MockGmmParams::mockSurfaceFormat.surfaceFormat;
+            imgInfo.surfaceFormat = &MockGmmParams::mockSurfaceFormat;
         } else {
-            imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+            imgInfo.surfaceFormat = surfaceFormat;
         }
         return imgInfo;
     }
 
     static GraphicsAllocation *allocateImage2d(MemoryManager &memoryManager) {
-        cl_image_desc imgDesc{};
-        imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-        imgDesc.image_width = 5;
-        imgDesc.image_height = 5;
+        ImageDescriptor imgDesc{};
+        imgDesc.imageType = ImageType::Image2D;
+        imgDesc.imageWidth = 5;
+        imgDesc.imageHeight = 5;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
         return memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, imgInfo, GraphicsAllocation::AllocationType::IMAGE, mockDeviceBitfield});
     }

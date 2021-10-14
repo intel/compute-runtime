@@ -20,13 +20,14 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/helpers/gmm_types_converter.h"
+#include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 #include "GL/gl.h"
@@ -148,7 +149,8 @@ TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm
 }
 
 TEST_F(GmmTests, GivenInvalidImageSizeWhenQueryingImgParamsThenImageInfoReturnsSizeZero) {
-    cl_image_desc imgDesc = {CL_MEM_OBJECT_IMAGE2D};
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image1D;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
@@ -157,9 +159,9 @@ TEST_F(GmmTests, GivenInvalidImageSizeWhenQueryingImgParamsThenImageInfoReturnsS
 }
 
 TEST_F(GmmTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIsThrown) {
-    cl_image_desc imgDesc{};
-    imgDesc.image_width = 10;
-    imgDesc.image_type = 0; // invalid
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageWidth = 10;
+    imgDesc.imageType = ImageType::Invalid;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     EXPECT_THROW(MockGmm::queryImgParams(getGmmClientContext(), imgInfo), std::exception);
@@ -167,13 +169,13 @@ TEST_F(GmmTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIsThrown
 
 TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
     const HardwareInfo *hwinfo = defaultHwInfo.get();
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
-    imgDesc.image_width = 17;
-    imgDesc.image_height = 17;
-    imgDesc.image_depth = 17;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image3D;
+    imgDesc.imageWidth = 17;
+    imgDesc.imageHeight = 17;
+    imgDesc.imageDepth = 17;
     size_t pixelSize = 4;
-    size_t minSize = imgDesc.image_width * imgDesc.image_height * imgDesc.image_depth * pixelSize;
+    size_t minSize = imgDesc.imageWidth * imgDesc.imageHeight * imgDesc.imageDepth * pixelSize;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
@@ -226,55 +228,55 @@ TEST_F(GmmTests, givenPtrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet)
 }
 
 TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedThenItHasDesiredPitchAndSize) {
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 329;
-    imgDesc.image_height = 349;
-    imgDesc.image_depth = 1;
-    imgDesc.image_row_pitch = 5312;
-    imgDesc.buffer = (cl_mem)0x1000;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 329;
+    imgDesc.imageHeight = 349;
+    imgDesc.imageDepth = 1;
+    imgDesc.imageRowPitch = 5312;
+    imgDesc.fromParent = true;
 
-    ClSurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16}};
+    SurfaceFormatInfo surfaceFormat = {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
     auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
     auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
 
-    size_t expectedSize = imgDesc.image_row_pitch * imgDesc.image_height;
+    size_t expectedSize = imgDesc.imageRowPitch * imgDesc.imageHeight;
     EXPECT_GE(renderSize, expectedSize);
-    EXPECT_EQ(imgDesc.image_row_pitch, queryGmm->gmmResourceInfo->getRenderPitch());
+    EXPECT_EQ(imgDesc.imageRowPitch, queryGmm->gmmResourceInfo->getRenderPitch());
 }
 
 TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitchIsOverridenThenItHasDesiredPitchAndSize) {
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 329;
-    imgDesc.image_height = 349;
-    imgDesc.image_depth = 1;
-    imgDesc.image_row_pitch = 5376;
-    imgDesc.buffer = (cl_mem)0x1000;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 329;
+    imgDesc.imageHeight = 349;
+    imgDesc.imageDepth = 1;
+    imgDesc.imageRowPitch = 5376;
+    imgDesc.fromParent = true;
 
-    ClSurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16}};
+    SurfaceFormatInfo surfaceFormat = {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
-    EXPECT_EQ(imgInfo.imgDesc.imageRowPitch, imgDesc.image_row_pitch);
+    EXPECT_EQ(imgInfo.imgDesc.imageRowPitch, imgDesc.imageRowPitch);
     auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
     auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
 
-    size_t expectedSize = imgDesc.image_row_pitch * imgDesc.image_height;
+    size_t expectedSize = imgDesc.imageRowPitch * imgDesc.imageHeight;
     EXPECT_GE(renderSize, expectedSize);
-    EXPECT_EQ(imgDesc.image_row_pitch, queryGmm->gmmResourceInfo->getRenderPitch());
+    EXPECT_EQ(imgDesc.imageRowPitch, queryGmm->gmmResourceInfo->getRenderPitch());
 }
 
 TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQueried) {
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 4;
-    imgDesc.image_height = 4;
-    imgDesc.image_depth = 1;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageHeight = 4;
+    imgDesc.imageWidth = 4;
+    imgDesc.imageDepth = 1;
 
-    ClSurfaceFormatInfo surfaceFormatNV12 = {{CL_NV12_INTEL, CL_UNORM_INT8}, {GMM_FORMAT_NV12, GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1}};
-    ClSurfaceFormatInfo surfaceFormatP010 = {{CL_R, CL_UNORM_INT16}, {GMM_FORMAT_P010, GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 2, 2}};
+    SurfaceFormatInfo surfaceFormatNV12 = {GMM_FORMAT_NV12, GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1};
+    SurfaceFormatInfo surfaceFormatP010 = {GMM_FORMAT_P010, GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 2, 2};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormatNV12);
     imgInfo.yOffsetForUVPlane = 0;
@@ -290,11 +292,11 @@ TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQueried)
 }
 
 TEST_F(GmmTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFlagIsSet) {
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 4;
-    imgDesc.image_height = 4;
-    imgDesc.image_depth = 1;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 4;
+    imgDesc.imageHeight = 4;
+    imgDesc.imageDepth = 1;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.linearStorage = false;
@@ -305,11 +307,11 @@ TEST_F(GmmTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFlagIsSet
 }
 
 TEST_F(GmmTests, givenTilingModeSetToNonTiledWhenCreatingGmmThenLinearFlagIsSet) {
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 4;
-    imgDesc.image_height = 4;
-    imgDesc.image_depth = 1;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 4;
+    imgDesc.imageHeight = 4;
+    imgDesc.imageDepth = 1;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.linearStorage = true;
@@ -322,14 +324,14 @@ TEST_F(GmmTests, givenTilingModeSetToNonTiledWhenCreatingGmmThenLinearFlagIsSet)
 TEST_F(GmmTests, givenZeroRowPitchWhenQueryImgFromBufferParamsThenCalculate) {
     MockGraphicsAllocation bufferAllocation(nullptr, 4096);
 
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 5;
-    imgDesc.image_height = 5;
-    imgDesc.image_row_pitch = 0;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 5;
+    imgDesc.imageHeight = 5;
+    imgDesc.imageRowPitch = 0;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    size_t expectedRowPitch = imgDesc.image_width * imgInfo.surfaceFormat->ImageElementSizeInBytes;
+    size_t expectedRowPitch = imgDesc.imageWidth * imgInfo.surfaceFormat->ImageElementSizeInBytes;
     GmmTypesConverter::queryImgFromBufferParams(imgInfo, &bufferAllocation);
 
     EXPECT_EQ(imgInfo.rowPitch, expectedRowPitch);
@@ -338,12 +340,12 @@ TEST_F(GmmTests, givenZeroRowPitchWhenQueryImgFromBufferParamsThenCalculate) {
 TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValue) {
     MockGraphicsAllocation bufferAllocation(nullptr, 4096);
 
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 5;
-    imgDesc.image_height = 5;
-    imgDesc.image_row_pitch = 123;
-    size_t expectedRowPitch = imgDesc.image_row_pitch;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 5;
+    imgDesc.imageHeight = 5;
+    imgDesc.imageRowPitch = 123;
+    size_t expectedRowPitch = imgDesc.imageRowPitch;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     GmmTypesConverter::queryImgFromBufferParams(imgInfo, &bufferAllocation);
@@ -400,11 +402,11 @@ TEST_F(GmmCanonizeTests, WhenDecanonizingThenCorrectAddressIsReturned) {
 }
 
 TEST_F(GmmTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIsReturned) {
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 60;
-    imgDesc.image_height = 40;
-    imgDesc.image_depth = 1;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = 60;
+    imgDesc.imageHeight = 40;
+    imgDesc.imageDepth = 1;
     int mipLevel = 5;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, mipLevel, nullptr);
@@ -515,26 +517,26 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     expectedReqInfo[1].ReqRender = 1;
     expectedReqInfo[1].Plane = updateImgInfo.plane;
 
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = GetParam();
-    imgDesc.image_width = 60;
-    imgDesc.image_height = 1;
-    imgDesc.image_depth = 1;
-    imgDesc.image_array_size = 1;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = Image::convertType(GetParam());
+    imgDesc.imageWidth = 60;
+    imgDesc.imageHeight = 1;
+    imgDesc.imageDepth = 1;
+    imgDesc.imageArraySize = 1;
     cl_uint arrayIndex = 0;
 
-    if (imgDesc.image_type == CL_MEM_OBJECT_IMAGE2D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY || imgDesc.image_type == CL_MEM_OBJECT_IMAGE3D) {
-        imgDesc.image_height = 40;
+    if (imgDesc.imageType == ImageType::Image2D || imgDesc.imageType == ImageType::Image2DArray || imgDesc.imageType == ImageType::Image3D) {
+        imgDesc.imageHeight = 40;
     }
-    if (imgDesc.image_type == CL_MEM_OBJECT_IMAGE3D) {
-        imgDesc.image_depth = 5;
+    if (imgDesc.imageType == ImageType::Image3D) {
+        imgDesc.imageDepth = 5;
         expectCalls = 2u;
         expectedReqInfo[0].Slice = 1;
     }
 
-    if (imgDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY ||
-        imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
-        imgDesc.image_array_size = 5;
+    if (imgDesc.imageType == ImageType::Image2DArray ||
+        imgDesc.imageType == ImageType::Image1DArray) {
+        imgDesc.imageArraySize = 5;
         expectCalls = 2u;
         arrayIndex = 2;
         expectedReqInfo[0].ArrayIndex = 1;
@@ -550,10 +552,10 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex);
     EXPECT_EQ(expectCalls, mockResInfo->getOffsetCalled);
 
-    EXPECT_EQ(imgDesc.image_width, updateImgInfo.imgDesc.imageWidth);
-    EXPECT_EQ(imgDesc.image_height, updateImgInfo.imgDesc.imageHeight);
-    EXPECT_EQ(imgDesc.image_depth, updateImgInfo.imgDesc.imageDepth);
-    EXPECT_EQ(imgDesc.image_array_size, updateImgInfo.imgDesc.imageArraySize);
+    EXPECT_EQ(imgDesc.imageWidth, updateImgInfo.imgDesc.imageWidth);
+    EXPECT_EQ(imgDesc.imageHeight, updateImgInfo.imgDesc.imageHeight);
+    EXPECT_EQ(imgDesc.imageDepth, updateImgInfo.imgDesc.imageDepth);
+    EXPECT_EQ(imgDesc.imageArraySize, updateImgInfo.imgDesc.imageArraySize);
     EXPECT_GT(updateImgInfo.imgDesc.imageRowPitch, 0u);
     EXPECT_GT(updateImgInfo.imgDesc.imageSlicePitch, 0u);
 
@@ -598,12 +600,12 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
         uint32_t gmmGetBitsPerPixelOutput;
     };
 
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
-    imgDesc.image_width = 60;
-    imgDesc.image_height = 1;
-    imgDesc.image_depth = 1;
-    imgDesc.image_array_size = 10;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2DArray;
+    imgDesc.imageWidth = 60;
+    imgDesc.imageHeight = 1;
+    imgDesc.imageDepth = 1;
+    imgDesc.imageArraySize = 10;
 
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     std::unique_ptr<Gmm> gmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
@@ -622,11 +624,11 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
 }
 
 TEST_F(GmmTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorrectly) {
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
-    imgDesc.image_width = 17;
-    imgDesc.image_height = 17;
-    imgDesc.image_depth = 17;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image3D;
+    imgDesc.imageWidth = 17;
+    imgDesc.imageHeight = 17;
+    imgDesc.imageDepth = 17;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
@@ -881,20 +883,19 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
     }
 
     void setupImgInfo() {
-        imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-        imgDesc.image_width = 2;
-        imgDesc.image_height = 2;
+        imgDesc.imageType = ImageType::Image2D;
+        imgDesc.imageWidth = 2;
+        imgDesc.imageHeight = 2;
         imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
         imgInfo.preferRenderCompression = true;
         imgInfo.useLocalMemory = true;
 
         // allowed for render compression:
-        imgInfo.surfaceFormat = &SurfaceFormats::readWrite()[0].surfaceFormat;
         imgInfo.plane = GMM_YUV_PLANE::GMM_NO_PLANE;
     }
 
     HardwareInfo *localPlatformDevice = nullptr;
-    cl_image_desc imgDesc = {};
+    ImageDescriptor imgDesc = {};
     ImageInfo imgInfo = {};
 };
 

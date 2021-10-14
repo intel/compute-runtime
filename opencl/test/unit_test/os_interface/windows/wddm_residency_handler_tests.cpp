@@ -15,6 +15,7 @@
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

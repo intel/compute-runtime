@@ -9,6 +9,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/unified/enable_unified.h"
 #include "opencl/source/sharings/unified/unified_buffer.h"
 #include "opencl/source/sharings/unified/unified_sharing.h"

@@ -19,13 +19,12 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/base_ult_config_listener.h"
 #include "shared/test/unit_test/tests_configuration.h"
-
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "gmock/gmock.h"
 

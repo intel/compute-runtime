@@ -10,9 +10,8 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/blit_commands_helper_tests.inl"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "gtest/gtest.h"
 #include "test_traits_common.h"

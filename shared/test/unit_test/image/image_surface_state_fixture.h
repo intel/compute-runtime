@@ -13,8 +13,8 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 #include <memory>

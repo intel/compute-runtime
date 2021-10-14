@@ -15,9 +15,9 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests_exp.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_exp.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_memory_info.h"
@@ -585,7 +585,10 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenSupportedTypeWhenAllocatingInDevice
     allocData.size = MemoryConstants::pageSize;
     allocData.flags.allocateMemory = true;
     allocData.rootDeviceIndex = rootDeviceIndex;
-    cl_image_desc imgDesc = {CL_MEM_OBJECT_IMAGE2D, MemoryConstants::pageSize, MemoryConstants::pageSize, 0, 0, 0, 0, 0, 0, {nullptr}};
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageWidth = MemoryConstants::pageSize;
+    imgDesc.imageHeight = MemoryConstants::pageSize;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     bool resource48Bit[] = {true, false};
@@ -934,9 +937,9 @@ TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCal
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIsAllocatedForImage1DWhenTheSizeReturnedFromGmmIsUnalignedThenCreateBufferObjectWithSizeAlignedTo64KB) {
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
-    imgDesc.image_width = 100;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image1D;
+    imgDesc.imageWidth = 100;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;

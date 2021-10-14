@@ -1491,8 +1491,8 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisable
 
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenDrainIsCalledAndCreateAllocationIsCalledTwice) {
     UltDeviceFactory deviceFactory{1, 0};
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image3D;
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     wddm->createAllocationStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
@@ -1509,8 +1509,8 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleter
 
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCanAllocateMemoryForTiledImageThenDrainIsNotCalledAndCreateAllocationIsCalledOnce) {
     UltDeviceFactory deviceFactory{1, 0};
-    cl_image_desc imgDesc;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    ImageDescriptor imgDesc;
+    imgDesc.imageType = ImageType::Image3D;
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     wddm->createAllocationStatus = STATUS_SUCCESS;
@@ -1533,8 +1533,8 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleter
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenCreateAllocationIsCalledOnce) {
     UltDeviceFactory deviceFactory{1, 0};
     memoryManager->setDeferredDeleter(nullptr);
-    cl_image_desc imgDesc;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    ImageDescriptor imgDesc;
+    imgDesc.imageType = ImageType::Image3D;
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     wddm->createAllocationStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
