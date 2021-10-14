@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
-
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 
 using HwHelperTestRkl = HwHelperTest;
 

@@ -11,10 +11,10 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "test.h"
 
 using namespace NEO;

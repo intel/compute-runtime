@@ -15,10 +15,13 @@ set_property(GLOBAL PROPERTY NEO_CORE_tests_compiler_mocks ${NEO_CORE_tests_comp
 
 set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_allocation_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_file_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_bindless_heaps_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtinslib.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.cpp

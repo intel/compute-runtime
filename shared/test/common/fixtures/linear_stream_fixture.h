@@ -27,7 +27,7 @@ struct LinearStreamFixture {
     }
     MockGraphicsAllocation gfxAllocation;
     LinearStream linearStream;
-    uint32_t pCmdBuffer[1024];
+    uint32_t pCmdBuffer[1024]{};
 };
 
 typedef Test<LinearStreamFixture> LinearStreamTest;

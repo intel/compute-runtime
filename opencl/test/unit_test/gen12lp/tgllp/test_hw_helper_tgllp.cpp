@@ -7,8 +7,7 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/compiler_support.h"
-
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 
 using HwHelperTestGen12Lp = HwHelperTest;
 

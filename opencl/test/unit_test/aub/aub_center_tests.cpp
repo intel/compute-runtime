@@ -13,10 +13,9 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
-
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 #include "gtest/gtest.h"
 #include "third_party/aub_stream/headers/aubstream.h"

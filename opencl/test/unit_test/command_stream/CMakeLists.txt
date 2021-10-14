@@ -30,7 +30,6 @@ set(IGDRCL_SRCS_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/get_devices_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_ocl_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_fixture.cpp

@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"

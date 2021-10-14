@@ -11,13 +11,13 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/ult_hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 #include "engine_node.h"
 #include "pipe_control_args.h"

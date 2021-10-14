@@ -9,8 +9,8 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/fixtures/linear_stream_fixture.h"
 
-#include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
 #include "test.h"
 
 using namespace NEO;

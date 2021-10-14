@@ -11,8 +11,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
-
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 
 #include <cstring>
 

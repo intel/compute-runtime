@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 
 using HwHelperTestsXeHP = HwHelperTest;
 

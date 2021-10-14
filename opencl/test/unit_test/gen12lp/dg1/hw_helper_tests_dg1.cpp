@@ -7,10 +7,10 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/compiler_support.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 using HwHelperTestDg1 = HwHelperTest;
 

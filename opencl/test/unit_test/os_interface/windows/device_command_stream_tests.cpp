@@ -32,6 +32,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/windows/mock_wddm_direct_submission.h"
+#include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
@@ -47,7 +48,6 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_interface23.h"
-#include "opencl/test/unit_test/os_interface/windows/mock_wddm_memory_manager.h"
 #include "test.h"
 
 #include "hw_cmds.h"
