@@ -39,7 +39,7 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
     const CpuInfo &cpuInfo = CpuInfo::getInstance();
 
     do {
-        uint32_t cpuRegsInfo[4];
+        uint32_t cpuRegsInfo[4] = {};
 
         cpuInfo.cpuidex(cpuRegsInfo, 4, subleaf);
         eax = cpuRegsInfo[0];
