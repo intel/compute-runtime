@@ -1478,6 +1478,7 @@ struct MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> 
     using CommandStreamReceiverSimulatedHw<FamilyType>::CommandStreamReceiverSimulatedHw;
     using CommandStreamReceiverSimulatedHw<FamilyType>::getDeviceIndex;
     void pollForCompletion() override {}
+    void initializeEngine() override {}
     bool writeMemory(GraphicsAllocation &gfxAllocation) override { return true; }
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {}
     void writeMMIO(uint32_t offset, uint32_t value) override {}

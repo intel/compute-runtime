@@ -23,6 +23,8 @@ class MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
     }
     void pollForCompletion() override {
     }
+    void initializeEngine() override {
+    }
     bool writeMemory(GraphicsAllocation &gfxAllocation) override {
         return true;
     }

@@ -164,7 +164,7 @@ HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    static_cast<AUBCommandStreamReceiverHw<FamilyType> &>(pCmdQ->getGpgpuCommandStreamReceiver()).initializeEngine();
+    getSimulatedCsr<FamilyType>()->initializeEngine();
 
     writeMemory<FamilyType>(destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
     writeMemory<FamilyType>(srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));

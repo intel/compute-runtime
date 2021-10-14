@@ -73,7 +73,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
                                const DeviceBitfield deviceBitfield);
     ~TbxCommandStreamReceiverHw() override;
 
-    void initializeEngine();
+    void initializeEngine() override;
 
     MemoryManager *getMemoryManager() {
         return CommandStreamReceiver::getMemoryManager();

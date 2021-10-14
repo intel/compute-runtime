@@ -103,7 +103,7 @@ HWTEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsRe
     uint8_t buffer[0x10000];
     size_t size = sizeof(buffer);
 
-    static_cast<AUBCommandStreamReceiverHw<FamilyType> &>(*pCommandStreamReceiver).initializeEngine();
+    getSimulatedCsr<FamilyType>()->initializeEngine();
 
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, size);
@@ -115,7 +115,7 @@ HWTEST_F(AUBcommandstreamTests, GivenSingleAllocationWhenCreatingResidentAllocat
     uint32_t buffer = 0xdeadbeef;
     size_t size = sizeof(buffer);
 
-    static_cast<AUBCommandStreamReceiverHw<FamilyType> &>(*pCommandStreamReceiver).initializeEngine();
+    getSimulatedCsr<FamilyType>()->initializeEngine();
 
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(&buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
@@ -132,7 +132,7 @@ HWTEST_F(AUBcommandstreamTests, GivenMultipleAllocationsWhenCreatingResidentAllo
         buffer[index] = static_cast<uint8_t>(index);
     }
 
-    static_cast<AUBCommandStreamReceiverHw<FamilyType> &>(*pCommandStreamReceiver).initializeEngine();
+    getSimulatedCsr<FamilyType>()->initializeEngine();
 
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, sizeBuffer);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
