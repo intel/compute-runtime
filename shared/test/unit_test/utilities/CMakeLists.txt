@@ -10,7 +10,6 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/const_stringref_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/containers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/containers_tests_helpers.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/cpuinfo_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cpuintrinsics_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/destructor_counted.h
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator_tests.cpp
