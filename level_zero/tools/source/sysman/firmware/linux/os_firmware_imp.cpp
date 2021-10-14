@@ -27,7 +27,9 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
     for (const auto &readByteLine : mtdDescriptorStrings) {
         for (const auto &fwType : deviceSupportedFwTypes) {
             if (std::string::npos != readByteLine.find(fwType)) {
-                supportedFwTypes.push_back(fwType);
+                if (std::find(supportedFwTypes.begin(), supportedFwTypes.end(), fwType) == supportedFwTypes.end()) {
+                    supportedFwTypes.push_back(fwType);
+                }
             }
         }
     }

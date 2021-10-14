@@ -30,6 +30,11 @@ struct Mock<FirmwareFsAccess> : public FirmwareFsAccess {
         val.push_back("mtd5: 00200000 00001000 \"i915-spi.42.auto.OptionROM\"");
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t readMtdValSuccess(const std::string file, std::vector<std::string> &val) {
+        val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
+        val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
+        return ZE_RESULT_SUCCESS;
+    }
     ze_result_t readValFailure(const std::string file, std::vector<std::string> &val) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }

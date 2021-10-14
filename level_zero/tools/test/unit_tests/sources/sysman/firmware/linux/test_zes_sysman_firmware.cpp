@@ -146,6 +146,19 @@ TEST_F(ZesFirmwareFixture, GivenFailedFirmwareInitializationWhenInitializingFirm
     EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
 }
 
+TEST_F(ZesFirmwareFixture, GivenRepeatedFWTypesWhenInitializingFirmwareContextThenexpectNoHandles) {
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
+    ON_CALL(*pFsAccess.get(), read(_, _))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<FirmwareFsAccess>::readMtdValSuccess));
+
+    pSysmanDeviceImp->pFirmwareHandleContext->init();
+
+    EXPECT_EQ(1u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
+}
+
 TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareThenSuccessIsReturned) {
     FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[0]);
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
