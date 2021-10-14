@@ -4327,18 +4327,18 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
     return program;
 }
 
-cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command_queue,
+cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue commandQueue,
                                                         cl_kernel kernel,
-                                                        cl_uint work_dim,
-                                                        const size_t *global_work_offset,
-                                                        const size_t *global_work_size,
-                                                        size_t *suggested_local_work_size) {
-    return clGetKernelSuggestedLocalWorkSizeINTEL(command_queue,
+                                                        cl_uint workDim,
+                                                        const size_t *globalWorkOffset,
+                                                        const size_t *globalWorkSize,
+                                                        size_t *suggestedLocalWorkSize) {
+    return clGetKernelSuggestedLocalWorkSizeINTEL(commandQueue,
                                                   kernel,
-                                                  work_dim,
-                                                  global_work_offset,
-                                                  global_work_size,
-                                                  suggested_local_work_size);
+                                                  workDim,
+                                                  globalWorkOffset,
+                                                  globalWorkSize,
+                                                  suggestedLocalWorkSize);
 }
 
 #define RETURN_FUNC_PTR_IF_EXIST(name)                                  \
