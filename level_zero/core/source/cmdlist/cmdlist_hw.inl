@@ -1449,21 +1449,27 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     auto dstAllocation = this->getAlignedAllocation(this->device, ptr, size, false);
+    //get_global_id(0) in FillBufferMiddle only goes upto UINT32_MAX,
+    constexpr size_t getGlobalIdMaxLimit = 4ull * MemoryConstants::gigaByte;
+    //FillBufferMiddle copies data based on uint, so the minimum size is sizeof(uint32_t),
+    //and Max limited to sizeof(uint32_t) * getGlobalIdMaxLimit
+    constexpr size_t fillBufferMiddleMinLimit = sizeof(uint32_t);
+    constexpr size_t fillBufferMiddleMaxLimit = sizeof(uint32_t) * getGlobalIdMaxLimit;
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
+        if (size > fillBufferMiddleMaxLimit) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+        }
     }
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    if (patternSize == 1) {
+    if ((patternSize == 1) && (size < fillBufferMiddleMinLimit)) {
         Kernel *builtinFunction = nullptr;
 
-        if (isStateless) {
-            builtinFunction = device->getBuiltinFunctionsLib()->getStatelessFunction(Builtin::FillBufferImmediate);
-        } else {
-            builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
-        }
+        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
+
         uint32_t groupSizeX = builtinFunction->getImmutableData()->getDescriptor().kernelAttributes.simdSize;
-        if (groupSizeX > static_cast<uint32_t>(size)) {
+        if (groupSizeX > size) {
             groupSizeX = static_cast<uint32_t>(size);
         }
         if (builtinFunction->setGroupSize(groupSizeX, 1u, 1u)) {
@@ -1478,14 +1484,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
         appendEventForProfilingAllWalkers(hSignalEvent, true);
 
-        uint32_t groups = static_cast<uint32_t>(size) / groupSizeX;
-        ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
+        uint64_t groups = size / groupSizeX;
+        DEBUG_BREAK_IF(groups >= UINT32_MAX);
+
+        ze_group_count_t dispatchFuncArgs{static_cast<uint32_t>(groups), 1u, 1u};
         res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
         if (res) {
             return res;
         }
 
-        uint32_t groupRemainderSizeX = static_cast<uint32_t>(size) % groupSizeX;
+        uint32_t groupRemainderSizeX = static_cast<uint32_t>(size % groupSizeX);
         if (groupRemainderSizeX) {
             builtinFunction->setGroupSize(groupRemainderSizeX, 1u, 1u);
             ze_group_count_t dispatchFuncRemainderArgs{1u, 1u, 1u};
@@ -1510,13 +1518,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
         size_t middleElSize = sizeof(uint32_t);
         size_t adjustedSize = size / middleElSize;
-        uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
+        uint32_t groupSizeX = (adjustedSize >= UINT32_MAX) ? UINT32_MAX - 1 : static_cast<uint32_t>(adjustedSize);
         uint32_t groupSizeY = 1, groupSizeZ = 1;
         builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
         builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
 
-        uint32_t groups = static_cast<uint32_t>(adjustedSize) / groupSizeX;
-        uint32_t groupRemainderSizeX = static_cast<uint32_t>(size) % groupSizeX;
+        uint64_t groups = adjustedSize / groupSizeX;
+        DEBUG_BREAK_IF(groups >= UINT32_MAX);
+        uint32_t groupRemainderSizeX = static_cast<uint32_t>(size % groupSizeX);
 
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
         uint32_t patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / middleElSize);
@@ -1527,6 +1536,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                                                                    patternAllocationSize,
                                                                                                                    NEO::GraphicsAllocation::AllocationType::FILL_PATTERN,
                                                                                                                    device->getNEODevice()->getDeviceBitfield()});
+            if (patternGfxAlloc == nullptr) {
+                PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "out of host memory error, check vm.max_map_count in sysctl for mmap limits, and total memory allocated for the application\n", "");
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
         }
         void *patternGfxAllocPtr = patternGfxAlloc->getUnderlyingBuffer();
         patternAllocations.push_back(patternGfxAlloc);
@@ -1551,14 +1564,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
         appendEventForProfilingAllWalkers(hSignalEvent, true);
 
-        ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
+        ze_group_count_t dispatchFuncArgs{static_cast<uint32_t>(groups), 1u, 1u};
         res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
         if (res) {
             return res;
         }
 
         if (groupRemainderSizeX) {
-            uint32_t dstOffsetRemainder = groups * groupSizeX * static_cast<uint32_t>(middleElSize);
+            uint32_t dstOffsetRemainder = static_cast<uint32_t>(groups) * groupSizeX * static_cast<uint32_t>(middleElSize);
             uint64_t patternOffsetRemainder = (groupSizeX * groups & (patternSizeInEls - 1)) * middleElSize;
 
             Kernel *builtinFunctionRemainder;
