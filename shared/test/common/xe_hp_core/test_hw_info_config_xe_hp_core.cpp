@@ -40,6 +40,7 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenRevisionIsAtLeastBThenAllo
 
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
     for (auto revision : {REVISION_A0, REVISION_A1, REVISION_B}) {
         hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
@@ -57,6 +58,7 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenCreateMultipleSubDevicesTh
 
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(hwInfo));
@@ -69,9 +71,18 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenCreateMultipleSubDevicesAn
 
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_TRUE(hwInfoConfig.allowStatelessCompression(hwInfo));
+}
+
+XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenRenderCompressedBuffersAreDisabledThenDontAllowStatelessCompression) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(hwInfo));
 }
 
 XEHPTEST_F(TestXeHPHwInfoConfig, givenSteppingWhenAskingForLocalMemoryAccessModeThenDisallowOnA0) {

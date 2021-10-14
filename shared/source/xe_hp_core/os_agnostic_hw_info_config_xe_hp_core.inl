@@ -75,6 +75,9 @@ bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &h
     if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
         return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
     }
+    if (!hwInfo.capabilityTable.ftrRenderCompressedBuffers) {
+        return false;
+    }
     if (HwHelper::getSubDevicesCount(&hwInfo) > 1) {
         return DebugManager.flags.EnableMultiTileCompression.get() > 0 ? true : false;
     }
