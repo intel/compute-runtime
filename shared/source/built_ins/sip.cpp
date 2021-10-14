@@ -21,6 +21,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/io_functions.h"
 
+#include "common/StateSaveAreaHeader.h"
+
 namespace NEO {
 
 const size_t SipKernel::maxDbgSurfaceSize = 0x1800000; // proper value should be taken from compiler when it's ready
@@ -68,6 +70,28 @@ GraphicsAllocation *SipKernel::getSipAllocation() const {
 
 const std::vector<char> &SipKernel::getStateSaveAreaHeader() const {
     return stateSaveAreaHeader;
+}
+
+size_t SipKernel::getStateSaveAreaSize() const {
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    if (stateSaveAreaHeader.empty()) {
+        return SipKernel::maxDbgSurfaceSize;
+    }
+
+    if (strcmp(stateSaveAreaHeader.data(), "tssarea")) {
+        return SipKernel::maxDbgSurfaceSize;
+    }
+
+    auto hdr = reinterpret_cast<const SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
+    DEBUG_BREAK_IF(hdr->versionHeader.size * 8 != sizeof(SIP::StateSaveAreaHeader));
+
+    auto stateSaveAreaSize = hdr->regHeader.num_slices *
+                                 hdr->regHeader.num_subslices_per_slice *
+                                 hdr->regHeader.num_eus_per_subslice *
+                                 hdr->regHeader.num_threads_per_eu *
+                                 hdr->regHeader.state_save_size +
+                             hdr->versionHeader.size * 8 + hdr->regHeader.state_area_offset;
+    return alignUp(stateSaveAreaSize, MemoryConstants::pageSize);
 }
 
 SipKernelType SipKernel::getSipKernelType(Device &device) {

@@ -789,18 +789,40 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     device->cacheReservation = CacheReservation::create(*device);
     device->maxNumHwThreads = NEO::HwHelper::getMaxThreadsForVfe(neoDevice->getHardwareInfo());
 
+    auto debugSurfaceSize = NEO::SipKernel::maxDbgSurfaceSize;
+    std::vector<char> stateSaveAreaHeader;
+
+    if (neoDevice->getCompilerInterface()) {
+        if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->getDebugger()) {
+            bool ret = NEO::SipKernel::initSipKernel(NEO::SipKernel::getSipKernelType(*neoDevice), *neoDevice);
+            UNRECOVERABLE_IF(!ret);
+
+            stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
+            debugSurfaceSize = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaSize();
+        }
+    } else {
+        *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
     const bool allocateDebugSurface = (device->getL0Debugger() || neoDevice->getDeviceInfo().debuggerActive) && !isSubDevice;
     NEO::GraphicsAllocation *debugSurface = nullptr;
-
     if (allocateDebugSurface) {
         debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
             {device->getRootDeviceIndex(), true,
-             NEO::SipKernel::maxDbgSurfaceSize,
+             debugSurfaceSize,
              NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
              false,
              false,
              device->getNEODevice()->getDeviceBitfield()});
         device->setDebugSurface(debugSurface);
+    }
+
+    if (debugSurface && stateSaveAreaHeader.size() > 0) {
+        auto &hwInfo = neoDevice->getHardwareInfo();
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
+                                                              *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
+                                                              stateSaveAreaHeader.size());
     }
 
     for (auto &neoSubDevice : device->neoDevice->getSubDevices()) {
@@ -819,24 +841,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device->subDevices.push_back(static_cast<Device *>(subDevice));
     }
     device->numSubDevices = static_cast<uint32_t>(device->subDevices.size());
-
-    if (neoDevice->getCompilerInterface()) {
-        auto &hwInfo = neoDevice->getHardwareInfo();
-        if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->getDebugger()) {
-            bool ret = NEO::SipKernel::initSipKernel(NEO::SipKernel::getSipKernelType(*neoDevice), *neoDevice);
-            UNRECOVERABLE_IF(!ret);
-
-            auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
-            if (debugSurface && stateSaveAreaHeader.size() > 0) {
-                auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-                NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
-                                                                      *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
-                                                                      stateSaveAreaHeader.size());
-            }
-        }
-    } else {
-        *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-    }
 
     auto supportDualStorageSharedMemory = neoDevice->getMemoryManager()->isLocalMemorySupported(device->neoDevice->getRootDeviceIndex());
     if (NEO::DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {

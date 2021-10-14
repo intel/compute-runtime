@@ -265,7 +265,6 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoaded
     ASSERT_NE(nullptr, secondSipKernel);
     auto secondStoredAllocation = sipKernel->getSipAllocation();
     EXPECT_NE(nullptr, secondStoredAllocation);
-
     EXPECT_EQ(sipKernel, secondSipKernel);
     EXPECT_EQ(storedAllocation, secondStoredAllocation);
 }
@@ -316,4 +315,24 @@ TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceT
     auto sipAllocation = sipKernel.getSipAllocation();
     auto sipAllocation2 = sipKernel2.getSipAllocation();
     EXPECT_EQ(sipAllocation, sipAllocation2);
+}
+
+using StateSaveAreaSipTest = Test<RawBinarySipFixture>;
+
+TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
+    MockSipData::useMockSip = true;
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
+    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+}
+
+TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
+    MockSipData::useMockSip = true;
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
+    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+}
+
+TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {
+    MockSipData::useMockSip = true;
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader();
+    EXPECT_EQ(0x3F1000u, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
 }
