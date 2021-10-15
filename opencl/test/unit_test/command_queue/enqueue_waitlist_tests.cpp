@@ -59,7 +59,7 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     void SetUp() override {
         EnqueueWaitlistFixture::SetUp();
         buffer = BufferHelper<>::create();
-        bufferNonZeroCopy = new UnalignedBuffer;
+        bufferNonZeroCopy = new UnalignedBuffer(BufferDefaults::context, &bufferNonZeroCopyAlloc);
         image = Image1dHelper<>::create(BufferDefaults::context);
         imageNonZeroCopy = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(BufferDefaults::context);
     }
@@ -75,6 +75,7 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     cl_int retVal = CL_SUCCESS;
     cl_int error = CL_SUCCESS;
 
+    MockGraphicsAllocation bufferNonZeroCopyAlloc{nullptr, MemoryConstants::pageSize};
     Buffer *buffer;
     Buffer *bufferNonZeroCopy;
     Image *image;

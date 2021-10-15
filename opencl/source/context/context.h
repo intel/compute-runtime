@@ -16,6 +16,7 @@
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
+#include "opencl/source/mem_obj/map_operations_handler.h"
 
 #include <list>
 #include <map>
@@ -92,6 +93,8 @@ class Context : public BaseObject<_cl_context> {
     SVMAllocsManager *getSVMAllocsManager() const {
         return svmAllocsManager;
     }
+
+    auto &getMapOperationsStorage() { return mapOperationsStorage; }
 
     const std::set<uint32_t> &getRootDeviceIndices() const;
 
@@ -199,6 +202,7 @@ class Context : public BaseObject<_cl_context> {
     void *userData = nullptr;
     MemoryManager *memoryManager = nullptr;
     SVMAllocsManager *svmAllocsManager = nullptr;
+    MapOperationsStorage mapOperationsStorage = {};
     StackVec<CommandQueue *, 1> specialQueues;
     DeviceQueue *defaultDeviceQueue = nullptr;
     DriverDiagnostics *driverDiagnostics = nullptr;

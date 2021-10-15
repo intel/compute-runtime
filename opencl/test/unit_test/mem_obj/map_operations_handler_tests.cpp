@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/ptr_math.h"
 
 #include "opencl/source/mem_obj/map_operations_handler.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"
 
 #include <tuple>
@@ -160,3 +161,56 @@ TEST_P(MapOperationsHandlerOverlapTests, givenAlreadyMappedPtrWhenAskingForOverl
 INSTANTIATE_TEST_CASE_P(MapOperationsHandlerOverlapTests,
                         MapOperationsHandlerOverlapTests,
                         ::testing::ValuesIn(overlappingCombinations));
+
+struct MapOperationsStorageWhitebox : MapOperationsStorage {
+    using MapOperationsStorage::handlers;
+};
+
+TEST(MapOperationsStorageTest, givenMapOperationsStorageWhenGetHandlerIsUsedThenCreateHandler) {
+    MockBuffer buffer1{};
+    MockBuffer buffer2{};
+
+    MapOperationsStorageWhitebox storage{};
+    EXPECT_EQ(0u, storage.handlers.size());
+
+    storage.getHandler(&buffer1);
+    EXPECT_EQ(1u, storage.handlers.size());
+
+    storage.getHandler(&buffer2);
+    EXPECT_EQ(2u, storage.handlers.size());
+
+    storage.getHandler(&buffer1);
+    EXPECT_EQ(2u, storage.handlers.size());
+}
+
+TEST(MapOperationsStorageTest, givenMapOperationsStorageWhenGetHandlerIfExistsIsUsedThenDoNotCreateHandler) {
+    MockBuffer buffer1{};
+    MockBuffer buffer2{};
+
+    MapOperationsStorageWhitebox storage{};
+    EXPECT_EQ(0u, storage.handlers.size());
+    EXPECT_EQ(nullptr, storage.getHandlerIfExists(&buffer1));
+    EXPECT_EQ(nullptr, storage.getHandlerIfExists(&buffer2));
+
+    storage.getHandler(&buffer1);
+    EXPECT_EQ(1u, storage.handlers.size());
+    EXPECT_NE(nullptr, storage.getHandlerIfExists(&buffer1));
+    EXPECT_EQ(nullptr, storage.getHandlerIfExists(&buffer2));
+
+    storage.getHandler(&buffer2);
+    EXPECT_EQ(2u, storage.handlers.size());
+    EXPECT_NE(nullptr, storage.getHandlerIfExists(&buffer1));
+    EXPECT_NE(nullptr, storage.getHandlerIfExists(&buffer2));
+    EXPECT_NE(storage.getHandlerIfExists(&buffer1), storage.getHandlerIfExists(&buffer2));
+}
+
+TEST(MapOperationsStorageTest, givenMapOperationsStorageWhenRemoveHandlerIsUsedThenRemoveHandler) {
+    MockBuffer buffer{};
+    MapOperationsStorageWhitebox storage{};
+
+    storage.getHandler(&buffer);
+    ASSERT_EQ(1u, storage.handlers.size());
+
+    storage.removeHandler(&buffer);
+    EXPECT_EQ(0u, storage.handlers.size());
+}

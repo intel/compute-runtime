@@ -62,9 +62,14 @@ MemObj::~MemObj() {
     if (allocatedMapPtr != nullptr) {
         needWait = true;
     }
-    if (mapOperationsHandler.size() > 0 && !getCpuAddressForMapping()) {
-        needWait = true;
+
+    if (auto mapOperationsHandler = getMapOperationsHandlerIfExists(); mapOperationsHandler != nullptr) {
+        if (mapOperationsHandler->size() > 0 && !getCpuAddressForMapping()) {
+            needWait = true;
+        }
+        context->getMapOperationsStorage().removeHandler(this);
     }
+
     if (!destructorCallbacks.empty()) {
         needWait = true;
     }
@@ -172,7 +177,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
 
     case CL_MEM_MAP_COUNT:
         srcParamSize = sizeof(mapCount);
-        mapCount = static_cast<cl_uint>(mapOperationsHandler.size());
+        mapCount = static_cast<cl_uint>(getMapOperationsHandler().size());
         srcParam = &mapCount;
         break;
 
@@ -382,11 +387,26 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
     }
 }
 
+MapOperationsHandler &MemObj::getMapOperationsHandler() {
+    return context->getMapOperationsStorage().getHandler(this);
+}
+
+MapOperationsHandler *MemObj::getMapOperationsHandlerIfExists() {
+    return context->getMapOperationsStorage().getHandlerIfExists(this);
+}
+
 bool MemObj::addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags,
                           MemObjSizeArray &size, MemObjOffsetArray &offset,
                           uint32_t mipLevel) {
-    return mapOperationsHandler.add(ptr, ptrLength, mapFlags, size, offset,
-                                    mipLevel);
+    return getMapOperationsHandler().add(ptr, ptrLength, mapFlags, size, offset, mipLevel);
+}
+
+bool MemObj::findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) {
+    return getMapOperationsHandler().find(mappedPtr, outMapInfo);
+}
+
+void MemObj::removeMappedPtr(void *mappedPtr) {
+    getMapOperationsHandler().remove(mappedPtr);
 }
 
 bool MemObj::isTiledAllocation() const {

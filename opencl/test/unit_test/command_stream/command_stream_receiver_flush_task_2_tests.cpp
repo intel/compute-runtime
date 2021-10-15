@@ -283,7 +283,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingMapEnqueueWhenFini
     size_t tempBuffer[] = {0, 1, 2};
     cl_int retVal;
 
-    AlignedBuffer mockBuffer;
+    auto cpuAllocation = std::make_unique<std::byte[]>(MemoryConstants::pageSize);
+    MockGraphicsAllocation allocation{cpuAllocation.get(), MemoryConstants::pageSize};
+    AlignedBuffer mockBuffer{&ctx, &allocation};
 
     uint32_t taskCount = 0;
     taskLevel = taskCount;
