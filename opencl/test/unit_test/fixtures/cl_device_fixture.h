@@ -27,5 +27,6 @@ struct ClDeviceFixture {
     PLATFORM platformHelper = {};
     OsContext *osContext = nullptr;
     const uint32_t rootDeviceIndex = 0u;
+    MockClExecutionEnvironment *pClExecutionEnvironment = nullptr;
 };
 } // namespace NEO

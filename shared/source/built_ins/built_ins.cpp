@@ -14,9 +14,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "opencl/source/helpers/convert_color.h"
-#include "opencl/source/helpers/dispatch_info_builder.h"
-
 #include "compiler_options.h"
 
 #include <cstdint>

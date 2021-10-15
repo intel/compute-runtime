@@ -14,6 +14,7 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/built_ins/populate_built_ins.inl"
 #include "opencl/source/built_ins/vme_dispatch_builder.h"
+#include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/program/program.h"
 
 namespace NEO {
@@ -103,7 +104,8 @@ const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
 BuiltinDispatchInfoBuilder &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
     auto &builtins = *device.getDevice().getBuiltIns();
     uint32_t operationId = static_cast<uint32_t>(operation);
-    auto &operationBuilder = builtins.BuiltinOpsBuilders[operationId];
+    auto clExecutionEnvironment = static_cast<ClExecutionEnvironment *>(device.getExecutionEnvironment());
+    auto &operationBuilder = clExecutionEnvironment->peekBuilders(device.getRootDeviceIndex())[operationId];
     switch (operation) {
     default:
         return BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, device);

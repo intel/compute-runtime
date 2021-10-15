@@ -13,12 +13,12 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 
@@ -64,7 +64,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>>();
         allocationData.rootDeviceIndex = rootDeviceIndex;
         this->mock = mock;
-        executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, numRootDevices);
+        executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         executionEnvironment->incRefInternal();
         for (auto i = 0u; i < numRootDevices; i++) {
             auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();

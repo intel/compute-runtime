@@ -28,7 +28,6 @@ namespace NEO {
 typedef std::vector<char> BuiltinResourceT;
 
 class Device;
-class Program;
 class SipKernel;
 class MemoryManager;
 
@@ -145,11 +144,8 @@ class BuiltinsLib {
     std::mutex mutex;
 };
 
-class BuiltinDispatchInfoBuilder;
-
 class BuiltIns {
   public:
-    std::pair<std::unique_ptr<BuiltinDispatchInfoBuilder>, std::once_flag> BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::COUNT)];
     BuiltIns();
     virtual ~BuiltIns();
 
@@ -175,8 +171,6 @@ class BuiltIns {
 
     std::unique_ptr<BuiltinsLib> builtinsLib;
 
-    using ProgramsContainerT = std::array<std::pair<std::unique_ptr<Program>, std::once_flag>, static_cast<size_t>(EBuiltInOps::COUNT)>;
-    ProgramsContainerT builtinPrograms;
     bool enableCacheing = true;
 };
 
