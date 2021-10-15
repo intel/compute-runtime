@@ -106,6 +106,7 @@ add_library(igdrcl_libult_common OBJECT EXCLUDE_FROM_ALL
 target_include_directories(igdrcl_libult_common PRIVATE
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
                            ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
+                           ${IGC_COMMON_PARENT_DIR}
 )
 
 set_target_properties(igdrcl_libult_common PROPERTIES POSITION_INDEPENDENT_CODE ON)

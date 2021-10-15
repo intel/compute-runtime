@@ -305,6 +305,8 @@ if(BUILD_WITH_L0)
                              ${COMPUTE_RUNTIME_DEFINITIONS}
   )
 
+  target_include_directories(${TARGET_NAME_L0} PRIVATE ${IGC_COMMON_PARENT_DIR})
+
   if(UNIX)
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
