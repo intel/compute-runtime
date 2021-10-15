@@ -47,4 +47,9 @@ void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &
     coherencyFlag = false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO

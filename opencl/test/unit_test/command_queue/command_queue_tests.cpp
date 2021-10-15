@@ -19,6 +19,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
@@ -1379,6 +1380,42 @@ TEST(CommandQueue, givenImageWithDifferentImageTypesWhenCallingBlitEnqueueImageA
     for (auto imageType : imageTypes) {
         image.imageDesc.image_type = imageType;
         EXPECT_TRUE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
+    }
+}
+
+TEST(CommandQueue, given64KBTileWith3DImageTypeWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
+    DebugManagerStateRestore restorer;
+    MockContext context{};
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
+    const auto &hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    size_t correctRegion[3] = {10u, 10u, 0};
+    size_t correctOrigin[3] = {1u, 1u, 0};
+    std::array<std::unique_ptr<Image>, 5> images = {
+        std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context)),
+        std::unique_ptr<Image>(ImageHelper<Image1dArrayDefaults>::create(&context)),
+        std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context)),
+        std::unique_ptr<Image>(ImageHelper<Image2dArrayDefaults>::create(&context)),
+        std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(&context))};
+
+    for (auto blitterEnabled : {0, 1}) {
+        DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(blitterEnabled);
+        for (auto isTile64 : {0, 1}) {
+            for (const auto &image : images) {
+                auto imageType = image->getImageDesc().image_type;
+                auto gfxAllocation = image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+                auto mockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(gfxAllocation->getDefaultGmm()->gmmResourceInfo.get());
+                mockGmmResourceInfo->getResourceFlags()->Info.Tile64 = isTile64;
+
+                if (isTile64 && (imageType == CL_MEM_OBJECT_IMAGE3D)) {
+                    auto supportExpected = hwInfoConfig->isTile64With3DSurfaceOnBCSSupported(hwInfo) && blitterEnabled;
+                    EXPECT_EQ(supportExpected, queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, *image));
+                } else {
+                    EXPECT_EQ(blitterEnabled, queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, *image));
+                }
+            }
+        }
     }
 }
 

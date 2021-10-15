@@ -343,3 +343,8 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfBlitterForImagesIsSupport
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     EXPECT_FALSE(hwInfoConfig.isBlitterForImagesSupported());
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isTile64With3DSurfaceOnBCSSupported(pInHwInfo));
+}

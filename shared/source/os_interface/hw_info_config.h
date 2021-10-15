@@ -75,6 +75,7 @@ class HwInfoConfig {
     virtual bool is3DPipelineSelectWARequired() const = 0;
     virtual bool isStorageInfoAdjustmentRequired() const = 0;
     virtual bool isBlitterForImagesSupported() const = 0;
+    virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -135,6 +136,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool is3DPipelineSelectWARequired() const override;
     bool isStorageInfoAdjustmentRequired() const override;
     bool isBlitterForImagesSupported() const override;
+    bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

@@ -441,3 +441,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, whenCapabilityCoheren
     hwInfoConfig.setCapabilityCoherencyFlag(*defaultHwInfo, coherency);
     EXPECT_FALSE(coherency);
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, givenXeHPAndLaterPlatformWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &hwInfo = *defaultHwInfo;
+
+    EXPECT_FALSE(hwInfoConfig.isTile64With3DSurfaceOnBCSSupported(hwInfo));
+}
