@@ -1521,13 +1521,13 @@ TEST_F(MultipleDevicesTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerReturn
 TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerReturnsFalse) {
     struct MockDeviceFail : public Mock<DeviceImp> {
         struct MockCommandQueueImp : public Mock<CommandQueue> {
-            ze_result_t destroy() {
+            ze_result_t destroy() override {
                 return ZE_RESULT_SUCCESS;
             }
 
             ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
-                                            ze_fence_handle_t hFence, bool performMigration) { return ZE_RESULT_ERROR_UNKNOWN; }
+                                            ze_fence_handle_t hFence, bool performMigration) override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
         MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
@@ -1535,13 +1535,13 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
         }
 
         ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
-                                       ze_command_queue_handle_t *commandQueue) {
+                                       ze_command_queue_handle_t *commandQueue) override {
             *commandQueue = &this->commandQueue;
             return ZE_RESULT_SUCCESS;
         }
 
         ze_result_t createCommandList(const ze_command_list_desc_t *desc,
-                                      ze_command_list_handle_t *commandList) {
+                                      ze_command_list_handle_t *commandList) override {
             *commandList = &this->commandList;
             return ZE_RESULT_SUCCESS;
         }
