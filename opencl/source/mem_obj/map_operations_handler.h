@@ -9,6 +9,7 @@
 #include "opencl/source/helpers/properties_helper.h"
 
 #include <mutex>
+#include <unordered_map>
 #include <vector>
 
 namespace NEO {
@@ -26,6 +27,19 @@ class MapOperationsHandler {
     bool isOverlapping(MapInfo &inputMapInfo);
     std::vector<MapInfo> mappedPointers;
     mutable std::mutex mtx;
+};
+
+class MapOperationsStorage {
+  public:
+    using HandlersMap = std::unordered_map<cl_mem, MapOperationsHandler>;
+
+    MapOperationsHandler &getHandler(cl_mem memObj);
+    MapOperationsHandler *getHandlerIfExists(cl_mem memObj);
+    void removeHandler(cl_mem memObj);
+
+  protected:
+    std::mutex mutex;
+    HandlersMap handlers{};
 };
 
 } // namespace NEO

@@ -89,7 +89,9 @@ TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnGpuThenRetur
 }
 
 TEST_F(clEnqueueUnmapMemObjTests, GivenInvalidMemObjectTypeWhenUnmappingImageThenInvalidMemObjectIsReturned) {
-    MockBuffer buffer{};
+    MockContext context{};
+    MockGraphicsAllocation allocation{};
+    MockBuffer buffer{&context, allocation};
     cl_int retVal = CL_SUCCESS;
 
     auto mappedPtr = clEnqueueMapBuffer(pCommandQueue, &buffer, CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
