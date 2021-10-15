@@ -1697,6 +1697,8 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreated
         GTEST_SKIP();
     }
 
+    device->setPreemptionMode(PreemptionMode::Disabled);
+
     auto csr = static_cast<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(device->getDefaultEngine().commandStreamReceiver);
     csr->callHwFlush = false;
 
