@@ -1207,11 +1207,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingPlanarYuvHeigh
     EXPECT_EQ(helper.getPlanarYuvMaxHeight(), 16352u);
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenIsBlitterForImagesSupportedIsCalledThenFalseIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    EXPECT_FALSE(hwInfoConfig.isBlitterForImagesSupported());
-}
-
 TEST_F(HwHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto &hwHelper = HwHelper::get(renderCoreFamily);

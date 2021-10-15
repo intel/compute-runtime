@@ -110,3 +110,10 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenXEHPWhenHeapInLocalMemIsCalledThenCorrectV
         EXPECT_TRUE(hwInfoConfig.heapInLocalMem(hwInfo));
     }
 }
+
+XEHPTEST_F(TestXeHPHwInfoConfig, givenXeHpCoreWhenIsBlitterForImagesSupportedIsCalledThenFalseIsReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    EXPECT_FALSE(hwInfoConfig.isBlitterForImagesSupported());
+}

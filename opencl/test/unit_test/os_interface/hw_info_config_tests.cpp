@@ -336,3 +336,8 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfStorageInfoAdjustmentIsRe
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isStorageInfoAdjustmentRequired());
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfBlitterForImagesIsSupportedThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_FALSE(hwInfoConfig.isBlitterForImagesSupported());
+}
