@@ -21,7 +21,7 @@ uint64_t HwInfoConfigHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() {
 template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::enableRenderCompression(HardwareInfo *hwInfo) {
     hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.ftrE2ECompression;
-    hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.ftrE2ECompression;
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
