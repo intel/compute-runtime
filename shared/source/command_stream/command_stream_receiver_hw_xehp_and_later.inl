@@ -59,7 +59,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
     auto hwInfo = peekHwInfo();
     if (isComputeModeNeeded()) {
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+        if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
         }
         size += sizeof(typename GfxFamily::STATE_COMPUTE_MODE);
@@ -171,7 +171,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipeline
     auto hwInfo = peekHwInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
         args.textureCacheInvalidationEnable = true;
         args.hdcPipelineFlush = true;
         args.amfsFlushEnable = true;
@@ -192,7 +192,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args(true);
 
-    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo) && debuggingEnabled &&
+    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs()) && debuggingEnabled &&
         !hwHelper.isSipWANeeded(hwInfo)) {
         addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
     }

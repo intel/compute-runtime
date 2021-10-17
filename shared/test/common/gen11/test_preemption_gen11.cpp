@@ -36,7 +36,7 @@ GEN11TEST_F(Gen11PreemptionTests, whenMidThreadPreemptionIsNotAvailableThenDoesN
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
+    PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
@@ -46,7 +46,7 @@ GEN11TEST_F(Gen11PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSip
     device->setPreemptionMode(PreemptionMode::MidThread);
     executionEnvironment->DisableMidThreadPreemption = 0;
 
-    size_t requiredCmdStreamSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
+    size_t requiredCmdStreamSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
     size_t expectedPreambleSize = sizeof(STATE_SIP);
     EXPECT_EQ(expectedPreambleSize, requiredCmdStreamSize);
 

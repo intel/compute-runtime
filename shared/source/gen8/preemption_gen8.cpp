@@ -47,7 +47,7 @@ size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device
 }
 
 template <>
-size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(const Device &device) {
+size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, bool isRcs) {
     return 0;
 }
 

@@ -85,7 +85,7 @@ size_t PreemptionHelper::getRequiredPreambleSize(const Device &device) {
 }
 
 template <typename GfxFamily>
-size_t PreemptionHelper::getRequiredStateSipCmdSize(const Device &device) {
+size_t PreemptionHelper::getRequiredStateSipCmdSize(Device &device, bool isRcs) {
     size_t size = 0;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();

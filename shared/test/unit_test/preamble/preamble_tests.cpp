@@ -58,12 +58,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIs
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    auto cmdSizePreemptionDisabled = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    auto cmdSizePreemptionDisabled = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
     EXPECT_EQ(0u, cmdSizePreemptionDisabled);
 
     if (mockDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
         mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-        auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+        auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
         EXPECT_LT(cmdSizePreemptionDisabled, cmdSizePreemptionMidThread);
 
         StackVec<char, 8192> preambleBuffer(8192);

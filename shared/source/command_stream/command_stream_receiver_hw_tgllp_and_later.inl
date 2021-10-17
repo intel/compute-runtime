@@ -22,7 +22,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
 
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+        if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
             auto pPipeControlSpace = stream.getSpaceForCmd<PIPE_CONTROL>();
 
             auto pipeControl = GfxFamily::cmdInitPipeControl;

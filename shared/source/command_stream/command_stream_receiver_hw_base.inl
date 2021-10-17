@@ -807,7 +807,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size_t size = getRequiredCmdSizeForPreamble(device);
     size += getRequiredStateBaseAddressSize(device);
     if (!this->isStateSipSent || device.isDebuggerActive()) {
-        size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device);
+        size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);

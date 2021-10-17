@@ -195,7 +195,7 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenSizeForStateSipIsZero) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(mode);
 
-    auto size = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    auto size = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
     EXPECT_EQ(0u, size);
 }
 
@@ -204,7 +204,7 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenStateSipIsNotProgrammed) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(mode);
 
-    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
@@ -314,7 +314,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStat
         auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.isPreambleSent = true;
 
-        auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+        auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
         StackVec<char, 4096> buff(requiredSize);
         LinearStream commandStream(buff.begin(), buff.size());
 
@@ -364,7 +364,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, WhenProgrammingPreemptionT
         auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.isPreambleSent = true;
 
-        auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+        auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
         StackVec<char, 4096> buff(requiredSize);
         LinearStream commandStream(buff.begin(), buff.size());
 

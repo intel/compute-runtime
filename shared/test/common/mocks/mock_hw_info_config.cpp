@@ -179,7 +179,7 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const {
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     return false;
 }
 

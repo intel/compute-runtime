@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/hw_info.h"
@@ -51,7 +52,7 @@ class PreemptionHelper {
     template <typename GfxFamily>
     static size_t getRequiredPreambleSize(const Device &device);
     template <typename GfxFamily>
-    static size_t getRequiredStateSipCmdSize(const Device &device);
+    static size_t getRequiredStateSipCmdSize(Device &device, bool isRcs);
 
     template <typename GfxFamily>
     static void programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);

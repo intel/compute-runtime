@@ -70,7 +70,7 @@ size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device
 }
 
 template <>
-size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(const Device &device) {
+size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, bool isRcs) {
     size_t size = 0;
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
     auto hwInfo = device.getHardwareInfo();
@@ -83,7 +83,7 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(const Device &dev
             size += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
         } else {
             auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-            if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+            if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs)) {
                 size += sizeof(typename GfxFamily::PIPE_CONTROL);
             }
             size += sizeof(typename GfxFamily::STATE_SIP);
