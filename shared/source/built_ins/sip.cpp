@@ -254,8 +254,15 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
 }
 
 const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device) {
-    auto debugSipType = SipKernel::getSipKernelType(device, true);
-    return device.getBuiltIns()->getSipKernel(debugSipType, true, device);
+    auto debugSipType = SipKernelType::DbgBindless;
+    SipKernel::initSipKernelImpl(debugSipType, device);
+
+    switch (SipKernel::classType) {
+    case SipClassType::RawBinaryFromFile:
+        return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
+    default:
+        return device.getBuiltIns()->getSipKernel(debugSipType, device);
+    }
 }
 
 } // namespace NEO

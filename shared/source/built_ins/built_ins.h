@@ -154,7 +154,6 @@ class BuiltIns {
     virtual ~BuiltIns();
 
     MOCKABLE_VIRTUAL const SipKernel &getSipKernel(SipKernelType type, Device &device);
-    MOCKABLE_VIRTUAL const SipKernel &getSipKernel(SipKernelType type, bool bindlessSip, Device &device);
     MOCKABLE_VIRTUAL void freeSipKernels(MemoryManager *memoryManager);
 
     BuiltinsLib &getBuiltinsLib() {

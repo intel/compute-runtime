@@ -269,6 +269,21 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoaded
     EXPECT_EQ(storedAllocation, secondStoredAllocation);
 }
 
+TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingBindlessDebugSipThenSipIsLoadedFromFile) {
+    auto sipAllocation = SipKernel::getBindlessDebugSipKernel(*pDevice).getSipAllocation();
+
+    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::DbgBindless);
+    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
+    ASSERT_NE(nullptr, sipKernel);
+    auto storedAllocation = sipKernel->getSipAllocation();
+
+    EXPECT_NE(nullptr, storedAllocation);
+    EXPECT_EQ(storedAllocation, sipAllocation);
+
+    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    EXPECT_NE(0u, header.size());
+}
+
 struct HexadecimalHeaderSipKernel : public SipKernel {
     using SipKernel::getSipKernelImpl;
     using SipKernel::initHexadecimalArraySipKernel;
@@ -335,4 +350,16 @@ TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveArea
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader();
     EXPECT_EQ(0x3F1000u, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+}
+TEST(DebugBindlessSip, givenActiveDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.UseBindlessDebugSip.set(1);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+    mockDevice->setDebuggerActive(true);
+
+    auto sipType = NEO::SipKernel::getSipKernelType(*mockDevice);
+
+    EXPECT_EQ(SipKernelType::DbgBindless, sipType);
 }
