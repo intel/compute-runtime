@@ -26,9 +26,13 @@ TEST(BuiltInTestsOcl, givenUseBindlessBuiltinInApiDependentModeWhenBinExtensionP
     const uint32_t deviceRevId = 9;
 
     std::string resourceNameGeneric = createBuiltinResourceName(builtin, extension);
+    std::string resourceNameForPlatform = createBuiltinResourceName(builtin, extension, platformName);
     std::string resourceNameForPlatformAndStepping = createBuiltinResourceName(builtin, extension, platformName, deviceRevId);
 
     std::string expectedResourceNameGeneric = "bindful_copy_buffer_to_buffer.builtin_kernel.bin";
+
+    std::string expectedResourceNameForPlatform = platformName.c_str();
+    expectedResourceNameForPlatform += "_0_bindful_copy_buffer_to_buffer.builtin_kernel.bin";
 
     std::string expectedResourceNameForPlatformAndStepping = platformName.c_str();
     expectedResourceNameForPlatformAndStepping += "_";
@@ -36,6 +40,7 @@ TEST(BuiltInTestsOcl, givenUseBindlessBuiltinInApiDependentModeWhenBinExtensionP
     expectedResourceNameForPlatformAndStepping += "_bindful_copy_buffer_to_buffer.builtin_kernel.bin";
 
     EXPECT_EQ(0, strcmp(expectedResourceNameGeneric.c_str(), resourceNameGeneric.c_str()));
+    EXPECT_EQ(0, strcmp(expectedResourceNameForPlatform.c_str(), resourceNameForPlatform.c_str()));
     EXPECT_EQ(0, strcmp(expectedResourceNameForPlatformAndStepping.c_str(), resourceNameForPlatformAndStepping.c_str()));
 }
 TEST(BuiltInTestsOcl, givenUseBindlessBuiltinDisabledInOclApiWhenBinExtensionPassedThenNameHasBindfulPrefix) {
