@@ -70,7 +70,7 @@ macro(macro_for_each_platform)
       endif()
       set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/linux/local${BRANCH_DIR_SUFFIX}${PLATFORM_IT_LOWER}/enable_local_memory_helper_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
-        list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${SRC_FILE})
+        list(APPEND ${GEN_TYPE}_SRC_LINK_LINUX ${SRC_FILE})
       endif()
 
       set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ail${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_IT_LOWER}/ail_configuration_${PLATFORM_IT_LOWER}.cpp)
@@ -167,6 +167,7 @@ macro(macro_for_each_gen)
   list(APPEND CORE_SRCS_GENX_ALL_LINUX ${CORE_SRCS_${GEN_TYPE}_CPP_LINUX})
 
   list(APPEND CORE_SRCS_LINK ${${GEN_TYPE}_SRC_LINK_BASE})
+  list(APPEND CORE_SRCS_LINK_LINUX ${${GEN_TYPE}_SRC_LINK_LINUX})
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")

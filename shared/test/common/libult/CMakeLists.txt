@@ -15,7 +15,7 @@ macro(macro_for_each_platform)
       endif()
       set(SRC_FILE ${NEO_SHARED_DIRECTORY}/os_interface/linux/local${BRANCH_DIR_SUFFIX}${PLATFORM_IT_LOWER}/enable_local_memory_helper_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
-        list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+        list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW_LINUX ${SRC_FILE})
       endif()
       set(SRC_FILE ${NEO_SHARED_DIRECTORY}/ail${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_IT_LOWER}/ail_configuration_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
@@ -97,6 +97,10 @@ get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PAR
 list(APPEND igdrcl_libult_common_SRCS_LIB_ULT
      ${NEO_SHARED_TESTS_CMD_PARSE}
 )
+
+if(UNIX)
+  list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${igdrcl_libult_common_SRCS_ENABLE_TESTED_HW_LINUX})
+endif()
 
 add_library(igdrcl_libult_common OBJECT EXCLUDE_FROM_ALL
             ${igdrcl_libult_common_SRCS_LIB_ULT}
