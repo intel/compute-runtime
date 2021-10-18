@@ -27,6 +27,10 @@ class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
     FirmwareUtil *pFwInterface = nullptr;
     bool isFWInitalized = false;
     std::string osFwType;
+
+  private:
+    void getFirmwareVersion(char *);
+    void getOpromVersion(char *);
 };
 
 } // namespace L0

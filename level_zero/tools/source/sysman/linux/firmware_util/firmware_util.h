@@ -28,16 +28,11 @@ class FirmwareUtil {
     virtual ze_result_t getFirstDevice(igsc_device_info *) = 0;
     virtual ze_result_t fwGetVersion(std::string &fwVersion) = 0;
     virtual ze_result_t opromGetVersion(std::string &fwVersion) = 0;
-    virtual ze_result_t pscGetVersion(std::string &fwVersion) = 0;
     virtual ze_result_t fwFlashGSC(void *pImage, uint32_t size) = 0;
     virtual ze_result_t fwFlashOprom(void *pImage, uint32_t size) = 0;
-    virtual ze_result_t fwFlashIafPsc(void *pImage, uint32_t size) = 0;
-    virtual ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) = 0;
-    virtual ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) = 0;
     virtual ze_result_t fwIfrApplied(bool &ifrStatus) = 0;
     virtual ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) = 0;
     virtual ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) = 0;
-    virtual void getDeviceSupportedFwTypes(std::vector<std ::string> &fwTypes) = 0;
     virtual ~FirmwareUtil() = default;
 };
 } // namespace L0

@@ -18,7 +18,7 @@
 
 namespace L0 {
 typedef int (*pIgscDeviceInitByDevice)(struct igsc_device_handle *handle,
-                                       const char *devicePath);
+                                       const char *device_path);
 typedef int (*pIgscDeviceGetDeviceInfo)(struct igsc_device_handle *handle,
                                         struct igsc_info_device *info);
 typedef int (*pIgscDeviceFwVersion)(struct igsc_device_handle *handle,
@@ -29,21 +29,21 @@ typedef int (*pIgscDeviceIteratorNext)(struct igsc_device_iterator *iter,
 typedef void (*pIgscDeviceIteratorDestroy)(struct igsc_device_iterator *iter);
 typedef int (*pIgscDeviceFwUpdate)(struct igsc_device_handle *handle,
                                    const uint8_t *buffer,
-                                   const uint32_t bufferLen,
-                                   igsc_progress_func_t progressFunc,
+                                   const uint32_t buffer_len,
+                                   igsc_progress_func_t progress_f,
                                    void *ctx);
 typedef int (*pIgscImageOpromInit)(struct igsc_oprom_image **img,
                                    const uint8_t *buffer,
-                                   uint32_t bufferLen);
+                                   uint32_t buffer_len);
 typedef int (*pIgscImageOpromType)(struct igsc_oprom_image *img,
-                                   uint32_t *opromType);
+                                   uint32_t *oprom_type);
 typedef int (*pIgscDeviceOpromUpdate)(struct igsc_device_handle *handle,
-                                      uint32_t opromType,
+                                      uint32_t oprom_type,
                                       struct igsc_oprom_image *img,
-                                      igsc_progress_func_t progressFunc,
+                                      igsc_progress_func_t progress_f,
                                       void *ctx);
 typedef int (*pIgscDeviceOpromVersion)(struct igsc_device_handle *handle,
-                                       uint32_t opromType,
+                                       uint32_t oprom_type,
                                        struct igsc_oprom_version *version);
 
 extern pIgscDeviceInitByDevice deviceInitByDevice;
@@ -66,16 +66,11 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t getFirstDevice(igsc_device_info *) override;
     ze_result_t fwGetVersion(std::string &fwVersion) override;
     ze_result_t opromGetVersion(std::string &fwVersion) override;
-    ze_result_t pscGetVersion(std::string &fwVersion) override;
     ze_result_t fwFlashGSC(void *pImage, uint32_t size) override;
     ze_result_t fwFlashOprom(void *pImage, uint32_t size) override;
-    ze_result_t fwFlashIafPsc(void *pImage, uint32_t size) override;
-    ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) override;
-    ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) override;
     ze_result_t fwIfrApplied(bool &ifrStatus) override;
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override;
     ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) override;
-    void getDeviceSupportedFwTypes(std::vector<std ::string> &fwTypes) override;
 
     template <class T>
     bool getSymbolAddr(const std::string name, T &proc);
