@@ -113,3 +113,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
     return HwHelper::get(hwInfo.platform.eDisplayCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
+    return true;
+}

@@ -112,8 +112,8 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenXEHPWhenHeapInLocalMemIsCalledThenCorrectV
 }
 
 XEHPTEST_F(TestXeHPHwInfoConfig, givenXeHpCoreWhenIsBlitterForImagesSupportedIsCalledThenFalseIsReturned) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    EXPECT_FALSE(hwInfoConfig.isBlitterForImagesSupported());
+    EXPECT_TRUE(hwInfoConfig.isBlitterForImagesSupported());
 }
