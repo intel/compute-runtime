@@ -176,9 +176,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipeline
         args.hdcPipelineFlush = true;
         args.amfsFlushEnable = true;
         args.instructionCacheInvalidateEnable = true;
-        args.dcFlushEnable = true;
         args.constantCacheInvalidationEnable = true;
         args.stateCacheInvalidationEnable = true;
+
+        args.dcFlushEnable = false;
+
+        setPipeControlPriorToNonPipelinedStateCommandExtraProperties(args);
     }
 
     addPipeControlCmd(commandStream, args);

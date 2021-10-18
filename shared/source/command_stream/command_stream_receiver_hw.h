@@ -155,6 +155,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;
 
+    void setPipeControlPriorToNonPipelinedStateCommandExtraProperties(PipeControlArgs &args);
+
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     void addPipeControlCmd(LinearStream &commandStream, PipeControlArgs &args);
     void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);

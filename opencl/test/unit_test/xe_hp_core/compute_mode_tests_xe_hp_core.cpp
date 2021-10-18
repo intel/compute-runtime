@@ -46,7 +46,6 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedSta
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
@@ -60,7 +59,7 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
 
-    SetUpImpl<FamilyType>();
+    SetUpImpl<FamilyType>(&hwInfo);
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -90,7 +89,6 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 

@@ -68,7 +68,9 @@ struct ComputeModeRequirements : public ::testing::Test {
     template <typename FamilyType>
     void SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo));
+        device->executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hardwareInfo);
         csr = new myCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
+
         device->resetCommandStreamReceiver(csr);
         AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
 

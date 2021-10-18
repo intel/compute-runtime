@@ -118,7 +118,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControlCmd->getDcFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
 }
 
@@ -150,7 +149,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControlCmd->getDcFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 

@@ -91,6 +91,9 @@ bool CommandStreamReceiverHw<GfxFamily>::isMultiOsContextCapable() const {
 }
 
 template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::setPipeControlPriorToNonPipelinedStateCommandExtraProperties(PipeControlArgs &args) {}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
     addPipeControlCmd(commandStream, args);
 }

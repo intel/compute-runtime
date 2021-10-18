@@ -72,6 +72,9 @@ template <>
 void CommandStreamReceiverHw<Family>::addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags) {}
 
 template <>
+void CommandStreamReceiverHw<Family>::setPipeControlPriorToNonPipelinedStateCommandExtraProperties(PipeControlArgs &args) {}
+
+template <>
 void BlitCommandsHelper<Family>::appendClearColor(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
     using XY_COPY_BLT = typename Family::XY_COPY_BLT;
     if (DebugManager.flags.UseClearColorAllocationForBlitter.get()) {

@@ -23,19 +23,9 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
-            auto pPipeControlSpace = stream.getSpaceForCmd<PIPE_CONTROL>();
+            PipeControlArgs args(true);
 
-            auto pipeControl = GfxFamily::cmdInitPipeControl;
-            pipeControl.setHdcPipelineFlush(true);
-            pipeControl.setAmfsFlushEnable(true);
-            pipeControl.setCommandStreamerStallEnable(true);
-            pipeControl.setInstructionCacheInvalidateEnable(true);
-            pipeControl.setTextureCacheInvalidationEnable(true);
-            pipeControl.setDcFlushEnable(true);
-            pipeControl.setConstantCacheInvalidationEnable(true);
-            pipeControl.setStateCacheInvalidationEnable(true);
-
-            *pPipeControlSpace = pipeControl;
+            addPipeControlPriorToNonPipelinedStateCommand(stream, args);
         }
 
         auto stateComputeMode = GfxFamily::cmdInitStateComputeMode;
