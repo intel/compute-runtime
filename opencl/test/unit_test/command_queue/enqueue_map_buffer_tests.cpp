@@ -747,3 +747,27 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedOnCpuThenSet
 
     EXPECT_EQ(mappedPtr, expectedPtr);
 }
+
+HWTEST_F(EnqueueMapBufferTest, givenMapBufferOnGpuWhenMappingBufferThenStoreGraphicsAllocationInMapInfo) {
+    uint8_t hostPtr[10] = {};
+    std::unique_ptr<Buffer> bufferForCpuMap(Buffer::create(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
+    ASSERT_NE(nullptr, bufferForCpuMap);
+    ASSERT_TRUE(bufferForCpuMap->mappingOnCpuAllowed());
+
+    std::unique_ptr<Buffer> bufferForGpuMap(Buffer::create(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
+    ASSERT_NE(nullptr, bufferForGpuMap);
+    forceMapBufferOnGpu(*bufferForGpuMap);
+    ASSERT_FALSE(bufferForGpuMap->mappingOnCpuAllowed());
+
+    cl_int retVal{};
+    void *pointerMappedOnCpu = clEnqueueMapBuffer(pCmdQ, bufferForCpuMap.get(), CL_FALSE, CL_MAP_READ, 0, 10, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    void *pointerMappedOnGpu = clEnqueueMapBuffer(pCmdQ, bufferForGpuMap.get(), CL_FALSE, CL_MAP_READ, 0, 10, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    MapInfo mapInfo{};
+    EXPECT_TRUE(bufferForCpuMap->findMappedPtr(pointerMappedOnCpu, mapInfo));
+    EXPECT_EQ(nullptr, mapInfo.graphicsAllocation);
+    EXPECT_TRUE(bufferForGpuMap->findMappedPtr(pointerMappedOnGpu, mapInfo));
+    EXPECT_NE(nullptr, mapInfo.graphicsAllocation);
+}

@@ -40,23 +40,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     auto isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingWrite, size, const_cast<void *>(ptr),
                                                  numEventsInWaitList, eventWaitList);
-
     InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
-    //check if we are dealing with SVM pointer here for which we already have an allocation
-    if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
-        auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
-        if (svmEntry) {
-            memoryType = svmEntry->memoryType;
-            if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
-                return CL_INVALID_OPERATION;
-            }
 
-            if (isCpuCopyAllowed) {
-                if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
-                    isCpuCopyAllowed = false;
-                }
-            }
-            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    if (!mapAllocation) {
+        cl_int retVal = getContext().tryGetExistingHostPtrAllocation(ptr, size, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
+        if (retVal != CL_SUCCESS) {
+            return retVal;
         }
     }
 

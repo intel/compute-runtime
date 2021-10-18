@@ -428,7 +428,8 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
     void *returnPtr = ptrOffset(basePtr, mapPtrOffset);
 
     if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
-                                                 transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel)) {
+                                                 transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel,
+                                                 transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()))) {
         errcodeRet = CL_INVALID_OPERATION;
         return nullptr;
     }

@@ -9,6 +9,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
@@ -55,6 +56,15 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
     assert(nullptr != funcCreate);
 
     return funcCreate(pContext, pDevice, properties, false);
+}
+
+void CommandQueueHwFixture::forceMapBufferOnGpu(Buffer &buffer) {
+    ClDevice *clDevice = buffer.getContext()->getDevice(0);
+    buffer.setSharingHandler(new SharingHandler());
+    auto gfxAllocation = buffer.getGraphicsAllocation(clDevice->getRootDeviceIndex());
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(clDevice->getGmmClientContext()), handleId);
+    }
 }
 
 void CommandQueueHwFixture::SetUp() {

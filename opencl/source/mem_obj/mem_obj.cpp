@@ -397,8 +397,8 @@ MapOperationsHandler *MemObj::getMapOperationsHandlerIfExists() {
 
 bool MemObj::addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags,
                           MemObjSizeArray &size, MemObjOffsetArray &offset,
-                          uint32_t mipLevel) {
-    return getMapOperationsHandler().add(ptr, ptrLength, mapFlags, size, offset, mipLevel);
+                          uint32_t mipLevel, GraphicsAllocation *graphicsAllocation) {
+    return getMapOperationsHandler().add(ptr, ptrLength, mapFlags, size, offset, mipLevel, graphicsAllocation);
 }
 
 bool MemObj::findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) {

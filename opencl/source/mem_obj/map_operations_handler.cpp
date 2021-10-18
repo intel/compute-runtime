@@ -16,10 +16,11 @@ size_t MapOperationsHandler::size() const {
     return mappedPointers.size();
 }
 
-bool MapOperationsHandler::add(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel) {
+bool MapOperationsHandler::add(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel, GraphicsAllocation *graphicsAllocation) {
     std::lock_guard<std::mutex> lock(mtx);
     MapInfo mapInfo(ptr, ptrLength, size, offset, mipLevel);
     mapInfo.readOnly = (mapFlags == CL_MAP_READ);
+    mapInfo.graphicsAllocation = graphicsAllocation;
 
     if (isOverlapping(mapInfo)) {
         return false;
@@ -60,6 +61,19 @@ bool MapOperationsHandler::find(void *mappedPtr, MapInfo &outMapInfo) {
     return false;
 }
 
+bool NEO::MapOperationsHandler::findInfoForHostPtr(const void *ptr, size_t size, MapInfo &outMapInfo) {
+    for (auto &mapInfo : mappedPointers) {
+        void *ptrStart = mapInfo.ptr;
+        void *ptrEnd = ptrOffset(mapInfo.ptr, mapInfo.ptrLength);
+
+        if (ptrStart <= ptr && ptrOffset(ptr, size) <= ptrEnd) {
+            outMapInfo = mapInfo;
+            return true;
+        }
+    }
+    return false;
+}
+
 void MapOperationsHandler::remove(void *mappedPtr) {
     std::lock_guard<std::mutex> lock(mtx);
 
@@ -86,6 +100,15 @@ MapOperationsHandler *NEO::MapOperationsStorage::getHandlerIfExists(cl_mem memOb
     }
 
     return &iterator->second;
+}
+
+bool NEO::MapOperationsStorage::getInfoForHostPtr(const void *ptr, size_t size, MapInfo &outInfo) {
+    for (auto &entry : handlers) {
+        if (entry.second.findInfoForHostPtr(ptr, size, outInfo)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void NEO::MapOperationsStorage::removeHandler(cl_mem memObj) {

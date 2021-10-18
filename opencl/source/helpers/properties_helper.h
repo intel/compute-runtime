@@ -17,6 +17,7 @@
 namespace NEO {
 class MemObj;
 class Buffer;
+class GraphicsAllocation;
 
 struct EventsRequest {
     EventsRequest() = delete;
@@ -69,5 +70,6 @@ struct MapInfo {
     void *ptr = nullptr;
     uint32_t mipLevel = 0;
     bool readOnly = false;
+    GraphicsAllocation *graphicsAllocation = nullptr;
 };
 } // namespace NEO

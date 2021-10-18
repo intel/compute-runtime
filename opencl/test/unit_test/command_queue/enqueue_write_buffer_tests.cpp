@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -562,4 +563,38 @@ HWTEST_F(EnqueueWriteBufferStatefulTest, WhenWritingBufferStatefulThenSuccessIsR
                                             nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueWriteBufferHw, givenHostPtrIsFromMappedBufferWhenWriteBufferIsCalledThenReuseGraphicsAllocation) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DisableZeroCopyForBuffers.set(1);
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
+
+    MockCommandQueueHw<FamilyType> queue(context.get(), device.get(), nullptr);
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+
+    BufferDefaults::context = context.get();
+    auto bufferForMap = clUniquePtr(BufferHelper<>::create());
+    auto bufferForRead = clUniquePtr(BufferHelper<>::create());
+
+    cl_int retVal{};
+    void *mappedPtr = queue.enqueueMapBuffer(bufferForMap.get(), CL_TRUE, CL_MAP_READ, 0, bufferForMap->getSize(), 0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+
+    MapOperationsHandler *mapOperationsHandler = context->getMapOperationsStorage().getHandlerIfExists(bufferForMap.get());
+    EXPECT_NE(nullptr, mapOperationsHandler);
+    MapInfo mapInfo{};
+    EXPECT_TRUE(mapOperationsHandler->find(mappedPtr, mapInfo));
+    EXPECT_NE(nullptr, mapInfo.graphicsAllocation);
+
+    auto unmappedPtr = std::make_unique<char[]>(bufferForRead->getSize());
+    retVal = queue.enqueueWriteBuffer(bufferForRead.get(), CL_TRUE, 0, bufferForRead->getSize(), unmappedPtr.get(), nullptr, 0, 0, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
+
+    retVal = queue.enqueueWriteBuffer(bufferForRead.get(), CL_TRUE, 0, bufferForRead->getSize(), mappedPtr, nullptr, 0, 0, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
 }

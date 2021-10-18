@@ -230,7 +230,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
                             ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice()),
                             CL_MEM_READ_WRITE, 0, size,
                             storage, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
-        memObj->addMappedPtr(storage, 1, mapFlags, region, origin, 0);
+        memObj->addMappedPtr(storage, 1, mapFlags, region, origin, 0, nullptr);
     } else {
         memObj->setAllocatedMapPtr(storage);
     }

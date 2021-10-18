@@ -33,6 +33,8 @@ struct CommandQueueHwFixture {
         const cl_command_queue_properties *properties,
         Context *context);
 
+    static void forceMapBufferOnGpu(Buffer &buffer);
+
     virtual void SetUp();
     virtual void SetUp(ClDevice *pDevice, cl_command_queue_properties properties);
 

@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/vec.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/context/context_type.h"
@@ -95,6 +96,13 @@ class Context : public BaseObject<_cl_context> {
     }
 
     auto &getMapOperationsStorage() { return mapOperationsStorage; }
+
+    cl_int tryGetExistingHostPtrAllocation(const void *ptr,
+                                           size_t size,
+                                           uint32_t rootDeviceIndex,
+                                           GraphicsAllocation *&allocation,
+                                           InternalMemoryType &memoryType,
+                                           bool &isCpuCopyAllowed);
 
     const std::set<uint32_t> &getRootDeviceIndices() const;
 

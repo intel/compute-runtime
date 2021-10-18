@@ -88,7 +88,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     MapOperationsHandler &getMapOperationsHandler();
     MapOperationsHandler *getMapOperationsHandlerIfExists();
-    bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel);
+    bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel, GraphicsAllocation *graphicsAllocation);
     bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo);
     void removeMappedPtr(void *mappedPtr);
     void *getBasePtrForMap(uint32_t rootDeviceIndex);

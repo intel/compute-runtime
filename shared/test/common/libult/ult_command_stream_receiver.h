@@ -279,6 +279,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return blitterDirectSubmissionAvailable;
     }
 
+    bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
+        createAllocationForHostSurfaceCalled++;
+        return BaseClass::createAllocationForHostSurface(surface, requiresL3Flush);
+    }
+
     void ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize) override {
         ensureCommandBufferAllocationCalled++;
         BaseClass::ensureCommandBufferAllocation(commandStream, minimumRequiredSize, additionalAllocationSize);
@@ -302,6 +307,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
     BlitPropertiesContainer receivedBlitProperties = {};
+    uint32_t createAllocationForHostSurfaceCalled = 0;
 
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;

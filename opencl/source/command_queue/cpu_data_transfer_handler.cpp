@@ -32,7 +32,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                               transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
 
         if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
-                                                     transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel)) {
+                                                     transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel, nullptr)) {
             err.set(CL_INVALID_OPERATION);
             return nullptr;
         }

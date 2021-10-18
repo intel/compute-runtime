@@ -82,6 +82,38 @@ cl_int Context::setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_context, 
     return CL_SUCCESS;
 }
 
+cl_int Context::tryGetExistingHostPtrAllocation(const void *ptr,
+                                                size_t size,
+                                                uint32_t rootDeviceIndex,
+                                                GraphicsAllocation *&allocation,
+                                                InternalMemoryType &memoryType,
+                                                bool &isCpuCopyAllowed) {
+    if (getSVMAllocsManager()) {
+        SvmAllocationData *svmEntry = getSVMAllocsManager()->getSVMAlloc(ptr);
+        if (svmEntry) {
+            memoryType = svmEntry->memoryType;
+            if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
+                return CL_INVALID_OPERATION;
+            }
+            allocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+            if (isCpuCopyAllowed) {
+                if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
+                    isCpuCopyAllowed = false;
+                }
+            }
+            return CL_SUCCESS;
+        }
+    }
+
+    if (MapInfo mapInfo = {}; mapOperationsStorage.getInfoForHostPtr(ptr, size, mapInfo)) {
+        if (mapInfo.graphicsAllocation) {
+            allocation = mapInfo.graphicsAllocation;
+        }
+    }
+
+    return CL_SUCCESS;
+}
+
 const std::set<uint32_t> &Context::getRootDeviceIndices() const {
     return rootDeviceIndices;
 }
