@@ -86,8 +86,7 @@ TEST_F(IOQTaskTestsMt, GivenBlockedOnUserEventWhenEnqueingMarkerThenSuccessIsRet
 }
 
 TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingBufferThenEventsAreCompleted) {
-    MockGraphicsAllocation alignedBufferAlloc{nullptr, MemoryConstants::pageSize};
-    AlignedBuffer alignedBuffer{pContext, &alignedBufferAlloc};
+    AlignedBuffer alignedBuffer;
 
     auto userEvent = clCreateUserEvent(pContext, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

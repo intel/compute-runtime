@@ -35,21 +35,16 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using Buffer::magic;
     using Buffer::offset;
     using Buffer::size;
-    using MemObj::context;
     using MemObj::isZeroCopy;
     using MemObj::memObjectType;
     using MockBufferStorage::device;
-
-    MockBuffer(GraphicsAllocation &alloc) : MockBuffer(nullptr, alloc) {}
-
-    MockBuffer(Context *context, GraphicsAllocation &alloc)
+    MockBuffer(GraphicsAllocation &alloc)
         : MockBufferStorage(), Buffer(
-                                   context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                   nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                    CL_MEM_USE_HOST_PTR, 0, alloc.getUnderlyingBufferSize(), alloc.getUnderlyingBuffer(), alloc.getUnderlyingBuffer(),
                                    GraphicsAllocationHelper::toMultiGraphicsAllocation(&alloc), true, false, false),
           externalAlloc(&alloc) {
     }
-
     MockBuffer()
         : MockBufferStorage(), Buffer(
                                    nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
@@ -58,8 +53,9 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     }
     ~MockBuffer() override {
         if (externalAlloc != nullptr) {
-            // no ownership over graphics allocation, do not release it
-            this->multiGraphicsAllocation.removeAllocation(0u);
+            // no ownership over graphics allocation
+            // return to mock allocations
+            this->multiGraphicsAllocation.addAllocation(&this->mockGfxAllocation);
         }
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) override {
@@ -77,29 +73,15 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
                                                     CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64),
                                                     GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation), true, false, false) {
     }
-
-    AlignedBuffer(GraphicsAllocation *gfxAllocation) : AlignedBuffer(nullptr, gfxAllocation) {}
-
-    AlignedBuffer(Context *context, GraphicsAllocation *gfxAllocation)
+    AlignedBuffer(GraphicsAllocation *gfxAllocation)
         : MockBufferStorage(), Buffer(
-                                   context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                   nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                    CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64),
-                                   GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), true, false, false),
-          externalAlloc(gfxAllocation) {
+                                   GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), true, false, false) {
     }
-
-    ~AlignedBuffer() override {
-        if (externalAlloc != nullptr) {
-            // no ownership over graphics allocation, do not release it
-            this->multiGraphicsAllocation.removeAllocation(0u);
-        }
-    }
-
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) override {
         Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0, false, false);
     }
-
-    GraphicsAllocation *externalAlloc = nullptr;
 };
 
 class UnalignedBuffer : public MockBufferStorage, public Buffer {
@@ -111,29 +93,15 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
                                                      CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4),
                                                      GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation), false, false, false) {
     }
-
-    UnalignedBuffer(GraphicsAllocation *gfxAllocation) : UnalignedBuffer(nullptr, gfxAllocation) {}
-
-    UnalignedBuffer(Context *context, GraphicsAllocation *gfxAllocation)
+    UnalignedBuffer(GraphicsAllocation *gfxAllocation)
         : MockBufferStorage(true), Buffer(
-                                       context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                       nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                        CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4),
-                                       GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), false, false, false),
-          externalAlloc(gfxAllocation) {
+                                       GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), false, false, false) {
     }
-
-    ~UnalignedBuffer() override {
-        if (externalAlloc != nullptr) {
-            // no ownership over graphics allocation, do not release it
-            this->multiGraphicsAllocation.removeAllocation(0u);
-        }
-    }
-
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) override {
         Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0, false, false);
     }
-
-    GraphicsAllocation *externalAlloc = nullptr;
 };
 
 class MockPublicAccessBuffer : public Buffer {

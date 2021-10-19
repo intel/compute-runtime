@@ -72,21 +72,3 @@ void MapOperationsHandler::remove(void *mappedPtr) {
         }
     }
 }
-
-MapOperationsHandler &NEO::MapOperationsStorage::getHandler(cl_mem memObj) {
-    return handlers[memObj];
-}
-
-MapOperationsHandler *NEO::MapOperationsStorage::getHandlerIfExists(cl_mem memObj) {
-    auto iterator = handlers.find(memObj);
-    if (iterator == handlers.end()) {
-        return nullptr;
-    }
-
-    return &iterator->second;
-}
-
-void NEO::MapOperationsStorage::removeHandler(cl_mem memObj) {
-    auto iterator = handlers.find(memObj);
-    handlers.erase(iterator);
-}

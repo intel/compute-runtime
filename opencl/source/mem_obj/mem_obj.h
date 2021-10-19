@@ -86,11 +86,9 @@ class MemObj : public BaseObject<_cl_mem> {
     bool getIsObjectRedescribed() const { return isObjectRedescribed; };
     size_t getSize() const;
 
-    MapOperationsHandler &getMapOperationsHandler();
-    MapOperationsHandler *getMapOperationsHandlerIfExists();
     bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel);
-    bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo);
-    void removeMappedPtr(void *mappedPtr);
+    bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) { return mapOperationsHandler.find(mappedPtr, outMapInfo); }
+    void removeMappedPtr(void *mappedPtr) { mapOperationsHandler.remove(mappedPtr); }
     void *getBasePtrForMap(uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL void setAllocatedMapPtr(void *allocatedMapPtr);
@@ -175,6 +173,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void *memoryStorage;
     void *hostPtr;
     void *allocatedMapPtr = nullptr;
+    MapOperationsHandler mapOperationsHandler;
     size_t offset = 0;
     MemObj *associatedMemObject = nullptr;
     cl_uint refCount = 0;
