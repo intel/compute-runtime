@@ -396,7 +396,7 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested)
 
     this->appendDrmContextFlags(gcc, isSpecialContextRequested);
 
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
+    auto retVal = this->createDrmContextExt(gcc, drmVmId, isSpecialContextRequested);
     UNRECOVERABLE_IF(retVal != 0);
 
     if (drmVmId > 0) {

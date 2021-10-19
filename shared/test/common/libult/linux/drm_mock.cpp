@@ -77,7 +77,10 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
         this->receivedCreateContextId = create->ctx_id;
         this->receivedContextCreateFlags = create->flags;
-        return this->storedRetVal;
+        if (create->extensions == 0) {
+            return this->storedRetVal;
+        }
+        receivedContextCreateSetParam = *reinterpret_cast<drm_i915_gem_context_create_ext_setparam *>(create->extensions);
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_DESTROY) && (arg != nullptr)) {

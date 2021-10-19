@@ -27,6 +27,7 @@ class DrmMock : public Drm {
     using Drm::checkQueueSliceSupport;
     using Drm::classHandles;
     using Drm::contextDebugSupported;
+    using Drm::createDrmContextExt;
     using Drm::engineInfo;
     using Drm::generateElfUUID;
     using Drm::generateUUID;
@@ -142,6 +143,7 @@ class DrmMock : public Drm {
     bool allowDebugAttachCallBase = false;
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
 
+    drm_i915_gem_context_create_ext_setparam receivedContextCreateSetParam = {};
     uint32_t receivedContextCreateFlags = 0;
     uint32_t receivedCreateContextId = 0;
     uint32_t receivedDestroyContextId = 0;
