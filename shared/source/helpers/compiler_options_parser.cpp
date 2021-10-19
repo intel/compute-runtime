@@ -1,11 +1,15 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/compiler_options_parser.h"
+
+#include "shared/source/compiler_interface/compiler_options/compiler_options_base.h"
+
+#include "opencl/source/platform/extensions.h"
 
 #include <cstdint>
 #include <sstream>
@@ -31,6 +35,23 @@ bool requiresOpenClCFeatures(const std::string &compileOptions) {
 
 bool requiresAdditionalExtensions(const std::string &compileOptions) {
     return (getMajorVersion(compileOptions) == 2);
+}
+void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions) {
+    std::string extensionsList = getExtensionsList(hwInfo);
+    if (requiresAdditionalExtensions(options)) {
+        extensionsList += "cl_khr_3d_image_writes ";
+    }
+    OpenClCFeaturesContainer openclCFeatures;
+    if (requiresOpenClCFeatures(options)) {
+        getOpenclCFeaturesList(hwInfo, openclCFeatures);
+    }
+
+    auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
+    auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
+    internalOptions = CompilerOptions::concatenate(oclVersion, compilerExtensions, internalOptions);
+    if (hwInfo.capabilityTable.supportsImages) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
+    }
 }
 
 } // namespace NEO

@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -17,7 +18,6 @@
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 #include "gmock/gmock.h"
@@ -35,11 +35,11 @@ const char *gCBadDompilerDllName = "libbad_compiler.so";
 #error "Unknown OS!"
 #endif
 
-class CompilerInterfaceTest : public ClDeviceFixture,
+class CompilerInterfaceTest : public DeviceFixture,
                               public ::testing::Test {
   public:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
 
         // create the compiler interface
         this->pCompilerInterface = new MockCompilerInterface();
@@ -60,13 +60,12 @@ class CompilerInterfaceTest : public ClDeviceFixture,
         ASSERT_NE(nullptr, pSource);
 
         inputArgs.src = ArrayRef<char>(pSource.get(), sourceSize);
-        inputArgs.internalOptions = ArrayRef<const char>(pClDevice->peekCompilerExtensions().c_str(), pClDevice->peekCompilerExtensions().size());
     }
 
     void TearDown() override {
         pSource.reset();
 
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 
     MockCompilerInterface *pCompilerInterface;
@@ -161,19 +160,6 @@ TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedTh
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
 }
 
-TEST_F(CompilerInterfaceTest, WhenBuildIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {
-    std::string receivedInternalOptions;
-
-    auto debugVars = NEO::getFclDebugVars();
-    debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->fclPushDebugVars(debugVars);
-    TranslationOutput translationOutput = {};
-    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
-    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(pClDevice->peekCompilerExtensions()));
-    gEnvironment->fclPopDebugVars();
-}
-
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenBuildFailsGracefully) {
     pCompilerInterface->igcMain.reset(nullptr);
     TranslationOutput translationOutput = {};
@@ -248,20 +234,6 @@ TEST_F(CompilerInterfaceTest, GivenProgramCreatedFromIrWhenCompileIsCalledThenDo
     inputArgs.srcType = IGC::CodeType::oclGenBin;
     err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::AlreadyCompiled, err);
-}
-
-TEST_F(CompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {
-    std::string receivedInternalOptions;
-
-    MockCompilerDebugVars fclDebugVars;
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd16_", ".bc");
-    fclDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
-    TranslationOutput translationOutput = {};
-    auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
-    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(pClDevice->peekCompilerExtensions()));
-    gEnvironment->fclPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCompileFailsGracefully) {

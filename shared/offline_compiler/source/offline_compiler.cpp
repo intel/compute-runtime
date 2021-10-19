@@ -25,8 +25,6 @@
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_library.h"
 
-#include "opencl/source/platform/extensions.h"
-
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
 #include "cif/import/library_api.h"
@@ -172,7 +170,7 @@ int OfflineCompiler::buildIrBinary() {
 
     if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
         updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
-        retVal = CL_BUILD_PROGRAM_FAILURE;
+        retVal = BUILD_PROGRAM_FAILURE;
         return retVal;
     }
 
@@ -451,22 +449,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         internalOptions = CompilerOptions::concatenate("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes", internalOptions);
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     } else {
-        std::string extensionsList = getExtensionsList(hwInfo);
-        if (requiresAdditionalExtensions(options)) {
-            extensionsList += "cl_khr_3d_image_writes ";
-        }
-        OpenClCFeaturesContainer openclCFeatures;
-        if (requiresOpenClCFeatures(options)) {
-            getOpenclCFeaturesList(hwInfo, openclCFeatures);
-        }
-
-        auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
-        auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
-        internalOptions = CompilerOptions::concatenate(oclVersion, compilerExtensions, internalOptions);
-
-        if (hwInfo.capabilityTable.supportsImages) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
-        }
+        appendExtensionsToInternalOptions(hwInfo, options, internalOptions);
     }
 
     parseDebugSettings();
@@ -967,7 +950,7 @@ void OfflineCompiler::storeBinary(
     delete[] pDst;
     pDst = new char[srcSize];
 
-    dstSize = (cl_uint)srcSize;
+    dstSize = static_cast<uint32_t>(srcSize);
     memcpy_s(pDst, dstSize, pSrc, srcSize);
 }
 
