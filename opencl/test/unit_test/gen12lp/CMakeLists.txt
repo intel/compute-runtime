@@ -29,14 +29,13 @@ if(TESTS_GEN12LP)
       ${CMAKE_CURRENT_SOURCE_DIR}/profiling_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_source_tests_gen12lp.inl
-      ${CMAKE_CURRENT_SOURCE_DIR}/special_ult_helper_gen12lp.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/special_ult_helper_gen12lp.h
       ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_gen12lp.inl
       ${NEO_SOURCE_DIR}/shared/test/common/gen12lp/unit_test_helper_gen12lp.cpp
+      ${NEO_SOURCE_DIR}/shared/test/common/gen12lp/special_ult_helper_gen12lp.cpp
   )
 
   get_property(NEO_CORE_TESTS_GEN12LP GLOBAL PROPERTY NEO_CORE_TESTS_GEN12LP)
