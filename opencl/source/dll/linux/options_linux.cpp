@@ -17,7 +17,7 @@ const char *libvaDllName = "libva.so.2";
 const char *gdiDllName = "/usr/lib/wsl/lib/libdxcore.so";
 const char *dxcoreDllName = "/usr/lib/wsl/lib/libdxcore.so";
 
-const char *sysFsPciPathPrefix = "/sys/bus/pci/devices/0000:";
+const char *sysFsPciPathPrefix = "/sys/bus/pci/devices/";
 const char *pciDevicesDirectory = "/dev/dri/by-path";
 const char *sysFsProcPathPrefix = "/proc";
 
