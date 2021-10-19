@@ -7,6 +7,8 @@
 
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 
+volatile uint32_t MockCommandStreamReceiver::mockTagAddress[MockCommandStreamReceiver::tagSize];
+
 bool MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     return true;
 }

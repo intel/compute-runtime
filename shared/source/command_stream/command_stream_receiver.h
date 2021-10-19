@@ -122,7 +122,7 @@ class CommandStreamReceiver {
         return tagsMultiAllocation;
     }
     MultiGraphicsAllocation &createTagsMultiAllocation();
-    MOCKABLE_VIRTUAL volatile uint32_t *getTagAddress() const { return tagAddress; }
+    volatile uint32_t *getTagAddress() const { return tagAddress; }
     uint64_t getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + debugPauseStateAddressOffset; }
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; };
@@ -159,7 +159,7 @@ class CommandStreamReceiver {
 
     virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
     virtual bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
-    MOCKABLE_VIRTUAL bool baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
+    bool baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
     bool testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait);
     virtual void downloadAllocations(){};
 

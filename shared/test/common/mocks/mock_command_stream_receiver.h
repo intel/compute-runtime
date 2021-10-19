@@ -44,6 +44,12 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
 
+    MockCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : CommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
+        CommandStreamReceiver::tagAddress = &mockTagAddress[0];
+        memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
+    }
+
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         return true;
@@ -99,13 +105,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return 0;
     }
 
-    volatile uint32_t *getTagAddress() const override {
-        if (callParentGetTagAddress) {
-            return CommandStreamReceiver::getTagAddress();
-        }
-        return const_cast<volatile uint32_t *>(&mockTagAddress[0]);
-    }
-
     bool createPreemptionAllocation() override {
         if (createPreemptionAllocationParentCall) {
             return CommandStreamReceiver::createPreemptionAllocation();
@@ -125,23 +124,17 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     void postInitFlagsSetup() override {}
 
-    bool baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
-        baseWaitFunctionCalled++;
-        return CommandStreamReceiver::baseWaitFunction(pollAddress, enableTimeout, timeoutMicroseconds, taskCountToWait);
-    }
-
-    uint32_t mockTagAddress[8] = {};
+    static constexpr size_t tagSize = 64;
+    static volatile uint32_t mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
     uint32_t makeResidentCalledTimes = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
-    uint32_t baseWaitFunctionCalled = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
     bool downloadAllocationsCalled = false;
     bool programHardwareContextCalled = false;
-    bool callParentGetTagAddress = true;
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;
 };

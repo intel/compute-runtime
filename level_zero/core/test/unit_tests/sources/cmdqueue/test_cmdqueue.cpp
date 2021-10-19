@@ -1567,14 +1567,11 @@ using CommandQueueSynchronizeTest = Test<ContextFixture>;
 
 template <typename GfxFamily>
 struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
-    ~SynchronizeCsr() override {
-        delete[] tagAddress;
-    }
 
     SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
-        tagAddress = new uint32_t[tagSize];
-        memset(tagAddress, 0xFFFFFFFF, tagSize * sizeof(uint32_t));
+        CommandStreamReceiver::tagAddress = &tagAddressData[0];
+        memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
     }
 
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
@@ -1589,17 +1586,16 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
     }
 
-    volatile uint32_t *getTagAddress() const override {
-        return tagAddress;
-    }
-
     static constexpr size_t tagSize = 64;
-    uint32_t *tagAddress;
+    static volatile uint32_t tagAddressData[tagSize];
     uint32_t waitForComplitionCalledTimes = 0;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     uint32_t partitionCountSet = 0;
     bool enableTimeoutSet = false;
 };
+
+template <typename GfxFamily>
+volatile uint32_t SynchronizeCsr<GfxFamily>::tagAddressData[SynchronizeCsr<GfxFamily>::tagSize];
 
 HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
     auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),

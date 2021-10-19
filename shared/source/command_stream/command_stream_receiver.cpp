@@ -141,9 +141,9 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 }
 
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
-    auto address = getTagAddress(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+    auto address = getTagAddress();
     if (address) {
-        baseWaitFunction(address, false, 0, requiredTaskCount); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+        baseWaitFunction(address, false, 0, requiredTaskCount);
     }
     internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
 }

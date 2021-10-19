@@ -794,11 +794,10 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
-    EXPECT_TRUE(csr->getTagAddress() == nullptr);
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
-    EXPECT_TRUE(csr->getTagAddress() != nullptr);
+    EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
     auto tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
         EXPECT_EQ(*tagAddress, initialHardwareTag);
@@ -813,13 +812,12 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
 
     EXPECT_EQ(nullptr, csr->getTagAllocation());
-    EXPECT_TRUE(csr->getTagAddress() == nullptr);
 
     csr->initializeTagAllocation();
 
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
-    EXPECT_TRUE(csr->getTagAddress() != nullptr);
+    EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
     auto tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 4; i++) {
         EXPECT_EQ(*tagAddress, initialHardwareTag);
@@ -869,10 +867,9 @@ TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTa
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
-    EXPECT_TRUE(csr->getTagAddress() == nullptr);
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
-    EXPECT_TRUE(csr->getTagAddress() != nullptr);
+    EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
     EXPECT_EQ(*csr->getTagAddress(), static_cast<uint32_t>(-1));
 }
 
@@ -1015,7 +1012,6 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckDisabledWhen
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = false;
     csr.mockTagAddress[0] = 1u;
@@ -1029,7 +1025,6 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckEnabledWhenG
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = true;
     csr.mockTagAddress[0] = 1u;
@@ -1043,7 +1038,6 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuNotIdleImplicitFlushCheckEnabledWh
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = true;
     csr.mockTagAddress[0] = 1u;
@@ -1066,7 +1060,6 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(0b11);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.callParentGetTagAddress = false;
 
     csr.mockTagAddress[0] = 0u;
     csr.mockTagAddress[2] = 0u;
@@ -1083,7 +1076,6 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
 
     CpuIntrinsicsTests::pauseCounter = 0;
     csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
-    EXPECT_EQ(1u, csr.baseWaitFunctionCalled);
     EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
 
     CpuIntrinsicsTests::pauseAddress = nullptr;
