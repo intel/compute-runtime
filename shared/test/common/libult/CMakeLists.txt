@@ -107,6 +107,17 @@ add_library(igdrcl_libult_common OBJECT EXCLUDE_FROM_ALL
             ${igdrcl_libult_common_SRCS_ENABLE_TESTED_HW}
 )
 
+set(igdrcl_libult_common_SRCS_LIB_ULT_WIN
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.h
+)
+
+if(WIN32)
+  target_sources(igdrcl_libult_common PRIVATE ${igdrcl_libult_common_SRCS_LIB_ULT_WIN})
+endif()
+
 target_include_directories(igdrcl_libult_common PRIVATE
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
                            ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}

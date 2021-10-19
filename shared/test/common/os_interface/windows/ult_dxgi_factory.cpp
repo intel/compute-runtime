@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.h"
+#include "shared/test/common/os_interface/windows/ult_dxgi_factory.h"
 
 namespace NEO {
 

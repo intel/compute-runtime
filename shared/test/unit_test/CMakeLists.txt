@@ -60,8 +60,6 @@ if(NOT SKIP_UNIT_TESTS)
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxcore_factory.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
     )

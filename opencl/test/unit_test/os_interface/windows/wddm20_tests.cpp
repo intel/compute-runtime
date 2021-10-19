@@ -30,10 +30,10 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
+#include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
-#include "opencl/test/unit_test/os_interface/windows/ult_dxcore_factory.h"
 
 #include "gtest/gtest.h"
 
