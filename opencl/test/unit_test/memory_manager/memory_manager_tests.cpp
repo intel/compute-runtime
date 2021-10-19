@@ -3017,6 +3017,26 @@ TEST(MemoryTransferHelperTest, givenBlitOperationSupportedWhenBcsEngineNotAvaila
     EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelperFunctions::blitMemoryToAllocation(*device, &graphicsAllocation, 0, srcData, {dataSize, 1, 1}));
 }
 
+TEST(MemoryTransferHelperTest, givenBlitOperationSupportedDisabledWhenBlitMemoryToAllocationThenReturnUnsupported) {
+    DebugManagerStateRestore restorer;
+    constexpr uint32_t dataSize = 16;
+    uint8_t destData[dataSize] = {};
+    uint8_t srcData[dataSize] = {};
+
+    MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
+    graphicsAllocation.storageInfo.memoryBanks = 1;
+    graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    DebugManager.flags.EnableBlitterOperationsSupport.set(false);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelperFunctions::blitMemoryToAllocation(*device, &graphicsAllocation, 0, srcData, {dataSize, 1, 1}));
+}
+
 TEST(MemoryManagerTest, givenMemoryManagerWithLocalMemoryWhenCreatingMultiGraphicsAllocationInSystemMemoryThenForceSystemMemoryPlacement) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();
