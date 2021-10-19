@@ -15,6 +15,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 namespace ult {
@@ -1071,6 +1072,35 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
         auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
+}
+
+using CommandListAppendLaunchKernel = Test<ModuleFixture>;
+using SklAndLaterMatcher = IsAtLeastProduct<IGFX_SKYLAKE>;
+HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsWhenAppendLaunchCooperativeKernelIsCalledThenReturnError, SklAndLaterMatcher) {
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    bool isCooperative = false;
+    auto result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    isCooperative = true;
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    isCooperative = true;
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    isCooperative = false;
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 } // namespace ult
 } // namespace L0
