@@ -250,27 +250,32 @@ void testAppendImageViewCopy(ze_context_handle_t &context, ze_device_handle_t &d
     // validate Y plane data
     auto result = memcmp(srcVecY.data(), dstVecY.data(), width * height);
 
+    validRet = true;
     if (result != 0) {
         std::cout << "Failed to validate data read for plane Y from Y-plane view" << std::endl;
+        validRet = false;
     }
 
     result = memcmp(dstVecY.data(), dstMem, width * height);
 
-    if (result != 0) {
+    if (result != 0 && validRet) {
         std::cout << "Failed to validate data read for plane Y from nv12 surface" << std::endl;
+        validRet = false;
     }
 
     // validate UV plane data
     result = memcmp(srcVecUV.data(), dstVecUV.data(), (width / 2) * (height));
 
-    if (result != 0) {
+    if (result != 0 && validRet) {
         std::cout << "Failed to validate data read for plane Y from Y-plane view" << std::endl;
+        validRet = false;
     }
 
     result = memcmp(dstVecUV.data(), (dstMem + (width * height)), (width / 2) * (height));
 
-    if (result != 0) {
+    if (result != 0 && validRet) {
         std::cout << "Failed to validate data read for plane UV from nv12 surface" << std::endl;
+        validRet = false;
     }
 
     // cleanup
@@ -285,7 +290,7 @@ int main(int argc, char *argv[]) {
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
     auto device = devices[0];
-    bool outputValidationSuccessful;
+    bool outputValidationSuccessful = false;
 
     ze_device_properties_t deviceProperties = {};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
@@ -297,5 +302,5 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
     std::cout << "\nZello Copy Image Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-    return 0;
+    return (outputValidationSuccessful ? 0 : 1);
 }
