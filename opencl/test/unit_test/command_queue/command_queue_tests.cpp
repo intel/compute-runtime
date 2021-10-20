@@ -808,7 +808,7 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
         MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
-        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList) override {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;
         }
@@ -853,6 +853,61 @@ HWTEST_F(WaitForQueueCompletionTests, whenFinishIsCalledThenCallWaitWithoutQuick
     cmdQ->finish();
     EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
     EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
+}
+
+template <class GfxFamily>
+class CommandStreamReceiverHwMock : public CommandStreamReceiverHw<GfxFamily> {
+  public:
+    CommandStreamReceiverHwMock(ExecutionEnvironment &executionEnvironment,
+                                uint32_t rootDeviceIndex,
+                                const DeviceBitfield deviceBitfield)
+        : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+    bool wiatForTaskCountCalled = false;
+
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+        return;
+    }
+
+    void waitForTaskCount(uint32_t requiredTaskCount) override {
+        wiatForTaskCountCalled = true;
+        return;
+    }
+};
+
+struct WaitUntilCompletionTests : public ::testing::Test {
+    template <typename Family>
+    struct MyCmdQueue : public CommandQueueHw<Family> {
+      public:
+        using CommandQueue::gpgpuEngine;
+
+        MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
+    };
+
+    void SetUp() override {
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        context.reset(new MockContext(device.get()));
+    }
+
+    std::unique_ptr<MockClDevice> device;
+    std::unique_ptr<MockContext> context;
+};
+
+HWTEST_F(WaitUntilCompletionTests, givenCommandQueueAndCleanTemporaryAllocationListWhenWaitUntilCompleteThenWaitForTaskCountIsCalled) {
+    std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> cmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
+    cmdStream->initializeTagAllocation();
+    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
+    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+
+    cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
+    uint32_t taskCount = 0u;
+    StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
+    cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, false);
+
+    auto cmdStreamPtr = &device->getGpgpuCommandStreamReceiver();
+
+    EXPECT_TRUE(static_cast<CommandStreamReceiverHwMock<FamilyType> *>(cmdStreamPtr)->wiatForTaskCountCalled);
+
+    cmdQ->gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
 }
 
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenNoObjectsThenReturnSuccess) {

@@ -409,7 +409,18 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     commandStreamReceiverOwnership.unlock();
 
     if (blocking) {
-        waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()));
+        auto &builtinOpParams = multiDispatchInfo.peekBuiltinOpParams();
+        if (builtinOpParams.userPtrForPostOperationCpuCopy) {
+            waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), false);
+            auto hostPtrAlloc = builtinOpParams.transferAllocation;
+            UNRECOVERABLE_IF(nullptr == hostPtrAlloc);
+            auto size = hostPtrAlloc->getUnderlyingBufferSize();
+            [[maybe_unused]] int cpuCopyStatus = memcpy_s(builtinOpParams.userPtrForPostOperationCpuCopy, size, hostPtrAlloc->getUnderlyingBuffer(), size);
+            DEBUG_BREAK_IF(cpuCopyStatus != 0);
+            waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), true);
+        } else {
+            waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), true);
+        }
     }
     if (migratedMemory) {
         getGpgpuCommandStreamReceiver().flushBatchedSubmissions();

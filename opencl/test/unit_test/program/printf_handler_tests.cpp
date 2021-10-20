@@ -169,7 +169,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePr
         using CommandQueueHw<FamilyType>::CommandQueueHw;
         using CommandQueueHw<FamilyType>::enqueueKernel;
 
-        void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) override {
+        void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) override {
             waitCalled = true;
             printfHandlerUsedForWait = printfHandler;
         }

@@ -194,7 +194,7 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
     return false;
 }
 
-void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
+void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList) {
     WAIT_ENTER()
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
@@ -218,7 +218,11 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEn
         bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
     }
 
-    getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanTemporaryAllocationList(gpgpuTaskCountToWait);
+    if (cleanTemporaryAllocationList) {
+        getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanTemporaryAllocationList(gpgpuTaskCountToWait);
+    } else {
+        getGpgpuCommandStreamReceiver().waitForTaskCount(gpgpuTaskCountToWait);
+    }
 
     WAIT_LEAVE()
 }
@@ -930,7 +934,7 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
     }
 }
 
-void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) {
+void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) {
     if (blockedQueue) {
         while (isQueueBlocked()) {
         }
@@ -947,7 +951,7 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
             activeBcsStates.push_back(state);
         }
     }
-    waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false);
+    waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList);
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();

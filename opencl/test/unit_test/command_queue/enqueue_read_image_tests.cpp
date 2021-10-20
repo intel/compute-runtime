@@ -93,6 +93,105 @@ HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageThenBuiltinKernelIsResolved) 
     pCmdQ->finish();
 }
 
+template <typename GfxFamily>
+struct CreateAllocationForHostSurfaceFailCsr : public CommandStreamReceiverHw<GfxFamily> {
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
+
+    bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
+        return CL_FALSE;
+    }
+};
+
+HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndFailingAllocationForHostSurfaceWhenEnqueueReadImageThenOutOfResourceIsReturned) {
+    MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
+    auto failCsr = std::make_unique<CreateAllocationForHostSurfaceFailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    failCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
+
+    auto srcImage = Image2dHelper<>::create(context);
+    auto retVal = cmdQ.enqueueReadImage(srcImage, CL_FALSE,
+                                        EnqueueReadImageTraits::origin,
+                                        EnqueueReadImageTraits::region,
+                                        EnqueueReadImageTraits::rowPitch,
+                                        EnqueueReadImageTraits::slicePitch,
+                                        EnqueueReadImageTraits::hostPtr,
+                                        EnqueueReadImageTraits::mapAllocation,
+                                        0u,
+                                        nullptr,
+                                        nullptr);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+    cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
+    srcImage->release();
+}
+
+HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndFailingAllocationForHostSurfaceWhenBlockingEnqueueReadImageThenOutOfResourceIsReturned) {
+    MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
+    auto failCsr = std::make_unique<CreateAllocationForHostSurfaceFailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    failCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
+
+    auto srcImage = Image2dHelper<>::create(context);
+    auto retVal = cmdQ.enqueueReadImage(srcImage, CL_TRUE,
+                                        EnqueueReadImageTraits::origin,
+                                        EnqueueReadImageTraits::region,
+                                        EnqueueReadImageTraits::rowPitch,
+                                        EnqueueReadImageTraits::slicePitch,
+                                        EnqueueReadImageTraits::hostPtr,
+                                        EnqueueReadImageTraits::mapAllocation,
+                                        0u,
+                                        nullptr,
+                                        nullptr);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+    cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
+    srcImage->release();
+}
+
+template <typename GfxFamily>
+struct CreateAllocationForHostSurfaceCsr : public CommandStreamReceiverHw<GfxFamily> {
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
+
+    bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
+        if (surface.peekIsPtrCopyAllowed()) {
+            return CommandStreamReceiverHw<GfxFamily>::createAllocationForHostSurface(surface, requiresL3Flush);
+        } else {
+            return CL_FALSE;
+        }
+    }
+
+    CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
+                              const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
+                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        return CompletionStamp{0u, 0u, static_cast<FlushStamp>(0u)};
+    }
+};
+
+HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndPtrCopyAllowedForHostSurfaceWhenBlockingEnqueueReadImageThenSuccessIsReturned) {
+    auto csr = std::make_unique<CreateAllocationForHostSurfaceCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+
+    csr->setupContext(*pDevice->getDefaultEngine().osContext);
+    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    cmdQ->gpgpuEngine->commandStreamReceiver = csr.get();
+    csr->initializeTagAllocation();
+
+    auto retVal = cmdQ->enqueueReadImage(srcImage, CL_TRUE,
+                                         EnqueueReadImageTraits::origin,
+                                         EnqueueReadImageTraits::region,
+                                         EnqueueReadImageTraits::rowPitch,
+                                         EnqueueReadImageTraits::slicePitch,
+                                         EnqueueReadImageTraits::hostPtr,
+                                         EnqueueReadImageTraits::mapAllocation,
+                                         0u,
+                                         nullptr,
+                                         nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    cmdQ->gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
+}
+
 HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageThenKernelRequiresMigration) {
 
     MockDefaultContext context;

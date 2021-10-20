@@ -107,6 +107,7 @@ class CommandStreamReceiver {
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
     bool needsPageTableManager() const;
 
+    MOCKABLE_VIRTUAL void waitForTaskCount(uint32_t requiredTaskCount);
     void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage);
     MOCKABLE_VIRTUAL void waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount);
 

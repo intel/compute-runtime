@@ -78,6 +78,10 @@ class HostPtrSurface : public Surface {
         return isL3Capable(*gfxAllocation);
     }
 
+    void setIsPtrCopyAllowed(bool allowed) {
+        this->isPtrCopyAllowed = allowed;
+    }
+
   protected:
     const void *memoryPointer;
     size_t surfaceSize;

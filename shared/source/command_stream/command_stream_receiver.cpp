@@ -142,11 +142,15 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
     makeResident(*gfxAllocation);
 }
 
-void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
+void CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
     auto address = getTagAddress();
     if (address) {
         baseWaitFunction(address, false, 0, requiredTaskCount);
     }
+}
+
+void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
+    this->CommandStreamReceiver::waitForTaskCount(requiredTaskCount);
     internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
 }
 

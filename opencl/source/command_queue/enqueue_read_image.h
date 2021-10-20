@@ -68,6 +68,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&srcImgSurf, nullptr};
 
+    bool tempAllocFallback = false;
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
@@ -81,7 +82,16 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
             region[2] != 0) {
             bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
-                return CL_OUT_OF_RESOURCES;
+                if (CL_TRUE == blockingRead) {
+                    hostPtrSurf.setIsPtrCopyAllowed(true);
+                    status = csr.createAllocationForHostSurface(hostPtrSurf, true);
+                    if (!status) {
+                        return CL_OUT_OF_RESOURCES;
+                    }
+                    tempAllocFallback = true;
+                } else {
+                    return CL_OUT_OF_RESOURCES;
+                }
             }
             dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
@@ -102,6 +112,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
         dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, origin);
     }
     dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
+    if (tempAllocFallback) {
+        dc.userPtrForPostOperationCpuCopy = ptr;
+    }
 
     auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);

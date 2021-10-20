@@ -52,6 +52,7 @@ struct BuiltinOpParams {
     size_t dstSlicePitch = 0;
     uint32_t srcMipLevel = 0;
     uint32_t dstMipLevel = 0;
+    void *userPtrForPostOperationCpuCopy = nullptr;
 };
 
 class BuiltinDispatchInfoBuilder {
