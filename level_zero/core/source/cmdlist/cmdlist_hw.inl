@@ -1752,8 +1752,12 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
         DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
         if (driverHandle->isRemoteResourceNeeded(const_cast<void *>(buffer), alloc, allocData, device)) {
+            uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+            uint64_t offset = sourcePtr - pbase;
+
             alloc = driverHandle->getPeerAllocation(device, allocData, const_cast<void *>(buffer), &alignedPtr);
             UNRECOVERABLE_IF(alloc == nullptr);
+            alignedPtr += offset;
         } else {
             alignedPtr = sourcePtr;
         }
