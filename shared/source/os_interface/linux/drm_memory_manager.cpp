@@ -1386,6 +1386,32 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
             boAddress += boSize;
         }
     }
+
+    if (storageInfo.colouringPolicy == ColouringPolicy::MappingBased) {
+        auto size = alignUp(allocation->getUnderlyingBufferSize(), storageInfo.colouringGranularity);
+        auto chunks = static_cast<uint32_t>(size / storageInfo.colouringGranularity);
+        auto granularity = storageInfo.colouringGranularity;
+
+        for (uint32_t boHandle = 0; boHandle < handles; boHandle++) {
+            bos[boHandle]->setColourWithBind();
+            bos[boHandle]->setColourChunk(granularity);
+            bos[boHandle]->reserveAddressVector(alignUp(chunks, handles) / handles);
+        }
+
+        auto boHandle = 0u;
+        auto colourAddress = gpuAddress;
+        for (auto chunk = 0u; chunk < chunks; chunk++) {
+            if (boHandle == handles) {
+                boHandle = 0u;
+            }
+
+            bos[boHandle]->addColouringAddress(colourAddress);
+            colourAddress += granularity;
+
+            boHandle++;
+        }
+    }
+
     return true;
 }
 
