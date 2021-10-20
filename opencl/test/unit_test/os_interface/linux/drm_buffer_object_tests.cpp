@@ -500,3 +500,38 @@ TEST_F(DrmBufferObjectTest, givenAsyncDebugFlagWhenFillingExecObjectThenFlagIsSe
 
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_ASYNC);
 }
+TEST_F(DrmBufferObjectTest, given47bitAddressWhenSetThenIsAddressNotCanonized) {
+    auto hwInfoAddressWidth = Math::log2(defaultHwInfo.get()->capabilityTable.gpuAddressSpace + 1);
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
+
+    auto toShift = hwInfoAddressWidth - 36;
+    uint64_t address = 0x7fff00000 << toShift;
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    bo.setAddress(address);
+    auto boAddress = bo.peekAddress();
+    EXPECT_EQ(boAddress, address);
+}
+TEST_F(DrmBufferObjectTest, given48bitAddressWhenSetThenAddressIsCanonized) {
+    auto hwInfoAddressWidth = Math::log2(defaultHwInfo.get()->capabilityTable.gpuAddressSpace + 1);
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
+
+    auto toShift = hwInfoAddressWidth - 36;
+    uint64_t address = 0x8fff00000 << toShift;
+    uint64_t expectedAddress = 0;
+
+    if (hwInfoAddressWidth < 48) {
+        expectedAddress = 0x8fff00000 << toShift;
+    } else {
+        expectedAddress = 0xfffffff8fff00000 << toShift;
+    }
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    bo.setAddress(address);
+    auto boAddress = bo.peekAddress();
+    EXPECT_EQ(boAddress, expectedAddress);
+}

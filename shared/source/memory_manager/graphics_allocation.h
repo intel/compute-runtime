@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -128,7 +129,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
         this->cpuPtr = cpuPtr;
-        this->gpuAddress = gpuAddress;
+        this->gpuAddress = GmmHelper::canonize(gpuAddress);
     }
     size_t getUnderlyingBufferSize() const { return size; }
     void setSize(size_t size) { this->size = size; }

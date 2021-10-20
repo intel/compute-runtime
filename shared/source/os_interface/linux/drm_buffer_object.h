@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/utilities/stackvec.h"
@@ -67,7 +68,7 @@ class BufferObject {
     int peekHandle() const { return handle; }
     const Drm *peekDrm() const { return drm; }
     uint64_t peekAddress() const { return gpuAddress; }
-    void setAddress(uint64_t address) { this->gpuAddress = address; }
+    void setAddress(uint64_t address) { this->gpuAddress = GmmHelper::canonize(address); }
     void *peekLockedAddress() const { return lockedAddress; }
     void setLockedAddress(void *cpuAddress) { this->lockedAddress = cpuAddress; }
     void setUnmapSize(uint64_t unmapSize) { this->unmapSize = unmapSize; }

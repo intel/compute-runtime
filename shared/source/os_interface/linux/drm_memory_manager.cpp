@@ -561,7 +561,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
             return nullptr;
         }
 
-        bo->setAddress(GmmHelper::canonize(gpuVirtualAddress));
+        bo->setAddress(gpuVirtualAddress);
         auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), const_cast<void *>(allocationData.hostPtr), GmmHelper::canonize(ptrOffset(gpuVirtualAddress, inputPointerOffset)),
                                             allocationSize, MemoryPool::System4KBPagesWith32BitGpuAddressing);
         allocation->set32BitAllocation(true);
@@ -595,7 +595,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
         return nullptr;
     }
 
-    bo->setAddress(GmmHelper::canonize(gpuVA));
+    bo->setAddress(gpuVA);
 
     // softpin to the GPU address, res if it uses limitedRange Allocation
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), ptrAlloc, GmmHelper::canonize(gpuVA), alignedAllocationSize,
