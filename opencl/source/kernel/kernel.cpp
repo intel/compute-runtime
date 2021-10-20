@@ -137,7 +137,7 @@ void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, Graphic
     }
 
     void *ssh = getSurfaceStateHeap();
-    if ((nullptr != ssh) & isValidOffset(arg.bindful)) {
+    if ((nullptr != ssh) && isValidOffset(arg.bindful)) {
         auto surfaceState = ptrOffset(ssh, arg.bindful);
         void *addressToPatch = reinterpret_cast<void *>(allocation.getGpuAddressToPatch());
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
