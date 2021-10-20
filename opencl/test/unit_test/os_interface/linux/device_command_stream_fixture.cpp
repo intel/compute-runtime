@@ -183,8 +183,8 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
     return ioctl_res.load();
 }
 
-DrmMockCustom::DrmMockCustom()
-    : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {
+DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
+    : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     reset();
     ioctl_expected.contextCreate = static_cast<int>(NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
     ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();

@@ -32,7 +32,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = new ::testing::NiceMock<DrmMockImpl>(mockFd);
+        mock = new ::testing::NiceMock<DrmMockImpl>(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
@@ -105,7 +105,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = new T();
+        mock = new T(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex);
@@ -118,9 +118,9 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
-        constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
-        constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
-        constructPlatform()->peekExecutionEnvironment()->initializeMemoryManager();
+        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->initializeMemoryManager();
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
         device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);
@@ -185,7 +185,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = new T();
+        mock = new T(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex);
@@ -198,9 +198,9 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
-        constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
-        constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
-        constructPlatform()->peekExecutionEnvironment()->initializeMemoryManager();
+        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->initializeMemoryManager();
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
         device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);

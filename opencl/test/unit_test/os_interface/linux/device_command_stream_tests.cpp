@@ -39,7 +39,7 @@ struct DeviceCommandStreamLeaksTest : ::testing::Test {
 
 HWTEST_F(DeviceCommandStreamLeaksTest, WhenCreatingDeviceCsrThenValidPointerIsReturned) {
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
-    DrmMockSuccess mockDrm;
+    DrmMockSuccess mockDrm(mockFd, *executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, ptr);
 }
 

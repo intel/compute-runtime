@@ -55,21 +55,23 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 
     void SetUp() override {
         MemoryManagementFixture::SetUp();
-        SetUp(new DrmMockCustom, false);
+
+        executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
+        SetUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
     }
 
     void SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
+        ASSERT_NE(nullptr, executionEnvironment);
+        executionEnvironment->incRefInternal();
         DebugManager.flags.DeferOsContextInitialization.set(0);
 
         environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>>();
         allocationData.rootDeviceIndex = rootDeviceIndex;
         this->mock = mock;
-        executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
-        executionEnvironment->incRefInternal();
         for (auto i = 0u; i < numRootDevices; i++) {
             auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
-            rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom()));
+            rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
             rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i);
             rootDeviceEnvironment->builtins.reset(new MockBuiltins);
         }
@@ -120,7 +122,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     }
 
   protected:
-    ExecutionEnvironment *executionEnvironment;
+    ExecutionEnvironment *executionEnvironment = nullptr;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
     AllocationData allocationData{};
@@ -136,7 +138,8 @@ class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
         ultHwConfig.csrBaseCallCreatePreemption = false;
 
         MemoryManagementFixture::SetUp();
-        DrmMemoryManagerFixture::SetUp(new DrmMockCustom, true);
+        executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
+        DrmMemoryManagerFixture::SetUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), true);
     }
     void TearDown() override {
         DrmMemoryManagerFixture::TearDown();
@@ -184,13 +187,13 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
         for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
             rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
-            rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom));
+            rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
             rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i);
             i++;
         }
         mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
         mock->memoryInfo.reset(new MockMemoryInfoImpl());
-        constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         memoryManager.reset(new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment));
 
         ASSERT_NE(nullptr, memoryManager);

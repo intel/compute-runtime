@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "opencl/test/unit_test/os_interface/linux/mock_os_time_linux.h"
@@ -51,6 +52,7 @@ struct DrmTimeTest : public ::testing::Test {
     }
     std::unique_ptr<MockOSTimeLinux> osTime;
     std::unique_ptr<OSInterface> osInterface;
+    MockExecutionEnvironment executionEnvironment;
 };
 
 TEST_F(DrmTimeTest, GivenMockOsTimeThenInitializes) {
@@ -72,7 +74,7 @@ TEST_F(DrmTimeTest, GivenFalseTimeFuncWhenGettingCpuTimeThenFails) {
 
 TEST_F(DrmTimeTest, WhenGettingGpuTimeThenSuceeds) {
     uint64_t time = 0;
-    auto pDrm = new DrmMockTime();
+    auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
     auto error = osTime->getDeviceTime()->getGpuTime32(&time);
     EXPECT_TRUE(error);
@@ -87,7 +89,7 @@ TEST_F(DrmTimeTest, WhenGettingGpuTimeThenSuceeds) {
 
 TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingGpuTimeThenFails) {
     uint64_t time = 0;
-    auto pDrm = new DrmMockFail();
+    auto pDrm = new DrmMockFail(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
     auto error = osTime->getDeviceTime()->getGpuTime32(&time);
     EXPECT_FALSE(error);
@@ -100,7 +102,7 @@ TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingGpuTimeThenFails) {
 TEST_F(DrmTimeTest, WhenGettingCpuGpuTimeThenSucceeds) {
     TimeStampData CPUGPUTime01 = {0, 0};
     TimeStampData CPUGPUTime02 = {0, 0};
-    auto pDrm = new DrmMockTime();
+    auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
     auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_TRUE(error);
@@ -117,7 +119,7 @@ TEST_F(DrmTimeTest, WhenGettingCpuGpuTimeThenSucceeds) {
 TEST_F(DrmTimeTest, GivenDrmWhenGettingCpuGpuTimeThenSucceeds) {
     TimeStampData CPUGPUTime01 = {0, 0};
     TimeStampData CPUGPUTime02 = {0, 0};
-    auto pDrm = new DrmMockTime();
+    auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
     auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_TRUE(error);
@@ -139,7 +141,7 @@ TEST_F(DrmTimeTest, givenGetCpuGpuTimeWhenItIsUnavailableThenReturnFalse) {
 
 TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingCpuGpuTimeThenFails) {
     TimeStampData CPUGPUTime01 = {0, 0};
-    auto pDrm = new DrmMockFail();
+    auto pDrm = new DrmMockFail(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
     auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_FALSE(error);
@@ -147,7 +149,7 @@ TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingCpuGpuTimeThenFails) {
 
 TEST_F(DrmTimeTest, GivenInvalidFuncTimeWhenGettingCpuGpuTimeCpuThenFails) {
     TimeStampData CPUGPUTime01 = {0, 0};
-    auto pDrm = new DrmMockTime();
+    auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->setGetTimeFunc(getTimeFuncFalse);
     osTime->updateDrm(pDrm);
     auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
@@ -155,7 +157,7 @@ TEST_F(DrmTimeTest, GivenInvalidFuncTimeWhenGettingCpuGpuTimeCpuThenFails) {
 }
 
 TEST_F(DrmTimeTest, WhenGettingTimeThenTimeIsCorrect) {
-    auto drm = new DrmMockCustom;
+    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(drm);
 
     {
@@ -185,7 +187,7 @@ TEST_F(DrmTimeTest, WhenGettingTimeThenTimeIsCorrect) {
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultResolutionIsReturned) {
     auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
 
-    auto drm = new DrmMockCustom();
+    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(drm);
 
     drm->getParamRetValue = 0;
@@ -198,7 +200,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultRes
 TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultClockIsReturned) {
     auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
 
-    auto drm = new DrmMockCustom();
+    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(drm);
 
     drm->getParamRetValue = 0;
@@ -210,7 +212,7 @@ TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultCloc
 }
 
 TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlSucceedsThenNonDefaultClockIsReturned) {
-    auto drm = new DrmMockCustom();
+    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(drm);
 
     uint64_t frequency = 1500;
@@ -230,7 +232,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenNoDrmThenDefaultResoluti
 }
 
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectResolutionIsReturned) {
-    auto drm = new DrmMockCustom();
+    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(drm);
 
     // 19200000 is frequency yelding 52.083ns resolution

@@ -23,7 +23,8 @@ class DrmMemoryManagerFixtureExp : public DrmMemoryManagerFixture {
         ultHwConfig.csrBaseCallCreatePreemption = false;
 
         MemoryManagementFixture::SetUp();
-        mockExp = new DrmMockCustomExp;
+        executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
+        mockExp = new DrmMockCustomExp(*executionEnvironment->rootDeviceEnvironments[0]);
         DrmMemoryManagerFixture::SetUp(mockExp, true);
     }
 

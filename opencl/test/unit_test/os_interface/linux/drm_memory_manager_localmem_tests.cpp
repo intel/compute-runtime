@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests_exp.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_exp.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_memory_info.h"
@@ -73,7 +74,7 @@ class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-        mock = new DrmMockCustomExp();
+        mock = new DrmMockCustomExp(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
 

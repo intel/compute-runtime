@@ -38,7 +38,7 @@ class DrmMockForWorker : public Drm {
     std::atomic<int> gem_close_cnt;
     std::atomic<int> gem_close_expected;
     std::atomic<std::thread::id> ioctl_caller_thread_id;
-    DrmMockForWorker() : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {
+    DrmMockForWorker(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     }
     int ioctl(unsigned long request, void *arg) override {
         if (_IOC_TYPE(request) == DRM_IOCTL_BASE) {
@@ -66,7 +66,7 @@ class DrmGemCloseWorkerFixture {
     uint32_t deadCnt = deadCntInit;
 
     void SetUp() {
-        this->drmMock = new DrmMockForWorker;
+        this->drmMock = new DrmMockForWorker(*executionEnvironment.rootDeviceEnvironments[0]);
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));

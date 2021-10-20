@@ -12,9 +12,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
-#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "drm/i915_drm.h"
 #include "engine_node.h"
@@ -25,7 +23,6 @@
 #include <cstdint>
 #include <iostream>
 
-using NEO::constructPlatform;
 using NEO::Drm;
 using NEO::HwDeviceIdDrm;
 using NEO::RootDeviceEnvironment;
@@ -35,7 +32,6 @@ extern const char *mockPciPath;
 
 class DrmMockImpl : public Drm {
   public:
-    DrmMockImpl(int fd) : DrmMockImpl(fd, *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]){};
     DrmMockImpl(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment){};
 
     MOCK_METHOD2(ioctl, int(unsigned long request, void *arg));
@@ -43,7 +39,6 @@ class DrmMockImpl : public Drm {
 
 class DrmMockSuccess : public Drm {
   public:
-    DrmMockSuccess() : DrmMockSuccess(mockFd, *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
     DrmMockSuccess(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment) {}
 
     int ioctl(unsigned long request, void *arg) override { return 0; };
@@ -51,13 +46,14 @@ class DrmMockSuccess : public Drm {
 
 class DrmMockFail : public Drm {
   public:
-    DrmMockFail() : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
+    DrmMockFail(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {}
 
     int ioctl(unsigned long request, void *arg) override { return -1; };
 };
 
 class DrmMockTime : public DrmMockSuccess {
   public:
+    using DrmMockSuccess::DrmMockSuccess;
     int ioctl(unsigned long request, void *arg) override {
         drm_i915_reg_read *reg = reinterpret_cast<drm_i915_reg_read *>(arg);
         reg->val = getVal() << 32;
@@ -123,7 +119,7 @@ class DrmMockCustom : public Drm {
         uint32_t called = 0u;
     };
 
-    DrmMockCustom();
+    DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment);
 
     int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) override;
 

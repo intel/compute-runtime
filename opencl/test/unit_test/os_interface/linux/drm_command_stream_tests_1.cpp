@@ -858,7 +858,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreate
     executionEnvironment.rootDeviceEnvironments[1]->setHwInfo(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[1]->initGmm();
     executionEnvironment.rootDeviceEnvironments[1]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[1]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom()));
+    executionEnvironment.rootDeviceEnvironments[1]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0])));
     auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, 1, gemCloseWorkerMode::gemCloseWorkerActive);
     auto pageTableManager = csr->createPageTableManager();
     EXPECT_EQ(csr->pageTableManager.get(), pageTableManager);

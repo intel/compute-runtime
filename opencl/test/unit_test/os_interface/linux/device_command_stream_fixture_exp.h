@@ -75,7 +75,7 @@ class DrmMockCustomExp : public DrmMockCustom {
         return 0;
     }
 
-    DrmMockCustomExp() : DrmMockCustom() {
+    DrmMockCustomExp(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
         ioctlExp_cnt.reset();
         ioctlExp_expected.reset();
     }
