@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -280,7 +281,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, WhenEnqueingKernelThenAdressesAreAlign
 }
 
 HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
-
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -291,6 +291,9 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+
+    pCmdQ->getGpgpuCommandStreamReceiver().overwriteFlatBatchBufferHelper(new FlatBatchBufferHelperHw<FamilyType>(*pCmdQ->getDevice().getExecutionEnvironment()));
+
     pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
     auto retVal = pCmdQ->enqueueKernel(

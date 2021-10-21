@@ -58,7 +58,10 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
 
     requiredThreadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&peekHwInfo().capabilityTable.kmdNotifyProperties));
-    flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
+
+    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get() || DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
+    }
     defaultSshSize = getSshHeapSize();
     canUse4GbHeaps = are4GbHeapsAvailable();
 
