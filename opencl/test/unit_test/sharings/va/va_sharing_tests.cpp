@@ -1246,7 +1246,7 @@ TEST_F(VaDeviceTests, givenVADeviceWhenGetDeviceFromVAIsCalledThenRootDeviceIsRe
     NEO::Device *neoDevice = &device->getDevice();
 
     auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>());
-    mockDrm->setPciPath("00:02.0");
+    mockDrm->setPciPath("0000:00:02.0");
 
     VADevice vaDevice{};
     auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
@@ -1386,7 +1386,7 @@ TEST_F(VaDeviceTests, givenValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCal
     NEO::Device *neoDevice = &device->getDevice();
 
     auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>());
-    mockDrm->setPciPath("00:02.0");
+    mockDrm->setPciPath("0000:00:02.0");
 
     auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, vaDisplay.get(), 0u, 1, &devices, &numDevices);
     EXPECT_EQ(CL_SUCCESS, errCode);

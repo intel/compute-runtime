@@ -180,7 +180,7 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
     EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
 TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
@@ -355,7 +355,7 @@ TEST_F(DrmSimpleTests, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateM
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
     EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
 TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {

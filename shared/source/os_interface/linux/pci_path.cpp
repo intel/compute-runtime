@@ -34,7 +34,7 @@ std::optional<std::string> getPciPath(int deviceFd) {
     }
 
     std::string_view devicePathView(devicePath, static_cast<size_t>(readLinkSize));
-    devicePathView = devicePathView.substr(devicePathView.find("/drm/render") - 7u, 7u);
+    devicePathView = devicePathView.substr(devicePathView.find("/drm/render") - 12u, 12u);
 
     return std::string(devicePathView);
 }
