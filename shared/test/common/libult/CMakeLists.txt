@@ -67,6 +67,8 @@ set(igdrcl_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_management_fixture.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_management_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
@@ -114,8 +116,16 @@ set(igdrcl_libult_common_SRCS_LIB_ULT_WIN
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.h
 )
 
+set(igdrcl_libult_common_SRCS_LIB_ULT_LINUX
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.h
+)
+set_property(GLOBAL PROPERTY igdrcl_libult_common_SRCS_LIB_ULT_LINUX ${igdrcl_libult_common_SRCS_LIB_ULT_LINUX})
+
 if(WIN32)
   target_sources(igdrcl_libult_common PRIVATE ${igdrcl_libult_common_SRCS_LIB_ULT_WIN})
+elseif(UNIX)
+  target_sources(igdrcl_libult_common PRIVATE ${igdrcl_libult_common_SRCS_LIB_ULT_LINUX})
 endif()
 
 target_include_directories(igdrcl_libult_common PRIVATE

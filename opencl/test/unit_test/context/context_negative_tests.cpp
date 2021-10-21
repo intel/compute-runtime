@@ -5,10 +5,11 @@
  *
  */
 
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 

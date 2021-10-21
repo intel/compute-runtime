@@ -67,7 +67,6 @@ if(WIN32)
   )
 else()
   list(APPEND IGDRCL_SRCS_tests_mocks
-       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/page_table_manager_functions.cpp
   )
 endif()

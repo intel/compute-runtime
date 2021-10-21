@@ -5,10 +5,10 @@
  *
  */
 
-#include "shared/test//common/mocks/mock_ostime.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/scheduler/scheduler_kernel.h"

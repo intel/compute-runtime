@@ -15,8 +15,8 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
 #include "drm/i915_drm.h"
@@ -500,14 +500,18 @@ TEST_F(DrmBufferObjectTest, givenAsyncDebugFlagWhenFillingExecObjectThenFlagIsSe
 
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_ASYNC);
 }
+
+struct MockGmmHelper : GmmHelper {
+    using GmmHelper::addressWidth;
+};
+
 TEST_F(DrmBufferObjectTest, given47bitAddressWhenSetThenIsAddressNotCanonized) {
-    auto hwInfoAddressWidth = Math::log2(defaultHwInfo.get()->capabilityTable.gpuAddressSpace + 1);
+    VariableBackup<uint32_t> backup(&MockGmmHelper::addressWidth, 48);
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
 
-    auto toShift = hwInfoAddressWidth - 36;
-    uint64_t address = 0x7fff00000 << toShift;
+    uint64_t address = maxNBitValue(47) - maxNBitValue(5);
 
     MockBufferObject bo(&drm, 0, 0, 1);
     bo.setAddress(address);
@@ -515,20 +519,13 @@ TEST_F(DrmBufferObjectTest, given47bitAddressWhenSetThenIsAddressNotCanonized) {
     EXPECT_EQ(boAddress, address);
 }
 TEST_F(DrmBufferObjectTest, given48bitAddressWhenSetThenAddressIsCanonized) {
-    auto hwInfoAddressWidth = Math::log2(defaultHwInfo.get()->capabilityTable.gpuAddressSpace + 1);
+    VariableBackup<uint32_t> backup(&MockGmmHelper::addressWidth, 48);
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
 
-    auto toShift = hwInfoAddressWidth - 36;
-    uint64_t address = 0x8fff00000 << toShift;
-    uint64_t expectedAddress = 0;
-
-    if (hwInfoAddressWidth < 48) {
-        expectedAddress = 0x8fff00000 << toShift;
-    } else {
-        expectedAddress = 0xfffffff8fff00000 << toShift;
-    }
+    uint64_t address = maxNBitValue(48) - maxNBitValue(5);
+    uint64_t expectedAddress = std::numeric_limits<uint64_t>::max() - maxNBitValue(5);
 
     MockBufferObject bo(&drm, 0, 0, 1);
     bo.setAddress(address);

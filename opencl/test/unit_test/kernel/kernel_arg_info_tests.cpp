@@ -5,11 +5,11 @@
  *
  */
 
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_tests.h"

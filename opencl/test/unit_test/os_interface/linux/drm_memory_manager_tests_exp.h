@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
 
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture_exp.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests.h"
 
 namespace NEO {
 

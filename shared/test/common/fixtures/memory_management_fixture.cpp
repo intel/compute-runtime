@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/memory_management.h"

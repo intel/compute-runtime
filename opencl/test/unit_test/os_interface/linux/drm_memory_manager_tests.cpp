@@ -5,7 +5,7 @@
  *
  */
 
-#include "drm_memory_manager_tests.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/device_command_stream.h"

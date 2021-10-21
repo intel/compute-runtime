@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 class DrmMockCustomExp : public DrmMockCustom {
   public:

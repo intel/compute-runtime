@@ -29,7 +29,6 @@ add_executable(igdrcl_${target_name}
                ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}drm_other_requests.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
 )
 if(NEO__LIBVA_FOUND)

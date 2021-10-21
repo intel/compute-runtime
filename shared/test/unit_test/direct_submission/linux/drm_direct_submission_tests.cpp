@@ -18,8 +18,8 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
 
-#include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests.h"
 #include "test.h"
 
 #include <memory>

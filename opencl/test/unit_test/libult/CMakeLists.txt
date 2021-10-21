@@ -38,8 +38,6 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/main.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/command_queue/command_queue_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/command_queue/command_queue_fixture.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/memory_management_fixture.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/memory_management_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/built_in_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/built_in_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/buffer_fixture.cpp

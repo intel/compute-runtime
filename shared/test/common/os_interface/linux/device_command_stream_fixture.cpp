@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 const int mockFd = 33;
 const char *mockPciPath = "";
