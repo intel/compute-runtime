@@ -20,7 +20,7 @@ static void show_usage(std::string name) {
               << "\t -p, --platform\t\tOPTIONAL - Family name with type\n"
               << "\t -a, --array\t\tName of an uin32_t type array containing parsed input file" << std::endl;
 }
-std::string parseToCharArray(std::unique_ptr<uint8_t[]> binary, size_t size, std::string &builtinName, std::string &platform, std::string revisionId, bool isSpirV) {
+std::string parseToCharArray(std::unique_ptr<uint8_t[]> &binary, size_t size, std::string &builtinName, std::string &platform, std::string revisionId, bool isSpirV) {
     std::ostringstream out;
 
     out << "#include <cstddef>\n";
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
         inputFile.read(reinterpret_cast<char *>(memblock.get()), size);
         inputFile.close();
         isSpirV = fileName.find(".spv") != std::string::npos;
-        std::string cpp = parseToCharArray(move(memblock), size, arrayName, platform, revisionId, isSpirV);
+        std::string cpp = parseToCharArray(memblock, size, arrayName, platform, revisionId, isSpirV);
         std::fstream(cppOutputName.c_str(), std::ios::out | std::ios::binary).write(cpp.c_str(), cpp.size());
     } else {
         std::cerr << "File cannot be opened!" << std::endl;

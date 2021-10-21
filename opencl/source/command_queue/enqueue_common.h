@@ -944,7 +944,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     const EnqueueProperties &enqueueProperties,
     EventsRequest &eventsRequest,
     EventBuilder &externalEventBuilder,
-    std::unique_ptr<PrintfHandler> printfHandler,
+    std::unique_ptr<PrintfHandler> &&printfHandler,
     CommandStreamReceiver *bcsCsr) {
 
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);

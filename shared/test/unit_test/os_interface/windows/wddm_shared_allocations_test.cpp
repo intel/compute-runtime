@@ -17,7 +17,7 @@ using namespace NEO;
 class WddmSharedAllocationsMock : public WddmMock {
   public:
     WddmSharedAllocationsMock(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {}
-    WddmSharedAllocationsMock(std::unique_ptr<HwDeviceIdWddm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(std::move(hwDeviceId), rootDeviceEnvironment) {}
+    WddmSharedAllocationsMock(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(std::move(hwDeviceId), rootDeviceEnvironment) {}
     NTSTATUS createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle) override {
         return static_cast<NTSTATUS>(0xfff);
     }

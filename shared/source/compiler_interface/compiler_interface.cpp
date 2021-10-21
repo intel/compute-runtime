@@ -354,7 +354,7 @@ bool CompilerInterface::loadIgc() {
     return NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
 }
 
-bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl) {
+bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
     bool fclAvailable = requireFcl ? this->loadFcl() : false;
     bool igcAvailable = this->loadIgc();
 

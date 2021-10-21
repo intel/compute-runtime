@@ -60,7 +60,7 @@ class TestBuiltinFunctionsLibImpl : public DeviceFixture, public testing::Test {
     struct MockBuiltinData : BuiltinFunctionsLibImpl::BuiltinData {
         using BuiltinFunctionsLibImpl::BuiltinData::func;
         using BuiltinFunctionsLibImpl::BuiltinData::module;
-        MockBuiltinData(std::unique_ptr<L0::Module> mod, std::unique_ptr<L0::Kernel> ker) {
+        MockBuiltinData(std::unique_ptr<L0::Module> &&mod, std::unique_ptr<L0::Kernel> &&ker) {
             module = std::move(mod);
             func = std::move(ker);
         }

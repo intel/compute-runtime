@@ -127,7 +127,7 @@ T *Program::createBuiltInFromGenBinary(
         program = new T(context, true, deviceVector);
         for (const auto &device : deviceVector) {
             if (program->buildInfos[device->getRootDeviceIndex()].packedDeviceBinarySize == 0) {
-                program->replaceDeviceBinary(makeCopy(binary, size), size, device->getRootDeviceIndex());
+                program->replaceDeviceBinary(std::move(makeCopy(binary, size)), size, device->getRootDeviceIndex());
             }
         }
         program->setBuildStatusSuccess(deviceVector, CL_PROGRAM_BINARY_TYPE_EXECUTABLE);

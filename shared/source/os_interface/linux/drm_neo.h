@@ -206,7 +206,7 @@ class Drm : public DriverModel {
 
     static bool isi915Version(int fd);
 
-    static Drm *create(std::unique_ptr<HwDeviceIdDrm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
+    static Drm *create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void overrideBindSupport(bool &useVmBind);
     std::string getPciPath() {
         return hwDeviceId->getPciPath();
@@ -243,7 +243,7 @@ class Drm : public DriverModel {
     }
 
   protected:
-    Drm(std::unique_ptr<HwDeviceIdDrm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
+    Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
     uint32_t createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isSpecialContextRequested);
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);

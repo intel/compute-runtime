@@ -148,7 +148,7 @@ class MockProgram : public Program {
         return this->build(getDevices(), this->options.c_str(), false, builtins);
     }
 
-    void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) override {
+    void replaceDeviceBinary(std::unique_ptr<char[]> &&newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) override {
         if (replaceDeviceBinaryCalledPerRootDevice.find(rootDeviceIndex) == replaceDeviceBinaryCalledPerRootDevice.end()) {
             replaceDeviceBinaryCalledPerRootDevice.insert({rootDeviceIndex, 1});
         } else {

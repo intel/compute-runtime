@@ -105,7 +105,7 @@ class CompilerInterface {
     virtual ~CompilerInterface();
 
     template <typename CompilerInterfaceT = CompilerInterface>
-    static CompilerInterfaceT *createInstance(std::unique_ptr<CompilerCache> cache, bool requireFcl) {
+    static CompilerInterfaceT *createInstance(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
         auto instance = new CompilerInterfaceT();
         if (!instance->initialize(std::move(cache), requireFcl)) {
             delete instance;
@@ -137,7 +137,7 @@ class CompilerInterface {
                                                                      std::vector<char> &stateSaveAreaHeader);
 
   protected:
-    MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl);
+    MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl);
     MOCKABLE_VIRTUAL bool loadFcl();
     MOCKABLE_VIRTUAL bool loadIgc();
 
