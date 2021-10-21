@@ -12,8 +12,6 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
-#include "opencl/test/unit_test/helpers/gtest_helpers.h"
-
 #include "drm/i915_drm.h"
 #include "engine_node.h"
 #include "gmock/gmock.h"

@@ -19,7 +19,6 @@
 
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 
 #include <memory>
@@ -51,12 +50,12 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
     TestedDrmMemoryManager *memoryManager = nullptr;
-    MockClDevice *device = nullptr;
+    MockDevice *device = nullptr;
 
     void SetUp() override {
         MemoryManagementFixture::SetUp();
 
-        executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
+        executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         SetUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
     }
 
@@ -86,7 +85,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         if (memoryManager->getgemCloseWorker()) {
             memoryManager->getgemCloseWorker()->close(true);
         }
-        device = new MockClDevice{MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex)};
+        device = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
         mock->reset();
     }
 
