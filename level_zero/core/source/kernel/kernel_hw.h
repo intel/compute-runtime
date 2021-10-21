@@ -77,7 +77,7 @@ struct KernelHw : public KernelImp {
         args.allocation = alloc;
         args.gmmHelper = neoDevice->getGmmHelper();
         args.useGlobalAtomics = kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics;
-        args.areMultipleSubDevicesInContext = true;
+        args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
 
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;

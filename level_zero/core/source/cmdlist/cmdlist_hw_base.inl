@@ -180,7 +180,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         args.allocation = device->getDebugSurface();
         args.gmmHelper = neoDevice->getGmmHelper();
         args.useGlobalAtomics = kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics;
-        args.areMultipleSubDevicesInContext = true;
+        args.areMultipleSubDevicesInContext = false;
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
