@@ -136,7 +136,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         }
     };
 
-    void SetUp() override {
+    void SetUp() {
         auto executionEnvironment = MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0u);
         memoryManager = new MockImmutableMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
@@ -179,7 +179,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         kernel->initialize(&desc);
     }
 
-    void TearDown() override {
+    void TearDown() {
         DeviceFixture::TearDown();
     }
 
@@ -191,7 +191,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 };
 
 struct ModuleFixture : public DeviceFixture {
-    void SetUp() override {
+    void SetUp() {
         NEO::MockCompilerEnableGuard mock(true);
         DeviceFixture::SetUp();
         createModuleFromBinary();
@@ -228,7 +228,7 @@ struct ModuleFixture : public DeviceFixture {
         kernel->initialize(&desc);
     }
 
-    void TearDown() override {
+    void TearDown() {
         DeviceFixture::TearDown();
     }
 
@@ -240,7 +240,7 @@ struct ModuleFixture : public DeviceFixture {
 };
 
 struct MultiDeviceModuleFixture : public MultiDeviceFixture {
-    void SetUp() override {
+    void SetUp() {
         MultiDeviceFixture::SetUp();
         modules.resize(numRootDevices);
     }
@@ -277,7 +277,7 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
         kernel->initialize(&desc);
     }
 
-    void TearDown() override {
+    void TearDown() {
         MultiDeviceFixture::TearDown();
     }
 
@@ -289,14 +289,14 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
 };
 
 struct ImportHostPointerModuleFixture : public ModuleFixture {
-    void SetUp() override {
+    void SetUp() {
         DebugManager.flags.EnableHostPointerImport.set(1);
         ModuleFixture::SetUp();
 
         hostPointer = driverHandle->getMemoryManager()->allocateSystemMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
     }
 
-    void TearDown() override {
+    void TearDown() {
         driverHandle->getMemoryManager()->freeSystemMemory(hostPointer);
         ModuleFixture::TearDown();
     }

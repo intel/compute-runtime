@@ -17,7 +17,7 @@ namespace ult {
 
 class CommandListFixture : public DeviceFixture {
   public:
-    void SetUp() override {
+    void SetUp() {
         DeviceFixture::SetUp();
         ze_result_t returnValue;
         commandList.reset(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -35,7 +35,7 @@ class CommandListFixture : public DeviceFixture {
         event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     }
 
-    void TearDown() override {
+    void TearDown() {
         DeviceFixture::TearDown();
     }
 

@@ -1186,17 +1186,16 @@ TEST_F(EventPoolCreateNegativeTest, whenInitializingEventPoolButMemoryManagerFai
     delete[] devices;
 }
 
-class EventTests : public DeviceFixture,
-                   public testing::Test {
+class EventFixture : public DeviceFixture {
   public:
-    void SetUp() override {
+    void SetUp() {
         DeviceFixture::SetUp();
 
         auto hDevice = device->toHandle();
         eventPool = whitebox_cast(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc));
     }
 
-    void TearDown() override {
+    void TearDown() {
         eventPool->destroy();
 
         DeviceFixture::TearDown();
@@ -1211,6 +1210,8 @@ class EventTests : public DeviceFixture,
     ze_event_desc_t eventDesc = {};
     EventPool *eventPool;
 };
+
+using EventTests = Test<EventFixture>;
 
 TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
     auto event = whitebox_cast(Event::create<uint32_t>(eventPool, &eventDesc, device));
@@ -1269,13 +1270,13 @@ TEST_F(EventTests, givenTwoEventsCreatedThenTheyHaveDifferentAddresses) {
     event1->destroy();
 }
 
-struct EventSizeTests : public DeviceFixture, public testing::Test {
-    void SetUp() override {
+struct EventSizeFixture : public DeviceFixture {
+    void SetUp() {
         DeviceFixture::SetUp();
         hDevice = device->toHandle();
     }
 
-    void TearDown() override {
+    void TearDown() {
         DeviceFixture::TearDown();
     }
 
@@ -1310,6 +1311,8 @@ struct EventSizeTests : public DeviceFixture, public testing::Test {
     std::unique_ptr<L0::Event> eventObj0;
     std::unique_ptr<L0::Event> eventObj1;
 };
+
+using EventSizeTests = Test<EventSizeFixture>;
 
 HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc)));

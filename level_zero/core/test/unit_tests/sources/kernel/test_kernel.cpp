@@ -271,16 +271,18 @@ HWTEST2_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThen
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
-class KernelImmutableDataTests : public ModuleImmutableDataFixture, public ::testing::Test {
+class KernelImmutableDataFixture : public ModuleImmutableDataFixture {
   public:
-    void SetUp() override {
+    void SetUp() {
         ModuleImmutableDataFixture::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() {
         ModuleImmutableDataFixture::TearDown();
     }
 };
+
+using KernelImmutableDataTests = Test<KernelImmutableDataFixture>;
 
 TEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThenPrivateMemoryIsNull) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 0u;

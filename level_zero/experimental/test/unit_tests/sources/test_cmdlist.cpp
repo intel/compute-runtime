@@ -29,7 +29,7 @@ using ::testing::Return;
 
 class CommandListMemoryExtensionFixture : public DeviceFixture {
   public:
-    void SetUp() override {
+    void SetUp() {
         DeviceFixture::SetUp();
         ze_result_t returnValue;
         commandList.reset(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -56,7 +56,7 @@ class CommandListMemoryExtensionFixture : public DeviceFixture {
         EXPECT_NE(nullptr, ptr);
     }
 
-    void TearDown() override {
+    void TearDown() {
         context->freeMem(ptr);
         DeviceFixture::TearDown();
     }

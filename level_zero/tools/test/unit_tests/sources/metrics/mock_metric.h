@@ -147,8 +147,8 @@ struct Mock<MetricQuery> : public MetricQuery {
 class MetricContextFixture : public ContextFixture {
 
   protected:
-    void SetUp() override;
-    void TearDown() override;
+    void SetUp();
+    void TearDown();
     void openMetricsAdapter();
     void openMetricsAdapterGroup();
 
@@ -171,8 +171,8 @@ class MetricContextFixture : public ContextFixture {
 class MetricMultiDeviceFixture : public MultiDeviceFixture {
 
   protected:
-    void SetUp() override;
-    void TearDown() override;
+    void SetUp();
+    void TearDown();
     void openMetricsAdapter();
     void openMetricsAdapterSubDevice(uint32_t subDeviceIndex);
     void openMetricsAdapterGroup();

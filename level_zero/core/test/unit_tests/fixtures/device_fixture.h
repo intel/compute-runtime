@@ -33,8 +33,8 @@ class MockBuiltins;
 
 struct DeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
-    virtual void SetUp();    // NOLINT(readability-identifier-naming)
-    virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void SetUp();    // NOLINT(readability-identifier-naming)
+    void TearDown(); // NOLINT(readability-identifier-naming)
     void setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment);
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -46,8 +46,8 @@ struct DeviceFixture {
 
 struct PageFaultDeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
-    virtual void SetUp();    // NOLINT(readability-identifier-naming)
-    virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void SetUp();    // NOLINT(readability-identifier-naming)
+    void TearDown(); // NOLINT(readability-identifier-naming)
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     std::unique_ptr<MockMemoryManager> mockMemoryManager;
@@ -60,8 +60,8 @@ struct PageFaultDeviceFixture {
 
 struct MultiDeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
-    virtual void SetUp();    // NOLINT(readability-identifier-naming)
-    virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void SetUp();    // NOLINT(readability-identifier-naming)
+    void TearDown(); // NOLINT(readability-identifier-naming)
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -72,18 +72,18 @@ struct MultiDeviceFixture {
 };
 
 struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {
-    void SetUp() override;
+    void SetUp();
 
     L0::Device *device = nullptr;
     NEO::Device *neoDevice = nullptr;
 };
 
 struct ContextFixture : DeviceFixture {
-    void SetUp() override;
-    void TearDown() override;
+    void SetUp();
+    void TearDown();
 };
 
-struct AubCsrFixture : ContextFixture {
+struct AubCsrFixture : public ContextFixture {
     template <typename T>
     void SetUpT() {
         auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + NEO::defaultHwInfo->platform.eRenderCoreFamily];
@@ -96,8 +96,8 @@ struct AubCsrFixture : ContextFixture {
         ContextFixture::TearDown();
     }
 
-    void SetUp() override{};
-    void TearDown() override{};
+    void SetUp() {}
+    void TearDown() {}
     std::unique_ptr<VariableBackup<CommandStreamReceiverCreateFunc>> variableBackup;
 };
 

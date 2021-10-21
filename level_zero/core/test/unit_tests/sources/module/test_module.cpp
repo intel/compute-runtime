@@ -477,10 +477,10 @@ HWTEST_F(ModuleTest, GivenIncorrectNameWhenCreatingKernelThenResultErrorInvalidA
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_NAME, res);
 }
+
 template <typename T1, typename T2>
-struct ModuleSpecConstantsTests : public DeviceFixture,
-                                  public ::testing::Test {
-    void SetUp() override {
+struct ModuleSpecConstantsFixture : public DeviceFixture {
+    void SetUp() {
         DeviceFixture::SetUp();
 
         mockCompiler = new MockCompilerInterfaceWithSpecConstants<T1, T2>(moduleNumSpecConstants);
@@ -490,7 +490,7 @@ struct ModuleSpecConstantsTests : public DeviceFixture,
         mockTranslationUnit = new MockModuleTranslationUnit(device);
     }
 
-    void TearDown() override {
+    void TearDown() {
         DeviceFixture::TearDown();
     }
 
@@ -599,6 +599,9 @@ struct ModuleSpecConstantsTests : public DeviceFixture,
     MockCompilerInterfaceWithSpecConstants<T1, T2> *mockCompiler;
     MockModuleTranslationUnit *mockTranslationUnit;
 };
+
+template <typename T1, typename T2>
+using ModuleSpecConstantsTests = Test<ModuleSpecConstantsFixture<T1, T2>>;
 
 using ModuleSpecConstantsLongTests = ModuleSpecConstantsTests<uint32_t, uint64_t>;
 TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWithLongSizeInDescriptorThenModuleCorrectlyPassesThemToTheCompiler) {
@@ -763,13 +766,12 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     module->destroy();
 }
 
-struct ModuleStaticLinkTests : public DeviceFixture,
-                               public ::testing::Test {
-    void SetUp() override {
+struct ModuleStaticLinkFixture : public DeviceFixture {
+    void SetUp() {
         DeviceFixture::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() {
         DeviceFixture::TearDown();
     }
 
@@ -891,6 +893,8 @@ struct ModuleStaticLinkTests : public DeviceFixture,
     ze_module_desc_t combinedModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_program_exp_desc_t staticLinkModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
 };
+
+using ModuleStaticLinkTests = Test<ModuleStaticLinkFixture>;
 
 TEST_F(ModuleStaticLinkTests, givenMultipleModulesProvidedForSpirVStaticLinkAndCompilerFailsThenFailureIsReturned) {
     runLinkFailureTest();

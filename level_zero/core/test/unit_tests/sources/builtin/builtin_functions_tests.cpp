@@ -24,7 +24,7 @@
 namespace L0 {
 namespace ult {
 template <bool useImagesBuiltins, bool isStateless>
-class TestBuiltinFunctionsLibImpl : public DeviceFixture, public testing::Test {
+class BuiltinFunctionsLibFixture : public DeviceFixture {
   public:
     struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
         using BuiltinFunctionsLibImpl::builtins;
@@ -68,12 +68,12 @@ class TestBuiltinFunctionsLibImpl : public DeviceFixture, public testing::Test {
             module.release();
         }
     };
-    void SetUp() override {
+    void SetUp() {
         DeviceFixture::SetUp();
         mockDevicePtr = std::unique_ptr<MockDeviceForSpv<useImagesBuiltins, isStateless>>(new MockDeviceForSpv<useImagesBuiltins, isStateless>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
         mockBuiltinFunctionsLibImpl.reset(new MockBuiltinFunctionsLibImpl(mockDevicePtr.get(), neoDevice->getBuiltIns()));
     }
-    void TearDown() override {
+    void TearDown() {
         mockBuiltinFunctionsLibImpl.reset();
         DeviceFixture::TearDown();
     }
@@ -81,6 +81,9 @@ class TestBuiltinFunctionsLibImpl : public DeviceFixture, public testing::Test {
     std::unique_ptr<MockBuiltinFunctionsLibImpl> mockBuiltinFunctionsLibImpl;
     std::unique_ptr<MockDeviceForSpv<useImagesBuiltins, isStateless>> mockDevicePtr;
 };
+
+template <bool useImagesBuiltins, bool isStateless>
+using TestBuiltinFunctionsLibImpl = Test<BuiltinFunctionsLibFixture<useImagesBuiltins, isStateless>>;
 
 class TestBuiltinFunctionsLibImplDefault : public TestBuiltinFunctionsLibImpl<false, false> {};
 class TestBuiltinFunctionsLibImplStateless : public TestBuiltinFunctionsLibImpl<false, true> {};

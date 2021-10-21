@@ -93,18 +93,20 @@ HWTEST2_F(DeviceQueueGroupTest, givenBlitterSupportAndCCSThenThreeQueueGroupsAre
     }
 }
 
-class DeviceCopyQueueGroupTest : public DeviceFixture, public ::testing::Test {
+class DeviceCopyQueueGroupFixture : public DeviceFixture {
   public:
-    void SetUp() override {
+    void SetUp() {
         DebugManager.flags.EnableBlitterOperationsSupport.set(0);
         DeviceFixture::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() {
         DeviceFixture::TearDown();
     }
     DebugManagerStateRestore restorer;
 };
+
+using DeviceCopyQueueGroupTest = Test<DeviceCopyQueueGroupFixture>;
 
 HWTEST2_F(DeviceCopyQueueGroupTest,
           givenBlitterSupportAndEnableBlitterOperationsSupportSetToZeroThenNoCopyEngineIsReturned, IsXeHpCore) {

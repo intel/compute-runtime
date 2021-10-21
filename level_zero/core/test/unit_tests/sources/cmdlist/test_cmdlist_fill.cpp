@@ -21,7 +21,7 @@
 namespace L0 {
 namespace ult {
 
-class AppendFillFixture : public DeviceFixture, public ::testing::Test {
+class AppendFillFixture : public DeviceFixture {
   public:
     class MockDriverFillHandle : public L0::DriverHandleImp {
       public:
@@ -68,7 +68,7 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
         uint32_t numberOfCallsToAppendLaunchKernelWithParams = 0;
     };
 
-    void SetUp() override {
+    void SetUp() {
         dstPtr = new uint8_t[allocSize];
         immediateDstPtr = new uint8_t[allocSize];
 
@@ -82,7 +82,7 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
         device = driverHandle->devices[0];
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete[] immediateDstPtr;
         delete[] dstPtr;
     }
@@ -100,9 +100,11 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
     uint8_t *immediateDstPtr = nullptr;
 };
 
+using AppendFillTest = Test<AppendFillFixture>;
+
 using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-HWTEST2_F(AppendFillFixture,
+HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillWithImmediateValueThenSuccessIsReturned, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
@@ -115,7 +117,7 @@ HWTEST2_F(AppendFillFixture,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(AppendFillFixture,
+HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillThenSuccessIsReturned, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
@@ -126,7 +128,7 @@ HWTEST2_F(AppendFillFixture,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(AppendFillFixture,
+HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillWithAppendLaunchKernelFailureThenSuccessIsNotReturned, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
@@ -138,7 +140,7 @@ HWTEST2_F(AppendFillFixture,
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(AppendFillFixture,
+HWTEST2_F(AppendFillTest,
           givenTwoCallsToAppendMemoryFillWithSamePatternThenAllocationIsCreatedForEachCall, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
@@ -160,7 +162,7 @@ HWTEST2_F(AppendFillFixture,
     delete[] newDstPtr;
 }
 
-HWTEST2_F(AppendFillFixture,
+HWTEST2_F(AppendFillTest,
           givenTwoCallsToAppendMemoryFillWithDifferentPatternsThenAllocationIsCreatedForEachPattern, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
@@ -180,7 +182,7 @@ HWTEST2_F(AppendFillFixture,
     EXPECT_EQ(patternAllocationsVectorSize + 1u, newPatternAllocationsVectorSize);
 }
 
-HWTEST2_F(AppendFillFixture,
+HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeThenSuccessIsReturned, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
@@ -195,7 +197,7 @@ HWTEST2_F(AppendFillFixture,
     delete[] nonMultipleDstPtr;
 }
 
-HWTEST2_F(AppendFillFixture,
+HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 

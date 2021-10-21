@@ -166,8 +166,8 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
     }
 }
 
-struct CommandQueueGroupMultiDevice : public MultiDeviceFixture, public ::testing::Test {
-    void SetUp() override {
+struct CommandQueueGroupMultiDeviceFixture : public MultiDeviceFixture {
+    void SetUp() {
         NEO::MockCompilerEnableGuard mock(true);
         MultiDeviceFixture::SetUp();
         uint32_t count = 1;
@@ -177,11 +177,13 @@ struct CommandQueueGroupMultiDevice : public MultiDeviceFixture, public ::testin
         device = L0::Device::fromHandle(hDevice);
         ASSERT_NE(nullptr, device);
     }
-    void TearDown() override {
+    void TearDown() {
         MultiDeviceFixture::TearDown();
     }
     L0::Device *device = nullptr;
 };
+
+using CommandQueueGroupMultiDevice = Test<CommandQueueGroupMultiDeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupMultiDevice,
           givenCommandQueuePropertiesCallThenCallSucceedsAndCommandListImmediateIsCreated, IsGen9) {
