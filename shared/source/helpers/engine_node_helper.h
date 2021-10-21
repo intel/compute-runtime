@@ -53,7 +53,7 @@ aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const Device
 void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine);
 aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputType, const HardwareInfo &hwInfo);
 uint32_t getBcsIndex(aub_stream::EngineType engineType);
-aub_stream::EngineType mapBcsIndexToEngineType(uint32_t index);
+aub_stream::EngineType mapBcsIndexToEngineType(uint32_t index, bool includeMainCopyEngine);
 aub_stream::EngineType mapCcsIndexToEngineType(uint32_t index);
 
 std::string engineTypeToString(aub_stream::EngineType engineType);
