@@ -2497,3 +2497,52 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAlignmentRequirementExceedsPageSizeThenA
         EXPECT_EQ(0U, memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA);
     }
 }
+
+struct WddmWithMockedLock : public WddmMock {
+    using WddmMock::WddmMock;
+
+    void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size) override {
+        if (handle < storageLocked.size()) {
+            storageLocked.set(handle);
+        }
+        return storages[handle];
+    }
+    std::bitset<4> storageLocked{};
+    uint8_t storages[EngineLimits::maxHandleCount][MemoryConstants::pageSize64k] = {0u};
+};
+
+TEST(WddmMemoryManagerCopyMemoryToAllocationBanksTest, givenAllocationWithMultiTilePlacementWhenCopyDataSpecificMemoryBanksThenLockOnlySpecificStorages) {
+    uint8_t sourceData[32]{};
+    size_t offset = 3;
+    size_t sourceAllocationSize = sizeof(sourceData);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrLocalMemory = true;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.initGmm();
+    auto wddm = new WddmWithMockedLock(*executionEnvironment.rootDeviceEnvironments[0]);
+    wddm->init();
+    MemoryManagerCreate<WddmMemoryManager> memoryManager(true, true, executionEnvironment);
+
+    MockWddmAllocation mockAllocation(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
+
+    mockAllocation.storageInfo.memoryBanks = 0b1111;
+    DeviceBitfield memoryBanksToCopy = 0b1010;
+    mockAllocation.handles.resize(4);
+    for (auto index = 0u; index < 4; index++) {
+        wddm->storageLocked.set(index, false);
+        if (mockAllocation.storageInfo.memoryBanks.test(index)) {
+            mockAllocation.handles[index] = index;
+        }
+    }
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+    auto ret = memoryManager.copyMemoryToAllocationBanks(&mockAllocation, offset, dataToCopy.data(), dataToCopy.size(), memoryBanksToCopy);
+    EXPECT_TRUE(ret);
+
+    EXPECT_FALSE(wddm->storageLocked.test(0));
+    ASSERT_TRUE(wddm->storageLocked.test(1));
+    EXPECT_FALSE(wddm->storageLocked.test(2));
+    ASSERT_TRUE(wddm->storageLocked.test(3));
+    EXPECT_EQ(0, memcmp(ptrOffset(wddm->storages[1], offset), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(wddm->storages[3], offset), dataToCopy.data(), dataToCopy.size()));
+}

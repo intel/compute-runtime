@@ -18,6 +18,7 @@
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/deferrable_deletion.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
@@ -855,6 +856,33 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
         inputPointerReadDelta = 1;
     }
     return inputPointerReadDelta > slownessFactor * fastestLocalRead;
+}
+
+bool WddmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
+    if (graphicsAllocation->getUnderlyingBuffer()) {
+        return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
+    }
+    return copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));
+}
+
+bool WddmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
+    if (MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+        return false;
+    }
+    auto &wddm = getWddm(graphicsAllocation->getRootDeviceIndex());
+    auto wddmAllocation = static_cast<WddmAllocation *>(graphicsAllocation);
+    for (auto handleId = 0u; handleId < graphicsAllocation->storageInfo.getNumBanks(); handleId++) {
+        if (!handleMask.test(handleId)) {
+            continue;
+        }
+        auto ptr = wddm.lockResource(wddmAllocation->getHandles()[handleId], wddmAllocation->needsMakeResidentBeforeLock, wddmAllocation->getAlignedSize());
+        if (!ptr) {
+            return false;
+        }
+        memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy);
+        wddm.unlockResource(wddmAllocation->getHandles()[handleId]);
+    }
+    return true;
 }
 
 } // namespace NEO

@@ -1,60 +1,41 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
-#include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/command_stream/preemption.h"
-#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
-#include "shared/source/helpers/cache_policy.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/timestamp_packet.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/tag_allocator.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 
-#include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
-#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_hw_helper.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
 #include "gmock/gmock.h"
 
 using namespace NEO;
 
-struct CommandStreamReceiverTest : public ClDeviceFixture,
+struct CommandStreamReceiverTest : public DeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
 
         commandStreamReceiver = &pDevice->getGpgpuCommandStreamReceiver();
         ASSERT_NE(nullptr, commandStreamReceiver);
@@ -63,7 +44,7 @@ struct CommandStreamReceiverTest : public ClDeviceFixture,
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 
     CommandStreamReceiver *commandStreamReceiver;
@@ -104,29 +85,6 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     EXPECT_EQ(PreemptionMode::Initial, csr.lastPreemptionMode);
     EXPECT_EQ(0u, csr.latestSentStatelessMocsConfig);
     EXPECT_FALSE(csr.lastSentUseGlobalAtomics);
-}
-
-TEST_F(CommandStreamReceiverTest, WhenMakingResidentThenBufferResidencyFlagIsSet) {
-    MockContext context;
-    float srcMemory[] = {1.0f};
-
-    auto retVal = CL_INVALID_VALUE;
-    auto buffer = Buffer::create(
-        &context,
-        CL_MEM_USE_HOST_PTR,
-        sizeof(srcMemory),
-        srcMemory,
-        retVal);
-    ASSERT_NE(nullptr, buffer);
-
-    auto graphicsAllocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_FALSE(graphicsAllocation->isResident(commandStreamReceiver->getOsContext().getContextId()));
-
-    commandStreamReceiver->makeResident(*graphicsAllocation);
-
-    EXPECT_TRUE(graphicsAllocation->isResident(commandStreamReceiver->getOsContext().getContextId()));
-
-    delete buffer;
 }
 
 TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotChangeAnything) {
@@ -881,32 +839,6 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     }
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndCreateGlobalFenceAllocationIsCalledThenFenceAllocationIsAllocated) {
-    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
-
-    MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    csr.setupContext(*pDevice->getDefaultEngine().osContext);
-    EXPECT_EQ(nullptr, csr.globalFenceAllocation);
-
-    EXPECT_TRUE(csr.createGlobalFenceAllocation());
-
-    ASSERT_NE(nullptr, csr.globalFenceAllocation);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_FENCE, csr.globalFenceAllocation->getAllocationType());
-}
-
-HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenGettingFenceAllocationThenCorrectFenceAllocationIsReturned) {
-    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
-
-    CommandStreamReceiverHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    csr.setupContext(*pDevice->getDefaultEngine().osContext);
-    EXPECT_EQ(nullptr, csr.getGlobalFenceAllocation());
-
-    EXPECT_TRUE(csr.createGlobalFenceAllocation());
-
-    ASSERT_NE(nullptr, csr.getGlobalFenceAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_FENCE, csr.getGlobalFenceAllocation()->getAllocationType());
-}
-
 TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocatedAndinitialValueIsMinusOne) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableNullHardware.set(true);
@@ -1129,9 +1061,7 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
 }
 
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0u));
 
     auto &commandStreamReceiver0 = *device->commandStreamReceivers[0];
     auto &commandStreamReceiver1 = *device->commandStreamReceivers[1];
@@ -1166,16 +1096,14 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
 
 struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
     void SetUp() override {
-        executionEnvironment = platform()->peekExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
-        gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*executionEnvironment);
-        executionEnvironment->memoryManager.reset(gmockMemoryManager);
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+        executionEnvironment.incRefInternal();
+        gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(executionEnvironment);
+        executionEnvironment.memoryManager.reset(gmockMemoryManager);
+        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, &executionEnvironment, 0u));
         commandStreamReceiver = &device->getGpgpuCommandStreamReceiver();
     }
+    MockExecutionEnvironment executionEnvironment;
     HardwareInfo hwInfo = *defaultHwInfo;
-    ExecutionEnvironment *executionEnvironment = nullptr;
     GMockMemoryManager *gmockMemoryManager = nullptr;
     std::unique_ptr<MockDevice> device;
     CommandStreamReceiver *commandStreamReceiver = nullptr;
@@ -1383,6 +1311,7 @@ HWTEST_F(CommandStreamReceiverTest, whenCreatingCommandStreamReceiverThenLastAdd
 
 HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableStaticPartitioningAccordingly) {
     DebugManagerStateRestore restore{};
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
 
     {
         UltDeviceFactory deviceFactory{1, 2};
@@ -1548,64 +1477,6 @@ HWTEST_F(SimulatedCommandStreamReceiverTest, givenOsContextWithNoDeviceBitfieldW
     EXPECT_EQ(0u, csr.getDeviceIndex());
 }
 
-using CommandStreamReceiverMultiRootDeviceTest = MultiRootDeviceFixture;
-
-TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphicsAllocationsThenTheyHaveCorrectRootDeviceIndex) {
-    auto commandStreamReceiver = &device1->getGpgpuCommandStreamReceiver();
-
-    ASSERT_NE(nullptr, commandStreamReceiver);
-    EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getRootDeviceIndex());
-
-    // Linear stream / Command buffer
-    GraphicsAllocation *allocation = mockMemoryManager->allocateGraphicsMemoryWithProperties({expectedRootDeviceIndex, 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device1->getDeviceBitfield()});
-    LinearStream commandStream{allocation};
-
-    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 100u, 0u);
-    EXPECT_EQ(allocation, commandStream.getGraphicsAllocation());
-    EXPECT_EQ(128u, commandStream.getMaxAvailableSpace());
-    EXPECT_EQ(expectedRootDeviceIndex, commandStream.getGraphicsAllocation()->getRootDeviceIndex());
-
-    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 1024u, 0u);
-    EXPECT_NE(allocation, commandStream.getGraphicsAllocation());
-    EXPECT_EQ(0u, commandStream.getMaxAvailableSpace() % MemoryConstants::pageSize64k);
-    EXPECT_EQ(expectedRootDeviceIndex, commandStream.getGraphicsAllocation()->getRootDeviceIndex());
-    mockMemoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
-
-    // Debug surface
-    auto debugSurface = commandStreamReceiver->allocateDebugSurface(MemoryConstants::pageSize);
-    ASSERT_NE(nullptr, debugSurface);
-    EXPECT_EQ(expectedRootDeviceIndex, debugSurface->getRootDeviceIndex());
-
-    // Indirect heaps
-    IndirectHeap::Type heapTypes[]{IndirectHeap::DYNAMIC_STATE, IndirectHeap::INDIRECT_OBJECT, IndirectHeap::SURFACE_STATE};
-    for (auto heapType : heapTypes) {
-        IndirectHeap *heap = nullptr;
-        commandStreamReceiver->allocateHeapMemory(heapType, MemoryConstants::pageSize, heap);
-        ASSERT_NE(nullptr, heap);
-        ASSERT_NE(nullptr, heap->getGraphicsAllocation());
-        EXPECT_EQ(expectedRootDeviceIndex, heap->getGraphicsAllocation()->getRootDeviceIndex());
-        mockMemoryManager->freeGraphicsMemory(heap->getGraphicsAllocation());
-        delete heap;
-    }
-
-    // Tag allocation
-    ASSERT_NE(nullptr, commandStreamReceiver->getTagAllocation());
-    EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getTagAllocation()->getRootDeviceIndex());
-
-    // Preemption allocation
-    if (nullptr == commandStreamReceiver->getPreemptionAllocation()) {
-        commandStreamReceiver->createPreemptionAllocation();
-    }
-    EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getPreemptionAllocation()->getRootDeviceIndex());
-
-    // HostPtr surface
-    char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-    HostPtrSurface surface(memory, sizeof(memory), true);
-    EXPECT_TRUE(commandStreamReceiver->createAllocationForHostSurface(surface, false));
-    ASSERT_NE(nullptr, surface.getAllocation());
-    EXPECT_EQ(expectedRootDeviceIndex, surface.getAllocation()->getRootDeviceIndex());
-}
-
 using CommandStreamReceiverPageTableManagerTest = ::testing::Test;
 
 TEST_F(CommandStreamReceiverPageTableManagerTest, givenExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
@@ -1631,4 +1502,50 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonExisitingPageTableMana
     EXPECT_EQ(nullptr, commandStreamReceiver.pageTableManager.get());
 
     EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager());
+}
+
+TEST(CreateWorkPartitionAllocationTest, givenDisabledBlitterWhenInitializingWorkPartitionAllocationThenFallbackToCpuCopy) {
+    DebugManagerStateRestore restore{};
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+
+    UltDeviceFactory deviceFactory{1, 2};
+    MockDevice &device = *deviceFactory.rootDevices[0];
+
+    auto memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+    auto commandStreamReceiver = device.getDefaultEngine().commandStreamReceiver;
+    memoryManager->freeGraphicsMemory(commandStreamReceiver->getWorkPartitionAllocation());
+
+    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+    memoryManager->copyMemoryToAllocationBanksCalled = 0u;
+    memoryManager->copyMemoryToAllocationBanksParamsPassed.clear();
+    auto retVal = commandStreamReceiver->createWorkPartitionAllocation(device);
+    EXPECT_TRUE(retVal);
+    EXPECT_EQ(2u, memoryManager->copyMemoryToAllocationBanksCalled);
+    EXPECT_EQ(deviceFactory.subDevices[0]->getDeviceBitfield(), memoryManager->copyMemoryToAllocationBanksParamsPassed[0].handleMask);
+    EXPECT_EQ(deviceFactory.subDevices[1]->getDeviceBitfield(), memoryManager->copyMemoryToAllocationBanksParamsPassed[1].handleMask);
+    for (auto i = 0; i < 2; i++) {
+        EXPECT_EQ(commandStreamReceiver->getWorkPartitionAllocation(), memoryManager->copyMemoryToAllocationBanksParamsPassed[i].graphicsAllocation);
+        EXPECT_EQ(sizeof(uint32_t), memoryManager->copyMemoryToAllocationBanksParamsPassed[i].sizeToCopy);
+        EXPECT_NE(nullptr, memoryManager->copyMemoryToAllocationBanksParamsPassed[i].memoryToCopy);
+    }
+}
+
+TEST(CreateWorkPartitionAllocationTest, givenEnabledBlitterWhenInitializingWorkPartitionAllocationThenDontCopyOnCpu) {
+    DebugManagerStateRestore restore{};
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+
+    UltDeviceFactory deviceFactory{1, 2};
+    MockDevice &device = *deviceFactory.rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+    auto commandStreamReceiver = device.getDefaultEngine().commandStreamReceiver;
+
+    device.getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(&device.getHardwareInfo());
+    memoryManager->freeGraphicsMemory(commandStreamReceiver->getWorkPartitionAllocation());
+
+    memoryManager->copyMemoryToAllocationBanksCalled = 0u;
+    memoryManager->copyMemoryToAllocationBanksParamsPassed.clear();
+    auto retVal = commandStreamReceiver->createWorkPartitionAllocation(device);
+    EXPECT_TRUE(retVal);
+    EXPECT_EQ(0u, memoryManager->copyMemoryToAllocationBanksCalled);
 }

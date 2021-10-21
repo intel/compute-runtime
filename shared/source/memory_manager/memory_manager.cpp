@@ -691,6 +691,11 @@ bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocatio
     return true;
 }
 
+bool MemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
+    memcpy_s(ptrOffset(static_cast<uint8_t *>(graphicsAllocation->getUnderlyingBuffer()), destinationOffset),
+             (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
+    return true;
+}
 void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) {
     for (auto &engine : getRegisteredEngines()) {
         auto osContextId = engine.osContext->getContextId();
@@ -866,5 +871,14 @@ bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Dev
         }
     }
     return device.getMemoryManager()->copyMemoryToAllocation(dstAllocation, dstOffset, srcMemory, srcSize);
+}
+bool MemoryTransferHelper::transferMemoryToAllocationBanks(const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory,
+                                                           size_t srcSize, DeviceBitfield dstMemoryBanks) {
+    auto blitSuccess = BlitHelper::blitMemoryToAllocationBanks(device, dstAllocation, dstOffset, srcMemory, {srcSize, 1, 1}, dstMemoryBanks) == BlitOperationResult::Success;
+
+    if (!blitSuccess) {
+        return device.getMemoryManager()->copyMemoryToAllocationBanks(dstAllocation, dstOffset, srcMemory, srcSize, dstMemoryBanks);
+    }
+    return true;
 }
 } // namespace NEO

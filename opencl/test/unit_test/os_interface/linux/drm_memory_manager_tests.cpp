@@ -5418,4 +5418,61 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenOversize
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+struct DrmMemoryManagerToTestCopyMemoryToAllocationBanks : public DrmMemoryManager {
+    DrmMemoryManagerToTestCopyMemoryToAllocationBanks(ExecutionEnvironment &executionEnvironment, size_t lockableLocalMemorySize)
+        : DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
+        lockedLocalMemorySize = lockableLocalMemorySize;
+    }
+    void *lockResourceInLocalMemoryImpl(BufferObject *bo) override {
+        if (lockedLocalMemorySize > 0) {
+            if (static_cast<uint32_t>(bo->peekHandle()) < lockedLocalMemory.size()) {
+                lockedLocalMemory[bo->peekHandle()].reset(new uint8_t[lockedLocalMemorySize]);
+                return lockedLocalMemory[bo->peekHandle()].get();
+            }
+        }
+        return nullptr;
+    }
+    void unlockResourceInLocalMemoryImpl(BufferObject *bo) override {
+    }
+    std::array<std::unique_ptr<uint8_t[]>, 4> lockedLocalMemory;
+    size_t lockedLocalMemorySize = 0;
+};
+
+TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationOnSpecificMemoryBanksThenAllocationIsFilledWithCorrectDataOnSpecificBanks) {
+    uint8_t sourceData[64]{};
+    size_t offset = 3;
+    size_t sourceAllocationSize = sizeof(sourceData);
+    size_t destinationAllocationSize = sourceAllocationSize + offset;
+    MockExecutionEnvironment executionEnvironment;
+    auto drm = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManger(executionEnvironment, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    MockDrmAllocation mockAllocation(GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE, MemoryPool::LocalMemory);
+
+    mockAllocation.storageInfo.memoryBanks = 0b1111;
+    DeviceBitfield memoryBanksToCopy = 0b1010;
+    mockAllocation.bufferObjects.clear();
+
+    for (auto index = 0u; index < 4; index++) {
+        drmMemoryManger.lockedLocalMemory[index].reset();
+        mockAllocation.bufferObjects.push_back(new BufferObject(drm, index, sourceAllocationSize, 3));
+    }
+
+    auto ret = drmMemoryManger.copyMemoryToAllocationBanks(&mockAllocation, offset, dataToCopy.data(), dataToCopy.size(), memoryBanksToCopy);
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(nullptr, drmMemoryManger.lockedLocalMemory[0].get());
+    ASSERT_NE(nullptr, drmMemoryManger.lockedLocalMemory[1].get());
+    EXPECT_EQ(nullptr, drmMemoryManger.lockedLocalMemory[2].get());
+    ASSERT_NE(nullptr, drmMemoryManger.lockedLocalMemory[3].get());
+
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManger.lockedLocalMemory[1].get(), offset), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManger.lockedLocalMemory[3].get(), offset), dataToCopy.data(), dataToCopy.size()));
+    for (auto index = 0u; index < 4; index++) {
+        delete mockAllocation.bufferObjects[index];
+    }
+}
 } // namespace NEO
