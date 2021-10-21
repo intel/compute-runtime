@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -627,4 +628,10 @@ template <typename GfxFamily>
 uint64_t HwHelperHw<GfxFamily>::getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const {
     return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
 }
+
+template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) {
+    EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+}
+
 } // namespace NEO

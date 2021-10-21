@@ -31,6 +31,7 @@ class TagAllocatorBase;
 class Gmm;
 struct AllocationData;
 struct AllocationProperties;
+struct EncodeSurfaceStateArgs;
 struct EngineControl;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
@@ -147,6 +148,7 @@ class HwHelper {
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual bool isStatelesToStatefullWithOffsetSupported() const = 0;
+    virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) = 0;
 
   protected:
     HwHelper() = default;
@@ -369,6 +371,7 @@ class HwHelperHw : public HwHelper {
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
     bool isStatelesToStatefullWithOffsetSupported() const override;
+    void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;
