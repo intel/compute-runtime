@@ -61,7 +61,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     auto bo = new BufferObject(&getDrm(properties.rootDeviceIndex), openFd.handle, properties.size, maxOsContextCount);
     bo->setAddress(properties.gpuAddress);
 
-    return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
+    return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
                              handle, MemoryPool::SystemCpuInaccessible);
 }
 
@@ -99,7 +99,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
         emitPinningRequest(bo.get(), allocationData);
 
-        auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->gpuAddress, alignedSize, MemoryPool::System4KBPages);
+        auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->peekAddress(), alignedSize, MemoryPool::System4KBPages);
         allocation->setMmapPtr(cpuPointer);
         allocation->setMmapSize(alignedSize);
         if (pointerDiff != 0) {
@@ -122,7 +122,7 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     if (bo == nullptr)
         return nullptr;
 
-    auto rootDeviceIndex = this->getRootDeviceIndex(bo->drm);
+    auto rootDeviceIndex = this->getRootDeviceIndex(bo->peekDrm());
 
     uint64_t offset = 0;
     if (!retrieveMmapOffsetForBufferObject(this->getDrm(rootDeviceIndex), *bo, I915_MMAP_OFFSET_WC, offset)) {

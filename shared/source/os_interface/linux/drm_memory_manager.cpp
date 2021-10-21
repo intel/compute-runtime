@@ -101,7 +101,9 @@ BufferObject *DrmMemoryManager::createRootDeviceBufferObject(uint32_t rootDevice
         bo = allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, 0, rootDeviceIndex);
         if (bo) {
             if (isLimitedRange(rootDeviceIndex)) {
-                bo->gpuAddress = acquireGpuRange(bo->size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+                auto boSize = bo->peekSize();
+                bo->setAddress(acquireGpuRange(boSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD));
+                UNRECOVERABLE_IF(boSize < bo->peekSize());
             }
         } else {
             alignedFreeWrapper(memoryForPinBBs[rootDeviceIndex]);
@@ -132,7 +134,7 @@ void DrmMemoryManager::releaseDeviceSpecificMemResources(uint32_t rootDeviceInde
 void DrmMemoryManager::releaseBufferObject(uint32_t rootDeviceIndex) {
     if (auto bo = pinBBs[rootDeviceIndex]) {
         if (isLimitedRange(rootDeviceIndex)) {
-            releaseGpuRange(reinterpret_cast<void *>(bo->gpuAddress), bo->size, rootDeviceIndex);
+            releaseGpuRange(reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(), rootDeviceIndex);
         }
         DrmMemoryManager::unreference(bo, true);
         pinBBs[rootDeviceIndex] = nullptr;
@@ -153,12 +155,12 @@ void DrmMemoryManager::commonCleanup() {
 void DrmMemoryManager::eraseSharedBufferObject(NEO::BufferObject *bo) {
     auto it = std::find(sharingBufferObjects.begin(), sharingBufferObjects.end(), bo);
     DEBUG_BREAK_IF(it == sharingBufferObjects.end());
-    releaseGpuRange(reinterpret_cast<void *>((*it)->gpuAddress), (*it)->peekUnmapSize(), this->getRootDeviceIndex(bo->drm));
+    releaseGpuRange(reinterpret_cast<void *>((*it)->peekAddress()), (*it)->peekUnmapSize(), this->getRootDeviceIndex(bo->peekDrm()));
     sharingBufferObjects.erase(it);
 }
 
 void DrmMemoryManager::pushSharedBufferObject(NEO::BufferObject *bo) {
-    bo->isReused = true;
+    bo->markAsReusableAllocation();
     sharingBufferObjects.push_back(bo);
 }
 
@@ -167,19 +169,19 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
         return -1;
 
     if (synchronousDestroy) {
-        while (bo->refCount > 1)
+        while (bo->getRefCount() > 1)
             ;
     }
 
     std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
-    if (bo->isReused) {
+    if (bo->peekIsReusableAllocation()) {
         lock.lock();
     }
 
-    uint32_t r = bo->refCount.fetch_sub(1);
+    uint32_t r = bo->unreference();
 
     if (r == 1) {
-        if (bo->isReused) {
+        if (bo->peekIsReusableAllocation()) {
             eraseSharedBufferObject(bo);
         }
 
@@ -242,7 +244,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
         DEBUG_BREAK_IF(true);
         return nullptr;
     }
-    res->gpuAddress = address;
+    res->setAddress(address);
 
     return res;
 }
@@ -327,7 +329,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
     obtainGpuAddress(allocationData, bo.get(), gpuAddress);
     emitPinningRequest(bo.get(), allocationData);
 
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->gpuAddress, size, MemoryPool::System4KBPages);
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->peekAddress(), size, MemoryPool::System4KBPages);
     allocation->setDriverAllocatedCpuPtr(res);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSVMSize);
     if (!allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
@@ -343,7 +345,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
 void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress) {
     if ((isLimitedRange(allocationData.rootDeviceIndex) || allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) &&
         !allocationData.flags.isUSMHostAllocation) {
-        bo->gpuAddress = gpuAddress;
+        bo->setAddress(gpuAddress);
     }
 }
 
@@ -371,7 +373,7 @@ DrmAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationD
         if (!gpuAddress) {
             return nullptr;
         }
-        bo->gpuAddress = gpuAddress;
+        bo->setAddress(gpuAddress);
     }
 
     emitPinningRequest(bo.get(), allocationData);
@@ -380,7 +382,7 @@ DrmAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationD
                                         allocationData.type,
                                         bo.get(),
                                         bufferPtr,
-                                        bo->gpuAddress,
+                                        bo->peekAddress(),
                                         cSize,
                                         MemoryPool::System4KBPages);
 
@@ -417,14 +419,14 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
     }
 
     UNRECOVERABLE_IF(allocationData.gpuAddress == 0);
-    bo->gpuAddress = allocationData.gpuAddress;
+    bo->setAddress(allocationData.gpuAddress);
 
     BufferObject *boPtr = bo.get();
     if (forcePinEnabled && pinBBs.at(allocationData.rootDeviceIndex) != nullptr && alignedSize >= this->pinThreshold) {
         pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, osContextLinux, 0, osContextLinux->getDrmContextIds()[0]);
     }
 
-    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->gpuAddress, alignedSize, MemoryPool::System4KBPages);
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->peekAddress(), alignedSize, MemoryPool::System4KBPages);
     allocation->setDriverAllocatedCpuPtr(res);
     bo.release();
 
@@ -452,7 +454,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
         return nullptr;
     }
 
-    bo->gpuAddress = gpuVirtualAddress;
+    bo->setAddress(gpuVirtualAddress);
 
     if (validateHostPtrMemory) {
         auto boPtr = bo.get();
@@ -491,7 +493,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     ((void)(ret));
 
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, bufferSize, maxOsContextCount));
-    bo->gpuAddress = gpuRange;
+    bo->setAddress(gpuRange);
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), nullptr, gpuRange, bufferSize, MemoryPool::SystemCpuInaccessible);
     allocation->setDefaultGmm(gmm.release());
@@ -523,7 +525,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     if (!bo) {
         return nullptr;
     }
-    bo->gpuAddress = gpuRange;
+    bo->setAddress(gpuRange);
 
     auto ret2 = bo->setTiling(I915_TILING_Y, static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
     DEBUG_BREAK_IF(ret2 != true);
@@ -559,7 +561,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
             return nullptr;
         }
 
-        bo->gpuAddress = GmmHelper::canonize(gpuVirtualAddress);
+        bo->setAddress(GmmHelper::canonize(gpuVirtualAddress));
         auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), const_cast<void *>(allocationData.hostPtr), GmmHelper::canonize(ptrOffset(gpuVirtualAddress, inputPointerOffset)),
                                             allocationSize, MemoryPool::System4KBPagesWith32BitGpuAddressing);
         allocation->set32BitAllocation(true);
@@ -593,7 +595,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
         return nullptr;
     }
 
-    bo->gpuAddress = GmmHelper::canonize(gpuVA);
+    bo->setAddress(GmmHelper::canonize(gpuVA));
 
     // softpin to the GPU address, res if it uses limitedRange Allocation
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), ptrAlloc, GmmHelper::canonize(gpuVA), alignedAllocationSize,
@@ -610,7 +612,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
 BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle) {
     BufferObject *bo = nullptr;
     for (const auto &i : sharingBufferObjects) {
-        if (i->handle == boHandle) {
+        if (i->peekHandle() == boHandle) {
             bo = i;
             bo->reference();
             break;
@@ -666,7 +668,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     lock.unlock();
 
-    auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
+    auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
                                            handle, MemoryPool::SystemCpuInaccessible);
 
     if (requireSpecificBitness && this->force32bitAllocations) {
@@ -715,7 +717,7 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     if (!bo) {
         return nullptr;
     }
-    bo->gpuAddress = gpuRange;
+    bo->setAddress(gpuRange);
     auto allocation = new DrmAllocation(rootDeviceIndex, inputGraphicsAllocation->getAllocationType(), bo.get(), srcPtr, GmmHelper::canonize(ptrOffset(gpuRange, offset)), sizeWithPadding,
                                         inputGraphicsAllocation->getMemoryPool());
 
@@ -778,7 +780,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
     } else {
         auto &bos = static_cast<DrmAllocation *>(gfxAllocation)->getBOs();
         for (auto bo : bos) {
-            unreference(bo, bo && bo->isReused ? false : true);
+            unreference(bo, bo && bo->peekIsReusableAllocation() ? false : true);
         }
         closeSharedHandle(gfxAllocation);
     }
@@ -1128,7 +1130,7 @@ void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
     if (bo == nullptr)
         return;
 
-    releaseReservedCpuAddressRange(bo->peekLockedAddress(), bo->peekSize(), this->getRootDeviceIndex(bo->drm));
+    releaseReservedCpuAddressRange(bo->peekLockedAddress(), bo->peekSize(), this->getRootDeviceIndex(bo->peekDrm()));
 
     [[maybe_unused]] auto ret = munmapFunction(bo->peekLockedAddress(), bo->peekSize());
     DEBUG_BREAK_IF(ret != 0);
