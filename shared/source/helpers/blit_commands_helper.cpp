@@ -174,11 +174,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, Gra
 BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                             const Vec3<size_t> &size, DeviceBitfield memoryBanks) {
     const auto &hwInfo = device.getHardwareInfo();
-    auto isBlitterRequired = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isBlitCopyRequiredForLocalMemory(hwInfo, *memory);
-    if (!hwInfo.capabilityTable.blitterOperationsSupported && !isBlitterRequired) {
-        return BlitOperationResult::Unsupported;
-    }
-    if (0 == DebugManager.flags.EnableBlitterOperationsSupport.get()) {
+    if (!hwInfo.capabilityTable.blitterOperationsSupported) {
         return BlitOperationResult::Unsupported;
     }
 

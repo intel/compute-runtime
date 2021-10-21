@@ -684,6 +684,9 @@ bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocatio
     for (auto i = 0u; i < graphicsAllocation->storageInfo.getNumBanks(); ++i) {
         memcpy_s(ptrOffset(static_cast<uint8_t *>(graphicsAllocation->getUnderlyingBuffer()) + i * graphicsAllocation->getUnderlyingBufferSize(), destinationOffset),
                  (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
+        if (graphicsAllocation->getAllocationType() != GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+            break;
+        }
     }
     return true;
 }
