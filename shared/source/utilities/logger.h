@@ -94,7 +94,6 @@ class FileLogger {
     void logInputs(Types &&...params) {
         if (enabled()) {
             if (logApiCalls) {
-                std::unique_lock<std::mutex> theLock(mtx);
                 std::thread::id thisThread = std::this_thread::get_id();
                 std::stringstream ss;
                 ss << "------------------------------\n";
@@ -118,7 +117,6 @@ class FileLogger {
     void log(bool enableLog, Types... params) {
         if (enabled()) {
             if (enableLog) {
-                std::unique_lock<std::mutex> theLock(mtx);
                 std::thread::id thisThread = std::this_thread::get_id();
                 std::stringstream ss;
                 print(ss, "ThreadID", thisThread, params...);
@@ -138,7 +136,7 @@ class FileLogger {
     bool peekLogApiCalls() { return logApiCalls; }
 
   protected:
-    std::mutex mtx;
+    std::mutex mutex;
     std::string logFileName;
     bool dumpKernels = false;
     bool logApiCalls = false;
