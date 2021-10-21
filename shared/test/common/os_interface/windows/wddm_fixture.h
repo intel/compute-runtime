@@ -24,12 +24,11 @@
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/mock_wddm_interface20.h"
 #include "shared/test/common/mocks/mock_wddm_residency_allocations_container.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
 #include "test.h"
-
-#include "mock_gmm_memory.h"
 
 namespace NEO {
 struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {

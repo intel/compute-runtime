@@ -65,7 +65,6 @@ target_sources(igdrcl_aub_tests PRIVATE
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
-                 ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
                  ${NEO_SOURCE_DIR}/shared/source/os_interface/windows/os_memory_virtual_alloc.cpp
   )
@@ -74,12 +73,6 @@ else()
                  ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
-  if(NOT DISABLE_WDDM_LINUX)
-    target_sources(igdrcl_aub_tests PRIVATE
-                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-    )
-  endif()
 endif()
 
 copy_gmm_dll_for(igdrcl_aub_tests)

@@ -36,6 +36,7 @@
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 
 #include "gtest/gtest.h"
+#include "mock_gmm_memory.h"
 
 #include <functional>
 #include <memory>

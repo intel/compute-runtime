@@ -11,11 +11,10 @@
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 
 #include "test.h"
-
-#include "mock_gmm_memory.h"
 
 using namespace NEO;
 

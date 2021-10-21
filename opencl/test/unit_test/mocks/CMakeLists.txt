@@ -58,9 +58,6 @@ if(WIN32)
   list(APPEND IGDRCL_SRCS_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_d3d_objects.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime_win.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory${BRANCH_DIR_SUFFIX}mock_gmm_memory.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/os_interface/windows/mock_gdi_interface.cpp
        ${IGDRCL_SRC_tests_mock_wddm}
@@ -73,14 +70,6 @@ endif()
 
 add_library(igdrcl_mocks STATIC EXCLUDE_FROM_ALL ${IGDRCL_SRCS_tests_mocks})
 add_subdirectories()
-
-if(WIN32)
-  target_include_directories(igdrcl_mocks PUBLIC
-                             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/gmm_memory${BRANCH_DIR_SUFFIX}
-  )
-endif()
-
-# add_dependencies(igdrcl_mocks gmock-gtest)
 
 get_property(NEO_CORE_tests_mocks GLOBAL PROPERTY NEO_CORE_tests_mocks)
 list(APPEND NEO_CORE_tests_mocks

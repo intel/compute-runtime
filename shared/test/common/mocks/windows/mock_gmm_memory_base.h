@@ -47,11 +47,11 @@ class MockGmmMemoryBase : public GmmMemory {
     GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
 };
 
-class GmockGmmMemoryBase : public GmmMemory {
+class GmockGmmMemory : public GmmMemory {
   public:
-    ~GmockGmmMemoryBase() = default;
+    ~GmockGmmMemory() = default;
 
-    GmockGmmMemoryBase(GmmClientContext *gmmClientContext) : GmmMemory(gmmClientContext) {
+    GmockGmmMemory(GmmClientContext *gmmClientContext) : GmmMemory(gmmClientContext) {
         ON_CALL(*this, getInternalGpuVaRangeLimit())
             .WillByDefault(::testing::Return(NEO::windowsMinAddress));
 

@@ -49,12 +49,6 @@ else()
   target_sources(igdrcl_mt_tests PRIVATE
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
-  if(NOT DISABLE_WDDM_LINUX)
-    target_sources(igdrcl_mt_tests PRIVATE
-                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-    )
-  endif()
 endif()
 
 if(WIN32)

@@ -55,7 +55,6 @@ set_property(TARGET compute_runtime_mockable_extra APPEND_STRING PROPERTY COMPIL
 target_include_directories(compute_runtime_mockable_extra
                            PUBLIC
                            ${COMPUTE_RUNTIME_MOCKABLE_INCLUDES}
-                           ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/gmm_memory
                            ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
 )
 
@@ -73,7 +72,6 @@ if(WIN32)
   target_sources(compute_runtime_mockable_extra
                  PRIVATE
                  ${NEO_SOURCE_DIR}/shared/source/dll/windows/environment_variables.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_memory_base.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
   )
 

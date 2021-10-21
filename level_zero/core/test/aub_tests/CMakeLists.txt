@@ -82,12 +82,6 @@ if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
 endif()
 
 if(UNIX)
-  if(NOT DISABLE_WDDM_LINUX)
-    target_sources(${TARGET_NAME} PRIVATE
-                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-    )
-  endif()
   target_sources(${TARGET_NAME} PRIVATE
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
@@ -97,11 +91,9 @@ if(UNIX)
   )
 else()
   target_sources(${TARGET_NAME} PRIVATE
-                 ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
-                 ${NEO_SOURCE_DIR}/shared/source/dll/windows/environment_variables.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
@@ -131,7 +123,6 @@ target_include_directories(${TARGET_NAME} PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/aub_tests
                            ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
-                           ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/gmm_memory
                            ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests
                            ${ENGINE_NODE_DIR}
                            ${CIF_BASE_DIR}
