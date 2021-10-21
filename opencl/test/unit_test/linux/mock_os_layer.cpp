@@ -105,11 +105,16 @@ int closedir(DIR *dirp) {
 
 struct dirent entries[] = {
     {0, 0, 0, 0, "."},
+    {0, 0, 0, 0, "pci-0000:00:03.1-render"},
+    {0, 0, 0, 0, "platform-4010000000.pcie-pci-0000:00:02.0-render"},
     {0, 0, 0, 0, "pci-0000:test1-render"},
     {0, 0, 0, 0, "pci-0000:test2-render"},
     {0, 0, 0, 0, "pci-0000:1234-render"},
-    {0, 0, 0, 0, "pci-0000:0:2.1-render"},
     {0, 0, 0, 0, "pci-0000:3:0.0-render"},
+    {0, 0, 0, 0, "pci-0a00:00:03.1-render"},
+    {0, 0, 0, 0, "pci-0000:b3:03.1-render"},
+    {0, 0, 0, 0, "pci-0000:00:b3.1-render"},
+    {0, 0, 0, 0, "pci-0000:00:03.a-render"},
 };
 
 uint32_t entryIndex = 0u;

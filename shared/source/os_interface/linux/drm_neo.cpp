@@ -33,6 +33,7 @@
 #include <cstdio>
 #include <cstring>
 #include <linux/limits.h>
+#include <regex>
 
 namespace NEO {
 
@@ -514,8 +515,6 @@ void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int
 std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     executionEnvironment.osEnvironment = std::make_unique<OsEnvironment>();
-    std::string devicePrefix = std::string(Os::pciDevicesDirectory) + "/pci-";
-    const char *renderDeviceSuffix = "-render";
     size_t numRootDevices = 0u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
@@ -543,11 +542,14 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
     }
 
     do {
+        const std::regex renderRegex(".*([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]\\.[0-9a-fA-F])-render$");
         for (std::vector<std::string>::iterator file = files.begin(); file != files.end(); ++file) {
-            if (file->find(renderDeviceSuffix) == std::string::npos) {
+            std::smatch fnMatch;
+            auto reMatch = std::regex_match(*file, fnMatch, renderRegex);
+            if (!reMatch) {
                 continue;
             }
-            std::string pciPath = file->substr(devicePrefix.size(), file->size() - devicePrefix.size() - strlen(renderDeviceSuffix));
+            std::string pciPath = fnMatch[1];
 
             if (DebugManager.flags.ForceDeviceId.get() != "unk") {
                 if (file->find(DebugManager.flags.ForceDeviceId.get().c_str()) == std::string::npos) {
@@ -729,7 +731,7 @@ PhysicalDevicePciBusInfo Drm::getPciBusInfo() const {
     PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
 
     if (adapterBDF.Data != std::numeric_limits<uint32_t>::max()) {
-        pciBusInfo.pciDomain = 0;
+        pciBusInfo.pciDomain = this->pciDomain;
         pciBusInfo.pciBus = adapterBDF.Bus;
         pciBusInfo.pciDevice = adapterBDF.Device;
         pciBusInfo.pciFunction = adapterBDF.Function;
