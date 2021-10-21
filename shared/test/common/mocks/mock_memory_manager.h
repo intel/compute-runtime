@@ -149,6 +149,18 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemAdvise(gfxAllocation, flags, rootDeviceIndex);
     }
 
+    struct CopyMemoryToAllocationBanksParams {
+        GraphicsAllocation *graphicsAllocation = nullptr;
+        size_t destinationOffset = 0u;
+        const void *memoryToCopy = nullptr;
+        size_t sizeToCopy = 0u;
+        DeviceBitfield dstMemoryBanks = {};
+    };
+
+    StackVec<CopyMemoryToAllocationBanksParams, 2> copyMemoryToAllocationBanksParamsPassed{};
+    bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield dstMemoryBanks) override;
+
+    uint32_t copyMemoryToAllocationBanksCalled = 0u;
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;

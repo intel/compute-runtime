@@ -57,6 +57,7 @@ class DrmMemoryManager : public MemoryManager {
 
     DrmGemCloseWorker *peekGemCloseWorker() const { return this->gemCloseWorker.get(); }
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) override;
+    bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield dstMemoryBanks) override;
 
     MOCKABLE_VIRTUAL int obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex);
     AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override;

@@ -570,12 +570,11 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
         }
 
         const uint32_t copySrc = deviceIndex;
-        const Vec3<size_t> copySrcSize = {sizeof(copySrc), 1, 1};
         DeviceBitfield copyBitfield{};
         copyBitfield.set(deviceIndex);
-        BlitOperationResult blitResult = BlitHelper::blitMemoryToAllocationBanks(device, workPartitionAllocation, 0, &copySrc, copySrcSize, copyBitfield);
+        auto copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, workPartitionAllocation, 0, &copySrc, sizeof(copySrc), copyBitfield);
 
-        if (blitResult != BlitOperationResult::Success) {
+        if (!copySuccess) {
             return false;
         }
     }
