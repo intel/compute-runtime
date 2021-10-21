@@ -40,6 +40,7 @@ class MockProgram : public Program {
     using Program::debugDataSize;
     using Program::deviceBuildInfos;
     using Program::extractInternalOptions;
+    using Program::forceToStatelessNeeded;
     using Program::getKernelInfo;
     using Program::internalOptionsToExtract;
     using Program::irBinary;

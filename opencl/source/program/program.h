@@ -283,6 +283,10 @@ class Program : public BaseObject<_cl_program> {
     }
 
   protected:
+    bool forceToStatelessNeeded() const;
+
+    MOCKABLE_VIRTUAL bool containsStatefulAccess(uint32_t rootDeviceIndex) const;
+
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
 
     cl_int packDeviceBinary(ClDevice &clDevice);
@@ -366,6 +370,7 @@ class Program : public BaseObject<_cl_program> {
 
     bool isBuiltIn = false;
     bool kernelDebugEnabled = false;
+    bool containsStatefulAccesses = false;
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     std::mutex lockMutex;
     uint32_t exposedKernels = 0;

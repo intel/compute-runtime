@@ -34,8 +34,7 @@ cl_int Program::build(
     const char *buildOptions,
     bool enableCaching) {
     cl_int retVal = CL_SUCCESS;
-    std::string internalOptions;
-    initInternalOptions(internalOptions);
+
     auto defaultClDevice = deviceVector[0];
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();
@@ -69,6 +68,9 @@ cl_int Program::build(
             } else if (this->createdFrom != CreatedFrom::BINARY) {
                 options = "";
             }
+            std::string internalOptions;
+            initInternalOptions(internalOptions);
+
             extractInternalOptions(options, internalOptions);
             applyAdditionalOptions(internalOptions);
 
@@ -164,6 +166,10 @@ cl_int Program::build(
                 break;
             }
             phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::BinaryProcessing;
+        }
+
+        if (containsStatefulAccess(defaultDevice.getRootDeviceIndex()) && forceToStatelessNeeded() && !isBuiltIn) {
+            retVal = CL_BUILD_PROGRAM_FAILURE;
         }
 
         if (retVal != CL_SUCCESS) {

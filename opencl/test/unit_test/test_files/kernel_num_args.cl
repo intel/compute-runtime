@@ -6,4 +6,5 @@
  */
 
 __kernel void test(__global float *argGlobal, __read_only image3d_t argImg3D, __constant float *argConst) {
+	argGlobal[0] = argConst[0];
 }
