@@ -26,6 +26,8 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
+#include "encode_surface_state.inl"
+
 #include <algorithm>
 
 namespace NEO {
@@ -337,21 +339,19 @@ void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
-                                              bool cpuCoherent, bool forceNonAuxMode, bool isReadOnly, uint32_t numAvailableDevices,
-                                              GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(dst);
-    UNRECOVERABLE_IF(!isAligned<getSurfaceBaseAddressAlignment()>(size));
+void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
+    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
+    UNRECOVERABLE_IF(!isAligned<getSurfaceBaseAddressAlignment()>(args.size));
 
     SURFACE_STATE_BUFFER_LENGTH Length = {0};
-    Length.Length = static_cast<uint32_t>(size - 1);
+    Length.Length = static_cast<uint32_t>(args.size - 1);
 
     surfaceState->setWidth(Length.SurfaceState.Width + 1);
     surfaceState->setHeight(Length.SurfaceState.Height + 1);
     surfaceState->setDepth(Length.SurfaceState.Depth + 1);
 
-    surfaceState->setSurfaceType((address != 0) ? R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER
-                                                : R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
+    surfaceState->setSurfaceType((args.graphicsAddress != 0) ? R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER
+                                                             : R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
     surfaceState->setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
     surfaceState->setSurfaceVerticalAlignment(R_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
     surfaceState->setSurfaceHorizontalAlignment(R_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
@@ -359,25 +359,27 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_
     surfaceState->setTileMode(R_SURFACE_STATE::TILE_MODE_LINEAR);
     surfaceState->setVerticalLineStride(0);
     surfaceState->setVerticalLineStrideOffset(0);
-    surfaceState->setMemoryObjectControlState(mocs);
-    surfaceState->setSurfaceBaseAddress(address);
+    surfaceState->setMemoryObjectControlState(args.mocs);
+    surfaceState->setSurfaceBaseAddress(args.graphicsAddress);
 
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 
-    setCoherencyType(surfaceState, cpuCoherent ? R_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+    setCoherencyType(surfaceState, args.cpuCoherent ? R_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
 
-    Gmm *gmm = allocation ? allocation->getDefaultGmm() : nullptr;
-    if (gmm && gmm->isCompressionEnabled && !forceNonAuxMode) {
+    Gmm *gmm = args.allocation ? args.allocation->getDefaultGmm() : nullptr;
+    if (gmm && gmm->isCompressionEnabled && !args.forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
         setCoherencyType(surfaceState, R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
         setBufferAuxParamsForCCS(surfaceState);
     }
 
     if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        surfaceState->setMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
-    EncodeSurfaceState<Family>::encodeExtraBufferParams(surfaceState, allocation, gmmHelper, isReadOnly, numAvailableDevices, useGlobalAtomics, areMultipleSubDevicesInContext);
+    EncodeSurfaceState<Family>::encodeExtraBufferParams(args);
+
+    EncodeSurfaceState<Family>::appendBufferSurfaceState(args);
 }
 
 template <typename Family>

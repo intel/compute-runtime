@@ -618,33 +618,33 @@ bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                                         bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    Gmm *gmm = allocation ? allocation->getDefaultGmm() : nullptr;
+void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
+    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
+    Gmm *gmm = args.allocation ? args.allocation->getDefaultGmm() : nullptr;
     uint32_t compressionFormat = 0;
 
     bool setConstCachePolicy = false;
-    if (allocation && allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE) {
+    if (args.allocation && args.allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE) {
         setConstCachePolicy = true;
     }
 
-    if (surfaceState->getMemoryObjectControlState() == gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) &&
+    if (surfaceState->getMemoryObjectControlState() == args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) &&
         DebugManager.flags.ForceL1Caching.get() != 0) {
         setConstCachePolicy = true;
     }
 
     if (setConstCachePolicy == true) {
-        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+        surfaceState->setMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
     }
 
-    encodeExtraCacheSettings(surfaceState, *gmmHelper->getHardwareInfo());
-    DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(numAvailableDevices))};
+    encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
+    DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(args.numAvailableDevices))};
     bool implicitScaling = ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, true);
     bool enablePartialWrites = implicitScaling;
     bool enableMultiGpuAtomics = enablePartialWrites;
 
     if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
-        enableMultiGpuAtomics = useGlobalAtomics && (enablePartialWrites || areMultipleSubDevicesInContext);
+        enableMultiGpuAtomics = args.useGlobalAtomics && (enablePartialWrites || args.areMultipleSubDevicesInContext);
     }
 
     surfaceState->setDisableSupportForMultiGpuAtomics(!enableMultiGpuAtomics);
@@ -660,7 +660,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfac
 
     if (EncodeSurfaceState<Family>::isAuxModeEnabled(surfaceState, gmm)) {
         auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();
-        compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+        compressionFormat = args.gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
 
         if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
             compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
@@ -668,7 +668,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfac
     }
 
     if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (allocation && !MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
+        if (args.allocation && !MemoryPool::isSystemMemoryPool(args.allocation->getMemoryPool())) {
             setCoherencyType(surfaceState, R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
             setBufferAuxParamsForCCS(surfaceState);
             compressionFormat = DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();

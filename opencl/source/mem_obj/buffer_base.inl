@@ -19,7 +19,6 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/buffer.h"
 
-#include "buffer_ext.inl"
 #include "hw_cmds.h"
 
 namespace NEO {
@@ -39,11 +38,21 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     auto rootDeviceIndex = device.getRootDeviceIndex();
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     const auto isReadOnly = isValueSet(getFlags(), CL_MEM_READ_ONLY) || isReadOnlyArgument;
-    EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(rootDeviceIndex),
-                                                getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex),
-                                                getMocsValue(disableL3, isReadOnly, rootDeviceIndex),
-                                                true, forceNonAuxMode, isReadOnly, device.getNumGenericSubDevices(),
-                                                graphicsAllocation, device.getGmmHelper(), useGlobalAtomics, areMultipleSubDevicesInContext);
-    appendSurfaceStateExt(memory);
+
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = memory;
+    args.graphicsAddress = getBufferAddress(rootDeviceIndex);
+    args.size = getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex);
+    args.mocs = getMocsValue(disableL3, isReadOnly, rootDeviceIndex);
+    args.cpuCoherent = true;
+    args.forceNonAuxMode = forceNonAuxMode;
+    args.isReadOnly = isReadOnly;
+    args.numAvailableDevices = device.getNumGenericSubDevices();
+    args.allocation = graphicsAllocation;
+    args.gmmHelper = device.getGmmHelper();
+    args.useGlobalAtomics = useGlobalAtomics;
+    args.areMultipleSubDevicesInContext = areMultipleSubDevicesInContext;
+    appendSurfaceStateArgs(args);
+    EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
 } // namespace NEO

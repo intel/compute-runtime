@@ -449,9 +449,9 @@ inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &devic
 }
 
 template <typename GfxFamily>
-inline void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                                                   bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    encodeExtraCacheSettings(surfaceState, *gmmHelper->getHardwareInfo());
+inline void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
+    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
+    encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
 }
 
 template <typename GfxFamily>

@@ -500,9 +500,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenSpecificP
     std::unique_ptr<BufferHw<FamilyType>> buffer(static_cast<BufferHw<FamilyType> *>(
         BufferHw<FamilyType>::create(&context, {}, 0, 0, allocationSize, nullptr, nullptr, multiGraphicsAllocation, false, false, false)));
 
-    EncodeSurfaceState<FamilyType>::encodeBuffer(&rssCmd, allocation->getGpuAddress(), allocation->getUnderlyingBufferSize(),
-                                                 buffer->getMocsValue(false, false, pClDevice->getRootDeviceIndex()), false, false, false,
-                                                 pClDevice->getNumGenericSubDevices(), allocation, pClDevice->getGmmHelper(), false, 1u);
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = &rssCmd;
+    args.graphicsAddress = allocation->getGpuAddress();
+    args.size = allocation->getUnderlyingBufferSize();
+    args.mocs = buffer->getMocsValue(false, false, pClDevice->getRootDeviceIndex());
+    args.numAvailableDevices = pClDevice->getNumGenericSubDevices();
+    args.allocation = allocation;
+    args.gmmHelper = pClDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = true;
+
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
     EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, rssCmd.getCoherencyType());
 }

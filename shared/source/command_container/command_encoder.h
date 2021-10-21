@@ -16,6 +16,8 @@
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 
+#include "encode_surface_state_args.h"
+
 #include <algorithm>
 
 namespace NEO {
@@ -246,12 +248,10 @@ struct EncodeSurfaceState {
     using AUXILIARY_SURFACE_MODE = typename R_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     using COHERENCY_TYPE = typename R_SURFACE_STATE::COHERENCY_TYPE;
 
-    static void encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
-                             bool cpuCoherent, bool forceNonAuxMode, bool isReadOnly, uint32_t numAvailableDevices,
-                             GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
-    static void encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                        bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
+    static void encodeBuffer(EncodeSurfaceStateArgs &args);
+    static void encodeExtraBufferParams(EncodeSurfaceStateArgs &args);
     static void encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo);
+    static void appendBufferSurfaceState(EncodeSurfaceStateArgs &args);
 
     static constexpr uintptr_t getSurfaceBaseAddressAlignmentMask() {
         return ~(getSurfaceBaseAddressAlignment() - 1);

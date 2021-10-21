@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/gen12lp/reg_configs.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/preamble.h"
 
 using Family = NEO::TGLLPFamily;
@@ -21,6 +22,7 @@ using Family = NEO::TGLLPFamily;
 #include "shared/source/command_stream/command_stream_receiver.h"
 
 namespace NEO {
+
 template <>
 size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
     size_t size = 0;
@@ -67,19 +69,19 @@ void EncodeWA<Family>::encodeAdditionalPipelineSelect(Device &device, LinearStre
 }
 
 template <>
-void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                                         bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    const bool isL3Allowed = surfaceState->getMemoryObjectControlState() == gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
+    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
+    const bool isL3Allowed = surfaceState->getMemoryObjectControlState() == args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     if (isL3Allowed) {
-        const bool isConstantSurface = allocation && allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE;
-        bool useL1 = isReadOnly || isConstantSurface;
+        const bool isConstantSurface = args.allocation && args.allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE;
+        bool useL1 = args.isReadOnly || isConstantSurface;
 
         if (DebugManager.flags.ForceL1Caching.get() != 1) {
             useL1 = false;
         }
 
         if (useL1) {
-            surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+            surfaceState->setMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
         }
     }
 }

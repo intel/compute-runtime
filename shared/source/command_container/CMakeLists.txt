@@ -15,6 +15,9 @@ set(NEO_CORE_COMMAND_CONTAINER
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_compute_mode_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions/encode_surface_state_args_base.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}encode_surface_state.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}encode_surface_state_args.h
 )
 
 if(SUPPORT_XEHP_AND_LATER)

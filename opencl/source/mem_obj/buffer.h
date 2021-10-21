@@ -19,10 +19,11 @@
 #include <functional>
 
 namespace NEO {
-class Device;
 class Buffer;
 class ClDevice;
+class Device;
 class MemoryManager;
+struct EncodeSurfaceStateArgs;
 
 using BufferCreatFunc = Buffer *(*)(Context *context,
                                     MemoryProperties memoryProperties,
@@ -193,6 +194,8 @@ class Buffer : public MemObj {
     static bool isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties);
 
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);
+
+    void appendSurfaceStateArgs(EncodeSurfaceStateArgs &args);
 };
 
 template <typename GfxFamily>
@@ -214,7 +217,6 @@ class BufferHw : public Buffer {
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation,
                         bool isReadOnlyArgument, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) override;
-    void appendSurfaceStateExt(void *memory);
 
     static Buffer *create(Context *context,
                           MemoryProperties memoryProperties,
