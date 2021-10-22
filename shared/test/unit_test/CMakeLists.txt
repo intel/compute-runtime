@@ -41,7 +41,7 @@ if(NOT SKIP_UNIT_TESTS)
 
   if(UNIX)
     target_sources(${TARGET_NAME} PRIVATE
-                   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/os_interface.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
     )
   endif()
 

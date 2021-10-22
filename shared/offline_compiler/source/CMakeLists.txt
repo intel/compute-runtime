@@ -86,16 +86,16 @@ endif()
 
 if(WIN32)
   list(APPEND CLOC_LIB_SRCS_LIB
+       ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
-       ${NEO_SOURCE_DIR}/opencl/source/dll/windows/options_windows.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
+       ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
-       ${NEO_SOURCE_DIR}/opencl/source/dll/linux/options_linux.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
   )
 endif()

@@ -12,12 +12,11 @@ endif()
 
 set(RUNTIME_SRCS_DLL_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_deferred_deleter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_memory_manager_${DRIVER_MODEL}.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_tbx_sockets.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_dll.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/get_devices.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/source_level_debugger_dll.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
     ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
     ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp
@@ -31,6 +30,7 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
     ${NEO_SOURCE_DIR}/opencl/source/api/api.cpp
     ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/dll/debug_manager.cpp
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 
     ${GTPIN_INIT_FILE}
@@ -41,9 +41,9 @@ set(RUNTIME_SRCS_DLL_BASE
 append_sources_from_properties(RUNTIME_SRCS_DLL_BASE NEO_CORE_SRCS_LINK)
 
 set(RUNTIME_SRCS_DLL_LINUX
-    ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/linux/options_linux.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_interface.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
@@ -52,8 +52,8 @@ set(RUNTIME_SRCS_DLL_LINUX
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/options_windows.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp

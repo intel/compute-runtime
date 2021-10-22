@@ -217,18 +217,21 @@ if(BUILD_WITH_L0)
 
   target_sources(${TARGET_NAME_L0}
                  PRIVATE
-                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_deferred_deleter.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_memory_manager_${DRIVER_MODEL}.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_tbx_sockets.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/get_devices.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/source_level_debugger_dll.cpp
-                 ${COMPUTE_RUNTIME_DIR}/shared/source/built_ins/sip_init.cpp
-                 ${COMPUTE_RUNTIME_DIR}/shared/source/aub/aub_stream_interface.cpp
+                 ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface.cpp
+                 ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
+                 ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
+                 ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
+                 ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
+                 ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
+                 ${NEO_SHARED_DIRECTORY}/dll/source_level_debugger_dll.cpp
   )
 
   if(WIN32)
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
+                   ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
@@ -236,9 +239,6 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-                   ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/options_windows.cpp
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/os_interface.cpp
     )
     target_link_libraries(${TARGET_NAME_L0}
                           dxgi
@@ -255,8 +255,10 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
                    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
                    ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/options_linux.cpp
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/os_interface.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
+                   ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
     )
     if(NOT DISABLE_WDDM_LINUX)
       target_sources(${TARGET_NAME_L0}
@@ -308,11 +310,6 @@ if(BUILD_WITH_L0)
   target_include_directories(${TARGET_NAME_L0} PRIVATE ${IGC_COMMON_PARENT_DIR})
 
   if(UNIX)
-    target_sources(${TARGET_NAME_L0}
-                   PRIVATE
-                   ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/drm_neo_create.cpp
-    )
     set(OS_SPECIFIC_LIBS dl pthread rt)
     target_include_directories(${TARGET_NAME_L0} PUBLIC
                                ${L0_ROOT_DIR}/core/source/os_interface/linux

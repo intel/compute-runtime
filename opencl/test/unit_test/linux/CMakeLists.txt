@@ -21,14 +21,14 @@ add_executable(igdrcl_${target_name}
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h
                ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux_tests.cpp
                ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
-               ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
-               ${NEO_SOURCE_DIR}/opencl/source/dll/create_memory_manager_drm.cpp
-               ${NEO_SOURCE_DIR}/opencl/source/dll/linux/drm_neo_create.cpp
-               ${NEO_SOURCE_DIR}/opencl/source/dll/linux/options_linux.cpp
-               ${NEO_SOURCE_DIR}/opencl/source/dll/linux/os_interface.cpp
+               ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_drm.cpp
+               ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
+               ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
+               ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
                ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}drm_other_requests.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
 )
 if(NEO__LIBVA_FOUND)
