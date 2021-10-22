@@ -473,7 +473,7 @@ if(BUILD_WITH_L0)
   target_sources(${TARGET_NAME_L0} PRIVATE $<TARGET_OBJECTS:${L0_RELEASE_LIB_NAME}> ${L0_SHARED_LIB_SRCS})
 
   target_link_libraries(${TARGET_NAME_L0}
-                        ${NEO_STATICALLY_LINKED_LIBRARIES}
+                        ${NEO_SHARED_RELEASE_LIB_NAME}
                         ${OS_SPECIFIC_LIBS} ${ASAN_LIBS} ${TSAN_LIBS}
   )
 

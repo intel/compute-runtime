@@ -9,6 +9,12 @@
 
 #include "shared/source/built_ins/built_ins.h"
 
+namespace NEO {
+const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
+    return nullptr;
+}
+} // namespace NEO
+
 namespace L0 {
 
 std::unique_lock<BuiltinFunctionsLib::MutexType> BuiltinFunctionsLib::obtainUniqueOwnership() {

@@ -39,10 +39,6 @@ if(WIN32)
   endif()
 endif()
 
-if(DEFINED AUB_STREAM_PROJECT_NAME)
-  target_link_libraries(${NEO_STATIC_LIB_NAME} ${AUB_STREAM_PROJECT_NAME})
-endif()
-
 target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
                            ${CMAKE_CURRENT_BINARY_DIR}
                            ${KMDAF_HEADERS_DIR}
