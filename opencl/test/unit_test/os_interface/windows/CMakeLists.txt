@@ -13,7 +13,6 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_win_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_environment_variables.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kmdaf_listener.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_time_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_win.cpp
@@ -36,7 +35,6 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_allocate_in_device_pool_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_handler_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_sys_calls.h
 )
 
 if(WIN32)

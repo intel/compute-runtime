@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/os_interface/windows/mock_environment_variables.h"
+#include "shared/test/common/os_interface/windows/mock_environment_variables.h"
 
 #include "shared/source/os_interface/windows/environment_variables.h"
 

@@ -35,11 +35,6 @@ set(IGDRCL_SRCS_tests_local
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 )
 
-if(WIN32)
-  list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp)
-  list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp)
-endif()
-
 add_subdirectory(libult)
 
 hide_subdir(libult)
@@ -60,6 +55,7 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:neo_libult_common>
     $<TARGET_OBJECTS:igdrcl_libult>
     $<TARGET_OBJECTS:neo_libult_cs>
+    $<TARGET_OBJECTS:neo_libult>
     $<TARGET_OBJECTS:igdrcl_libult_env>
     $<TARGET_OBJECTS:mock_gmm>
     $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>

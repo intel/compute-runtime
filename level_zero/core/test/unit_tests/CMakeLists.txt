@@ -40,25 +40,8 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
                $<TARGET_OBJECTS:neo_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>
+               $<TARGET_OBJECTS:neo_libult>
 )
-
-if(UNIX)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-  )
-else()
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
-  )
-endif()
 
 set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})

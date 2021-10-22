@@ -24,10 +24,6 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
 )
 
-set(IGDRCL_SRCS_LIB_ULT_WINDOWS
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/mock_environment_variables.cpp
-)
-
 add_library(igdrcl_libult OBJECT EXCLUDE_FROM_ALL
             ${IGDRCL_SRCS_LIB_ULT}
             ${IGDRCL_SRCS_ENABLE_TESTED_HW}
@@ -56,26 +52,6 @@ add_library(igdrcl_libult_env OBJECT EXCLUDE_FROM_ALL
             ${IGDRCL_SRCS_LIB_ULT_ENV}
 )
 
-set(IGDRCL_SRCS_LIB_ULT_ENV_WINDOWS
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
-)
-
-set(IGDRCL_SRCS_LIB_ULT_ENV_LINUX
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-)
-
-if(WIN32)
-  target_sources(igdrcl_libult_env PRIVATE ${IGDRCL_SRCS_LIB_ULT_ENV_WINDOWS})
-  target_sources(igdrcl_libult PRIVATE ${IGDRCL_SRCS_LIB_ULT_WINDOWS})
-else()
-  target_sources(igdrcl_libult_env PRIVATE ${IGDRCL_SRCS_LIB_ULT_ENV_LINUX})
-endif()
-
 target_include_directories(igdrcl_libult_env PRIVATE
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
 )
@@ -84,7 +60,6 @@ set_property(GLOBAL PROPERTY IGDRCL_SRCS_ENABLE_TESTED_HW ${IGDRCL_SRCS_ENABLE_T
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_ENABLE_TESTED_HW_LINUX ${IGDRCL_SRCS_ENABLE_TESTED_HW_LINUX})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_LIB_ULT ${IGDRCL_SRCS_LIB_ULT})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_LIB_ULT_ENV ${IGDRCL_SRCS_LIB_ULT_ENV})
-set_property(GLOBAL PROPERTY IGDRCL_SRCS_LIB_ULT_ENV_LINUX ${IGDRCL_SRCS_LIB_ULT_ENV_LINUX})
 
 foreach(target_name igdrcl_libult igdrcl_libult_env)
   set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)

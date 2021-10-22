@@ -7,7 +7,7 @@
 
 #include "sys_calls.h"
 
-#include "opencl/test/unit_test/os_interface/windows/mock_sys_calls.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 
 #include <cstdint>
 

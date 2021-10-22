@@ -36,26 +36,12 @@ if(NOT SKIP_UNIT_TESTS)
                  $<TARGET_OBJECTS:mock_gmm>
                  $<TARGET_OBJECTS:neo_libult_common>
                  $<TARGET_OBJECTS:neo_libult_cs>
+                 $<TARGET_OBJECTS:neo_libult>
   )
 
   if(UNIX)
     target_sources(${TARGET_NAME} PRIVATE
                    ${NEO_SOURCE_DIR}/opencl/source/dll/linux/os_interface.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-                   ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
-                   ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
-    )
-  else()
-    target_sources(${TARGET_NAME} PRIVATE
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
     )
   endif()
 

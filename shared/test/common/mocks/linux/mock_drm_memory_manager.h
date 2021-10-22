@@ -14,7 +14,7 @@
 namespace NEO {
 extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
-extern int closeInputFd;
+extern std::atomic<int> closeInputFd;
 extern std::atomic<int> closeCalledCount;
 extern std::vector<void *> mmapVector;
 

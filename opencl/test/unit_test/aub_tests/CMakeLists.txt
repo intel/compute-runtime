@@ -20,6 +20,7 @@ list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
      $<TARGET_OBJECTS:igdrcl_libult>
      $<TARGET_OBJECTS:neo_libult_common>
      $<TARGET_OBJECTS:neo_libult_cs>
+     $<TARGET_OBJECTS:neo_libult>
      $<TARGET_OBJECTS:igdrcl_libult_env>
 )
 if(TARGET ${SCHEDULER_BINARY_LIB_NAME})
@@ -65,13 +66,10 @@ target_sources(igdrcl_aub_tests PRIVATE
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
-                 ${NEO_SOURCE_DIR}/shared/source/os_interface/windows/os_memory_virtual_alloc.cpp
   )
 else()
   target_sources(igdrcl_aub_tests PRIVATE
                  ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
 endif()
 

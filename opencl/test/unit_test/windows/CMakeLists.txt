@@ -23,13 +23,19 @@ if(WIN32)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
                  ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
                  ${NEO_SOURCE_DIR}/shared/source/dll/create_command_stream.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}get_devices_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/os_memory_virtual_alloc_ult.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
   )
 
   target_link_libraries(igdrcl_windows_dll_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} igdrcl_mocks gmock-gtest ${IGDRCL_EXTRA_LIBS})

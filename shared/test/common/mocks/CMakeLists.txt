@@ -79,7 +79,6 @@ set(NEO_CORE_tests_mocks
 
 if(WIN32)
   list(APPEND NEO_CORE_tests_mocks
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
@@ -91,7 +90,6 @@ else()
   list(APPEND NEO_CORE_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
   )
 endif()

@@ -140,17 +140,45 @@ elseif(UNIX)
   target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 endif()
 
-target_include_directories(neo_libult_common PRIVATE
-                           $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
-                           ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
-                           ${IGC_COMMON_PARENT_DIR}
-)
+set(neo_libult_SRCS)
+if(UNIX)
+  list(APPEND neo_libult_SRCS
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/create_drm_memory_manager.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_neo_create.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/options.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
+  )
+else()
+  list(APPEND neo_libult_SRCS
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/os_memory_virtual_alloc_ult.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_create.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.h
+  )
+endif()
 
-set_target_properties(neo_libult_common PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(neo_libult_common PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
-set_property(TARGET neo_libult_common APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
-target_include_directories(neo_libult_common PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_definitions(neo_libult_common PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+add_library(neo_libult OBJECT EXCLUDE_FROM_ALL ${neo_libult_SRCS})
 
-create_project_source_tree(neo_libult_common)
+foreach(target_name "neo_libult_common" "neo_libult")
+  set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+  set_target_properties(${target_name} PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
+  set_property(TARGET ${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
+  target_include_directories(${target_name} PRIVATE
+                             $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
+                             $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                             ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
+                             ${IGC_COMMON_PARENT_DIR}
+  )
+  target_compile_definitions(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+
+  create_project_source_tree(${target_name})
+endforeach()
+
 add_subdirectories()

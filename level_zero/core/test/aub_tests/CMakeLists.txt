@@ -72,6 +72,7 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
                $<TARGET_OBJECTS:neo_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>
+               $<TARGET_OBJECTS:neo_libult>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
 )
@@ -83,23 +84,11 @@ endif()
 
 if(UNIX)
   target_sources(${TARGET_NAME} PRIVATE
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
   )
 else()
   target_sources(${TARGET_NAME} PRIVATE
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
-                 ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
-                 ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
   )
 endif()
 

@@ -21,6 +21,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                $<TARGET_OBJECTS:igdrcl_libult>
                $<TARGET_OBJECTS:neo_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>
+               $<TARGET_OBJECTS:neo_libult>
                $<TARGET_OBJECTS:igdrcl_libult_env>
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
@@ -39,17 +40,6 @@ target_link_libraries(igdrcl_mt_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE
 target_link_libraries(igdrcl_mt_tests gmock-gtest)
 target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 target_link_libraries(igdrcl_mt_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
-
-if(WIN32)
-  target_sources(igdrcl_mt_tests PRIVATE
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/os_memory_virtual_alloc_ult.cpp
-  )
-else()
-  target_sources(igdrcl_mt_tests PRIVATE
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
-  )
-endif()
 
 if(WIN32)
   add_dependencies(igdrcl_mt_tests mock_gdi igdrcl_tests)

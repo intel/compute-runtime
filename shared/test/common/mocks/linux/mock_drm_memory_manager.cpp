@@ -18,7 +18,7 @@
 namespace NEO {
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
-int closeInputFd = 0;
+std::atomic<int> closeInputFd(0);
 std::atomic<int> closeCalledCount(0);
 std::vector<void *> mmapVector(64);
 
