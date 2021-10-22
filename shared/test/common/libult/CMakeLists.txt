@@ -140,28 +140,33 @@ elseif(UNIX)
   target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 endif()
 
-set(neo_libult_SRCS)
+set(neo_libult_SRCS_LINUX
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/create_drm_memory_manager.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_neo_create.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/options.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
+)
+
+set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_LINUX ${neo_libult_SRCS_LINUX})
+set(neo_libult_SRCS_WINDOWS
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/os_memory_virtual_alloc_ult.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_create.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.h
+)
+
+set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_WINDOWS ${neo_libult_SRCS_WINDOWS})
 if(UNIX)
-  list(APPEND neo_libult_SRCS
-       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/create_drm_memory_manager.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_neo_create.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/options.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
-  )
+  set(neo_libult_SRCS ${neo_libult_SRCS_LINUX})
 else()
-  list(APPEND neo_libult_SRCS
-       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/os_memory_virtual_alloc_ult.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_create.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.cpp
-       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.h
-  )
+  set(neo_libult_SRCS ${neo_libult_SRCS_WINDOWS})
 endif()
 
 add_library(neo_libult OBJECT EXCLUDE_FROM_ALL ${neo_libult_SRCS})
