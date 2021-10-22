@@ -37,13 +37,12 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
     hash.update(&*options.begin(), options.size());
     hash.update("----", 4);
     hash.update(&*internalOptions.begin(), internalOptions.size());
-
     hash.update("----", 4);
     hash.update(r_pod_cast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
     hash.update("----", 4);
-    hash.update(r_pod_cast<const char *>(&hwInfo.featureTable.packed), sizeof(hwInfo.featureTable.packed));
+    hash.update(r_pod_cast<const char *>(std::to_string(hwInfo.featureTable.asHash()).c_str()), std::to_string(hwInfo.featureTable.asHash()).length());
     hash.update("----", 4);
-    hash.update(reinterpret_cast<const char *>(&hwInfo.workaroundTable), sizeof(hwInfo.workaroundTable));
+    hash.update(r_pod_cast<const char *>(std::to_string(hwInfo.workaroundTable.asHash()).c_str()), std::to_string(hwInfo.workaroundTable.asHash()).length());
 
     auto res = hash.finish();
     std::stringstream stream;

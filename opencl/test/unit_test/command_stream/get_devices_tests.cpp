@@ -22,9 +22,9 @@
 namespace NEO {
 bool operator==(const HardwareInfo &hwInfoIn, const HardwareInfo &hwInfoOut) {
     bool result = (0 == memcmp(&hwInfoIn.platform, &hwInfoOut.platform, sizeof(PLATFORM)));
-    result &= (0 == memcmp(&hwInfoIn.featureTable, &hwInfoOut.featureTable, sizeof(FeatureTable)));
-    result &= (0 == memcmp(&hwInfoIn.workaroundTable, &hwInfoOut.workaroundTable, sizeof(WorkaroundTable)));
-    result &= (0 == memcmp(&hwInfoIn.capabilityTable, &hwInfoOut.capabilityTable, sizeof(RuntimeCapabilityTable)));
+    result &= (hwInfoIn.featureTable.asHash() == hwInfoOut.featureTable.asHash());
+    result &= (hwInfoIn.workaroundTable.asHash() == hwInfoOut.workaroundTable.asHash());
+    result &= (hwInfoIn.capabilityTable == hwInfoOut.capabilityTable);
     return result;
 }
 
