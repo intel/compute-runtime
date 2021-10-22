@@ -5,7 +5,7 @@
 #
 
 if(UNIX)
-  target_sources(igdrcl_libult_common PRIVATE
+  target_sources(neo_libult_common PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.h

@@ -18,7 +18,7 @@ list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
      ${NEO_SHARED_aub_tests_configurations}
      $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
      $<TARGET_OBJECTS:igdrcl_libult>
-     $<TARGET_OBJECTS:igdrcl_libult_common>
+     $<TARGET_OBJECTS:neo_libult_common>
      $<TARGET_OBJECTS:neo_libult_cs>
      $<TARGET_OBJECTS:igdrcl_libult_env>
 )

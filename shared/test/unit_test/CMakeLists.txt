@@ -34,7 +34,7 @@ if(NOT SKIP_UNIT_TESTS)
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                  $<TARGET_OBJECTS:mock_gmm>
-                 $<TARGET_OBJECTS:igdrcl_libult_common>
+                 $<TARGET_OBJECTS:neo_libult_common>
                  $<TARGET_OBJECTS:neo_libult_cs>
   )
 

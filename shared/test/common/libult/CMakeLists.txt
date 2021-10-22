@@ -11,15 +11,15 @@ macro(macro_for_each_platform)
     foreach(BRANCH ${BRANCH_DIR_LIST})
       set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
-        list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+        list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
       set(SRC_FILE ${NEO_SHARED_DIRECTORY}/os_interface/linux/local${BRANCH_DIR_SUFFIX}${PLATFORM_IT_LOWER}/enable_local_memory_helper_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
-        list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW_LINUX ${SRC_FILE})
+        list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX ${SRC_FILE})
       endif()
       set(SRC_FILE ${NEO_SHARED_DIRECTORY}/ail${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_IT_LOWER}/ail_configuration_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
-        list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+        list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
     endforeach()
   endforeach()
@@ -30,20 +30,20 @@ macro(macro_for_each_gen)
     foreach(BRANCH ${BRANCH_DIR_LIST})
       set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common/${BRANCH}${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
-        list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+        list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
       set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common/libult/${BRANCH}${GEN_TYPE_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
-        list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+        list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
       foreach(SRC_IT "enable_" "enable_family_full_core_")
         set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}${SRC_IT}${GEN_TYPE_LOWER}.cpp)
         if(EXISTS ${SRC_FILE})
-          list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+          list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
         endif()
         set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH_DIR}${GEN_TYPE_LOWER}/${SRC_IT}${GEN_TYPE_LOWER}.cpp)
         if(EXISTS ${SRC_FILE})
-          list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+          list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
         endif()
       endforeach()
     endforeach()
@@ -54,7 +54,7 @@ endmacro()
 
 apply_macro_for_each_gen("TESTED")
 
-set(igdrcl_libult_common_SRCS_LIB_ULT
+set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.cpp
@@ -96,20 +96,20 @@ set(igdrcl_libult_common_SRCS_LIB_ULT
 
 get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)
 
-list(APPEND igdrcl_libult_common_SRCS_LIB_ULT
+list(APPEND neo_libult_common_SRCS_LIB_ULT
      ${NEO_SHARED_TESTS_CMD_PARSE}
 )
 
 if(UNIX)
-  list(APPEND igdrcl_libult_common_SRCS_ENABLE_TESTED_HW ${igdrcl_libult_common_SRCS_ENABLE_TESTED_HW_LINUX})
+  list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX})
 endif()
 
-add_library(igdrcl_libult_common OBJECT EXCLUDE_FROM_ALL
-            ${igdrcl_libult_common_SRCS_LIB_ULT}
-            ${igdrcl_libult_common_SRCS_ENABLE_TESTED_HW}
+add_library(neo_libult_common OBJECT EXCLUDE_FROM_ALL
+            ${neo_libult_common_SRCS_LIB_ULT}
+            ${neo_libult_common_SRCS_ENABLE_TESTED_HW}
 )
 
-set(igdrcl_libult_common_SRCS_LIB_ULT_WIN
+set(neo_libult_common_SRCS_LIB_ULT_WIN
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory${BRANCH_DIR_SUFFIX}mock_gmm_memory.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/mock_gmm_memory_base.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/mock_gmm_memory_base.h
@@ -119,38 +119,38 @@ set(igdrcl_libult_common_SRCS_LIB_ULT_WIN
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.h
 )
 
-set(igdrcl_libult_common_SRCS_LIB_ULT_LINUX
+set(neo_libult_common_SRCS_LIB_ULT_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.h
 )
-set_property(GLOBAL PROPERTY igdrcl_libult_common_SRCS_LIB_ULT_LINUX ${igdrcl_libult_common_SRCS_LIB_ULT_LINUX})
+set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_LINUX ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 
 if(UNIX AND NOT DISABLE_WDDM_LINUX)
-  target_sources(igdrcl_libult_common PRIVATE
+  target_sources(neo_libult_common PRIVATE
                  ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
   )
 endif()
 if(WIN32)
-  target_sources(igdrcl_libult_common PRIVATE ${igdrcl_libult_common_SRCS_LIB_ULT_WIN})
-  target_include_directories(igdrcl_libult_common PRIVATE
+  target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_LIB_ULT_WIN})
+  target_include_directories(neo_libult_common PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory${BRANCH_DIR_SUFFIX}
   )
 elseif(UNIX)
-  target_sources(igdrcl_libult_common PRIVATE ${igdrcl_libult_common_SRCS_LIB_ULT_LINUX})
+  target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 endif()
 
-target_include_directories(igdrcl_libult_common PRIVATE
+target_include_directories(neo_libult_common PRIVATE
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
                            ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
                            ${IGC_COMMON_PARENT_DIR}
 )
 
-set_target_properties(igdrcl_libult_common PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(igdrcl_libult_common PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
-set_property(TARGET igdrcl_libult_common APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
-target_include_directories(igdrcl_libult_common PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_definitions(igdrcl_libult_common PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+set_target_properties(neo_libult_common PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(neo_libult_common PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
+set_property(TARGET neo_libult_common APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
+target_include_directories(neo_libult_common PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(neo_libult_common PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 
-create_project_source_tree(igdrcl_libult_common)
+create_project_source_tree(neo_libult_common)
 add_subdirectories()
