@@ -69,7 +69,6 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     false,                                         // ftr64KBpages
     true,                                          // instrumentationEnabled
-    true,                                          // forceStatelessCompilationFor32Bit
     "core",                                        // platformType
     "",                                            // deviceName
     false,                                         // sourceLevelDebuggerSupported

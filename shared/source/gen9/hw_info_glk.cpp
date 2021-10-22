@@ -61,7 +61,6 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     false,                                         // ftr64KBpages
     true,                                          // instrumentationEnabled
-    false,                                         // forceStatelessCompilationFor32Bit
     "lp",                                          // platformType
     "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported

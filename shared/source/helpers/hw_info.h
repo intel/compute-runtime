@@ -49,7 +49,6 @@ struct RuntimeCapabilityTable {
     bool ftrRenderCompressedImages;
     bool ftr64KBpages;
     bool instrumentationEnabled;
-    bool forceStatelessCompilationFor32Bit;
     const char *platformType;
     const char *deviceName;
     bool debuggerSupported;

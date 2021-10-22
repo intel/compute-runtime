@@ -66,7 +66,6 @@ const RuntimeCapabilityTable XE_HP_SDV::capabilityTable{
     false,                                                     // ftrRenderCompressedImages
     true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
-    true,                                                      // forceStatelessCompilationFor32Bit
     "core",                                                    // platformType
     "",                                                        // deviceName
     true,                                                      // sourceLevelDebuggerSupported

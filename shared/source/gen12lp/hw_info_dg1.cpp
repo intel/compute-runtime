@@ -70,7 +70,6 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     true,                                          // ftr64KBpages
     true,                                          // instrumentationEnabled
-    true,                                          // forceStatelessCompilationFor32Bit
     "lp",                                          // platformType
     "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported

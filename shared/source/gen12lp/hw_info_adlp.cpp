@@ -61,7 +61,6 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     false,                                          // ftrRenderCompressedBuffers
     false,                                          // ftrRenderCompressedImages
     true,                                           // instrumentationEnabled
-    true,                                           // forceStatelessCompilationFor32Bit
     true,                                           // ftr64KBpages
     "lp",                                           // platformType
     "",                                             // deviceName
