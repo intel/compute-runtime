@@ -333,24 +333,6 @@ else()
   endif()
 endif()
 
-# Metrics Library
-get_filename_component(METRICS_LIBRARY_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}metrics_library" ABSOLUTE)
-if(IS_DIRECTORY ${METRICS_LIBRARY_HEADERS_DIR})
-  message(STATUS "Metrics Library dir: ${METRICS_LIBRARY_HEADERS_DIR}")
-  include_directories(${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}metrics_library)
-else()
-  message(FATAL_ERROR "Metrics Library headers not available!")
-endif()
-
-# Metrics Discovery
-get_filename_component(METRICS_DISCOVERY_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}metrics_discovery" ABSOLUTE)
-if(IS_DIRECTORY ${METRICS_DISCOVERY_HEADERS_DIR})
-  message(STATUS "Metrics Discovery dir: ${METRICS_DISCOVERY_HEADERS_DIR}")
-  include_directories(${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}metrics_discovery)
-else()
-  message(FATAL_ERROR "Metrics Discovery headers not available!")
-endif()
-
 if(NOT DEFINED KHRONOS_HEADERS_DIR)
   get_filename_component(DIR_tmp "${CMAKE_CURRENT_SOURCE_DIR}/third_party/opencl_headers" ABSOLUTE)
   if(IS_DIRECTORY ${DIR_tmp})
@@ -382,6 +364,9 @@ include(cmake/find_igc.cmake)
 
 # GmmLib detection
 include(cmake/find_gmmlib.cmake)
+
+# Metrics detection
+include(cmake/find_metrics.cmake)
 
 # LibVA detection
 if(NOT DISABLE_LIBVA)
