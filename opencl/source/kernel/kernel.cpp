@@ -1615,7 +1615,7 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
     if (argVal) {
         storeKernelArg(argIndex, NONE_OBJ, nullptr, nullptr, argSize);
 
-        auto crossThreadDataEnd = ptrOffset(crossThreadData, crossThreadDataSize);
+        [[maybe_unused]] auto crossThreadDataEnd = ptrOffset(crossThreadData, crossThreadDataSize);
         const auto &argAsVal = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex].as<ArgDescValue>();
         for (const auto &element : argAsVal.elements) {
             DEBUG_BREAK_IF(element.size <= 0);
@@ -1624,7 +1624,6 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
             auto pSrc = ptrOffset(argVal, element.sourceOffset);
 
             DEBUG_BREAK_IF(!(ptrOffset(pDst, element.size) <= crossThreadDataEnd));
-            UNUSED_VARIABLE(crossThreadDataEnd);
 
             if (element.sourceOffset < argSize) {
                 size_t maxBytesToCopy = argSize - element.sourceOffset;

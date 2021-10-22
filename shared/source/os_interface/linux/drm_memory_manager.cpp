@@ -517,9 +517,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     drm_i915_gem_create create = {0, 0, 0};
     create.size = allocationData.imgInfo->size;
 
-    auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
+    [[maybe_unused]] auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
     DEBUG_BREAK_IF(ret != 0);
-    UNUSED_VARIABLE(ret);
 
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new (std::nothrow) BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, allocationData.imgInfo->size, maxOsContextCount));
     if (!bo) {
@@ -527,9 +526,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     }
     bo->setAddress(gpuRange);
 
-    auto ret2 = bo->setTiling(I915_TILING_Y, static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
+    [[maybe_unused]] auto ret2 = bo->setTiling(I915_TILING_Y, static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
     DEBUG_BREAK_IF(ret2 != true);
-    UNUSED_VARIABLE(ret2);
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), nullptr, gpuRange, allocationData.imgInfo->size, MemoryPool::SystemCpuInaccessible);
     allocation->setDefaultGmm(gmm.release());
@@ -635,10 +633,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     auto ret = this->getDrm(properties.rootDeviceIndex).ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
 
     if (ret != 0) {
-        int err = errno;
+        [[maybe_unused]] int err = errno;
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         DEBUG_BREAK_IF(ret != 0);
-        UNUSED_VARIABLE(ret);
+
         return nullptr;
     }
 
@@ -819,9 +817,9 @@ uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
 
     drm_i915_gem_context_param getContextParam = {};
     getContextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
-    auto ret = getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &getContextParam);
+    [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &getContextParam);
     DEBUG_BREAK_IF(ret != 0);
-    UNUSED_VARIABLE(ret);
+
     uint64_t gpuMemorySize = getContextParam.value;
 
     return std::min(hostMemorySize, gpuMemorySize);
@@ -887,9 +885,8 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t r
             if (osHandle->bo) {
                 BufferObject *search = osHandle->bo;
                 search->wait(-1);
-                auto refCount = unreference(search, true);
+                [[maybe_unused]] auto refCount = unreference(search, true);
                 DEBUG_BREAK_IF(refCount != 1u);
-                UNUSED_VARIABLE(refCount);
             }
             delete handleStorage.fragmentStorageData[i].osHandleStorage;
             handleStorage.fragmentStorageData[i].osHandleStorage = nullptr;

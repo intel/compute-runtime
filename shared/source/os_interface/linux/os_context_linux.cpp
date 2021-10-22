@@ -68,10 +68,10 @@ void OsContextLinux::initializeContext() {
             this->drmContextIds.push_back(drmContextId);
 
             if (drm.isPerContextVMRequired()) {
-                auto ret = drm.queryVmId(drmContextId, drmVmId);
+                [[maybe_unused]] auto ret = drm.queryVmId(drmContextId, drmVmId);
                 DEBUG_BREAK_IF(drmVmId == 0);
                 DEBUG_BREAK_IF(ret != 0);
-                UNUSED_VARIABLE(ret);
+
                 UNRECOVERABLE_IF(this->drmVmIds.size() <= deviceIndex);
                 this->drmVmIds[deviceIndex] = drmVmId;
             }

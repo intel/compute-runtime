@@ -36,9 +36,9 @@ TagNodeBase *TagAllocator<TagType>::getTag() {
 template <typename TagType>
 void TagAllocator<TagType>::returnTagToFreePool(TagNodeBase *node) {
     auto nodeT = static_cast<NodeType *>(node);
-    auto usedNode = usedTags.removeOne(*nodeT).release();
+    [[maybe_unused]] auto usedNode = usedTags.removeOne(*nodeT).release();
     DEBUG_BREAK_IF(usedNode == nullptr);
-    UNUSED_VARIABLE(usedNode);
+
     freeTags.pushFrontOne(*nodeT);
 }
 
@@ -165,41 +165,37 @@ size_t TagNode<TagType>::getGlobalEndOffset() const {
 }
 
 template <typename TagType>
-uint64_t TagNode<TagType>::getContextStartValue(uint32_t packetIndex) const {
+uint64_t TagNode<TagType>::getContextStartValue([[maybe_unused]] uint32_t packetIndex) const {
     if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
         return tagForCpuAccess->getContextStartValue(packetIndex);
     } else {
-        UNUSED_VARIABLE(packetIndex);
         UNRECOVERABLE_IF(true);
     }
 }
 
 template <typename TagType>
-uint64_t TagNode<TagType>::getGlobalStartValue(uint32_t packetIndex) const {
+uint64_t TagNode<TagType>::getGlobalStartValue([[maybe_unused]] uint32_t packetIndex) const {
     if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
         return tagForCpuAccess->getGlobalStartValue(packetIndex);
     } else {
-        UNUSED_VARIABLE(packetIndex);
         UNRECOVERABLE_IF(true);
     }
 }
 
 template <typename TagType>
-uint64_t TagNode<TagType>::getContextEndValue(uint32_t packetIndex) const {
+uint64_t TagNode<TagType>::getContextEndValue([[maybe_unused]] uint32_t packetIndex) const {
     if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
         return tagForCpuAccess->getContextEndValue(packetIndex);
     } else {
-        UNUSED_VARIABLE(packetIndex);
         UNRECOVERABLE_IF(true);
     }
 }
 
 template <typename TagType>
-uint64_t TagNode<TagType>::getGlobalEndValue(uint32_t packetIndex) const {
+uint64_t TagNode<TagType>::getGlobalEndValue([[maybe_unused]] uint32_t packetIndex) const {
     if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
         return tagForCpuAccess->getGlobalEndValue(packetIndex);
     } else {
-        UNUSED_VARIABLE(packetIndex);
         UNRECOVERABLE_IF(true);
     }
 }
@@ -232,12 +228,10 @@ size_t TagNode<TagType>::getSinglePacketSize() const {
 }
 
 template <typename TagType>
-void TagNode<TagType>::assignDataToAllTimestamps(uint32_t packetIndex, void *source) {
+void TagNode<TagType>::assignDataToAllTimestamps([[maybe_unused]] uint32_t packetIndex, [[maybe_unused]] void *source) {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
         return tagForCpuAccess->assignDataToAllTimestamps(packetIndex, source);
     } else {
-        UNUSED_VARIABLE(packetIndex);
-        UNUSED_VARIABLE(source);
         UNRECOVERABLE_IF(true);
     }
 }
