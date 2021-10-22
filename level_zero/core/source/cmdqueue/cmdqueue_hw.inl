@@ -151,6 +151,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     size_t totalCmdBuffers = 0;
     uint32_t perThreadScratchSpaceSize = 0;
+    NEO::PageFaultManager *pageFaultManager = nullptr;
+    if (performMigration) {
+        pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        if (pageFaultManager == nullptr) {
+            performMigration = false;
+        }
+    }
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
 
@@ -189,6 +196,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         partitionCount = std::max(partitionCount, commandList->partitionCount);
+        commandList->csr = csr;
+        commandList->makeResidentAndMigrate(performMigration);
     }
 
     size_t linearStreamSizeEstimate = totalCmdBuffers * sizeof(MI_BATCH_BUFFER_START);
@@ -337,14 +346,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
     }
 
-    NEO::PageFaultManager *pageFaultManager = nullptr;
-    if (performMigration) {
-        pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-        if (pageFaultManager == nullptr) {
-            performMigration = false;
-        }
-    }
-
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
@@ -399,9 +400,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         printfFunctionContainer.insert(printfFunctionContainer.end(),
                                        commandList->getPrintfFunctionContainer().begin(),
                                        commandList->getPrintfFunctionContainer().end());
-
-        commandList->csr = csr;
-        commandList->makeResidentAndMigrate(performMigration);
     }
 
     if (performMigration) {

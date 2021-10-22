@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "test.h"
@@ -2028,6 +2029,83 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
     auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getSynchronousMode();
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, cmdQueueSynchronousMode);
 
+    commandQueue->destroy();
+}
+
+struct DeviceWithDualStorage : Test<DeviceFixture> {
+    void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
+        DebugManager.flags.EnableLocalMemory.set(1);
+        DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+        DeviceFixture::SetUp();
+    }
+    void TearDown() override {
+        DeviceFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperationsHandler>();
+    ze_result_t res = ZE_RESULT_SUCCESS;
+
+    const ze_command_queue_desc_t desc = {};
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getInternalEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           res));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, res)));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, commandList);
+    Mock<Kernel> kernel;
+    kernel.immutableData.device = device;
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    res = context->allocSharedMem(device->toHandle(),
+                                  &deviceDesc,
+                                  &hostDesc,
+                                  size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    kernel.residencyContainer.push_back(gpuAlloc);
+
+    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr);
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    auto pageFaultCmdQueue = whitebox_cast(deviceImp->pageFaultCommandList->cmdQImmediate);
+
+    auto sizeBefore = commandQueue->commandStream->getUsed();
+    auto pageFaultSizeBefore = pageFaultCmdQueue->commandStream->getUsed();
+    auto handle = commandList->toHandle();
+    commandQueue->executeCommandLists(1, &handle, nullptr, true);
+    auto sizeAfter = commandQueue->commandStream->getUsed();
+    auto pageFaultSizeAfter = pageFaultCmdQueue->commandStream->getUsed();
+    EXPECT_LT(sizeBefore, sizeAfter);
+    EXPECT_LT(pageFaultSizeBefore, pageFaultSizeAfter);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(commandQueue->commandStream->getCpuBase(), 0),
+                                             sizeAfter);
+    auto count = findAll<CFE_STATE *>(commands.begin(), commands.end()).size();
+    EXPECT_EQ(0u, count);
+
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(pageFaultCmdQueue->commandStream->getCpuBase(), 0),
+                                             pageFaultSizeAfter);
+    count = findAll<CFE_STATE *>(commands.begin(), commands.end()).size();
+    EXPECT_EQ(1u, count);
+
+    res = context->freeMem(ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     commandQueue->destroy();
 }
 } // namespace ult
