@@ -30,7 +30,6 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/compiler_support.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <algorithm>
@@ -753,7 +752,7 @@ bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
     switch (imgInfo.imgDesc.imageType) {
     case ImageType::Image3D:
         imageDepth = imgInfo.imgDesc.imageDepth;
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case ImageType::Image2D:
     case ImageType::Image2DArray:
         imageHeight = imgInfo.imgDesc.imageHeight;

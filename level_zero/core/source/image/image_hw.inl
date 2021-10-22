@@ -14,7 +14,6 @@
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/compiler_support.h"
 
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/image/image_formats.h"

@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/utilities/compiler_support.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 
 using HwHelperTestGen12Lp = HwHelperTest;
@@ -57,10 +56,10 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIsWorka
         switch (stepping) {
         case REVISION_A0:
             EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         case REVISION_B:
             EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         default:
             EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
             EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));

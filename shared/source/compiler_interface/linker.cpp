@@ -17,7 +17,6 @@
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/compiler_support.h"
 
 #include "RelocationInfo.h"
 

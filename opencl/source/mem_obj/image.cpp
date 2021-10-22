@@ -18,7 +18,6 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/compiler_support.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
@@ -164,7 +163,7 @@ Image *Image::create(Context *context,
         switch (imageDesc->image_type) {
         case CL_MEM_OBJECT_IMAGE3D:
             imageDepth = imageDesc->image_depth;
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         case CL_MEM_OBJECT_IMAGE2D:
         case CL_MEM_OBJECT_IMAGE2D_ARRAY:
             imageHeight = imageDesc->image_height;
@@ -727,7 +726,7 @@ void Image::calculateHostPtrOffset(size_t *imageOffset, const size_t *origin, co
     case CL_MEM_OBJECT_IMAGE1D_BUFFER:
     case CL_MEM_OBJECT_IMAGE2D:
         DEBUG_BREAK_IF(slicePitch != 0 && slicePitch < computedImageRowPitch * region[1]);
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case CL_MEM_OBJECT_IMAGE2D_ARRAY:
     case CL_MEM_OBJECT_IMAGE3D:
         *imageOffset = origin[2] * computedImageSlicePitch + origin[1] * computedImageRowPitch + origin[0] * bytesPerPixel;

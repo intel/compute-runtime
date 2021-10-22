@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/core/source/image/image_format_desc_helper.h"
-
-#include "shared/source/utilities/compiler_support.h"
 
 #include "third_party/opencl_headers/CL/cl_ext_intel.h"
 
@@ -40,7 +38,7 @@ cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
             return CL_SNORM_INT16;
 
         return CL_HALF_FLOAT;
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case ZE_IMAGE_FORMAT_LAYOUT_32:
     case ZE_IMAGE_FORMAT_LAYOUT_32_32:
     case ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32:
