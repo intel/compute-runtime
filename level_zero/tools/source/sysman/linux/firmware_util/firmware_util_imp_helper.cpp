@@ -49,12 +49,4 @@ ze_result_t FirmwareUtilImp::flashFirmware(std::string fwType, void *pImage, uin
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t FirmwareUtilImp::fwFlashIafPsc(void *pImage, uint32_t size) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t FirmwareUtilImp::pscGetVersion(std::string &fwVersion) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 } // namespace L0

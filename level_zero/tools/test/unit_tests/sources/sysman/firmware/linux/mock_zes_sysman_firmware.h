@@ -60,13 +60,7 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
     Mock<FirmwareInterface>() = default;
 
     MOCK_METHOD(ze_result_t, fwDeviceInit, (), (override));
-    MOCK_METHOD(ze_result_t, fwGetVersion, (std::string & fwVersion), (override));
-    MOCK_METHOD(ze_result_t, opromGetVersion, (std::string & fwVersion), (override));
-    MOCK_METHOD(ze_result_t, pscGetVersion, (std::string & fwVersion), (override));
     MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
-    MOCK_METHOD(ze_result_t, fwFlashGSC, (void *pImage, uint32_t size), (override));
-    MOCK_METHOD(ze_result_t, fwFlashOprom, (void *pImage, uint32_t size), (override));
-    MOCK_METHOD(ze_result_t, fwFlashIafPsc, (void *pImage, uint32_t size), (override));
     MOCK_METHOD(ze_result_t, getFwVersion, (std::string fwType, std::string &firmwareVersion), (override));
     MOCK_METHOD(ze_result_t, flashFirmware, (std::string fwType, void *pImage, uint32_t size), (override));
     MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));

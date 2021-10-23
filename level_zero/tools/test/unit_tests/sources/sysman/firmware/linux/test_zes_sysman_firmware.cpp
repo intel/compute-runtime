@@ -30,15 +30,7 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface.get();
         ON_CALL(*pMockFwInterface.get(), fwDeviceInit())
             .WillByDefault(::testing::Return(ZE_RESULT_SUCCESS));
-        ON_CALL(*pMockFwInterface.get(), fwGetVersion(_))
-            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwGetVersion));
-        ON_CALL(*pMockFwInterface.get(), opromGetVersion(_))
-            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockOpromGetVersion));
         ON_CALL(*pMockFwInterface.get(), getFirstDevice(_))
-            .WillByDefault(::testing::Return(ZE_RESULT_SUCCESS));
-        ON_CALL(*pMockFwInterface.get(), fwFlashGSC(_, _))
-            .WillByDefault(::testing::Return(ZE_RESULT_SUCCESS));
-        ON_CALL(*pMockFwInterface.get(), fwFlashOprom(_, _))
             .WillByDefault(::testing::Return(ZE_RESULT_SUCCESS));
         ON_CALL(*pMockFwInterface.get(), getDeviceSupportedFwTypes(_))
             .WillByDefault(::testing::SetArgReferee<0>(mockSupportedFwTypes));

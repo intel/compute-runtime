@@ -67,18 +67,19 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ~FirmwareUtilImp();
     ze_result_t fwDeviceInit() override;
     ze_result_t getFirstDevice(igsc_device_info *) override;
-    ze_result_t fwGetVersion(std::string &fwVersion) override;
-    ze_result_t opromGetVersion(std::string &fwVersion) override;
-    ze_result_t pscGetVersion(std::string &fwVersion) override;
-    ze_result_t fwFlashGSC(void *pImage, uint32_t size) override;
-    ze_result_t fwFlashOprom(void *pImage, uint32_t size) override;
-    ze_result_t fwFlashIafPsc(void *pImage, uint32_t size) override;
     ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) override;
     ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) override;
     ze_result_t fwIfrApplied(bool &ifrStatus) override;
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override;
     ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) override;
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
+
+    ze_result_t fwGetVersion(std::string &fwVersion);
+    ze_result_t opromGetVersion(std::string &fwVersion);
+    ze_result_t pscGetVersion(std::string &fwVersion);
+    ze_result_t fwFlashGSC(void *pImage, uint32_t size);
+    ze_result_t fwFlashOprom(void *pImage, uint32_t size);
+    ze_result_t fwFlashIafPsc(void *pImage, uint32_t size);
 
     template <class T>
     bool getSymbolAddr(const std::string name, T &proc);
