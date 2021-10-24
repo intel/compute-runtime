@@ -48,10 +48,7 @@ bool LinuxFirmwareImp::isFirmwareSupported(void) {
 }
 
 void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties) {
-    std::string fwVersion;
-    if (ZE_RESULT_SUCCESS == pFwInterface->getFwVersion(osFwType, fwVersion)) {
-        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, fwVersion.c_str(), ZES_STRING_PROPERTY_SIZE);
-    } else {
+    if (ZE_RESULT_SUCCESS != getFirmwareVersion(osFwType, pProperties)) {
         strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
     }
     pProperties->canControl = true; //Assuming that user has permission to flash the firmware
@@ -63,6 +60,7 @@ ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
 
 LinuxFirmwareImp::LinuxFirmwareImp(OsSysman *pOsSysman, const std::string &fwType) : osFwType(fwType) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
 }
 
