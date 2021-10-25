@@ -86,7 +86,7 @@ else()
 endif()
 
 target_link_libraries(${TARGET_NAME}
-                      ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE}
+                      ${NEO_SHARED_MOCKABLE_LIB_NAME}
                       compute_runtime_mockable_extra
                       ${HW_LIBS_ULT}
                       gmock-gtest

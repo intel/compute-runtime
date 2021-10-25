@@ -8,7 +8,6 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "shared/source/gmm_helper/gmm_interface.h"
-#include "shared/source/os_interface/linux/drm_neo.h"
 
 namespace NEO {
 

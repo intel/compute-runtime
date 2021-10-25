@@ -70,15 +70,13 @@ target_include_directories(
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
 )
 
-if(UNIX)
-  target_link_libraries(${TARGET_NAME} pthread rt)
-else()
+if(WIN32)
   target_link_libraries(${TARGET_NAME} dbghelp)
   add_dependencies(${TARGET_NAME} mock_gdi)
 endif()
 
 target_link_libraries(
-                      ${TARGET_NAME} ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE}
+                      ${TARGET_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME}
                       compute_runtime_mockable_extra ${HW_LIBS_ULT} gmock-gtest
 )
 

@@ -11,7 +11,6 @@ set(OPENCL_AUB_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 get_property(NEO_SHARED_aub_tests_configurations GLOBAL PROPERTY NEO_SHARED_aub_tests_configurations)
 
 list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
-     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
      ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
      ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
      ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
@@ -77,9 +76,9 @@ copy_gmm_dll_for(igdrcl_aub_tests)
 add_subdirectories()
 
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
-target_link_libraries(igdrcl_aub_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
+target_link_libraries(igdrcl_aub_tests ${OPENCL_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
-target_link_libraries(igdrcl_aub_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
+target_link_libraries(igdrcl_aub_tests gmock-gtest ${NEO_EXTRA_LIBS})
 if(UNIX)
   target_link_libraries(igdrcl_aub_tests ${GMM_LINK_NAME})
 else()

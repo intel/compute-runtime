@@ -763,6 +763,12 @@ set(BUILTINS_SPIRV_LIB_NAME "builtins_spirv")
 set(BUILTINS_VME_LIB_NAME "builtins_vme")
 set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
 
+if(WIN32)
+  set(NEO_EXTRA_LIBS Ws2_32)
+else()
+  set(NEO_EXTRA_LIBS dl pthread rt)
+endif()
+
 add_subdirectory_unique(shared/source)
 add_subdirectory_unique(shared/generate_cpp_array)
 
@@ -800,7 +806,6 @@ macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
   if(${MOCKABLE})
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual)
     target_compile_definitions(${SHARINGS_ENABLE_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual)
-    target_compile_definitions(${LIB_NAME} PUBLIC DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} DEFAULT_TEST_FAMILY_NAME=${DEFAULT_TESTED_FAMILY_NAME} ${TESTED_GEN_FLAGS_DEFINITONS})
   else()
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
     target_compile_definitions(${SHARINGS_ENABLE_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
@@ -823,13 +828,6 @@ else()
     set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
     generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
   endif()
-endif()
-
-set(NEO_STATICALLY_LINKED_LIBRARIES ${NEO_RELEASE_LIB_NAME} ${NEO_SHARED_RELEASE_LIB_NAME} ${NEO_RELEASE_LIB_NAME} ${NEO_SHARED_RELEASE_LIB_NAME})
-set(NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
-
-if(NOT SKIP_UNIT_TESTS)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/level_zero/cmake/${BRANCH_TYPE}/l0_tests.cmake)
 endif()
 
 add_subdirectory_unique(shared/test/unit_test)
