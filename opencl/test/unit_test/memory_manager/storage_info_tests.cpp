@@ -275,6 +275,7 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSVMGPUThenAllMemory
 TEST_F(MultiDeviceStorageInfoTest, givenMultiStorageGranularityWhenCreatingStorageInfoThenProperGranularityIsSet) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.MultiStorageGranularity.set(128);
+    DebugManager.flags.MultiStoragePolicy.set(1);
 
     AllocationProperties properties{mockRootDeviceIndex, false, 10 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::SVM_GPU, true, allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);

@@ -18,7 +18,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
               ${CORE_SOURCES}
   )
   if(${MOCKABLE})
-    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual)
+    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} DEFAULT_TEST_FAMILY_NAME=${DEFAULT_TESTED_FAMILY_NAME} ${TESTED_GEN_FLAGS_DEFINITONS})
   else()
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
   endif()

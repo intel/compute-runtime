@@ -115,8 +115,11 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         auto colouringPolicy = properties.colouringPolicy;
         auto granularity = properties.colouringGranularity;
 
+        if (DebugManager.flags.MultiStoragePolicy.get() != -1) {
+            colouringPolicy = static_cast<ColouringPolicy>(DebugManager.flags.MultiStoragePolicy.get());
+        }
+
         if (DebugManager.flags.MultiStorageGranularity.get() != -1) {
-            colouringPolicy = ColouringPolicy::ChunkSizeBased;
             granularity = DebugManager.flags.MultiStorageGranularity.get() * MemoryConstants::kiloByte;
         }
 

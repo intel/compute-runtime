@@ -1,18 +1,32 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 name: verify
-on: [pull_request]
+on:
+  - pull_request
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: neo
+    - name: lint
+      uses: ./neo/.github/actions/neo-lint
+      with:
+        path: neo
+
   build:
+    needs:
+      - lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: 
+        compiler:
           - [gcc-7, g++-7]
           - [gcc-8, g++-8]
           - [gcc-9, g++-9]

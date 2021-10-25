@@ -141,6 +141,7 @@ elseif(UNIX)
 endif()
 
 set(neo_libult_SRCS_LINUX
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/create_drm_memory_manager.cpp
@@ -151,6 +152,7 @@ set(neo_libult_SRCS_LINUX
 
 set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_LINUX ${neo_libult_SRCS_LINUX})
 set(neo_libult_SRCS_WINDOWS
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
@@ -182,7 +184,6 @@ foreach(target_name "neo_libult_common" "neo_libult")
                              ${IGC_COMMON_PARENT_DIR}
   )
   target_compile_definitions(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
-
   create_project_source_tree(${target_name})
 endforeach()
 

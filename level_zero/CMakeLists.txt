@@ -7,6 +7,9 @@
 include(cmake/verify_l0_support.cmake)
 
 if(BUILD_WITH_L0)
+  if(NOT SKIP_UNIT_TESTS)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/l0_tests.cmake)
+  endif()
 
   set(TARGET_NAME_L0 ze_intel_gpu)
 
@@ -242,7 +245,6 @@ if(BUILD_WITH_L0)
     )
     target_link_libraries(${TARGET_NAME_L0}
                           dxgi
-                          ws2_32
     )
     if(DEFINED L0_DLL_RC_FILE)
       message(STATUS "Setting L0 Resource Info")
@@ -310,7 +312,6 @@ if(BUILD_WITH_L0)
   target_include_directories(${TARGET_NAME_L0} PRIVATE ${IGC_COMMON_PARENT_DIR})
 
   if(UNIX)
-    set(OS_SPECIFIC_LIBS dl pthread rt)
     target_include_directories(${TARGET_NAME_L0} PUBLIC
                                ${L0_ROOT_DIR}/core/source/os_interface/linux
                                ${I915_INCLUDES_DIR}
@@ -319,7 +320,6 @@ if(BUILD_WITH_L0)
                                ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
     )
   else()
-    set(OS_SPECIFIC_LIBS "")
     target_include_directories(${TARGET_NAME_L0} PUBLIC
                                ${L0_ROOT_DIR}/core/source/os_interface/windows
     )
@@ -392,7 +392,7 @@ if(BUILD_WITH_L0)
 
     if(${MOCKABLE})
       get_property(COMPUTE_RUNTIME_DEFINITIONS
-                   TARGET ${NEO_MOCKABLE_LIB_NAME}
+                   TARGET ${NEO_SHARED_MOCKABLE_LIB_NAME}
                    PROPERTY COMPILE_DEFINITIONS
       )
       target_compile_definitions(${LIB_NAME}
@@ -471,7 +471,7 @@ if(BUILD_WITH_L0)
 
   target_link_libraries(${TARGET_NAME_L0}
                         ${NEO_SHARED_RELEASE_LIB_NAME}
-                        ${OS_SPECIFIC_LIBS} ${ASAN_LIBS} ${TSAN_LIBS}
+                        ${NEO_EXTRA_LIBS} ${ASAN_LIBS} ${TSAN_LIBS}
   )
 
   if(UNIX)

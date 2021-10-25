@@ -39,12 +39,6 @@ if(NOT SKIP_UNIT_TESTS)
                  $<TARGET_OBJECTS:neo_libult>
   )
 
-  if(UNIX)
-    target_sources(${TARGET_NAME} PRIVATE
-                   ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
-    )
-  endif()
-
   set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
   set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
 
@@ -56,16 +50,14 @@ if(NOT SKIP_UNIT_TESTS)
                              ${IGC_COMMON_PARENT_DIR}
   )
 
-  if(UNIX)
-    target_link_libraries(${TARGET_NAME} pthread rt)
-  else()
+  if(WIN32)
     target_link_libraries(${TARGET_NAME} dbghelp)
   endif()
 
   target_link_libraries(${TARGET_NAME}
                         gmock-gtest
-                        ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE}
-                        compute_runtime_mockable_extra
+                        ${NEO_SHARED_MOCKABLE_LIB_NAME}
+                        ${NEO_EXTRA_LIBS}
   )
 
   if(MSVC)

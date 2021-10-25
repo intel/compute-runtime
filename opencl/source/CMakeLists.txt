@@ -66,14 +66,12 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
 endif()
 
 if(WIN32)
-  set(IGDRCL_EXTRA_LIBS Ws2_32)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
                              ${NEO_SHARED_DIRECTORY}/os_interface/windows
                              ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows
   )
   target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC OGL=1)
 else()
-  set(IGDRCL_EXTRA_LIBS dl pthread)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
                              ${NEO_SHARED_DIRECTORY}/os_interface/linux
                              ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux
@@ -171,7 +169,7 @@ if(${GENERATE_EXECUTABLE})
 
   add_subdirectory(dll)
 
-  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${IGDRCL_EXTRA_LIBS})
+  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_EXTRA_LIBS})
 
   target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
                              ${CMAKE_CURRENT_BINARY_DIR}
@@ -225,4 +223,3 @@ if(UNIX AND NOT (TARGET clang-tidy))
   )
 endif()
 
-set(IGDRCL_EXTRA_LIBS ${IGDRCL_EXTRA_LIBS} PARENT_SCOPE)

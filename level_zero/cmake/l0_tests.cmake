@@ -6,7 +6,7 @@
 
 #Extract compute runtime COMPILE_DEFINITIONS
 get_property(COMPUTE_RUNTIME_MOCKABLE_DEFINITIONS
-             TARGET ${NEO_MOCKABLE_LIB_NAME}
+             TARGET ${NEO_SHARED_MOCKABLE_LIB_NAME}
              PROPERTY COMPILE_DEFINITIONS
 )
 
@@ -20,7 +20,7 @@ endif()
 
 #Extract compute runtime INCLUDE_DIRECTORIES
 get_property(COMPUTE_RUNTIME_MOCKABLE_INCLUDES
-             TARGET ${NEO_MOCKABLE_LIB_NAME}
+             TARGET ${NEO_SHARED_MOCKABLE_LIB_NAME}
              PROPERTY INCLUDE_DIRECTORIES
 )
 
@@ -30,7 +30,6 @@ add_library(compute_runtime_mockable_extra
             EXCLUDE_FROM_ALL
             ${CMAKE_CURRENT_LIST_DIR}/l0_tests.cmake
             ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_cif.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_command_stream_receiver.cpp
@@ -65,13 +64,8 @@ target_compile_definitions(compute_runtime_mockable_extra
 
 target_link_libraries(compute_runtime_mockable_extra
                       gmock-gtest
+                      ${NEO_EXTRA_LIBS}
 )
-
-if(WIN32)
-  target_link_libraries(compute_runtime_mockable_extra
-                        ws2_32
-  )
-endif()
 
 if(UNIX)
   target_sources(compute_runtime_mockable_extra
@@ -79,9 +73,6 @@ if(UNIX)
                  ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info_impl.cpp
                  ${NEO_SHARED_DIRECTORY}/gmm_helper${BRANCH_DIR_SUFFIX}resource_info_${DRIVER_MODEL}.cpp
                  ${NEO_SHARED_DIRECTORY}/tbx/tbx_sockets_imp.cpp
-  )
-  target_link_libraries(compute_runtime_mockable_extra
-                        dl
   )
 endif()
 set_target_properties(compute_runtime_mockable_extra PROPERTIES

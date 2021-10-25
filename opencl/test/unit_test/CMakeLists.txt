@@ -9,6 +9,7 @@ project(igdrcl_tests)
 set(OPENCL_TEST_PROJECTS_FOLDER "opencl runtime")
 set(PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER "${OPENCL_TEST_PROJECTS_FOLDER}/test platforms")
 set(OPENCL_UNIT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(OPENCL_STATICALLY_LINKED_LIBRARIES_MOCKABLE ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
 
 include(${NEO_SOURCE_DIR}/cmake/setup_ult_global_flags.cmake)
 
@@ -28,7 +29,6 @@ add_dependencies(unit_tests copy_test_files_per_product)
 
 set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
@@ -107,7 +107,7 @@ if(COMPILER_SUPPORTS_SSE42)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
 endif()
 
-target_link_libraries(igdrcl_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
+target_link_libraries(igdrcl_tests ${OPENCL_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 
 target_include_directories(igdrcl_tests PRIVATE
@@ -122,7 +122,7 @@ if(WIN32)
   )
 endif()
 
-target_link_libraries(igdrcl_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
+target_link_libraries(igdrcl_tests gmock-gtest ${NEO_EXTRA_LIBS})
 
 set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins")
 

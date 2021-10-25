@@ -8,7 +8,6 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "shared/source/helpers/constants.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
 

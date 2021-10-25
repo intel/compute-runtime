@@ -97,6 +97,29 @@ class BufferObject {
     void setCachePolicy(CachePolicy memType) { cachePolicy = memType; }
     CachePolicy peekCachePolicy() const { return cachePolicy; }
 
+    void setColourWithBind() {
+        this->colourWithBind = true;
+    }
+    void setColourChunk(size_t size) {
+        this->colourChunk = size;
+    }
+    void addColouringAddress(uint64_t address) {
+        this->bindAddresses.push_back(address);
+    }
+    void reserveAddressVector(size_t size) {
+        this->bindAddresses.reserve(size);
+    }
+
+    bool getColourWithBind() {
+        return this->colourWithBind;
+    }
+    size_t getColourChunk() {
+        return this->colourChunk;
+    }
+    std::vector<uint64_t> &getColourAddresses() {
+        return this->bindAddresses;
+    }
+
   protected:
     Drm *drm = nullptr;
     bool perContextVmsUsed = false;
@@ -124,6 +147,10 @@ class BufferObject {
 
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;
+
+    bool colourWithBind = false;
+    size_t colourChunk = 0;
+    std::vector<uint64_t> bindAddresses;
 
   private:
     uint64_t gpuAddress = 0llu;
