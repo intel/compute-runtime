@@ -66,15 +66,6 @@ target_link_libraries(compute_runtime_mockable_extra
                       gmock-gtest
                       ${NEO_EXTRA_LIBS}
 )
-
-if(UNIX)
-  target_sources(compute_runtime_mockable_extra
-                 PRIVATE
-                 ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info_impl.cpp
-                 ${NEO_SHARED_DIRECTORY}/gmm_helper${BRANCH_DIR_SUFFIX}resource_info_${DRIVER_MODEL}.cpp
-                 ${NEO_SHARED_DIRECTORY}/tbx/tbx_sockets_imp.cpp
-  )
-endif()
 set_target_properties(compute_runtime_mockable_extra PROPERTIES
                       POSITION_INDEPENDENT_CODE ON
                       FOLDER "ze_intel_gpu"

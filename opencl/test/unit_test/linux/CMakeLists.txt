@@ -25,7 +25,6 @@ add_executable(igdrcl_${target_name}
                ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
-               ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}drm_other_requests.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
@@ -35,7 +34,7 @@ if(NEO__LIBVA_FOUND)
   target_sources(igdrcl_${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)
 endif()
 
-target_link_libraries(igdrcl_${target_name} ${OPENCL_STATICALLY_LINKED_LIBRARIES_MOCKABLE} igdrcl_mocks ${OPENCL_STATICALLY_LINKED_LIBRARIES_MOCKABLE} ${NEO_EXTRA_LIBS} gmock-gtest)
+target_link_libraries(igdrcl_${target_name} ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} igdrcl_mocks ${NEO_EXTRA_LIBS} gmock-gtest)
 
 set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 target_include_directories(igdrcl_${target_name} PRIVATE

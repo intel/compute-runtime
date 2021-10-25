@@ -13,7 +13,6 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
                ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
-               ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
                ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
@@ -35,10 +34,9 @@ target_include_directories(igdrcl_mt_tests PRIVATE
 add_subdirectories()
 
 target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
-target_link_libraries(igdrcl_mt_tests ${OPENCL_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
+target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_mt_tests gmock-gtest)
 target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${NEO_EXTRA_LIBS})
-target_link_libraries(igdrcl_mt_tests ${OPENCL_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 
 if(WIN32)
   add_dependencies(igdrcl_mt_tests mock_gdi igdrcl_tests)

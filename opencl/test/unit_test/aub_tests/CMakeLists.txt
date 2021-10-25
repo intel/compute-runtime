@@ -59,7 +59,6 @@ target_include_directories(igdrcl_aub_tests PRIVATE
 target_sources(igdrcl_aub_tests PRIVATE
                ${NEO_SHARED_TEST_DIRECTORY}/unit_test/page_fault_manager/default_asan_options.cpp
                ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
-               ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 )
 
 if(WIN32)
@@ -76,7 +75,7 @@ copy_gmm_dll_for(igdrcl_aub_tests)
 add_subdirectories()
 
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
-target_link_libraries(igdrcl_aub_tests ${OPENCL_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
+target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests gmock-gtest ${NEO_EXTRA_LIBS})
 if(UNIX)

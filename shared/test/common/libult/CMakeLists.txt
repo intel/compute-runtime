@@ -92,6 +92,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
+    ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info_impl.cpp
 )
 
 get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)
