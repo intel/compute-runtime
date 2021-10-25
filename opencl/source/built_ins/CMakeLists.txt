@@ -28,6 +28,11 @@ set(RUNTIME_SRCS_BUILT_IN_KERNELS
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_BUILT_IN_KERNELS})
 
+hide_subdir(registry)
+hide_subdir(kernels)
+
+add_subdirectories()
+
 if(NOT (TARGET ${BUILTINS_VME_LIB_NAME}))
   add_subdirectory(registry)
   if(COMPILE_BUILT_INS)
