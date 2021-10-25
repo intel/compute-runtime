@@ -12,6 +12,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <iterator>
+#include <regex>
 #include <string>
 
 namespace NEO {
@@ -148,7 +149,9 @@ struct Token {
                           SingleCharacter,
                           Comment,
                           FileSectionBeg,
-                          FileSectionEnd };
+                          FileSectionEnd,
+                          CollectionBeg,
+                          CollectionEnd };
 
     constexpr Token(ConstStringRef tokData, Type tokType) {
         pos = tokData.begin();
@@ -252,6 +255,9 @@ using TokensCache = StackVec<Token, 2048>;
 using LinesCache = StackVec<Line, 512>;
 
 std::string constructYamlError(size_t lineNumber, const char *lineBeg, const char *parsePos, const char *reason = nullptr);
+
+static std::regex inlineCollectionRegex(R"regex(^\[(\s*(\d|\w)+,?)+\]\s*\n)regex");
+constexpr ConstStringRef inlineCollectionYamlErrorMsg = "NEO::Yaml : Inline collection is not in valid regex format - ^\\[(\\s*(\\d|\\w)+,?)+\\]\\s*\\n";
 
 bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens, std::string &outErrReason, std::string &outWarning);
 
