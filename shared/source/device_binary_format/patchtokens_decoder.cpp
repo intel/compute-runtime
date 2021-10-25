@@ -292,21 +292,13 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
         break;
 
     case DATA_PARAMETER_NUM_HARDWARE_THREADS:
-        [[fallthrough]];
     case DATA_PARAMETER_PRINTF_SURFACE_SIZE:
-        [[fallthrough]];
     case DATA_PARAMETER_IMAGE_SRGB_CHANNEL_ORDER:
-        [[fallthrough]];
     case DATA_PARAMETER_STAGE_IN_GRID_ORIGIN:
-        [[fallthrough]];
     case DATA_PARAMETER_STAGE_IN_GRID_SIZE:
-        [[fallthrough]];
     case DATA_PARAMETER_LOCAL_ID:
-        [[fallthrough]];
     case DATA_PARAMETER_EXECUTION_MASK:
-        [[fallthrough]];
     case DATA_PARAMETER_VME_IMAGE_TYPE:
-        [[fallthrough]];
     case DATA_PARAMETER_VME_MB_SKIP_BLOCK_TYPE:
         // ignored intentionally
         break;
@@ -399,15 +391,10 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         break;
 
     case PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT:
-        [[fallthrough]];
     case PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT:
-        [[fallthrough]];
     case PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
-        [[fallthrough]];
     case PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
-        [[fallthrough]];
     case PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT:
-        [[fallthrough]];
     case PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT:
         assignArg(out, token);
         break;

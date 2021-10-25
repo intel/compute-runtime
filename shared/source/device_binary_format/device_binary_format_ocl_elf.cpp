@@ -26,9 +26,7 @@ bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(const ArrayRef<const 
     default:
         return false;
     case Elf::ET_OPENCL_EXECUTABLE:
-        [[fallthrough]];
     case Elf::ET_OPENCL_LIBRARY:
-        [[fallthrough]];
     case Elf::ET_OPENCL_OBJECTS:
         return true;
     }
@@ -65,7 +63,6 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(con
         auto sectionData = elfSectionHeader.data;
         switch (elfSectionHeader.header->type) {
         case Elf::SHT_OPENCL_SPIRV:
-            [[fallthrough]];
         case Elf::SHT_OPENCL_LLVM_BINARY:
             ret.intermediateRepresentation = sectionData;
             break;

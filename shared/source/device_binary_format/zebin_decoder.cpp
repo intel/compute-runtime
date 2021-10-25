@@ -670,9 +670,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadPayloadArgument::ArgType::localId.str() + " in context of : " + dst.kernelMetadata.kernelName + ". For simd=" + std::to_string(dst.kernelAttributes.simdSize) + " expected : " + std::to_string(singleChannelBytes) + " or " + std::to_string(singleChannelBytes * 2) + " or " + std::to_string(singleChannelBytes * 3) + ". Got : " + std::to_string(src.size) + " \n");
             return DecodeError::InvalidBinary;
         case 1:
-            [[fallthrough]];
         case 2:
-            [[fallthrough]];
         case 3:
             dst.kernelAttributes.numLocalIdChannels = static_cast<uint8_t>(tupleSize);
             break;
@@ -696,9 +694,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             return DecodeError::InvalidBinary;
 
         case 1:
-            [[fallthrough]];
         case 2:
-            [[fallthrough]];
         case 3:
             dst.kernelAttributes.numLocalIdChannels = static_cast<uint8_t>(tupleSize);
             break;
