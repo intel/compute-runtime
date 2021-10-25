@@ -13,6 +13,7 @@
 
 namespace NEO {
 class CommandStreamReceiver;
+struct ReusableAllocationRequirements;
 
 class AllocationsList : public IDList<GraphicsAllocation, true, true> {
   public:
@@ -23,6 +24,7 @@ class AllocationsList : public IDList<GraphicsAllocation, true, true> {
 
   private:
     GraphicsAllocation *detachAllocationImpl(GraphicsAllocation *, void *);
+    bool checkTagAddressReady(ReusableAllocationRequirements *requirements, GraphicsAllocation *gfxAllocation);
 
     const AllocationUsage allocationUsage;
 };

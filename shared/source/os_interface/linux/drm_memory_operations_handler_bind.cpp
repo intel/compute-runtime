@@ -110,10 +110,14 @@ std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerIfUsed()
     return std::unique_lock<std::mutex>();
 }
 
-void DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bool waitForCompletion) {
+void DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) {
     auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
 
-    std::lock_guard<std::mutex> lock(mutex);
+    std::unique_lock<std::mutex> evictLock(mutex, std::defer_lock);
+    if (isLockNeeded) {
+        evictLock.lock();
+    }
+
     auto allocLock = memoryManager->acquireAllocLock();
 
     this->evictUnusedAllocationsImpl(memoryManager->getSysMemAllocs(), waitForCompletion);

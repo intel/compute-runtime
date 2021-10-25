@@ -8,11 +8,11 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/memory_allocator_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "test.h"
 
 struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
@@ -269,4 +269,28 @@ TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConc
     thread2.join();
 
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+}
+
+TEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachingReusableAllocationThenCheckTaskCountFinishedOnAllTiles) {
+    csr->setActivePartitions(2u);
+    auto tagAddress = csr->getTagAddress();
+    *tagAddress = 0xFF;
+    tagAddress = ptrOffset(tagAddress, 8);
+    *tagAddress = 0x0;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    EXPECT_EQ(allocation, csr->getAllocationsForReuse().peekHead());
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
+    allocation->updateTaskCount(1u, csr->getOsContext().getContextId());
+
+    std::unique_ptr<GraphicsAllocation> allocationReusable = csr->getAllocationsForReuse().detachAllocation(0, nullptr, csr, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY);
+    EXPECT_EQ(nullptr, allocationReusable.get());
+
+    *tagAddress = 0x1;
+    allocationReusable = csr->getAllocationsForReuse().detachAllocation(0, nullptr, csr, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY);
+    EXPECT_EQ(allocation, allocationReusable.get());
+
+    memoryManager->freeGraphicsMemory(allocationReusable.release());
 }

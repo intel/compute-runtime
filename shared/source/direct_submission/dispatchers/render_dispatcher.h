@@ -20,12 +20,16 @@ class RenderDispatcher : public Dispatcher<GfxFamily> {
                                      uint64_t gpuAddress,
                                      uint64_t immediateData,
                                      const HardwareInfo &hwInfo,
-                                     bool useNotifyEnable);
+                                     bool useNotifyEnable,
+                                     bool partitionedWorkload);
     static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address);
     static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address);
     static size_t getSizeCacheFlush(const HardwareInfo &hwInfo);
     static size_t getSizeTlbFlush();
+    static bool isMultiTileSynchronizationSupported() {
+        return true;
+    }
 };
 } // namespace NEO

@@ -11,19 +11,19 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/source/helpers/local_work_size.h"
+#include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/arrayref.h"
-
-#include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/program/kernel_info.h"
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/device/device.h"
@@ -90,10 +90,24 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
 
     if ((false == surfaceStateHeap.empty()) && (NEO::isValidOffset(ptr.bindful))) {
         auto surfaceState = surfaceStateHeap.begin() + ptr.bindful;
-        void *addressToPatch = reinterpret_cast<void *>(allocation.getUnderlyingBuffer());
+        auto addressToPatch = allocation.getGpuAddress();
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
-        NEO::Buffer::setSurfaceState(&device, surfaceState, false, false, sizeToPatch, addressToPatch, 0,
-                                     &allocation, 0, 0, useGlobalAtomics, device.getNumGenericSubDevices() > 1);
+
+        auto &hwInfo = device.getHardwareInfo();
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        NEO::EncodeSurfaceStateArgs args;
+        args.outMemory = surfaceState;
+        args.size = sizeToPatch;
+        args.graphicsAddress = addressToPatch;
+        args.gmmHelper = device.getGmmHelper();
+        args.allocation = &allocation;
+        args.useGlobalAtomics = useGlobalAtomics;
+        args.numAvailableDevices = device.getNumGenericSubDevices();
+        args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
+        args.mocs = hwHelper.getMocsIndex(*args.gmmHelper, true, false) << 1;
+
+        hwHelper.encodeBufferSurfaceState(args);
     }
 }
 
@@ -106,8 +120,9 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     this->kernelInfo = kernelInfo;
     this->kernelDescriptor = &kernelInfo->kernelDescriptor;
 
-    auto neoDevice = device->getNEODevice();
-    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto neoDevice = deviceImp->getActiveDevice();
+    auto memoryManager = neoDevice->getMemoryManager();
 
     auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
     const auto allocType = internalKernel ? NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL : NEO::GraphicsAllocation::AllocationType::KERNEL_ISA;
@@ -128,17 +143,17 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
+    if (kernelInfo->heapInfo.pKernelHeap != nullptr && internalKernel == false) {
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
+                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
+                                                              static_cast<size_t>(kernelIsaSize));
+    }
+
     if (device->getL0Debugger()) {
         NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
         if (memoryOperationsIface) {
             memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
         }
-    }
-
-    if (kernelInfo->heapInfo.pKernelHeap != nullptr && internalKernel == false) {
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
-                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
-                                                              static_cast<size_t>(kernelIsaSize));
     }
 
     this->crossThreadDataSize = this->kernelDescriptor->kernelAttributes.crossThreadDataSize;
@@ -613,10 +628,18 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(requestedAddress);
     if (driverHandle->isRemoteResourceNeeded(requestedAddress, alloc, allocData, device)) {
+        if (allocData == nullptr) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
+        uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+        uint64_t offset = (uint64_t)requestedAddress - pbase;
+
         alloc = driverHandle->getPeerAllocation(device, allocData, requestedAddress, &gpuAddress);
         if (alloc == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
+        gpuAddress += offset;
     }
 
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
@@ -746,7 +769,7 @@ NEO::GraphicsAllocation *KernelImp::allocatePrivateMemoryGraphicsAllocation() {
 
 void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) {
     auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
-    auto neoDevice = module->getDevice()->getNEODevice();
+    auto device = module->getDevice();
 
     ArrayRef<uint8_t> crossThredDataArrayRef = ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize);
     ArrayRef<uint8_t> surfaceStateHeapArrayRef = ArrayRef<uint8_t>(this->surfaceStateHeapData.get(), this->surfaceStateHeapDataSize);
@@ -754,7 +777,7 @@ void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocatio
     patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
                              static_cast<uintptr_t>(privateAllocation->getGpuAddressToPatch()),
                              *privateAllocation, kernelImmData->getDescriptor().payloadMappings.implicitArgs.privateMemoryAddress,
-                             *neoDevice, kernelAttributes.flags.useGlobalAtomics);
+                             *device->getNEODevice(), kernelAttributes.flags.useGlobalAtomics);
 }
 
 ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {

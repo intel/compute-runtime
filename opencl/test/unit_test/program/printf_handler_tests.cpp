@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -15,7 +16,6 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/program/printf_handler.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -169,7 +169,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePr
         using CommandQueueHw<FamilyType>::CommandQueueHw;
         using CommandQueueHw<FamilyType>::enqueueKernel;
 
-        void waitUntilComplete(bool blockedQueue, PrintfHandler *printfHandler) override {
+        void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) override {
             waitCalled = true;
             printfHandlerUsedForWait = printfHandler;
         }
@@ -205,11 +205,34 @@ HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePr
     EXPECT_FALSE(cmdQ.isQueueBlocked());
 }
 
-TEST_F(PrintfHandlerTests, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
+TEST_F(PrintfHandlerTests, givenParentKernelWithoutPrintfAndBlockKernelWithPrintfWhenPrintfHandlerCreateCalledThenResultIsAnObject) {
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
-    std::unique_ptr<MockParentKernel> parentKernelWithoutPrintf(MockParentKernel::create(context, false, false, false, false));
+    MockParentKernel::CreateParams createParams{};
+    createParams.addPrintfForParent = false;
+    createParams.addPrintfForBlock = true;
+    std::unique_ptr<MockParentKernel> parentKernelWithoutPrintf(MockParentKernel::create(context, createParams));
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), parentKernelWithoutPrintf.get());
+
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+
+    ASSERT_NE(nullptr, printfHandler.get());
+}
+
+TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsButWithoutPrintfWhenPrintfHandlerCreateCalledThenResultIsAnObject) {
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context(device.get());
+    MockParentKernel::CreateParams createParams{};
+    createParams.addPrintfForParent = false;
+    createParams.addPrintfForBlock = false;
+    std::unique_ptr<MockParentKernel> parentKernelWithoutPrintf(MockParentKernel::create(context, createParams));
+
+    parentKernelWithoutPrintf->pImplicitArgs = std::make_unique<ImplicitArgs>();
+
+    *parentKernelWithoutPrintf->pImplicitArgs = {};
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), parentKernelWithoutPrintf.get());
 
@@ -222,7 +245,10 @@ TEST_F(PrintfHandlerTests, givenParentKernelAndBlockKernelWithoutPrintfWhenPrint
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
-    std::unique_ptr<MockParentKernel> blockKernelWithoutPrintf(MockParentKernel::create(context, false, false, false, false, false));
+    MockParentKernel::CreateParams createParams{};
+    createParams.addPrintfForBlock = false;
+    createParams.addPrintfForParent = false;
+    std::unique_ptr<MockParentKernel> blockKernelWithoutPrintf(MockParentKernel::create(context, createParams));
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), blockKernelWithoutPrintf.get());
 
@@ -234,7 +260,10 @@ TEST_F(PrintfHandlerTests, givenParentKernelWithPrintfAndBlockKernelWithoutPrint
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
-    std::unique_ptr<MockParentKernel> parentKernelWithPrintfBlockKernelWithoutPrintf(MockParentKernel::create(context, false, false, false, true, false));
+    MockParentKernel::CreateParams createParams{};
+    createParams.addPrintfForBlock = false;
+    createParams.addPrintfForParent = true;
+    std::unique_ptr<MockParentKernel> parentKernelWithPrintfBlockKernelWithoutPrintf(MockParentKernel::create(context, createParams));
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), parentKernelWithPrintfBlockKernelWithoutPrintf.get());
 

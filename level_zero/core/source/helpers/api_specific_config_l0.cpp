@@ -8,6 +8,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
 
+#include "level_zero/core/source/compiler_interface/l0_reg_path.h"
+
 namespace NEO {
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return false;
@@ -35,6 +37,10 @@ std::string ApiSpecificConfig::getName() {
 
 uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {
     return maxAllocSize;
+}
+
+const char *ApiSpecificConfig::getRegistryPath() {
+    return L0::registryPath;
 }
 
 } // namespace NEO

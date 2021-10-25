@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/utilities/range.h"
 
 #include "opencl/source/command_queue/copy_engine_state.h"
 #include "opencl/source/command_queue/csr_selection_args.h"
@@ -216,17 +217,17 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
-    MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
-    MOCKABLE_VIRTUAL void waitUntilComplete(bool blockedQueue, PrintfHandler *printfHandler);
+    MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
+    MOCKABLE_VIRTUAL void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler);
 
     static uint32_t getTaskLevelFromWaitList(uint32_t taskLevel,
                                              cl_uint numEventsInWaitList,
                                              const cl_event *eventWaitList);
 
     MOCKABLE_VIRTUAL CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
-    CommandStreamReceiver *getBcsCommandStreamReceiver() const;
+    CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const;
+    CommandStreamReceiver *getAnyBcs() const;
     CommandStreamReceiver *getBcsForAuxTranslation() const;
-    MOCKABLE_VIRTUAL CommandStreamReceiver &getCommandStreamReceiver(bool blitAllowed) const;
     MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const;
     Device &getDevice() const noexcept;
     ClDevice &getClDevice() const { return *device; }
@@ -314,7 +315,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return requiresCacheFlushAfterWalker;
     }
 
-    void updateBcsTaskCount(uint32_t newBcsTaskCount) { this->bcsTaskCount = newBcsTaskCount; }
+    void updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount);
     uint32_t peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const;
 
     void updateLatestSentEnqueueType(EnqueueProperties::Operation newEnqueueType) { this->latestSentEnqueueType = newEnqueueType; }
@@ -361,12 +362,11 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
-    void waitForLatestTaskCount();
 
     Context *context = nullptr;
     ClDevice *device = nullptr;
     EngineControl *gpgpuEngine = nullptr;
-    EngineControl *bcsEngine = nullptr;
+    std::array<EngineControl *, bcsInfoMaskSize> bcsEngines = {};
 
     cl_command_queue_properties commandQueueProperties = 0;
     std::vector<uint64_t> propertiesVector;
@@ -380,7 +380,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     EnqueueProperties::Operation latestSentEnqueueType = EnqueueProperties::Operation::None;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
-    uint32_t bcsTaskCount = 0;
+    std::array<CopyEngineState, bcsInfoMaskSize> bcsStates = {};
 
     bool perfCountersEnabled = false;
 

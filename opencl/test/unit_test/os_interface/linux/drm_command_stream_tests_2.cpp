@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
@@ -21,18 +22,17 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
+#include "shared/test/common/mocks/mock_host_ptr_manager.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
-#include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
-#include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_command_stream_fixture.h"
@@ -626,6 +626,20 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenNotEmptyNotPaddedBbWhenFlu
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedWithFailingExec, GivenFailingExecThenCSRFlushFails) {
+    int bbUsed = 15 * sizeof(uint32_t);
+
+    auto &cs = csr->getCS();
+
+    cs.getSpace(bbUsed);
+
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    bool ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_EQ(ret, false);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenNotAlignedWhenFlushingThenSucceeds) {
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
@@ -733,7 +747,7 @@ class DrmMockBuffer : public MockBufferStorage, public Buffer {
 
     DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc)
         : Buffer(
-              nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+              nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
               CL_MEM_USE_HOST_PTR, 0, size, data, data,
               GraphicsAllocationHelper::toMultiGraphicsAllocation(alloc), true, false, false),
           data(data),
@@ -778,7 +792,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCommandStreamReceiverWh
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBufferObjectWhenMakeResidentBufferObjectsIsCalledThenTheBufferObjectIsMadeResident) {
     auto size = 1024u;
     auto bo = this->createBO(size);
-    BufferObjects bos{{bo}};
+    BufferObjects bos{bo};
     auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
     EXPECT_EQ(bo, allocation->getBO());
 
@@ -902,7 +916,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
     mock->ioctl_cnt.gemWait = 0;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(-1, mock->gemWaitTimeout);
@@ -925,7 +939,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutU
     mock->ioctl_cnt.gemWait = 0;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(1000, mock->gemWaitTimeout);
@@ -960,7 +974,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     }
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
@@ -994,7 +1008,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
@@ -1023,7 +1037,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
-    EXPECT_ANY_THROW(testedCsr->waitForFlushStamp(handleToWait, 1, 0));
+    EXPECT_ANY_THROW(testedCsr->waitForFlushStamp(handleToWait));
 
     EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
@@ -1054,7 +1068,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
-    testedCsr->waitForFlushStamp(handleToWait, 1, 0);
+    testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
@@ -1182,4 +1196,110 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenVmBindAvailableUseWaitCall
 
     EXPECT_FALSE(testDrmCsr->isKmdWaitModeActive());
     EXPECT_EQ(1u, mock->isVmBindAvailableCall.called);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenNoAllocsInMemoryOperationHandlerDefaultWhenFlushThenDrmMemoryOperationHandlerIsNotLocked) {
+    struct MockDrmMemoryOperationsHandler : public DrmMemoryOperationsHandler {
+        using DrmMemoryOperationsHandler::mutex;
+    };
+
+    struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
+        using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
+        int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+            auto memoryOperationsInterface = static_cast<MockDrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
+            EXPECT_TRUE(memoryOperationsInterface->mutex.try_lock());
+            memoryOperationsInterface->mutex.unlock();
+            return 0;
+        }
+    };
+
+    auto osContext = std::make_unique<OsContextLinux>(*mock, 0u,
+                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
+
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    LinearStream cs(commandBuffer);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
+    mockCsr.setupContext(*osContext.get());
+    mockCsr.flush(batchBuffer, mockCsr.getResidencyAllocations());
+
+    mm->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocsInMemoryOperationHandlerDefaultWhenFlushThenDrmMemoryOperationHandlerIsLocked) {
+    struct MockDrmMemoryOperationsHandler : public DrmMemoryOperationsHandler {
+        using DrmMemoryOperationsHandler::mutex;
+    };
+
+    struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
+        using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
+        int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+            auto memoryOperationsInterface = static_cast<MockDrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
+            EXPECT_FALSE(memoryOperationsInterface->mutex.try_lock());
+            return 0;
+        }
+    };
+
+    auto osContext = std::make_unique<OsContextLinux>(*mock, 0u,
+                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
+
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1));
+
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    LinearStream cs(commandBuffer);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
+    mockCsr.setupContext(*osContext.get());
+    mockCsr.flush(batchBuffer, mockCsr.getResidencyAllocations());
+
+    mm->freeGraphicsMemory(commandBuffer);
+    mm->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocInMemoryOperationsInterfaceWhenFlushThenAllocIsResident) {
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    LinearStream cs(commandBuffer);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1));
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    const auto boRequirments = [&allocation](const auto &bo) {
+        return (static_cast<int>(bo.handle) == static_cast<DrmAllocation *>(allocation)->getBO()->peekHandle() &&
+                bo.offset == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
+    };
+
+    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->getExecStorage();
+    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    EXPECT_EQ(residency.size(), 2u);
+    residency.clear();
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    EXPECT_EQ(residency.size(), 2u);
+    residency.clear();
+
+    csr->getResidencyAllocations().clear();
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->evict(device.get(), *allocation);
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_FALSE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    EXPECT_EQ(residency.size(), 1u);
+
+    mm->freeGraphicsMemory(allocation);
+    mm->freeGraphicsMemory(commandBuffer);
 }

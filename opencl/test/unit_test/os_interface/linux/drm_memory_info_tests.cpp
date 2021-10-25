@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/memory_info.h"
-
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "gtest/gtest.h"
 
@@ -17,6 +16,12 @@ struct MemoryInfoImpl : public NEO::MemoryInfo {
     MemoryInfoImpl() {}
     ~MemoryInfoImpl() override{};
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
+        return 0u;
+    }
+    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override {
+        return 0u;
+    }
+    uint32_t createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
         return 0u;
     }
 };

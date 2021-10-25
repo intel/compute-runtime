@@ -32,7 +32,6 @@ void PageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager
     std::unique_lock<SpinLock> lock{mtx};
     this->memoryData.insert(std::make_pair(ptr, PageFaultData{size, unifiedMemoryManager, cmdQ, domain}));
     if (!initialPlacementCpu) {
-        this->setAubWritable(false, ptr, unifiedMemoryManager);
         this->protectCPUMemoryAccess(ptr, size);
     }
 }
@@ -55,7 +54,6 @@ void PageFaultManager::moveAllocationToGpuDomain(void *ptr) {
     if (alloc != memoryData.end()) {
         auto &pageFaultData = alloc->second;
         if (pageFaultData.domain != AllocationDomain::Gpu) {
-            this->setAubWritable(false, ptr, pageFaultData.unifiedMemoryManager);
             if (pageFaultData.domain == AllocationDomain::Cpu) {
                 if (DebugManager.flags.PrintUmdSharedMigration.get()) {
                     printf("UMD transferring shared allocation %llx from CPU to GPU\n", reinterpret_cast<unsigned long long int>(ptr));
@@ -74,7 +72,6 @@ void PageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocs
         auto allocPtr = alloc.first;
         auto &pageFaultData = alloc.second;
         if (pageFaultData.unifiedMemoryManager == unifiedMemoryManager && pageFaultData.domain != AllocationDomain::Gpu) {
-            this->setAubWritable(false, allocPtr, pageFaultData.unifiedMemoryManager);
             if (pageFaultData.domain == AllocationDomain::Cpu) {
                 if (DebugManager.flags.PrintUmdSharedMigration.get()) {
                     printf("UMD transferring shared allocation %llx from CPU to GPU\n", reinterpret_cast<unsigned long long int>(allocPtr));

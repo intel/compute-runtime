@@ -24,6 +24,7 @@ struct CommandListImp : CommandList {
     ze_result_t appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) override;
     ze_result_t appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
                                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+    virtual void appendMultiPartitionPrologue(uint32_t partitionDataSize) = 0;
 
   protected:
     ~CommandListImp() override = default;

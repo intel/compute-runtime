@@ -156,7 +156,6 @@ int drmGetParam(drm_i915_getparam_t *param) {
 #endif
     default:
         ret = -1;
-        std::cerr << "drm.getParam: " << std::dec << param->param << std::endl;
         break;
     }
     return ret;
@@ -186,7 +185,6 @@ int drmSetContextParam(drm_i915_gem_context_param *param) {
         break;
     default:
         ret = -1;
-        std::cerr << "drm.setContextParam: " << std::dec << param->param << std::endl;
         break;
     }
     return ret;
@@ -204,7 +202,6 @@ int drmGetContextParam(drm_i915_gem_context_param *param) {
         break;
     default:
         ret = -1;
-        std::cerr << "drm.getContextParam: " << std::dec << param->param << std::endl;
         break;
     }
     return ret;

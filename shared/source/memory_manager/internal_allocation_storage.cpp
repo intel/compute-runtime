@@ -18,7 +18,7 @@ InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &comm
       temporaryAllocations(TEMPORARY_ALLOCATION),
       allocationsForReuse(REUSABLE_ALLOCATION){};
 
-void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
+void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage) {
     uint32_t taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
 
     if (allocationUsage == REUSABLE_ALLOCATION) {
@@ -27,7 +27,7 @@ void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocati
 
     storeAllocationWithTaskCount(std::move(gfxAllocation), allocationUsage, taskCount);
 }
-void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
+void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
     if (allocationUsage == REUSABLE_ALLOCATION) {
         if (DebugManager.flags.DisableResourceRecycling.get()) {
             commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(gfxAllocation.release());

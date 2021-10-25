@@ -18,17 +18,11 @@ namespace NEO {
 
 namespace IoctlHelper {
 std::string getIoctlStringRemaining(unsigned long request) {
-    switch (request) {
-    default:
-        return std::to_string(request);
-    }
+    return std::to_string(request);
 }
 
 std::string getIoctlParamStringRemaining(int param) {
-    switch (param) {
-    default:
-        return std::to_string(param);
-    }
+    return std::to_string(param);
 }
 } // namespace IoctlHelper
 

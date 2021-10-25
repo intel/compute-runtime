@@ -66,13 +66,20 @@ struct KernelHw : public KernelImp {
         if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
             l3Enabled = false;
         }
-        auto mocs = this->module->getDevice()->getMOCS(l3Enabled, false);
-
         NEO::Device *neoDevice = module->getDevice()->getNEODevice();
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(&surfaceState, bufferAddressForSsh, bufferSizeForSsh, mocs,
-                                                         false, false, false, neoDevice->getNumGenericSubDevices(),
-                                                         alloc, neoDevice->getGmmHelper(),
-                                                         kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics, 1u);
+
+        NEO::EncodeSurfaceStateArgs args;
+        args.outMemory = &surfaceState;
+        args.graphicsAddress = bufferAddressForSsh;
+        args.size = bufferSizeForSsh;
+        args.mocs = this->module->getDevice()->getMOCS(l3Enabled, false);
+        args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+        args.allocation = alloc;
+        args.gmmHelper = neoDevice->getGmmHelper();
+        args.useGlobalAtomics = kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics;
+        args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
+
+        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
     }
 

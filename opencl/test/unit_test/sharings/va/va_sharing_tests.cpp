@@ -14,6 +14,9 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/create_command_stream.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
@@ -23,12 +26,9 @@
 #include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/source/sharings/va/va_surface.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "opencl/test/unit_test/libult/create_command_stream.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
 #include "test.h"
 
@@ -1246,7 +1246,7 @@ TEST_F(VaDeviceTests, givenVADeviceWhenGetDeviceFromVAIsCalledThenRootDeviceIsRe
     NEO::Device *neoDevice = &device->getDevice();
 
     auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>());
-    mockDrm->setPciPath("00:02.0");
+    mockDrm->setPciPath("0000:00:02.0");
 
     VADevice vaDevice{};
     auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
@@ -1386,7 +1386,7 @@ TEST_F(VaDeviceTests, givenValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCal
     NEO::Device *neoDevice = &device->getDevice();
 
     auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>());
-    mockDrm->setPciPath("00:02.0");
+    mockDrm->setPciPath("0000:00:02.0");
 
     auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, vaDisplay.get(), 0u, 1, &devices, &numDevices);
     EXPECT_EQ(CL_SUCCESS, errCode);

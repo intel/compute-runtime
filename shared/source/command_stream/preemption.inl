@@ -9,9 +9,10 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
-#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "pipe_control_args.h"
 
 namespace NEO {
 
@@ -84,7 +85,7 @@ size_t PreemptionHelper::getRequiredPreambleSize(const Device &device) {
 }
 
 template <typename GfxFamily>
-size_t PreemptionHelper::getRequiredStateSipCmdSize(const Device &device) {
+size_t PreemptionHelper::getRequiredStateSipCmdSize(Device &device, bool isRcs) {
     size_t size = 0;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();

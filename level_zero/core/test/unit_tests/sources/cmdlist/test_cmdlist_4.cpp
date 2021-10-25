@@ -16,6 +16,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+#include "test_traits_common.h"
+
 namespace L0 {
 namespace ult {
 
@@ -64,7 +66,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto &commandContainer = commandList->commandContainer;
 
-    uint64_t timestampAddress = 0x12345678555500;
+    uint64_t timestampAddress = 0x123456785500;
     uint32_t timestampAddressLow = (uint32_t)(timestampAddress & 0xFFFFFFFF);
     uint32_t timestampAddressHigh = (uint32_t)(timestampAddress >> 32);
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
@@ -90,7 +92,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
 HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer, Platforms) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    uint64_t timestampAddress = 0x12345678555500;
+    uint64_t timestampAddress = 0x123456785500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
     commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
 
@@ -118,7 +120,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimes
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
     EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
-    uint64_t timestampAddress = 0x12345678555500;
+    uint64_t timestampAddress = 0x123456785500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
     auto result = commandList0->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
@@ -164,8 +166,15 @@ HWTEST2_F(CommandListCreate, whenCommandListIsCreatedThenFlagsAreCorrectlySet, P
     }
 }
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
-HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenChangedFieldsAreDirty, IsAtLeastGen12lp) {
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+struct ProgramChangedFieldsInComputeMode {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if (productFamily == IGFX_BROADWELL)
+            return false;
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::programOnlyChangedFieldsInComputeStateMode;
+    }
+};
+HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenChangedFieldsAreDirty, ProgramChangedFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
 
     Mock<::L0::Kernel> kernel;
@@ -184,15 +193,37 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStr
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
     pCommandList->updateStreamProperties(kernel, false, false);
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
-    if (IsXEHP::isMatched<productFamily>()) {
-        EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
-    } else {
-        EXPECT_FALSE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+    EXPECT_FALSE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+}
+struct ProgramAllFieldsInComputeMode {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return !TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::programOnlyChangedFieldsInComputeStateMode;
     }
+};
+HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModeTraitsSetToFalsePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenAllFieldsAreDirty, ProgramAllFieldsInComputeMode) {
+    DebugManagerStateRestore restorer;
+
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsAtLeastGen12lp) {
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, Platforms) {
     DebugManagerStateRestore restorer;
 
     Mock<::L0::Kernel> kernel;
@@ -542,7 +573,11 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -588,7 +623,11 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);

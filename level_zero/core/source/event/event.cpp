@@ -91,15 +91,31 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 
     eventPoolAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(maxRootDeviceIndex);
 
-    NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, systemMemoryBitfield};
-    allocationProperties.alignment = eventAlignment;
+    bool allocatedMemory = false;
 
-    std::vector<uint32_t> rootDeviceIndicesVector = {rootDeviceIndices.begin(), rootDeviceIndices.end()};
-    auto eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector,
-                                                                                                    allocationProperties,
-                                                                                                    *eventPoolAllocations);
+    if (useDeviceAlloc) {
+        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, devices[0]->getNEODevice()->getDeviceBitfield()};
+        allocationProperties.alignment = eventAlignment;
 
-    if (!eventPoolPtr) {
+        auto graphicsAllocation = driver->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+        if (graphicsAllocation) {
+            eventPoolAllocations->addAllocation(graphicsAllocation);
+            allocatedMemory = true;
+        }
+
+    } else {
+        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, systemMemoryBitfield};
+        allocationProperties.alignment = eventAlignment;
+
+        std::vector<uint32_t> rootDeviceIndicesVector = {rootDeviceIndices.begin(), rootDeviceIndices.end()};
+        eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector,
+                                                                                                   allocationProperties,
+                                                                                                   *eventPoolAllocations);
+
+        allocatedMemory = (nullptr != eventPoolPtr);
+    }
+
+    if (!allocatedMemory) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
     return ZE_RESULT_SUCCESS;

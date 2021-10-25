@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <vector>
@@ -41,12 +42,14 @@ struct PowerHandleContext {
     PowerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~PowerHandleContext();
 
-    void init();
-
+    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower);
 
     OsSysman *pOsSysman = nullptr;
     std::vector<Power *> handleList = {};
+
+  private:
+    void createHandle(ze_device_handle_t deviceHandle);
 };
 
 } // namespace L0

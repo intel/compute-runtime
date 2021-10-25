@@ -35,7 +35,7 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
     const cl_command_queue_properties *properties) {
     if (pDevice == nullptr) {
         if (this->device == nullptr) {
-            this->device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+            this->device = new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
             createdDevice = true;
         }
         pDevice = this->device;

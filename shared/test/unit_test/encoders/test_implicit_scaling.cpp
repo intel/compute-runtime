@@ -120,8 +120,8 @@ TEST_F(ImplicitScalingTests, givenForceSemaphoreUseWhenCheckingSemaphoreUseThenE
     EXPECT_TRUE(ImplicitScalingHelper::isSemaphoreProgrammingRequired());
 }
 
-TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingCrossTileAtomicSyncThenExpectTrue) {
-    EXPECT_TRUE(ImplicitScalingHelper::isCrossTileAtomicRequired());
+TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingCrossTileAtomicSyncThenExpectDefaultDefined) {
+    EXPECT_EQ(ImplicitScaling::crossTileAtomicSynchronization, ImplicitScalingHelper::isCrossTileAtomicRequired());
 }
 
 TEST_F(ImplicitScalingTests, givenForceDisableWhenCheckingCrossTileAtomicSyncThenExpectFalse) {

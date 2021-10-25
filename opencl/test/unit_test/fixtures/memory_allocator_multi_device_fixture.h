@@ -8,11 +8,11 @@
 #pragma once
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;

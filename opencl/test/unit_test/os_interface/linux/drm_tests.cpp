@@ -10,13 +10,13 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 
 #include "gtest/gtest.h"
 
@@ -45,7 +45,7 @@ TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     {
-        drm.setPciPath("ab:cd.e");
+        drm.setPciPath("0000:ab:cd.e");
         EXPECT_EQ(0, drm.queryAdapterBDF());
         auto adapterBdf = drm.getAdapterBDF();
         EXPECT_EQ(0xabu, adapterBdf.Bus);
@@ -60,7 +60,7 @@ TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned
     }
 
     {
-        drm.setPciPath("01:23.4");
+        drm.setPciPath("0000:01:23.4");
         EXPECT_EQ(0, drm.queryAdapterBDF());
         auto adapterBdf = drm.getAdapterBDF();
         EXPECT_EQ(0x1u, adapterBdf.Bus);

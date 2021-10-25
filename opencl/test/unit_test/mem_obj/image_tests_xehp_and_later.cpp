@@ -12,15 +12,15 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
-#include "mock_gmm_client_context.h"
 #include "test_traits_common.h"
 
 #include <functional>
@@ -52,7 +52,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhen
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
-        &context, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
+        &context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
@@ -91,7 +91,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhen
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
-        &context, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
+        &context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
@@ -125,7 +125,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenDebugFlagForMultiTileS
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         CL_MEM_READ_ONLY, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
-        &context, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
+        &context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
@@ -171,7 +171,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeUnrestricti
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
-        &context, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
+        &context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
@@ -204,7 +204,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhen
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         CL_MEM_READ_ONLY, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
-        &context, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
+        &context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
@@ -239,7 +239,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeSpecialized
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
-        &context, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
+        &context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
@@ -292,7 +292,7 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsImageTest, givenAppendSurfaceS
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         memFlags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
-        &context, MemoryPropertiesHelper::createMemoryProperties(memFlags, 0, 0, &context.getDevice(0)->getDevice()),
+        &context, ClMemoryPropertiesHelper::createMemoryProperties(memFlags, 0, 0, &context.getDevice(0)->getDevice()),
         memFlags, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
@@ -392,7 +392,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionWhenAppendi
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
-        &context, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
+        &context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
@@ -432,7 +432,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenImageFromBufferWhenSet
     buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    auto image = std::unique_ptr<Image>(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
+    auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
                                                       CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
@@ -574,7 +574,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenRenderCompressionWhenAppendingNewAllocati
     gmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
     gmm->isCompressionEnabled = true;
 
-    auto mcsGmm = new MockGmm();
+    auto mcsGmm = new MockGmm(context.getDevice(0)->getGmmClientContext());
     mcsGmm->isCompressionEnabled = true;
     mcsGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
     mcsGmm->gmmResourceInfo->getResourceFlags()->Gpu.UnifiedAuxSurface = true;
@@ -658,6 +658,27 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenAppendin
 
     EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
                                                                  context->getDevice(0)->getGmmHelper(), false);
+    EXPECT_EQ(platform(), nullptr);
+    EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
+    EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
+    EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
+}
+
+HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction, CompressionParamsSupportedMatcher) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+    RENDER_SURFACE_STATE rss{};
+    platformsImpl->clear();
+    rss.setMemoryCompressionEnable(false);
+    rss.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
+    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
+    const auto expectedGetSurfaceStateCompressionFormatCalled = gmmClientContext->getSurfaceStateCompressionFormatCalled;
+    const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled + 1;
+
+    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
+                                                                 context->getDevice(0)->getGmmHelper(), false);
+
     EXPECT_EQ(platform(), nullptr);
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
     EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);

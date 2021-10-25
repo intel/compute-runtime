@@ -12,9 +12,9 @@
 
 using namespace NEO;
 
-HWTEST2_F(ComputeModeRequirements, GivenProgramAdditionalPipeControlBeforeStateComputeModeCommandThenCorrectCommandsAreAdded, IsXEHP) {
+HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCorrectCommandsAreAdded, IsXEHP) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
+    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     SetUpImpl<FamilyType>();
 
@@ -46,7 +46,6 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramAdditionalPipeControlBeforeStateC
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
@@ -60,7 +59,7 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
 
-    SetUpImpl<FamilyType>();
+    SetUpImpl<FamilyType>(&hwInfo);
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -90,7 +89,6 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
@@ -100,9 +98,9 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModelCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-HWTEST2_F(ComputeModeRequirements, GivenProgramAdditionalPipeControlBeforeStateComputeModeCommandThenCommandSizeIsCalculatedAndCorrectCommandSizeIsReturned, IsXEHP) {
+HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCommandSizeIsCalculatedAndCorrectCommandSizeIsReturned, IsXEHP) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
+    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

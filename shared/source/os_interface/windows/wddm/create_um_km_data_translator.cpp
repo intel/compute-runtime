@@ -58,12 +58,14 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
         createContextDataStructSize = getStructSizeFn(TOK_S_CREATECONTEXT_PVTDATA);
         commandBufferHeaderStructSize = getStructSizeFn(TOK_S_COMMAND_BUFFER_HEADER_REC);
         gmmResourceInfoStructSize = getStructSizeFn(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT);
+        gmmGfxPartitioningStructSize = getStructSizeFn(TOK_S_GMM_GFX_PARTITIONING);
 
         procAddr = this->wslComputeHelperLibrary->getProcAddress(getSizeRequiredForTokensName);
         UNRECOVERABLE_IF(nullptr == procAddr);
         auto getTokensSizeFn = reinterpret_cast<getSizeRequiredForTokensFPT>(procAddr);
         adapterInfoTokensSize = getTokensSizeFn(TOK_S_ADAPTER_INFO);
         gmmResourceInfoTokensSize = getTokensSizeFn(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT);
+        gmmGfxPartitioningTokensSize = getTokensSizeFn(TOK_S_GMM_GFX_PARTITIONING);
 
         procAddr = this->wslComputeHelperLibrary->getProcAddress(structToTokensName);
         UNRECOVERABLE_IF(nullptr == procAddr);
@@ -76,6 +78,10 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
         procAddr = this->wslComputeHelperLibrary->getProcAddress(destroyStructRepresentationName);
         UNRECOVERABLE_IF(nullptr == procAddr);
         destroyStructFn = reinterpret_cast<destroyStructRepresentationFPT>(procAddr);
+
+        procAddr = this->wslComputeHelperLibrary->getProcAddress(getVersionName);
+        UNRECOVERABLE_IF(nullptr == procAddr);
+        computeHelperLibraryVersion = reinterpret_cast<getVersionFPT>(procAddr)();
 
         this->isEnabled = true;
     }
@@ -96,6 +102,14 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
 
     size_t getSizeForGmmResourceInfoInternalRepresentation() {
         return gmmResourceInfoStructSize;
+    }
+
+    size_t getSizeForGmmGfxPartitioningInternalRepresentation() override {
+        if (computeHelperLibraryVersion == 0) {
+            return sizeof(GMM_GFX_PARTITIONING);
+        }
+
+        return gmmGfxPartitioningStructSize;
     }
 
     bool translateAdapterInfoFromInternalRepresentation(ADAPTER_INFO_KMD &dst, const void *src, size_t srcSize) override {
@@ -146,7 +160,7 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
         return tokensToStructFn(TOK_S_CREATECONTEXT_PVTDATA, dst, dstSize, &marshalled.base.header, reinterpret_cast<TokenHeader *>(&marshalled + 1));
     }
 
-    bool tranlateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src) override {
+    bool translateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src) override {
         auto marshalled = Marshaller<TOK_S_COMMAND_BUFFER_HEADER_REC>::marshall(src);
         return tokensToStructFn(TOK_S_COMMAND_BUFFER_HEADER_REC, dst, dstSize, &marshalled.base.header, reinterpret_cast<TokenHeader *>(&marshalled + 1));
     }
@@ -156,6 +170,28 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
         static_cast<const GmmResourceInfoWinAccessor *>(&src)->get(resInfoPodStruct);
         auto marshalled = Marshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT>::marshall(resInfoPodStruct);
         return tokensToStructFn(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT, dst, dstSize, &marshalled.base.header, reinterpret_cast<TokenHeader *>(&marshalled + 1));
+    }
+
+    bool translateGmmGfxPartitioningToInternalRepresentation(void *dst, size_t dstSize, const GMM_GFX_PARTITIONING &src) override {
+        if (computeHelperLibraryVersion == 0) {
+            return (0 == memcpy_s(dst, dstSize, &src, sizeof(src)));
+        }
+
+        auto marshalled = Marshaller<TOK_S_GMM_GFX_PARTITIONING>::marshall(src);
+        return tokensToStructFn(TOK_S_GMM_GFX_PARTITIONING, dst, dstSize, &marshalled.base.header, reinterpret_cast<TokenHeader *>(&marshalled + 1));
+    }
+
+    bool translateGmmGfxPartitioningFromInternalRepresentation(GMM_GFX_PARTITIONING &dst, const void *src, size_t srcSize) override {
+        if (computeHelperLibraryVersion == 0) {
+            return (0 == memcpy_s(&dst, sizeof(GMM_GFX_PARTITIONING), src, srcSize));
+        }
+
+        std::vector<uint8_t> tokData(gmmGfxPartitioningTokensSize);
+        TokenHeader *tok = reinterpret_cast<TokenHeader *>(tokData.data());
+        if (false == structToTokensFn(TOK_S_GMM_GFX_PARTITIONING, tok, gmmGfxPartitioningTokensSize, src, srcSize)) {
+            return false;
+        }
+        return Demarshaller<TOK_S_GMM_GFX_PARTITIONING>::demarshall(dst, tok, tok + gmmGfxPartitioningTokensSize / sizeof(TokenHeader));
     }
 
     void destroyGmmResourceInfo(void *src, size_t size) {
@@ -168,6 +204,7 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
 
   protected:
     std::unique_ptr<OsLibrary> wslComputeHelperLibrary;
+    uint64_t computeHelperLibraryVersion = 0U;
 
     structToTokensFPT structToTokensFn = nullptr;
     tokensToStructFPT tokensToStructFn = nullptr;
@@ -179,6 +216,8 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
     size_t commandBufferHeaderStructSize = 0U;
     size_t gmmResourceInfoStructSize = 0U;
     size_t gmmResourceInfoTokensSize = 0U;
+    size_t gmmGfxPartitioningStructSize = 0U;
+    size_t gmmGfxPartitioningTokensSize = 0U;
 };
 
 WslComputeHelperGmmHandleAllocator::WslComputeHelperGmmHandleAllocator(WslComputeHelperUmKmDataTranslator *translator)

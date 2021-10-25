@@ -16,16 +16,16 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/event/perf_counter.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/queue_helpers.h"
-#include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 #include "pipe_control_args.h"

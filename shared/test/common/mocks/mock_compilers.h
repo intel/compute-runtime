@@ -185,7 +185,7 @@ struct MockOclTranslationOutput : MockCIF<IGC::OclTranslationOutputTagOCL> {
     MockCIFBuffer *debugData = nullptr;
 };
 
-struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<2>> {
+struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtxTagOCL> {
     static CIF::ICIF *Create(CIF::InterfaceId_t intId, CIF::Version_t version);
 
     MockIgcOclDeviceCtx();

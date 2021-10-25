@@ -130,7 +130,7 @@ class CommandMapUnmap : public Command {
 class CommandComputeKernel : public Command {
   public:
     CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces,
-                         bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
+                         bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> &&printfHandler,
                          PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount);
 
     ~CommandComputeKernel() override;
@@ -139,6 +139,7 @@ class CommandComputeKernel : public Command {
 
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
     Kernel *peekKernel() const { return kernel; }
+    PrintfHandler *peekPrintfHandler() const { return printfHandler.get(); }
 
   protected:
     std::vector<Surface *> surfaces;

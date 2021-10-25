@@ -7,15 +7,14 @@
 
 #pragma once
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
-
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include <atomic>
 
 namespace NEO {
 extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
-extern int closeInputFd;
+extern std::atomic<int> closeInputFd;
 extern std::atomic<int> closeCalledCount;
 extern std::vector<void *> mmapVector;
 

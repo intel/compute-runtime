@@ -60,7 +60,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pOsSysman);
 }
 
-void SysmanDeviceImp::init() {
+ze_result_t SysmanDeviceImp::init() {
     uint32_t subDeviceCount = 0;
     // We received a device handle. Check for subdevices in this device
     Device::fromHandle(hCoreDevice)->getSubDevices(&subDeviceCount, nullptr);
@@ -71,9 +71,12 @@ void SysmanDeviceImp::init() {
         Device::fromHandle(hCoreDevice)->getSubDevices(&subDeviceCount, deviceHandles.data());
     }
 
-    pOsSysman->init();
+    auto result = pOsSysman->init();
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
     if (pPowerHandleContext) {
-        pPowerHandleContext->init();
+        pPowerHandleContext->init(deviceHandles);
     }
     if (pFrequencyHandleContext) {
         pFrequencyHandleContext->init(deviceHandles);
@@ -120,6 +123,7 @@ void SysmanDeviceImp::init() {
     if (pPerformanceHandleContext) {
         pPerformanceHandleContext->init(deviceHandles);
     }
+    return result;
 }
 
 ze_result_t SysmanDeviceImp::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {

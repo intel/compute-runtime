@@ -125,7 +125,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     if (stateSipRequired) {
-        preemptionSize += NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice);
+        preemptionSize += NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice, csr->isRcs());
     }
 
     preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(devicePreemption, commandQueuePreemptionMode);
@@ -139,6 +139,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     bool directSubmissionEnabled = isCopyOnlyCommandQueue ? csr->isBlitterDirectSubmissionEnabled() : csr->isDirectSubmissionEnabled();
+    partitionCount = csr->getActivePartitions();
 
     L0::Fence *fence = nullptr;
 
@@ -417,7 +418,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                                  workPartitionAddress);
         NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(child,
                                                  NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                                 addressOffset,
+                                                 CommonConstants::partitionAddressOffset,
                                                  true);
     }
 
@@ -460,8 +461,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         memset(paddingPtr, 0, padding);
     }
 
-    submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd,
-                      anyCommandListWithCooperativeKernels);
+    auto ret = submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd,
+                                 anyCommandListWithCooperativeKernels);
 
     this->taskCount = csr->peekTaskCount();
 
@@ -472,6 +473,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     this->heapContainer.clear();
+
+    csr->pollForCompletion();
+    if (ret) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
 
     return ZE_RESULT_SUCCESS;
 }

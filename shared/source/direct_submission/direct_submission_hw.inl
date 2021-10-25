@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -81,6 +82,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     UNRECOVERABLE_IF(semaphores == nullptr);
     allocations.push_back(semaphores);
 
+    if (this->workPartitionAllocation != nullptr) {
+        allocations.push_back(workPartitionAllocation);
+    }
+
     handleResidency();
     ringCommandStream.replaceBuffer(ringBuffer->getUnderlyingBuffer(), minimumRequiredSize);
     ringCommandStream.replaceGraphicsAllocation(ringBuffer);
@@ -96,7 +101,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     workloadModeOneStoreAddress = static_cast<volatile void *>(&semaphoreData->DiagnosticModeCounter);
     *static_cast<volatile uint32_t *>(workloadModeOneStoreAddress) = 0u;
 
-    this->gpuVaForMiFlush = this->semaphoreGpuVa + 2 * MemoryConstants::cacheLineSize;
+    this->gpuVaForMiFlush = this->semaphoreGpuVa + offsetof(RingSemaphoreData, miFlushSpace);
 
     auto ret = makeResourcesResident(allocations);
 
@@ -139,7 +144,20 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit) {
     if (ret && submitOnInit) {
         size_t startBufferSize = Dispatcher::getSizePreemption() +
                                  getSizeSemaphoreSection();
+        if (this->partitionedMode) {
+            startBufferSize += EncodeSetMMIO<GfxFamily>::sizeMEM;
+            startBufferSize += EncodeSetMMIO<GfxFamily>::sizeIMM;
+        }
         Dispatcher::dispatchPreemption(ringCommandStream);
+        if (this->partitionedMode) {
+            EncodeSetMMIO<GfxFamily>::encodeMEM(ringCommandStream,
+                                                PartitionRegisters<GfxFamily>::wparidCCSOffset,
+                                                this->workPartitionAllocation->getGpuAddress());
+            EncodeSetMMIO<GfxFamily>::encodeIMM(ringCommandStream,
+                                                PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                                CommonConstants::partitionAddressOffset,
+                                                true);
+        }
         if (workloadMode == 1) {
             dispatchDiagnosticModeSection();
             startBufferSize += getDiagnosticModeSection();
@@ -185,7 +203,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, false);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, false, this->partitionedMode);
     }
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
 
@@ -240,7 +258,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSwitchRingBufferS
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, false);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, false, this->partitionedMode);
     }
     Dispatcher::dispatchStartCommandBuffer(ringCommandStream, nextBufferGpuAddress);
 }
@@ -321,7 +339,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     if (!disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, false);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, false, this->partitionedMode);
     }
 
     dispatchSemaphoreSection(currentQueueWorkCount + 1);
@@ -340,10 +358,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd();
 
     bool buffersSwitched = false;
-    uint64_t startGpuVa = getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
+    getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
 
     if (ringCommandStream.getAvailableSpace() < requiredMinimalSize) {
-        startGpuVa = switchRingBuffers();
+        switchRingBuffers();
         buffersSwitched = true;
     }
 

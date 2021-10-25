@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
+#include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 
 namespace NEO {
 
@@ -22,6 +22,8 @@ class MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {
     }
     void pollForCompletion() override {
+    }
+    void initializeEngine() override {
     }
     bool writeMemory(GraphicsAllocation &gfxAllocation) override {
         return true;

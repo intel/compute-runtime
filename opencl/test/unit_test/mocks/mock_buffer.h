@@ -10,7 +10,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -40,14 +40,14 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using MockBufferStorage::device;
     MockBuffer(GraphicsAllocation &alloc)
         : MockBufferStorage(), Buffer(
-                                   nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                   nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                    CL_MEM_USE_HOST_PTR, 0, alloc.getUnderlyingBufferSize(), alloc.getUnderlyingBuffer(), alloc.getUnderlyingBuffer(),
                                    GraphicsAllocationHelper::toMultiGraphicsAllocation(&alloc), true, false, false),
           externalAlloc(&alloc) {
     }
     MockBuffer()
         : MockBufferStorage(), Buffer(
-                                   nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                   nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                    CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data,
                                    GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation), true, false, false) {
     }
@@ -69,13 +69,13 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
     using MockBufferStorage::device;
 
     AlignedBuffer() : MockBufferStorage(false), Buffer(
-                                                    nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                                    nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                                     CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64),
                                                     GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation), true, false, false) {
     }
     AlignedBuffer(GraphicsAllocation *gfxAllocation)
         : MockBufferStorage(), Buffer(
-                                   nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                   nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                    CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64),
                                    GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), true, false, false) {
     }
@@ -89,13 +89,13 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
     using MockBufferStorage::device;
 
     UnalignedBuffer() : MockBufferStorage(true), Buffer(
-                                                     nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                                     nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                                      CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4),
                                                      GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation), false, false, false) {
     }
     UnalignedBuffer(GraphicsAllocation *gfxAllocation)
         : MockBufferStorage(true), Buffer(
-                                       nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                                       nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                                        CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4),
                                        GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), false, false, false) {
     }

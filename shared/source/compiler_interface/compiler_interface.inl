@@ -7,9 +7,8 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/os_library.h"
-
-#include "opencl/source/helpers/validators.h"
 
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "cif/common/cif.h"

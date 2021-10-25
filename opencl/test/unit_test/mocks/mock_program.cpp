@@ -18,7 +18,6 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/create.inl"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/helpers/ult_limits.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 

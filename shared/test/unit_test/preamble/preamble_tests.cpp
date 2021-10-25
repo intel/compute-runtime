@@ -14,11 +14,13 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "test.h"
 
+#include "reg_configs_common.h"
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -56,12 +58,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIs
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    auto cmdSizePreemptionDisabled = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    auto cmdSizePreemptionDisabled = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
     EXPECT_EQ(0u, cmdSizePreemptionDisabled);
 
     if (mockDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
         mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-        auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+        auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
         EXPECT_LT(cmdSizePreemptionDisabled, cmdSizePreemptionMidThread);
 
         StackVec<char, 8192> preambleBuffer(8192);
@@ -106,7 +108,7 @@ HWTEST_F(PreambleTest, givenInactiveKernelDebuggingWhenPreambleKernelDebuggingCo
     EXPECT_EQ(0u, size);
 }
 
-HWTEST2_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectCommandsArePlacedIntoStream, IsAtMostXeHpCore) {
+HWTEST_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectCommandsArePlacedIntoStream) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
 
     auto bufferSize = PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true);
@@ -124,13 +126,13 @@ HWTEST2_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectComma
     auto it = cmdList.begin();
 
     MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(DebugModeRegisterOffset<FamilyType>::registerOffset, pCmd->getRegisterOffset());
-    EXPECT_EQ(DebugModeRegisterOffset<FamilyType>::debugEnabledValue, pCmd->getDataDword());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getDebugModeRegisterOffset(), pCmd->getRegisterOffset());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getDebugModeRegisterValue(), pCmd->getDataDword());
     it++;
 
     pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::registerOffset, pCmd->getRegisterOffset());
-    EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::debugEnabledValue, pCmd->getDataDword());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getTdCtlRegisterOffset(), pCmd->getRegisterOffset());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getTdCtlRegisterValue(), pCmd->getDataDword());
 }
 
 HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenProgramKernelDebuggingIsCalled) {
@@ -255,6 +257,19 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfe
     EXPECT_NE(0u, offset);
     EXPECT_EQ(MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET + reinterpret_cast<uintptr_t>(pVfeCmd),
               offset + reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()));
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenIsSystolicModeConfigurableThenReturnFalse) {
+    auto result = PreambleHelper<FamilyType>::isSystolicModeConfigurable(*defaultHwInfo);
+    EXPECT_FALSE(result);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenAppendProgramPipelineSelectThenNothingChanged) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
+    cmd.setMaskBits(pipelineSelectEnablePipelineSelectMaskBits);
+    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, true, *defaultHwInfo);
+    EXPECT_EQ(pipelineSelectEnablePipelineSelectMaskBits, cmd.getMaskBits());
 }
 
 HWTEST_F(PreambleTest, givenSetForceSemaphoreDelayBetweenWaitsWhenProgramSemaphoreDelayThenSemaWaitPollRegisterIsProgrammed) {

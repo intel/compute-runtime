@@ -12,6 +12,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 
@@ -22,9 +24,7 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/mocks/mock_svm_manager.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
@@ -355,8 +355,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     EXPECT_EQ(allocationSize, allocation->size);
     EXPECT_EQ(mockContext.getDevice(0u), allocation->device->getSpecializedDevice<ClDevice>());
 
-    EXPECT_EQ(alignUp(allocationSize, 2u * MB), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, 64 * KB), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize2Mb), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
@@ -384,8 +384,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    EXPECT_EQ(alignUp(allocationSize, 2u * MB), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, 64 * KB), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize2Mb), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
@@ -871,7 +871,7 @@ TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropert
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedForTransferCallsThenUSMAllocationIsReused) {
+TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedForTransferCallsThenUSMAllocationIsReused) {
     MockContext mockContext;
     auto device = mockContext.getDevice(0u);
     REQUIRE_SVM_OR_SKIP(device);
@@ -915,7 +915,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedFor
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTransferCallsThenUsmAllocationIsReused) {
+TEST(UnifiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTransferCallsThenUsmAllocationIsReused) {
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
@@ -955,7 +955,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTr
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTransferCallsThenCPUPathIsNotChoosen) {
+TEST(UnifiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTransferCallsThenCPUPathIsNotChoosen) {
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
@@ -995,7 +995,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTr
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTransferCallsThenCPUPathIsChoosen) {
+TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTransferCallsThenCPUPathIsChoosen) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(false);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
@@ -1042,7 +1042,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTran
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTransferRequirementsThenErrorIsReturned) {
+TEST(UnifiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTransferRequirementsThenErrorIsReturned) {
     MockContext mockContext;
     auto device = mockContext.getDevice(0u);
     REQUIRE_SVM_OR_SKIP(device);
@@ -1075,7 +1075,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTransf
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemoryWhenPointerIsUsedAsTranfserParameterThenUSMAllocationIsReused) {
+TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemoryWhenPointerIsUsedAsTranfserParameterThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(0);
 
@@ -1118,7 +1118,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemory
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWhenPointerIsUsedAsTransferParameterThenUSMAllocationIsReused) {
+TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWhenPointerIsUsedAsTransferParameterThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(1);
 
@@ -1163,7 +1163,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWhe
     clReleaseCommandQueue(commandQueue);
 }
 
-class UnfiedSharedMemoryHWTest : public testing::Test {
+class UnifiedSharedMemoryHWTest : public testing::Test {
   public:
     MockContext mockContext;
 };
@@ -1192,7 +1192,7 @@ class TestCommandQueueHw : public CommandQueueHw<GfxFamily> {
     }
 };
 
-HWTEST_F(UnfiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenWriteBufferThenCpuPtrIsNotUsed) {
+HWTEST_F(UnifiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenWriteBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY,
                                                                       mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
     unifiedMemoryProperties.device = &mockContext.getDevice(0)->getDevice();
@@ -1220,7 +1220,7 @@ HWTEST_F(UnfiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenWriteBufferThenCp
     clMemFreeINTEL(&mockContext, deviceMemory);
 }
 
-HWTEST_F(UnfiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenReadBufferThenCpuPtrIsNotUsed) {
+HWTEST_F(UnifiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenReadBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY,
                                                                       mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
     unifiedMemoryProperties.device = &mockContext.getDevice(0)->getDevice();
@@ -1248,7 +1248,7 @@ HWTEST_F(UnfiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenReadBufferThenCpu
     clMemFreeINTEL(&mockContext, deviceMemory);
 }
 
-HWTEST_F(UnfiedSharedMemoryHWTest, givenSharedUsmAllocationWhenWriteBufferThenCpuPtrIsNotUsed) {
+HWTEST_F(UnifiedSharedMemoryHWTest, givenSharedUsmAllocationWhenWriteBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY,
                                                                       mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
     auto sharedMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
@@ -1275,7 +1275,7 @@ HWTEST_F(UnfiedSharedMemoryHWTest, givenSharedUsmAllocationWhenWriteBufferThenCp
     clMemFreeINTEL(&mockContext, sharedMemory);
 }
 
-HWTEST_F(UnfiedSharedMemoryHWTest, givenSharedUsmAllocationWhenReadBufferThenCpuPtrIsNotUsed) {
+HWTEST_F(UnifiedSharedMemoryHWTest, givenSharedUsmAllocationWhenReadBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY,
                                                                       mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
     auto sharedMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);

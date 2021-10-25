@@ -12,17 +12,20 @@
 namespace L0 {
 
 ze_result_t LinuxSysmanImp::init() {
-    pXmlParser = XmlParser::create();
-    pFwUtilInterface = FirmwareUtil::create();
     pFsAccess = FsAccess::create();
-    UNRECOVERABLE_IF(nullptr == pFsAccess);
+    DEBUG_BREAK_IF(nullptr == pFsAccess);
 
-    pProcfsAccess = ProcfsAccess::create();
-    UNRECOVERABLE_IF(nullptr == pProcfsAccess);
+    if (pProcfsAccess == nullptr) {
+        pProcfsAccess = ProcfsAccess::create();
+    }
+    DEBUG_BREAK_IF(nullptr == pProcfsAccess);
 
     pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
-    UNRECOVERABLE_IF(nullptr == pDevice);
+    DEBUG_BREAK_IF(nullptr == pDevice);
     NEO::OSInterface &OsInterface = pDevice->getOsInterface();
+    if (OsInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     pDrm = OsInterface.getDriverModel()->as<NEO::Drm>();
     int myDeviceFd = pDrm->getFileDescriptor();
     std::string myDeviceName;
@@ -31,8 +34,10 @@ ze_result_t LinuxSysmanImp::init() {
         return result;
     }
 
-    pSysfsAccess = SysfsAccess::create(myDeviceName);
-    UNRECOVERABLE_IF(nullptr == pSysfsAccess);
+    if (pSysfsAccess == nullptr) {
+        pSysfsAccess = SysfsAccess::create(myDeviceName);
+    }
+    DEBUG_BREAK_IF(nullptr == pSysfsAccess);
 
     std::string realRootPath;
     result = pSysfsAccess->getRealPath("device", realRootPath);
@@ -43,17 +48,17 @@ ze_result_t LinuxSysmanImp::init() {
     PlatformMonitoringTech::create(pParentSysmanDeviceImp->deviceHandles, pFsAccess, rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
 
     pPmuInterface = PmuInterface::create(this);
-    UNRECOVERABLE_IF(nullptr == pPmuInterface);
+
+    DEBUG_BREAK_IF(nullptr == pPmuInterface);
+    auto loc = realRootPath.find_last_of('/');
+    std::string pciBDF = realRootPath.substr(loc + 1, std::string::npos);
+    pFwUtilInterface = FirmwareUtil::create(pciBDF);
 
     return ZE_RESULT_SUCCESS;
 }
 
 PmuInterface *LinuxSysmanImp::getPmuInterface() {
     return pPmuInterface;
-}
-
-XmlParser *LinuxSysmanImp::getXmlParser() {
-    return pXmlParser;
 }
 
 FirmwareUtil *LinuxSysmanImp::getFwUtilInterface() {
@@ -139,10 +144,6 @@ LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pFsAccess) {
         delete pFsAccess;
         pFsAccess = nullptr;
-    }
-    if (nullptr != pXmlParser) {
-        delete pXmlParser;
-        pXmlParser = nullptr;
     }
     if (nullptr != pFwUtilInterface) {
         delete pFwUtilInterface;

@@ -114,9 +114,10 @@ string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
 add_custom_target(run_ocloc_tests ALL
                   DEPENDS ocloc_tests
 )
-
-add_dependencies(run_unit_tests run_ocloc_tests)
-add_dependencies(unit_tests ocloc_tests)
+if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+  add_dependencies(run_unit_tests run_ocloc_tests)
+  add_dependencies(unit_tests ocloc_tests)
+endif()
 
 macro(macro_for_each_platform)
   if("${PLATFORM_IT_LOWER}" STREQUAL "${CLOC_LIB_DEFAULT_DEVICE}")

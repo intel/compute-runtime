@@ -15,8 +15,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/kernel/grf_config.h"
-
-#include "opencl/source/kernel/kernel_execution_type.h"
+#include "shared/source/kernel/kernel_execution_type.h"
 
 #include <limits>
 
@@ -124,5 +123,6 @@ struct CsrSizeRequestFlags {
     bool hasSharedHandles = false;
     bool numGrfRequiredChanged = false;
     bool specialPipelineSelectModeChanged = false;
+    bool activePartitionsChanged = false;
 };
 } // namespace NEO

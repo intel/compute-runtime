@@ -8,10 +8,10 @@
 #include "driver_diagnostics_tests.h"
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include <tuple>
 
@@ -664,7 +664,7 @@ TEST_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPe
     auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
     context->isSharedContext = false;
     auto buffer = std::unique_ptr<Buffer>(
-        Buffer::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice()),
+        Buffer::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice()),
                        0, 0, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
     auto compressionSupported = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForRenderCompression(size, hwInfo) &&
@@ -684,7 +684,7 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     cl_device_id deviceId = device.get();
     MemoryProperties memoryProperties =
-        MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
+        ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
 
     size_t size = 0u;
 
@@ -756,7 +756,7 @@ TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerforma
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -815,7 +815,7 @@ TEST_F(PerformanceHintTest, givenImageWithNoGmmWhenItsCreatedThenNoPerformanceHi
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -876,7 +876,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,

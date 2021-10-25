@@ -11,15 +11,10 @@
 #include "shared/test/common/fixtures/preemption_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-
-#include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gmock/gmock.h"
 
@@ -199,7 +194,7 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenSizeForStateSipIsZero) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(mode);
 
-    auto size = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    auto size = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
     EXPECT_EQ(0u, size);
 }
 
@@ -208,7 +203,7 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenStateSipIsNotProgrammed) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(mode);
 
-    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
@@ -275,7 +270,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
 
         uint32_t allocateGraphicsMemoryCount = 0;
     };
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(nullptr, 0u);
     executionEnvironment->memoryManager = std::make_unique<FailingMemoryManager>(*executionEnvironment);
     if (executionEnvironment->memoryManager.get()->isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -318,7 +313,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStat
         auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.isPreambleSent = true;
 
-        auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+        auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
         StackVec<char, 4096> buff(requiredSize);
         LinearStream commandStream(buff.begin(), buff.size());
 
@@ -368,7 +363,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, WhenProgrammingPreemptionT
         auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.isPreambleSent = true;
 
-        auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+        auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
         StackVec<char, 4096> buff(requiredSize);
         LinearStream commandStream(buff.begin(), buff.size());
 

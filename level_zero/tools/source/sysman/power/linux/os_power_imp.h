@@ -27,7 +27,9 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     ze_result_t setEnergyThreshold(double threshold) override;
 
     bool isPowerModuleSupported() override;
-    LinuxPowerImp(OsSysman *pOsSysman);
+    bool isEnergyHwmonDir(std::string name);
+    ze_result_t getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy);
+    LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxPowerImp() = default;
     ~LinuxPowerImp() override = default;
 
@@ -37,6 +39,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
 
   private:
     std::string i915HwmonDir;
+    std::string energyHwmonDir;
     static const std::string hwmonDir;
     static const std::string i915;
     static const std::string sustainedPowerLimitEnabled;
@@ -49,6 +52,8 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     static const std::string minPowerLimit;
     static const std::string maxPowerLimit;
     bool canControl = false;
+    bool isSubdevice = false;
+    uint32_t subdeviceId = 0;
 
     ze_result_t getErrorCode(ze_result_t result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {

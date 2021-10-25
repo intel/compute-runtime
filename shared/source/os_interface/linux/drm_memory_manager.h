@@ -65,6 +65,8 @@ class DrmMemoryManager : public MemoryManager {
 
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;
 
+    bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) override;
+
     std::unique_lock<std::mutex> acquireAllocLock();
     std::vector<GraphicsAllocation *> &getSysMemAllocs();
     std::vector<GraphicsAllocation *> &getLocalMemAllocs(uint32_t rootDeviceIndex);
@@ -75,6 +77,8 @@ class DrmMemoryManager : public MemoryManager {
     static std::unique_ptr<MemoryManager> create(ExecutionEnvironment &executionEnvironment);
 
     DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr);
+    void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
+    void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
@@ -116,6 +120,8 @@ class DrmMemoryManager : public MemoryManager {
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;
     uint32_t getRootDeviceIndex(const Drm *drm);
+    BufferObject *createRootDeviceBufferObject(uint32_t rootDeviceIndex);
+    void releaseBufferObject(uint32_t rootDeviceIndex);
 
     std::vector<BufferObject *> pinBBs;
     std::vector<void *> memoryForPinBBs;

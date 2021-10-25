@@ -13,10 +13,13 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
@@ -27,20 +30,17 @@
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_init.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/program/program_tests.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -2830,4 +2830,49 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
     mockGAHandle.reset();
     allocDataHandle.reset();
 }
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenGtpinRemoveCommandQueueIsCalledThenAllKernelsFromCmdQueueAreRemoved) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    kernelExecQueue.clear();
+
+    CommandQueue *cmdQ1 = reinterpret_cast<CommandQueue *>(1);
+    CommandQueue *cmdQ2 = reinterpret_cast<CommandQueue *>(2);
+    Kernel *kernel1 = reinterpret_cast<Kernel *>(1);
+    Kernel *kernel2 = reinterpret_cast<Kernel *>(2);
+    Kernel *kernel3 = reinterpret_cast<Kernel *>(3);
+    Kernel *kernel4 = reinterpret_cast<Kernel *>(4);
+
+    gtpinkexec_t kExec;
+    kExec.pKernel = kernel1;
+    kExec.pCommandQueue = cmdQ1;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel2;
+    kExec.pCommandQueue = cmdQ1;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel3;
+    kExec.pCommandQueue = cmdQ2;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel4;
+    kExec.pCommandQueue = cmdQ2;
+    kernelExecQueue.push_back(kExec);
+    EXPECT_EQ(4u, kernelExecQueue.size());
+
+    gtpinRemoveCommandQueue(cmdQ1);
+    EXPECT_EQ(2u, kernelExecQueue.size());
+
+    gtpinRemoveCommandQueue(cmdQ2);
+    EXPECT_EQ(0u, kernelExecQueue.size());
+}
+
 } // namespace ULT

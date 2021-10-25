@@ -7,6 +7,8 @@
 
 #include "shared/source/helpers/api_specific_config.h"
 
+#include "level_zero/core/source/compiler_interface/l0_reg_path.h"
+
 #include "gtest/gtest.h"
 
 namespace NEO {
@@ -31,4 +33,7 @@ TEST(ApiSpecificConfigL0Tests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeTh
     EXPECT_EQ(1024u, ApiSpecificConfig::getReducedMaxAllocSize(1024));
 }
 
+TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturned) {
+    EXPECT_STREQ(L0::registryPath, ApiSpecificConfig::getRegistryPath());
+}
 } // namespace NEO

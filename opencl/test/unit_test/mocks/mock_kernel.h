@@ -124,6 +124,7 @@ class MockKernel : public Kernel {
     using Kernel::parentEventOffset;
     using Kernel::patchBufferOffset;
     using Kernel::patchWithImplicitSurface;
+    using Kernel::pImplicitArgs;
     using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
     using Kernel::singleSubdevicePreferredInCurrentEnqueue;
@@ -414,13 +415,24 @@ class MockKernelWithInternals {
 
 class MockParentKernel : public Kernel {
   public:
+    struct CreateParams {
+        bool addChildSimdSize = false;
+        bool addChildGlobalMemory = false;
+        bool addChildConstantMemory = false;
+        bool addPrintfForParent = false;
+        bool addPrintfForBlock = false;
+    };
     using Kernel::auxTranslationRequired;
     using Kernel::kernelInfo;
     using Kernel::patchBlocksCurbeWithConstantValues;
+    using Kernel::pImplicitArgs;
     using Kernel::pSshLocal;
     using Kernel::sshLocalSize;
-
-    static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
+    static MockParentKernel *create(Context &context) {
+        CreateParams createParams{};
+        return create(context, createParams);
+    }
+    static MockParentKernel *create(Context &context, const CreateParams &createParams) {
         auto clDevice = context.getDevice(0);
 
         auto info = new MockKernelInfo();
@@ -441,7 +453,7 @@ class MockParentKernel : public Kernel {
         info->setDeviceSideEnqueueEventPoolSurface(8, crossThreadOffset);
         crossThreadOffset += 8;
 
-        if (addPrintfForParent) {
+        if (createParams.addPrintfForParent) {
             info->setPrintfSurface(8, crossThreadOffset);
             crossThreadOffset += 8;
         }
@@ -450,7 +462,7 @@ class MockParentKernel : public Kernel {
         deviceVector.push_back(clDevice);
         MockProgram *mockProgram = new MockProgram(&context, false, deviceVector);
 
-        if (addChildSimdSize) {
+        if (createParams.addChildSimdSize) {
             info->childrenKernelsIdOffset.push_back({0, crossThreadOffset});
         }
 
@@ -473,17 +485,17 @@ class MockParentKernel : public Kernel {
         infoBlock->setDeviceSideEnqueueEventPoolSurface(8, crossThreadOffset);
         crossThreadOffsetBlock += 8;
 
-        if (addPrintfForBlock) {
+        if (createParams.addPrintfForBlock) {
             infoBlock->setPrintfSurface(8, crossThreadOffsetBlock);
             crossThreadOffsetBlock += 8;
         }
 
-        if (addChildGlobalMemory) {
+        if (createParams.addChildGlobalMemory) {
             infoBlock->setGlobalVariablesSurface(8, crossThreadOffsetBlock);
             crossThreadOffsetBlock += 8;
         }
 
-        if (addChildConstantMemory) {
+        if (createParams.addChildConstantMemory) {
             infoBlock->setGlobalConstantsSurface(8, crossThreadOffsetBlock);
             crossThreadOffsetBlock += 8;
         }

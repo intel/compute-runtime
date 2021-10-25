@@ -22,7 +22,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ~SysmanDeviceImp() override;
 
     SysmanDeviceImp() = delete;
-    void init();
+    ze_result_t init();
 
     ze_device_handle_t hCoreDevice = nullptr;
     std::vector<ze_device_handle_t> deviceHandles; // handles of all subdevices

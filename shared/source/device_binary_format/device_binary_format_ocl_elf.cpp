@@ -10,7 +10,6 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
-#include "shared/source/utilities/compiler_support.h"
 
 #include <tuple>
 
@@ -27,9 +26,9 @@ bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(const ArrayRef<const 
     default:
         return false;
     case Elf::ET_OPENCL_EXECUTABLE:
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case Elf::ET_OPENCL_LIBRARY:
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case Elf::ET_OPENCL_OBJECTS:
         return true;
     }
@@ -66,7 +65,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(con
         auto sectionData = elfSectionHeader.data;
         switch (elfSectionHeader.header->type) {
         case Elf::SHT_OPENCL_SPIRV:
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         case Elf::SHT_OPENCL_LLVM_BINARY:
             ret.intermediateRepresentation = sectionData;
             break;

@@ -55,6 +55,7 @@ class FsAccess {
   protected:
     FsAccess();
     decltype(&NEO::SysCalls::access) accessSyscall = NEO::SysCalls::access;
+    decltype(&stat) statSyscall = stat;
 };
 
 class ProcfsAccess : private FsAccess {

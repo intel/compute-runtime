@@ -5,12 +5,12 @@
  *
  */
 
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
@@ -99,9 +99,12 @@ HWTEST_F(AUBcommandstreamTests, GivenVecsWhenTestingNoopIdThenAubIsCorrect) {
     testNoopIdXcs<FamilyType>(aub_stream::ENGINE_VECS);
 }
 
-TEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsResident) {
+HWTEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsResident) {
     uint8_t buffer[0x10000];
     size_t size = sizeof(buffer);
+
+    getSimulatedCsr<FamilyType>()->initializeEngine();
+
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
@@ -111,6 +114,9 @@ TEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsResi
 HWTEST_F(AUBcommandstreamTests, GivenSingleAllocationWhenCreatingResidentAllocationThenAubIsCorrect) {
     uint32_t buffer = 0xdeadbeef;
     size_t size = sizeof(buffer);
+
+    getSimulatedCsr<FamilyType>()->initializeEngine();
+
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(&buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
     pCommandStreamReceiver->processResidency(allocationsForResidency, 0u);
@@ -125,6 +131,8 @@ HWTEST_F(AUBcommandstreamTests, GivenMultipleAllocationsWhenCreatingResidentAllo
     for (size_t index = 0; index < sizeBuffer; ++index) {
         buffer[index] = static_cast<uint8_t>(index);
     }
+
+    getSimulatedCsr<FamilyType>()->initializeEngine();
 
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, sizeBuffer);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};

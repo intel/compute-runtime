@@ -6,16 +6,16 @@
  */
 
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/enqueue_copy_buffer_to_image_fixture.h"
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
 
@@ -215,10 +215,9 @@ HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBuffe
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
-    auto oldBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
         EBuiltInOps::CopyBufferToImage3d,
-        pCmdQ->getContext(),
-        pCmdQ->getDevice(),
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
     cl_int retVal = CL_SUCCESS;
@@ -277,10 +276,9 @@ HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBuffe
     EXPECT_EQ(expectedMipLevel, params->dstMipLevel);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
         EBuiltInOps::CopyBufferToImage3d,
-        pCmdQ->getContext(),
-        pCmdQ->getDevice(),
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 }
@@ -293,7 +291,7 @@ struct EnqueueCopyBufferToImageHw : public ::testing::Test {
     void SetUp() override {
         REQUIRE_64BIT_OR_SKIP();
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context = std::make_unique<MockContext>(device.get());
         dstImage = std::unique_ptr<Image>(Image2dHelper<>::create(context.get()));
     }

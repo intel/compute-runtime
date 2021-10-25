@@ -13,16 +13,17 @@
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
-#include "opencl/test/unit_test/custom_event_listener.h"
+#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/linux/drm_wrap.h"
 #include "opencl/test/unit_test/linux/mock_os_layer.h"
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
 #include "gmock/gmock.h"
@@ -40,6 +41,11 @@ namespace NEO {
 void __attribute__((destructor)) platformsDestructor();
 extern const DeviceDescriptor deviceDescriptorTable[];
 } // namespace NEO
+
+NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
+    return nullptr;
+}
+
 using namespace NEO;
 
 class DrmTestsFixture {
@@ -141,16 +147,16 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDevice
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
 
     entryIndex = 0;
     openCounter = 2;
     hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(2u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevices) {
@@ -165,16 +171,16 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
     EXPECT_STREQ("/dev/dri/renderD128", lastOpenedPath.c_str());
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
 
     openCounter = 2;
     hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
     EXPECT_EQ(2u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
 TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
@@ -198,7 +204,6 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     struct DrmMock : public Drm {
         using Drm::ioctlStatistics;
     };
-    // ::testing::internal::CaptureStdout();
 
     constexpr long long initialMin = std::numeric_limits<long long>::max();
     constexpr long long initialMax = 0;
@@ -284,6 +289,8 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     EXPECT_EQ(1u, destroyData->second.count);
     EXPECT_NE(0, destroyData->second.totalTime);
 
+    ::testing::internal::CaptureStdout();
+
     delete drm;
 
     // std::string output = ::testing::internal::GetCapturedStdout();
@@ -346,9 +353,9 @@ TEST_F(DrmSimpleTests, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateM
     EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:02.0", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:00:03.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
 TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {
@@ -364,9 +371,9 @@ TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevice
     EXPECT_STREQ("/dev/dri/by-path/pci-0000:test2-render", lastOpenedPath.c_str());
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
+    EXPECT_STREQ("0000:test2", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {

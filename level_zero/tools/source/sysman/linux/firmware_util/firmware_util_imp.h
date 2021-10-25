@@ -12,12 +12,13 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util.h"
 
+#include <cinttypes>
 #include <string>
 #include <vector>
 
 namespace L0 {
 typedef int (*pIgscDeviceInitByDevice)(struct igsc_device_handle *handle,
-                                       const char *device_path);
+                                       const char *devicePath);
 typedef int (*pIgscDeviceGetDeviceInfo)(struct igsc_device_handle *handle,
                                         struct igsc_info_device *info);
 typedef int (*pIgscDeviceFwVersion)(struct igsc_device_handle *handle,
@@ -28,21 +29,21 @@ typedef int (*pIgscDeviceIteratorNext)(struct igsc_device_iterator *iter,
 typedef void (*pIgscDeviceIteratorDestroy)(struct igsc_device_iterator *iter);
 typedef int (*pIgscDeviceFwUpdate)(struct igsc_device_handle *handle,
                                    const uint8_t *buffer,
-                                   const uint32_t buffer_len,
-                                   igsc_progress_func_t progress_f,
+                                   const uint32_t bufferLen,
+                                   igsc_progress_func_t progressFunc,
                                    void *ctx);
 typedef int (*pIgscImageOpromInit)(struct igsc_oprom_image **img,
                                    const uint8_t *buffer,
-                                   uint32_t buffer_len);
+                                   uint32_t bufferLen);
 typedef int (*pIgscImageOpromType)(struct igsc_oprom_image *img,
-                                   uint32_t *oprom_type);
+                                   uint32_t *opromType);
 typedef int (*pIgscDeviceOpromUpdate)(struct igsc_device_handle *handle,
-                                      uint32_t oprom_type,
+                                      uint32_t opromType,
                                       struct igsc_oprom_image *img,
-                                      igsc_progress_func_t progress_f,
+                                      igsc_progress_func_t progressFunc,
                                       void *ctx);
 typedef int (*pIgscDeviceOpromVersion)(struct igsc_device_handle *handle,
-                                       uint32_t oprom_type,
+                                       uint32_t opromType,
                                        struct igsc_oprom_version *version);
 
 extern pIgscDeviceInitByDevice deviceInitByDevice;
@@ -59,17 +60,22 @@ extern pIgscDeviceOpromVersion deviceOpromVersion;
 
 class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
   public:
-    FirmwareUtilImp();
+    FirmwareUtilImp(const std::string &pciBDF);
     ~FirmwareUtilImp();
     ze_result_t fwDeviceInit() override;
     ze_result_t getFirstDevice(igsc_device_info *) override;
     ze_result_t fwGetVersion(std::string &fwVersion) override;
     ze_result_t opromGetVersion(std::string &fwVersion) override;
+    ze_result_t pscGetVersion(std::string &fwVersion) override;
     ze_result_t fwFlashGSC(void *pImage, uint32_t size) override;
     ze_result_t fwFlashOprom(void *pImage, uint32_t size) override;
+    ze_result_t fwFlashIafPsc(void *pImage, uint32_t size) override;
+    ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) override;
+    ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) override;
     ze_result_t fwIfrApplied(bool &ifrStatus) override;
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override;
     ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) override;
+    void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
 
     template <class T>
     bool getSymbolAddr(const std::string name, T &proc);
@@ -79,5 +85,11 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     bool loadEntryPoints();
 
     NEO::OsLibrary *libraryHandle = nullptr;
+
+  private:
+    uint16_t domain = 0;
+    uint8_t bus = 0;
+    uint8_t device = 0;
+    uint8_t function = 0;
 };
 } // namespace L0

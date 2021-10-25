@@ -8,12 +8,9 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/preemption_fixture.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_device.h"
-
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 
 #include "test_traits_common.h"
 
@@ -22,7 +19,7 @@ using namespace NEO;
 using XeHPAndLaterPreemptionTests = DevicePreemptionTests;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmdIsNotAddedToStream) {
-    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
+    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
@@ -38,7 +35,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingThenWaH
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingThenWaNotApplied) {
     size_t usedSize = 0;
 
-    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
+    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
     StackVec<char, 4096> buff(requiredSize);
     LinearStream cmdStream(buff.begin(), buff.size());
 
@@ -112,7 +109,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenP
     auto sipType = SipKernel::getSipKernelType(*device.get());
     SipKernel::initSipKernel(sipType, *device.get());
 
-    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
+    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
     EXPECT_EQ(sizeof(STATE_SIP), requiredSize);
 
     const size_t bufferSize = 128;

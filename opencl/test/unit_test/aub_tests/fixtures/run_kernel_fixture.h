@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
@@ -18,7 +19,6 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
-#include "opencl/test/unit_test/global_environment.h"
 
 namespace NEO {
 

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
@@ -18,36 +19,35 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/windows/mock_wddm_direct_submission.h"
+#include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
-#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_interface23.h"
-#include "opencl/test/unit_test/os_interface/windows/mock_wddm_memory_manager.h"
 #include "test.h"
 
 #include "hw_cmds.h"
@@ -219,7 +219,7 @@ TEST_F(DeviceCommandStreamTest, WhenCreatingWddmCsrWithAubDumpThenAubCsrIsCreate
 TEST_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedMonitoredFence) {
     uint64_t stampToWait = 123;
     wddm->waitFromCpuResult.called = 0u;
-    csr->waitForFlushStamp(stampToWait, 1, 0);
+    csr->waitForFlushStamp(stampToWait);
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
     EXPECT_TRUE(wddm->waitFromCpuResult.success);
     EXPECT_EQ(stampToWait, wddm->waitFromCpuResult.uint64ParamPassed);
@@ -970,13 +970,13 @@ HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenInitial
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 1u));
     setCompressionEnabled(compressionEnabled, !compressionEnabled);
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[index]->pageTableManager.get());
 
     MockWddmCsr<FamilyType> mockWddmCsr(*executionEnvironment, index, 1);
     mockWddmCsr.createPageTableManager();
-    ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[index]->pageTableManager.get());
 
-    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(executionEnvironment->rootDeviceEnvironments[index]->pageTableManager.get());
+    ASSERT_NE(nullptr, mockWddmCsr.pageTableManager.get());
+
+    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(mockWddmCsr.pageTableManager.get());
     EXPECT_EQ(1u, mockMngr->setCsrHanleCalled);
     EXPECT_EQ(&mockWddmCsr, mockMngr->passedCsrHandle);
 
@@ -995,7 +995,9 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
     setCompressionEnabled(false, false);
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
     MockWddmCsr<FamilyType> mockWddmCsr(*executionEnvironment, 1, device->getDeviceBitfield());
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
+    for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
+        EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -1017,19 +1019,24 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     device->resetCommandStreamReceiver(mockWddmCsr);
 
     auto memoryManager = executionEnvironment->memoryManager.get();
-
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
+    for (auto engine : memoryManager->getRegisteredEngines()) {
+        EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
+    }
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockWddmCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(graphicsAllocation);
 
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
+    for (auto engine : memoryManager->getRegisteredEngines()) {
+        EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
+    }
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
 
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
+    for (auto engine : memoryManager->getRegisteredEngines()) {
+        EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
+    }
 
     mockWddmCsr->flushBatchedSubmissions();
     memoryManager->freeGraphicsMemory(graphicsAllocation);

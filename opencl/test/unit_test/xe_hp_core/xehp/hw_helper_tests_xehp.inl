@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 
 using HwHelperTestsXeHP = HwHelperTest;
 
@@ -44,22 +44,6 @@ XEHPTEST_F(HwHelperTestsXeHP, givenXEHPWhenIsBankOverrideRequiredIsCalledThenCor
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
         hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
         EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
-    }
-}
-
-XEHPTEST_F(HwHelperTestsXeHP, givenXEHPWhenHeapInLocalMemIsCalledThenCorrectValueIsReturned) {
-    DebugManagerStateRestore restore;
-    auto hwInfo = *defaultHwInfo;
-    auto &helper = HwHelper::get(renderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(helper.heapInLocalMem(hwInfo));
-    }
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EXPECT_TRUE(helper.heapInLocalMem(hwInfo));
     }
 }
 

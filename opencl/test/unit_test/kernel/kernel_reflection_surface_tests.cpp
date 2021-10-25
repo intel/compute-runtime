@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/matchers.h"
 
 #include "opencl/source/execution_model/device_enqueue.h"
@@ -17,7 +18,6 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -1671,14 +1671,17 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenPrintfHandlerWhenPatchingRefl
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
     MockContext context(device);
     cl_queue_properties properties[3] = {0};
-    MockParentKernel *parentKernel = MockParentKernel::create(context);
+    MockParentKernel::CreateParams createParams{};
+    createParams.addPrintfForBlock = true;
+    createParams.addPrintfForParent = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
 
     DeviceQueue devQueue(&context, device, properties[0]);
     parentKernel->createReflectionSurface();
 
     context.setDefaultDeviceQueue(&devQueue);
 
-    MockMultiDispatchInfo multiDispatchInfo(device, parentKernel);
+    MockMultiDispatchInfo multiDispatchInfo(device, parentKernel.get());
     PrintfHandler *printfHandler = PrintfHandler::create(multiDispatchInfo, *device);
     printfHandler->prepareDispatch(multiDispatchInfo);
 
@@ -1690,21 +1693,23 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenPrintfHandlerWhenPatchingRefl
     EXPECT_EQ(printfSurfaceArg.pointerSize, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.size);
 
     delete printfHandler;
-    delete parentKernel;
 }
 
 TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenNoPrintfSurfaceWhenPatchingReflectionSurfaceThenPrintBufferIsNotPatched) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
     MockContext context(device);
     cl_queue_properties properties[3] = {0};
-    MockParentKernel *parentKernel = MockParentKernel::create(context);
+    MockParentKernel::CreateParams createParams{};
+    createParams.addPrintfForBlock = true;
+    createParams.addPrintfForParent = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
 
     DeviceQueue devQueue(&context, device, properties[0]);
     parentKernel->createReflectionSurface();
 
     context.setDefaultDeviceQueue(&devQueue);
 
-    MockMultiDispatchInfo multiDispatchInfo(device, parentKernel);
+    MockMultiDispatchInfo multiDispatchInfo(device, parentKernel.get());
     PrintfHandler *printfHandler = PrintfHandler::create(multiDispatchInfo, *device);
 
     parentKernel->patchReflectionSurface<true>(&devQueue, printfHandler);
@@ -1715,7 +1720,6 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenNoPrintfSurfaceWhenPatchingRe
     EXPECT_EQ(printfSurfaceArg.pointerSize, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.size);
 
     delete printfHandler;
-    delete parentKernel;
 }
 
 class ReflectionSurfaceConstantValuesPatchingTest : public ClDeviceFixture,
@@ -1732,7 +1736,9 @@ class ReflectionSurfaceConstantValuesPatchingTest : public ClDeviceFixture,
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWhenReflectionSurfaceIsPatchedWithConstantValuesThenProgramGlobalMemoryAddressIsPatched) {
 
     MockContext context(pClDevice);
-    MockParentKernel *parentKernel = MockParentKernel::create(context, false, true, false);
+    MockParentKernel::CreateParams createParams{};
+    createParams.addChildGlobalMemory = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
 
     // graphicsMemory is released by Program
     GraphicsAllocation *globalMemory = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -1759,14 +1765,14 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWh
     uint64_t *pCurbe = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset + blockPatchOffset);
 
     EXPECT_EQ(globalMemory->getGpuAddressToPatch(), *pCurbe);
-
-    delete parentKernel;
 }
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAndProgramWithoutGlobalMemortWhenReflectionSurfaceIsPatchedWithConstantValuesThenZeroAddressIsPatched) {
 
     MockContext context(pClDevice);
-    MockParentKernel *parentKernel = MockParentKernel::create(context, false, true, false);
+    MockParentKernel::CreateParams createParams{};
+    createParams.addChildGlobalMemory = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
 
     if (parentKernel->mockProgram->getGlobalSurface(pClDevice->getRootDeviceIndex())) {
         pDevice->getMemoryManager()->freeGraphicsMemory(parentKernel->mockProgram->getGlobalSurface(pClDevice->getRootDeviceIndex()));
@@ -1792,14 +1798,14 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAn
     uint64_t *pCurbe = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset + blockPatchOffset);
 
     EXPECT_EQ(0u, *pCurbe);
-
-    delete parentKernel;
 }
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemoryWhenReflectionSurfaceIsPatchedWithConstantValuesThenProgramConstantMemoryAddressIsPatched) {
 
     MockContext context(pClDevice);
-    MockParentKernel *parentKernel = MockParentKernel::create(context, false, false, true);
+    MockParentKernel::CreateParams createParams{};
+    createParams.addChildConstantMemory = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
 
     // graphicsMemory is released by Program
     GraphicsAllocation *constantMemory = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -1835,14 +1841,14 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
     //memory after is not written
     EXPECT_THAT(zeroMemory.get(), MemCompare(pCurbeToPatch + 1, std::min(4096u, 8192u - constBufferOffset - blockPatchOffset - (uint32_t)sizeof(uint64_t))));
-
-    delete parentKernel;
 }
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemoryAndProgramWithoutConstantMemortWhenReflectionSurfaceIsPatchedWithConstantValuesThenZeroAddressIsPatched) {
 
     MockContext context(pClDevice);
-    MockParentKernel *parentKernel = MockParentKernel::create(context, false, false, true);
+    MockParentKernel::CreateParams createParams{};
+    createParams.addChildConstantMemory = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
 
     if (parentKernel->mockProgram->getConstantSurface(pClDevice->getRootDeviceIndex())) {
         pDevice->getMemoryManager()->freeGraphicsMemory(parentKernel->mockProgram->getConstantSurface(pClDevice->getRootDeviceIndex()));
@@ -1879,8 +1885,6 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
     //memory after is not written
     EXPECT_THAT(zeroMemory.get(), MemCompare(pCurbeToPatch + 1, std::min(4096u, 8192u - constBufferOffset - blockPatchOffset - (uint32_t)sizeof(uint64_t))));
-
-    delete parentKernel;
 }
 
 using KernelReflectionMultiDeviceTest = MultiRootDeviceFixture;

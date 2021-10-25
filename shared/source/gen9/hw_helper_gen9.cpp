@@ -21,7 +21,7 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
     if (!debuggingActive) {
         return SipKernelType::Csr;
     }
-    return SipKernelType::DbgCsrLocal;
+    return DebugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::DbgBindless : SipKernelType::DbgCsrLocal;
 }
 
 template <>

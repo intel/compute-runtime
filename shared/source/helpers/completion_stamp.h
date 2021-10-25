@@ -16,7 +16,7 @@ struct CompletionStamp {
     uint32_t taskLevel;
     FlushStamp flushStamp;
 
-    static const uint32_t notReady;
+    static constexpr uint32_t notReady = 0xFFFFFFF0;
 };
 
 } // namespace NEO

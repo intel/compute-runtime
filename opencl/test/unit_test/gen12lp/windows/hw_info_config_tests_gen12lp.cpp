@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
-#include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 #include "opencl/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
 
 using namespace NEO;
@@ -61,4 +61,26 @@ GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenCompressionFtrEnabledWhenAski
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
     EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+}
+
+GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenGen12LpSkuWhenGettingCapabilityCoherencyFlagThenExpectValidValue) {
+    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    bool coherency = false;
+    hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+
+    const bool checkDone = SpecialUltHelperGen12lp::additionalCoherencyCheck(outHwInfo.platform.eProductFamily, coherency);
+    if (checkDone) {
+        return;
+    }
+
+    if (SpecialUltHelperGen12lp::isAdditionalCapabilityCoherencyFlagSettingRequired(outHwInfo.platform.eProductFamily)) {
+        outHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, outHwInfo);
+        hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+        EXPECT_TRUE(coherency);
+        outHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, outHwInfo);
+        hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+        EXPECT_FALSE(coherency);
+    } else {
+        EXPECT_TRUE(coherency);
+    }
 }

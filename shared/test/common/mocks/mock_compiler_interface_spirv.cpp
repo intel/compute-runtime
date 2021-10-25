@@ -8,10 +8,9 @@
 #include "shared/test/common/mocks/mock_compiler_interface_spirv.h"
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
-
-#include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "shared/test/common/libult/global_environment.h"
 
 namespace NEO {
 TranslationOutput::ErrorCode MockCompilerInterfaceSpirv::compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) {

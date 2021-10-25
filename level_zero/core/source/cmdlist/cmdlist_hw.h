@@ -104,8 +104,8 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents) override;
-    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr,
-                                    NEO::GraphicsAllocation *srcptr,
+    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
+                                    NEO::GraphicsAllocation *srcAllocation,
                                     size_t size,
                                     bool flushHost) override;
     ze_result_t appendMemoryCopyRegion(void *dstPtr,
@@ -151,6 +151,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
                                             size_t size, ze_event_handle_t hSignalEvent,
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+    void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
@@ -223,13 +224,13 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent);
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
     void updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative);
-    void clearComputeModePropertiesIfNeeded(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy);
+    virtual void clearComputeModePropertiesIfNeeded(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy);
     void clearCommandsToPatch();
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                   const void **pRanges);
 
-    ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]);
+    ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, uint32_t lws[3]);
     ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t *pThreadGroupDimensions);
     void appendWriteKernelTimestamp(ze_event_handle_t hEvent, bool beforeWalker, bool maskLsb);
     void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask);

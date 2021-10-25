@@ -32,6 +32,7 @@ struct MockEvent : public BaseEventType {
 
     using BaseEventType::timeStampNode;
     using Event::calcProfilingData;
+    using Event::calculateSubmitTimestampData;
     using Event::magic;
     using Event::queueTimeStamp;
     using Event::submitTimeStamp;

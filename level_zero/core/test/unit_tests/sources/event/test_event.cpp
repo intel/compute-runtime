@@ -7,10 +7,10 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context_imp.h"
@@ -324,6 +324,70 @@ TEST_F(EventPoolOpenIPCHandleFailTests, givenFailureToAllocateMemoryWhenOpeningI
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
+class MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager : public FailMemoryManager {
+  public:
+    MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : FailMemoryManager(executionEnvironment) {}
+
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+        return &mockAllocation0;
+    }
+
+    GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override {
+        if (calls == 0) {
+            calls++;
+            return &mockAllocation1;
+        }
+        return nullptr;
+    }
+
+    void freeGraphicsMemory(GraphicsAllocation *gfxAllocation) override {
+    }
+
+    NEO::MockGraphicsAllocation mockAllocation0;
+    NEO::MockGraphicsAllocation mockAllocation1;
+    uint32_t calls = 0;
+};
+
+using MultiDeviceEventPoolOpenIPCHandleFailTests = Test<MultiDeviceFixture>;
+
+TEST_F(MultiDeviceEventPoolOpenIPCHandleFailTests,
+       givenFailureToAllocateMemoryWhenOpeningIpcHandleForEventPoolWithMultipleDevicesThenOutOfHostMemoryIsReturned) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        numEvents};
+
+    auto deviceHandle = driverHandle->devices[0]->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    {
+        NEO::MemoryManager *prevMemoryManager = nullptr;
+        NEO::MemoryManager *currMemoryManager = nullptr;
+
+        prevMemoryManager = driverHandle->getMemoryManager();
+        NEO::MockDevice *neoDevice = static_cast<NEO::MockDevice *>(driverHandle->devices[0]->getNEODevice());
+        currMemoryManager = new MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager(*neoDevice->executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
+
+        ze_event_pool_handle_t ipcEventPoolHandle = {};
+        res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
+        EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY);
+
+        driverHandle->setMemoryManager(prevMemoryManager);
+        delete currMemoryManager;
+    }
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+}
+
 TEST_F(EventPoolCreate, GivenNullptrDeviceAndNumberOfDevicesWhenCreatingEventPoolThenReturnError) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -356,11 +420,35 @@ TEST_F(EventPoolCreate, whenHostVisibleFlagNotSetThenEventAllocationIsOnDevice) 
         4};
 
     ze_device_handle_t devices[] = {nullptr, device->toHandle()};
+
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->recentlyPassedDeviceBitfield = systemMemoryBitfield;
+
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, devices, &eventPoolDesc));
 
     ASSERT_NE(nullptr, eventPool);
 
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, eventPool->getAllocation().getAllocationType());
+    EXPECT_NE(systemMemoryBitfield, memoryManager->recentlyPassedDeviceBitfield);
+    EXPECT_EQ(neoDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
+}
+
+TEST_F(EventPoolCreate, whenAllocationMemoryFailsThenEventAllocationIsNotCreated) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        0u,
+        4};
+
+    ze_device_handle_t devices[] = {nullptr, device->toHandle()};
+
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, devices, &eventPoolDesc));
+
+    EXPECT_EQ(nullptr, eventPool);
 }
 
 TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamReceiverSet) {

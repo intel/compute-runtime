@@ -39,7 +39,7 @@ template <>
 void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, DispatchFlags &dispatchFlags) {
     using PWR_CLK_STATE_REGISTER = Family::PWR_CLK_STATE_REGISTER;
 
-    if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
+    if (HwInfoConfig::get(peekHwInfo().platform.eProductFamily)->isAdditionalMediaSamplerProgrammingRequired()) {
         if (dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 PipeControlArgs args;
@@ -120,7 +120,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
 template <>
 bool CommandStreamReceiverHw<Family>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
     bool flag = DebugManager.flags.ForceCsrReprogramming.get();
-    if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
+    if (HwInfoConfig::get(peekHwInfo().platform.eProductFamily)->isInitialFlagsProgrammingRequired()) {
         if (!dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (lastVmeSubslicesConfig) {
                 flag = true;
@@ -135,7 +135,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForMediaSampler(bool mediaSamp
     typedef typename Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename Family::PIPE_CONTROL PIPE_CONTROL;
 
-    if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
+    if (HwInfoConfig::get(peekHwInfo().platform.eProductFamily)->isReturnedCmdSizeForMediaSamplerAdjustmentRequired()) {
         if (mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 return sizeof(MI_LOAD_REGISTER_IMM) + 2 * sizeof(PIPE_CONTROL);

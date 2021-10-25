@@ -11,23 +11,24 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 
 namespace NEO {
 
 struct UltCommandStreamReceiverTest
     : public ClDeviceFixture,
-      public HardwareParse,
+      public ClHardwareParse,
       ::testing::Test {
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
 
         size_t sizeStream = 512;
         size_t alignmentStream = 0x1000;
@@ -72,7 +73,7 @@ struct UltCommandStreamReceiverTest
         alignedFree(iohBuffer);
         alignedFree(dshBuffer);
         alignedFree(cmdBuffer);
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         ClDeviceFixture::TearDown();
     }
 
@@ -130,9 +131,9 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
         auto gmmHelper = pDevice->getGmmHelper();
-        auto mocsIndex = isL1CacheEnabled ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        auto mocsIndex = HwHelper::get(defaultHwInfo->platform.eDisplayCoreFamily).getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
 
-        commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex >> 1;
+        commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex;
         commandStreamReceiver.lastSentL3Config = L3Config;
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;

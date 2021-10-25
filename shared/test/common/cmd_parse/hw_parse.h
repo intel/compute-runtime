@@ -10,11 +10,9 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-
-#include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/kernel/kernel.h"
 
 #include "gtest/gtest.h"
 
@@ -71,14 +69,12 @@ struct HardwareParse {
     }
 
     template <typename FamilyType>
-    void parseCommands(NEO::CommandQueue &commandQueue) {
-        auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
+    void parseCommands(NEO::CommandStreamReceiver &commandStreamReceiver, NEO::LinearStream &commandStream) {
         auto &commandStreamCSR = commandStreamReceiver.getCS();
 
         parseCommands<FamilyType>(commandStreamCSR, startCSRCS);
         startCSRCS = commandStreamCSR.getUsed();
 
-        auto &commandStream = commandQueue.getCS(1024);
         if (previousCS != &commandStream) {
             startCS = 0;
         }
@@ -131,7 +127,7 @@ struct HardwareParse {
     }
 
     template <typename FamilyType>
-    const void *getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
+    const void *getStatelessArgumentPointer(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
 
     template <typename CmdType>
     CmdType *getCommand(GenCmdList::iterator itorStart, GenCmdList::iterator itorEnd) {
@@ -164,8 +160,8 @@ struct HardwareParse {
             }
             itorCmd = find<PIPELINE_SELECT *>(++itorCmd, cmdList.end());
         }
-        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-        if (hwHelper.is3DPipelineSelectWARequired(*defaultHwInfo)) {
+        const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+        if (hwInfoConfig.is3DPipelineSelectWARequired()) {
             auto maximalNumberOf3dSelectsRequired = 2;
             EXPECT_LE(numberOf3dSelects, maximalNumberOf3dSelectsRequired);
             EXPECT_EQ(numberOf3dSelects, numberOfGpgpuSelects);

@@ -89,20 +89,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreemptionWatermarkXeHPAndLater, givenPreambleThenP
     EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 }
 
-struct KernelCommandsXeHPAndLater : public PreambleVfeState,
-                                    public ClDeviceFixture {
+struct KernelCommandsXeHPAndLater : public PreambleVfeState {
     void SetUp() override {
         PreambleVfeState::SetUp();
-        ClDeviceFixture::SetUp();
+        pDevice->incRefInternal();
+        pClDevice = new MockClDevice{pDevice};
+        ASSERT_NE(nullptr, pClDevice);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        pClDevice->decRefInternal();
         PreambleVfeState::TearDown();
     }
 
+    MockClDevice *pClDevice = nullptr;
     std::unique_ptr<MockProgram> program;
     KernelInfo kernelInfo;
 };
@@ -244,7 +246,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushC
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
     auto expectedMocsIndexForStateless = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
-    auto expectedMocsIndexForL1EnabledResource = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC);
     auto expectedMocsIndexForHeap = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
 
     EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getSurfaceStateMemoryObjectControlStateIndexToMocsTables());
@@ -254,7 +255,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushC
     EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables());
     EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables());
     EXPECT_EQ(expectedMocsIndexForStateless, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForL1EnabledResource, stateBaseAddress->getIndirectObjectMemoryObjectControlStateIndexToMocsTables());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseAddressHasAllCachesOffWhenDebugFlagIsPresent) {
@@ -278,7 +278,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushC
     EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getInstructionMemoryObjectControlStateIndexToMocsTables());
     EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables());
     EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getIndirectObjectMemoryObjectControlStateIndexToMocsTables());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL1DebugFlagWhenStatelessMocsIsProgrammedThenItHasL1CachingOn) {
@@ -437,78 +436,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenMultE
     EXPECT_FALSE(stateBaseAddress->getDisableSupportForMultiGpuPartialWritesForStatelessMessages());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenDefaultIndirectHeapCachingSettingWhenFlushingCsrThenExpectL1CachingPolicySelected) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    int32_t defaultRegValue = DebugManager.flags.UseCachingPolicyForIndirectObjectHeap.get();
-    EXPECT_EQ(-1, defaultRegValue);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    flushTask(commandStreamReceiver);
-    HardwareParse hwParserCsr;
-    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    hwParserCsr.findHardwareCommands<FamilyType>();
-    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto actualMocs = stateBaseAddress->getIndirectObjectMemoryObjectControlStateIndexToMocsTables();
-    auto expectedMocs = pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC);
-    EXPECT_EQ(expectedMocs, actualMocs);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenUncachedIndirectHeapCachingSettingWhenFlushingCsrThenExpectUncachedCachingPolicySelected) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.UseCachingPolicyForIndirectObjectHeap.set(0);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    flushTask(commandStreamReceiver);
-    HardwareParse hwParserCsr;
-    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    hwParserCsr.findHardwareCommands<FamilyType>();
-    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto actualMocs = stateBaseAddress->getIndirectObjectMemoryObjectControlStateIndexToMocsTables();
-    auto expectedMocs = pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED);
-    EXPECT_EQ(expectedMocs, actualMocs);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenL3IndirectHeapCachingSettingWhenFlushingCsrThenExpectL3CachingPolicySelected) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.UseCachingPolicyForIndirectObjectHeap.set(1);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    flushTask(commandStreamReceiver);
-    HardwareParse hwParserCsr;
-    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    hwParserCsr.findHardwareCommands<FamilyType>();
-    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto actualMocs = stateBaseAddress->getIndirectObjectMemoryObjectControlStateIndexToMocsTables();
-    auto expectedMocs = pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
-    EXPECT_EQ(expectedMocs, actualMocs);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenL1IndirectHeapCachingSettingWhenFlushingCsrThenExpectL1CachingPolicySelected) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.UseCachingPolicyForIndirectObjectHeap.set(2);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    flushTask(commandStreamReceiver);
-    HardwareParse hwParserCsr;
-    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    hwParserCsr.findHardwareCommands<FamilyType>();
-    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto actualMocs = stateBaseAddress->getIndirectObjectMemoryObjectControlStateIndexToMocsTables();
-    auto expectedMocs = pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC);
-    EXPECT_EQ(expectedMocs, actualMocs);
-}
-
 using StateBaseAddressXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;
 
 struct CompressionParamsSupportedMatcher {
@@ -573,9 +500,26 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenSpecificP
     std::unique_ptr<BufferHw<FamilyType>> buffer(static_cast<BufferHw<FamilyType> *>(
         BufferHw<FamilyType>::create(&context, {}, 0, 0, allocationSize, nullptr, nullptr, multiGraphicsAllocation, false, false, false)));
 
-    EncodeSurfaceState<FamilyType>::encodeBuffer(&rssCmd, allocation->getGpuAddress(), allocation->getUnderlyingBufferSize(),
-                                                 buffer->getMocsValue(false, false, pClDevice->getRootDeviceIndex()), false, false, false,
-                                                 pClDevice->getNumGenericSubDevices(), allocation, pClDevice->getGmmHelper(), false, 1u);
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = &rssCmd;
+    args.graphicsAddress = allocation->getGpuAddress();
+    args.size = allocation->getUnderlyingBufferSize();
+    args.mocs = buffer->getMocsValue(false, false, pClDevice->getRootDeviceIndex());
+    args.numAvailableDevices = pClDevice->getNumGenericSubDevices();
+    args.allocation = allocation;
+    args.gmmHelper = pClDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = true;
+
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
     EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, rssCmd.getCoherencyType());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleFixture, whenCallingIsSpecialPipelineSelectModeChangedThenReturnCorrectValue) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    bool oldPipelineSelectSpecialMode = true;
+    bool newPipelineSelectSpecialMode = false;
+
+    auto result = PreambleHelper<FamilyType>::isSpecialPipelineSelectModeChanged(oldPipelineSelectSpecialMode, newPipelineSelectSpecialMode, *defaultHwInfo);
+    EXPECT_TRUE(result);
 }

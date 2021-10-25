@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/mocks/mock_block_kernel_manager.h"
 
 #include "gtest/gtest.h"

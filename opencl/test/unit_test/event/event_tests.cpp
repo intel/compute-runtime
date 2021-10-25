@@ -9,25 +9,25 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/event/perf_counter.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "opencl/test/unit_test/mocks/mock_ostime.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
@@ -143,12 +143,12 @@ TEST(Event, givenBcsCsrSetInEventWhenPeekingBcsTaskCountThenReturnCorrectTaskCou
         new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockAlignedMallocManagerDevice>(&hwInfo)}};
     MockContext context{device.get()};
     MockCommandQueue queue{context};
-    queue.updateBcsTaskCount(19);
+    queue.updateBcsTaskCount(queue.bcsEngines[0]->getEngineType(), 19);
     Event event{&queue, CL_COMMAND_READ_BUFFER, 0, 0};
 
     EXPECT_EQ(0u, event.peekBcsTaskCountFromCommandQueue());
 
-    event.setupBcs(queue.getBcsCommandStreamReceiver()->getOsContext().getEngineType());
+    event.setupBcs(queue.bcsEngines[0]->getEngineType());
     EXPECT_EQ(19u, event.peekBcsTaskCountFromCommandQueue());
 }
 
@@ -743,9 +743,9 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenGetEventProfilingI
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMMAND_MARKER, 0, 0);
+    event.queueTimeStamp.GPUTimeStamp = MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP;
 
     event.setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(cmdQ)));
-
     event.submitCommand(false);
     uint64_t submitTime = 0ULL;
     event.getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submitTime, 0);
@@ -1143,22 +1143,6 @@ TEST(EventCallback, WhenOverridingStatusThenEventUsesNewStatus) {
     EXPECT_EQ(-1, clb.getCallbackExecutionStatusTarget());
     clb.execute();
     EXPECT_EQ(-1, retStatus);
-}
-
-TEST_F(EventTest, WhenSettingTimeStampThenCorrectValuesAreSet) {
-    MyEvent ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
-    TimeStampData inTimeStamp = {1ULL, 2ULL};
-    ev.setSubmitTimeStamp(&inTimeStamp);
-    TimeStampData outtimeStamp = {0, 0};
-    outtimeStamp = ev.getSubmitTimeStamp();
-    EXPECT_EQ(1ULL, outtimeStamp.GPUTimeStamp);
-    EXPECT_EQ(2ULL, outtimeStamp.CPUTimeinNS);
-    inTimeStamp.GPUTimeStamp = 3;
-    inTimeStamp.CPUTimeinNS = 4;
-    ev.setQueueTimeStamp(&inTimeStamp);
-    outtimeStamp = ev.getQueueTimeStamp();
-    EXPECT_EQ(3ULL, outtimeStamp.GPUTimeStamp);
-    EXPECT_EQ(4ULL, outtimeStamp.CPUTimeinNS);
 }
 
 TEST_F(EventTest, WhenSettingCpuTimeStampThenCorrectTimeIsSet) {

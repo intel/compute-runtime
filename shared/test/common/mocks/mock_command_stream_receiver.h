@@ -25,6 +25,8 @@ using namespace NEO;
 
 class MockCommandStreamReceiver : public CommandStreamReceiver {
   public:
+    using CommandStreamReceiver::activePartitions;
+    using CommandStreamReceiver::baseWaitFunction;
     using CommandStreamReceiver::checkForNewResources;
     using CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using CommandStreamReceiver::CommandStreamReceiver;
@@ -41,6 +43,12 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
+
+    MockCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : CommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
+        CommandStreamReceiver::tagAddress = &mockTagAddress[0];
+        memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
+    }
 
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
@@ -77,7 +85,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return true;
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) override {
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
 
     uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
@@ -97,13 +105,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return 0;
     }
 
-    volatile uint32_t *getTagAddress() const override {
-        if (callParentGetTagAddress) {
-            return CommandStreamReceiver::getTagAddress();
-        }
-        return const_cast<volatile uint32_t *>(&mockTagAddress);
-    }
-
     bool createPreemptionAllocation() override {
         if (createPreemptionAllocationParentCall) {
             return CommandStreamReceiver::createPreemptionAllocation();
@@ -116,20 +117,35 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         makeResidentCalledTimes++;
     }
 
+    std::unique_lock<CommandStreamReceiver::MutexType> obtainHostPtrSurfaceCreationLock() override {
+        ++hostPtrSurfaceCreationMutexLockCount;
+        return CommandStreamReceiver::obtainHostPtrSurfaceCreationLock();
+    }
+
     void postInitFlagsSetup() override {}
 
+    static constexpr size_t tagSize = 64;
+    static volatile uint32_t mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
-    uint32_t mockTagAddress = 0;
     uint32_t makeResidentCalledTimes = 0;
+    int hostPtrSurfaceCreationMutexLockCount = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
     bool downloadAllocationsCalled = false;
     bool programHardwareContextCalled = false;
-    bool callParentGetTagAddress = true;
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;
+};
+
+class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {
+  public:
+    MockCommandStreamReceiverWithFailingSubmitBatch(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+    int submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return -1;
+    }
 };
 
 template <typename GfxFamily>
@@ -141,6 +157,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::postInitFlagsSetup;
     using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::programVFEState;
+    using CommandStreamReceiver::activePartitions;
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;

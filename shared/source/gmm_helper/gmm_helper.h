@@ -6,15 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 
 #include <memory>
 
 namespace NEO {
 class GmmClientContext;
-class OsLibrary;
 class OSInterface;
 struct HardwareInfo;
 
@@ -27,7 +24,7 @@ class GmmHelper {
     const HardwareInfo *getHardwareInfo();
     uint32_t getMOCS(uint32_t type) const;
 
-    static constexpr uint64_t maxPossiblePitch = 2147483648;
+    static constexpr uint64_t maxPossiblePitch = (1ull << 31);
 
     static uint64_t canonize(uint64_t address) {
         return static_cast<int64_t>(address << (64 - GmmHelper::addressWidth)) >> (64 - GmmHelper::addressWidth);

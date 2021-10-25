@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/aub/aub_helper.h"
+#include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
+#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
-#include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_stream.h"
 #include "opencl/test/unit_test/mocks/mock_csr_simulated_common_hw.h"

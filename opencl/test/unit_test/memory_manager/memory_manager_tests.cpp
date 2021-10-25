@@ -19,12 +19,17 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_deferrable_deletion.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 
 #include "opencl/source/event/event.h"
@@ -41,13 +46,9 @@
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
@@ -674,6 +675,47 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenForce32bitallocationI
     EXPECT_TRUE(memoryManager.peekForce32BitAllocations());
 }
 
+TEST(OsAgnosticMemoryManager, givenMultipleRootDevicesWhenUpdateLatestContextIdForRootDeviceThenRootDeviceIndexToContextIdUpdateProperly) {
+    class TestedOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        using OsAgnosticMemoryManager::latestContextId;
+        using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+        using OsAgnosticMemoryManager::rootDeviceIndexToContextId;
+        using OsAgnosticMemoryManager::updateLatestContextIdForRootDevice;
+    };
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    TestedOsAgnosticMemoryManager memoryManager(executionEnvironment);
+    uint32_t rootDeviceArray[] = {0, 1, 2, 3};
+    for (auto &rootDeviceIndex : rootDeviceArray) {
+        for (int count = 0; count < 10; count++) {
+            memoryManager.updateLatestContextIdForRootDevice(rootDeviceIndex);
+            ++memoryManager.latestContextId;
+        }
+    }
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[0], std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[1], 9u);
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[2], 19u);
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[3], 29u);
+
+    memoryManager.reInitLatestContextId();
+    for (int count = 0; count < 10; count++) {
+        memoryManager.updateLatestContextIdForRootDevice(2);
+        ++memoryManager.latestContextId;
+    }
+    EXPECT_EQ(memoryManager.rootDeviceIndexToContextId[2], 19u);
+}
+
+TEST(OsAgnosticMemoryManager, givenCreateOrReleaseDeviceSpecificMemResourcesWhenCreatingMemoryManagerObjectThenTheseMethodsAreEmpty) {
+    class TestedOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+    };
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    TestedOsAgnosticMemoryManager memoryManager(executionEnvironment);
+    memoryManager.releaseDeviceSpecificMemResources(1);
+    memoryManager.createDeviceSpecificMemResources(1);
+}
+
 class MyOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
   public:
     bool peek32bit() override {
@@ -757,10 +799,10 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedForNon32BitAllocationWh
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(*executionEnvironment);
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = 512;
-    imgDesc.image_height = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageWidth = 512;
+    imgDesc.imageHeight = 1;
+    imgDesc.imageType = ImageType::Image2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     AllocationData allocationData;
@@ -794,10 +836,10 @@ TEST(OsAgnosticMemoryManager, givenDestroyedTagAllocationWhenWaitForCompletiionT
 TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocateGraphicsMemoryForImageIsCalledThenUseLocalMemoryIsNotSet) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = 1;
-    imgDesc.image_height = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageWidth = 1;
+    imgDesc.imageHeight = 1;
+    imgDesc.imageType = ImageType::Image2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     AllocationData allocationData;
@@ -813,25 +855,25 @@ TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphi
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, false, *executionEnvironment);
 
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = 4;
-    imgDesc.image_height = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageWidth = 4;
+    imgDesc.imageHeight = 1;
+    imgDesc.imageType = ImageType::Image1D;
 
     cl_image_format imageFormat = {};
     imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
     imageFormat.image_channel_order = CL_RGBA;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features)->surfaceFormat;
 
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
-    imgInfo.rowPitch = imgDesc.image_width * 4;
-    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.image_height;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
+    imgInfo.rowPitch = imgDesc.imageWidth * 4;
+    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.imageHeight;
     imgInfo.size = imgInfo.slicePitch;
     imgInfo.linearStorage = true;
 
-    auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
+    auto hostPtr = alignedMalloc(imgDesc.imageWidth * imgDesc.imageHeight * 4, MemoryConstants::pageSize);
 
     bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_FALSE(copyRequired);
@@ -853,10 +895,10 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, false, *executionEnvironment);
 
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = 4;
-    imgDesc.image_height = 4;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageHeight = 4;
+    imgDesc.imageWidth = 4;
+    imgDesc.imageType = ImageType::Image2D;
 
     cl_image_format imageFormat = {};
     imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
@@ -865,12 +907,12 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
 
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
-    imgInfo.rowPitch = imgDesc.image_width * 4;
-    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.image_height;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat->surfaceFormat);
+    imgInfo.rowPitch = imgDesc.imageWidth * 4;
+    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.imageHeight;
     imgInfo.size = imgInfo.slicePitch;
 
-    auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
+    auto hostPtr = alignedMalloc(imgDesc.imageWidth * imgDesc.imageHeight * 4, MemoryConstants::pageSize);
 
     bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_TRUE(copyRequired);
@@ -889,10 +931,10 @@ TEST(OsAgnosticMemoryManager, givenEnabledCrossRootDeviceAccessFlagWhenAllocateG
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, false, *executionEnvironment);
 
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = 4;
-    imgDesc.image_height = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageWidth = 4;
+    imgDesc.imageHeight = 1;
+    imgDesc.imageType = ImageType::Image1D;
 
     cl_image_format imageFormat = {};
     imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
@@ -901,13 +943,13 @@ TEST(OsAgnosticMemoryManager, givenEnabledCrossRootDeviceAccessFlagWhenAllocateG
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
 
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
-    imgInfo.rowPitch = imgDesc.image_width * 4;
-    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.image_height;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat->surfaceFormat);
+    imgInfo.rowPitch = imgDesc.imageWidth * 4;
+    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.imageHeight;
     imgInfo.size = imgInfo.slicePitch;
     imgInfo.linearStorage = true;
 
-    auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
+    auto hostPtr = alignedMalloc(imgDesc.imageWidth * imgDesc.imageHeight * 4, MemoryConstants::pageSize);
 
     AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
@@ -1640,10 +1682,10 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWithFlagEnable64kbpage
 TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = 1;
-    imgDesc.image_height = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageHeight = 1;
+    imgDesc.imageWidth = 1;
+    imgDesc.imageType = ImageType::Image2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     AllocationData allocationData;
@@ -1660,10 +1702,10 @@ TEST(MemoryManager, givenImageAndLimitedGPUWhenAllocatingGraphicsMemoryThenAlloc
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
     memoryManager.limitedGPU = true;
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = 1;
-    imgDesc.image_height = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageHeight = 1;
+    imgDesc.imageWidth = 1;
+    imgDesc.imageType = ImageType::Image2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     AllocationData allocationData;
@@ -2550,13 +2592,13 @@ TEST_F(HeapSelectorTest, givenDebugModuleAreaAllocationInLocalMemoryAndUseFrontW
 
 TEST(MemoryAllocationTest, givenAllocationTypeWhenPassedToMemoryAllocationConstructorThenAllocationTypeIsStored) {
     MemoryAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0,
-                                MemoryPool::MemoryNull, false, false, mockMaxOsContextCount};
+                                MemoryPool::MemoryNull, false, false, MemoryManager::maxOsContextCount};
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, allocation.getAllocationType());
 }
 
 TEST(MemoryAllocationTest, givenMemoryPoolWhenPassedToMemoryAllocationConstructorThenMemoryPoolIsStored) {
     MemoryAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0,
-                                MemoryPool::System64KBPages, false, false, mockMaxOsContextCount};
+                                MemoryPool::System64KBPages, false, false, MemoryManager::maxOsContextCount};
     EXPECT_EQ(MemoryPool::System64KBPages, allocation.getMemoryPool());
 }
 
@@ -2755,17 +2797,159 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNo
 }
 
 using PageTableManagerTest = ::testing::Test;
+using namespace ::testing;
+HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEnginesWithPageTableUpdateAuxTableAreCalled) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto csr2 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    EngineInstancesContainer regularEngines = {
+        {aub_stream::ENGINE_CCS, EngineUsage::Regular},
+        {aub_stream::ENGINE_BCS, EngineUsage::Regular},
+    };
+
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+    memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[1],
+                                                                                                       PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr2 = new NiceMock<MockGmmPageTableMngr>();
+
+    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
+    memoryManager->getRegisteredEngines()[1].commandStreamReceiver->pageTableManager.reset(mockMngr2);
+
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    gmm.isCompressionEnabled = true;
+    allocation.setDefaultGmm(&gmm);
+    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
+    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable2 = {};
+    GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
+    expectedDdiUpdateAuxTable.BaseGpuVA = allocation.getGpuAddress();
+    expectedDdiUpdateAuxTable.BaseResInfo = allocation.getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo();
+    expectedDdiUpdateAuxTable.DoNotWait = true;
+    expectedDdiUpdateAuxTable.Map = true;
+
+    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
+    EXPECT_CALL(*mockMngr2, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg2) {givenDdiUpdateAuxTable2 = *arg2; return GMM_SUCCESS; }));
+
+    bool result = memoryManager->mapAuxGpuVA(&allocation);
+    EXPECT_TRUE(result);
+
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable2, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+}
+HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorThenMapAuxGpuVaReturnFalse) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    EngineInstancesContainer regularEngines = {
+        {aub_stream::ENGINE_CCS, EngineUsage::Regular}};
+
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+
+    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
+
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    gmm.isCompressionEnabled = true;
+    allocation.setDefaultGmm(&gmm);
+
+    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) { return GMM_ERROR; }));
+
+    bool result = memoryManager->mapAuxGpuVA(&allocation);
+    EXPECT_FALSE(result);
+}
+
+HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThrow) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    EngineInstancesContainer regularEngines = {
+        {aub_stream::ENGINE_CCS, EngineUsage::Regular},
+    };
+
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(nullptr);
+
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    gmm.isCompressionEnabled = true;
+    allocation.setDefaultGmm(&gmm);
+
+    EXPECT_NO_THROW(memoryManager->mapAuxGpuVA(&allocation));
+}
+
+HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenReturnFalse) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0],
+                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    for (auto engine : memoryManager->getRegisteredEngines()) {
+        engine.commandStreamReceiver->pageTableManager.reset(nullptr);
+    }
+
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+
+    bool result = memoryManager->mapAuxGpuVA(&allocation);
+    EXPECT_FALSE(result);
+}
 
 HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhenMapAuxGpuVAIsCalledThenItReturnsTrue) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
-    MockGmm gmm;
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
     allocation.setDefaultGmm(&gmm);
     bool mapped = memoryManager->mapAuxGpuVA(&allocation);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getHardwareInfo();
@@ -2829,6 +3013,26 @@ TEST(MemoryTransferHelperTest, givenBlitOperationSupportedWhenBcsEngineNotAvaila
 
     auto bcsEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
     EXPECT_EQ(nullptr, bcsEngine);
+
+    EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelperFunctions::blitMemoryToAllocation(*device, &graphicsAllocation, 0, srcData, {dataSize, 1, 1}));
+}
+
+TEST(MemoryTransferHelperTest, givenBlitOperationSupportedDisabledWhenBlitMemoryToAllocationThenReturnUnsupported) {
+    DebugManagerStateRestore restorer;
+    constexpr uint32_t dataSize = 16;
+    uint8_t destData[dataSize] = {};
+    uint8_t srcData[dataSize] = {};
+
+    MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
+    graphicsAllocation.storageInfo.memoryBanks = 1;
+    graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    DebugManager.flags.EnableBlitterOperationsSupport.set(false);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
     EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelperFunctions::blitMemoryToAllocation(*device, &graphicsAllocation, 0, srcData, {dataSize, 1, 1}));
 }

@@ -10,10 +10,9 @@
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
-
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 using namespace NEO;
 
@@ -110,7 +109,6 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocs
     EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc1);
     EXPECT_EQ(pageFaultManager->protectedSize, 10u);
     EXPECT_EQ(pageFaultManager->transferToGpuAddress, alloc1);
-    EXPECT_FALSE(pageFaultManager->isAubWritable);
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
@@ -173,7 +171,6 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocs
     EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc1);
     EXPECT_EQ(pageFaultManager->protectedSize, 10u);
     EXPECT_EQ(pageFaultManager->transferToGpuAddress, alloc1);
-    EXPECT_FALSE(pageFaultManager->isAubWritable);
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainThenTransferToGpuIsCalled) {
@@ -195,7 +192,6 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainThenTrans
     EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc);
     EXPECT_EQ(pageFaultManager->protectedSize, 10u);
     EXPECT_EQ(pageFaultManager->transferToGpuAddress, alloc);
-    EXPECT_FALSE(pageFaultManager->isAubWritable);
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
@@ -486,7 +482,6 @@ TEST_F(PageFaultManagerTest, givenInitialPlacementCpuWhenMovingToGpuDomainThenFi
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 1);
-    EXPECT_FALSE(pageFaultManager->isAubWritable);
 
     EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc);
     EXPECT_EQ(pageFaultManager->protectedSize, 10u);
@@ -513,7 +508,6 @@ TEST_F(PageFaultManagerTest, givenInitialPlacementGpuWhenMovingToGpuDomainThenFi
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
-    EXPECT_FALSE(pageFaultManager->isAubWritable);
 }
 
 TEST_F(PageFaultManagerTest, givenAllocationMovedToGpuDomainWhenVerifyingPagefaultThenAllocationIsMovedToCpuDomain) {
@@ -535,7 +529,6 @@ TEST_F(PageFaultManagerTest, givenAllocationMovedToGpuDomainWhenVerifyingPagefau
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
-    EXPECT_FALSE(pageFaultManager->isAubWritable);
 
     pageFaultManager->verifyPageFault(alloc);
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);

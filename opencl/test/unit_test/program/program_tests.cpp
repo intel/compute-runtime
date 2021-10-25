@@ -23,6 +23,10 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
+#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
@@ -35,10 +39,6 @@
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
-#include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -2210,13 +2210,11 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
     }
 }
 
-TEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimizationIsMatchingThePlatformEnablingStatus) {
+HWTEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimizationIsMatchingThePlatformEnablingStatus) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInitInternalOptions();
 
-    HardwareCapabilities hwCaps = {0};
-    HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily).setupHardwareCapabilities(&hwCaps, pDevice->getHardwareInfo());
-    if (hwCaps.isStatelesToStatefullWithOffsetSupported) {
+    if (HwHelperHw<FamilyType>::get().isStatelesToStatefullWithOffsetSupported()) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));
     } else {
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));

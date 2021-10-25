@@ -8,9 +8,8 @@
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_hw_helper.h"
 #include "test.h"
 
 extern PRODUCT_FAMILY productFamily;

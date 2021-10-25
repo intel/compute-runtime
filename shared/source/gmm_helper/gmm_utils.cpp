@@ -10,6 +10,6 @@
 
 using namespace NEO;
 
-void Gmm::applyAppResource(StorageInfo &storageInfo) {}
 void Gmm::applyExtraMemoryFlags(const StorageInfo &storageInfo) {}
 bool Gmm::extraMemoryFlagsRequired() { return false; }
+void Gmm::applyAppResource(StorageInfo &storageInfo) {}

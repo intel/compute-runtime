@@ -5,10 +5,8 @@
  *
  */
 
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
-
-#include "opencl/source/program/kernel_info.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

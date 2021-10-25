@@ -18,15 +18,14 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/compiler_support.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -164,7 +163,7 @@ Image *Image::create(Context *context,
         switch (imageDesc->image_type) {
         case CL_MEM_OBJECT_IMAGE3D:
             imageDepth = imageDesc->image_depth;
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         case CL_MEM_OBJECT_IMAGE2D:
         case CL_MEM_OBJECT_IMAGE2D_ARRAY:
             imageHeight = imageDesc->image_height;
@@ -498,7 +497,7 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     auto size = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getUnderlyingBufferSize();
     auto sharedImage = createImageHw(
-        context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags, flagsIntel, size, nullptr,
         surfaceFormat->OCLImageFormat, Image::convertDescriptor(imgInfo.imgDesc), false,
         std::move(multiGraphicsAllocation), false, baseMipLevel, mipCount, surfaceFormat);
@@ -727,7 +726,7 @@ void Image::calculateHostPtrOffset(size_t *imageOffset, const size_t *origin, co
     case CL_MEM_OBJECT_IMAGE1D_BUFFER:
     case CL_MEM_OBJECT_IMAGE2D:
         DEBUG_BREAK_IF(slicePitch != 0 && slicePitch < computedImageRowPitch * region[1]);
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case CL_MEM_OBJECT_IMAGE2D_ARRAY:
     case CL_MEM_OBJECT_IMAGE3D:
         *imageOffset = origin[2] * computedImageSlicePitch + origin[1] * computedImageRowPitch + origin[0] * bytesPerPixel;
@@ -971,8 +970,8 @@ Image *Image::redescribeFillImage() {
     imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
 
     DEBUG_BREAK_IF(nullptr == createFunction);
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0,
-                                                                                       &context->getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0,
+                                                                                         &context->getDevice(0)->getDevice());
     auto image = createFunction(context,
                                 memoryProperties,
                                 flags | CL_MEM_USE_HOST_PTR,
@@ -1028,8 +1027,8 @@ Image *Image::redescribe() {
     imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
 
     DEBUG_BREAK_IF(nullptr == createFunction);
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0,
-                                                                                       &context->getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0,
+                                                                                         &context->getDevice(0)->getDevice());
     auto image = createFunction(context,
                                 memoryProperties,
                                 flags | CL_MEM_USE_HOST_PTR,
@@ -1092,7 +1091,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint3
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageYPlane(Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -1116,7 +1115,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint3
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageUVPlane(Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -1185,16 +1184,16 @@ cl_mem Image::validateAndCreateImage(cl_context context,
     MemoryProperties memoryProperties{};
     cl_mem_flags_intel emptyFlagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
-    if ((false == MemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
+    if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
+                                                                  MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, emptyFlagsIntel, imageDesc->mem_object,
                                                                  *pContext))) {
         errcodeRet = CL_INVALID_VALUE;
         return nullptr;
     }
 
-    if ((false == MemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
+    if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                  MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object,
                                                                  *pContext))) {
         errcodeRet = CL_INVALID_PROPERTY;

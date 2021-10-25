@@ -27,6 +27,9 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.h
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_bdw_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
     ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
@@ -83,16 +86,16 @@ endif()
 
 if(WIN32)
   list(APPEND CLOC_LIB_SRCS_LIB
+       ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
-       ${NEO_SOURCE_DIR}/opencl/source/dll/windows/options_windows.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
+       ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
-       ${NEO_SOURCE_DIR}/opencl/source/dll/linux/options_linux.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
   )
 endif()
@@ -104,15 +107,15 @@ set(CLOC_LIB_LIB_FLAGS_DEFINITIONS
     -DALL_SUPPORTED_PRODUCT_FAMILIES=${ALL_SUPPORTED_PRODUCT_FAMILIES}
 )
 
-set(RUNTIME_GENX_CPP_FILES
+set(NEO_SHARED_GENX_CPP_FILES
     hw_info
 )
 
 macro(macro_for_each_platform)
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     foreach(BRANCH ${BRANCH_DIR_LIST})
-      foreach(SRC_FILE ${NEO_SOURCE_DIR}/opencl/source${BRANCH}${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
-                ${NEO_SOURCE_DIR}/opencl/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
+      foreach(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
+                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
         )
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
@@ -123,10 +126,10 @@ macro(macro_for_each_platform)
 endmacro()
 
 macro(macro_for_each_gen)
-  foreach(SRC_IT ${RUNTIME_GENX_CPP_FILES})
+  foreach(SRC_IT ${NEO_SHARED_GENX_CPP_FILES})
     foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
       foreach(BRANCH ${BRANCH_DIR_LIST})
-        set(SRC_FILE ${NEO_SOURCE_DIR}/opencl/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}${SRC_IT})
+        set(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}${SRC_IT})
         if(EXISTS ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
         endif()

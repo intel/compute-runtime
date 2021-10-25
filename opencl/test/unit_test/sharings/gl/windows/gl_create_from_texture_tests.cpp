@@ -6,16 +6,16 @@
  */
 
 #include "shared/source/helpers/get_info.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/gl/gl_texture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -64,18 +64,18 @@ class CreateFromGlTexture : public ::testing::Test {
         tempMM.forceGmm = gmm.get();
 
         if (glSharing->m_textureInfoOutput.globalShareHandleMCS != 0) {
-            cl_image_desc mcsImgDesc = {};
-            mcsImgDesc.image_height = 128;
-            mcsImgDesc.image_row_pitch = 256;
-            mcsImgDesc.image_width = 128;
-            mcsImgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+            ImageDescriptor mcsImgDesc = {};
+            mcsImgDesc.imageHeight = 128;
+            mcsImgDesc.imageRowPitch = 256;
+            mcsImgDesc.imageWidth = 128;
+            mcsImgDesc.imageType = ImageType::Image2D;
             auto mcsImgInfo = MockGmm::initImgInfo(mcsImgDesc, 0, nullptr);
             mcsGmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmClientContext(), mcsImgInfo);
             tempMM.forceMcsGmm = mcsGmm.get();
         }
     }
 
-    cl_image_desc imgDesc;
+    ImageDescriptor imgDesc;
     ImageInfo imgInfo = {};
     std::unique_ptr<Gmm> gmm;
     std::unique_ptr<Gmm> mcsGmm;
@@ -101,20 +101,20 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCreateIsCalledThenFillImageDescription) {
     unsigned int target = GetParam();
     unsigned int baseTarget = GlTexture::getBaseTargetType(target);
-    imgDesc.image_type = GlTexture::getClMemObjectType(target);
-    imgDesc.image_width = 5;
+    imgDesc.imageType = Image::convertType(GlTexture::getClMemObjectType(target));
+    imgDesc.imageWidth = 5;
     if (target == GL_TEXTURE_1D_ARRAY || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
-        imgDesc.image_array_size = 5;
+        imgDesc.imageArraySize = 5;
     }
     if (target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE ||
         target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_3D ||
         target == GL_RENDERBUFFER_EXT || baseTarget == GL_TEXTURE_CUBE_MAP_ARB ||
         target == GL_TEXTURE_2D_MULTISAMPLE || target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
-        imgDesc.image_height = 5;
+        imgDesc.imageHeight = 5;
     }
 
     if (target == GL_TEXTURE_3D) {
-        imgDesc.image_depth = 5;
+        imgDesc.imageDepth = 5;
     }
 
     if (target == GL_TEXTURE_BUFFER) {
@@ -125,7 +125,7 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
     }
 
     if (target == GL_TEXTURE_2D_MULTISAMPLE || target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
-        imgDesc.num_samples = 16;
+        imgDesc.numSamples = 16;
         glSharing->m_textureInfoOutput.numberOfSamples = 16;
         glSharing->m_textureInfoOutput.globalShareHandleMCS = CreateFromGlTexture::mcsHandle;
         glSharing->uploadDataToTextureInfo();
@@ -147,7 +147,7 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
     auto glTexture = reinterpret_cast<GlTexture *>(glImage->peekSharingHandler());
     EXPECT_EQ(glTexture->getTarget(), target);
 
-    EXPECT_EQ(glImage->getImageDesc().image_type, imgDesc.image_type);
+    EXPECT_EQ(glImage->getImageDesc().image_type, Image::convertType(imgDesc.imageType));
     if (target == GL_TEXTURE_BUFFER) {
         EXPECT_EQ(glImage->getImageDesc().image_width,
                   static_cast<size_t>(glTexture->getTextureInfo()->textureBufferWidth));
@@ -190,10 +190,10 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
         EXPECT_EQ(glImage->getImageDesc().image_depth, 0u);
     }
 
-    if (imgDesc.image_array_size > 1 || imgDesc.image_depth > 1) {
+    if (imgDesc.imageArraySize > 1 || imgDesc.imageDepth > 1) {
         GMM_REQ_OFFSET_INFO GMMReqInfo = {};
-        GMMReqInfo.ArrayIndex = imgDesc.image_array_size > 1 ? 1 : 0;
-        GMMReqInfo.Slice = imgDesc.image_depth > 1 ? 1 : 0;
+        GMMReqInfo.ArrayIndex = imgDesc.imageArraySize > 1 ? 1 : 0;
+        GMMReqInfo.Slice = imgDesc.imageDepth > 1 ? 1 : 0;
         GMMReqInfo.ReqLock = 1;
         gmm->gmmResourceInfo->getOffset(GMMReqInfo);
         size_t expectedSlicePitch = GMMReqInfo.Lock.Offset;
@@ -227,12 +227,12 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenArrayTextureTargetAndArraySizeEq
     // only array targets
     if (target == GL_TEXTURE_1D_ARRAY ||
         target == GL_TEXTURE_2D_ARRAY) {
-        imgDesc.image_type = GlTexture::getClMemObjectType(target);
-        imgDesc.image_width = 5;
+        imgDesc.imageType = Image::convertType(GlTexture::getClMemObjectType(target));
+        imgDesc.imageWidth = 5;
         if (target == GL_TEXTURE_2D_ARRAY) {
-            imgDesc.image_height = 5;
+            imgDesc.imageHeight = 5;
         }
-        imgDesc.image_array_size = 1;
+        imgDesc.imageArraySize = 1;
 
         updateImgInfoAndForceGmm();
 
@@ -248,17 +248,17 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenArrayTextureTargetAndArraySizeEq
 TEST_P(CreateFromGlTextureTestsWithParams, givenZeroRowPitchFromGmmWhenCreatingTextureThenComputeIt) {
     unsigned int target = GL_TEXTURE_2D;
 
-    imgDesc.image_type = GlTexture::getClMemObjectType(target);
-    imgDesc.image_width = 5;
-    imgDesc.image_height = 5;
-    imgDesc.image_array_size = 1;
+    imgDesc.imageType = Image::convertType(GlTexture::getClMemObjectType(target));
+    imgDesc.imageWidth = 5;
+    imgDesc.imageHeight = 5;
+    imgDesc.imageArraySize = 1;
 
     updateImgInfoAndForceGmm();
 
     auto mockResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
     mockResInfo->overrideReturnedRenderPitch(0u);
 
-    auto alignedWidth = alignUp(imgDesc.image_width, gmm->gmmResourceInfo->getHAlign());
+    auto alignedWidth = alignUp(imgDesc.imageWidth, gmm->gmmResourceInfo->getHAlign());
     auto expectedRowPitch = alignedWidth * (gmm->gmmResourceInfo->getBitsPerPixel() >> 3);
 
     auto glImage = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(&clContext, (cl_mem_flags)0, target, 0, 0, &retVal));
@@ -272,10 +272,10 @@ TEST_F(CreateFromGlTextureTests, GivenGlTextureTargetAndMipLevelNegativeWhenCrea
     unsigned int target = GL_TEXTURE_3D;
     cl_GLint miplevel = -1;
 
-    imgDesc.image_type = GlTexture::getClMemObjectType(target);
-    imgDesc.image_height = 13;
-    imgDesc.image_width = 15;
-    imgDesc.image_depth = 7;
+    imgDesc.imageType = Image::convertType(GlTexture::getClMemObjectType(target));
+    imgDesc.imageHeight = 13;
+    imgDesc.imageWidth = 15;
+    imgDesc.imageDepth = 7;
 
     updateImgInfoAndForceGmm();
 
@@ -301,10 +301,10 @@ TEST_F(CreateFromGlTextureTests, GivenGlTextureTargetAndMipLevelNonNegativeWhenC
     unsigned int target = GL_TEXTURE_3D;
     cl_GLint miplevel = 2;
 
-    imgDesc.image_type = GlTexture::getClMemObjectType(target);
-    imgDesc.image_height = 13;
-    imgDesc.image_width = 15;
-    imgDesc.image_depth = 7;
+    imgDesc.imageType = Image::convertType(GlTexture::getClMemObjectType(target));
+    imgDesc.imageHeight = 13;
+    imgDesc.imageWidth = 15;
+    imgDesc.imageDepth = 7;
 
     updateImgInfoAndForceGmm();
 
@@ -330,10 +330,10 @@ TEST_F(CreateFromGlTextureTests, GivenGlTextureWhenCreateIsCalledThenAllocationT
     unsigned int target = GL_TEXTURE_3D;
     cl_GLint miplevel = 2;
 
-    imgDesc.image_type = GlTexture::getClMemObjectType(target);
-    imgDesc.image_height = 13;
-    imgDesc.image_width = 15;
-    imgDesc.image_depth = 7;
+    imgDesc.imageType = Image::convertType(GlTexture::getClMemObjectType(target));
+    imgDesc.imageHeight = 13;
+    imgDesc.imageWidth = 15;
+    imgDesc.imageDepth = 7;
 
     updateImgInfoAndForceGmm();
 

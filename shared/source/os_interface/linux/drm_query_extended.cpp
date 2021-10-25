@@ -64,6 +64,10 @@ bool Drm::isVmBindAvailable() {
     return this->bindAvailable;
 }
 
+uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isSpecialContextRequested) {
+    return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
+}
+
 void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpecialContextRequested) {
 }
 

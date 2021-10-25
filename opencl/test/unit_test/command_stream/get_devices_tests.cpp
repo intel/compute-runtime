@@ -13,9 +13,9 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/create_command_stream.h"
 
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/libult/create_command_stream.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 

@@ -31,7 +31,7 @@ add_library(compute_runtime_mockable_extra
             ${CMAKE_CURRENT_LIST_DIR}/l0_tests.cmake
             ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_SUFIX_DIR}/mock_gmm_client_context.cpp
+            ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_cif.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_command_stream_receiver.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compiler_interface_spirv.cpp
@@ -40,15 +40,10 @@ add_library(compute_runtime_mockable_extra
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_deferred_deleter.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_device.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context_base.cpp
+            ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_resource_info_common.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_sip.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_resource_info.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
             ${NEO_SHARED_DIRECTORY}/debug_settings/debug_settings_manager.cpp
 )
 
@@ -59,7 +54,6 @@ set_property(TARGET compute_runtime_mockable_extra APPEND_STRING PROPERTY COMPIL
 target_include_directories(compute_runtime_mockable_extra
                            PUBLIC
                            ${COMPUTE_RUNTIME_MOCKABLE_INCLUDES}
-                           ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/gmm_memory
                            ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
 )
 
@@ -74,13 +68,6 @@ target_link_libraries(compute_runtime_mockable_extra
 )
 
 if(WIN32)
-  target_sources(compute_runtime_mockable_extra
-                 PRIVATE
-                 ${NEO_SOURCE_DIR}/shared/source/dll/windows/environment_variables.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_memory_base.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
-  )
-
   target_link_libraries(compute_runtime_mockable_extra
                         ws2_32
   )
@@ -89,8 +76,8 @@ endif()
 if(UNIX)
   target_sources(compute_runtime_mockable_extra
                  PRIVATE
-                 ${NEO_SOURCE_DIR}/opencl/source/dll/linux/allocator_helper.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_mock.cpp
+                 ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info_impl.cpp
+                 ${NEO_SHARED_DIRECTORY}/gmm_helper${BRANCH_DIR_SUFFIX}resource_info_${DRIVER_MODEL}.cpp
                  ${NEO_SHARED_DIRECTORY}/tbx/tbx_sockets_imp.cpp
   )
   target_link_libraries(compute_runtime_mockable_extra

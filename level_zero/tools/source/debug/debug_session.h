@@ -73,12 +73,17 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual EuThread::ThreadId convertToThreadId(ze_device_thread_t thread);
     virtual ze_device_thread_t convertToApi(EuThread::ThreadId threadId);
 
+    ze_result_t sanityMemAccessThreadCheck(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
+
   protected:
     DebugSession(const zet_debug_config_t &config, Device *device);
     virtual void startAsyncThread() = 0;
 
     virtual bool isBindlessSystemRoutine();
     virtual bool readModuleDebugArea() = 0;
+    virtual ze_result_t readSbaBuffer(EuThread::ThreadId threadId, SbaTrackedAddresses &sbaBuffer) = 0;
+
+    void fillDevicesFromThread(ze_device_thread_t thread, std::vector<uint8_t> &devices);
 
     std::vector<EuThread::ThreadId> getSingleThreadsForDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo);
 

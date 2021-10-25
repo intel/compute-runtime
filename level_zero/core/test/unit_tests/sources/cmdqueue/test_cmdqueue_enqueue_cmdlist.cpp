@@ -488,7 +488,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNo
 HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListWithCooperativeKernelsWhenExecuteCommandListsIsCalledThenCorrectBatchBufferIsSubmitted, IsAtLeastXeHpCore) {
     struct MockCsr : NEO::CommandStreamReceiverHw<FamilyType> {
         using NEO::CommandStreamReceiverHw<FamilyType>::CommandStreamReceiverHw;
-        bool submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        int submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
             useSingleSubdeviceValue = batchBuffer.useSingleSubdevice;
             submitBatchBufferCalled++;
             return NEO::CommandStreamReceiver::submitBatchBuffer(batchBuffer, allocationsForResidency);
@@ -814,6 +814,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
     ze_result_t returnValue;
+
     auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
                                                            device,
                                                            device->getNEODevice()->getDefaultEngine().commandStreamReceiver,
@@ -822,6 +823,11 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
                                                            false,
                                                            returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto &commandStreamReceiver = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+        commandStreamReceiver->createPreemptionAllocation();
+    }
 
     ze_fence_desc_t fenceDesc{};
     auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));

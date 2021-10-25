@@ -11,8 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_sip.h"
-
-#include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
+#include "shared/test/common/mocks/mock_source_level_debugger.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"

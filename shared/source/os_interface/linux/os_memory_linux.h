@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class OSMemoryLinux : public OSMemory {
     void getMemoryMaps(MemoryMaps &memoryMaps) override;
 
   protected:
-    void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) override;
+    void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, bool topDownHint) override;
     void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) override;
 
     MOCKABLE_VIRTUAL void *mmapWrapper(void *, size_t, int, int, int, off_t);

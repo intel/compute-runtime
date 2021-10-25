@@ -174,32 +174,7 @@ class MetricMultiDeviceFixture : public MultiDeviceFixture {
     void SetUp() override;
     void TearDown() override;
     void openMetricsAdapter();
-    void openMetricsAdapterGroup();
-
-  public:
-    std::vector<L0::Device *> devices;
-
-    // Mocked objects.
-    std::unique_ptr<Mock<MetricEnumeration>> mockMetricEnumeration = nullptr;
-    std::unique_ptr<Mock<MetricsLibrary>> mockMetricsLibrary = nullptr;
-
-    // Mocked metrics library/discovery APIs.
-    MockMetricsLibraryApi mockMetricsLibraryApi = {};
-    MockMetricsDiscoveryApi mockMetricsDiscoveryApi = {};
-
-    // Metrics discovery device
-    Mock<IAdapterGroup_1_9> adapterGroup;
-    Mock<IAdapter_1_9> adapter;
-    Mock<IMetricsDevice_1_5> metricsDevice;
-    MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
-};
-
-class MetricMultiDeviceContextFixture : public MultiDeviceFixture {
-
-  protected:
-    void SetUp() override;
-    void TearDown() override;
-    void openMetricsAdapter();
+    void openMetricsAdapterSubDevice(uint32_t subDeviceIndex);
     void openMetricsAdapterGroup();
 
   public:
@@ -223,7 +198,7 @@ class MetricMultiDeviceContextFixture : public MultiDeviceFixture {
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
 };
 
-class MetricStreamerMultiDeviceContextFixture : public MetricMultiDeviceContextFixture {
+class MetricStreamerMultiDeviceFixture : public MetricMultiDeviceFixture {
   public:
     void cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer);
 };

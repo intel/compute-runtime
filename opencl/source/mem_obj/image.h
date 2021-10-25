@@ -9,8 +9,8 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/image/image_surface_state.h"
 
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
-#include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 

@@ -16,7 +16,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj.h"
@@ -26,6 +26,7 @@
 #include "opencl/source/sharings/gl/gl_texture.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 #include "opencl/source/tracing/tracing_notify.h"
+#include "opencl/source/utilities/cl_logger.h"
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
@@ -227,8 +228,8 @@ cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_u
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "numObjects", numObjects, "memObjects", memObjects, "numEventsInWaitList",
                    numEventsInWaitList, "eventWaitList",
-                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
-                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
+                   getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     CommandQueue *pCommandQueue = nullptr;
     retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
 
@@ -264,8 +265,8 @@ cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_u
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "numObjects", numObjects, "memObjects", memObjects, "numEventsInWaitList",
                    numEventsInWaitList, "eventWaitList",
-                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
-                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
+                   getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     CommandQueue *pCommandQueue = nullptr;
     retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
 

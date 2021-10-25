@@ -7,7 +7,12 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_os_library.h"
+#include "shared/test/common/mocks/mock_source_level_debugger.h"
+#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
@@ -18,14 +23,10 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "test.h"
 
 using namespace NEO;
@@ -95,6 +96,26 @@ HWTEST_F(CommandQueueHwTest, WhenConstructingTwoCommandQueuesThenOnlyOneDebugSur
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw2(context, device.get(), nullptr);
     EXPECT_EQ(dbgSurface, device->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation());
+}
+
+HWTEST_F(CommandQueueHwTest, WhenDebugSurfaceIsAllocatedThenBufferIsZeroed) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
+    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
+    auto sipType = SipKernel::getSipKernelType(device->getDevice());
+    SipKernel::initSipKernel(sipType, device->getDevice());
+
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw1(context, device.get(), nullptr);
+
+    auto dbgSurface = device->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
+    EXPECT_NE(dbgSurface, nullptr);
+    auto mem = dbgSurface->getUnderlyingBuffer();
+    ASSERT_NE(nullptr, mem);
+
+    auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
+    mem = ptrOffset(mem, stateSaveAreaHeader.size());
+    auto size = dbgSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
+    EXPECT_THAT(mem, MemoryZeroed(size));
 }
 
 HWTEST_F(CommandQueueHwTest, WhenConstructingCommandQueueDebugOnButIgcDoesNotReturnSSAHDoNotCopyIt) {
@@ -198,7 +219,7 @@ HWTEST_F(CommandQueueHwTest, GivenCommandQueueWhenProcessDispatchForMarkerCalled
     MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     auto myCmdQ = std::make_unique<MockCommandQueueHwWithOverwrittenCsr<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr, false);
     myCmdQ->csr = &csr;
-    csr.osContext = &pCmdQ->getCommandStreamReceiver(false).getOsContext();
+    csr.osContext = &pCmdQ->getGpgpuCommandStreamReceiver().getOsContext();
     std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
@@ -211,6 +232,16 @@ HWTEST_F(CommandQueueHwTest, GivenCommandQueueWhenProcessDispatchForMarkerCalled
     CsrDependencies deps = {};
     myCmdQ->processDispatchForMarker(*myCmdQ.get(), &linearStream, eventsRequest, deps);
     EXPECT_GT(csr.makeResidentCalledTimes, 0u);
+}
+
+HWTEST_F(CommandQueueHwTest, GivenCommandQueueWhenItIsCreatedThenInitDirectSubmissionIsCalledOnAllBcsEngines) {
+    MockCommandQueueHw<FamilyType> queue(pContext, pClDevice, nullptr);
+    for (auto engine : queue.bcsEngines) {
+        if (engine != nullptr) {
+            auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine->commandStreamReceiver);
+            EXPECT_EQ(1u, csr->initDirectSubmissionCalled);
+        }
+    }
 }
 
 HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnTrue) {
@@ -825,6 +856,38 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
     ev->decRefInternal();
 }
 
+HWTEST_F(CommandQueueHwTest, GivenMultiTileQueueWhenEventNotCompletedAndFinishIsCalledThenItGetsCompletedOnAllTilesAndItStatusIsUpdatedAfterFinishCall) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+
+    auto &csr = this->pCmdQ->getGpgpuCommandStreamReceiver();
+    csr.setActivePartitions(2u);
+    auto tagAddress = csr.getTagAddress();
+    *ptrOffset(tagAddress, 8) = *tagAddress;
+
+    struct ClbFuncTempStruct {
+        static void CL_CALLBACK ClbFuncT(cl_event e, cl_int execStatus, void *valueForUpdate) {
+            *static_cast<cl_int *>(valueForUpdate) = 1;
+        }
+    };
+    auto value = 0u;
+
+    auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, CompletionStamp::notReady + 1);
+    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::ClbFuncT, &value);
+    EXPECT_GT(3u, csr.peekTaskCount());
+
+    *tagAddress = CompletionStamp::notReady + 1;
+    tagAddress = ptrOffset(tagAddress, 8);
+    *tagAddress = CompletionStamp::notReady + 1;
+
+    cl_int ret = clFinish(this->pCmdQ);
+    ASSERT_EQ(CL_SUCCESS, ret);
+
+    ev->updateExecutionStatus();
+    EXPECT_EQ(1u, value);
+    ev->decRefInternal();
+}
+
 void CloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
     for (auto &srcDi : src) {
         dst.push(srcDi);
@@ -876,10 +939,9 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
         auto builtIns = new MockBuiltins();
         pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
 
-        auto swapBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+        auto swapBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+            rootDeviceIndex,
             operation,
-            *pContext,
-            *pDevice,
             std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
         mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(

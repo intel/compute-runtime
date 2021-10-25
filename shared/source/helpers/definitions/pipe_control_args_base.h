@@ -22,6 +22,7 @@ struct PipeControlArgsBase {
     bool compressionControlSurfaceCcsFlush = false;
     bool notifyEnable = false;
     bool workloadPartitionOffset = false;
+    bool amfsFlushEnable = false;
 
   protected:
     PipeControlArgsBase() = default;

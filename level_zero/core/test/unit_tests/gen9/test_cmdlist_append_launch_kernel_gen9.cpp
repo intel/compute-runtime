@@ -8,7 +8,6 @@
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"

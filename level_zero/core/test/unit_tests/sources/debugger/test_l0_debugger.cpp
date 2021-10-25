@@ -100,7 +100,9 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
     auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
 
     if (isHexadecimalArrayPreferred) {
-        auto &expectedStateSaveAreaHeader = neoDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)]->getStateSaveAreaHeader();
+        auto sipKernel = neoDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
+        ASSERT_NE(sipKernel, nullptr);
+        auto &expectedStateSaveAreaHeader = sipKernel->getStateSaveAreaHeader();
         EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
     } else {
         auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
@@ -725,7 +727,7 @@ HWTEST_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledForI
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendImageCopyRegionThenSuccessIsReturned, IsSklOrAbove) {
+HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendImageCopyRegionThenSuccessIsReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -745,7 +747,11 @@ HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledForI
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -773,7 +779,7 @@ HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledForI
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendImageCopyRegionThenSuccessIsReturned, IsSklOrAbove) {
+HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendImageCopyRegionThenSuccessIsReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
 
@@ -793,7 +799,11 @@ HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledFor
     ASSERT_NE(nullptr, commandList0);
 
     CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    if (neoDevice->getInternalCopyEngine()) {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
+    } else {
+        EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    }
 
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;

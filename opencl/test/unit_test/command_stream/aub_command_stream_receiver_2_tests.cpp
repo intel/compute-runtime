@@ -7,30 +7,30 @@
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
+#include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_aub_file_stream.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/aub_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
@@ -40,6 +40,15 @@
 using namespace NEO;
 
 using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
+
+struct FlatBatchBufferHelperAubTests : AubCommandStreamReceiverTests {
+    void SetUp() override {
+        DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+        AubCommandStreamReceiverTests::SetUp();
+    }
+
+    DebugManagerStateRestore restore;
+};
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInImmediateDispatchModeThenNewCombinedBatchBufferIsCreated) {
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
@@ -122,7 +131,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     memoryManager->freeGraphicsMemory(otherAllocation);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRegisterCommandChunkIsCalledThenNewChunkIsAddedToTheList) {
+HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenRegisterCommandChunkIsCalledThenNewChunkIsAddedToTheList) {
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
@@ -143,7 +152,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRegiste
     EXPECT_EQ(0x123u, aubCsr->getFlatBatchBufferHelper().getCommandChunkList()[1].endOffset);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRemovePatchInfoDataIsCalledThenElementIsRemovedFromPatchInfoList) {
+HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenRemovePatchInfoDataIsCalledThenElementIsRemovedFromPatchInfoList) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
@@ -158,8 +167,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRemoveP
     EXPECT_EQ(0u, aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection().size());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddGucStartMessageIsCalledThenBatchBufferAddressIsStoredInPatchInfoCollection) {
-    DebugManagerStateRestore dbgRestore;
+HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenAddGucStartMessageIsCalledThenBatchBufferAddressIsStoredInPatchInfoCollection) {
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false, true);
@@ -175,9 +183,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddGucS
     EXPECT_EQ(patchInfoCollection[0].targetType, PatchInfoAllocationType::GUCStartMessage);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInBatchedDispatchModeThenNewCombinedBatchBufferIsCreated) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInBatchedDispatchModeThenNewCombinedBatchBufferIsCreated) {
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
 
@@ -433,7 +439,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     aubCsr->flush(batchBuffer, allocationsForResidency);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForEmptyPatchInfoListThenIndirectPatchCommandBufferIsNotCreated) {
+HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForEmptyPatchInfoListThenIndirectPatchCommandBufferIsNotCreated) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
@@ -445,7 +451,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndi
     EXPECT_EQ(0u, indirectPatchInfo.size());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForNonEmptyPatchInfoListThenIndirectPatchCommandBufferIsCreated) {
+HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForNonEmptyPatchInfoListThenIndirectPatchCommandBufferIsCreated) {
     typedef typename FamilyType::MI_STORE_DATA_IMM MI_STORE_DATA_IMM;
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
@@ -467,7 +473,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndi
     EXPECT_EQ(2u * sizeof(MI_STORE_DATA_IMM), indirectPatchCommandsSize);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, GivenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledFor64BitAddressingModeThenDwordLengthAndStoreQwordAreSetCorrectly) {
+HWTEST_F(FlatBatchBufferHelperAubTests, GivenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledFor64BitAddressingModeThenDwordLengthAndStoreQwordAreSetCorrectly) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
@@ -486,7 +492,7 @@ HWTEST_F(AubCommandStreamReceiverTests, GivenAubCommandStreamReceiverWhenGetIndi
     EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD, cmd->getDwordLength());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, GivenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledFor32BitAddressingModeThenDwordLengthAndSetStoreDwordAreSetCorrectly) {
+HWTEST_F(FlatBatchBufferHelperAubTests, GivenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledFor32BitAddressingModeThenDwordLengthAndSetStoreDwordAreSetCorrectly) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
@@ -505,10 +511,8 @@ HWTEST_F(AubCommandStreamReceiverTests, GivenAubCommandStreamReceiverWhenGetIndi
     EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_DWORD, cmd->getDwordLength());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddBatchBufferStartCalledAndBatchBUfferFlatteningEnabledThenBatchBufferStartAddressIsRegistered) {
+HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenAddBatchBufferStartCalledAndBatchBUfferFlatteningEnabledThenBatchBufferStartAddressIsRegistered) {
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
@@ -577,15 +581,16 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(engineInstance, deviceBitfield));
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *executionEnvironment, 0, deviceBitfield));
     aubCsr->setupContext(osContext);
+    aubCsr->initializeEngine();
 
-    cl_image_desc imgDesc = {};
-    imgDesc.image_width = 512;
-    imgDesc.image_height = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageWidth = 512;
+    imgDesc.imageHeight = 1;
+    imgDesc.imageType = ImageType::Image2D;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, deviceFactory.rootDevices[0]);
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, deviceFactory.rootDevices[0]);
     AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(aubCsr->getRootDeviceIndex(), imgInfo, true, memoryProperties, *hwInfo, osContext.getDeviceBitfield(), true);
 
     auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
@@ -610,6 +615,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *executionEnvironment, 0, deviceBitfield));
     auto osContext = memoryManager->createAndRegisterOsContext(aubCsr.get(), EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::Regular}));
     aubCsr->setupContext(*osContext);
+    aubCsr->initializeEngine();
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{aubCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     memoryManager->lockResource(gfxAllocation);
@@ -769,6 +775,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
 
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
     std::unique_ptr<MemoryManager> memoryManager(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
 
     PhysicalAddressAllocator allocator;

@@ -1186,9 +1186,7 @@ typedef struct tagRENDER_SURFACE_STATE {
             uint32_t MipTailStartLod : BITFIELD_RANGE(8, 11);
             uint32_t Reserved_172 : BITFIELD_RANGE(12, 13);
             uint32_t CoherencyType : BITFIELD_RANGE(14, 14);
-            uint32_t Reserved_175 : BITFIELD_RANGE(15, 15);
-            uint32_t L1CachePolicyL1CacheControl : BITFIELD_RANGE(16, 18);
-            uint32_t Reserved_178 : BITFIELD_RANGE(19, 19);
+            uint32_t Reserved_175 : BITFIELD_RANGE(15, 19);
             uint32_t EwaDisableForCube : BITFIELD_RANGE(20, 20);
             uint32_t YOffset : BITFIELD_RANGE(21, 23);
             uint32_t Reserved_184 : BITFIELD_RANGE(24, 24);
@@ -1895,13 +1893,6 @@ typedef struct tagRENDER_SURFACE_STATE {
     typedef enum tagMEMORY_COMPRESSION_MODE {
         MEMORY_COMPRESSION_MODE_HORIZONTAL = 0x0,
     } MEMORY_COMPRESSION_MODE;
-    typedef enum tagL1_CACHE_POLICY {
-        L1_CACHE_POLICY_WBP = 0x0,
-        L1_CACHE_POLICY_UC = 0x1,
-        L1_CACHE_POLICY_WB = 0x2,
-        L1_CACHE_POLICY_WT = 0x3,
-        L1_CACHE_POLICY_WS = 0x4,
-    } L1_CACHE_POLICY;
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MediaBoundaryPixelMode = MEDIA_BOUNDARY_PIXEL_MODE_NORMAL_MODE;
@@ -1921,7 +1912,6 @@ typedef struct tagRENDER_SURFACE_STATE {
         TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma = HALF_PITCH_FOR_CHROMA_DISABLE;
         TheStructure.Common.DisableSupportForMultiGpuAtomics = 1;
         TheStructure.Common.DisableSupportForMultiGpuPartialWrites = 1;
-        TheStructure.Common.L1CachePolicyL1CacheControl = L1_CACHE_POLICY::L1_CACHE_POLICY_WBP;
     }
     static tagRENDER_SURFACE_STATE sInit(void) {
         RENDER_SURFACE_STATE state;
@@ -2203,12 +2193,6 @@ typedef struct tagRENDER_SURFACE_STATE {
     }
     inline COHERENCY_TYPE getCoherencyType(void) const {
         return static_cast<COHERENCY_TYPE>(TheStructure.Common.CoherencyType);
-    }
-    inline void setL1CachePolicyL1CacheControl(const uint32_t value) {
-        TheStructure.Common.L1CachePolicyL1CacheControl = value;
-    }
-    inline uint32_t getL1CachePolicyL1CacheControl(void) const {
-        return TheStructure.Common.L1CachePolicyL1CacheControl;
     }
     inline void setEwaDisableForCube(const bool value) {
         TheStructure.Common.EwaDisableForCube = value;
@@ -2881,8 +2865,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
             uint32_t DisableSupportForMultiGpuPartialWritesForStatelessMessages : BITFIELD_RANGE(15, 15);
             uint32_t StatelessDataPortAccessMemoryObjectControlState_Reserved : BITFIELD_RANGE(16, 16);
             uint32_t StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(17, 22);
-            uint32_t L1CachePolicyL1CacheControl : BITFIELD_RANGE(23, 25);
-            uint32_t Reserved_119 : BITFIELD_RANGE(26, 31);
+            uint32_t Reserved_119 : BITFIELD_RANGE(23, 31);
             // DWORD 4-5
             uint64_t SurfaceStateBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_129 : BITFIELD_RANGE(1, 3);
@@ -2898,12 +2881,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
             uint64_t Reserved_203 : BITFIELD_RANGE(11, 11);
             uint64_t DynamicStateBaseAddress : BITFIELD_RANGE(12, 63);
             // DWORD 8-9
-            uint64_t IndirectObjectBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
-            uint64_t Reserved_257 : BITFIELD_RANGE(1, 3);
-            uint64_t IndirectObjectMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t IndirectObjectMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
-            uint64_t Reserved_267 : BITFIELD_RANGE(11, 11);
-            uint64_t IndirectObjectBaseAddress : BITFIELD_RANGE(12, 63);
+            uint64_t Reserved8 : BITFIELD_RANGE(0, 63);
             // DWORD 10-11
             uint64_t InstructionBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_321 : BITFIELD_RANGE(1, 3);
@@ -2968,13 +2946,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
         ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED = 0x0,
         ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_ENABLED = 0x1,
     } ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES;
-    typedef enum tagL1_CACHE_POLICY {
-        L1_CACHE_POLICY_WBP = 0x0,
-        L1_CACHE_POLICY_UC = 0x1,
-        L1_CACHE_POLICY_WB = 0x2,
-        L1_CACHE_POLICY_WT = 0x3,
-        L1_CACHE_POLICY_WS = 0x4,
-    } L1_CACHE_POLICY;
     typedef enum tagPATCH_CONSTANTS {
         GENERALSTATEBASEADDRESS_BYTEOFFSET = 0x4,
         GENERALSTATEBASEADDRESS_INDEX = 0x1,
@@ -2982,8 +2953,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
         SURFACESTATEBASEADDRESS_INDEX = 0x4,
         DYNAMICSTATEBASEADDRESS_BYTEOFFSET = 0x18,
         DYNAMICSTATEBASEADDRESS_INDEX = 0x6,
-        INDIRECTOBJECTBASEADDRESS_BYTEOFFSET = 0x20,
-        INDIRECTOBJECTBASEADDRESS_INDEX = 0x8,
         INSTRUCTIONBASEADDRESS_BYTEOFFSET = 0x28,
         INSTRUCTIONBASEADDRESS_INDEX = 0xa,
         BINDLESSSURFACESTATEBASEADDRESS_BYTEOFFSET = 0x40,
@@ -3001,7 +2970,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
         TheStructure.Common.EnableMemoryCompressionForAllStatelessAccesses = ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED;
         TheStructure.Common.DisableSupportForMultiGpuAtomicsForStatelessAccesses = 1;
         TheStructure.Common.DisableSupportForMultiGpuPartialWritesForStatelessMessages = 1;
-        TheStructure.Common.L1CachePolicyL1CacheControl = L1_CACHE_POLICY_WBP;
     }
     static tagSTATE_BASE_ADDRESS sInit(void) {
         STATE_BASE_ADDRESS state;
@@ -3070,12 +3038,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline uint32_t getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables(void) const {
         return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables << 1);
     }
-    inline void setL1CachePolicyL1CacheControl(const L1_CACHE_POLICY value) {
-        TheStructure.Common.L1CachePolicyL1CacheControl = value;
-    }
-    inline L1_CACHE_POLICY getL1CachePolicyL1CacheControl(void) const {
-        return static_cast<L1_CACHE_POLICY>(TheStructure.Common.L1CachePolicyL1CacheControl);
-    }
     inline void setStatelessDataPortAccessMemoryObjectControlState(const uint32_t value) {
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved = value;
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables = (value >> 1);
@@ -3140,34 +3102,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
     }
     inline uint64_t getDynamicStateBaseAddress(void) const {
         return (TheStructure.Common.DynamicStateBaseAddress << DYNAMICSTATEBASEADDRESS_BIT_SHIFT);
-    }
-    inline void setIndirectObjectBaseAddressModifyEnable(const bool value) {
-        TheStructure.Common.IndirectObjectBaseAddressModifyEnable = value;
-    }
-    inline bool getIndirectObjectBaseAddressModifyEnable(void) const {
-        return (TheStructure.Common.IndirectObjectBaseAddressModifyEnable);
-    }
-    inline void setIndirectObjectMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved = value;
-    }
-    inline uint64_t getIndirectObjectMemoryObjectControlStateReserved(void) const {
-        return (TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved);
-    }
-    inline void setIndirectObjectMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getIndirectObjectMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables << 1);
-    }
-    typedef enum tagINDIRECTOBJECTBASEADDRESS {
-        INDIRECTOBJECTBASEADDRESS_BIT_SHIFT = 0xc,
-        INDIRECTOBJECTBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } INDIRECTOBJECTBASEADDRESS;
-    inline void setIndirectObjectBaseAddress(const uint64_t value) {
-        TheStructure.Common.IndirectObjectBaseAddress = value >> INDIRECTOBJECTBASEADDRESS_BIT_SHIFT;
-    }
-    inline uint64_t getIndirectObjectBaseAddress(void) const {
-        return (TheStructure.Common.IndirectObjectBaseAddress << INDIRECTOBJECTBASEADDRESS_BIT_SHIFT);
     }
     inline void setInstructionBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.InstructionBaseAddressModifyEnable = value;
@@ -3621,7 +3555,7 @@ struct XY_BLOCK_COPY_BLT {
             /// DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t DestinationAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMOCSvalue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
             uint32_t DestinationCompressionType : BITFIELD_RANGE(28, 28);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
@@ -3882,12 +3816,12 @@ struct XY_BLOCK_COPY_BLT {
         return static_cast<AUXILIARY_SURFACE_MODE>(TheStructure.Common.DestinationAuxiliarysurfacemode);
     }
 
-    inline void setDestinationMOCSvalue(const uint32_t value) {
-        TheStructure.Common.DestinationMOCSvalue = value;
+    inline void setDestinationMOCS(const uint32_t value) {
+        TheStructure.Common.DestinationMOCS = value;
     }
 
-    inline uint32_t getDestinationMOCSvalue(void) const {
-        return (TheStructure.Common.DestinationMOCSvalue);
+    inline uint32_t getDestinationMOCS(void) const {
+        return (TheStructure.Common.DestinationMOCS);
     }
 
     inline void setDestinationCompressionType(const COMPRESSION_TYPE value) {
@@ -4353,7 +4287,7 @@ struct XY_FAST_COLOR_BLT {
             /// DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t DestinationAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMOCSvalue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
             uint32_t DestinationCompressionType : BITFIELD_RANGE(28, 28);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
@@ -4560,12 +4494,12 @@ struct XY_FAST_COLOR_BLT {
         return static_cast<DESTINATION_AUXILIARY_SURFACE_MODE>(TheStructure.Common.DestinationAuxiliarysurfacemode);
     }
 
-    inline void setDestinationMOCSvalue(const uint32_t value) {
-        TheStructure.Common.DestinationMOCSvalue = value;
+    inline void setDestinationMOCS(const uint32_t value) {
+        TheStructure.Common.DestinationMOCS = value;
     }
 
-    inline uint32_t getDestinationMOCSvalue(void) const {
-        return (TheStructure.Common.DestinationMOCSvalue);
+    inline uint32_t getDestinationMOCS(void) const {
+        return (TheStructure.Common.DestinationMOCS);
     }
 
     inline void setDestinationCompressionType(const DESTINATION_COMPRESSION_TYPE value) {
@@ -5103,7 +5037,7 @@ typedef struct tagPOSTSYNC_DATA {
             // DWORD 0
             uint32_t Operation : BITFIELD_RANGE(0, 1);
             uint32_t DataportPipelineFlush : BITFIELD_RANGE(2, 2);
-            uint32_t L3Flush : BITFIELD_RANGE(3, 3);
+            uint32_t Reserved_3 : BITFIELD_RANGE(3, 3);
             uint32_t MocsReserved_4 : BITFIELD_RANGE(4, 4);
             uint32_t MocsIndexToMocsTables : BITFIELD_RANGE(5, 10);
             uint32_t Reserved_13 : BITFIELD_RANGE(11, 31);
@@ -5143,12 +5077,6 @@ typedef struct tagPOSTSYNC_DATA {
     }
     inline bool getDataportPipelineFlush(void) const {
         return TheStructure.Common.DataportPipelineFlush;
-    }
-    inline void setL3Flush(const bool value) {
-        TheStructure.Common.L3Flush = value;
-    }
-    inline bool getL3Flush(void) const {
-        return TheStructure.Common.L3Flush;
     }
     inline void setMocs(const uint32_t value) { // patched
         UNRECOVERABLE_IF(value > 0x7f);

@@ -7,6 +7,8 @@
 target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/gdi_dll_fixture.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mock_sys_calls.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_memory_manager.h
                ${CMAKE_CURRENT_SOURCE_DIR}/wddm_fixture.h
 )
 

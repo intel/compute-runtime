@@ -73,6 +73,7 @@ class CommandQueueHw : public CommandQueue {
 
         if (device->getDevice().getDebugger() && !getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation()) {
             auto debugSurface = getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+            memset(debugSurface->getUnderlyingBuffer(), 0, debugSurface->getUnderlyingBufferSize());
 
             auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
             if (stateSaveAreaHeader.size() > 0) {
@@ -91,9 +92,11 @@ class CommandQueueHw : public CommandQueue {
 
         gpgpuEngine->osContext->ensureContextInitialized();
         gpgpuEngine->commandStreamReceiver->initDirectSubmission(device->getDevice(), *gpgpuEngine->osContext);
-        if (bcsEngine) {
-            bcsEngine->osContext->ensureContextInitialized();
-            bcsEngine->commandStreamReceiver->initDirectSubmission(device->getDevice(), *bcsEngine->osContext);
+        for (const EngineControl *engine : bcsEngines) {
+            if (engine != nullptr) {
+                engine->osContext->ensureContextInitialized();
+                engine->commandStreamReceiver->initDirectSubmission(device->getDevice(), *engine->osContext);
+            }
         }
     }
 
@@ -395,7 +398,7 @@ class CommandQueueHw : public CommandQueue {
                         const EnqueueProperties &enqueueProperties,
                         EventsRequest &eventsRequest,
                         EventBuilder &externalEventBuilder,
-                        std::unique_ptr<PrintfHandler> printfHandler,
+                        std::unique_ptr<PrintfHandler> &&printfHandler,
                         CommandStreamReceiver *bcsCsr);
 
     CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,

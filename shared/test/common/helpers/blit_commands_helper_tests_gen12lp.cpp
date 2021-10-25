@@ -10,9 +10,8 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/blit_commands_helper_tests.inl"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "gtest/gtest.h"
 
@@ -77,7 +76,7 @@ HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColorDepthThenAbortIsTh
 
 HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAdressAreCorectOffseted, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto gmm = std::make_unique<MockGmm>();
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages);
@@ -174,7 +173,7 @@ struct MyMockResourecInfo : public GmmResourceInfo {
 
 HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThenPitchIsValueFromGmm, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto gmm = std::make_unique<MockGmm>();
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     GMM_RESCREATE_PARAMS gmmParams = {};
     auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
     myResourecInfo->pitch = 0x100;
@@ -205,7 +204,7 @@ HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThe
 
 HWTEST2_F(BlitTests, givenLinearSrcAndDestinationImagesWhenAppendImageCommandsThenPitchIsValueFromProperties, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto gmm = std::make_unique<MockGmm>();
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     GMM_RESCREATE_PARAMS gmmParams = {};
     auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
     myResourecInfo->pitch = 0x100;

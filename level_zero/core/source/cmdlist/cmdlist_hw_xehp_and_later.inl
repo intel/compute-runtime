@@ -119,9 +119,10 @@ void programEventL3Flush(ze_event_handle_t hEvent,
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
     auto event = Event::fromHandle(hEvent);
 
-    uint64_t eventAddress = event->getPacketAddress(device) + event->getSinglePacketSize();
-    bool isTimestampEvent = event->isEventTimestampFlagSet();
-    if (isTimestampEvent) {
+    auto eventPartitionOffset = (partitionCount > 1) ? (partitionCount * event->getSinglePacketSize())
+                                                     : event->getSinglePacketSize();
+    uint64_t eventAddress = event->getPacketAddress(device) + eventPartitionOffset;
+    if (event->isEventTimestampFlagSet()) {
         eventAddress += event->getContextEndOffset();
     }
 
@@ -145,6 +146,13 @@ void programEventL3Flush(ze_event_handle_t hEvent,
         eventAddress, Event::STATE_SIGNALED,
         commandContainer.getDevice()->getHardwareInfo(),
         args);
+
+    if (partitionCount > 1) {
+        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(),
+                                                 NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                                 CommonConstants::partitionAddressOffset,
+                                                 true);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -276,14 +284,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     if (neoDevice->getDebugger()) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
         auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
-        auto debugSurface = device->getDebugSurface();
-        auto mocs = device->getMOCS(false, false);
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(&surfaceState, debugSurface->getGpuAddress(),
-                                                         debugSurface->getUnderlyingBufferSize(), mocs,
-                                                         false, false, false, neoDevice->getNumGenericSubDevices(),
-                                                         debugSurface, neoDevice->getGmmHelper(),
-                                                         kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, 1u);
+
+        NEO::EncodeSurfaceStateArgs args;
+        args.outMemory = &surfaceState;
+        args.graphicsAddress = device->getDebugSurface()->getGpuAddress();
+        args.size = device->getDebugSurface()->getUnderlyingBufferSize();
+        args.mocs = device->getMOCS(false, false);
+        args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+        args.allocation = device->getDebugSurface();
+        args.gmmHelper = neoDevice->getGmmHelper();
+        args.useGlobalAtomics = kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics;
+        args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
+
+        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
     // Attach Function residency to our CommandList residency
@@ -313,6 +327,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t partitionDataSize) {
+
+    const uint64_t workPartitionAllocationGpuVa = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
+    size_t estimatedSizeRequired = sizeof(typename GfxFamily::MI_LOAD_REGISTER_MEM) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    increaseCommandStreamSpace(estimatedSizeRequired);
+
+    NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer,
+                                             NEO::PartitionRegisters<GfxFamily>::wparidCCSOffset,
+                                             workPartitionAllocationGpuVa);
+    NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(commandContainer,
+                                             NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                             partitionDataSize,
+                                             true);
 }
 
 } // namespace L0

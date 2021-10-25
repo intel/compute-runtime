@@ -87,8 +87,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
     auto idd = &walkerCmd.getInterfaceDescriptor();
+    auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
 
-    if (currentTimestampPacketNodes && commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (currentTimestampPacketNodes && queueCsr.peekTimestampPacketWriteEnabled()) {
         auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
         GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacket, commandQueue.getDevice().getRootDeviceEnvironment());
     }
@@ -123,7 +124,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd);
 
-    auto devices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getDeviceBitfield();
+    auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, !kernel.isSingleSubdevicePreferred());
 
     if (partitionWalker) {
@@ -137,7 +138,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                              false,
                                                              kernel.usesImages(),
                                                              workPartitionAllocationGpuVa);
-
+        if (queueCsr.isStaticWorkPartitioningEnabled()) {
+            queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), partitionCount));
+        }
         auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
         timestampPacket->setPacketsUsed(partitionCount);
     } else {

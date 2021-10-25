@@ -31,8 +31,8 @@ class TagAllocatorBase;
 class Gmm;
 struct AllocationData;
 struct AllocationProperties;
+struct EncodeSurfaceStateArgs;
 struct EngineControl;
-struct HardwareCapabilities;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
 
@@ -48,9 +48,7 @@ class HwHelper {
     virtual uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const HardwareInfo *hwInfo) const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;
-    virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
-    virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
@@ -94,14 +92,11 @@ class HwHelper {
     virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
     virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) = 0;
 
-    virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) = 0;
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const = 0;
     virtual uint32_t getMinimalSIMDSize() = 0;
     virtual bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const = 0;
-    virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const = 0;
-    virtual bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
     virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
@@ -110,7 +105,6 @@ class HwHelper {
     virtual bool isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
     virtual uint32_t getDefaultThreadArbitrationPolicy() const = 0;
-    virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
@@ -123,7 +117,6 @@ class HwHelper {
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
@@ -131,9 +124,7 @@ class HwHelper {
     virtual uint32_t getNumCacheRegions() const = 0;
     virtual bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
-    virtual bool isBlitterForImagesSupported(const HardwareInfo &hwInfo) const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
-    virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
                                                                              size_t initialTagCount, CommandStreamReceiverType csrType,
                                                                              DeviceBitfield deviceBitfield) const = 0;
@@ -150,6 +141,14 @@ class HwHelper {
     virtual bool isSipKernelAsHexadecimalArrayPreferred() const = 0;
     virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const = 0;
     virtual void adjustPreemptionSurfaceSize(size_t &csrSize) const = 0;
+    virtual size_t getSamplerStateSize() const = 0;
+
+    virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
+    virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const = 0;
+    virtual size_t getMax3dImageWidthOrHeight() const = 0;
+    virtual uint64_t getMaxMemAllocSize() const = 0;
+    virtual bool isStatelesToStatefullWithOffsetSupported() const = 0;
+    virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) = 0;
 
   protected:
     HwHelper() = default;
@@ -190,6 +189,11 @@ class HwHelperHw : public HwHelper {
         return sizeof(RENDER_SURFACE_STATE);
     }
 
+    size_t getSamplerStateSize() const override {
+        using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
+        return sizeof(SAMPLER_STATE);
+    }
+
     uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const override {
         using DataPortBindlessSurfaceExtendedMessageDescriptor = typename GfxFamily::DataPortBindlessSurfaceExtendedMessageDescriptor;
         DataPortBindlessSurfaceExtendedMessageDescriptor messageExtDescriptor = {};
@@ -209,19 +213,13 @@ class HwHelperHw : public HwHelper {
 
     uint32_t getMaxNumSamplers() const override;
 
-    void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) override;
-
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
-
-    void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) override;
 
     bool isL3Configurable(const HardwareInfo &hwInfo) override;
 
     SipKernelType getSipKernelType(bool debuggingActive) const override;
 
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
-
-    bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
 
     bool hvAlign4Required() const override;
 
@@ -279,17 +277,11 @@ class HwHelperHw : public HwHelper {
 
     bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const override;
 
-    bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const override;
-
     bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const override;
-
-    bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const override;
 
     bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const override;
 
     static bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo);
-
-    bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) override;
 
     bool isWaDisableRccRhwoOptimizationRequired() const override;
 
@@ -328,8 +320,6 @@ class HwHelperHw : public HwHelper {
 
     bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const override;
 
-    bool isNewResidencyModelSupported() const override;
-
     bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
 
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
@@ -350,8 +340,6 @@ class HwHelperHw : public HwHelper {
 
     uint32_t getPlanarYuvMaxHeight() const override;
 
-    bool isBlitterForImagesSupported(const HardwareInfo &hwInfo) const override;
-
     size_t getPreemptionAllocationAlignment() const override;
 
     std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
@@ -369,8 +357,6 @@ class HwHelperHw : public HwHelper {
 
     bool additionalPipeControlArgsRequired() const override;
 
-    bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
-
     bool isEngineTypeRemappingToHwSpecificRequired() const override;
 
     bool isSipKernelAsHexadecimalArrayPreferred() const override;
@@ -378,6 +364,14 @@ class HwHelperHw : public HwHelper {
     void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const override;
 
     void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
+
+    bool isScratchSpaceSurfaceStateAccessible() const override;
+    uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const override;
+
+    size_t getMax3dImageWidthOrHeight() const override;
+    uint64_t getMaxMemAllocSize() const override;
+    bool isStatelesToStatefullWithOffsetSupported() const override;
+    void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

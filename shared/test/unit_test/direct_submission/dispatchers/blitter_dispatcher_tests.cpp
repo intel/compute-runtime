@@ -37,7 +37,7 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDis
 
     uint64_t expectedGpuAddress = 0x5100ull;
     uint64_t expectedValue = 0x1234ull;
-    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, expectedGpuAddress, expectedValue, pDevice->getHardwareInfo(), false);
+    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, expectedGpuAddress, expectedValue, pDevice->getHardwareInfo(), false, false);
 
     EXPECT_EQ(expectedSize, cmdBuffer.getUsed());
 
@@ -90,4 +90,8 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingTlbFlushThenDispatchMi
     EXPECT_EQ(miFlushDw->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
 
     EXPECT_EQ(BlitterDispatcher<FamilyType>::getSizeTlbFlush(), EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite());
+}
+
+HWTEST_F(BlitterDispatcheTest, givenBlitterWhenCheckingForMultiTileSynchronizationSupportThenExpectFalse) {
+    EXPECT_FALSE(BlitterDispatcher<FamilyType>::isMultiTileSynchronizationSupported());
 }

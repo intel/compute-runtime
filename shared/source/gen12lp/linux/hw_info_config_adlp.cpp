@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"

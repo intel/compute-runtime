@@ -4,19 +4,12 @@
 %global ver xxx
 %global rel xxx
 %global build_id xxx
-%global neo_source_dir %{nil}
 
 %define gmmlib_sover  11
 %define igc_sover 1
 
 %if !0%{?build_type:1}
 %define build_type Release
-%endif
-
-%if "%{neo_source_dir}" != ""
-%global neo_build_extra_opts -DNEO_SOURCE_DIR=%neo_source_dir
-%else
-%global neo_build_extra_opts %{nil}
 %endif
 
 %define _source_payload w5T16.xzdio
@@ -57,7 +50,7 @@ exposing hardware capabilities to applications.
 %autosetup -p1 -n compute-runtime-%{version}
 
 %build
-%cmake .. %neo_build_extra_opts \
+%cmake .. \
    -DNEO_VERSION_BUILD=%{build_id} \
    -DCMAKE_BUILD_TYPE=%{build_type} \
    -DCMAKE_INSTALL_PREFIX=/usr \

@@ -25,6 +25,7 @@
 #include "mock/mock_offline_compiler.h"
 
 #include <algorithm>
+#include <array>
 #include <fstream>
 
 extern Environment *gEnvironment;
@@ -368,6 +369,25 @@ TEST_F(OfflineCompilerTests, givenDebugOptionThenInternalOptionShouldContainKern
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_THAT(internalOptions, ::testing::HasSubstr("-cl-kernel-debug-enable"));
+}
+
+TEST_F(OfflineCompilerTests, givenDashGInBiggerOptionStringWhenInitializingThenInternalOptionsShouldNotContainKernelDebugEnable) {
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-options",
+        "-gNotRealDashGOption",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+    mockOfflineCompiler->initialize(argv.size(), argv);
+
+    std::string internalOptions = mockOfflineCompiler->internalOptions;
+    EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr("-cl-kernel-debug-enable")));
 }
 
 TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorrectExtensionsArePassed) {
@@ -852,7 +872,7 @@ TEST(OfflineCompilerTest, WhenStoringBinaryThenStoredCorrectly) {
     delete[] pDstBinary;
 }
 
-TEST(OfflineCompilerTest, WhenUpdatingBuildLogThenMessageIsAppended) {
+TEST(OfflineCompilerTest, givenErrorStringsWithoutExtraNullCharactersWhenUpdatingBuildLogThenMessageIsCorrect) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
@@ -863,6 +883,26 @@ TEST(OfflineCompilerTest, WhenUpdatingBuildLogThenMessageIsAppended) {
     std::string FinalString = "Build failure";
     mockOfflineCompiler->updateBuildLog(FinalString.c_str(), FinalString.length());
     EXPECT_EQ(0, (ErrorString + "\n" + FinalString).compare(mockOfflineCompiler->getBuildLog().c_str()));
+}
+
+TEST(OfflineCompilerTest, givenErrorStringsWithExtraNullCharactersWhenUpdatingBuildLogThenMessageIsCorrect) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::array<char, sizeof("Error: undefined variable\0")> errorMessageArray = {"Error: undefined variable\0"};
+    std::string expectedBuildLogString = "Error: undefined variable";
+    EXPECT_EQ(errorMessageArray.size(), std::string("Error: undefined variable").length() + 2);
+
+    mockOfflineCompiler->updateBuildLog(errorMessageArray.data(), errorMessageArray.size());
+    EXPECT_EQ(mockOfflineCompiler->getBuildLog(), expectedBuildLogString);
+
+    std::array<char, sizeof("Build failure\0")> additionalErrorMessageArray = {"Build failure\0"};
+    expectedBuildLogString = "Error: undefined variable\n"
+                             "Build failure";
+    EXPECT_EQ(additionalErrorMessageArray.size(), std::string("Build failure").length() + 2);
+
+    mockOfflineCompiler->updateBuildLog(additionalErrorMessageArray.data(), additionalErrorMessageArray.size());
+    EXPECT_EQ(mockOfflineCompiler->getBuildLog(), expectedBuildLogString);
 }
 
 TEST(OfflineCompilerTest, GivenSourceCodeWhenBuildingThenSuccessIsReturned) {
@@ -1015,20 +1055,6 @@ TEST(OfflineCompilerTest, givenSpirvInputOptionPassedWhenCmdLineParsedThenInputF
 TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChangedThenSpirvInputFileIsFalse) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     EXPECT_FALSE(mockOfflineCompiler->inputFileSpirV);
-}
-
-TEST(OfflineCompilerTest, whenIsMidThreadPreemptionSupportedIsCalledThenCorrectResultIsReturned) {
-    MockOfflineCompiler offlineCompiler;
-
-    if (!hardwarePrefix[IGFX_SKYLAKE]) {
-        GTEST_SKIP();
-    }
-    offlineCompiler.getHardwareInfo("skl");
-    offlineCompiler.hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = false;
-    EXPECT_FALSE(offlineCompiler.isMidThreadPreemptionSupported(offlineCompiler.hwInfo));
-
-    offlineCompiler.hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = true;
-    EXPECT_TRUE(offlineCompiler.isMidThreadPreemptionSupported(offlineCompiler.hwInfo));
 }
 
 TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {

@@ -250,7 +250,7 @@ class Program : public BaseObject<_cl_program> {
         buildInfos[rootDeviceIndex].linkerInput = std::move(linkerInput);
     }
 
-    MOCKABLE_VIRTUAL void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize, uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void replaceDeviceBinary(std::unique_ptr<char[]> &&newBinary, size_t newBinarySize, uint32_t rootDeviceIndex);
 
     static bool isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
     void invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);

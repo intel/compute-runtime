@@ -25,49 +25,23 @@ if(NOT SKIP_UNIT_TESTS)
   add_executable(${TARGET_NAME}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
-                 ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_platform.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/ult_specific_config.cpp
                  ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/api_specific_config_shared_tests.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                  $<TARGET_OBJECTS:mock_gmm>
-                 $<TARGET_OBJECTS:igdrcl_libult_common>
+                 $<TARGET_OBJECTS:neo_libult_common>
+                 $<TARGET_OBJECTS:neo_libult_cs>
+                 $<TARGET_OBJECTS:neo_libult>
   )
 
   if(UNIX)
     target_sources(${TARGET_NAME} PRIVATE
-                   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/os_interface.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-                   ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
-                   ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
-    )
-    if(NOT DISABLE_WDDM_LINUX)
-      target_sources(${TARGET_NAME} PRIVATE
-                     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-                     ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-      )
-    endif()
-  else()
-    target_sources(${TARGET_NAME} PRIVATE
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxcore_factory.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
-                   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
     )
   endif()
 
@@ -75,10 +49,11 @@ if(NOT SKIP_UNIT_TESTS)
   set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
 
   target_include_directories(${TARGET_NAME} PRIVATE
-                             ${CMAKE_CURRENT_SOURCE_DIR}
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                              ${ENGINE_NODE_DIR}
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                              ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
+                             ${IGC_COMMON_PARENT_DIR}
   )
 
   if(UNIX)
@@ -101,6 +76,7 @@ if(NOT SKIP_UNIT_TESTS)
   endif()
 
   add_subdirectory(${NEO_SHARED_TEST_DIRECTORY}/common "${NEO_BUILD_DIR}/shared/test/common")
+  add_subdirectory_unique(mocks)
 
   if(NOT SKIP_SHARED_UNIT_TESTS)
     add_subdirectories()

@@ -9,21 +9,8 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/api_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_init_linux.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_metrics_library.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
 )
-
-if(SUPPORT_XEHP_AND_LATER)
-  list(APPEND RUNTIME_SRCS_OS_INTERFACE_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later.inl
-  )
-endif()
 
 if(UNIX)
   target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_OS_INTERFACE_LINUX})

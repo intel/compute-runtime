@@ -5,24 +5,37 @@
  *
  */
 
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
+#include <cstdint>
+#include <memory>
+#include <string>
 
-#include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
-
-#include "third_party/gtest/gtest/gtest.h"
-
+namespace NEO {
+class CommandStreamReceiver;
+class MockDevice;
+class ExecutionEnvironment;
+class MemoryManager;
+struct HardwareInfo;
+} // namespace NEO
 namespace L0 {
+namespace ult {
+template <typename Type>
+struct Mock;
+template <typename Type>
+struct WhiteBox;
+} // namespace ult
+
+struct ContextImp;
+struct DriverHandleImp;
+struct CommandQueue;
+struct CommandList;
+struct Device;
 
 class AUBFixtureL0 {
   public:
-    void SetUp(const HardwareInfo *hardwareInfo);
+    AUBFixtureL0();
+    virtual ~AUBFixtureL0();
+    void SetUp();
+    void SetUp(const NEO::HardwareInfo *hardwareInfo);
     void TearDown();
     static void prepareCopyEngines(NEO::MockDevice &device, const std::string &filename);
 
@@ -32,15 +45,13 @@ class AUBFixtureL0 {
     NEO::MockDevice *neoDevice = nullptr;
 
     std::unique_ptr<ult::Mock<DriverHandleImp>> driverHandle;
-    std::unique_ptr<ult::CommandList> commandList;
-    std::unique_ptr<EventPool> eventPool;
-    std::unique_ptr<Event> event;
+    std::unique_ptr<ult::WhiteBox<L0::CommandList>> commandList;
 
     Device *device = nullptr;
     ContextImp *context = nullptr;
     CommandQueue *pCmdq = nullptr;
 
-    CommandStreamReceiver *csr = nullptr;
+    NEO::CommandStreamReceiver *csr = nullptr;
 };
 
 } // namespace L0

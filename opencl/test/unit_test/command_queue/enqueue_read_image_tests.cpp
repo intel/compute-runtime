@@ -9,13 +9,13 @@
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/enqueue_read_image_fixture.h"
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
 
@@ -594,10 +594,9 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitc
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
-    auto oldBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
         copyBuiltIn,
-        pCmdQ->getContext(),
-        pCmdQ->getDevice(),
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
     std::unique_ptr<Image> srcImage(Image1dArrayHelper<>::create(context));
@@ -615,10 +614,9 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitc
     EXPECT_EQ(params->dstRowPitch, slicePitch);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
         copyBuiltIn,
-        pCmdQ->getContext(),
-        pCmdQ->getDevice(),
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 }
@@ -762,13 +760,13 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DThatIsZeroCopyWhenReadImageWithTheSam
 
 HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideInvalidEngineWithDefault.set(1);
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(hwInfo);
     size_t origin[] = {0, 0, 0};
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Image> image(Image2dHelper<>::create(context));
@@ -786,7 +784,7 @@ HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImage
         DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), image.get(), CL_TRUE, origin, region);
-        auto supportExpected = hwHelper.isBlitterForImagesSupported(*hwInfo);
+        auto supportExpected = hwInfoConfig->isBlitterForImagesSupported();
         EXPECT_EQ(supportExpected, mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {
@@ -869,10 +867,9 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
-    auto oldBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
         EBuiltInOps::CopyImage3dToBuffer,
-        pCmdQ->getContext(),
-        pCmdQ->getDevice(),
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
     cl_int retVal = CL_SUCCESS;
@@ -934,10 +931,9 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
     EXPECT_EQ(expectedMipLevel, params->srcMipLevel);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
         EBuiltInOps::CopyImage3dToBuffer,
-        pCmdQ->getContext(),
-        pCmdQ->getDevice(),
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 }

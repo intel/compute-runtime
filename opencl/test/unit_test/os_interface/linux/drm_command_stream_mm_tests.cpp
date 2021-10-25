@@ -6,16 +6,16 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
-#include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
 using namespace NEO;
@@ -27,8 +27,8 @@ HWTEST_F(DrmCommandStreamMMTest, GivenForcePinThenMemoryManagerCreatesPinBb) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableForcePin.set(true);
 
-    auto drm = new DrmMockCustom();
     MockExecutionEnvironment executionEnvironment;
+    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -46,8 +46,8 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableForcePin.set(false);
 
-    auto drm = new DrmMockCustom();
     MockExecutionEnvironment executionEnvironment;
+    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -68,7 +68,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenExecutionEnvironmentWithMoreThanOneRootDev
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
-        auto drm = new DrmMockCustom();
+        auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
     }

@@ -49,7 +49,7 @@ class MyMockCommandQueue : public CommandQueueHw<Family> {
 class ImageUnmapTest : public ::testing::Test {
   public:
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context = std::make_unique<MockContext>(device.get());
         image.reset(ImageHelper<ImageReadOnly<Image3dDefaults>>::create(context.get()));
     }
@@ -89,7 +89,6 @@ HWTEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocated
     cl_int retVal;
     size_t origin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<CommandQueue> commandQueue(CommandQueue::create(context.get(), device.get(), nullptr, false, retVal));
     commandQueue->enqueueMapImage(image.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
     EXPECT_NE(nullptr, image->getAllocatedMapPtr());

@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -91,12 +92,18 @@ void RootDeviceEnvironment::initGmm() {
     }
 }
 
+void RootDeviceEnvironment::initOsTime() {
+    if (!osTime) {
+        osTime = OSTime::create(osInterface.get());
+    }
+}
+
 BindlessHeapsHelper *RootDeviceEnvironment::getBindlessHeapsHelper() const {
     return bindlessHeapsHelper.get();
 }
 
-void RootDeviceEnvironment::createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex) {
-    bindlessHeapsHelper = std::make_unique<BindlessHeapsHelper>(memoryManager, availableDevices, rootDeviceIndex);
+void RootDeviceEnvironment::createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+    bindlessHeapsHelper = std::make_unique<BindlessHeapsHelper>(memoryManager, availableDevices, rootDeviceIndex, deviceBitfield);
 }
 
 CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {

@@ -144,7 +144,7 @@ void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
+void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, [[maybe_unused]] uint64_t postSyncAddress) {
     // 1. make sure previous kernel finished
     PipeControlArgs args;
     auto &hardwareInfo = commandQueue.getDevice().getHardwareInfo();
@@ -170,8 +170,6 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
 
             flushGpuCache<GfxFamily>(commandStream, range, postSyncAddressToFlush, hardwareInfo);
         }
-    } else {
-        UNUSED_VARIABLE(postSyncAddress);
     }
 }
 

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 

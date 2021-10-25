@@ -14,11 +14,9 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
-#include "shared/source/utilities/compiler_support.h"
 #include "shared/source/utilities/stackvec.h"
-
-#include "opencl/source/program/kernel_info.h"
 
 #include <tuple>
 
@@ -638,10 +636,10 @@ bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[Len], size_t vecSi
         return false;
     case sizeof(ElSize) * 3:
         vec[2] = static_cast<CrossThreadDataOffset>(baseOffset + 2 * sizeof(ElSize));
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case sizeof(ElSize) * 2:
         vec[1] = static_cast<CrossThreadDataOffset>(baseOffset + 1 * sizeof(ElSize));
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case sizeof(ElSize) * 1:
         vec[0] = static_cast<CrossThreadDataOffset>(baseOffset + 0 * sizeof(ElSize));
         break;
@@ -672,9 +670,9 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadPayloadArgument::ArgType::localId.str() + " in context of : " + dst.kernelMetadata.kernelName + ". For simd=" + std::to_string(dst.kernelAttributes.simdSize) + " expected : " + std::to_string(singleChannelBytes) + " or " + std::to_string(singleChannelBytes * 2) + " or " + std::to_string(singleChannelBytes * 3) + ". Got : " + std::to_string(src.size) + " \n");
             return DecodeError::InvalidBinary;
         case 1:
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         case 2:
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         case 3:
             dst.kernelAttributes.numLocalIdChannels = static_cast<uint8_t>(tupleSize);
             break;
@@ -698,9 +696,9 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             return DecodeError::InvalidBinary;
 
         case 1:
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         case 2:
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         case 3:
             dst.kernelAttributes.numLocalIdChannels = static_cast<uint8_t>(tupleSize);
             break;

@@ -6,8 +6,8 @@
  */
 
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 namespace NEO {

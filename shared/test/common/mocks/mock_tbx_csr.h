@@ -27,7 +27,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     MockTbxCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, 0, deviceBitfield) {}
 
-    void initializeEngine() {
+    void initializeEngine() override {
         TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();
         initializeEngineCalled = true;
     }

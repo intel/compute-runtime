@@ -16,11 +16,14 @@ list(APPEND BIND_MODES
 )
 
 set(GENERATED_BUILTINS
-    "aux_translation"
     "copy_buffer_rect"
     "copy_buffer_to_buffer"
     "copy_kernel_timestamps"
     "fill_buffer"
+)
+
+set(GENERATED_BUILTINS_AUX_TRANSLATION
+    "aux_translation"
 )
 
 set(GENERATED_BUILTINS_IMAGES

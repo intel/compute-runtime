@@ -12,14 +12,14 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 using namespace NEO;
@@ -189,10 +189,10 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
 
-    auto mocsIndex = clDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocs = clDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
 
-    EXPECT_EQ(mocsIndex, bltCmd->getDestinationMOCSvalue());
-    EXPECT_EQ(mocsIndex, bltCmd->getSourceMOCS());
+    EXPECT_EQ(mocs, bltCmd->getDestinationMOCS());
+    EXPECT_EQ(mocs, bltCmd->getSourceMOCS());
 }
 
 XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenSetMocsToValueOfDebugKey) {
@@ -218,7 +218,7 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandThenS
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
 
-    EXPECT_EQ(0u, bltCmd->getDestinationMOCSvalue());
+    EXPECT_EQ(0u, bltCmd->getDestinationMOCS());
     EXPECT_EQ(0u, bltCmd->getSourceMOCS());
 }
 
@@ -562,10 +562,10 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagSetWhenCompressionIsUsedThe
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto blitCmd = FamilyType::cmdInitXyCopyBlt;
 
-    auto gmm = std::make_unique<MockGmm>();
+    auto gmm = std::make_unique<MockGmm>(clDevice->getGmmClientContext());
     gmm->isCompressionEnabled = true;
     MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, reinterpret_cast<void *>(0x1234),
-                                          0x1000, 0, sizeof(uint32_t), MemoryPool::System4KBPages, mockMaxOsContextCount);
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
 
     BlitProperties properties = {};

@@ -70,12 +70,13 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo);
+    size_t getCmdSizeForActivePartitionConfig() const;
 
     bool isComputeModeNeeded() const;
     bool isPipelineSelectAlreadyProgrammed() const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo);
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) override;
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
     const HardwareInfo &peekHwInfo() const;
 
     void collectStateBaseAddresPatchInfo(
@@ -85,6 +86,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         const LinearStream &ioh,
         const LinearStream &ssh,
         uint64_t generalStateBase);
+
+    void collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh);
 
     void resetKmdNotifyHelper(KmdNotifyHelper *newHelper);
 
@@ -147,13 +150,19 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programStallingPipeControlForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags);
     void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
+    void programActivePartitionConfig();
 
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;
 
+    void setPipeControlPriorToNonPipelinedStateCommandExtraProperties(PipeControlArgs &args);
+
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     void addPipeControlCmd(LinearStream &commandStream, PipeControlArgs &args);
     void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);
+    void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
+    void addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags);
+    void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args);
     size_t getSshHeapSize();
     bool are4GbHeapsAvailable() const;
 

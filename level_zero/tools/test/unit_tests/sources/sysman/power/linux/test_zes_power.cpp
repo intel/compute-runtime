@@ -6,94 +6,13 @@
  */
 
 #include "level_zero/tools/source/sysman/power/linux/os_power_imp.h"
-#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include "mock_sysfs_power.h"
-#include "sysman/power/power_imp.h"
-
-using ::testing::DoDefault;
-using ::testing::Matcher;
-using ::testing::Return;
+#include "level_zero/tools/test/unit_tests/sources/sysman/power/linux/mock_sysfs_power.h"
 
 namespace L0 {
 namespace ult {
 
 constexpr uint64_t convertJouleToMicroJoule = 1000000u;
 constexpr uint32_t powerHandleComponentCount = 1u;
-const std::map<std::string, uint64_t> deviceKeyOffsetMapPower = {
-    {"PACKAGE_ENERGY", 0x400},
-    {"COMPUTE_TEMPERATURES", 0x68},
-    {"SOC_TEMPERATURES", 0x60},
-    {"CORE_TEMPERATURES", 0x6c}};
-
-class SysmanDevicePowerFixture : public SysmanDeviceFixture {
-  protected:
-    std::unique_ptr<PublicLinuxPowerImp> pPublicLinuxPowerImp;
-    std::unique_ptr<Mock<PowerPmt>> pPmt;
-    std::unique_ptr<Mock<PowerFsAccess>> pFsAccess;
-    std::unique_ptr<Mock<PowerSysfsAccess>> pSysfsAccess;
-    SysfsAccess *pSysfsAccessOld = nullptr;
-    FsAccess *pFsAccessOriginal = nullptr;
-    OsPower *pOsPowerOriginal = nullptr;
-    std::vector<ze_device_handle_t> deviceHandles;
-    void SetUp() override {
-        SysmanDeviceFixture::SetUp();
-        pFsAccess = std::make_unique<NiceMock<Mock<PowerFsAccess>>>();
-        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-        pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<NiceMock<Mock<PowerSysfsAccess>>>();
-        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
-        ON_CALL(*pFsAccess.get(), listDirectory(_, _))
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PowerFsAccess>::listDirectorySuccess));
-        ON_CALL(*pFsAccess.get(), getRealPath(_, _))
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PowerFsAccess>::getRealPathSuccess));
-        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValString));
-        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValUnsignedLong));
-        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValUnsignedInt));
-        ON_CALL(*pSysfsAccess.get(), write(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::setVal));
-        ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntries));
-
-        uint32_t subDeviceCount = 0;
-        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
-        if (subDeviceCount == 0) {
-            deviceHandles.resize(1, device->toHandle());
-        } else {
-            deviceHandles.resize(subDeviceCount, nullptr);
-            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
-        }
-
-        for (auto &deviceHandle : deviceHandles) {
-            ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-            Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-            auto pPmt = new NiceMock<Mock<PowerPmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                                     deviceProperties.subdeviceId);
-            pPmt->mockedInit(pFsAccess.get());
-            pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
-            pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
-        }
-
-        pSysmanDeviceImp->pPowerHandleContext->init();
-    }
-    void TearDown() override {
-        SysmanDeviceFixture::TearDown();
-        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
-        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
-    }
-
-    std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {
-        std::vector<zes_pwr_handle_t> handles(count, nullptr);
-        EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-        return handles;
-    }
-};
 
 TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainsWhenhwmonInterfaceExistsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
@@ -147,7 +66,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_properties_t properties;
@@ -171,7 +90,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_properties_t properties;
@@ -194,7 +113,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_properties_t properties;
@@ -207,21 +126,11 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenHwmonInterfaceExistThenValidPowerReadingsRetrieved) {
-    auto handles = getPowerHandles(powerHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_power_energy_counter_t energyCounter = {};
-        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
-    }
-}
-
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterFailedWhenHwmonInterfaceExistThenValidErrorCodeReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
 
-    ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValUnsignedLongReturnErrorForEnergyCounter));
+    EXPECT_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS));
     for (auto handle : handles) {
         zes_power_energy_counter_t energyCounter = {};
         uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
@@ -235,6 +144,7 @@ TEST_F(SysmanDevicePowerFixture, GivenSetPowerLimitsWhenGettingPowerLimitsWhenHw
     for (auto handle : handles) {
         zes_power_sustained_limit_t sustainedSet = {};
         zes_power_sustained_limit_t sustainedGet = {};
+        sustainedSet.enabled = 1;
         sustainedSet.interval = 10;
         sustainedSet.power = 300000;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handle, &sustainedSet, nullptr, nullptr));
@@ -285,8 +195,8 @@ TEST_F(SysmanDevicePowerFixture, GivenGetPowerLimitsReturnErrorWhenGettingPowerL
 TEST_F(SysmanDevicePowerFixture, GivenGetPowerLimitsReturnErrorWhenGettingPowerLimitsWhenHwmonInterfaceExistForBurstPowerLimitThenProperErrorCodesIsReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
 
-    ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getValUnsignedLongReturnErrorUnknown));
+    EXPECT_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_UNKNOWN));
 
     for (auto handle : handles) {
         zes_power_burst_limit_t burstSet = {};
@@ -374,6 +284,7 @@ TEST_F(SysmanDevicePowerFixture, GivenwritingSustainedPowerNodeReturnErrorWhenSe
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::setValReturnErrorForSustainedPower));
 
     zes_power_sustained_limit_t sustainedSet = {};
+    sustainedSet.enabled = 1;
     sustainedSet.interval = 10;
     sustainedSet.power = 300000;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
@@ -386,9 +297,37 @@ TEST_F(SysmanDevicePowerFixture, GivenwritingSustainedPowerIntervalNodeReturnErr
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::setValReturnErrorForSustainedPowerInterval));
 
     zes_power_sustained_limit_t sustainedSet = {};
+    sustainedSet.enabled = 1;
     sustainedSet.interval = 10;
     sustainedSet.power = 300000;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenWritingToSustainedPowerEnableNodeWithoutPermissionsThenValidErrorIsReturned) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    ON_CALL(*pSysfsAccess.get(), write(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::setValUnsignedLongReturnInsufficientForSustainedPowerLimitEnabled));
+
+    zes_power_sustained_limit_t sustainedSet = {};
+    sustainedSet.enabled = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleAndPermissionsThenFirstDisableSustainedPowerLimitAndThenEnableItAndCheckSuccesIsReturned) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    zes_power_sustained_limit_t sustainedSet = {};
+    zes_power_sustained_limit_t sustainedGet = {};
+    sustainedSet.enabled = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
+    sustainedSet.enabled = 1;
+    sustainedSet.interval = 10;
+    sustainedSet.power = 300000;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handles[0], &sustainedGet, nullptr, nullptr));
+    EXPECT_EQ(sustainedGet.enabled, sustainedSet.enabled);
+    EXPECT_EQ(sustainedGet.power, sustainedSet.power);
+    EXPECT_EQ(sustainedGet.interval, sustainedSet.interval);
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenGetPowerLimitsWhenPowerLimitsAreDisabledWhenHwmonInterfaceExistThenAllPowerValuesAreIgnored) {
@@ -413,35 +352,37 @@ TEST_F(SysmanDevicePowerFixture, GivenGetPowerLimitsWhenPowerLimitsAreDisabledWh
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenScanDiectoriesFailAndPmtIsNotNullPointerThenPowerModuleIsSupported) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
-    pSysmanDeviceImp->pPowerHandleContext->init();
-    PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman);
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    Device::fromHandle(device)->getProperties(&deviceProperties);
+    PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
     EXPECT_TRUE(pPowerImp->isPowerModuleSupported());
     delete pPowerImp;
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, powerHandleComponentCount);
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenInvalidComponentCountWhenEnumeratingPowerDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, powerHandleComponentCount);
@@ -452,13 +393,13 @@ TEST_F(SysmanDevicePowerFixture, GivenInvalidComponentCountWhenEnumeratingPowerD
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainsThenValidPowerHandlesIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, powerHandleComponentCount);
@@ -471,13 +412,13 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesThenCallSucceeds) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -489,13 +430,13 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrieved) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -506,14 +447,39 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     }
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenEnergyHwmonFileReturnsErrorAndPmtFailsThenFailureIsReturned) {
+    EXPECT_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    for (auto &subDeviceIdToPmtEntry : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
+        delete subDeviceIdToPmtEntry.second;
+    }
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, nullptr);
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        zes_power_energy_counter_t energyCounter = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetEnergyCounter(handle, &energyCounter));
+    }
+}
+
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyThresholdThenUnsupportedFeatureErrorIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     zes_energy_threshold_t threshold;
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
@@ -522,13 +488,13 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyThre
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerEnergyThresholdThenUnsupportedFeatureErrorIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     double threshold = 0;
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
@@ -537,13 +503,13 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerEnergyThre
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerLimitsThenUnsupportedFeatureErrorIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_sustained_limit_t sustained;
@@ -554,19 +520,37 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerLimitsThen
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsThenUnsupportedFeatureErrorIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PowerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_sustained_limit_t sustained;
         zes_power_burst_limit_t burst;
         zes_power_peak_limit_t peak;
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handle, &sustained, &burst, &peak));
+    }
+}
+
+TEST_F(SysmanDevicePowerMultiDeviceFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenEnergyHwmonFailsThenValidPowerReadingsRetrievedFromPmt) {
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        zes_power_energy_counter_t energyCounter;
+        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
     }
 }
 

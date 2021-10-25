@@ -15,18 +15,18 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
@@ -330,6 +330,12 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
     if (device->getNumGenericSubDevices() > 1) {
         numEnginesForDevice *= device->getNumGenericSubDevices();
         numEnginesForDevice += device->engines.size();
+
+        if (device->getSubDevice(0)->getNumSubDevices() > 0) {
+            numEnginesForDevice += device->getNumSubDevices();
+        }
+    } else if (device->getNumSubDevices() > 0) {
+        numEnginesForDevice += device->getNumSubDevices();
     }
     EXPECT_EQ(numEnginesForDevice, memoryManager->getRegisteredEnginesCount());
 }
@@ -341,27 +347,58 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     for (auto i = 0u; i < numDevices; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
     }
-    auto hwInfo = *defaultHwInfo;
-    const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size());
 
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
+    MockDevice *devices[] = {device1.get(), device2.get()};
+
     auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines();
-    EXPECT_EQ(numGpgpuEngines * numDevices, registeredEngines.size());
 
-    for (uint32_t i = 0; i < numGpgpuEngines; i++) {
-        EXPECT_EQ(i, device1->engines[i].osContext->getContextId());
-        EXPECT_EQ(1u, device1->engines[i].osContext->getDeviceBitfield().to_ulong());
-        EXPECT_EQ(i + numGpgpuEngines, device2->engines[i].osContext->getContextId());
-        EXPECT_EQ(1u, device2->engines[i].osContext->getDeviceBitfield().to_ulong());
+    auto &hwInfo = device1->getHardwareInfo();
+    const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size());
 
-        EXPECT_EQ(registeredEngines[i].commandStreamReceiver,
-                  device1->engines[i].commandStreamReceiver);
-        EXPECT_EQ(registeredEngines[i + numGpgpuEngines].commandStreamReceiver,
-                  device2->engines[i].commandStreamReceiver);
+    size_t numExpectedGenericEnginesPerDevice = numGpgpuEngines;
+    size_t numExpectedEngineInstancedEnginesPerDevice = 0;
+    if (device1->getNumSubDevices() > 0) {
+        numExpectedEngineInstancedEnginesPerDevice = device1->getNumSubDevices();
     }
-    EXPECT_EQ(numGpgpuEngines * numDevices, executionEnvironment->memoryManager->getRegisteredEnginesCount());
+
+    auto expectedTotalRegisteredEngines = (numExpectedGenericEnginesPerDevice + numExpectedEngineInstancedEnginesPerDevice) * numDevices;
+
+    EXPECT_EQ(expectedTotalRegisteredEngines, registeredEngines.size());
+
+    uint32_t contextId = 0;
+
+    for (uint32_t i = 0; i < numDevices; i++) {
+        auto device = devices[i];
+
+        for (uint32_t j = 0; j < numExpectedEngineInstancedEnginesPerDevice; j++) {
+            auto subDevice = device->getSubDevice(j);
+            auto &engine = subDevice->getEngine(0);
+            EXPECT_EQ(contextId, engine.osContext->getContextId());
+            EXPECT_EQ(1u, engine.osContext->getDeviceBitfield().to_ulong());
+
+            EXPECT_EQ(registeredEngines[contextId].commandStreamReceiver,
+                      engine.commandStreamReceiver);
+
+            contextId++;
+        }
+
+        for (uint32_t j = 0; j < numExpectedGenericEnginesPerDevice; j++) {
+            auto &engine = device->getEngine(j);
+
+            EXPECT_EQ(contextId, engine.osContext->getContextId());
+            EXPECT_EQ(1u, engine.osContext->getDeviceBitfield().to_ulong());
+
+            EXPECT_EQ(registeredEngines[contextId].commandStreamReceiver,
+                      engine.commandStreamReceiver);
+
+            contextId++;
+        }
+    }
+
+    EXPECT_EQ(expectedTotalRegisteredEngines, executionEnvironment->memoryManager->getRegisteredEnginesCount());
 }
 
 TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
@@ -514,7 +551,6 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(&localHwInfo);
     }
     executionEnvironment.initializeMemoryManager();
-    auto defaultEngineType = getChosenEngineType(localHwInfo);
     std::unique_ptr<MockDevice> device;
     device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 0));
     auto &csr0 = device->getUltCommandStreamReceiver<FamilyType>();
@@ -525,14 +561,14 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
     hwInfo->capabilityTable.ftrRenderCompressedImages = false;
     device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 1));
     auto &csr1 = device->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(csr1.needsPageTableManager(defaultEngineType), csr1.createPageTableManagerCalled);
+    EXPECT_EQ(csr1.needsPageTableManager(), csr1.createPageTableManagerCalled);
 
     hwInfo = executionEnvironment.rootDeviceEnvironments[2]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
     hwInfo->capabilityTable.ftrRenderCompressedImages = true;
     device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 2));
     auto &csr2 = device->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(csr2.needsPageTableManager(defaultEngineType), csr2.createPageTableManagerCalled);
+    EXPECT_EQ(csr2.needsPageTableManager(), csr2.createPageTableManagerCalled);
 }
 
 HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocationThenReturnNull) {

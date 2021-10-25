@@ -31,4 +31,15 @@ bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
     return setCacheAdvice(drm, 0, regionIndex);
 }
 
+bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
+    if (flags.cached_memory != enabledMemAdviseFlags.cached_memory) {
+        CachePolicy memType = flags.cached_memory ? CachePolicy::WriteBack : CachePolicy::Uncached;
+        setCachePolicy(memType);
+    }
+
+    enabledMemAdviseFlags = flags;
+
+    return true;
+}
+
 } // namespace NEO

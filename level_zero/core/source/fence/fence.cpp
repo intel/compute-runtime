@@ -42,26 +42,28 @@ ze_result_t FenceImp::queryStatus() {
         if (queryVal == Fence::STATE_CLEARED) {
             break;
         }
-        hostAddr = ptrOffset(hostAddr, CommandQueueImp::addressOffset);
+        hostAddr = ptrOffset(hostAddr, CommonConstants::partitionAddressOffset);
     }
     return queryVal == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
 }
 
 void FenceImp::initialize() {
     NEO::AllocationProperties properties(
-        cmdQueue->getDevice()->getRootDeviceIndex(), MemoryConstants::cacheLineSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, cmdQueue->getDevice()->getNEODevice()->getDeviceBitfield());
-    properties.alignment = MemoryConstants::cacheLineSize;
+        cmdQueue->getDevice()->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, cmdQueue->getDevice()->getNEODevice()->getDeviceBitfield());
+    properties.alignment = MemoryConstants::pageSize;
     allocation = cmdQueue->getDevice()->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     UNRECOVERABLE_IF(allocation == nullptr);
+
     reset();
 }
 
 ze_result_t FenceImp::reset() {
+    constexpr uint32_t maxPartitionCount = 16;
     volatile uint32_t *hostAddress = static_cast<uint32_t *>(allocation->getUnderlyingBuffer());
-    for (uint32_t i = 0; i < partitionCount; i++) {
+    for (uint32_t i = 0; i < maxPartitionCount; i++) {
         *hostAddress = Fence::STATE_CLEARED;
         NEO::CpuIntrinsics::clFlush(const_cast<uint32_t *>(hostAddress));
-        hostAddress = ptrOffset(hostAddress, CommandQueueImp::addressOffset);
+        hostAddress = ptrOffset(hostAddress, CommonConstants::partitionAddressOffset);
     }
     partitionCount = 1;
     return ZE_RESULT_SUCCESS;

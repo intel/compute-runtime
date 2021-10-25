@@ -7,11 +7,11 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
 using namespace NEO;
@@ -25,7 +25,7 @@ struct XeHPSlm : HardwareParse, ::testing::Test {
         HardwareParse::TearDown();
     }
 
-    uint32_t cmdBuffer[1024];
+    uint32_t cmdBuffer[1024]{};
     MockGraphicsAllocation gfxAllocation{cmdBuffer, sizeof(cmdBuffer)};
     LinearStream linearStream{&gfxAllocation};
 };
@@ -113,4 +113,16 @@ XEHPTEST_F(XeHPPreambleVfeState, WhenProgramVFEStateIsCalledThenCorrectCfeStateA
     EXPECT_EQ(10u, cfeCmd.getMaximumNumberOfThreads());
     EXPECT_EQ(1u, cfeCmd.getNumberOfWalkers());
     EXPECT_EQ(expectedAddress, cfeCmd.getScratchSpaceBuffer());
+}
+
+using XeHPPipelineSelect = ::testing::Test;
+
+XEHPTEST_F(XeHPPipelineSelect, WhenAppendProgramPipelineSelectThenCorrectValuesSet) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
+    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, true, *defaultHwInfo);
+    EXPECT_TRUE(cmd.getSystolicModeEnable());
+    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, false, *defaultHwInfo);
+    EXPECT_FALSE(cmd.getSystolicModeEnable());
+    EXPECT_EQ(pipelineSelectSystolicModeEnableMaskBits, cmd.getMaskBits());
 }

@@ -77,7 +77,7 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         kernelDesc.pKernelName = builtInName;
         res = module->createKernel(&kernelDesc, &kernelHandle);
         DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);
-        UNUSED_VARIABLE(res);
+
         kernel.reset(Kernel::fromHandle(kernelHandle));
         return std::unique_ptr<BuiltinData>(new MockBuiltinDataTimestamp{std::move(module), std::move(kernel)});
     }

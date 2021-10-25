@@ -49,7 +49,7 @@ struct BuiltinFunctionsLibImpl::BuiltinData {
         module.reset();
     }
     BuiltinData() = default;
-    BuiltinData(std::unique_ptr<L0::Module> mod, std::unique_ptr<L0::Kernel> ker) {
+    BuiltinData(std::unique_ptr<L0::Module> &&mod, std::unique_ptr<L0::Kernel> &&ker) {
         module = std::move(mod);
         func = std::move(ker);
     }

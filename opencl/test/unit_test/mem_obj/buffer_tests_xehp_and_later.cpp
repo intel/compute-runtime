@@ -15,13 +15,13 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
@@ -390,8 +390,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDev
             retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto allocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    auto gmm = new MockGmm();
+    auto &device = context.getDevice(0)->getDevice();
+    auto allocation = buffer->getGraphicsAllocation(device.getRootDeviceIndex());
+    auto gmm = new MockGmm(device.getGmmClientContext());
     gmm->isCompressionEnabled = true;
     allocation->setDefaultGmm(gmm);
 
@@ -399,7 +400,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDev
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
-    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, device, false, false);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, allocation->getDefaultGmm()));
@@ -447,7 +448,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationWitho
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     std::unique_ptr<Buffer> buffer(Buffer::createBufferHw(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice()),
         0,
         0,
         sizeof(srcMemory),

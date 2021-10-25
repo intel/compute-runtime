@@ -23,6 +23,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
@@ -132,7 +133,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     commandContainer.setReservedSshSize(getReserveSshSize());
-    auto returnValue = commandContainer.initialize(static_cast<DeviceImp *>(device)->neoDevice);
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice());
     ze_result_t returnType = parseErrorCode(returnValue);
     if (returnType == ZE_RESULT_SUCCESS) {
         if (!isCopyOnly()) {
@@ -735,7 +737,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_handle_t hDevice,
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
-    MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     flags.memadvise_flags = 0;
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
@@ -775,8 +777,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
             break;
         }
 
-        NEO::PageFaultManager *pageFaultManager = nullptr;
-        pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        auto memoryManager = device->getDriverHandle()->getMemoryManager();
+        auto pageFaultManager = memoryManager->getPageFaultManager();
         if (pageFaultManager) {
             /* If Read Only and Device Preferred Hints have been cleared, then cpu_migration of Shared memory can be re-enabled*/
             if (flags.cpu_migration_blocked) {
@@ -788,10 +790,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
             /* Given MemAdvise hints, use different gpu Domain Handler for the Page Fault Handling */
             pageFaultManager->setGpuDomainHandler(L0::handleGpuDomainTransferForHwWithHints);
         }
+
+        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
+        if (!memoryManager->setMemAdvise(alloc, flags, deviceImp->getRootDeviceIndex())) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+
         deviceImp->memAdviseSharedAllocations[allocData] = flags;
         return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_ERROR_UNKNOWN;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -876,6 +884,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     commandContainer.addToResidencyContainer(srcPtrAlloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
+    NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
+    bool blitterDirectSubmission = true; // assume direct submission enabled, since usually MI_BATCH_BUFFER_START is bigger than MI_BATCH_BUFFER_END
+    size_t estimatedSize = NEO::BlitCommandsHelper<GfxFamily>::template BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer,
+                                                                                                                                false,
+                                                                                                                                false,
+                                                                                                                                blitterDirectSubmission,
+                                                                                                                                *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    increaseCommandStreamSpace(estimatedSize);
+
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
     return ZE_RESULT_SUCCESS;
@@ -920,6 +937,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
         return ret;
     }
 
+    NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
+    bool blitterDirectSubmission = true; // assume direct submission enabled, since usually MI_BATCH_BUFFER_START is bigger than MI_BATCH_BUFFER_END
+    size_t estimatedSize = NEO::BlitCommandsHelper<GfxFamily>::template BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer,
+                                                                                                                                false,
+                                                                                                                                false,
+                                                                                                                                blitterDirectSubmission,
+                                                                                                                                *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    increaseCommandStreamSpace(estimatedSize);
+
     appendEventForProfiling(hSignalEvent, true);
     if (copyOneCommand) {
         NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsRegion(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
@@ -958,8 +984,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstptr,
-                                                                      NEO::GraphicsAllocation *srcptr,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
+                                                                      NEO::GraphicsAllocation *srcAllocation,
                                                                       size_t size, bool flushHost) {
 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -972,32 +998,45 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
         isStateless = true;
     }
 
-    uint64_t dstAddress = dstptr->getGpuAddress();
-    uint64_t srcAddress = srcptr->getGpuAddress();
-    ze_result_t ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
-                                                   dstptr, 0,
-                                                   reinterpret_cast<void *>(&srcAddress),
-                                                   srcptr, 0,
-                                                   size - rightSize,
-                                                   middleElSize,
-                                                   Builtin::CopyBufferToBufferMiddle,
-                                                   nullptr,
-                                                   isStateless);
-    if (ret == ZE_RESULT_SUCCESS && rightSize) {
-        appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
-                                     dstptr, size - rightSize,
-                                     reinterpret_cast<void *>(&srcAddress),
-                                     srcptr, size - rightSize,
-                                     rightSize, 1UL,
-                                     Builtin::CopyBufferToBufferSide,
-                                     nullptr,
-                                     isStateless);
-    }
+    uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
+    uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
+    ze_result_t ret = ZE_RESULT_ERROR_UNKNOWN;
+    if (isCopyOnly()) {
+        ret = appendMemoryCopyBlit(dstAddress, dstAllocation, 0u,
+                                   srcAddress, srcAllocation, 0u,
+                                   size - rightSize);
 
-    if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
-        if (flushHost) {
-            NEO::PipeControlArgs args(true);
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        if (ret == ZE_RESULT_SUCCESS && rightSize) {
+            ret = appendMemoryCopyBlit(dstAddress, dstAllocation, size - rightSize,
+                                       srcAddress, srcAllocation, size - rightSize,
+                                       rightSize);
+        }
+    } else {
+        ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
+                                           dstAllocation, 0,
+                                           reinterpret_cast<void *>(&srcAddress),
+                                           srcAllocation, 0,
+                                           size - rightSize,
+                                           middleElSize,
+                                           Builtin::CopyBufferToBufferMiddle,
+                                           nullptr,
+                                           isStateless);
+        if (ret == ZE_RESULT_SUCCESS && rightSize) {
+            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
+                                               dstAllocation, size - rightSize,
+                                               reinterpret_cast<void *>(&srcAddress),
+                                               srcAllocation, size - rightSize,
+                                               rightSize, 1UL,
+                                               Builtin::CopyBufferToBufferSide,
+                                               nullptr,
+                                               isStateless);
+        }
+
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+            if (flushHost) {
+                NEO::PipeControlArgs args(true);
+                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+            }
         }
     }
 
@@ -1713,8 +1752,12 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
         DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
         if (driverHandle->isRemoteResourceNeeded(const_cast<void *>(buffer), alloc, allocData, device)) {
+            uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+            uint64_t offset = sourcePtr - pbase;
+
             alloc = driverHandle->getPeerAllocation(device, allocData, const_cast<void *>(buffer), &alignedPtr);
             UNRECOVERABLE_IF(alloc == nullptr);
+            alignedPtr += offset;
         } else {
             alignedPtr = sourcePtr;
         }
@@ -2214,7 +2257,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, uint32_t lws[3]) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     NEO::EncodeIndirectParams<GfxFamily>::setGlobalWorkSizeIndirect(commandContainer, offsets, crossThreadAddress, lws);
@@ -2236,7 +2279,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         sbaAddresses.BindlessSurfaceStateBaseAddress = sba.getBindlessSurfaceStateBaseAddress();
         sbaAddresses.DynamicStateBaseAddress = sba.getDynamicStateBaseAddress();
         sbaAddresses.GeneralStateBaseAddress = sba.getGeneralStateBaseAddress();
-        sbaAddresses.IndirectObjectBaseAddress = sba.getIndirectObjectBaseAddress();
+        NEO::EncodeStateBaseAddress<GfxFamily>::setIohAddressForDebugger(sbaAddresses, sba);
         sbaAddresses.InstructionBaseAddress = sba.getInstructionBaseAddress();
         sbaAddresses.SurfaceStateBaseAddress = sba.getSurfaceStateBaseAddress();
 

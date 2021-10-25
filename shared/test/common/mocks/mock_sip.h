@@ -18,6 +18,7 @@ class MemoryAllocation;
 
 class MockSipKernel : public SipKernel {
   public:
+    using SipKernel::createHeaderFilename;
     using SipKernel::type;
 
     MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc);
@@ -45,5 +46,6 @@ extern bool returned;
 extern bool useMockSip;
 
 void clearUseFlags();
+std::vector<char> createStateSaveAreaHeader();
 } // namespace MockSipData
 } // namespace NEO

@@ -97,6 +97,12 @@ using CommandList = WhiteBox<::L0::CommandList>;
         return funcName##Result;                                       \
     }
 
+#define ADDMETHOD_NOBASE_VOIDRETURN(funcName, funcParams) \
+    uint32_t funcName##Called = 0u;                       \
+    void funcName funcParams override {                   \
+        funcName##Called++;                               \
+    }
+
 #define ADDMETHOD(funcName, retType, callBase, defaultReturn, funcParams, invokeParams) \
     retType funcName##Result = defaultReturn;                                           \
     bool funcName##CallBase = callBase;                                                 \
@@ -340,6 +346,8 @@ struct MockCommandList : public CommandList {
                      (L0::Device * device,
                       NEO::EngineGroupType engineGroupType,
                       ze_command_list_flags_t flags));
+
+    ADDMETHOD_NOBASE_VOIDRETURN(appendMultiPartitionPrologue, (uint32_t partitionDataSize));
 
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;

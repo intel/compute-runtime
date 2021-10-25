@@ -26,16 +26,17 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
+#include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
-#include "opencl/test/unit_test/os_interface/windows/ult_dxcore_factory.h"
 
 #include "gtest/gtest.h"
+#include "mock_gmm_memory.h"
 
 #include <functional>
 #include <memory>
@@ -100,7 +101,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
 
 TEST(WddmDiscoverDevices, WhenNoHwDeviceIdIsProvidedToWddmThenWddmIsNotCreated) {
     struct MockWddm : public Wddm {
-        MockWddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceIdIn), rootDeviceEnvironment) {}
+        MockWddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceIdIn), rootDeviceEnvironment) {}
     };
 
     MockExecutionEnvironment executionEnvironment;
@@ -426,8 +427,7 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     allocation.setDefaultGmm(gmm.get());
     auto status = memoryManager.createGpuAllocationsWithRetry(&allocation);
     EXPECT_TRUE(status);
-    EXPECT_NE(0u, allocation.resourceHandle);
-    EXPECT_NE(0u, allocation.peekSharedHandle());
+    EXPECT_NE(0u, allocation.peekInternalHandle(&memoryManager));
 }
 
 TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
@@ -435,7 +435,7 @@ TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsShar
     auto sharedHandleToModify = allocation.getSharedHandleToModify();
     EXPECT_NE(nullptr, sharedHandleToModify);
     *sharedHandleToModify = 1234u;
-    EXPECT_EQ(*sharedHandleToModify, allocation.peekSharedHandle());
+    EXPECT_EQ(*sharedHandleToModify, allocation.peekInternalHandle(nullptr));
 }
 
 TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHandleToModify) {
@@ -707,7 +707,7 @@ TEST_F(Wddm20Tests, WhenMakingNonResidentThenEvictIsCalled) {
 }
 
 TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedToDestroyAllocation) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -733,7 +733,7 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
 }
 
 TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -756,7 +756,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
 }
 
 TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -926,7 +926,7 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeReside
 }
 
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentAndMakeResidentCallFailsThenEvictTemporaryResourcesAndRetry) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.handle = 0x3;
     GmockWddm gmockWddm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
@@ -936,7 +936,7 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeReside
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndTemporaryResourcesAreEvictedSuccessfullyThenCallMakeResidentOneMoreTime) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.handle = 0x3;
     GmockWddm gmockWddm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
@@ -948,7 +948,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndTemporaryR
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeResidentStillFailsThenDontStoreTemporaryResource) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.handle = 0x2;
     GmockWddm gmockWddm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
@@ -961,7 +961,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeReside
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeResidentPassesAfterEvictThenStoreTemporaryResource) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.handle = 0x2;
     GmockWddm gmockWddm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
@@ -975,7 +975,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeReside
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeResidentPassesThenStoreTemporaryResource) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.handle = 0x2;
     GmockWddm gmockWddm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
@@ -998,7 +998,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenEvictingAllTemporaryResourcesThenAcqui
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenEvictingAllTemporaryResourcesAndAllEvictionsSucceedThenReturnSuccess) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     GmockWddm gmockWddm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
     mockTemporaryResources->resourceHandles.push_back(allocation.handle);
@@ -1085,7 +1085,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenEvictingTemporaryResourceThenOtherReso
 
 TEST_F(WddmLockWithMakeResidentTests, whenAlllocationNeedsBlockingMakeResidentBeforeLockThenLockWithBlockingMakeResident) {
     WddmMemoryManager memoryManager(*executionEnvironment);
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     allocation.needsMakeResidentBeforeLock = false;
     memoryManager.lockResource(&allocation);
     EXPECT_EQ(1u, wddm->lockResult.called);

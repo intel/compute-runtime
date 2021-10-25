@@ -37,7 +37,12 @@ export NEO_OCL_VERSION_MAJOR
 export NEO_OCL_VERSION_MINOR
 export NEO_OCL_VERSION_BUILD
 
-VERSION="${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}.${API_VERSION}-${API_VERSION_SRC}${API_DEB_MODEL_LINK}"
+if [ -z "${BRANCH_SUFFIX}" ]; then
+    VERSION="${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}${API_DEB_MODEL_LINK}"
+else
+    VERSION="${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}.${API_VERSION}-${API_VERSION_SRC}${API_DEB_MODEL_LINK}"
+fi
+
 PKG_VERSION=${VERSION}
 
 if [ "${CMAKE_BUILD_TYPE}" != "Release" ]; then
@@ -48,9 +53,35 @@ rm -rf $BUILD_DIR
 mkdir -p $BUILD_DIR/debian
 
 COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/copyright"
+CONTROL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/control"
+SHLIBS="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/shlibs.local"
 
 cp -pR ${REPO_DIR}/scripts/packaging/opencl/${OS_TYPE}/debian/* $BUILD_DIR/debian/
 cp $COPYRIGHT $BUILD_DIR/debian/
+cp $CONTROL $BUILD_DIR/debian/
+if [ -f "${SHLIBS}" ]; then
+    cp $SHLIBS $BUILD_DIR/debian/
+fi
+
+if [ -z "${BRANCH_SUFFIX}" ]; then
+    GMM_VERSION=$(apt-cache policy intel-gmmlib | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${GMM_VERSION}" ]; then
+        perl -pi -e "s/^ intel-gmmlib(?=,|$)/ intel-gmmlib (=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+    GMM_DEVEL_VERSION=$(apt-cache policy intel-gmmlib-devel | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
+        perl -pi -e "s/^ intel-gmmlib-devel(?=,|$)/ intel-gmmlib-devel (=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+
+    IGC_VERSION=$(apt-cache policy intel-igc-opencl | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${IGC_VERSION}" ]; then
+        perl -pi -e "s/^ intel-igc-opencl(?=,|$)/ intel-igc-opencl (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+    IGC_DEVEL_VERSION=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
+        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    fi
+fi
 
 #needs a top level CMAKE file
 cat << EOF | tee $BUILD_DIR/CMakeLists.txt
@@ -74,6 +105,12 @@ EOF
     if [ "${ENABLE_ULT}" == "0" ]; then
         SKIP_UNIT_TESTS="TRUE"
     fi
+
+    if [ "${TARGET_ARCH}" == "aarch64" ]; then
+        SKIP_UNIT_TESTS="TRUE"
+        export NEO_DISABLE_BUILTINS_COMPILATION="TRUE"
+    fi
+
     export SKIP_UNIT_TESTS
 
     dch -v ${PKG_VERSION} -m "build $PKG_VERSION" -b

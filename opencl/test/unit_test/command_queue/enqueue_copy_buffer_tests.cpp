@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -17,7 +18,6 @@
 #include "opencl/test/unit_test/command_queue/enqueue_copy_buffer_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"
 
@@ -331,7 +331,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
     ASSERT_NE(nullptr, kernel);
 
     // Determine where the argument is
-    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 0u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0), rootDeviceIndex);
+    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 0u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0), rootDeviceIndex);
 
     EXPECT_EQ(reinterpret_cast<void *>(srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), *pArgument);
 }
@@ -359,7 +359,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     ASSERT_NE(nullptr, kernel);
 
     // Determine where the argument is
-    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 1u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0), rootDeviceIndex);
+    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 1u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0), rootDeviceIndex);
 
     EXPECT_EQ(reinterpret_cast<void *>(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), *pArgument);
 }
@@ -370,7 +370,7 @@ struct EnqueueCopyBufferHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
         dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
     }

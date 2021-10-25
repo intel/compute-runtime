@@ -29,20 +29,11 @@ add_dependencies(unit_tests copy_test_files_per_product)
 set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 )
-
-if(WIN32)
-  list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp)
-else()
-  if(NOT DISABLE_WDDM_LINUX)
-    list(APPEND IGDRCL_SRCS_tests_local ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-         ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-    )
-  endif()
-endif()
 
 add_subdirectory(libult)
 
@@ -55,15 +46,16 @@ if(UNIX)
                      TARGET run_unit_tests
                      POST_BUILD
                      COMMAND echo running tests for linux dynamic library - .so in ${TargetDir}
-                     COMMAND igdrcl_linux_dll_tests ${IGDRCL_TESTS_LISTENER_OPTION}
+                     COMMAND ${NEO_RUN_INTERCEPTOR_LIST} igdrcl_linux_dll_tests ${NEO_TESTS_LISTENER_OPTION}
                      COMMAND WORKING_DIRECTORY ${TargetDir}
   )
 endif()
 
 set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
-    $<TARGET_OBJECTS:igdrcl_libult_common>
+    $<TARGET_OBJECTS:neo_libult_common>
     $<TARGET_OBJECTS:igdrcl_libult>
-    $<TARGET_OBJECTS:igdrcl_libult_cs>
+    $<TARGET_OBJECTS:neo_libult_cs>
+    $<TARGET_OBJECTS:neo_libult>
     $<TARGET_OBJECTS:igdrcl_libult_env>
     $<TARGET_OBJECTS:mock_gmm>
     $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
@@ -118,21 +110,17 @@ endif()
 target_link_libraries(igdrcl_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 
-option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" OFF)
-
-if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
-  set(IGDRCL_TESTS_LISTENER_OPTION "--disable_default_listener")
-else()
-  set(IGDRCL_TESTS_LISTENER_OPTION "--enable_default_listener")
-endif()
-
 target_include_directories(igdrcl_tests PRIVATE
                            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}
-                           ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}
                            ${ENGINE_NODE_DIR}
                            ${KHRONOS_GL_HEADERS_DIR}
-                           ${CMAKE_CURRENT_SOURCE_DIR}/config
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
 )
+if(WIN32)
+  target_include_directories(igdrcl_tests PRIVATE
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory${BRANCH_DIR_SUFFIX}
+  )
+endif()
 
 target_link_libraries(igdrcl_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
@@ -224,20 +212,33 @@ function(neo_gen_kernels platform_name_with_type platform_name revision_id suffi
     get_filename_component(workdir ${filepath} DIRECTORY)
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
-    set(output_files
-        ${outputpath_base}.spv
-        ${outputpath_base}.bin
-        ${outputpath_base}.gen
-    )
+    if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+      set(output_files
+          ${outputpath_base}.spv
+          ${outputpath_base}.bin
+          ${outputpath_base}.gen
+      )
 
-    add_custom_command(
-                       OUTPUT ${output_files}
-                       COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir}
-                       WORKING_DIRECTORY ${workdir}
-                       DEPENDS ${filepath} ocloc
-    )
+      add_custom_command(
+                         OUTPUT ${output_files}
+                         COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir}
+                         WORKING_DIRECTORY ${workdir}
+                         DEPENDS ${filepath} ocloc
+      )
 
-    list(APPEND kernels_to_compile ${output_files})
+      list(APPEND kernels_to_compile ${output_files})
+    else()
+      foreach(_file_name "spv" "bin" "gen")
+        set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/${suffix}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}")
+        add_custom_command(
+                           OUTPUT ${outputpath_base}.${_file_name}
+                           COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+        )
+
+        list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${outputpath_base}.${_file_name})
+      endforeach()
+    endif()
   endforeach()
   list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile})
   set(kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
@@ -257,19 +258,32 @@ function(neo_gen_kernels_with_options platform_name_with_type platform_name revi
       string(REPLACE " " "_" argwospaces ${arg})
 
       set(outputpath_base "${outputdir}/${basename}_${suffix}")
-      set(output_files
-          ${outputpath_base}.spv${argwospaces}
-          ${outputpath_base}.bin${argwospaces}
-          ${outputpath_base}.gen${argwospaces}
-      )
+      if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+        set(output_files
+            ${outputpath_base}.spv${argwospaces}
+            ${outputpath_base}.bin${argwospaces}
+            ${outputpath_base}.gen${argwospaces}
+        )
 
-      add_custom_command(
-                         OUTPUT ${output_files}
-                         COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id} -options ${arg} -options_name
-                         WORKING_DIRECTORY ${workdir}
-                         DEPENDS ${filearg} ocloc
-      )
-      list(APPEND kernels_to_compile ${output_files})
+        add_custom_command(
+                           OUTPUT ${output_files}
+                           COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id} -options ${arg} -options_name
+                           WORKING_DIRECTORY ${workdir}
+                           DEPENDS ${filearg} ocloc
+        )
+        list(APPEND kernels_to_compile ${output_files})
+      else()
+        foreach(_file_name "spv" "bin" "gen")
+          set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/${suffix}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}${argwospaces}")
+          add_custom_command(
+                             OUTPUT ${outputpath_base}.${_file_name}${argwospaces}
+                             COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+          )
+
+          list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${outputpath_base}.${_file_name}${argwospaces})
+        endforeach()
+      endif()
     endforeach()
   endforeach()
   list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile})
@@ -292,25 +306,37 @@ function(neo_gen_kernels_with_internal_options platform_name_with_type platform_
   endif()
 
   set(outputpath_base "${outputdir}/${basename}_${suffix}")
-  set(output_files
-      ${outputpath_base}.spv
-      ${outputpath_base}.bin
-      ${outputpath_base}.gen
-  )
+  if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+    set(output_files
+        ${outputpath_base}.spv
+        ${outputpath_base}.bin
+        ${outputpath_base}.gen
+    )
 
-  if(NOT "${output_name_prefix}" STREQUAL "")
-    set(output_name -output ${basename})
+    if(NOT "${output_name_prefix}" STREQUAL "")
+      set(output_name -output ${basename})
+    endif()
+
+    add_custom_command(
+                       OUTPUT ${output_files}
+                       COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
+                       WORKING_DIRECTORY ${workdir}
+                       DEPENDS ${filearg} ocloc
+    )
+    list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${output_files})
+  else()
+    foreach(_file_name "spv" "bin" "gen")
+      set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/${suffix}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}")
+      add_custom_command(
+                         OUTPUT ${outputpath_base}.${_file_name}
+                         COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+      )
+
+      list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${outputpath_base}.${_file_name})
+    endforeach()
   endif()
 
-  add_custom_command(
-                     OUTPUT ${output_files}
-                     COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
-                     WORKING_DIRECTORY ${workdir}
-                     DEPENDS ${filearg} ocloc
-  )
-
-  list(APPEND kernels_to_compile ${output_files})
-  list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile})
   set(kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
@@ -329,21 +355,33 @@ function(neo_gen_kernel_with_kernel_debug_options platform_name_with_type platfo
   string(REPLACE " " "_" argwospaces ${TEST_KERNEL_kernel_debug_enable})
 
   set(outputpath_base "${outputdir}/${argwospaces}_${suffix}")
-  set(output_files
-      ${outputpath_base}.spv
-      ${outputpath_base}.bin
-      ${outputpath_base}.gen
-      ${outputpath_base}.dbg
-  )
 
-  add_custom_command(
-                     OUTPUT ${output_files}
-                     COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
-                     WORKING_DIRECTORY ${workdir}
-                     DEPENDS ${filepath} ocloc
-  )
+  if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+    set(output_files
+        ${outputpath_base}.spv
+        ${outputpath_base}.bin
+        ${outputpath_base}.gen
+        ${outputpath_base}.dbg
+    )
+    add_custom_command(
+                       OUTPUT ${output_files}
+                       COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
+                       WORKING_DIRECTORY ${workdir}
+                       DEPENDS ${filepath} ocloc
+    )
+    list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${output_files})
+  else()
+    foreach(_file_name "spv" "bin" "gen" "dbg")
+      set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/${suffix}/${revision_id}/test_files/${NEO_ARCH}/${argwospaces}_${suffix}.${_file_name}")
+      add_custom_command(
+                         OUTPUT ${outputpath_base}.${_file_name}
+                         COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+      )
 
-  list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${output_files})
+      list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${outputpath_base}.${_file_name})
+    endforeach()
+  endif()
   set(kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
@@ -524,9 +562,17 @@ macro(macro_for_each_gen)
       endif()
 
       foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
-        add_custom_target(prepare_test_kernels_${family_name_with_type}_${REVISION_ID} DEPENDS ${kernels_to_compile_${family_name_with_type}_${REVISION_ID}} copy_compiler_files)
+        if(NEO_DISABLE_BUILTINS_COMPILATION)
+          add_custom_target(prepare_test_kernels_${family_name_with_type}_${REVISION_ID} DEPENDS ${kernels_to_compile_${family_name_with_type}_${REVISION_ID}} copy_compiler_files)
+          # cp -a ../neo_test_kernels/XE_HPC_COREcore bin/
+          # message(FATAL_ERROR "list: ${kernels_to_compile_${family_name_with_type}_${REVISION_ID}}")
+          add_dependencies(prepare_test_kernels prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
+
+        else()
+          add_custom_target(prepare_test_kernels_${family_name_with_type}_${REVISION_ID} DEPENDS ${kernels_to_compile_${family_name_with_type}_${REVISION_ID}} copy_compiler_files)
+          add_dependencies(prepare_test_kernels prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
+        endif()
         set_target_properties(prepare_test_kernels_${family_name_with_type}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}/${REVISION_ID}")
-        add_dependencies(prepare_test_kernels prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
       endforeach()
     endif()
   endforeach()

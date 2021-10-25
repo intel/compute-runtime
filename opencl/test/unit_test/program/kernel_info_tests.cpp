@@ -7,11 +7,11 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 
 #include "gtest/gtest.h"

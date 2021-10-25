@@ -67,13 +67,9 @@ bool MetricEnumeration::isInitialized() {
 
 ze_result_t MetricEnumeration::initialize() {
     if (initializationState == ZE_RESULT_ERROR_UNINITIALIZED) {
-        if (!this->metricContext.getMetricCollectionEnabled()) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
-                                  "metrics collection is disabled on the root device\n");
-            initializationState = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        } else if (hMetricsDiscovery &&
-                   openMetricsDiscovery() == ZE_RESULT_SUCCESS &&
-                   cacheMetricInformation() == ZE_RESULT_SUCCESS) {
+        if (hMetricsDiscovery &&
+            openMetricsDiscovery() == ZE_RESULT_SUCCESS &&
+            cacheMetricInformation() == ZE_RESULT_SUCCESS) {
             initializationState = ZE_RESULT_SUCCESS;
         } else {
             initializationState = ZE_RESULT_ERROR_UNKNOWN;
@@ -131,11 +127,10 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
     }
 
     auto &device = metricContext.getDevice();
-    if (device.isMultiDeviceCapable()) {
+    const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+    if (metricContext.isMultiDeviceCapable()) {
 
         // Open metrics device for each sub device.
-        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-
         for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
 
             auto &metricsDevice = deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().pMetricsDevice;
@@ -171,9 +166,9 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     if (pAdapter) {
 
         auto &device = metricContext.getDevice();
-        if (device.isMultiDeviceCapable()) {
+        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+        if (metricContext.isMultiDeviceCapable()) {
 
-            const auto &deviceImp = *static_cast<DeviceImp *>(&device);
             for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
                 deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().cleanupMetricsDiscovery();
             }
@@ -205,13 +200,12 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
 ze_result_t MetricEnumeration::cacheMetricInformation() {
 
     auto &device = metricContext.getDevice();
-
-    if (device.isMultiDeviceCapable()) {
+    const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+    if (metricContext.isMultiDeviceCapable()) {
 
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         // Get metric information from all sub devices.
-        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
         for (auto subDevice : deviceImp.subDevices) {
             result = subDevice->getMetricContext().getMetricEnumeration().cacheMetricInformation();
             if (ZE_RESULT_SUCCESS != result) {
@@ -591,10 +585,118 @@ ze_result_t MetricGroupImp::closeIoStream() {
 ze_result_t MetricGroupImp::calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                                   const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                                   zet_typed_value_t *pMetricValues) {
+
+    const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
+    if (pRawHeader->magic == MetricGroupCalculateHeader::magicValue) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                              "INFO: The call is not supported for multiple devices\n"
+                              "INFO: Please use zetMetricGroupCalculateMultipleMetricValuesExp instead\n");
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     const bool calculateCountOnly = *pMetricValueCount == 0;
     const bool result = calculateCountOnly
                             ? getCalculatedMetricCount(rawDataSize, *pMetricValueCount)
                             : getCalculatedMetricValues(type, rawDataSize, pRawData, *pMetricValueCount, pMetricValues);
+
+    return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+}
+
+ze_result_t MetricGroupImp::calculateMetricValuesExp(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
+                                                     const uint8_t *pRawData, uint32_t *pSetCount,
+                                                     uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
+                                                     zet_typed_value_t *pMetricValues) {
+
+    const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
+
+    if (pRawHeader->magic != MetricGroupCalculateHeader::magicValue) {
+
+        const bool calculationCountOnly = *pTotalMetricValueCount == 0;
+        ze_result_t result = calculateMetricValues(type, rawDataSize, pRawData, pTotalMetricValueCount, pMetricValues);
+
+        if (result == ZE_RESULT_SUCCESS) {
+            *pSetCount = 1;
+            if (!calculationCountOnly) {
+                pMetricCounts[0] = *pTotalMetricValueCount;
+            }
+        } else {
+            if (calculationCountOnly) {
+                *pSetCount = 0;
+                *pTotalMetricValueCount = 0;
+            } else {
+                pMetricCounts[0] = 0;
+            }
+        }
+        return result;
+    }
+
+    bool result = true;
+    const size_t metricGroupCount = metricGroups.size();
+
+    if (*pSetCount == 0 || *pTotalMetricValueCount == 0) {
+
+        const uint32_t *pRawDataSizesUnpacked = reinterpret_cast<const uint32_t *>(pRawData + pRawHeader->rawDataSizes);
+
+        if (metricGroupCount == 0) {
+            result = getCalculatedMetricCount(*pRawDataSizesUnpacked, *pTotalMetricValueCount);
+
+            if (result) {
+                *pSetCount = 1;
+            } else {
+                *pSetCount = 0;
+                *pTotalMetricValueCount = 0;
+            }
+        } else {
+            *pSetCount = static_cast<uint32_t>(metricGroupCount);
+            *pTotalMetricValueCount = 0;
+
+            for (size_t i = 0; i < metricGroupCount; i++) {
+                uint32_t metricCount = 0;
+                auto &metricGroup = *static_cast<MetricGroupImp *>(metricGroups[i]);
+                result = metricGroup.getCalculatedMetricCount(pRawDataSizesUnpacked[i], metricCount);
+
+                if (!result) {
+                    *pSetCount = 0;
+                    *pTotalMetricValueCount = 0;
+                    break;
+                }
+
+                *pTotalMetricValueCount += metricCount;
+            }
+        }
+    } else {
+
+        const uint32_t *pRawDataSizesUnpacked = reinterpret_cast<const uint32_t *>(pRawData + pRawHeader->rawDataSizes);
+        const uint32_t *pRawDataOffsetsUnpacked = reinterpret_cast<const uint32_t *>(pRawData + pRawHeader->rawDataOffsets);
+        const uint8_t *pRawDataOffsetUnpacked = reinterpret_cast<const uint8_t *>(pRawData + pRawHeader->rawDataOffset);
+
+        if (metricGroupCount == 0) {
+            result = getCalculatedMetricValues(type, pRawDataSizesUnpacked[0], pRawDataOffsetUnpacked, *pTotalMetricValueCount, pMetricValues);
+            pMetricCounts[0] = *pTotalMetricValueCount;
+
+        } else {
+            UNRECOVERABLE_IF(*pSetCount > metricGroupCount);
+            const uint32_t maxTotalMetricValueCount = *pTotalMetricValueCount;
+            *pTotalMetricValueCount = 0;
+            for (size_t i = 0; i < *pSetCount; i++) {
+                auto &metricGroup = *static_cast<MetricGroupImp *>(metricGroups[i]);
+                const uint32_t dataSize = pRawDataSizesUnpacked[i];
+                const uint8_t *pRawDataOffset = pRawDataOffsetUnpacked + pRawDataOffsetsUnpacked[i];
+                pMetricCounts[i] = maxTotalMetricValueCount;
+                result = metricGroup.getCalculatedMetricValues(type, dataSize, pRawDataOffset, pMetricCounts[i], pMetricValues);
+
+                if (!result) {
+                    for (size_t j = 0; j <= i; j++) {
+                        pMetricCounts[j] = 0;
+                    }
+                    break;
+                }
+
+                *pTotalMetricValueCount += pMetricCounts[i];
+                pMetricValues += pMetricCounts[i];
+            }
+        }
+    }
 
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }

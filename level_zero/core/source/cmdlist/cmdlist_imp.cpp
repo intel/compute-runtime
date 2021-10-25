@@ -89,28 +89,36 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     CommandListImp *commandList = nullptr;
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
 
+    NEO::EngineGroupType engineType = engineGroupType;
+
     if (allocator) {
-        commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
-        commandList->internalUsage = internalUsage;
-        commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
-        commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
-        returnValue = commandList->initialize(device, engineGroupType, desc->flags);
-        if (returnValue != ZE_RESULT_SUCCESS) {
-            commandList->destroy();
-            commandList = nullptr;
-            return commandList;
-        }
         NEO::CommandStreamReceiver *csr = nullptr;
         auto deviceImp = static_cast<DeviceImp *>(device);
         if (internalUsage) {
-            csr = deviceImp->neoDevice->getInternalEngine().commandStreamReceiver;
+            if (NEO::EngineGroupType::Copy == engineType && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
+                csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
+            } else {
+                csr = deviceImp->getActiveDevice()->getInternalEngine().commandStreamReceiver;
+                engineType = NEO::EngineGroupType::RenderCompute;
+            }
         } else {
             device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
         }
 
         UNRECOVERABLE_IF(nullptr == csr);
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineGroupType, internalUsage, returnValue);
+        commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
+        commandList->internalUsage = internalUsage;
+        commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
+        commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
+        returnValue = commandList->initialize(device, engineType, desc->flags);
+        if (returnValue != ZE_RESULT_SUCCESS) {
+            commandList->destroy();
+            commandList = nullptr;
+            return commandList;
+        }
+
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineType, internalUsage, returnValue);
         if (!commandQueue) {
             commandList->destroy();
             commandList = nullptr;

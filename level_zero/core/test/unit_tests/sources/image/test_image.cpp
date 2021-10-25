@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include "test.h"
 
@@ -401,7 +402,7 @@ HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingImageThenSuccessIsReturned, Imag
     neoDevice->injectMemoryManager(currMemoryManager);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = L0::Device::create(driverHandle.get(), neoDevice, 0, false, &result);
+    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
 
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
     auto ret = imageHW->initialize(device, &desc);
@@ -424,6 +425,7 @@ class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
 
 HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsReturned, ImageSupport) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
 
     ze_image_desc_t desc = {};
 
@@ -440,13 +442,18 @@ HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsRet
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
 
+    auto isHexadecimalArrayPrefered = NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+    if (isHexadecimalArrayPrefered) {
+        backupSipInitType = true;
+    }
+
     NEO::MockDevice *neoDevice = nullptr;
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     NEO::MemoryManager *currMemoryManager = new FailMemoryManagerMock(*neoDevice->executionEnvironment);
     neoDevice->injectMemoryManager(currMemoryManager);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = L0::Device::create(driverHandle.get(), neoDevice, 0, false, &result);
+    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
 
     L0::Image *imageHandle;
 

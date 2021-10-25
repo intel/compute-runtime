@@ -10,15 +10,15 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/sharings/gl/gl_buffer.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 
 using namespace NEO;
@@ -30,7 +30,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
 
     auto nonSharedBuffer = new MockBuffer;
     MockGlSharing glSharing;
-    MockGmm mockGmm;
+    MockGmm mockGmm(pDevice->getGmmClientContext());
     glSharing.uploadDataToBufferInfo(1, 0, mockGmm.gmmResourceInfo->peekGmmResourceInfo());
     pContext->setSharingFunctions(glSharing.sharingFunctions.release());
     auto retVal = CL_SUCCESS;

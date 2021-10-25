@@ -171,6 +171,7 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         break;
 
     case CL_PROFILING_COMMAND_SUBMIT:
+        calculateSubmitTimestampData();
         timestamp = getTimeInNSFromTimestampData(submitTimeStamp);
         src = &timestamp;
         srcSize = sizeof(cl_ulong);
@@ -258,6 +259,17 @@ cl_ulong Event::getDelta(cl_ulong startTime,
     }
 
     return Delta;
+}
+
+void Event::calculateSubmitTimestampData() {
+    if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
+        auto &device = cmdQueue->getDevice();
+        auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        double resolution = device.getDeviceInfo().profilingTimerResolution;
+
+        int64_t timerDiff = queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, resolution);
+        submitTimeStamp.GPUTimeStamp = static_cast<uint64_t>((submitTimeStamp.CPUTimeinNS - timerDiff) / resolution);
+    }
 }
 
 uint64_t Event::getTimeInNSFromTimestampData(const TimeStampData &timestamp) const {
@@ -408,7 +420,8 @@ inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
         }
     }
 
-    cmdQueue->waitUntilComplete(taskCount.load(), this->bcsState.taskCount, flushStamp->peekStamp(), useQuickKmdSleep);
+    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+    cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep);
     updateExecutionStatus();
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);

@@ -12,14 +12,16 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
 using namespace NEO;
@@ -27,8 +29,10 @@ using namespace NEO;
 TEST(SubDevicesTest, givenDefaultConfigWhenCreateRootDeviceThenItDoesntContainSubDevices) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
-    EXPECT_EQ(0u, device->getNumSubDevices());
     EXPECT_EQ(0u, device->getNumGenericSubDevices());
+    if (device->getNumSubDevices() > 0) {
+        EXPECT_TRUE(device->getSubDevice(0)->isEngineInstanced());
+    }
 }
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItsSubdevicesHaveProperRootIdSet) {
@@ -201,13 +205,6 @@ TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnS
     EXPECT_EQ(secondSubDeviceMask, static_cast<uint32_t>(secondSubDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong()));
 }
 
-TEST(SubDevicesTest, givenDeviceWithoutSubDevicesWhenGettingDeviceByIdZeroThenGetThisDevice) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-
-    EXPECT_EQ(0u, device->getNumGenericSubDevices());
-    EXPECT_ANY_THROW(device->getSubDevice(0u));
-}
-
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrectSubDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
@@ -227,7 +224,11 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
     EXPECT_EQ(2u, device->getNumSubDevices());
     auto subDevice = device->subdevices.at(0);
 
-    EXPECT_ANY_THROW(subDevice->getSubDevice(0));
+    if (subDevice->getNumSubDevices() > 0) {
+        EXPECT_ANY_THROW(subDevice->getSubDevice(0)->getSubDevice(0));
+    } else {
+        EXPECT_ANY_THROW(subDevice->getSubDevice(0));
+    }
 }
 
 TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDeviceCreatesCorrectNumberOfEngines) {
@@ -293,10 +294,6 @@ TEST(SubDevicesTest, whenCreatingEngineInstancedSubDeviceThenSetCorrectSubdevice
 }
 
 struct EngineInstancedDeviceTests : public ::testing::Test {
-    void SetUp() override {
-        DebugManager.flags.EngineInstancedSubDevices.set(true);
-    }
-
     bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
         DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
 
@@ -394,6 +391,8 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndMoreThanOneCcsWhenCreatin
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
     }
@@ -415,6 +414,24 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndMoreThanOneCcsWhenCreatin
         EXPECT_TRUE(isEngineInstanced(subDevice, engineType, 0, 1));
         EXPECT_TRUE(hasEngineInstancedEngines(subDevice, engineType));
     }
+}
+
+TEST_F(EngineInstancedDeviceTests, givenDebugFlagNotSetAndMoreThanOneCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenDontCreateEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto &hwInfo = rootDevice->getHardwareInfo();
+
+    EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+    EXPECT_EQ(0u, rootDevice->getNumSubDevices());
+    EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+    EXPECT_TRUE(hasAllEngines(rootDevice));
 }
 
 TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndZeroCcsesWhenCreatingRootDeviceWithoutGenericSubDevicesThenCreateEngineInstanced) {
@@ -782,6 +799,27 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.4");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+
+    EXPECT_TRUE(rootDevice->isEngineInstanced());
+    EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
+    EXPECT_EQ(0u, rootDevice->getNumSubDevices());
+}
+
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDeviceSingleEngineWhenCreatingThenDontEnableEngineInstancedDevices) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 1;
+
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
@@ -792,7 +830,41 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
 
     EXPECT_FALSE(rootDevice->isEngineInstanced());
     EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
-    EXPECT_EQ(ccsCount, rootDevice->getNumSubDevices());
+    EXPECT_EQ(0u, rootDevice->getNumSubDevices());
+}
+
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDeviceWithoutDebugFlagWhenCreatingThenDontEnableAllEngineInstancedDevices) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+
+    EXPECT_FALSE(rootDevice->isEngineInstanced());
+    EXPECT_EQ(0u, rootDevice->getNumGenericSubDevices());
+    EXPECT_EQ(0u, rootDevice->getNumSubDevices());
+}
+
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskWhenCreatingClSubDevicesThenSkipDisabledDevices) {
+    constexpr uint32_t genericDevicesCount = 3;
+    constexpr uint32_t ccsCount = 1;
+
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
+
+    ASSERT_EQ(2u, clRootDevice->getNumSubDevices());
+    EXPECT_EQ(0b1u, clRootDevice->getSubDevice(0)->getDeviceBitfield().to_ulong());
+    EXPECT_EQ(0b100u, clRootDevice->getSubDevice(1)->getDeviceBitfield().to_ulong());
 }
 
 HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, IsAtLeastXeHpCore) {
@@ -801,6 +873,7 @@ HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingC
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
     }
@@ -822,6 +895,45 @@ HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingC
     EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
 }
 
+HWTEST_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenCreatingProgramThenAssignAllSubDevices) {
+    constexpr uint32_t genericDevicesCount = 2;
+    constexpr uint32_t ccsCount = 2;
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    const char *source = "text";
+    size_t sourceSize = strlen(source);
+
+    auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
+    auto clSubDevice = clRootDevice->getSubDevice(0);
+    auto clSubSubDevice0 = clSubDevice->getSubDevice(0);
+    auto clSubSubDevice1 = clSubDevice->getSubDevice(1);
+
+    cl_device_id device_ids[] = {clSubDevice, clSubSubDevice0, clSubSubDevice1};
+    ClDeviceVector deviceVector{device_ids, 3};
+    MockContext context(deviceVector);
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+    auto program = std::unique_ptr<MockProgram>(Program::create<MockProgram>(
+        &context,
+        1,
+        &source,
+        &sourceSize,
+        retVal));
+
+    ASSERT_NE(nullptr, program.get());
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_TRUE(program->deviceBuildInfos.find(clSubDevice) != program->deviceBuildInfos.end());
+
+    auto &associatedSubDevices = program->deviceBuildInfos[clSubDevice].associatedSubDevices;
+    ASSERT_EQ(2u, associatedSubDevices.size());
+    EXPECT_EQ(clSubSubDevice0, associatedSubDevices[0]);
+    EXPECT_EQ(clSubSubDevice1, associatedSubDevices[1]);
+}
+
 TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) {
     auto device = std::make_unique<MockDevice>();
     device->initializeRootCommandStreamReceiver();
@@ -836,6 +948,6 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenBindlessHeapHelperC
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
-    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->createBindlessHeapsHelper(device->getMemoryManager(), device->getNumGenericSubDevices() > 1, device->getRootDeviceIndex());
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->createBindlessHeapsHelper(device->getMemoryManager(), device->getNumGenericSubDevices() > 1, device->getRootDeviceIndex(), device->getDeviceBitfield());
     EXPECT_EQ(device->getBindlessHeapsHelper(), device->subdevices.at(0)->getBindlessHeapsHelper());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,7 @@
 #include "shared/source/device_binary_format/patchtokens_validator.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
-
-#include "opencl/source/utilities/logger.h"
+#include "shared/source/utilities/logger.h"
 
 namespace NEO {
 

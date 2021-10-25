@@ -12,9 +12,9 @@
 #include "shared/source/os_interface/windows/wddm/adapter_factory_dxgi.h"
 #include "shared/source/os_interface/windows/wddm/adapter_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
+#include "shared/test/common/os_interface/windows/ult_dxgi_factory.h"
 
-#include "opencl/test/unit_test/os_interface/windows/ult_dxcore_factory.h"
-#include "opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.h"
 #include "test.h"
 
 #include <memory>

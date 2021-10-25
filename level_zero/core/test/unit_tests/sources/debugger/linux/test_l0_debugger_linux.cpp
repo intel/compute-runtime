@@ -8,9 +8,9 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 
-#include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"

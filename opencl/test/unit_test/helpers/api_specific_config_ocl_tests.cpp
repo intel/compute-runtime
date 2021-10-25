@@ -7,6 +7,8 @@
 
 #include "shared/source/helpers/api_specific_config.h"
 
+#include "opencl/source/os_interface/ocl_reg_path.h"
+
 #include "gtest/gtest.h"
 
 namespace NEO {
@@ -31,4 +33,7 @@ TEST(ApiSpecificConfigOclTests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeT
     EXPECT_EQ(512u, ApiSpecificConfig::getReducedMaxAllocSize(1024));
 }
 
+TEST(ApiSpecificConfigOclTests, WhenGettingRegistryPathThenOclRegistryPathIsReturned) {
+    EXPECT_STREQ(oclRegPath, ApiSpecificConfig::getRegistryPath());
+}
 } // namespace NEO

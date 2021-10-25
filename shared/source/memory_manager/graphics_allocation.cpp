@@ -8,10 +8,10 @@
 #include "graphics_allocation.h"
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
-
-#include "opencl/source/utilities/logger.h"
+#include "shared/source/utilities/logger.h"
 
 namespace NEO {
 void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
@@ -23,7 +23,7 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
                                        uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, size_t maxOsContextCount)
     : rootDeviceIndex(rootDeviceIndex),
       gpuBaseAddress(baseAddress),
-      gpuAddress(gpuAddress),
+      gpuAddress(GmmHelper::canonize(gpuAddress)),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
@@ -35,7 +35,7 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
 GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
                                        osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount)
     : rootDeviceIndex(rootDeviceIndex),
-      gpuAddress(castToUint64(cpuPtrIn)),
+      gpuAddress(GmmHelper::canonize(castToUint64(cpuPtrIn))),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),

@@ -7,9 +7,9 @@
 
 #pragma once
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // MockCommandQueue - Core implementation
@@ -18,7 +18,7 @@
 namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
-    using CommandQueue::bcsEngine;
+    using CommandQueue::bcsEngines;
     using CommandQueue::blitEnqueueAllowed;
     using CommandQueue::blitEnqueueImageAllowed;
     using CommandQueue::blitEnqueuePreferred;
@@ -35,6 +35,22 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::requiresCacheFlushAfterWalker;
     using CommandQueue::throttle;
     using CommandQueue::timestampPacketContainer;
+
+    void clearBcsEngines() {
+        std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
+    }
+
+    void insertBcsEngine(aub_stream::EngineType bcsEngineType) {
+        const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
+        const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::Regular);
+        bcsEngines[index] = engine;
+    }
+
+    size_t countBcsEngines() const {
+        return std::count_if(bcsEngines.begin(), bcsEngines.end(), [](const EngineControl *engine) {
+            return engine != nullptr;
+        });
+    }
 
     void setProfilingEnabled() {
         commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
@@ -70,9 +86,9 @@ class MockCommandQueue : public CommandQueue {
         return writeBufferRetValue;
     }
 
-    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
-        return CommandQueue::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
+        return CommandQueue::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
     }
 
     cl_int enqueueCopyImage(Image *srcImage, Image *dstImage, const size_t *srcOrigin,
@@ -198,8 +214,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass = CommandQueueHw<GfxFamily>;
 
   public:
-    using BaseClass::bcsEngine;
-    using BaseClass::bcsTaskCount;
+    using BaseClass::bcsEngines;
+    using BaseClass::bcsStates;
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;
@@ -213,9 +229,18 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::throttle;
     using BaseClass::timestampPacketContainer;
 
+    void clearBcsStates() {
+        CopyEngineState unusedState{};
+        std::fill(bcsStates.begin(), bcsStates.end(), unusedState);
+    }
+
     MockCommandQueueHw(Context *context,
                        ClDevice *device,
                        cl_queue_properties *properties) : BaseClass(context, device, properties, false) {
+    }
+
+    void clearBcsEngines() {
+        std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
     }
 
     cl_int flush() override {
@@ -300,9 +325,9 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         useBcsCsrOnNotifyEnabled = notifyBcsCsr;
     }
 
-    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
-        return BaseClass::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
+        return BaseClass::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
     }
 
     bool isCacheFlushForBcsRequired() const override {

@@ -87,7 +87,7 @@ HWTEST_P(AUBCopyImage, WhenCopyingThenExpectationsMet) {
     auto retVal = CL_INVALID_VALUE;
     srcImage.reset(Image::create(
         context.get(),
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -98,7 +98,7 @@ HWTEST_P(AUBCopyImage, WhenCopyingThenExpectationsMet) {
 
     dstImage.reset(Image::create(
         context.get(),
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,

@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_ostime.h"
+
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_ostime.h"
 
 #include "cl_api_tests.h"
 

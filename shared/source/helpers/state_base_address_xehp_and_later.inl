@@ -61,7 +61,6 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED));
     }
 
-    stateBaseAddress->setIndirectObjectMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l1L3CacheOnPolicy));
     stateBaseAddress->setSurfaceStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
     stateBaseAddress->setDynamicStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
     stateBaseAddress->setGeneralStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
@@ -88,18 +87,6 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         setSbaStatelessCompressionParams<GfxFamily>(stateBaseAddress, memoryCompressionState);
     }
 
-    int32_t cachingPolicySetting = DebugManager.flags.UseCachingPolicyForIndirectObjectHeap.get();
-    uint32_t indirectObjectHeapCachingPolicy = l1L3CacheOnPolicy;
-
-    if (cachingPolicySetting != -1) {
-        if (cachingPolicySetting == 0) {
-            indirectObjectHeapCachingPolicy = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
-        } else if (cachingPolicySetting == 1) {
-            indirectObjectHeapCachingPolicy = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
-        }
-    }
-    stateBaseAddress->setIndirectObjectMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(indirectObjectHeapCachingPolicy));
-
     if (stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState() == gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) && DebugManager.flags.ForceL1Caching.get() != 0) {
         stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
     }
@@ -121,6 +108,10 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
     }
 
     *bindingTablePoolAlloc = cmd;
+}
+
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::appendIohParameters(STATE_BASE_ADDRESS *stateBaseAddress, const IndirectHeap *ioh, bool useGlobalHeapsBaseAddress, uint64_t indirectObjectHeapBaseAddress) {
 }
 
 } // namespace NEO

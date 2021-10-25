@@ -47,12 +47,14 @@ Device::~Device() {
     for (auto &engine : engines) {
         engine.commandStreamReceiver->flushBatchedSubmissions();
     }
+    engines.clear();
 
     for (auto subdevice : subdevices) {
         if (subdevice) {
             delete subdevice;
         }
     }
+    subdevices.clear();
 
     syncBufferHandler.reset();
     commandStreamReceivers.clear();
@@ -83,8 +85,12 @@ bool Device::genericSubDevicesAllowed() {
 }
 
 bool Device::engineInstancedSubDevicesAllowed() {
-    if ((DebugManager.flags.EngineInstancedSubDevices.get() != 1) || engineInstanced ||
-        (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2)) {
+    bool notAllowed = !DebugManager.flags.EngineInstancedSubDevices.get();
+    notAllowed |= engineInstanced;
+    notAllowed |= (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2);
+    notAllowed |= ((HwHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
+
+    if (notAllowed) {
         return false;
     }
 
@@ -200,8 +206,6 @@ bool Device::createDeviceImpl() {
     auto &hwInfo = getHardwareInfo();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&this->hardwareCapabilities, hwInfo);
     executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initGmm();
 
     if (!getDebugger()) {
@@ -229,15 +233,11 @@ bool Device::createDeviceImpl() {
     }
     executionEnvironment->memoryManager->setDefaultEngineIndex(getRootDeviceIndex(), defaultEngineIndexWithinMemoryManager);
 
-    auto osInterface = getRootDeviceEnvironment().osInterface.get();
-
-    if (!osTime) {
-        osTime = OSTime::create(osInterface);
-    }
+    getRootDeviceEnvironmentRef().initOsTime();
 
     initializeCaps();
 
-    if (osTime->getOSInterface()) {
+    if (getOSTime()->getOSInterface()) {
         if (hwInfo.capabilityTable.instrumentationEnabled) {
             performanceCounters = createPerformanceCountersFunc(this);
         }
@@ -317,7 +317,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         commandStreamReceiver->initializeDefaultsForInternalEngine();
     }
 
-    if (commandStreamReceiver->needsPageTableManager(engineType)) {
+    if (commandStreamReceiver->needsPageTableManager()) {
         commandStreamReceiver->createPageTableManager();
     }
 
@@ -365,11 +365,11 @@ const DeviceInfo &Device::getDeviceInfo() const {
 }
 
 double Device::getProfilingTimerResolution() {
-    return osTime->getDynamicDeviceTimerResolution(getHardwareInfo());
+    return getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
 }
 
 uint64_t Device::getProfilingTimerClock() {
-    return osTime->getDynamicDeviceTimerClock(getHardwareInfo());
+    return getOSTime()->getDynamicDeviceTimerClock(getHardwareInfo());
 }
 
 bool Device::isSimulation() const {
@@ -389,8 +389,10 @@ bool Device::isSimulation() const {
 }
 
 double Device::getPlatformHostTimerResolution() const {
-    if (osTime.get())
-        return osTime->getHostTimerResolution();
+    if (getOSTime()) {
+        return getOSTime()->getHostTimerResolution();
+    }
+
     return 0.0;
 }
 
@@ -563,10 +565,22 @@ EngineControl &Device::getInternalEngine() {
     return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::Internal);
 }
 
+EngineControl *Device::getInternalCopyEngine() {
+    for (auto &engine : engines) {
+        if (engine.osContext->getEngineType() == aub_stream::ENGINE_BCS &&
+            engine.osContext->isInternalEngine()) {
+            return &engine;
+        }
+    }
+    return nullptr;
+}
+
 void Device::initializeRayTracing() {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
         rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, GraphicsAllocation::AllocationType::BUFFER, getDeviceBitfield()});
     }
 }
+
+OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get(); };
 } // namespace NEO

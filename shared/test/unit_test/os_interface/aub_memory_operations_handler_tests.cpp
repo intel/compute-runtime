@@ -8,8 +8,7 @@
 #include "shared/test/unit_test/os_interface/aub_memory_operations_handler_tests.h"
 
 #include "shared/test/common/mocks/mock_aub_manager.h"
-
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "aub_mem_dump.h"
 
@@ -35,8 +34,9 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnC
 
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-
-    MockGmm gmm;
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
     gmm.isCompressionEnabled = true;
     allocPtr->setDefaultGmm(&gmm);
 

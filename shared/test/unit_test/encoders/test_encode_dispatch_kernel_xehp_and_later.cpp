@@ -21,8 +21,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "test.h"
 
 #include "hw_cmds.h"
@@ -312,7 +310,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncod
     auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
     auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), cmd->getPostSync().getMocs());
+    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed()) {
+        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), cmd->getPostSync().getMocs());
+    } else {
+        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), cmd->getPostSync().getMocs());
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatchKernelThenFlushNotAdded) {
@@ -916,6 +918,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -924,7 +928,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     bool requiresUncachedMocs = false;
     bool isInternal = false;
     size_t regularEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, nullptr);
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
                                              NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
@@ -942,7 +946,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     DebugManager.flags.EnableWalkerPartition.set(-1);
 
     size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, nullptr);
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
                                              NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
 
@@ -979,6 +983,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -986,7 +991,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     DebugManager.flags.EnableWalkerPartition.set(0);
     bool isInternal = false;
     size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
 
     DebugManager.flags.EnableWalkerPartition.set(1);
 
@@ -994,7 +999,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     bool requiresUncachedMocs = false;
 
     size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
                                              NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
 
@@ -1070,6 +1075,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1077,14 +1083,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     DebugManager.flags.EnableWalkerPartition.set(0);
     bool isInternal = false;
     size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
 
     DebugManager.flags.EnableWalkerPartition.set(1);
     isInternal = true;
     uint32_t partitionCount = 0;
     bool requiresUncachedMocs = false;
     size_t internalEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
     EXPECT_EQ(baseEstimateSize, internalEstimateSize);
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,

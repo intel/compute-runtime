@@ -7,8 +7,11 @@
 
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/per_thread_data.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -16,13 +19,10 @@
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
@@ -593,7 +593,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, givenCsrInBatchingModeWh
         size_t gws[3] = {1, 1, 1};
 
         MockContext context(pClDevice);
-        std::unique_ptr<MockParentKernel> kernelToRun(MockParentKernel::create(context, false, false, false, false, false));
+        MockParentKernel::CreateParams createParams{};
+        std::unique_ptr<MockParentKernel> kernelToRun(MockParentKernel::create(context, createParams));
 
         pCmdQ->enqueueKernel(kernelToRun.get(), 1, offset, gws, gws, 0, nullptr, nullptr);
 

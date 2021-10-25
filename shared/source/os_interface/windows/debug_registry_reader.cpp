@@ -57,22 +57,22 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
     DWORD success = ERROR_SUCCESS;
     bool readSettingFromEnv = true;
 
-    success = RegOpenKeyExA(hkeyType,
-                            registryReadRootKey.c_str(),
-                            0,
-                            KEY_READ,
-                            &Key);
+    success = SysCalls::regOpenKeyExA(hkeyType,
+                                      registryReadRootKey.c_str(),
+                                      0,
+                                      KEY_READ,
+                                      &Key);
 
     if (ERROR_SUCCESS == success) {
         DWORD size = sizeof(int64_t);
         int64_t regData;
 
-        success = RegQueryValueExA(Key,
-                                   settingName,
-                                   NULL,
-                                   NULL,
-                                   reinterpret_cast<LPBYTE>(&regData),
-                                   &size);
+        success = SysCalls::regQueryValueExA(Key,
+                                             settingName,
+                                             NULL,
+                                             NULL,
+                                             reinterpret_cast<LPBYTE>(&regData),
+                                             &size);
         if (ERROR_SUCCESS == success) {
             value = regData;
             readSettingFromEnv = false;
@@ -95,30 +95,30 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     std::string keyValue = value;
     bool readSettingFromEnv = true;
 
-    success = RegOpenKeyExA(hkeyType,
-                            registryReadRootKey.c_str(),
-                            0,
-                            KEY_READ,
-                            &Key);
+    success = SysCalls::regOpenKeyExA(hkeyType,
+                                      registryReadRootKey.c_str(),
+                                      0,
+                                      KEY_READ,
+                                      &Key);
     if (ERROR_SUCCESS == success) {
         DWORD regType = REG_NONE;
         DWORD regSize = 0;
 
-        success = RegQueryValueExA(Key,
-                                   settingName,
-                                   NULL,
-                                   &regType,
-                                   NULL,
-                                   &regSize);
+        success = SysCalls::regQueryValueExA(Key,
+                                             settingName,
+                                             NULL,
+                                             &regType,
+                                             NULL,
+                                             &regSize);
         if (ERROR_SUCCESS == success) {
             if (regType == REG_SZ || regType == REG_MULTI_SZ) {
                 auto regData = std::make_unique<char[]>(regSize);
-                success = RegQueryValueExA(Key,
-                                           settingName,
-                                           NULL,
-                                           &regType,
-                                           reinterpret_cast<LPBYTE>(regData.get()),
-                                           &regSize);
+                success = SysCalls::regQueryValueExA(Key,
+                                                     settingName,
+                                                     NULL,
+                                                     &regType,
+                                                     reinterpret_cast<LPBYTE>(regData.get()),
+                                                     &regSize);
                 if (success == ERROR_SUCCESS) {
                     keyValue.assign(regData.get());
                     readSettingFromEnv = false;
@@ -126,12 +126,12 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
             } else if (regType == REG_BINARY) {
                 size_t charCount = regSize / sizeof(wchar_t);
                 auto regData = std::make_unique<wchar_t[]>(charCount);
-                success = RegQueryValueExA(Key,
-                                           settingName,
-                                           NULL,
-                                           &regType,
-                                           reinterpret_cast<LPBYTE>(regData.get()),
-                                           &regSize);
+                success = SysCalls::regQueryValueExA(Key,
+                                                     settingName,
+                                                     NULL,
+                                                     &regType,
+                                                     reinterpret_cast<LPBYTE>(regData.get()),
+                                                     &regSize);
 
                 if (ERROR_SUCCESS == success) {
 

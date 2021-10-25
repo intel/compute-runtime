@@ -15,6 +15,7 @@ namespace NEO {
 template <typename GfxFamily, typename Dispatcher>
 struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     using BaseClass = DirectSubmissionHw<GfxFamily, Dispatcher>;
+    using BaseClass::activeTiles;
     using BaseClass::allocateResources;
     using BaseClass::completionRingBuffers;
     using BaseClass::cpuCachelineFlush;
@@ -44,6 +45,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::hwInfo;
     using BaseClass::osContext;
+    using BaseClass::partitionedMode;
     using BaseClass::performDiagnosticMode;
     using BaseClass::ringBuffer;
     using BaseClass::ringBuffer2;
@@ -59,6 +61,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::workloadMode;
     using BaseClass::workloadModeOneExpectedValue;
     using BaseClass::workloadModeOneStoreAddress;
+    using BaseClass::workPartitionAllocation;
     using typename BaseClass::RingBufferUse;
 
     ~MockDirectSubmissionHw() override {
@@ -73,6 +76,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     }
 
     bool makeResourcesResident(DirectSubmissionAllocations &allocations) override {
+        makeResourcesResidentVectorSize = static_cast<uint32_t>(allocations.size());
         if (callBaseResident) {
             return BaseClass::makeResourcesResident(allocations);
         }
@@ -122,6 +126,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     uint32_t submitCount = 0u;
     uint32_t handleResidencyCount = 0u;
     uint32_t disabledDiagnosticCalled = 0u;
+    uint32_t makeResourcesResidentVectorSize = 0u;
     bool allocateOsResourcesReturn = true;
     bool submitReturn = true;
     bool handleResidencyReturn = true;

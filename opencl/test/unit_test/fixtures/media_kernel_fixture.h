@@ -6,17 +6,16 @@
  */
 
 #pragma once
-#include "shared/test/common/cmd_parse/hw_parse.h"
-
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {
 
 template <typename FactoryType>
 struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
-                            public HardwareParse,
+                            public ClHardwareParse,
                             public ::testing::Test {
     typedef HelloWorldFixture<FactoryType> Parent;
 
@@ -66,7 +65,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         Parent::kernelName = "non_vme_kernel";
 
         Parent::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
 
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(false, pKernel->isVmeKernel());
@@ -90,7 +89,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         }
         pMultiDeviceVmeKernel->release();
 
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         Parent::TearDown();
     }
 

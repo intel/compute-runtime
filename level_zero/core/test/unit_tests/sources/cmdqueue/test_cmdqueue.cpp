@@ -14,13 +14,14 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -263,6 +264,25 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBufferReturnsError) {
+    auto csr = std::make_unique<MockCommandStreamReceiverWithFailingSubmitBatch>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ResidencyContainer container;
+    int ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    EXPECT_NE(ret, 0);
+
+    commandQueue->destroy();
+}
+
 TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitializedWithExpectedSize) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -446,7 +466,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
-    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex());
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
@@ -485,7 +505,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(0);
-    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex());
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
@@ -1010,7 +1030,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
 HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEnabledThenHeapContainerIsEmpty, CommandQueueExecuteTestSupport) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
-    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex());
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
@@ -1187,6 +1207,8 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
 
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
+
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -1516,49 +1538,64 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->destroy();
 }
 
+using AubCsrTest = Test<AubCsrFixture>;
+
+HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPollForCompletionIsCalled) {
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    ze_command_queue_handle_t commandQueue = {};
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto aub_csr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
+    CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
+    queue->setCommandQueuePreemptionMode(PreemptionMode::Disabled);
+    EXPECT_EQ(aub_csr->pollForCompletionCalled, 0u);
+
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    auto commandListHandle = commandList->toHandle();
+    queue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(aub_csr->pollForCompletionCalled, 1u);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
 using CommandQueueSynchronizeTest = Test<ContextFixture>;
 
 template <typename GfxFamily>
 struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
-    ~SynchronizeCsr() override {
-        delete tagAddress;
-    }
 
     SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
-        tagAddress = new uint32_t;
-    }
-
-    bool waitForCompletionWithTimeout(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait, uint32_t partitionCount, uint32_t offsetSize) override {
-        enableTimeoutSet = enableTimeout;
-        partitionCountSet = partitionCount;
-        offsetSizeSet = offsetSize;
-        waitForComplitionCalledTimes++;
-        return true;
+        CommandStreamReceiver::tagAddress = &tagAddressData[0];
+        memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
     }
 
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
         enableTimeoutSet = enableTimeout;
         waitForComplitionCalledTimes++;
+        partitionCountSet = this->activePartitions;
         return true;
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) override {
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
         waitForTaskCountWithKmdNotifyFallbackCalled++;
-        NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode, partitionCount, offsetSize);
+        NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
     }
 
-    volatile uint32_t *getTagAddress() const override {
-        return tagAddress;
-    }
-
-    uint32_t *tagAddress;
+    static constexpr size_t tagSize = 64;
+    static volatile uint32_t tagAddressData[tagSize];
     uint32_t waitForComplitionCalledTimes = 0;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     uint32_t partitionCountSet = 0;
-    uint32_t offsetSizeSet = 0;
     bool enableTimeoutSet = false;
 };
+
+template <typename GfxFamily>
+volatile uint32_t SynchronizeCsr<GfxFamily>::tagAddressData[SynchronizeCsr<GfxFamily>::tagSize];
 
 HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
     auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
@@ -1634,15 +1671,18 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
 }
 
 HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSynchronizeThenExpectTheSameNumberCsrSynchronizeCalls) {
-    auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
-                                                                                          device->getNEODevice()->getDeviceBitfield()));
-    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
-
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
+
+    auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    volatile uint32_t *tagAddress = csr->getTagAddress();
+    for (uint32_t i = 0; i < 2; i++) {
+        *tagAddress = 0xFF;
+        tagAddress = ptrOffset(tagAddress, 8);
+    }
     auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
                                                            device,
-                                                           csr.get(),
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                            &desc,
                                                            false,
                                                            false,
@@ -1650,13 +1690,49 @@ HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSync
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
 
-    commandQueue->partitionCount = 2;
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+    commandList->partitionCount = 2;
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+
     uint64_t timeout = std::numeric_limits<uint64_t>::max();
     commandQueue->synchronize(timeout);
 
-    EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
-    EXPECT_EQ(2u, csr->partitionCountSet);
-    EXPECT_EQ(8u, csr->offsetSizeSet);
+    EXPECT_EQ(2u, csr->activePartitions);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenCsrHasMultipleActivePartitionWhenExecutingCmdListOnNewCmdQueueThenExpectCmdPartitionCountMatchCsrActivePartitions) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+
+    auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    volatile uint32_t *tagAddress = csr->getTagAddress();
+    for (uint32_t i = 0; i < 2; i++) {
+        *tagAddress = 0xFF;
+        tagAddress = ptrOffset(tagAddress, 8);
+    }
+    csr->activePartitions = 2u;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+
+    EXPECT_EQ(2u, commandQueue->partitionCount);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
@@ -1667,7 +1743,6 @@ struct TestCmdQueueCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
     }
     MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
-    MOCK_METHOD6(waitForCompletionWithTimeout, bool(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait, uint32_t partitionCount, uint32_t offsetSize));
 };
 
 HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {
@@ -1693,40 +1768,6 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionF
         .Times(1)
         .WillOnce(::testing::Return(false));
 
-    uint64_t timeout = std::numeric_limits<uint64_t>::max();
-    returnValue = commandQueue->synchronize(timeout);
-    EXPECT_EQ(returnValue, ZE_RESULT_NOT_READY);
-
-    commandQueue->destroy();
-}
-
-HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {
-    auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
-                                                                                            device->getNEODevice()->getDeviceBitfield()));
-    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
-
-    const ze_command_queue_desc_t desc{};
-    ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr.get(),
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    ASSERT_NE(nullptr, commandQueue);
-
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
-                                                   ::testing::_,
-                                                   ::testing::_,
-                                                   ::testing::_,
-                                                   ::testing::_,
-                                                   ::testing::_))
-        .Times(1)
-        .WillOnce(::testing::Return(false));
-
-    commandQueue->partitionCount = 2;
     uint64_t timeout = std::numeric_limits<uint64_t>::max();
     returnValue = commandQueue->synchronize(timeout);
     EXPECT_EQ(returnValue, ZE_RESULT_NOT_READY);
@@ -1856,6 +1897,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
         if (allocationProperties.allocationType == NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER) {
             cmdBufferAllocationsFound++;
             EXPECT_EQ(expectedBitfield, allocationProperties.subDevicesBitfield.to_ulong());
+            EXPECT_EQ(1u, allocationProperties.flags.multiOsContextCapable);
         }
     }
 

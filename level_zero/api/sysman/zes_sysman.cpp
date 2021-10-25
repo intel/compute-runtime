@@ -11,14 +11,14 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceGetProperties(
     zes_device_handle_t hDevice,
     zes_device_properties_t *pProperties) {
-    return L0::SysmanDevice::fromHandle(hDevice)->deviceGetProperties(pProperties);
+    return L0::SysmanDevice::deviceGetProperties(hDevice, pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceGetState(
     zes_device_handle_t hDevice,
     zes_device_state_t *pState) {
-    return L0::SysmanDevice::fromHandle(hDevice)->deviceGetState(pState);
+    return L0::SysmanDevice::deviceGetState(hDevice, pState);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -26,7 +26,7 @@ zesDeviceEnumSchedulers(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_sched_handle_t *phScheduler) {
-    return L0::SysmanDevice::fromHandle(hDevice)->schedulerGet(pCount, phScheduler);
+    return L0::SysmanDevice::schedulerGet(hDevice, pCount, phScheduler);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -94,28 +94,28 @@ zesDeviceProcessesGetState(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_process_state_t *pProcesses) {
-    return L0::SysmanDevice::fromHandle(hDevice)->processesGetState(pCount, pProcesses);
+    return L0::SysmanDevice::processesGetState(hDevice, pCount, pProcesses);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceReset(
     zes_device_handle_t hDevice,
     ze_bool_t force) {
-    return L0::SysmanDevice::fromHandle(hDevice)->deviceReset(force);
+    return L0::SysmanDevice::deviceReset(hDevice, force);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDevicePciGetProperties(
     zes_device_handle_t hDevice,
     zes_pci_properties_t *pProperties) {
-    return L0::SysmanDevice::fromHandle(hDevice)->pciGetProperties(pProperties);
+    return L0::SysmanDevice::pciGetProperties(hDevice, pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDevicePciGetState(
     zes_device_handle_t hDevice,
     zes_pci_state_t *pState) {
-    return L0::SysmanDevice::fromHandle(hDevice)->pciGetState(pState);
+    return L0::SysmanDevice::pciGetState(hDevice, pState);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -123,14 +123,14 @@ zesDevicePciGetBars(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_pci_bar_properties_t *pProperties) {
-    return L0::SysmanDevice::fromHandle(hDevice)->pciGetBars(pCount, pProperties);
+    return L0::SysmanDevice::pciGetBars(hDevice, pCount, pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDevicePciGetStats(
     zes_device_handle_t hDevice,
     zes_pci_stats_t *pStats) {
-    return L0::SysmanDevice::fromHandle(hDevice)->pciGetStats(pStats);
+    return L0::SysmanDevice::pciGetStats(hDevice, pStats);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -138,7 +138,7 @@ zesDeviceEnumPowerDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_pwr_handle_t *phPower) {
-    return L0::SysmanDevice::fromHandle(hDevice)->powerGet(pCount, phPower);
+    return L0::SysmanDevice::powerGet(hDevice, pCount, phPower);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -192,7 +192,7 @@ zesDeviceEnumFrequencyDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_freq_handle_t *phFrequency) {
-    return L0::SysmanDevice::fromHandle(hDevice)->frequencyGet(pCount, phFrequency);
+    return L0::SysmanDevice::frequencyGet(hDevice, pCount, phFrequency);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -322,7 +322,7 @@ zesDeviceEnumEngineGroups(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_engine_handle_t *phEngine) {
-    return L0::SysmanDevice::fromHandle(hDevice)->engineGet(pCount, phEngine);
+    return L0::SysmanDevice::engineGet(hDevice, pCount, phEngine);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -344,7 +344,7 @@ zesDeviceEnumStandbyDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_standby_handle_t *phStandby) {
-    return L0::SysmanDevice::fromHandle(hDevice)->standbyGet(pCount, phStandby);
+    return L0::SysmanDevice::standbyGet(hDevice, pCount, phStandby);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -373,7 +373,7 @@ zesDeviceEnumFirmwares(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_firmware_handle_t *phFirmware) {
-    return L0::SysmanDevice::fromHandle(hDevice)->firmwareGet(pCount, phFirmware);
+    return L0::SysmanDevice::firmwareGet(hDevice, pCount, phFirmware);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -396,7 +396,7 @@ zesDeviceEnumMemoryModules(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_mem_handle_t *phMemory) {
-    return L0::SysmanDevice::fromHandle(hDevice)->memoryGet(pCount, phMemory);
+    return L0::SysmanDevice::memoryGet(hDevice, pCount, phMemory);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -425,7 +425,7 @@ zesDeviceEnumFabricPorts(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_fabric_port_handle_t *phPort) {
-    return L0::SysmanDevice::fromHandle(hDevice)->fabricPortGet(pCount, phPort);
+    return L0::SysmanDevice::fabricPortGet(hDevice, pCount, phPort);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -475,7 +475,7 @@ zesDeviceEnumTemperatureSensors(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_temp_handle_t *phTemperature) {
-    return L0::SysmanDevice::fromHandle(hDevice)->temperatureGet(pCount, phTemperature);
+    return L0::SysmanDevice::temperatureGet(hDevice, pCount, phTemperature);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -533,7 +533,7 @@ zesDeviceEnumFans(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_fan_handle_t *phFan) {
-    return L0::SysmanDevice::fromHandle(hDevice)->fanGet(pCount, phFan);
+    return L0::SysmanDevice::fanGet(hDevice, pCount, phFan);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -619,7 +619,7 @@ zesDeviceEnumRasErrorSets(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_ras_handle_t *phRas) {
-    return L0::SysmanDevice::fromHandle(hDevice)->rasGet(pCount, phRas);
+    return L0::SysmanDevice::rasGet(hDevice, pCount, phRas);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -655,7 +655,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceEventRegister(
     zes_device_handle_t hDevice,
     zes_event_type_flags_t events) {
-    return L0::SysmanDevice::fromHandle(hDevice)->deviceEventRegister(events);
+    return L0::SysmanDevice::deviceEventRegister(hDevice, events);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -685,7 +685,7 @@ zesDeviceEnumDiagnosticTestSuites(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_diag_handle_t *phDiagnostics) {
-    return L0::SysmanDevice::fromHandle(hDevice)->diagnosticsGet(pCount, phDiagnostics);
+    return L0::SysmanDevice::diagnosticsGet(hDevice, pCount, phDiagnostics);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -717,7 +717,7 @@ zesDeviceEnumPerformanceFactorDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_perf_handle_t *phPerf) {
-    return L0::SysmanDevice::fromHandle(hDevice)->performanceGet(pCount, phPerf);
+    return L0::SysmanDevice::performanceGet(hDevice, pCount, phPerf);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

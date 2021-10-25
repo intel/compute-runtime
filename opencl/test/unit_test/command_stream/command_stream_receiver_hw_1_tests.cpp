@@ -12,7 +12,9 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
@@ -21,9 +23,7 @@
 #include "opencl/test/unit_test/command_stream/command_stream_receiver_hw_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "test.h"
@@ -80,7 +80,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWh
 HWTEST_F(UltCommandStreamReceiverTest, givenCsrWhenProgramStateSipIsCalledThenIsStateSipCalledIsSetToTrue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice);
+    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, commandStreamReceiver.isRcs());
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
@@ -98,8 +98,29 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetWhenGetRequiredSt
     commandStreamReceiver.isStateSipSent = true;
     auto sizeWhenSipIsSent = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
 
-    auto sizeForStateSip = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice);
+    auto sizeForStateSip = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, commandStreamReceiver.isRcs());
     EXPECT_EQ(sizeForStateSip, sizeWithStateSipIsNotSent - sizeWhenSipIsSent);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, whenGetCmdSizeForPerDssBackedBufferIsCalledThenCorrectResultIsReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.usePerDssBackedBuffer = false;
+    commandStreamReceiver.isPerDssBackedBufferSent = true;
+    auto basicSize = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
+
+    {
+        dispatchFlags.usePerDssBackedBuffer = true;
+        commandStreamReceiver.isPerDssBackedBufferSent = true;
+        auto newSize = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
+        EXPECT_EQ(basicSize, newSize);
+    }
+    {
+        dispatchFlags.usePerDssBackedBuffer = true;
+        commandStreamReceiver.isPerDssBackedBufferSent = false;
+        auto newSize = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
+        EXPECT_EQ(basicSize, newSize - commandStreamReceiver.getCmdSizeForPerDssBackedBuffer(pDevice->getHardwareInfo()));
+    }
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetAndSourceLevelDebuggerIsActiveWhenGetRequiredStateSipCmdSizeIsCalledThenStateSipCmdSizeIsIncluded) {
@@ -113,7 +134,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetAndSourceLevelDeb
     commandStreamReceiver.isStateSipSent = true;
     auto sizeWithSourceKernelDebugging = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
 
-    auto sizeForStateSip = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice);
+    auto sizeForStateSip = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, commandStreamReceiver.isRcs());
     EXPECT_EQ(sizeForStateSip, sizeWithSourceKernelDebugging - sizeWithoutSourceKernelDebugging - PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true));
     pDevice->setDebuggerActive(false);
 }
@@ -439,7 +460,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSinglePartitionWhenCallingWaitKmdNot
     commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
     commandStreamReceiver.returnWaitForCompletionWithTimeout = false;
 
-    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false, 1, 0);
+    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
     EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
 }
 
@@ -448,8 +469,8 @@ HWTEST_F(UltCommandStreamReceiverTest, givenMultiplePartitionsWhenCallingWaitKmd
     commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
     commandStreamReceiver.returnWaitForCompletionWithTimeout = false;
 
-    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false, 2, 8);
-    EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountExplicitCalled);
+    commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
 }
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTests;
@@ -1400,3 +1421,13 @@ INSTANTIATE_TEST_CASE_P(BcsDetaliedTest,
                         ::testing::Combine(
                             ::testing::ValuesIn(BlitterProperties),
                             ::testing::Values(BlitterConstants::BlitDirection::HostPtrToBuffer, BlitterConstants::BlitDirection::BufferToHostPtr)));
+
+HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActivePartitionsThenExpectNoAction) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    size_t expectedCmdSize = 0;
+    EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getCmdSizeForActivePartitionConfig());
+    size_t usedBefore = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.programActivePartitionConfig();
+    size_t usedAfter = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(usedBefore, usedAfter);
+}

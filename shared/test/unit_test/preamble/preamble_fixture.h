@@ -8,30 +8,29 @@
 #pragma once
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/fixtures/linear_stream_fixture.h"
 
-#include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-struct PreambleFixture : public ClDeviceFixture,
+struct PreambleFixture : public DeviceFixture,
                          public LinearStreamFixture,
                          public HardwareParse,
                          public ::testing::Test {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
         HardwareParse::SetUp();
     }
 
     void TearDown() override {
         HardwareParse::TearDown();
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 };
 
-class PreambleVfeState : public PlatformFixture,
+class PreambleVfeState : public DeviceFixture,
                          public ::testing::Test,
                          public LinearStreamFixture,
                          public HardwareParse {
@@ -40,11 +39,11 @@ class PreambleVfeState : public PlatformFixture,
         ::testing::Test::SetUp();
         LinearStreamFixture::SetUp();
         HardwareParse::SetUp();
-        PlatformFixture::SetUp();
-        testWaTable = &pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->workaroundTable;
+        DeviceFixture::SetUp();
+        testWaTable = &pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->workaroundTable;
     }
     void TearDown() override {
-        PlatformFixture::TearDown();
+        DeviceFixture::TearDown();
         HardwareParse::TearDown();
         LinearStreamFixture::TearDown();
         ::testing::Test::TearDown();

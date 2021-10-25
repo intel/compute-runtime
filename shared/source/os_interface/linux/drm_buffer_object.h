@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/utilities/stackvec.h"
@@ -29,8 +30,6 @@ class Drm;
 class OsContext;
 
 class BufferObject {
-    friend DrmMemoryManager;
-
   public:
     BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContextCount);
     MOCKABLE_VIRTUAL ~BufferObject() = default;
@@ -60,17 +59,22 @@ class BufferObject {
     inline void reference() {
         this->refCount++;
     }
+    inline uint32_t unreference() {
+        return this->refCount.fetch_sub(1);
+    }
     uint32_t getRefCount() const;
 
     size_t peekSize() const { return size; }
     int peekHandle() const { return handle; }
+    const Drm *peekDrm() const { return drm; }
     uint64_t peekAddress() const { return gpuAddress; }
-    void setAddress(uint64_t address) { this->gpuAddress = address; }
+    void setAddress(uint64_t address) { this->gpuAddress = GmmHelper::canonize(address); }
     void *peekLockedAddress() const { return lockedAddress; }
     void setLockedAddress(void *cpuAddress) { this->lockedAddress = cpuAddress; }
     void setUnmapSize(uint64_t unmapSize) { this->unmapSize = unmapSize; }
     uint64_t peekUnmapSize() const { return unmapSize; }
     bool peekIsReusableAllocation() const { return this->isReused; }
+    void markAsReusableAllocation() { this->isReused = true; }
     void addBindExtHandle(uint32_t handle);
     StackVec<uint32_t, 2> &getBindExtHandles() { return bindExtHandles; }
     void markForCapture() {
@@ -90,6 +94,9 @@ class BufferObject {
     void setCacheRegion(CacheRegion regionIndex) { cacheRegion = regionIndex; }
     CacheRegion peekCacheRegion() const { return cacheRegion; }
 
+    void setCachePolicy(CachePolicy memType) { cachePolicy = memType; }
+    CachePolicy peekCachePolicy() const { return cachePolicy; }
+
   protected:
     Drm *drm = nullptr;
     bool perContextVmsUsed = false;
@@ -108,15 +115,17 @@ class BufferObject {
     MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
     void fillExecObjectImpl(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId);
 
-    uint64_t gpuAddress = 0llu;
-
     void *lockedAddress; // CPU side virtual address
 
     uint64_t unmapSize = 0;
 
     CacheRegion cacheRegion = CacheRegion::Default;
+    CachePolicy cachePolicy = CachePolicy::WriteBack;
 
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;
+
+  private:
+    uint64_t gpuAddress = 0llu;
 };
 } // namespace NEO

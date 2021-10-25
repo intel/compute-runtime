@@ -169,13 +169,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     if (neoDevice->getDebugger()) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
         auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
-        auto debugSurface = device->getDebugSurface();
-        auto mocs = device->getMOCS(false, false);
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(&surfaceState, debugSurface->getGpuAddress(),
-                                                         debugSurface->getUnderlyingBufferSize(), mocs,
-                                                         false, false, false, neoDevice->getNumGenericSubDevices(),
-                                                         debugSurface, neoDevice->getGmmHelper(), kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, 1u);
+
+        NEO::EncodeSurfaceStateArgs args;
+        args.outMemory = &surfaceState;
+        args.graphicsAddress = device->getDebugSurface()->getGpuAddress();
+        args.size = device->getDebugSurface()->getUnderlyingBufferSize();
+        args.mocs = device->getMOCS(false, false);
+        args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+        args.allocation = device->getDebugSurface();
+        args.gmmHelper = neoDevice->getGmmHelper();
+        args.useGlobalAtomics = kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics;
+        args.areMultipleSubDevicesInContext = false;
+        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
 
@@ -193,5 +199,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     return ZE_RESULT_SUCCESS;
 }
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t partitionDataSize) {}
 
 } // namespace L0

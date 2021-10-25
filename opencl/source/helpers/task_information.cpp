@@ -23,6 +23,7 @@
 #include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/task_information.inl"
 #include "opencl/source/mem_obj/mem_obj.h"
@@ -56,7 +57,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         {},                                                                          //pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                //flushStampReference
         commandQueue.getThrottle(),                                                  //throttle
-        PreemptionHelper::taskPreemptionMode(device, multiDispatch),                 //preemptionMode
+        ClPreemptionHelper::taskPreemptionMode(device, multiDispatch),               //preemptionMode
         GrfConfig::NotApplicable,                                                    //numGrfRequired
         L3CachingSettings::NotApplicable,                                            //l3CacheSettings
         ThreadArbitrationPolicy::NotPresent,                                         //threadArbitrationPolicy
@@ -96,7 +97,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::DependencyResolveOnGpu);
 
     if (!memObj.isMemObjZeroCopy()) {
-        commandQueue.waitUntilComplete(completionStamp.taskCount, 0u, completionStamp.flushStamp, false);
+        commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
         if (operationType == MAP) {
             memObj.transferDataToHostPtr(copySize, copyOffset);
         } else if (!readOnly) {
@@ -111,7 +112,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
 }
 
 CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces,
-                                           bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
+                                           bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> &&printfHandler,
                                            PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount)
     : Command(commandQueue, kernelOperation), flushDC(flushDC), slmUsed(usesSLM),
       NDRangeKernel(ndRangeKernel), printfHandler(std::move(printfHandler)), kernel(kernel),
@@ -138,6 +139,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
     bool executionModelKernel = kernel->isParentKernel;
     auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
+    auto bcsCsrForAuxTranslation = commandQueue.getBcsForAuxTranslation();
 
     auto commandStreamReceiverOwnership = commandStreamReceiver.obtainUniqueOwnership();
     bool isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
@@ -204,13 +206,12 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        auto &bcsCsr = *commandQueue.getBcsForAuxTranslation();
         CsrDependencies csrDeps;
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, bcsCsr, CsrDependencies::DependenciesType::All);
+        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, *bcsCsrForAuxTranslation, CsrDependencies::DependenciesType::All);
 
         BlitProperties::setupDependenciesForAuxTranslation(kernelOperation->blitPropertiesContainer, *timestampPacketDependencies,
                                                            *currentTimestampPacketNodes, csrDeps,
-                                                           commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
+                                                           commandQueue.getGpgpuCommandStreamReceiver(), *bcsCsrForAuxTranslation);
     }
 
     const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
@@ -286,10 +287,9 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
 
-    uint32_t bcsTaskCount = 0u;
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        bcsTaskCount = commandQueue.getBcsForAuxTranslation()->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
-        commandQueue.updateBcsTaskCount(bcsTaskCount);
+        const auto newTaskCount = bcsCsrForAuxTranslation->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+        commandQueue.updateBcsTaskCount(bcsCsrForAuxTranslation->getOsContext().getEngineType(), newTaskCount);
     }
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
 
@@ -298,7 +298,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (printfHandler) {
-        commandQueue.waitUntilComplete(completionStamp.taskCount, bcsTaskCount, completionStamp.flushStamp, false);
+        commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
         printfHandler.get()->printEnqueueOutput();
     }
 
@@ -326,9 +326,8 @@ void CommandWithoutKernel::dispatchBlitOperation() {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(blitProperties.csrDependencies, *bcsCsr);
     }
 
-    auto bcsTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
-
-    commandQueue.updateBcsTaskCount(bcsTaskCount);
+    const auto newTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+    commandQueue.updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
 }
 
 CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {

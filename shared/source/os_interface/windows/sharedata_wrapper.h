@@ -186,7 +186,10 @@ typedef struct __GMM_GFX_PARTITIONING {
         uint64_t Base, Limit;
     } Standard,
         Standard64KB,
+        Reserved0,
+        Reserved1,
         SVM,
+        Reserved2,
         Heap32[4];
 } GMM_GFX_PARTITIONING;
 

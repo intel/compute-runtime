@@ -7,10 +7,11 @@
 
 #include "shared/source/aub/aub_subcapture.h"
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_aub_csr.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
@@ -18,11 +19,10 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_stream/thread_arbitration_policy_helper.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_aub_csr.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_internal_allocation_storage.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
@@ -31,6 +31,8 @@
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
+
+#include "test_traits_common.h"
 
 using namespace NEO;
 
@@ -109,9 +111,9 @@ struct EnqueueHandlerWithAubSubCaptureTests : public EnqueueHandlerTest {
       public:
         MockCmdQWithAubSubCapture(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
 
-        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             waitUntilCompleteCalled = true;
-            CommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
+            CommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
         }
 
         void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, CommandStreamReceiver &csr) override {
@@ -141,6 +143,25 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCapt
     MockKernelWithInternals mockKernel(*pClDevice);
     size_t gws[3] = {1, 0, 0};
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_TRUE(cmdQ.waitUntilCompleteCalled);
+}
+
+HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueMarkerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(1);
+
+    auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(aubCsr);
+
+    AubSubCaptureCommon subCaptureCommon;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureFilter.dumpKernelName = "invalid_kernel_name";
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("file_name.aub", subCaptureCommon);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockCmdQWithAubSubCapture<FamilyType> cmdQ(context, pClDevice);
+    cmdQ.enqueueMarkerWithWaitList(0, nullptr, nullptr);
 
     EXPECT_TRUE(cmdQ.waitUntilCompleteCalled);
 }
@@ -447,7 +468,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsSetThenPatchInfoDataIsTransferredToCSR) {
+HWTEST2_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsSetThenPatchInfoDataIsTransferredToCSR, MatchAny) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
@@ -465,7 +486,9 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
     mockKernel.mockKernel->getPatchInfoDataList().push_back(patchInfoData);
 
-    EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(8);
+    constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 8 : 7;
+
+    EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(expectedCallsCount);
     EXPECT_CALL(*mockHelper, registerCommandChunk(::testing::_)).Times(1);
     EXPECT_CALL(*mockHelper, registerBatchBufferStartAddress(::testing::_, ::testing::_)).Times(1);
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -665,7 +688,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         auto &surfaceStateHeap = mockCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0);
         EXPECT_EQ(sshUsageWithoutSyncBuffer + kernelInternals.kernelInfo.heapInfo.SurfaceStateHeapSize, surfaceStateHeap.getUsed());
 
-        HardwareParse hwParser;
+        ClHardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(*mockCmdQ);
 
         auto &surfaceState = hwParser.getSurfaceState<FamilyType>(&surfaceStateHeap, 0);

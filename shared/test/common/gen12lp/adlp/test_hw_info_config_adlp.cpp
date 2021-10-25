@@ -8,7 +8,6 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
 using namespace NEO;

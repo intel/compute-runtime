@@ -98,9 +98,9 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         return ZE_RESULT_SUCCESS;
     }
 
-    void submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr, bool isCooperative) override {
+    int submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr, bool isCooperative) override {
         residencyContainerSnapshot = residencyContainer;
-        BaseClass::submitBatchBuffer(offset, residencyContainer, endingCmdPtr, isCooperative);
+        return BaseClass::submitBatchBuffer(offset, residencyContainer, endingCmdPtr, isCooperative);
     }
 
     uint32_t synchronizedCalled = 0;

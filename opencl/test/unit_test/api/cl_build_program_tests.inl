@@ -8,13 +8,13 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/program/kernel_info.h"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 
 #include "cl_api_tests.h"
 

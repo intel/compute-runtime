@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -29,6 +30,7 @@ namespace NEO {
 
 using osHandle = unsigned int;
 inline osHandle toOsHandle(const void *handle) {
+
     return static_cast<osHandle>(castToUint64(handle));
 }
 
@@ -127,7 +129,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
         this->cpuPtr = cpuPtr;
-        this->gpuAddress = gpuAddress;
+        this->gpuAddress = GmmHelper::canonize(gpuAddress);
     }
     size_t getUnderlyingBufferSize() const { return size; }
     void setSize(size_t size) { this->size = size; }
@@ -229,13 +231,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::RING_BUFFER ||
                allocationType == AllocationType::SEMAPHORE_BUFFER ||
                allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+               allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
                allocationType == AllocationType::DEBUG_MODULE_AREA;
     }
     static bool isLockable(AllocationType allocationType) {
         return isCpuAccessRequired(allocationType) ||
                isIsaAllocationType(allocationType) ||
                allocationType == AllocationType::BUFFER_HOST_MEMORY ||
-               allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
                allocationType == AllocationType::SHARED_RESOURCE_COPY;
     }
 
@@ -267,6 +269,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     }
     void setGmm(Gmm *gmm, uint32_t handleId) {
         gmms[handleId] = gmm;
+    }
+    void resizeGmms(uint32_t size) {
+        gmms.resize(size);
     }
 
     uint32_t getNumGmms() const {

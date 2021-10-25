@@ -105,7 +105,7 @@ class CompilerInterface {
     virtual ~CompilerInterface();
 
     template <typename CompilerInterfaceT = CompilerInterface>
-    static CompilerInterfaceT *createInstance(std::unique_ptr<CompilerCache> cache, bool requireFcl) {
+    static CompilerInterfaceT *createInstance(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
         auto instance = new CompilerInterfaceT();
         if (!instance->initialize(std::move(cache), requireFcl)) {
             delete instance;
@@ -133,11 +133,11 @@ class CompilerInterface {
                                                const TranslationInput &input,
                                                TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, bool bindlessSip, std::vector<char> &retBinary,
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
                                                                      std::vector<char> &stateSaveAreaHeader);
 
   protected:
-    MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl);
+    MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl);
     MOCKABLE_VIRTUAL bool loadFcl();
     MOCKABLE_VIRTUAL bool loadIgc();
 
@@ -183,7 +183,5 @@ class CompilerInterface {
         bool requiresIgc = (IGC::CodeType::oclC != translationSrc) || ((IGC::CodeType::spirV != translationDst) && (IGC::CodeType::llvmBc != translationDst) && (IGC::CodeType::llvmLl != translationDst));
         return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable() || (false == requiresIgc));
     }
-
-    bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo);
 };
 } // namespace NEO

@@ -35,9 +35,8 @@ std::unique_ptr<char[]> loadDataFromFile(
         if (ret) {
             // we initialize to all zeroes before reading in data
             memset(ret.get(), 0x00, nsize + 1);
-            auto read = fread(ret.get(), sizeof(unsigned char), nsize, fp);
+            [[maybe_unused]] auto read = fread(ret.get(), sizeof(unsigned char), nsize, fp);
             DEBUG_BREAK_IF(read != nsize);
-            UNUSED_VARIABLE(read);
         } else {
             nsize = 0;
         }

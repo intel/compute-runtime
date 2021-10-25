@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/memory_properties_helpers.h"
+
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {

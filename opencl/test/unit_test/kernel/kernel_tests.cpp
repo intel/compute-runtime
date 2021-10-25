@@ -10,34 +10,34 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
-#include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
@@ -504,7 +504,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return true;
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) override {
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
     uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
 
@@ -2125,7 +2125,7 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
     cl_int retVal;
     MockContext context;
     std::unique_ptr<NEO::Image> imageNV12(
-        Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(imageNV12->getMediaPlaneType(), 0u);
 
@@ -2141,7 +2141,7 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
     imageDesc.mem_object = imageNV12.get();
 
     std::unique_ptr<NEO::Image> imageY(
-        Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(imageY->getMediaPlaneType(), 0u);
 
@@ -3264,7 +3264,7 @@ HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsC
 
     char buffer[MemoryConstants::pageSize64k];
     GraphicsAllocation gfxAlloc(0, GraphicsAllocation::AllocationType::CONSTANT_SURFACE, buffer,
-                                MemoryConstants::pageSize64k, (osHandle)8, MemoryPool::MemoryNull, mockMaxOsContextCount);
+                                MemoryConstants::pageSize64k, (osHandle)8, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
 
     MockContext context(pClDevice);
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));

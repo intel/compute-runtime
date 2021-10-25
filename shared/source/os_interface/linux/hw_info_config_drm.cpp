@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -38,7 +39,7 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
     const CpuInfo &cpuInfo = CpuInfo::getInstance();
 
     do {
-        uint32_t cpuRegsInfo[4];
+        uint32_t cpuRegsInfo[4] = {};
 
         cpuInfo.cpuidex(cpuRegsInfo, 4, subleaf);
         eax = cpuRegsInfo[0];
@@ -175,8 +176,9 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     drm->checkNonPersistentContextsSupport();
     drm->checkPreemptionSupport();
     bool preemption = drm->isPreemptionSupported();
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(outHwInfo->platform.eProductFamily);
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  hwHelper.isMidThreadPreemptionSupported(*outHwInfo) && preemption,
+                                                  compilerHwInfoConfig->isMidThreadPreemptionSupported(*outHwInfo) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuThreadGroupLevelPreempt) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidBatchPreempt) && preemption);
 

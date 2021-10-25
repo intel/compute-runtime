@@ -35,4 +35,24 @@ bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwI
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isNewResidencyModelSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+    coherencyFlag = true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
 } // namespace NEO

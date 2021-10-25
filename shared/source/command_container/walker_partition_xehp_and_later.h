@@ -32,6 +32,7 @@ struct WalkerPartitionArgs {
     bool useAtomicsForSelfCleanup = false;
     bool initializeWparidRegister = false;
     bool emitPipeControlStall = false;
+    bool preferredStaticPartitioning = false;
 };
 
 template <typename GfxFamily>
@@ -457,6 +458,7 @@ uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
     if (args.emitSelfCleanup) {
         size += computeSelfCleanupSectionSize<GfxFamily>(args.useAtomicsForSelfCleanup);
     }
+    size += args.preferredStaticPartitioning ? sizeof(LOAD_REGISTER_MEM<GfxFamily>) : 0u;
     return size;
 }
 
@@ -585,6 +587,10 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
     if (args.crossTileAtomicSynchronization || args.emitSelfCleanup) {
         auto tileAtomicAddress = gpuAddressOfAllocation + controlSectionOffset + offsetof(BatchBufferControlData, tileCount);
         programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, tileAtomicAddress, args.tileCount);
+    }
+
+    if (args.preferredStaticPartitioning) {
+        programMiLoadRegisterMem<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args.workPartitionAllocationGpuVa, wparidCCSOffset);
     }
 
     //this bb start goes to the end of partitioned command buffer

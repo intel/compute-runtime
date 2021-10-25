@@ -10,18 +10,19 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
-
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 namespace NEO {
 struct UltDeviceFactory;
-}
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+} // namespace NEO
 
 namespace L0 {
 struct Context;
@@ -65,7 +66,7 @@ struct MultiDeviceFixture {
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     std::vector<NEO::Device *> devices;
-    uint32_t numRootDevices = 2u;
+    uint32_t numRootDevices = 4u;
     uint32_t numSubDevices = 2u;
     L0::ContextImp *context = nullptr;
 };
@@ -73,6 +74,24 @@ struct MultiDeviceFixture {
 struct ContextFixture : DeviceFixture {
     void SetUp() override;
     void TearDown() override;
+};
+
+struct AubCsrFixture : ContextFixture {
+    template <typename T>
+    void SetUpT() {
+        auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + NEO::defaultHwInfo->platform.eRenderCoreFamily];
+        variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
+        *csrCreateFcn = UltAubCommandStreamReceiver<T>::create;
+        ContextFixture::SetUp();
+    }
+    template <typename T>
+    void TearDownT() {
+        ContextFixture::TearDown();
+    }
+
+    void SetUp() override{};
+    void TearDown() override{};
+    std::unique_ptr<VariableBackup<CommandStreamReceiverCreateFunc>> variableBackup;
 };
 
 struct MultipleDevicesWithCustomHwInfo {

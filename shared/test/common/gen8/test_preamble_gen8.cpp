@@ -11,8 +11,6 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/unit_test/preamble/preamble_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/platform_fixture.h"
-
 using namespace NEO;
 
 typedef PreambleFixture BdwSlm;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "test.h"
@@ -56,7 +57,7 @@ TEST_F(AlocationHelperTests, GivenLinearStreamAllocTypeWhenUseExternalAllocatorF
     allocationData.type = GraphicsAllocation::AllocationType::LINEAR_STREAM;
     std::unique_ptr<MockMemoryManagerAllocationHelper> mockMemoryManager(new MockMemoryManagerAllocationHelper(*device->getNEODevice()->getExecutionEnvironment()));
     mockMemoryManager->allocateGraphicsMemory(allocationData);
-    EXPECT_EQ(mockMemoryManager->passedUseLocalMem, HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).heapInLocalMem(device->getHwInfo()));
+    EXPECT_EQ(mockMemoryManager->passedUseLocalMem, HwInfoConfig::get(device->getHwInfo().platform.eProductFamily)->heapInLocalMem(device->getHwInfo()));
 }
 
 TEST_F(AlocationHelperTests, GivenInternalAllocTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUseLocalMemEqualFalse) {

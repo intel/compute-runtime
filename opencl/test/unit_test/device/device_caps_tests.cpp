@@ -10,7 +10,9 @@
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -19,9 +21,7 @@
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
@@ -504,18 +504,14 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     EXPECT_EQ(sharedCaps.globalMemSize, expectedSize);
 }
 
-TEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSupportedWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
+HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSupportedWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getSharedDeviceInfo();
 
-    HardwareCapabilities hwCaps = {0};
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&hwCaps, *defaultHwInfo);
-
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
-    expectedSize = std::min(expectedSize, hwCaps.maxMemAllocSize);
+    expectedSize = std::min(expectedSize, HwHelperHw<FamilyType>::get().getMaxMemAllocSize());
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }
 

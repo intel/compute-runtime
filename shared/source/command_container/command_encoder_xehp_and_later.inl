@@ -50,6 +50,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     const auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
     auto sizeCrossThreadData = dispatchInterface->getCrossThreadDataSize();
     auto sizePerThreadDataForWholeGroup = dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
+    auto pImplicitArgs = dispatchInterface->getImplicitArgs();
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
     size_t sshOffset = 0;
@@ -61,7 +62,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
     size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec,
-                                                                        isInternal, isCooperative);
+                                                                        isInternal, isCooperative, isIndirect, dispatchInterface);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
         auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *bbEnd = Family::cmdInitBatchBufferEnd;
@@ -71,7 +72,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     if (kernelDescriptor.extendedInfo) {
         bool specialModeRequired = kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired();
-        if (container.lastPipelineSelectModeRequired != specialModeRequired) {
+        if (PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(container.lastPipelineSelectModeRequired, specialModeRequired, hwInfo)) {
             container.lastPipelineSelectModeRequired = specialModeRequired;
             EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
         }
@@ -152,14 +153,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     const uint32_t inlineDataSize = sizeof(INLINE_DATA);
     auto crossThreadData = dispatchInterface->getCrossThreadData();
 
+    uint32_t inlineDataProgrammingOffset = 0u;
+
     if (inlineDataProgramming) {
-        auto copySize = std::min(inlineDataSize, sizeCrossThreadData);
+        inlineDataProgrammingOffset = std::min(inlineDataSize, sizeCrossThreadData);
         auto dest = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
-        memcpy_s(dest, copySize, crossThreadData, copySize);
-        auto offset = std::min(inlineDataSize, sizeCrossThreadData);
-        sizeCrossThreadData -= copySize;
-        crossThreadData = ptrOffset(crossThreadData, offset);
-        inlineDataProgramming = copySize != 0;
+        memcpy_s(dest, inlineDataProgrammingOffset, crossThreadData, inlineDataProgrammingOffset);
+        sizeCrossThreadData -= inlineDataProgrammingOffset;
+        crossThreadData = ptrOffset(crossThreadData, inlineDataProgrammingOffset);
+        inlineDataProgramming = inlineDataProgrammingOffset != 0;
     }
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
@@ -174,7 +176,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         UNRECOVERABLE_IF(!ptr);
         offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData);
 
-        auto pImplicitArgs = dispatchInterface->getImplicitArgs();
         if (pImplicitArgs) {
             offsetThreadData -= sizeof(ImplicitArgs);
             pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
@@ -186,10 +187,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                      crossThreadData, sizeCrossThreadData);
         }
         if (isIndirect) {
-            void *gpuPtr = reinterpret_cast<void *>(heap->getHeapGpuBase() + heap->getUsed() - sizeThreadData);
-            EncodeIndirectParams<Family>::setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, gpuPtr);
-            EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, gpuPtr, dispatchInterface->getGroupSize());
-            EncodeIndirectParams<Family>::setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, gpuPtr, dispatchInterface->getGroupSize());
+            auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
+            uint64_t implicitArgsGpuPtr = 0u;
+            if (pImplicitArgs) {
+                implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - sizeof(ImplicitArgs);
+            }
+            EncodeIndirectParams<Family>::encode(container, gpuPtr, dispatchInterface, implicitArgsGpuPtr);
         }
 
         auto perThreadDataPtr = dispatchInterface->getPerThreadData();
@@ -238,7 +241,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     auto &postSync = walkerCmd.getPostSync();
     if (eventAddress != 0) {
         postSync.setDataportPipelineFlush(true);
-        postSync.setL3Flush(L3FlushEnable);
         if (isTimestampEvent) {
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
         } else {
@@ -250,7 +252,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         postSync.setDestinationAddress(eventAddress);
 
         auto gmmHelper = device->getRootDeviceEnvironment().getGmmHelper();
-        postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        if (MemorySynchronizationCommands<Family>::isDcFlushAllowed()) {
+            postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        } else {
+            postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+        }
 
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
     }
@@ -434,13 +440,22 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart,
                                                                           const Vec3<size_t> &groupCount, bool isInternal,
-                                                                          bool isCooperative) {
+                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface) {
     size_t totalSize = sizeof(WALKER_TYPE);
     totalSize += PreemptionHelper::getPreemptionWaCsSize<Family>(*device);
     totalSize += EncodeStates<Family>::getAdjustStateComputeModeSize();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
+    if (isIndirect) {
+        UNRECOVERABLE_IF(dispatchInterface == nullptr);
+        totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), false);
+        if (dispatchInterface->getImplicitArgs()) {
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), true);
+        }
+    }
 
     if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getDeviceBitfield(), !isCooperative) &&
         !isInternal) {
@@ -449,6 +464,10 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
     }
 
     return totalSize;
+}
+
+template <typename Family>
+void EncodeStateBaseAddress<Family>::setIohAddressForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
 }
 
 template <typename Family>
@@ -562,18 +581,10 @@ template <typename Family>
 void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
     auto pipelineSelectCmd = Family::cmdInitPipelineSelect;
+    auto isSpecialModeSelected = kernelDescriptor.extendedInfo && kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired();
 
-    if (kernelDescriptor.extendedInfo && kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired()) {
-        pipelineSelectCmd.setSystolicModeEnable(true);
-    } else {
-        pipelineSelectCmd.setSystolicModeEnable(false);
-    }
+    PreambleHelper<Family>::appendProgramPipelineSelect(&pipelineSelectCmd, isSpecialModeSelected, container.getDevice()->getHardwareInfo());
 
-    if (DebugManager.flags.OverrideSystolicPipelineSelect.get() != -1) {
-        pipelineSelectCmd.setSystolicModeEnable(DebugManager.flags.OverrideSystolicPipelineSelect.get());
-    }
-
-    pipelineSelectCmd.setMaskBits(pipelineSelectSystolicModeEnableMaskBits);
     pipelineSelectCmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 
     auto buffer = container.getCommandStream()->getSpace(sizeof(pipelineSelectCmd));
@@ -607,33 +618,33 @@ bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                                         bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    Gmm *gmm = allocation ? allocation->getDefaultGmm() : nullptr;
+void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
+    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
+    Gmm *gmm = args.allocation ? args.allocation->getDefaultGmm() : nullptr;
     uint32_t compressionFormat = 0;
 
     bool setConstCachePolicy = false;
-    if (allocation && allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE) {
+    if (args.allocation && args.allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE) {
         setConstCachePolicy = true;
     }
 
-    if (surfaceState->getMemoryObjectControlState() == gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) &&
+    if (surfaceState->getMemoryObjectControlState() == args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) &&
         DebugManager.flags.ForceL1Caching.get() != 0) {
         setConstCachePolicy = true;
     }
 
     if (setConstCachePolicy == true) {
-        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+        surfaceState->setMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
     }
 
-    encodeExtraCacheSettings(surfaceState, *gmmHelper->getHardwareInfo());
-    DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(numAvailableDevices))};
+    encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
+    DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(args.numAvailableDevices))};
     bool implicitScaling = ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, true);
     bool enablePartialWrites = implicitScaling;
     bool enableMultiGpuAtomics = enablePartialWrites;
 
     if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
-        enableMultiGpuAtomics = useGlobalAtomics && (enablePartialWrites || areMultipleSubDevicesInContext);
+        enableMultiGpuAtomics = args.useGlobalAtomics && (enablePartialWrites || args.areMultipleSubDevicesInContext);
     }
 
     surfaceState->setDisableSupportForMultiGpuAtomics(!enableMultiGpuAtomics);
@@ -649,7 +660,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfac
 
     if (EncodeSurfaceState<Family>::isAuxModeEnabled(surfaceState, gmm)) {
         auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();
-        compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+        compressionFormat = args.gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
 
         if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
             compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
@@ -657,7 +668,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfac
     }
 
     if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (allocation && !MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
+        if (args.allocation && !MemoryPool::isSystemMemoryPool(args.allocation->getMemoryPool())) {
             setCoherencyType(surfaceState, R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
             setBufferAuxParamsForCCS(surfaceState);
             compressionFormat = DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();

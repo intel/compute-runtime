@@ -14,9 +14,10 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/tag_allocator.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/linear_stream_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
@@ -25,8 +26,7 @@
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -450,7 +450,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
     auto gmmHelper = device->getGmmHelper();
-    auto expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto expectedMocs = MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed() ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
     auto walker = genCmdCast<COMPUTE_WALKER *>(*hwParser.itorWalker);
     EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walker->getPostSync().getOperation());
@@ -490,7 +490,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
     auto walker = genCmdCast<COMPUTE_WALKER *>(*hwParser.itorWalker);
 
     auto gmmHelper = device->getGmmHelper();
-    auto expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto expectedMocs = MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed() ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
     auto &postSyncData = walker->getPostSync();
     EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP,
@@ -1196,7 +1196,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t lws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1215,7 +1215,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t lws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1238,7 +1238,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelTha
     SingleSubdeviceKernel subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
     cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1256,7 +1256,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t lws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1275,7 +1275,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsCre
     size_t lws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1295,7 +1295,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     auto timestampPacket = cmdQ->timestampPacketContainer->peekNodes().at(0);
@@ -1315,7 +1315,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1334,7 +1334,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenThereIsNoL
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1399,7 +1399,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhe
     size_t lws[] = {8, 1, 1};
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
@@ -1408,6 +1408,122 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhe
 
     GenCmdList storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
     EXPECT_EQ(0u, storeDataImmList.size());
+}
+
+struct XeHPAndLaterDispatchWalkerBasicTestDynamicPartition : public XeHPAndLaterDispatchWalkerBasicTest {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        DebugManager.flags.EnableStaticPartitioning.set(0);
+        DebugManager.flags.EnableWalkerPartition.set(1u);
+
+        XeHPAndLaterDispatchWalkerBasicTest::SetUp();
+    }
+    void TearDown() override {
+        XeHPAndLaterDispatchWalkerBasicTest::TearDown();
+    }
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition, givenDynamicPartitioningWhenEnqueueingKernelThenNoMultipleActivePartitionsSetInCsr) {
+    if (!OSInterface::osEnableLocalMemory) {
+        GTEST_SKIP();
+    }
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    size_t gws[] = {128, 1, 1};
+    size_t lws[] = {8, 1, 1};
+    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ);
+    auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
+    ASSERT_NE(nullptr, computeWalker);
+    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+    EXPECT_EQ(8u, computeWalker->getPartitionSize());
+}
+
+struct XeHPAndLaterDispatchWalkerBasicTestStaticPartition : public XeHPAndLaterDispatchWalkerBasicTest {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        DebugManager.flags.EnableStaticPartitioning.set(1);
+        DebugManager.flags.EnableWalkerPartition.set(1u);
+
+        XeHPAndLaterDispatchWalkerBasicTest::SetUp();
+    }
+    void TearDown() override {
+        XeHPAndLaterDispatchWalkerBasicTest::TearDown();
+    }
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition, givenStaticPartitioningWhenEnqueueingKernelThenMultipleActivePartitionsAreSetInCsr) {
+    if (!OSInterface::osEnableLocalMemory) {
+        GTEST_SKIP();
+    }
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    size_t gws[] = {128, 1, 1};
+    size_t lws[] = {8, 1, 1};
+    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ);
+    auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
+    ASSERT_NE(nullptr, computeWalker);
+    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+    EXPECT_EQ(8u, computeWalker->getPartitionSize());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
+            givenStaticPartitioningWhenEnqueueingNonUnifromKernelThenMultipleActivePartitionsAreSetInCsrAndWparidRegisterIsReconfiguredToStatic) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    if (!OSInterface::osEnableLocalMemory) {
+        GTEST_SKIP();
+    }
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    size_t gws[] = {129, 1, 1};
+    size_t lws[] = {8, 1, 1};
+    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
+    kernel->mockProgram->allowNonUniform = true;
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ->commandStream);
+
+    auto firstComputeWalkerItor = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), firstComputeWalkerItor);
+    auto computeWalker = reinterpret_cast<COMPUTE_WALKER *>(*firstComputeWalkerItor);
+    EXPECT_EQ(COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+    EXPECT_EQ(8u, computeWalker->getPartitionSize());
+
+    auto nextCmdItor = firstComputeWalkerItor;
+    ++nextCmdItor;
+
+    auto secondComputeWalkerItor = find<COMPUTE_WALKER *>(nextCmdItor, hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), secondComputeWalkerItor);
+    computeWalker = reinterpret_cast<COMPUTE_WALKER *>(*secondComputeWalkerItor);
+    EXPECT_EQ(COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
+
+    auto workPartitionAllocationGpuVa = commandStreamReceiver.getWorkPartitionAllocationGpuAddress();
+    auto expectedRegister = 0x221Cu;
+    auto loadRegisterMem = hwParser.getCommand<MI_LOAD_REGISTER_MEM>(firstComputeWalkerItor, secondComputeWalkerItor);
+    ASSERT_NE(nullptr, loadRegisterMem);
+    EXPECT_EQ(workPartitionAllocationGpuVa, loadRegisterMem->getMemoryAddress());
+    EXPECT_EQ(expectedRegister, loadRegisterMem->getRegisterAddress());
 }
 
 using NonDefaultPlatformGpuWalkerTest = XeHPAndLaterDispatchWalkerBasicTest;
@@ -1421,7 +1537,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, NonDefaultPlatformGpuWalkerTest, givenNonDefaultPla
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     auto &cmdStream = cmdQ->getCS(0);
     TagNode<TimestampPackets<uint32_t>> timestamp;
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);

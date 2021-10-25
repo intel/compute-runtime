@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 
 namespace NEO {
@@ -94,7 +95,7 @@ void HardwareParse::findHardwareCommands() {
 }
 
 template <typename FamilyType>
-const void *HardwareParse::getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex) {
+const void *HardwareParse::getStatelessArgumentPointer(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
@@ -115,7 +116,7 @@ const void *HardwareParse::getStatelessArgumentPointer(const Kernel &kernel, uin
         offsetCrossThreadData);
 
     // Determine where the argument is
-    const auto &arg = kernel.getKernelInfo().getArgDescriptorAt(indexArg);
+    const auto &arg = kernelInfo.getArgDescriptorAt(indexArg);
     if (arg.is<ArgDescriptor::ArgTPointer>() && isValidOffset(arg.as<ArgDescPointer>().stateless)) {
         return ptrOffset(pCrossThreadData, arg.as<ArgDescPointer>().stateless);
     }

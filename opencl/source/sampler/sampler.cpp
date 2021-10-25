@@ -21,7 +21,6 @@
 namespace NEO {
 
 SamplerCreateFunc samplerFactory[IGFX_MAX_CORE] = {};
-getSamplerStateSizeHwFunc getSamplerStateSizeHw[IGFX_MAX_CORE] = {};
 
 Sampler::Sampler(Context *context, cl_bool normalizedCoordinates,
                  cl_addressing_mode addressingMode, cl_filter_mode filterMode,
@@ -59,10 +58,6 @@ Sampler *Sampler::create(Context *context, cl_bool normalizedCoordinates,
     }
 
     return sampler;
-}
-
-size_t Sampler::getSamplerStateSize(const HardwareInfo &hwInfo) {
-    return getSamplerStateSizeHw[hwInfo.platform.eRenderCoreFamily]();
 }
 
 template <typename ParameterType>

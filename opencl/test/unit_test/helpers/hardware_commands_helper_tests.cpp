@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
@@ -24,7 +25,6 @@
 #include "opencl/test/unit_test/fixtures/execution_model_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 
 #include <iostream>
 using namespace NEO;
@@ -688,12 +688,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
 
     // setup global memory
     char globalBuffer[16];
-    GraphicsAllocation gfxGlobalAlloc(0, GraphicsAllocation::AllocationType::UNKNOWN, globalBuffer, castToUint64(globalBuffer), 0llu, sizeof(globalBuffer), MemoryPool::MemoryNull, mockMaxOsContextCount);
+    GraphicsAllocation gfxGlobalAlloc(0, GraphicsAllocation::AllocationType::UNKNOWN, globalBuffer, castToUint64(globalBuffer), 0llu, sizeof(globalBuffer), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
     program.setGlobalSurface(&gfxGlobalAlloc);
 
     // setup constant memory
     char constBuffer[16];
-    GraphicsAllocation gfxConstAlloc(0, GraphicsAllocation::AllocationType::UNKNOWN, constBuffer, castToUint64(constBuffer), 0llu, sizeof(constBuffer), MemoryPool::MemoryNull, mockMaxOsContextCount);
+    GraphicsAllocation gfxConstAlloc(0, GraphicsAllocation::AllocationType::UNKNOWN, constBuffer, castToUint64(constBuffer), 0llu, sizeof(constBuffer), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
     program.setConstantSurface(&gfxConstAlloc);
 
     // create kernel

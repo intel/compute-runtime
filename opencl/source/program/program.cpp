@@ -22,14 +22,15 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
-#include "opencl/source/program/kernel_info.h"
 
 #include "compiler_options.h"
 
@@ -53,12 +54,10 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
             maxRootDeviceIndex = device->getRootDeviceIndex();
         }
         deviceBuildInfos[device] = {};
-        if (device->getNumGenericSubDevices() > 1) {
-            for (auto i = 0u; i < device->getNumGenericSubDevices(); i++) {
-                auto subDevice = device->getNearestGenericSubDevice(i);
-                if (isDeviceAssociated(*subDevice)) {
-                    deviceBuildInfos[device].associatedSubDevices.push_back(subDevice);
-                }
+        for (auto i = 0u; i < device->getNumSubDevices(); i++) {
+            auto subDevice = device->getSubDevice(i);
+            if (isDeviceAssociated(*subDevice)) {
+                deviceBuildInfos[device].associatedSubDevices.push_back(subDevice);
             }
         }
     }
@@ -84,7 +83,7 @@ void Program::initInternalOptions(std::string &internalOptions) const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 
-    auto enableStatelessToStatefullWithOffset = pClDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
+    auto enableStatelessToStatefullWithOffset = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily).isStatelesToStatefullWithOffsetSupported();
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
@@ -94,8 +93,8 @@ void Program::initInternalOptions(std::string &internalOptions) const {
     }
 
     auto &hwInfo = pClDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
 
@@ -425,7 +424,7 @@ void Program::updateNonUniformFlag(const Program **inputPrograms, size_t numInpu
     this->allowNonUniform = allowNonUniform;
 }
 
-void Program::replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) {
+void Program::replaceDeviceBinary(std::unique_ptr<char[]> &&newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) {
     if (isAnyPackedDeviceBinaryFormat(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(newBinary.get()), newBinarySize))) {
         this->buildInfos[rootDeviceIndex].packedDeviceBinary = std::move(newBinary);
         this->buildInfos[rootDeviceIndex].packedDeviceBinarySize = newBinarySize;

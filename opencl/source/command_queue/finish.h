@@ -19,12 +19,8 @@ cl_int CommandQueueHw<GfxFamily>::finish() {
         return CL_OUT_OF_RESOURCES;
     }
 
-    //as long as queue is blocked we need to stall.
-    while (isQueueBlocked())
-        ;
-
-    // Stall until HW reaches CQ taskCount
-    waitForLatestTaskCount();
+    // Stall until HW reaches taskCount on all its engines
+    waitForAllEngines(true, nullptr);
 
     return CL_SUCCESS;
 }

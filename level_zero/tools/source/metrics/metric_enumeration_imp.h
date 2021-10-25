@@ -29,6 +29,7 @@ struct MetricEnumeration {
 
     virtual ze_result_t loadMetricsDiscovery();
     static const char *getMetricsDiscoveryFilename();
+    static bool isReportTriggerAvailable();
 
   protected:
     ze_result_t initialize();
@@ -81,6 +82,10 @@ struct MetricGroupImp : MetricGroup {
     ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize, const uint8_t *pRawData,
                                       uint32_t *pMetricValueCount,
                                       zet_typed_value_t *pCalculatedData) override;
+    ze_result_t calculateMetricValuesExp(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
+                                         const uint8_t *pRawData, uint32_t *pSetCount,
+                                         uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
+                                         zet_typed_value_t *pMetricValues) override;
 
     ze_result_t initialize(const zet_metric_group_properties_t &sourceProperties,
                            MetricsDiscovery::IMetricSet_1_5 &metricSet,

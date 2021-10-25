@@ -39,10 +39,6 @@ if(WIN32)
   endif()
 endif()
 
-if(DEFINED AUB_STREAM_PROJECT_NAME)
-  target_link_libraries(${NEO_STATIC_LIB_NAME} ${AUB_STREAM_PROJECT_NAME})
-endif()
-
 target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
                            ${CMAKE_CURRENT_BINARY_DIR}
                            ${KMDAF_HEADERS_DIR}
@@ -58,7 +54,6 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
                            ${NEO__IGC_INCLUDE_DIR}
                            ${THIRD_PARTY_DIR}
                            ${NEO__GMM_INCLUDE_DIR}
-                           ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/create_command_stream_receiver_${DRIVER_MODEL}
 )
 
 target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC
@@ -189,9 +184,7 @@ if(${GENERATE_EXECUTABLE})
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
     )
   else()
-    if(${NEO_TARGET_PROCESSOR} STREQUAL "x86_64")
-      target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${GMM_LINK_NAME})
-    endif()
+    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${GMM_LINK_NAME})
     target_include_directories(${NEO_DYNAMIC_LIB_NAME} PRIVATE
                                ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
     )

@@ -15,6 +15,8 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "test_traits_common.h"
+
 using namespace NEO;
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
@@ -61,7 +63,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -82,7 +85,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -104,7 +108,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRe
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -122,7 +127,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGr
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -140,8 +146,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBl
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
-
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
@@ -158,7 +164,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAl
     uint32_t numSamplers = 1;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex());
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
 
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
@@ -187,9 +194,18 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
-    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
-                                                 false, false, false, 1u,
-                                                 &allocation, pDevice->getGmmHelper(), false, 1u);
+
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = stateBuffer;
+    args.graphicsAddress = gpuAddr;
+    args.size = allocSize;
+    args.mocs = 1;
+    args.numAvailableDevices = 1;
+    args.allocation = &allocation;
+    args.gmmHelper = pDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = true;
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
+
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
     EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
@@ -214,9 +230,17 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNo
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
 
-    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
-                                                 true, false, false, 1u,
-                                                 nullptr, pDevice->getGmmHelper(), false, 1u);
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = stateBuffer;
+    args.graphicsAddress = gpuAddr;
+    args.size = allocSize;
+    args.mocs = 1;
+    args.cpuCoherent = true;
+    args.numAvailableDevices = 1;
+    args.gmmHelper = pDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = true;
+
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, state->getSurfaceType());
     EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
@@ -240,16 +264,22 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherency
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
 
-    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
-                                                 false, false, false, 1u,
-                                                 nullptr, pDevice->getGmmHelper(), false, 1u);
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = stateBuffer;
+    args.graphicsAddress = gpuAddr;
+    args.size = allocSize;
+    args.mocs = 1;
+    args.numAvailableDevices = 1;
+    args.gmmHelper = pDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = true;
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());
 
     alignedFree(stateBuffer);
 }
 
-HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStateBaseAddressCalledThenStateBaseAddressAreNotSet) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStateBaseAddressCalledThenStateBaseAddressAreNotSet, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     cmdContainer->dirtyHeaps = 0;
 
@@ -261,7 +291,6 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStat
     EncodeStateBaseAddress<FamilyType>::encode(*cmdContainer.get(), sba);
 
     auto dsh = cmdContainer->getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
-    auto ioh = cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
     auto ssh = cmdContainer->getIndirectHeap(NEO::HeapType::SURFACE_STATE);
 
     GenCmdList commands;
@@ -271,12 +300,17 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStat
     auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
 
     EXPECT_EQ(dsh->getHeapGpuBase(), pCmd->getDynamicStateBaseAddress());
-    EXPECT_EQ(ioh->getHeapGpuBase(), pCmd->getIndirectObjectBaseAddress());
     EXPECT_EQ(ssh->getHeapGpuBase(), pCmd->getSurfaceStateBaseAddress());
 
     EXPECT_EQ(sba.getDynamicStateBaseAddress(), pCmd->getDynamicStateBaseAddress());
-    EXPECT_EQ(sba.getIndirectObjectBaseAddress(), pCmd->getIndirectObjectBaseAddress());
     EXPECT_EQ(sba.getSurfaceStateBaseAddress(), pCmd->getSurfaceStateBaseAddress());
+
+    if constexpr (TestTraits<gfxCoreFamily>::iohInSbaSupported) {
+        auto ioh = cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+
+        EXPECT_EQ(ioh->getHeapGpuBase(), pCmd->getIndirectObjectBaseAddress());
+        EXPECT_EQ(sba.getIndirectObjectBaseAddress(), pCmd->getIndirectObjectBaseAddress());
+    }
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCalledThenStateBaseAddressIsSetCorrectly) {

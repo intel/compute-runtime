@@ -16,6 +16,7 @@ using namespace NEO;
 template <typename FamilyType>
 void AubWriteCopyReadBuffer::runTest() {
     auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+    simulatedCsr->initializeEngine();
 
     char srcMemoryInitial[] = {1, 2, 3, 4, 5, 6, 7, 8};
     char dstMemoryInitial[] = {11, 12, 13, 14, 15, 16, 17, 18};

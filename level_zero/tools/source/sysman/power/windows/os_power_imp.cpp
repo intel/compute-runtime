@@ -330,13 +330,13 @@ bool WddmPowerImp::isPowerModuleSupported() {
     return ((status == ZE_RESULT_SUCCESS) && (enabled));
 }
 
-WddmPowerImp::WddmPowerImp(OsSysman *pOsSysman) {
+WddmPowerImp::WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
-OsPower *OsPower::create(OsSysman *pOsSysman) {
-    WddmPowerImp *pWddmPowerImp = new WddmPowerImp(pOsSysman);
+OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    WddmPowerImp *pWddmPowerImp = new WddmPowerImp(pOsSysman, onSubdevice, subdeviceId);
     return static_cast<OsPower *>(pWddmPowerImp);
 }
 

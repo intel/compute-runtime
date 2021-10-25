@@ -62,7 +62,9 @@ TEST(ParentKernelTest, WhenArgsAddedThenObjectCountsAreIncremented) {
 TEST(ParentKernelTest, WhenPatchingBlocksSimdSizeThenPatchIsAppliedCorrectly) {
     MockClDevice device{new MockDevice};
     MockContext context(&device);
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
+    MockParentKernel::CreateParams createParams{};
+    createParams.addChildSimdSize = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
     parentKernel->patchBlocksSimdSize();
@@ -91,7 +93,9 @@ TEST(ParentKernelTest, GivenNormalKernelWhenCheckingForDeviceEnqueueThenFalseIsR
 TEST(ParentKernelTest, WhenInitializingParentKernelThenBlocksSimdSizeIsPatched) {
     MockClDevice device{new MockDevice};
     MockContext context(&device);
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
+    MockParentKernel::CreateParams createParams{};
+    createParams.addChildSimdSize = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
     parentKernel->initialize();
@@ -105,7 +109,9 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenBlocksSimdSizeIsPatched) 
 TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsAllocated) {
     MockClDevice device{new MockDevice};
     MockContext context(&device);
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
+    MockParentKernel::CreateParams createParams{};
+    createParams.addChildSimdSize = true;
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, createParams));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
     auto infoBlock = new MockKernelInfo();

@@ -31,7 +31,12 @@ class UmKmDataTranslator {
     virtual bool translateCreateContextDataToInternalRepresentation(void *dst, size_t dstSize, const CREATECONTEXT_PVTDATA &src);
 
     virtual size_t getSizeForCommandBufferHeaderDataInternalRepresentation();
-    virtual bool tranlateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src);
+    virtual bool translateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src);
+
+    virtual size_t getSizeForGmmGfxPartitioningInternalRepresentation();
+    virtual bool translateGmmGfxPartitioningToInternalRepresentation(void *dst, size_t dstSize, const GMM_GFX_PARTITIONING &src);
+    virtual bool translateGmmGfxPartitioningFromInternalRepresentation(GMM_GFX_PARTITIONING &dst, const void *src, size_t srcSize);
+
     bool enabled() const {
         return isEnabled;
     }

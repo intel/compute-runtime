@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ std::unique_ptr<OSMemory> OSMemory::create() {
     return std::make_unique<OSMemoryLinux>();
 }
 
-void *OSMemoryLinux::osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) {
+void *OSMemoryLinux::osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, bool topDownHint) {
     return mmapWrapper(baseAddress, sizeToReserve, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
 }
 

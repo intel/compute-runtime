@@ -15,9 +15,8 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/program/sync_buffer_handler.h"
-
-#include "opencl/source/os_interface/performance_counters.h"
 
 #include "engine_group_types.h"
 
@@ -67,11 +66,12 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
+    EngineControl *getInternalCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
-    OSTime *getOSTime() const { return osTime.get(); };
+    OSTime *getOSTime() const;
     double getProfilingTimerResolution();
     uint64_t getProfilingTimerClock();
     double getPlatformHostTimerResolution() const;
@@ -88,7 +88,6 @@ class Device : public ReferenceTrackedObject<Device> {
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
     RootDeviceEnvironment &getRootDeviceEnvironmentRef() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
-    const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
     bool isFullRangeSvm() const {
         return getRootDeviceEnvironment().isFullRangeSvm();
     }
@@ -126,6 +125,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void initializeRayTracing();
 
     virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
+    const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
 
   protected:
     Device() = delete;
@@ -161,8 +161,6 @@ class Device : public ReferenceTrackedObject<Device> {
 
     DeviceInfo deviceInfo = {};
 
-    HardwareCapabilities hardwareCapabilities = {};
-    std::unique_ptr<OSTime> osTime;
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;

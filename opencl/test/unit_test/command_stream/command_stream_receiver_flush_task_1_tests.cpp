@@ -11,12 +11,12 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_csr.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 #include "test.h"
@@ -547,7 +547,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, WhenFlushingTas
     flushTask(commandStreamReceiver);
 
     auto &commandStreamCSR = commandStreamReceiver.commandStream;
-    HardwareParse::parseCommands<FamilyType>(commandStreamCSR, 0);
+    parseCommands<FamilyType>(commandStreamCSR, 0);
     HardwareParse::findHardwareCommands<FamilyType>();
 
     ASSERT_NE(nullptr, cmdStateBaseAddress);
@@ -771,8 +771,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRe
     flushTask(commandStreamReceiver);
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
 
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.is3DPipelineSelectWARequired(pDevice->getHardwareInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pDevice->getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
         EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
     } else {
         EXPECT_EQ(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
@@ -931,7 +931,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
 
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
     commandStreamReceiver.timestampPacketWriteEnabled = false;
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
@@ -941,8 +944,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
-    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
+    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*mockDevice);
+    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *mockDevice);
     sizeNeeded -= sizeof(MI_BATCH_BUFFER_START); // no task to submit
     sizeNeeded += sizeof(MI_BATCH_BUFFER_END);   // no task to submit, add BBE to CSR stream
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
@@ -960,19 +963,22 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
 
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
     commandStreamReceiver.timestampPacketWriteEnabled = false;
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
     commandStreamReceiver.lastSentCoherencyRequest = 0;
 
-    auto l3Config = PreambleHelper<FamilyType>::getL3Config(pDevice->getHardwareInfo(), false);
+    auto l3Config = PreambleHelper<FamilyType>::getL3Config(mockDevice->getHardwareInfo(), false);
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*mockDevice);
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
-    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
+    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *mockDevice);
     sizeNeeded -= sizeof(MI_BATCH_BUFFER_START); // no task to submit
     sizeNeeded += sizeof(MI_BATCH_BUFFER_END);   // no task to submit, add BBE to CSR stream
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
@@ -992,18 +998,20 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 
     commandStream.getSpace(sizeof(PIPE_CONTROL));
 
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.timestampPacketWriteEnabled = false;
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
 
     commandStreamReceiver.lastSentCoherencyRequest = 0;
 
-    auto l3Config = PreambleHelper<FamilyType>::getL3Config(pDevice->getHardwareInfo(), false);
+    auto l3Config = PreambleHelper<FamilyType>::getL3Config(mockDevice->getHardwareInfo(), false);
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSizeAligned(flushTaskFlags, *pDevice);
+    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSizeAligned(flushTaskFlags, *mockDevice);
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeeded);
     auto expectedBase = csrCS.getCpuBase();
@@ -1011,7 +1019,17 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     // This case handles when we have *just* enough space
     auto expectedUsed = csrCS.getUsed() + sizeNeeded;
 
-    flushTask(commandStreamReceiver, flushTaskFlags.blocking, 0, flushTaskFlags.requiresCoherency, flushTaskFlags.lowPriority);
+    flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
+
+    commandStreamReceiver.flushTask(
+        commandStream,
+        0,
+        dsh,
+        ioh,
+        ssh,
+        taskLevel,
+        flushTaskFlags,
+        *mockDevice);
 
     // Verify that we didn't grab a new CS buffer
     EXPECT_EQ(expectedUsed, csrCS.getUsed());

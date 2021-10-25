@@ -372,6 +372,64 @@ TEST(DebugSession, givenSomeStoppedThreadsWhenAreRequestedThreadsStoppedCalledTh
     EXPECT_FALSE(sessionMock->areRequestedThreadsStopped(apiThread));
 }
 
+TEST(DebugSession, givenApiThreadAndSingleTileWhenFillingDevicesThenVectorEntryIsSet) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto debugSession = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
+
+    ze_device_thread_t thread = {hwInfo.gtSystemInfo.SliceCount - 1, hwInfo.gtSystemInfo.SubSliceCount - 1, 0, 0};
+
+    std::vector<uint8_t> devices(1);
+    debugSession->fillDevicesFromThread(thread, devices);
+
+    EXPECT_EQ(1u, devices[0]);
+}
+
+TEST(DebugSession, givenDifferentCombinationsOfThreadsAndMemoryTypeCheckExpectedMemoryAccess) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x1000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    ze_result_t retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread = {1, 1, UINT32_MAX, UINT32_MAX};
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread = {0, 0, 0, 1};
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        sessionMock->allThreads[thread]->stopThread(1u);
+    }
+
+    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+}
+
 using DebugSessionMultiTile = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(DebugSessionMultiTile, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValueReturned) {
@@ -462,5 +520,32 @@ TEST_F(DebugSessionMultiTile, WhenConvertingToThreadIdAndBackThenCorrectThreadId
     EXPECT_EQ(thread.thread, apiThread.thread);
 }
 
+TEST_F(DebugSessionMultiTile, givenApiThreadAndMultiTileWhenFillingDevicesThenVectorEntriesAreSet) {
+    L0::Device *device = driverHandle->devices[0];
+
+    auto debugSession = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, device);
+
+    ze_device_thread_t thread = {UINT32_MAX, 0, 0, 0};
+
+    std::vector<uint8_t> devices(numSubDevices);
+    debugSession->fillDevicesFromThread(thread, devices);
+
+    EXPECT_EQ(1u, devices[0]);
+    EXPECT_EQ(1u, devices[1]);
+}
+
+TEST_F(DebugSessionMultiTile, givenApiThreadAndSingleTileWhenFillingDevicesThenVectorEntryIsSet) {
+    L0::Device *device = driverHandle->devices[0];
+
+    auto debugSession = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, device);
+
+    ze_device_thread_t thread = {sliceCount * numSubDevices - 1, 0, 0, 0};
+
+    std::vector<uint8_t> devices(numSubDevices);
+    debugSession->fillDevicesFromThread(thread, devices);
+
+    EXPECT_EQ(0u, devices[0]);
+    EXPECT_EQ(1u, devices[1]);
+}
 } // namespace ult
 } // namespace L0

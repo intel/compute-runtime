@@ -214,7 +214,7 @@ inline const ArgDescValue &ArgDescriptor::as<ArgDescValue>() const {
 
 template <>
 inline ArgDescPointer &ArgDescriptor::as<ArgDescPointer>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) & initIfUnknown) {
+    if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTPointer;
         this->asPointer = {};
     }
@@ -224,7 +224,7 @@ inline ArgDescPointer &ArgDescriptor::as<ArgDescPointer>(bool initIfUnknown) {
 
 template <>
 inline ArgDescImage &ArgDescriptor::as<ArgDescImage>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) & initIfUnknown) {
+    if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTImage;
         this->asImage = {};
     }
@@ -234,7 +234,7 @@ inline ArgDescImage &ArgDescriptor::as<ArgDescImage>(bool initIfUnknown) {
 
 template <>
 inline ArgDescSampler &ArgDescriptor::as<ArgDescSampler>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) & initIfUnknown) {
+    if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTSampler;
         this->asSampler = {};
     }
@@ -244,7 +244,7 @@ inline ArgDescSampler &ArgDescriptor::as<ArgDescSampler>(bool initIfUnknown) {
 
 template <>
 inline ArgDescValue &ArgDescriptor::as<ArgDescValue>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) & initIfUnknown) {
+    if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTValue;
         this->asByValue = {};
     }

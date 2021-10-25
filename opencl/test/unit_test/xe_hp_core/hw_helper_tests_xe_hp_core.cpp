@@ -6,13 +6,13 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/source/program/kernel_info.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
 using HwHelperTestXE_HP_CORE = HwHelperTest;
@@ -307,10 +307,4 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreHelperWhenCheckDirectSubm
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
     EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 5, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
-}
-
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreWhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {
-    const auto &hwInfo = *defaultHwInfo;
-    auto &helper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_FALSE(helper.isBlitterForImagesSupported(hwInfo));
 }

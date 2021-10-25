@@ -8,12 +8,15 @@
 #pragma once
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
+
+#include "encode_surface_state_args.h"
 
 #include <algorithm>
 
@@ -54,7 +57,7 @@ struct EncodeDispatchKernel {
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
     static size_t estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart, const Vec3<size_t> &groupCount,
-                                                       bool isInternal, bool isCooperative);
+                                                       bool isInternal, bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     size_t *lws,
@@ -126,10 +129,6 @@ struct EncodeMath {
                            AluRegisters firstOperandRegister,
                            AluRegisters secondOperandRegister,
                            AluRegisters finalResultRegister);
-    static void bitwiseOr(CommandContainer &container,
-                          AluRegisters firstOperandRegister,
-                          AluRegisters secondOperandRegister,
-                          AluRegisters finalResultRegister);
 };
 
 template <typename GfxFamily>
@@ -172,13 +171,16 @@ struct EncodeIndirectParams {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_MATH = typename GfxFamily::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
-    static void setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress);
-    static void setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offset, void *crossThreadAddress, const uint32_t *groupSize);
-    static void setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws);
+
+    static void encode(CommandContainer &container, uint64_t crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, uint64_t implicitArgsGpuPtr);
+    static void setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress);
+    static void setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offset, uint64_t crossThreadAddress, const uint32_t *groupSize);
+    static void setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws);
 
     static size_t getCmdsSizeForIndirectParams();
     static size_t getCmdsSizeForSetGroupSizeIndirect();
     static size_t getCmdsSizeForSetGroupCountIndirect();
+    static size_t getCmdsSizeForSetWorkDimIndirect(const uint32_t *groupSize, bool misalignedPtr);
 };
 
 template <typename GfxFamily>
@@ -221,6 +223,7 @@ struct EncodeStateBaseAddress {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd);
     static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics);
+    static void setIohAddressForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd);
     static size_t getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container);
 };
 
@@ -245,12 +248,10 @@ struct EncodeSurfaceState {
     using AUXILIARY_SURFACE_MODE = typename R_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     using COHERENCY_TYPE = typename R_SURFACE_STATE::COHERENCY_TYPE;
 
-    static void encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
-                             bool cpuCoherent, bool forceNonAuxMode, bool isReadOnly, uint32_t numAvailableDevices,
-                             GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
-    static void encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                        bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
+    static void encodeBuffer(EncodeSurfaceStateArgs &args);
+    static void encodeExtraBufferParams(EncodeSurfaceStateArgs &args);
     static void encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo);
+    static void appendBufferSurfaceState(EncodeSurfaceStateArgs &args);
 
     static constexpr uintptr_t getSurfaceBaseAddressAlignmentMask() {
         return ~(getSurfaceBaseAddressAlignment() - 1);

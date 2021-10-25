@@ -16,7 +16,6 @@ if(TESTS_XE_HP_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe_hp_core.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_xe_hp_core.cpp

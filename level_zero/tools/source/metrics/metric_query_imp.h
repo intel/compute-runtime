@@ -45,10 +45,11 @@ struct MetricsLibrary {
     virtual bool load();
     bool isInitialized();
     ze_result_t getInitializationState();
-    void getSubDeviceClientOptions(NEO::Device &neoDevice,
-                                   ClientOptionsData_1_0 &subDevice,
+    void enableWorkloadPartition();
+    void getSubDeviceClientOptions(ClientOptionsData_1_0 &subDevice,
                                    ClientOptionsData_1_0 &subDeviceIndex,
-                                   ClientOptionsData_1_0 &subDeviceCount);
+                                   ClientOptionsData_1_0 &subDeviceCount,
+                                   ClientOptionsData_1_0 &workloadPartition);
     static const char *getFilename();
 
     // Deinitialization.
@@ -65,6 +66,7 @@ struct MetricsLibrary {
 
     // Command buffer.
     bool getGpuCommands(CommandList &commandList, CommandBufferData_1_0 &commandBuffer);
+    bool getGpuCommands(CommandBufferData_1_0 &commandBuffer);
     uint32_t getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer);
 
     // Metric group configuration.
@@ -90,6 +92,7 @@ struct MetricsLibrary {
     NEO::OsLibrary *handle = nullptr;
     MetricContext &metricContext;
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
+    bool isWorkloadPartitionEnabled = false;
     std::mutex mutex;
 
     // Metrics library types.
@@ -156,6 +159,7 @@ struct MetricQueryPoolImp : MetricQueryPool {
     MetricsLibrary &metricsLibrary;
     std::vector<MetricQueryImp> pool;
     NEO::GraphicsAllocation *pAllocation = nullptr;
+    uint32_t allocationSize = 0;
     zet_metric_query_pool_desc_t description = {};
     zet_metric_group_handle_t hMetricGroup = nullptr;
     QueryHandle_1_0 query = {};

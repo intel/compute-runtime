@@ -37,7 +37,7 @@ class BindlessHeapsHelper {
         SCRATCH_SSH,
         NUM_HEAP_TYPES
     };
-    BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex);
+    BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     ~BindlessHeapsHelper();
     GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow);
 
@@ -60,5 +60,6 @@ class BindlessHeapsHelper {
     std::vector<std::unique_ptr<SurfaceStateInHeapInfo>> surfaceStateInHeapVectorReuse;
     std::unordered_map<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> surfaceStateInHeapAllocationMap;
     std::mutex mtx;
+    DeviceBitfield deviceBitfield;
 };
 } // namespace NEO

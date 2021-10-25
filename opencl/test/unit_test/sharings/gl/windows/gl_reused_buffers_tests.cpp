@@ -7,13 +7,13 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/gl/gl_buffer.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 using namespace NEO;

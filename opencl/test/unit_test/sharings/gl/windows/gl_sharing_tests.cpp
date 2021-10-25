@@ -10,7 +10,11 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
@@ -24,7 +28,6 @@
 #include "opencl/source/sharings/gl/gl_texture.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 #include "opencl/source/sharings/sharing.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_arb_sync_event_windows.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
@@ -32,9 +35,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 #include "gl_types.h"
@@ -900,11 +900,12 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(buffer->getCpuAddressForMemoryTransfer(), nullptr); // no cpu ptr
     auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    auto pClDevice = context.getDevice(0);
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(), handleId);
+        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmClientContext()), handleId);
     }
 
-    auto commandQueue = CommandQueue::create(&context, context.getDevice(0), 0, false, retVal);
+    auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     size_t offset = 1;
@@ -943,11 +944,12 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledTwiceThenReus
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(buffer->getCpuAddressForMemoryTransfer(), nullptr); // no cpu ptr
     auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    auto pClDevice = context.getDevice(0);
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(), handleId);
+        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmClientContext()), handleId);
     }
 
-    auto commandQueue = CommandQueue::create(&context, context.getDevice(0), 0, false, retVal);
+    auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto mappedPtr = clEnqueueMapBuffer(commandQueue, glBuffer, CL_TRUE, CL_MAP_READ, 0, buffer->getSize(),

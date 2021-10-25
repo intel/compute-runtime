@@ -5,9 +5,10 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_csr.h"
+
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "test.h"
 
 using namespace NEO;

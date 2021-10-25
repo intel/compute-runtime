@@ -17,9 +17,6 @@ namespace ImplicitScaling {
 extern bool apiSupport;
 extern bool semaphoreProgrammingRequired;
 extern bool crossTileAtomicSynchronization;
-
-constexpr uint32_t partitionAddressOffsetDwords = 2u;
-constexpr uint32_t partitionAddressOffset = sizeof(uint32_t) * partitionAddressOffsetDwords;
 } // namespace ImplicitScaling
 
 struct ImplicitScalingHelper {

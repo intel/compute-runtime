@@ -5,10 +5,11 @@
  *
  */
 
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/mem_obj/pipe.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

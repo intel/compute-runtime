@@ -9,10 +9,10 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/kernel/multi_device_kernel.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 
 #include "gmock/gmock.h"
@@ -28,35 +28,35 @@ ClDeviceVector toClDeviceVector(ClDevice &clDevice);
 ////////////////////////////////////////////////////////////////////////////////
 class MockProgram : public Program {
   public:
-    using Program::createProgramFromBinary;
-    using Program::deviceBuildInfos;
-    using Program::internalOptionsToExtract;
-    using Program::kernelDebugEnabled;
-    using Program::linkBinary;
-    using Program::separateBlockKernels;
-    using Program::setBuildStatus;
-    using Program::updateNonUniformFlag;
-
+    using Program::allowNonUniform;
     using Program::applyAdditionalOptions;
     using Program::areSpecializationConstantsInitialized;
     using Program::blockKernelManager;
     using Program::buildInfos;
     using Program::context;
     using Program::createdFrom;
+    using Program::createProgramFromBinary;
     using Program::debugData;
     using Program::debugDataSize;
+    using Program::deviceBuildInfos;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
+    using Program::internalOptionsToExtract;
     using Program::irBinary;
     using Program::irBinarySize;
     using Program::isSpirV;
+    using Program::kernelDebugEnabled;
+    using Program::linkBinary;
     using Program::options;
     using Program::packDeviceBinary;
     using Program::Program;
+    using Program::separateBlockKernels;
+    using Program::setBuildStatus;
     using Program::sourceCode;
     using Program::specConstantsIds;
     using Program::specConstantsSizes;
     using Program::specConstantsValues;
+    using Program::updateNonUniformFlag;
 
     MockProgram(const ClDeviceVector &deviceVector) : Program(nullptr, false, deviceVector) {
     }
@@ -148,7 +148,7 @@ class MockProgram : public Program {
         return this->build(getDevices(), this->options.c_str(), false, builtins);
     }
 
-    void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) override {
+    void replaceDeviceBinary(std::unique_ptr<char[]> &&newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) override {
         if (replaceDeviceBinaryCalledPerRootDevice.find(rootDeviceIndex) == replaceDeviceBinaryCalledPerRootDevice.end()) {
             replaceDeviceBinaryCalledPerRootDevice.insert({rootDeviceIndex, 1});
         } else {

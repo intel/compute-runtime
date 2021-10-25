@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_hw_base.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
@@ -57,8 +58,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
     size_t size = 0;
     auto hwInfo = peekHwInfo();
     if (isComputeModeNeeded()) {
-        auto &hwHelper = HwHelperHw<Family>::get();
-        if (hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
+        auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
         }
         size += sizeof(typename GfxFamily::STATE_COMPUTE_MODE);
@@ -136,6 +137,68 @@ bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsGpuIdleImplicitFlu
 template <typename GfxFamily>
 GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation() {
     return nullptr;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh) {
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForActivePartitionConfig() const {
+    if (this->staticWorkPartitioningEnabled && csrSizeRequestFlags.activePartitionsChanged) {
+        return EncodeSetMMIO<GfxFamily>::sizeMEM +
+               EncodeSetMMIO<GfxFamily>::sizeIMM;
+    }
+    return 0;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
+    if (this->staticWorkPartitioningEnabled && csrSizeRequestFlags.activePartitionsChanged) {
+        uint64_t workPartitionAddress = getWorkPartitionAllocationGpuAddress();
+        EncodeSetMMIO<GfxFamily>::encodeMEM(commandStream,
+                                            PartitionRegisters<GfxFamily>::wparidCCSOffset,
+                                            workPartitionAddress);
+        EncodeSetMMIO<GfxFamily>::encodeIMM(commandStream,
+                                            PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                            CommonConstants::partitionAddressOffset,
+                                            true);
+    }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
+    auto hwInfo = peekHwInfo();
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
+        args.textureCacheInvalidationEnable = true;
+        args.hdcPipelineFlush = true;
+        args.amfsFlushEnable = true;
+        args.instructionCacheInvalidateEnable = true;
+        args.constantCacheInvalidationEnable = true;
+        args.stateCacheInvalidationEnable = true;
+
+        args.dcFlushEnable = false;
+
+        setPipeControlPriorToNonPipelinedStateCommandExtraProperties(args);
+    }
+
+    addPipeControlCmd(commandStream, args);
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
+    auto hwInfo = peekHwInfo();
+    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    bool debuggingEnabled = device.getDebugger() != nullptr;
+    PipeControlArgs args(true);
+
+    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs()) && debuggingEnabled &&
+        !hwHelper.isSipWANeeded(hwInfo)) {
+        addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
+    }
 }
 
 } // namespace NEO

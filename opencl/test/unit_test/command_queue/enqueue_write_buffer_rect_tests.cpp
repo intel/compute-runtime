@@ -631,7 +631,7 @@ struct EnqueueWriteBufferRectHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
     }
 
@@ -650,9 +650,9 @@ struct EnqueueWriteBufferRectHw : public ::testing::Test {
     uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
 };
 
-using EnqeueWriteBufferRectStatelessTest = EnqueueWriteBufferRectHw;
+using EnqueueWriteBufferRectStatelessTest = EnqueueWriteBufferRectHw;
 
-HWTEST_F(EnqeueWriteBufferRectStatelessTest, WhenWritingBufferRectStatelessThenSuccessIsReturned) {
+HWTEST_F(EnqueueWriteBufferRectStatelessTest, WhenWritingBufferRectStatelessThenSuccessIsReturned) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
@@ -674,9 +674,9 @@ HWTEST_F(EnqeueWriteBufferRectStatelessTest, WhenWritingBufferRectStatelessThenS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-using EnqeueWriteBufferRectStatefulTest = EnqueueWriteBufferRectHw;
+using EnqueueWriteBufferRectStatefulTest = EnqueueWriteBufferRectHw;
 
-HWTEST_F(EnqeueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSuccessIsReturned) {
+HWTEST_F(EnqueueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSuccessIsReturned) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);

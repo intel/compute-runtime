@@ -6,10 +6,10 @@
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
 using HwHelperTestGen9 = HwHelperTest;
@@ -24,14 +24,6 @@ GEN9TEST_F(HwHelperTestGen9, givenGen9WhenCallIsPackedSupportedThenReturnFalse) 
     EXPECT_FALSE(helper.packedFormatsSupported());
 }
 
-GEN9TEST_F(HwHelperTestGen9, WhenSettingCapabilityCoherencyFlagThenFlagIsSet) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-    EXPECT_TRUE(coherency);
-}
-
 GEN9TEST_F(HwHelperTestGen9, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
@@ -42,13 +34,6 @@ GEN9TEST_F(HwHelperTestGen9, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
-GEN9TEST_F(HwHelperTestGen9, givenGen9PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    // Test default method implementation
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
 }
 
 GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenDbgCsrLocalTypeIsReturned) {

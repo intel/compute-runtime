@@ -12,11 +12,12 @@
 namespace NEO {
 
 struct ReusableAllocationRequirements {
+    const void *requiredPtr;
     size_t requiredMinimalSize;
     volatile uint32_t *csrTagAddress;
     GraphicsAllocation::AllocationType allocationType;
     uint32_t contextId;
-    const void *requiredPtr;
+    uint32_t activeTileCount;
 };
 
 AllocationsList::AllocationsList(AllocationUsage allocationUsage)
@@ -28,10 +29,11 @@ AllocationsList::AllocationsList()
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, GraphicsAllocation::AllocationType allocationType) {
     ReusableAllocationRequirements req;
     req.requiredMinimalSize = requiredMinimalSize;
-    commandStreamReceiver == nullptr ? req.csrTagAddress = nullptr : req.csrTagAddress = commandStreamReceiver->getTagAddress();
+    req.csrTagAddress = (commandStreamReceiver == nullptr) ? nullptr : commandStreamReceiver->getTagAddress();
     req.allocationType = allocationType;
-    commandStreamReceiver == nullptr ? req.contextId = UINT32_MAX : req.contextId = commandStreamReceiver->getOsContext().getContextId();
+    req.contextId = (commandStreamReceiver == nullptr) ? UINT32_MAX : commandStreamReceiver->getOsContext().getContextId();
     req.requiredPtr = requiredPtr;
+    req.activeTileCount = (commandStreamReceiver == nullptr) ? 1u : commandStreamReceiver->getActivePartitions();
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
     return std::unique_ptr<GraphicsAllocation>(retAlloc);
@@ -46,7 +48,7 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
             if (req->csrTagAddress == nullptr) {
                 return removeOneImpl(curr, nullptr);
             }
-            if ((this->allocationUsage == TEMPORARY_ALLOCATION || *req->csrTagAddress >= curr->getTaskCount(req->contextId)) &&
+            if ((this->allocationUsage == TEMPORARY_ALLOCATION || checkTagAddressReady(req, curr)) &&
                 (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer())) {
                 if (this->allocationUsage == TEMPORARY_ALLOCATION) {
                     // We may not have proper task count yet, so set notReady to avoid releasing in a different thread
@@ -69,4 +71,18 @@ void AllocationsList::freeAllGraphicsAllocations(Device *neoDevice) {
     }
     head = nullptr;
 }
+
+bool AllocationsList::checkTagAddressReady(ReusableAllocationRequirements *requirements, GraphicsAllocation *gfxAllocation) {
+    auto tagAddress = requirements->csrTagAddress;
+    auto taskCount = gfxAllocation->getTaskCount(requirements->contextId);
+    for (uint32_t count = 0; count < requirements->activeTileCount; count++) {
+        if (*tagAddress < taskCount) {
+            return false;
+        }
+        tagAddress = ptrOffset(tagAddress, CommonConstants::partitionAddressOffset);
+    }
+
+    return true;
+}
+
 } // namespace NEO

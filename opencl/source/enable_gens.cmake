@@ -4,67 +4,20 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(RUNTIME_SRCS_GENX_CPP_WINDOWS
-    windows/command_stream_receiver
-    windows/gmm_callbacks
-)
-
-set(RUNTIME_SRCS_GENX_CPP_LINUX
-    linux/command_stream_receiver
-)
-
-if(NOT DISABLE_WDDM_LINUX)
-  list(APPEND RUNTIME_SRCS_GENX_CPP_LINUX
-       ${RUNTIME_SRCS_GENX_CPP_WINDOWS}
-  )
-endif()
-
 set(RUNTIME_SRCS_GENX_CPP_BASE
-    aub_command_stream_receiver
-    aub_mem_dump
     buffer
     cl_hw_helper
     command_queue
-    command_stream_receiver_simulated_common_hw
-    create_device_command_stream_receiver
-    experimental_command_buffer
     gpgpu_walker
     hardware_commands_helper
-    hw_info
     image
     sampler
-    tbx_command_stream_receiver
 )
-
-macro(macro_for_each_platform)
-  string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-
-  foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
-    set(PLATFORM_FILE "hw_info_setup_${PLATFORM_IT_LOWER}.inl")
-    set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}${PLATFORM_FILE})
-    if(EXISTS ${SRC_FILE})
-      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
-    endif()
-    foreach(BRANCH ${BRANCH_DIR_LIST})
-      set(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.cpp")
-      set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_FILE})
-      if(EXISTS ${SRC_FILE})
-        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
-      endif()
-    endforeach()
-  endforeach()
-endmacro()
 
 macro(macro_for_each_gen)
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     set(GENX_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER})
     # Add default GEN files
-
-    foreach(SRC_IT "state_compute_mode_helper_${GEN_TYPE_LOWER}.cpp")
-      if(EXISTS ${GENX_PREFIX}/${SRC_IT})
-        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${SRC_IT})
-      endif()
-    endforeach()
 
     if(EXISTS "${GENX_PREFIX}/additional_files_${GEN_TYPE_LOWER}.cmake")
       include("${GENX_PREFIX}/additional_files_${GEN_TYPE_LOWER}.cmake")
@@ -85,22 +38,12 @@ macro(macro_for_each_gen)
       endif()
     endif()
 
-    foreach(OS_IT "BASE" "WINDOWS" "LINUX")
-      foreach(SRC_IT ${RUNTIME_SRCS_GENX_CPP_${OS_IT}})
-        if(EXISTS ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
-          list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_${OS_IT} ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
-        endif()
-      endforeach()
-    endforeach()
-
-    apply_macro_for_each_platform()
-
-    foreach(BRANCH ${BRANCH_DIR_LIST})
-      set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${GEN_TYPE_LOWER}/image_core_${GEN_TYPE_LOWER}.cpp)
-      if(EXISTS ${SRC_FILE})
-        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
+    foreach(SRC_IT ${RUNTIME_SRCS_GENX_CPP_BASE})
+      if(EXISTS ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
+        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
       endif()
     endforeach()
+
     if(EXISTS ${GENX_PREFIX}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp)
       list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp)
     endif()

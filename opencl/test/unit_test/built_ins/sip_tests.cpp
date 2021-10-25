@@ -8,9 +8,9 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
@@ -74,7 +74,8 @@ TEST(DebugBindlessSip, givenBindlessDebugSipIsRequestedThenCorrectSipKernelIsRet
     auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice);
 
     EXPECT_NE(nullptr, &sipKernel);
-    EXPECT_LE(SipKernelType::DbgCsr, sipKernel.getType());
+    EXPECT_EQ(SipKernelType::DbgBindless, sipKernel.getType());
+
     EXPECT_FALSE(sipKernel.getStateSaveAreaHeader().empty());
 }
 } // namespace SipKernelTests

@@ -16,8 +16,8 @@ class InternalAllocationStorage {
     MOCKABLE_VIRTUAL ~InternalAllocationStorage() = default;
     InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver);
     MOCKABLE_VIRTUAL void cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage);
-    void storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage);
-    void storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount);
+    void storeAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage);
+    void storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, uint32_t taskCount);
     std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, GraphicsAllocation::AllocationType allocationType);
     std::unique_ptr<GraphicsAllocation> obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, GraphicsAllocation::AllocationType allocationType);
     AllocationsList &getTemporaryAllocations() { return temporaryAllocations; }

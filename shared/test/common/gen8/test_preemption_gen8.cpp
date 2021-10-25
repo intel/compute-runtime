@@ -28,7 +28,7 @@ PreemptionTestHwDetails GetPreemptionTestHwDetails<BDWFamily>() {
 using Gen8PreemptionTests = DevicePreemptionTests;
 
 GEN8TEST_F(Gen8PreemptionTests, whenProgramStateSipIsCalledThenNoCmdsAreProgrammed) {
-    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
+    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};

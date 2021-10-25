@@ -151,12 +151,18 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
 
     if (ret != 0) {
-        static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(false);
+        int err = this->drm->getErrno();
+        if (err == EOPNOTSUPP) {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+            return err;
+        }
+
+        static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(false, true);
         ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
     }
 
     if (ret != 0) {
-        static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(true);
+        static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(true, true);
         ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
     }
 

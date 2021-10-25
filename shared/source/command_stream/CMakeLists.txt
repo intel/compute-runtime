@@ -8,6 +8,9 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture_status.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.h
@@ -15,6 +18,14 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tgllp_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_hw.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_definitions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.h
@@ -27,6 +38,7 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}per_dss_backed_buffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/preemption.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/preemption.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preemption.inl
@@ -50,10 +62,13 @@ set(NEO_CORE_COMMAND_STREAM
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_STREAM
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_and_later.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_xehp_and_later.inl
   )
 endif()
 

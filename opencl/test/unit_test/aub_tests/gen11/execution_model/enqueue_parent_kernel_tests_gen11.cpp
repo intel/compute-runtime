@@ -56,7 +56,7 @@ GEN11TEST_F(GEN11AUBParentKernelFixture, WhenEnqueuingParentKernelThenExpectatio
     desc.image_slice_pitch = 0;
     // clang-format on
 
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &pClDevice->getDevice());
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &pClDevice->getDevice());
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     Image *image = Image::create(
         pContext,

@@ -18,8 +18,9 @@ void ClDeviceFixture::SetUp() {
 }
 
 void ClDeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
-    pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
+    pDevice = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
     ASSERT_NE(nullptr, pDevice);
+    pClExecutionEnvironment = static_cast<MockClExecutionEnvironment *>(pDevice->getExecutionEnvironment());
     pClDevice = new MockClDevice{pDevice};
     ASSERT_NE(nullptr, pClDevice);
 

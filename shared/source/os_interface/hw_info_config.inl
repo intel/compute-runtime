@@ -200,4 +200,59 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isInitialFlagsProgrammingRequired() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::is3DPipelineSelectWARequired() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
+    return false;
+}
 } // namespace NEO

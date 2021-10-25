@@ -61,6 +61,21 @@ class HwInfoConfig {
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isNewResidencyModelSupported() const = 0;
+    virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const = 0;
+    virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
+    virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) = 0;
+    virtual bool isAdditionalMediaSamplerProgrammingRequired() const = 0;
+    virtual bool isInitialFlagsProgrammingRequired() const = 0;
+    virtual bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const = 0;
+    virtual bool extraParametersInvalid(const HardwareInfo &hwInfo) const = 0;
+    virtual bool pipeControlWARequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool is3DPipelineSelectWARequired() const = 0;
+    virtual bool isStorageInfoAdjustmentRequired() const = 0;
+    virtual bool isBlitterForImagesSupported() const = 0;
+    virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -107,6 +122,21 @@ class HwInfoConfigHw : public HwInfoConfig {
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const override;
+    bool isNewResidencyModelSupported() const override;
+    bool isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const override;
+    bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
+    void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) override;
+    bool isAdditionalMediaSamplerProgrammingRequired() const override;
+    bool isInitialFlagsProgrammingRequired() const override;
+    bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const override;
+    bool extraParametersInvalid(const HardwareInfo &hwInfo) const override;
+    bool pipeControlWARequired(const HardwareInfo &hwInfo) const override;
+    bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const override;
+    bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const override;
+    bool is3DPipelineSelectWARequired() const override;
+    bool isStorageInfoAdjustmentRequired() const override;
+    bool isBlitterForImagesSupported() const override;
+    bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

@@ -8,8 +8,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
-
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 
 using HwHelperTestGen12Lp = HwHelperTest;
 

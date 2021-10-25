@@ -6,9 +6,8 @@
  */
 
 #pragma once
-#include "shared/test/common/cmd_parse/hw_parse.h"
-
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 
 #include "hello_world_fixture.h"
 
@@ -18,7 +17,7 @@ namespace NEO {
 template <typename FactoryType>
 struct TwoWalkerTest
     : public HelloWorldTest<FactoryType>,
-      public HardwareParse {
+      public ClHardwareParse {
     typedef HelloWorldTest<FactoryType> Parent;
 
     using Parent::pCmdBuffer;
@@ -55,11 +54,11 @@ struct TwoWalkerTest
 
     void SetUp() override {
         Parent::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         Parent::TearDown();
     }
 

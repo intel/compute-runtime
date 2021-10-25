@@ -173,4 +173,78 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isPrefetchDisablingRequired(const HardwareInf
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdditionalMediaSamplerProgrammingRequired() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isInitialFlagsProgrammingRequired() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::is3DPipelineSelectWARequired() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isStorageInfoAdjustmentRequired() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isBlitterForImagesSupported() const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } //namespace NEO

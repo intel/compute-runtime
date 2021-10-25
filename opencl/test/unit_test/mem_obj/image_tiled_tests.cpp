@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/image.h"
@@ -14,7 +15,6 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "gtest/gtest.h"
 
@@ -73,7 +73,7 @@ HWTEST_P(CreateTiledImageTest, GivenImageTypeWhenCheckingIsTiledThenTrueReturned
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
         flags,
         0,
         surfaceFormat,

@@ -16,6 +16,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -86,7 +87,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
             auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
             auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
-            bcsEngine = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
+            bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)] = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
         }
     }
 
@@ -112,9 +113,9 @@ CommandQueue::~CommandQueue() {
             device->getPerformanceCounters()->shutdown();
         }
 
-        if (bcsEngine) {
+        if (auto mainBcs = bcsEngines[0]; mainBcs != nullptr) {
             auto &selectorCopyEngine = device->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
-            EngineHelpers::releaseBcsEngineType(bcsEngine->getEngineType(), selectorCopyEngine);
+            EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngine);
         }
     }
 
@@ -124,33 +125,33 @@ CommandQueue::~CommandQueue() {
     if (context && !isSpecialCommandQueue) {
         context->decRefInternal();
     }
+    gtpinRemoveCommandQueue(this);
 }
 
 CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {
     return *gpgpuEngine->commandStreamReceiver;
 }
 
-CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver() const {
-    if (bcsEngine) {
-        return bcsEngine->commandStreamReceiver;
+CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const {
+    const EngineControl *engine = this->bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)];
+    if (engine == nullptr) {
+        return nullptr;
+    } else {
+        return engine->commandStreamReceiver;
+    }
+}
+
+CommandStreamReceiver *CommandQueue::getAnyBcs() const {
+    for (const EngineControl *engine : this->bcsEngines) {
+        if (engine != nullptr) {
+            return engine->commandStreamReceiver;
+        }
     }
     return nullptr;
 }
 
 CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
-    if (bcsEngine) {
-        return bcsEngine->commandStreamReceiver;
-    }
-    return nullptr;
-}
-
-CommandStreamReceiver &CommandQueue::getCommandStreamReceiver(bool blitAllowed) const {
-    if (blitAllowed) {
-        auto csr = getBcsCommandStreamReceiver();
-        UNRECOVERABLE_IF(!csr);
-        return *csr;
-    }
-    return getGpgpuCommandStreamReceiver();
+    return getAnyBcs();
 }
 
 CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const {
@@ -160,7 +161,7 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     const bool blit = blitAllowed && (blitPreferred || blitRequired);
 
     if (blit) {
-        return *bcsEngine->commandStreamReceiver;
+        return *getAnyBcs();
     } else {
         return getGpgpuCommandStreamReceiver();
     }
@@ -180,13 +181,11 @@ volatile uint32_t *CommandQueue::getHwTagAddress() const {
 }
 
 bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) const {
-    uint32_t gpgpuHwTag = getHwTag();
-    DEBUG_BREAK_IF(gpgpuHwTag == CompletionStamp::notReady);
+    DEBUG_BREAK_IF(getHwTag() == CompletionStamp::notReady);
 
-    if (gpgpuHwTag >= gpgpuTaskCount) {
+    if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), gpgpuTaskCount)) {
         if (bcsState.isValid()) {
-            DEBUG_BREAK_IF(bcsState.engineType != getBcsCommandStreamReceiver()->getOsContext().getEngineType());
-            return *getBcsCommandStreamReceiver()->getTagAddress() >= bcsTaskCount;
+            return *getBcsCommandStreamReceiver(bcsState.engineType)->getTagAddress() >= peekBcsTaskCount(bcsState.engineType);
         }
 
         return true;
@@ -195,16 +194,7 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
     return false;
 }
 
-void CommandQueue::waitForLatestTaskCount() {
-    TimestampPacketContainer nodesToRelease;
-    if (deferredTimestampPackets) {
-        deferredTimestampPackets->swapNodes(nodesToRelease);
-    }
-
-    waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
-}
-
-void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
+void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
     WAIT_ENTER()
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
@@ -215,18 +205,17 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcs
     getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait,
                                                                           flushStampToWait,
                                                                           useQuickKmdSleep,
-                                                                          forcePowerSavingMode,
-                                                                          1u,
-                                                                          0u);
+                                                                          forcePowerSavingMode);
     DEBUG_BREAK_IF(getHwTag() < gpgpuTaskCountToWait);
 
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
     }
 
-    if (auto bcsCsr = getBcsCommandStreamReceiver()) {
-        bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCountToWait, 0, false, false, 1u, 0u);
-        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(bcsTaskCountToWait);
+    for (const CopyEngineState &copyEngine : copyEnginesToWait) {
+        auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
+        bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
+        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
     }
 
     getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanTemporaryAllocationList(gpgpuTaskCountToWait);
@@ -444,21 +433,25 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
         return nullptr;
     }
 
-    if (transferProperties.memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
-        auto buffer = castToObject<Buffer>(transferProperties.memObj);
-        errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, transferProperties.offset[0], transferProperties.size[0],
-                                       returnPtr, transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()), eventsRequest.numEventsInWaitList,
-                                       eventsRequest.eventWaitList, eventsRequest.outEvent);
+    if (transferProperties.mapFlags == CL_MAP_WRITE_INVALIDATE_REGION) {
+        errcodeRet = enqueueMarkerWithWaitList(eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
     } else {
-        auto image = castToObjectOrAbort<Image>(transferProperties.memObj);
-        size_t readOrigin[4] = {transferProperties.offset[0], transferProperties.offset[1], transferProperties.offset[2], 0};
-        auto mipIdx = getMipLevelOriginIdx(image->peekClMemObjType());
-        UNRECOVERABLE_IF(mipIdx >= 4);
-        readOrigin[mipIdx] = transferProperties.mipLevel;
-        errcodeRet = enqueueReadImage(image, transferProperties.blocking, readOrigin, &transferProperties.size[0],
-                                      image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
-                                      returnPtr, transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()), eventsRequest.numEventsInWaitList,
-                                      eventsRequest.eventWaitList, eventsRequest.outEvent);
+        if (transferProperties.memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
+            auto buffer = castToObject<Buffer>(transferProperties.memObj);
+            errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, transferProperties.offset[0], transferProperties.size[0],
+                                           returnPtr, transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()), eventsRequest.numEventsInWaitList,
+                                           eventsRequest.eventWaitList, eventsRequest.outEvent);
+        } else {
+            auto image = castToObjectOrAbort<Image>(transferProperties.memObj);
+            size_t readOrigin[4] = {transferProperties.offset[0], transferProperties.offset[1], transferProperties.offset[2], 0};
+            auto mipIdx = getMipLevelOriginIdx(image->peekClMemObjType());
+            UNRECOVERABLE_IF(mipIdx >= 4);
+            readOrigin[mipIdx] = transferProperties.mipLevel;
+            errcodeRet = enqueueReadImage(image, transferProperties.blocking, readOrigin, &transferProperties.size[0],
+                                          image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
+                                          returnPtr, transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()), eventsRequest.numEventsInWaitList,
+                                          eventsRequest.eventWaitList, eventsRequest.outEvent);
+        }
     }
 
     if (errcodeRet != CL_SUCCESS) {
@@ -639,9 +632,16 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
     }
 }
 
+void CommandQueue::updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount) {
+    CopyEngineState &state = bcsStates[EngineHelpers::getBcsIndex(bcsEngineType)];
+    state.engineType = bcsEngineType;
+    state.taskCount = newBcsTaskCount;
+}
+
 uint32_t CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const {
-    UNRECOVERABLE_IF(bcsEngine->getEngineType() != bcsEngineType);
-    return this->bcsTaskCount;
+    const CopyEngineState &state = bcsStates[EngineHelpers::getBcsIndex(bcsEngineType)];
+    DEBUG_BREAK_IF(!state.isValid());
+    return state.taskCount;
 }
 
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
@@ -745,7 +745,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
-    if (bcsEngine == nullptr) {
+    if (getAnyBcs() == nullptr) {
         return false;
     }
 
@@ -796,8 +796,8 @@ bool CommandQueue::blitEnqueuePreferred(const CsrSelectionArgs &args) const {
 
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {
     const auto &hwInfo = device->getHardwareInfo();
-    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto blitEnqueueImageAllowed = hwHelper.isBlitterForImagesSupported(hwInfo);
+    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto blitEnqueueImageAllowed = hwInfoConfig->isBlitterForImagesSupported();
 
     if (DebugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
         blitEnqueueImageAllowed = DebugManager.flags.EnableBlitterForEnqueueImageOperations.get();
@@ -805,6 +805,15 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
 
     blitEnqueueImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
     blitEnqueueImageAllowed &= !isMipMapped(image.getImageDesc());
+
+    const auto &defaultGmm = image.getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm();
+    if (defaultGmm != nullptr) {
+        auto isTile64 = defaultGmm->gmmResourceInfo->getResourceFlags()->Info.Tile64;
+        auto imageType = image.getImageDesc().image_type;
+        if (isTile64 && (imageType == CL_MEM_OBJECT_IMAGE3D)) {
+            blitEnqueueImageAllowed &= hwInfoConfig->isTile64With3DSurfaceOnBCSSupported(hwInfo);
+        }
+    }
 
     return blitEnqueueImageAllowed;
 }
@@ -890,7 +899,8 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     const bool isEngineCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroupType);
 
     if (isEngineCopyOnly) {
-        bcsEngine = &device->getEngine(engineType, EngineUsage::Regular);
+        std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
+        bcsEngines[EngineHelpers::getBcsIndex(engineType)] = &device->getEngine(engineType, EngineUsage::Regular);
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
@@ -901,7 +911,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
 
 void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo) {
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
-        auto status = getGpgpuCommandStreamReceiver().checkAndActivateAubSubCapture(multiDispatchInfo);
+        auto status = getGpgpuCommandStreamReceiver().checkAndActivateAubSubCapture(multiDispatchInfo.empty() ? "" : multiDispatchInfo.peekMainKernel()->getDescriptor().kernelMetadata.kernelName);
         if (!status.isActive) {
             // make each enqueue blocking when subcapture is not active to split batch buffer
             blocking = true;
@@ -919,13 +929,24 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
     }
 }
 
-void CommandQueue::waitUntilComplete(bool blockedQueue, PrintfHandler *printfHandler) {
+void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) {
     if (blockedQueue) {
         while (isQueueBlocked()) {
         }
     }
 
-    waitForLatestTaskCount();
+    TimestampPacketContainer nodesToRelease;
+    if (deferredTimestampPackets) {
+        deferredTimestampPackets->swapNodes(nodesToRelease);
+    }
+
+    StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
+    for (CopyEngineState &state : this->bcsStates) {
+        if (state.isValid()) {
+            activeBcsStates.push_back(state);
+        }
+    }
+    waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false);
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();

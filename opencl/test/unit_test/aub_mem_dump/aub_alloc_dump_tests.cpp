@@ -9,14 +9,14 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 using namespace NEO;
@@ -441,10 +441,10 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
     }
 
     if (AubAllocDump::isImageDumpFormat(dumpFormat)) {
-        cl_image_desc imgDesc = {};
-        imgDesc.image_width = 512;
-        imgDesc.image_height = 1;
-        imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        ImageDescriptor imgDesc = {};
+        imgDesc.imageWidth = 512;
+        imgDesc.imageHeight = 1;
+        imgDesc.imageType = ImageType::Image2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
         MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
         AllocationData allocationData;

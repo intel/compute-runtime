@@ -38,7 +38,16 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-        pSysmanDeviceImp->pPowerHandleContext->init();
+        uint32_t subDeviceCount = 0;
+        std::vector<ze_device_handle_t> deviceHandles;
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         SysmanDeviceFixture::TearDown();

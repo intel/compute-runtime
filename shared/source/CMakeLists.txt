@@ -39,7 +39,10 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
                              ${NEO__IGC_INCLUDE_DIR}
                              ${KHRONOS_HEADERS_DIR}
                              ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
+                             ${VISA_INCLUDE_DIR}
+                             ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/create_command_stream_receiver_${DRIVER_MODEL}
                              ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission/create_direct_submission_${DRIVER_MODEL}
+                             ${IGC_COMMON_PARENT_DIR}
   )
 
   if(WIN32 OR NOT DISABLE_WDDM_LINUX)
@@ -71,6 +74,10 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
     endif()
   endif()
 
+  if(DEFINED AUB_STREAM_PROJECT_NAME)
+    target_link_libraries(${LIB_NAME} ${AUB_STREAM_PROJECT_NAME})
+  endif()
+
 endfunction()
 
 set(NEO_CORE_COMPILE_DEFS "")
@@ -78,8 +85,12 @@ set(CORE_SOURCES ${CORE_SRCS_GENX_ALL_BASE})
 
 add_subdirectories()
 
-if(WIN32 OR NOT DISABLE_WDDM_LINUX)
+if(WIN32)
   list(APPEND CORE_SOURCES ${CORE_SRCS_GENX_ALL_WINDOWS})
+endif()
+
+if(WIN32 OR NOT DISABLE_WDDM_LINUX)
+  list(APPEND CORE_SOURCES ${CORE_SRCS_GENX_ALL_WDDM})
 endif()
 
 if(NOT WIN32)
@@ -103,6 +114,7 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_COMMAND_CONTAINER
                                NEO_CORE_COMMAND_ENCODERS
                                NEO_CORE_COMMAND_STREAM
+                               NEO_CORE_COMPILER_INTERFACE
                                NEO_CORE_DEBUGGER
                                NEO_CORE_DEBUG_SETTINGS
                                NEO_CORE_DEVICE
@@ -183,3 +195,6 @@ else()
 endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_SRCS_LINK ${CORE_SRCS_LINK})
+if(UNIX)
+  set_property(GLOBAL APPEND PROPERTY NEO_CORE_SRCS_LINK ${CORE_SRCS_LINK_LINUX})
+endif()

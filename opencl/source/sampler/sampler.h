@@ -52,7 +52,6 @@ class Sampler : public BaseObject<_cl_sampler> {
 
     virtual void setArg(void *memory, const HardwareInfo &hwInfo) = 0;
 
-    static size_t getSamplerStateSize(const HardwareInfo &hwInfo);
     bool isTransformable() const;
 
     Sampler(Context *context,
@@ -124,8 +123,6 @@ struct SamplerHw : public Sampler {
                                         lodMin,
                                         lodMax);
     }
-
-    static size_t getSamplerStateSize();
 };
 
 typedef Sampler *(*SamplerCreateFunc)(Context *context,

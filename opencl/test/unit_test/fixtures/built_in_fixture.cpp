@@ -9,11 +9,10 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/device/device.h"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
-
-#include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 
 using namespace NEO;
 

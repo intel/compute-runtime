@@ -12,8 +12,6 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper_base.inl"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
-
 namespace NEO {
 
 template <typename GfxFamily>
@@ -99,12 +97,12 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProper
     DEBUG_BREAK_IF((AuxTranslationDirection::None != blitProperties.auxTranslationDirection) &&
                    (dstAllocation != srcAllocation || !dstAllocationisCompressionEnabled));
 
-    auto mocsIndex = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    blitCmd.setDestinationMOCS(mocs);
+    blitCmd.setSourceMOCS(mocs);
 
-    blitCmd.setDestinationMOCSvalue(mocsIndex);
-    blitCmd.setSourceMOCS(mocsIndex);
     if (DebugManager.flags.OverrideBlitterMocs.get() != -1) {
-        blitCmd.setDestinationMOCSvalue(DebugManager.flags.OverrideBlitterMocs.get());
+        blitCmd.setDestinationMOCS(DebugManager.flags.OverrideBlitterMocs.get());
         blitCmd.setSourceMOCS(DebugManager.flags.OverrideBlitterMocs.get());
     }
     if (DebugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
@@ -147,12 +145,12 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::Graphic
 
     appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
 
-    auto mocsIndex = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
-
-    blitCmd.setDestinationMOCSvalue(mocsIndex);
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    blitCmd.setDestinationMOCS(mocs);
     if (DebugManager.flags.OverrideBlitterMocs.get() != -1) {
-        blitCmd.setDestinationMOCSvalue(DebugManager.flags.OverrideBlitterMocs.get());
+        blitCmd.setDestinationMOCS(DebugManager.flags.OverrideBlitterMocs.get());
     }
+
     if (DebugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
         if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
             blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);

@@ -7,7 +7,9 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/state_compute_mode_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "pipe_control_args.h"
 
@@ -19,21 +21,11 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
         this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
 
-        auto &hwHelper = HwHelperHw<Family>::get();
-        if (hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo)) {
-            auto pPipeControlSpace = stream.getSpaceForCmd<PIPE_CONTROL>();
+        auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
+            PipeControlArgs args(true);
 
-            auto pipeControl = GfxFamily::cmdInitPipeControl;
-            pipeControl.setHdcPipelineFlush(true);
-            pipeControl.setAmfsFlushEnable(true);
-            pipeControl.setCommandStreamerStallEnable(true);
-            pipeControl.setInstructionCacheInvalidateEnable(true);
-            pipeControl.setTextureCacheInvalidationEnable(true);
-            pipeControl.setDcFlushEnable(true);
-            pipeControl.setConstantCacheInvalidationEnable(true);
-            pipeControl.setStateCacheInvalidationEnable(true);
-
-            *pPipeControlSpace = pipeControl;
+            addPipeControlPriorToNonPipelinedStateCommand(stream, args);
         }
 
         auto stateComputeMode = GfxFamily::cmdInitStateComputeMode;
@@ -52,8 +44,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 
 template <>
 inline bool CommandStreamReceiverHw<Family>::isComputeModeNeeded() const {
-    return csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged ||
-           StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy);
+    return StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy);
 }
 
 template <>
@@ -61,6 +52,8 @@ inline void CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddres
     PipeControlArgs args(true);
     args.textureCacheInvalidationEnable = true;
     args.hdcPipelineFlush = true;
-    addPipeControlCmd(commandStream, args);
+
+    addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
 }
+
 } // namespace NEO

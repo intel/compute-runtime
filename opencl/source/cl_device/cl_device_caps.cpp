@@ -331,8 +331,8 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.localMemType = CL_LOCAL;
 
-    deviceInfo.image3DMaxWidth = this->getHardwareCapabilities().image3DMaxWidth;
-    deviceInfo.image3DMaxHeight = this->getHardwareCapabilities().image3DMaxHeight;
+    deviceInfo.image3DMaxWidth = hwHelper.getMax3dImageWidthOrHeight();
+    deviceInfo.image3DMaxHeight = hwHelper.getMax3dImageWidthOrHeight();
 
     // cl_khr_image2d_from_buffer
     deviceInfo.imagePitchAlignment = hwHelper.getPitchAlignmentForImage(&hwInfo);

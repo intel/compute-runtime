@@ -178,6 +178,9 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
     if (!hwInfo.capabilityTable.blitterOperationsSupported && !isBlitterRequired) {
         return BlitOperationResult::Unsupported;
     }
+    if (0 == DebugManager.flags.EnableBlitterOperationsSupport.get()) {
+        return BlitOperationResult::Unsupported;
+    }
 
     UNRECOVERABLE_IF(memoryBanks.none());
 

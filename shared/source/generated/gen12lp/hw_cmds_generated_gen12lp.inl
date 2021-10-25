@@ -5594,7 +5594,7 @@ typedef struct tagXY_BLOCK_COPY_BLT {
             // DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_50 : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMocsValue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
             uint32_t Reserved_60 : BITFIELD_RANGE(28, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
             // DWORD 2
@@ -5699,12 +5699,12 @@ typedef struct tagXY_BLOCK_COPY_BLT {
     inline uint32_t getDestinationPitch(void) const {
         return TheStructure.Common.DestinationPitch + 1;
     }
-    inline void setDestinationMocsValue(const uint32_t value) {
+    inline void setDestinationMOCS(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.DestinationMocsValue = value;
+        TheStructure.Common.DestinationMOCS = value;
     }
-    inline uint32_t getDestinationMocsValue(void) const {
-        return TheStructure.Common.DestinationMocsValue;
+    inline uint32_t getDestinationMOCS(void) const {
+        return TheStructure.Common.DestinationMOCS;
     }
     inline void setDestinationTiling(const DESTINATION_TILING value) {
         TheStructure.Common.DestinationTiling = value;
@@ -5829,7 +5829,7 @@ typedef struct tagXY_FAST_COLOR_BLT {
             // DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_50 : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMocsValue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
             uint32_t Reserved_60 : BITFIELD_RANGE(28, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
             // DWORD 2
@@ -5914,12 +5914,12 @@ typedef struct tagXY_FAST_COLOR_BLT {
     inline uint32_t getDestinationPitch(void) const {
         return TheStructure.Common.DestinationPitch + 1;
     }
-    inline void setDestinationMocsValue(const uint32_t value) {
+    inline void setDestinationMOCS(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.DestinationMocsValue = value;
+        TheStructure.Common.DestinationMOCS = value;
     }
-    inline uint32_t getDestinationMocsValue(void) const {
-        return TheStructure.Common.DestinationMocsValue;
+    inline uint32_t getDestinationMOCS(void) const {
+        return TheStructure.Common.DestinationMOCS;
     }
     inline void setDestinationTiling(const DESTINATION_TILING value) {
         TheStructure.Common.DestinationTiling = value;

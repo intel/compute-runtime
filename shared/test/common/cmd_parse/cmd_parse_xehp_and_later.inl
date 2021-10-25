@@ -193,7 +193,7 @@ void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
 }
 
 template <>
-const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex) {
+const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex) {
     typedef typename GenGfxFamily::COMPUTE_WALKER COMPUTE_WALKER;
     typedef typename GenGfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
@@ -204,10 +204,9 @@ const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const Kerne
     auto cmdSBA = (STATE_BASE_ADDRESS *)cmdStateBaseAddress;
     EXPECT_NE(nullptr, cmdSBA);
     auto argOffset = std::numeric_limits<uint32_t>::max();
-    auto &kernelInfo = kernel.getKernelInfo();
     // Determine where the argument is
 
-    const auto &arg = kernel.getKernelInfo().getArgDescriptorAt(indexArg);
+    const auto &arg = kernelInfo.getArgDescriptorAt(indexArg);
     if (arg.is<ArgDescriptor::ArgTPointer>() && isValidOffset(arg.as<ArgDescPointer>().stateless)) {
         argOffset = arg.as<ArgDescPointer>().stateless;
     } else {
@@ -218,9 +217,6 @@ const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const Kerne
     auto inlineDataSize = 32u;
 
     auto offsetCrossThreadData = cmdWalker->getIndirectDataStartAddress();
-    auto baseAddress = is64bit ? 0u : cmdSBA->getIndirectObjectBaseAddress();
-    EXPECT_LT(offsetCrossThreadData, baseAddress + cmdSBA->getIndirectObjectBufferSize() * MemoryConstants::pageSize);
-
     offsetCrossThreadData -= static_cast<uint32_t>(ioh.getGraphicsAllocation()->getGpuAddressToPatch());
 
     // Get the base of cross thread

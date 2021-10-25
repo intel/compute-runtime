@@ -10,22 +10,22 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/matchers.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 using namespace NEO;
@@ -83,11 +83,11 @@ TEST(Buffer, givenReadOnlySetOfInputFlagsWhenPassedToisReadOnlyMemoryPermittedBy
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     cl_mem_flags flags = CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
     EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 
     flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
     EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 }
 
@@ -194,7 +194,7 @@ TEST_P(BufferReadOnlyTest, givenNonReadOnlySetOfInputFlagsWhenPassedToisReadOnly
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     cl_mem_flags flags = GetParam() | CL_MEM_USE_HOST_PTR;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
     EXPECT_FALSE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 }
 static cl_mem_flags nonReadOnlyFlags[] = {
@@ -423,7 +423,7 @@ TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrRende
 
 TEST(Buffer, givenRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturnedIn64Bit) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, false, true);
@@ -432,7 +432,7 @@ TEST(Buffer, givenRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenB
 
 TEST(Buffer, givenRenderCompressedBuffersDisabledLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturnedIn64Bit) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, true, true);
@@ -441,7 +441,7 @@ TEST(Buffer, givenRenderCompressedBuffersDisabledLocalMemoryEnabledWhenAllocatio
 
 TEST(Buffer, givenSharedContextWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = true;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, false, true);
@@ -450,7 +450,7 @@ TEST(Buffer, givenSharedContextWhenAllocationTypeIsQueriedThenBufferHostMemoryTy
 
 TEST(Buffer, givenSharedContextAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = true;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, false, true);
@@ -460,7 +460,7 @@ TEST(Buffer, givenSharedContextAndRenderCompressedBuffersEnabledWhenAllocationTy
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, false, true);
@@ -470,7 +470,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledWhenAllocationTypeIsQuerie
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, true, true);
@@ -480,7 +480,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueried
 TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, false, true);
@@ -490,7 +490,7 @@ TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsRet
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, false, true);
@@ -500,7 +500,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndRenderCompressedBuffers
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, true, true);
@@ -510,7 +510,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndRenderCompressedBuffersE
 TEST(Buffer, givenUseHostPointerFlagAndForceSharedPhysicalStorageWhenLocalMemoryIsEnabledThenBufferHostMemoryTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_HOST_MEMORY_INTEL;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, true, true);
@@ -520,7 +520,7 @@ TEST(Buffer, givenUseHostPointerFlagAndForceSharedPhysicalStorageWhenLocalMemory
 TEST(Buffer, givenAllocHostPtrFlagAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, false, true);
@@ -529,7 +529,7 @@ TEST(Buffer, givenAllocHostPtrFlagAndRenderCompressedBuffersEnabledWhenAllocatio
 
 TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, false, true);
@@ -537,7 +537,7 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhen
 }
 
 TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteBuffer) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
 
     auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
@@ -565,11 +565,13 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
 }
 struct RenderCompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
-        ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+        ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
         for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
             rootDeviceEnvironment->initGmm();
         }
-        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        SetUp(executionEnvironment);
+    }
+    void SetUp(ExecutionEnvironment *executionEnvironment) {
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
@@ -699,14 +701,14 @@ TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThen
 
 struct RenderCompressedBuffersSvmTests : public RenderCompressedBuffersTests {
     void SetUp() override {
-        ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+        ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
         for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
             rootDeviceEnvironment->initGmm();
         }
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo->capabilityTable.gpuAddressSpace = MemoryConstants::max48BitAddress;
-        RenderCompressedBuffersTests::SetUp();
+        RenderCompressedBuffersTests::SetUp(executionEnvironment);
     }
 };
 
@@ -725,7 +727,7 @@ TEST_F(RenderCompressedBuffersSvmTests, givenSvmAllocationWhenCreatingBufferThen
 struct RenderCompressedBuffersCopyHostMemoryTests : public RenderCompressedBuffersTests {
     void SetUp() override {
         RenderCompressedBuffersTests::SetUp();
-        device->injectMemoryManager(new MockMemoryManager(true, false, *platform()->peekExecutionEnvironment()));
+        device->injectMemoryManager(new MockMemoryManager(true, false, *device->getExecutionEnvironment()));
         context->memoryManager = device->getMemoryManager();
         mockCmdQ = new MockCommandQueue();
         context->setSpecialQueue(mockCmdQ, device->getRootDeviceIndex());
@@ -956,7 +958,6 @@ struct ValidHostPtr
     void TearDown() override {
         delete buffer;
         BaseClass::TearDown();
-        platformsImpl->clear();
         MemoryManagementFixture::TearDown();
     }
 
@@ -1838,7 +1839,7 @@ HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseNonBl
 
     auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(), handleId);
+        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmClientContext()), handleId);
     }
 
     auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 1, 0, nullptr, nullptr, &retVal);

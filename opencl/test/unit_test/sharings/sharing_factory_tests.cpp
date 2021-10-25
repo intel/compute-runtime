@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -16,7 +17,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/sharing_factory.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

@@ -29,6 +29,34 @@ DG1TEST_F(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpe
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
+DG1TEST_F(Dg1HwInfoConfig, givenA0SteppingAndDg1PlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    std::array<std::pair<uint32_t, bool>, 2> revisions = {
+        {{REVISION_A0, true},
+         {REVISION_B, false}}};
+
+    for (const auto &[revision, paramBool] : revisions) {
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, hwInfo);
+
+        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+
+        EXPECT_EQ(paramBool, hwInfoConfig->pipeControlWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig->imagePitchAlignmentWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig->isForceEmuInt32DivRemSPWARequired(hwInfo));
+    }
+}
+
+DG1TEST_F(Dg1HwInfoConfig, givenHwInfoConfigWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isStorageInfoAdjustmentRequired());
+}
+
+DG1TEST_F(Dg1HwInfoConfig, givenHwInfoConfigWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.is3DPipelineSelectWARequired());
+}
+
 using Dg1HwInfo = ::testing::Test;
 
 DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {

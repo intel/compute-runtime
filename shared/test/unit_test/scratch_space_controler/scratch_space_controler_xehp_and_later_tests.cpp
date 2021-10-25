@@ -77,7 +77,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenDirtyScratchAllocationO
     std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
                                                                                                                                          *execEnv,
                                                                                                                                          *csr.getInternalAllocationStorage());
-    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex());
+    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = true;
@@ -97,7 +97,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenNotDirtyScratchAllocati
     std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
                                                                                                                                          *execEnv,
                                                                                                                                          *csr.getInternalAllocationStorage());
-    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex());
+    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = false;
@@ -119,7 +119,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenPrivateScratchEnabledWh
     std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
                                                                                                                                          *execEnv,
                                                                                                                                          *csr.getInternalAllocationStorage());
-    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex());
+    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = true;
@@ -141,7 +141,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenPrivateScratchDisabledW
     std::unique_ptr<MockScratchSpaceControllerXeHPAndLater> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(),
                                                                                                                                          *execEnv,
                                                                                                                                          *csr.getInternalAllocationStorage());
-    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex());
+    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = true;

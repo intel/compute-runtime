@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
+#include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
@@ -208,12 +209,20 @@ class MemoryManager {
     virtual void registerSysMemAlloc(GraphicsAllocation *allocation){};
     virtual void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex){};
 
+    virtual bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) { return true; }
+
     bool isExternalAllocation(GraphicsAllocation::AllocationType allocationType);
     LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
 
     bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL bool isNonSvmBuffer(const void *hostPtr, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
         return !force32bitAllocations && hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    }
+
+    virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
+    virtual void createDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
+    void reInitLatestContextId() {
+        latestContextId = std::numeric_limits<uint32_t>::max();
     }
 
   protected:
@@ -245,6 +254,12 @@ class MemoryManager {
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
     virtual void registerAllocationInOs(GraphicsAllocation *allocation) {}
     bool isAllocationTypeToCapture(GraphicsAllocation::AllocationType type) const;
+    void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
+        if (allocationData.flags.zeroMemory) {
+            memset(cpuPtr, 0, size);
+        }
+    }
+    void updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex);
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;
@@ -260,6 +275,7 @@ class MemoryManager {
     EngineControlContainer registeredEngines;
     std::unique_ptr<HostPtrManager> hostPtrManager;
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
+    std::map<uint32_t, uint32_t> rootDeviceIndexToContextId; // This map will contain initial value of latestContextId for each rootDeviceIndex
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
     std::vector<std::unique_ptr<GfxPartition>> gfxPartitions;
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> internalLocalMemoryUsageBankSelector;

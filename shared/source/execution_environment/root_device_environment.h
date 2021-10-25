@@ -30,6 +30,7 @@ class HwDeviceId;
 class MemoryManager;
 class MemoryOperationsHandler;
 class OSInterface;
+class OSTime;
 class SipKernel;
 class SWTagsManager;
 struct HardwareInfo;
@@ -50,6 +51,7 @@ struct RootDeviceEnvironment {
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex);
+    void initOsTime();
     void initGmm();
     void initDebugger();
     MOCKABLE_VIRTUAL bool initAilConfiguration();
@@ -58,15 +60,15 @@ struct RootDeviceEnvironment {
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
-    void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex);
+    void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
     std::unique_ptr<GmmHelper> gmmHelper;
     std::unique_ptr<OSInterface> osInterface;
-    std::unique_ptr<GmmPageTableMngr> pageTableManager;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<AubCenter> aubCenter;
     std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;
+    std::unique_ptr<OSTime> osTime;
 
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<BuiltIns> builtins;

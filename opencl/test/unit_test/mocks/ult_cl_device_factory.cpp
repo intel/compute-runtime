@@ -7,13 +7,13 @@
 
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 
+#include "shared/source/command_stream/create_command_stream_impl.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "opencl/source/command_stream/create_command_stream_impl.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

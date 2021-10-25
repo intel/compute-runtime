@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -38,13 +39,20 @@ bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t s
 }
 
 template <typename Family>
-void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
-    caps->image3DMaxHeight = 16384;
-    caps->image3DMaxWidth = 16384;
+size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
+    return 16384;
+}
+
+template <typename Family>
+uint64_t HwHelperHw<Family>::getMaxMemAllocSize() const {
     //With statefull messages we have an allocation cap of 4GB
     //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
-    caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
-    caps->isStatelesToStatefullWithOffsetSupported = true;
+    return (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
+}
+
+template <typename Family>
+bool HwHelperHw<Family>::isStatelesToStatefullWithOffsetSupported() const {
+    return true;
 }
 
 template <typename Family>
@@ -57,7 +65,7 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
     if (!debuggingActive) {
         return SipKernelType::Csr;
     }
-    return SipKernelType::DbgCsr;
+    return DebugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::DbgBindless : SipKernelType::DbgCsr;
 }
 
 template <typename Family>
@@ -384,22 +392,7 @@ bool HwHelperHw<GfxFamily>::isWorkaroundRequired(uint32_t lowestSteppingWithBug,
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
-    return false;
-}
-
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
     return false;
 }
 
@@ -601,11 +594,6 @@ bool HwHelperHw<GfxFamily>::isSubDeviceEngineSupported(const HardwareInfo &hwInf
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isBlitterForImagesSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 size_t HwHelperHw<GfxFamily>::getPreemptionAllocationAlignment() const {
     return 256 * MemoryConstants::kiloByte;
 }
@@ -624,11 +612,6 @@ bool HwHelperHw<GfxFamily>::isEngineTypeRemappingToHwSpecificRequired() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const {
-    return static_cast<bool>(hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt);
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isSipKernelAsHexadecimalArrayPreferred() const {
     return false;
 }
@@ -639,6 +622,16 @@ void HwHelperHw<GfxFamily>::setSipKernelData(uint32_t *&sipKernelBinary, size_t 
 
 template <typename GfxFamily>
 void HwHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize) const {
+}
+
+template <typename GfxFamily>
+uint64_t HwHelperHw<GfxFamily>::getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const {
+    return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
+}
+
+template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) {
+    EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
 
 } // namespace NEO

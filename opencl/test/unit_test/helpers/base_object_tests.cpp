@@ -291,7 +291,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
 
   public:
     MockBuffer() : MockBufferStorage(),
-                   Buffer(nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+                   Buffer(nullptr, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                           CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation), true, false, false) {
     }
 

@@ -128,7 +128,7 @@ struct MockMemoryManagerPci : public MemoryManagerMock {
     MockMemoryManagerPci(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
 
-class ZesPciFixture : public ::testing::Test {
+class ZesPciFixture : public SysmanDeviceFixture {
 
   protected:
     std::unique_ptr<Mock<PciSysfsAccess>> pSysfsAccess;
@@ -139,28 +139,15 @@ class ZesPciFixture : public ::testing::Test {
     L0::PciImp *pPciImp;
     OsPci *pOsPciPrev;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    NEO::MockDevice *neoDevice = nullptr;
-    L0::Device *device = nullptr;
+    MemoryManager *pMemoryManagerOld;
 
     void SetUp() override {
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        memoryManager = new ::testing::NiceMock<MockMemoryManagerPci>(*devices[0].get()->getExecutionEnvironment());
-        devices[0].get()->getExecutionEnvironment()->memoryManager.reset(memoryManager);
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[0];
+        SysmanDeviceFixture::SetUp();
 
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto &osInterface = device->getOsInterface();
-        osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
-        setenv("ZES_ENABLE_SYSMAN", "1", 1);
-        device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
-        pSysmanDevice = device->getSysmanHandle();
-        pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
-        pOsSysman = pSysmanDeviceImp->pOsSysman;
-        pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
+        pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
+        memoryManager = new ::testing::NiceMock<MockMemoryManagerPci>(*neoDevice->getExecutionEnvironment());
+        memoryManager->localMemorySupported[0] = false;
+        device->getDriverHandle()->setMemoryManager(memoryManager);
 
         pSysfsAccess = std::make_unique<NiceMock<Mock<PciSysfsAccess>>>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
@@ -202,6 +189,8 @@ class ZesPciFixture : public ::testing::Test {
     }
 
     void TearDown() override {
+        device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
+        SysmanDeviceFixture::TearDown();
         if (nullptr != pPciImp->pOsPci) {
             delete pPciImp->pOsPci;
         }
@@ -210,11 +199,11 @@ class ZesPciFixture : public ::testing::Test {
         unsetenv("ZES_ENABLE_SYSMAN");
         pLinuxSysmanImp->pSysfsAccess = pOriginalSysfsAccess;
         pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
+        if (memoryManager != nullptr) {
+            delete memoryManager;
+            memoryManager = nullptr;
+        }
     }
-    SysmanDevice *pSysmanDevice = nullptr;
-    SysmanDeviceImp *pSysmanDeviceImp = nullptr;
-    OsSysman *pOsSysman = nullptr;
-    PublicLinuxSysmanImp *pLinuxSysmanImp = nullptr;
 };
 
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {

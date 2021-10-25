@@ -6,23 +6,23 @@
  */
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
+#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
+#include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/test/unit_test/fixtures/aub_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
@@ -317,6 +317,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    aubCsr->initializeEngine();
 
     aubSubCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
@@ -698,6 +699,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledOnDefaultAllocationThenAllocationTypeShouldNotBeMadeNonAubWritable) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    aubCsr->initializeEngine();
     auto memoryManager = aubExecutionEnvironment->executionEnvironment->memoryManager.get();
 
     auto gfxDefaultAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -716,6 +718,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
+    aubCsr->initializeEngine();
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
@@ -752,6 +755,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
@@ -829,6 +833,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
 
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
 
@@ -844,6 +849,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     aubCsr->setAubWritable(false, *gfxAllocation);
@@ -856,12 +862,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     MockGraphicsAllocation gfxAllocation((void *)0x1234, 0);
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
     EXPECT_FALSE(aubCsr->writeMemory(gfxAllocation));
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAllocationDataIsPassedInAllocationViewThenWriteMemoryIsAllowed) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
     size_t size = 100;
     auto ptr = std::make_unique<char[]>(size);
     auto addr = reinterpret_cast<uint64_t>(ptr.get());
@@ -874,6 +882,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAllocat
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     AllocationView allocationView(0x1234, 0);
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
     EXPECT_FALSE(aubCsr->writeMemory(allocationView));
 }
 
@@ -899,14 +908,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
     ASSERT_FALSE(aubCsr->isFileOpen());
 
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("kernelName");
 
     EXPECT_TRUE(aubCsr->isFileOpen());
 }
@@ -922,14 +926,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
-    std::string fileName = aubCsr->subCaptureManager->getSubCaptureFileName(kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
+    std::string kernelName = "";
+    std::string fileName = aubCsr->subCaptureManager->getSubCaptureFileName(kernelName);
     aubCsr->initFile(fileName);
     ASSERT_TRUE(aubCsr->isFileOpen());
 
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture(kernelName);
 
     EXPECT_TRUE(aubCsr->isFileOpen());
     EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
@@ -948,16 +950,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     subCaptureManagerMock->setToggleFileName(newFileName);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
     std::string fileName = "file_name.aub";
     aubCsr->initFile(fileName);
     ASSERT_TRUE(aubCsr->isFileOpen());
     ASSERT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
 
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("kernelName");
 
     EXPECT_TRUE(aubCsr->isFileOpen());
     EXPECT_STRNE(fileName.c_str(), aubCsr->getFileName().c_str());
@@ -977,15 +975,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     subCaptureManagerMock->setToggleFileName(newFileName);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
     std::string fileName = "file_name.aub";
     aubCsr->initFile(fileName);
     ASSERT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
 
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("kernelName");
     ASSERT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
 
     EXPECT_EQ(nullptr, aubCsr->engineInfo.pLRCA);
@@ -1004,11 +998,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("kernelName");
 
     EXPECT_TRUE(aubCsr->dumpAubNonWritable);
 }
@@ -1024,11 +1014,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
+    std::string kernelName = "";
 
-    aubCsr->initFile(aubCsr->subCaptureManager->getSubCaptureFileName(kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName));
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->initFile(aubCsr->subCaptureManager->getSubCaptureFileName(kernelName));
+    aubCsr->checkAndActivateAubSubCapture(kernelName);
 
     EXPECT_FALSE(aubCsr->dumpAubNonWritable);
 }
@@ -1044,12 +1033,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     subCaptureManagerMock->setSubCaptureToggleActive(false);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("kernelName");
 
     EXPECT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 }
@@ -1065,11 +1049,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("kernelName");
 
     EXPECT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 }
@@ -1085,10 +1065,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     subCaptureManagerMock->setSubCaptureToggleActive(false);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("");
 
     EXPECT_FALSE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_FALSE(aubCsr->initProgrammingFlagsCalled);
@@ -1105,10 +1082,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("");
 
     EXPECT_FALSE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_FALSE(aubCsr->initProgrammingFlagsCalled);
@@ -1125,11 +1099,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("kernelName");
 
     EXPECT_FALSE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_TRUE(aubCsr->initProgrammingFlagsCalled);
@@ -1146,11 +1116,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     subCaptureManagerMock->setSubCaptureToggleActive(false);
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernelInternals.mockKernel);
-
-    aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
+    aubCsr->checkAndActivateAubSubCapture("kernelName");
 
     EXPECT_TRUE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_FALSE(aubCsr->initProgrammingFlagsCalled);

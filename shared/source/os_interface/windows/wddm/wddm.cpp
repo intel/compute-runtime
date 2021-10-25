@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -46,16 +47,12 @@ namespace NEO {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
 extern Wddm::DXCoreCreateAdapterFactoryFcn getDXCoreCreateAdapterFactory();
 extern Wddm::GetSystemInfoFcn getGetSystemInfo();
-extern Wddm::VirtualAllocFcn getVirtualAlloc();
-extern Wddm::VirtualFreeFcn getVirtualFree();
 
 Wddm::DXCoreCreateAdapterFactoryFcn Wddm::dXCoreCreateAdapterFactory = getDXCoreCreateAdapterFactory();
 Wddm::CreateDXGIFactoryFcn Wddm::createDxgiFactory = getCreateDxgiFactory();
 Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
-Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
-Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
-Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
+Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
     : DriverModel(DriverModelType::WDDM), hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     UNRECOVERABLE_IF(!hwDeviceId);
     featureTable.reset(new FeatureTable());
@@ -67,6 +64,7 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceIdIn, RootDeviceEnvironment &
     this->enablePreemptionRegValue = NEO::readEnablePreemptionRegKey();
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     temporaryResources = std::make_unique<WddmResidentAllocationsContainer>(this);
+    osMemory = OSMemory::create();
 }
 
 Wddm::~Wddm() {
@@ -455,12 +453,16 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     }
 
     kmDafListener->notifyMapGpuVA(featureTable->ftrKmdDaf, getAdapter(), device, handle, MapGPUVA.VirtualAddress, getGdi()->escape);
-
-    if (gmm->isCompressionEnabled && rootDeviceEnvironment.pageTableManager.get()) {
-        return rootDeviceEnvironment.pageTableManager->updateAuxTable(gpuPtr, gmm, true);
+    bool ret = true;
+    if (gmm->isCompressionEnabled && HwInfoConfig::get(gfxPlatform->eProductFamily)->isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
+        for (auto engine : rootDeviceEnvironment.executionEnvironment.memoryManager.get()->getRegisteredEngines()) {
+            if (engine.commandStreamReceiver->pageTableManager.get()) {
+                ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
+            }
+        }
     }
 
-    return true;
+    return ret;
 }
 
 D3DGPU_VIRTUAL_ADDRESS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress,
@@ -493,7 +495,7 @@ bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) 
     return status == STATUS_SUCCESS;
 }
 
-NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, D3DKMT_HANDLE *outSharedHandle) {
+NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DDDI_ALLOCATIONINFO2 AllocationInfo = {};
     D3DKMT_CREATEALLOCATION CreateAllocation = {};
@@ -520,7 +522,17 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     outHandle = AllocationInfo.hAllocation;
     outResourceHandle = CreateAllocation.hResource;
     if (outSharedHandle) {
-        *outSharedHandle = CreateAllocation.hGlobalShare;
+        HANDLE ntSharedHandle = NULL;
+        status = this->createNTHandle(&outResourceHandle, &ntSharedHandle);
+        if (status != STATUS_SUCCESS) {
+            DEBUG_BREAK_IF(true);
+            [[maybe_unused]] auto destroyStatus = this->destroyAllocations(&outHandle, 1, outResourceHandle);
+            outHandle = NULL_HANDLE;
+            outResourceHandle = NULL_HANDLE;
+            DEBUG_BREAK_IF(destroyStatus != STATUS_SUCCESS);
+            return status;
+        }
+        *outSharedHandle = castToUint64(ntSharedHandle);
     }
     kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, getAdapter(), device, outHandle, getGdi()->escape);
 
@@ -529,7 +541,7 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
 
 bool Wddm::createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     D3DKMT_HANDLE outResourceHandle = NULL_HANDLE;
-    D3DKMT_HANDLE *outSharedHandle = nullptr;
+    uint64_t *outSharedHandle = nullptr;
     auto result = this->createAllocation(nullptr, gmm, outHandle, outResourceHandle, outSharedHandle);
     return STATUS_SUCCESS == result;
 }
@@ -977,20 +989,19 @@ bool Wddm::isShutdownInProgress() {
 
 void Wddm::releaseReservedAddress(void *reservedAddress) {
     if (reservedAddress) {
-        [[maybe_unused]] auto status = virtualFree(reservedAddress, 0, MEM_RELEASE);
-        DEBUG_BREAK_IF(!status);
+        this->virtualFree(reservedAddress, 0);
     }
 }
 
 bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
-    reservedMem = virtualAlloc(nullptr, size, MEM_RESERVE, PAGE_READWRITE);
+    reservedMem = this->virtualAlloc(nullptr, size, false);
     if (reservedMem == nullptr) {
         return false;
     } else if (minAddress > reinterpret_cast<uintptr_t>(reservedMem)) {
         StackVec<void *, 100> invalidAddrVector;
         invalidAddrVector.push_back(reservedMem);
         do {
-            reservedMem = virtualAlloc(nullptr, size, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE);
+            reservedMem = this->virtualAlloc(nullptr, size, true);
             if (minAddress > reinterpret_cast<uintptr_t>(reservedMem) && reservedMem != nullptr) {
                 invalidAddrVector.push_back(reservedMem);
             } else {
@@ -998,8 +1009,7 @@ bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
             }
         } while (1);
         for (auto &it : invalidAddrVector) {
-            [[maybe_unused]] auto status = virtualFree(it, 0, MEM_RELEASE);
-            DEBUG_BREAK_IF(!status);
+            this->virtualFree(it, 0);
         }
         if (reservedMem == nullptr) {
             return false;
@@ -1008,12 +1018,12 @@ bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
     return true;
 }
 
-void *Wddm::virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) {
-    return virtualAllocFnc(inPtr, size, static_cast<DWORD>(flags), static_cast<DWORD>(type));
+void *Wddm::virtualAlloc(void *inPtr, size_t size, bool topDownHint) {
+    return osMemory->osReserveCpuAddressRange(inPtr, size, topDownHint);
 }
 
-int Wddm::virtualFree(void *ptr, size_t size, unsigned long flags) {
-    return virtualFreeFnc(ptr, size, static_cast<DWORD>(flags));
+void Wddm::virtualFree(void *ptr, size_t size) {
+    osMemory->osReleaseCpuAddressRange(ptr, size);
 }
 
 void Wddm::waitOnPagingFenceFromCpu() {

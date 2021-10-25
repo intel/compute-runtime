@@ -6,11 +6,10 @@
  */
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/program/kernel_info.h"
+#include "shared/source/program/kernel_info_from_patchtokens.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
-
-#include "opencl/source/program/kernel_info.h"
-#include "opencl/source/program/kernel_info_from_patchtokens.h"
 
 #include "gtest/gtest.h"
 

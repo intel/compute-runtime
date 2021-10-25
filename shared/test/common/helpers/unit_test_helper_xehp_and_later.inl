@@ -7,8 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-
-#include "opencl/source/kernel/kernel.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 namespace NEO {
 

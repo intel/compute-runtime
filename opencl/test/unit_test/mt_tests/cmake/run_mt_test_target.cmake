@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,7 +24,7 @@ add_custom_command(
                    POST_BUILD
                    COMMAND WORKING_DIRECTORY ${TargetDir}
                    COMMAND echo "Running igdrcl_mt_tests ${product} ${slices}x${subslices}x${eu_per_ss}"
-                   COMMAND igdrcl_mt_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${igdrcl_mt_tests_LISTENER_OPTION} --rev_id ${revision_id}
+                   COMMAND igdrcl_mt_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${NEO_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
 )
 
 add_dependencies(run_${product}_${revision_id}_mt_unit_tests prepare_test_kernels)

@@ -17,6 +17,7 @@ D3DKMTCloseAdapter
 D3DKMTCreateDevice
 D3DKMTDestroyDevice
 D3DKMTEscape
+D3DKMTShareObjects
 D3DKMTCreateContextVirtual
 D3DKMTDestroyContext
 D3DKMTOpenResource

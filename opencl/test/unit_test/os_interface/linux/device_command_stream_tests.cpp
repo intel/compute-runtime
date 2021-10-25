@@ -9,16 +9,16 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/os_interface/linux/device_command_stream.inl"
+#include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/source/os_interface/linux/device_command_stream.inl"
-#include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -39,7 +39,7 @@ struct DeviceCommandStreamLeaksTest : ::testing::Test {
 
 HWTEST_F(DeviceCommandStreamLeaksTest, WhenCreatingDeviceCsrThenValidPointerIsReturned) {
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
-    DrmMockSuccess mockDrm;
+    DrmMockSuccess mockDrm(mockFd, *executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, ptr);
 }
 

@@ -7,14 +7,14 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/enqueue_copy_image_fixture.h"
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
 
@@ -216,7 +216,7 @@ HWTEST_F(EnqueueCopyImageTest, givenDeviceWithBlitterSupportWhenEnqueueCopyImage
     DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
     size_t srcOrigin[] = {0, 0, 0};
     size_t dstOrigin[] = {0, 0, 0};
@@ -246,7 +246,7 @@ HWTEST_F(EnqueueCopyImageTest, givenDeviceWithBlitterSupportWhenEnqueueCopyImage
         DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
-        auto supportExpected = hwHelper.isBlitterForImagesSupported(*hwInfo);
+        auto supportExpected = hwInfoConfig->isBlitterForImagesSupported();
         EXPECT_EQ(supportExpected, mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {
@@ -279,10 +279,9 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
         EBuiltInOps::CopyImageToImage3d,
         pCmdQ->getClDevice());
     // substitute original builder with mock builder
-    auto oldBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
         EBuiltInOps::CopyImageToImage3d,
-        pCmdQ->getContext(),
-        pCmdQ->getDevice(),
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
     cl_int retVal = CL_SUCCESS;
@@ -377,10 +376,9 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
     EXPECT_EQ(expectedDstMipLevel, params->dstMipLevel);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = builtIns->setBuiltinDispatchInfoBuilder(
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
         EBuiltInOps::CopyImageToImage3d,
-        pCmdQ->getContext(),
-        pCmdQ->getDevice(),
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 }

@@ -51,7 +51,7 @@ class TestBuiltinFunctionsLibImpl : public DeviceFixture, public testing::Test {
             kernelDesc.pKernelName = builtInName;
             res = module->createKernel(&kernelDesc, &kernelHandle);
             DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);
-            UNUSED_VARIABLE(res);
+
             kernel.reset(Kernel::fromHandle(kernelHandle));
 
             return std::unique_ptr<BuiltinData>(new MockBuiltinData{std::move(module), std::move(kernel)});
@@ -60,7 +60,7 @@ class TestBuiltinFunctionsLibImpl : public DeviceFixture, public testing::Test {
     struct MockBuiltinData : BuiltinFunctionsLibImpl::BuiltinData {
         using BuiltinFunctionsLibImpl::BuiltinData::func;
         using BuiltinFunctionsLibImpl::BuiltinData::module;
-        MockBuiltinData(std::unique_ptr<L0::Module> mod, std::unique_ptr<L0::Kernel> ker) {
+        MockBuiltinData(std::unique_ptr<L0::Module> &&mod, std::unique_ptr<L0::Kernel> &&ker) {
             module = std::move(mod);
             func = std::move(ker);
         }
@@ -173,7 +173,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplStateless, givenCallToStatelessBuiltinFuncti
 HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterfaceSpirv());
-    std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, std::numeric_limits<uint32_t>::max(), false, &returnValue));
+    std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, false, &returnValue));
 
     if (device->getHwInfo().capabilityTable.supportsImages) {
         for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
@@ -185,7 +185,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCompilerInterfaceWhenCreateDev
 HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCompilerInterfaceWhenCreateDeviceThenBuiltinsFunctionsAreLoaded) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterfaceSpirv());
-    std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, std::numeric_limits<uint32_t>::max(), false, &returnValue));
+    std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, false, &returnValue));
 
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
         EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getFunction(static_cast<L0::Builtin>(builtId)));

@@ -7,11 +7,11 @@
 
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/sharings/va/enable_va.h"
 #include "opencl/source/sharings/va/va_sharing_functions.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"

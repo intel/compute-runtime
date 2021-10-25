@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_map_buffer_fixture.h"
@@ -16,7 +17,6 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
@@ -378,7 +378,7 @@ TEST_F(EnqueueMapBufferTest, givenNonReadOnlyBufferWhenMappedOnGpuThenSetValidEv
     buffer->setSharingHandler(new SharingHandler());
     auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(), handleId);
+        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmClientContext()), handleId);
     }
     buffer->forceDisallowCPUCopy = true;
 
@@ -426,7 +426,7 @@ TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEvent
     buffer->setSharingHandler(new SharingHandler());
     auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(), handleId);
+        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmClientContext()), handleId);
     }
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer.get());

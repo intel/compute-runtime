@@ -6,21 +6,21 @@
  */
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "shared/source/helpers/hardware_context_controller.h"
+#include "shared/source/helpers/neo_driver_version.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
+#include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_aub_file_stream.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/helpers/hardware_context_controller.h"
-#include "opencl/source/helpers/neo_driver_version.h"
 #include "opencl/test/unit_test/fixtures/aub_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
@@ -39,6 +39,15 @@ using ::testing::Invoke;
 using ::testing::Return;
 
 using AubFileStreamTests = Test<AubCommandStreamReceiverFixture>;
+
+struct AddPatchInfoCommentsAubTests : AubFileStreamTests {
+    void SetUp() override {
+        DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+        AubFileStreamTests::SetUp();
+    }
+
+    DebugManagerStateRestore restore;
+};
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitFileIsCalledWithInvalidFileNameThenFileIsNotOpened) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -213,6 +222,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalle
     auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    aubCsr->initializeEngine();
 
     aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
 
@@ -319,7 +329,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCallingInsertAubWa
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     ASSERT_FALSE(aubCsr->pollForCompletionCalled);
-    aubCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false, 1, 0);
+    aubCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
     EXPECT_TRUE(aubCsr->pollForCompletionCalled);
 }
 
@@ -538,6 +548,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithHardwareContextInS
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedFunctions) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    aubCsr->initializeEngine();
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
@@ -625,6 +636,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCall
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
@@ -756,7 +768,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
     EXPECT_EQ(mockAubManager->receivedComment, commentWithDriverVersion);
 }
 
-HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {
+HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {
     auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -781,7 +793,7 @@ HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataO
     EXPECT_EQ("AllocationsList\n", comments[1]);
 }
 
-HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
+HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
     auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -796,7 +808,7 @@ HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenFirstAddComments
     EXPECT_FALSE(result);
 }
 
-HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenSecondAddCommentsFailsThenFunctionReturnsFalse) {
+HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSecondAddCommentsFailsThenFunctionReturnsFalse) {
     auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -811,7 +823,7 @@ HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenSecondAddComment
     EXPECT_FALSE(result);
 }
 
-HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObjectsAddedThenCommentsAreNotEmpty) {
+HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObjectsAddedThenCommentsAreNotEmpty) {
     auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -881,7 +893,7 @@ HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObj
     }
 }
 
-HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenSourceAllocationIsNullThenDoNotAddToAllocationsList) {
+HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSourceAllocationIsNullThenDoNotAddToAllocationsList) {
     auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -933,7 +945,7 @@ HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenSourceAllocation
     }
 }
 
-HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenTargetAllocationIsNullThenDoNotAddToAllocationsList) {
+HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTargetAllocationIsNullThenDoNotAddToAllocationsList) {
     auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();

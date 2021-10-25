@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -19,6 +19,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
@@ -27,7 +28,6 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "pipe_control_args.h"
 
@@ -937,14 +937,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenDefaultHwHelperHwWhenIsWorkaround
     EXPECT_FALSE(helper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
 }
 
-HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceEmuInt32DivRemSPWARequiredCalledThenFalseIsReturned) {
-    if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
-        GTEST_SKIP();
-    }
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
-}
-
 HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8IsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(8u, helper.getMinimalSIMDSize());
@@ -1021,19 +1013,6 @@ HWTEST2_F(HwHelperTest, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLo
     graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, graphicsAllocation));
-}
-
-HWTEST_F(HwHelperTest, whenIsMidThreadPreemptionSupportedIsCalledThenCorrectResultIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = true;
-    auto midThreadPreemptionSupported = hwHelper.isMidThreadPreemptionSupported(hwInfo);
-    EXPECT_TRUE(midThreadPreemptionSupported);
-
-    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = false;
-    midThreadPreemptionSupported = hwHelper.isMidThreadPreemptionSupported(hwInfo);
-    EXPECT_FALSE(midThreadPreemptionSupported);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {
@@ -1228,11 +1207,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingPlanarYuvHeigh
     EXPECT_EQ(helper.getPlanarYuvMaxHeight(), 16352u);
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenIsBlitterForImagesSupportedIsCalledThenFalseIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isBlitterForImagesSupported(*defaultHwInfo));
-}
-
 TEST_F(HwHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto &hwHelper = HwHelper::get(renderCoreFamily);
@@ -1263,15 +1237,10 @@ HWTEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
     EXPECT_EQ(0u, hwHelper.getNumCacheRegions());
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenFalseIsReturned) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo));
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, whenCheckingForSmallKernelPreferenceThenFalseIsReturned) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(0u, this->pClDevice->getHardwareInfo()));
-    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(20000u, this->pClDevice->getHardwareInfo()));
+    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(0u, this->pDevice->getHardwareInfo()));
+    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(20000u, this->pDevice->getHardwareInfo()));
 }
 
 TEST_F(HwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
@@ -1287,7 +1256,7 @@ TEST_F(HwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequir
 
 HWTEST_F(HwHelperTest, whenSetRenderCompressedFlagThenProperFlagSet) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
-    auto gmm = std::make_unique<MockGmm>();
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     gmm->resourceParams.Flags.Info.RenderCompressed = 0;
 
     hwHelper.applyRenderCompressionFlag(*gmm, 1);
@@ -1332,20 +1301,22 @@ HWTEST2_F(HwHelperTest, givenXeHPAndBelowPlatformPlatformWhenCheckingIfEngineTyp
     EXPECT_FALSE(hwHelper.isEngineTypeRemappingToHwSpecificRequired());
 }
 
-HWTEST2_F(HwHelperTest, givenProgramAdditionalPipeControlBeforeStateComputeModeCommandWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned, IsXEHP) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.set(true);
-
+HWTEST2_F(HwHelperTest, givenAtMostGen12lpPlatformiWhenCheckingIfScratchSpaceSurfaceStateAccessibleThenFalseIsReturned, IsAtMostGen12lp) {
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
-    auto hwInfo = *defaultHwInfo;
-
-    EXPECT_TRUE(hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo));
+    EXPECT_FALSE(hwHelper.isScratchSpaceSurfaceStateAccessible());
 }
 
-HWTEST2_F(HwHelperTest, givenHwHelperWithMultipleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned, IsXEHP) {
+HWTEST2_F(HwHelperTest, givenAtLeastXeHpPlatformWhenCheckingIfScratchSpaceSurfaceStateAccessibleTheniTrueIsReturned, IsAtLeastXeHpCore) {
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    EXPECT_TRUE(hwHelper.isScratchSpaceSurfaceStateAccessible());
+}
 
-    EXPECT_TRUE(hwHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo));
+HWTEST_F(HwHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorrectValueIsReturned) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    RENDER_SURFACE_STATE renderSurfaceState;
+    uint64_t expectedBaseAddress = 0x1122334455667788;
+    renderSurfaceState.setSurfaceBaseAddress(expectedBaseAddress);
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(expectedBaseAddress, hwHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState));
 }

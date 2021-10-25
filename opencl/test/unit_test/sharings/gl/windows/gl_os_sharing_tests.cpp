@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
@@ -20,7 +21,6 @@
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/windows/mock_sys_calls.h"
 
 #include "gtest/gtest.h"
 #include <GL/gl.h>

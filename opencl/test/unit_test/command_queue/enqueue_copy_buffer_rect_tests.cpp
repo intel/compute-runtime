@@ -7,12 +7,12 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/enqueue_copy_buffer_rect_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"
 
@@ -417,7 +417,7 @@ struct EnqueueCopyBufferRectHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
         dstBuffer = std::unique_ptr<Buffer>(BufferHelper<EnqueueCopyBufferRectTest::BufferRect>::create(context.get()));
     }

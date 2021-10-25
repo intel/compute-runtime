@@ -75,6 +75,9 @@ bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &h
     if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
         return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
     }
+    if (!hwInfo.capabilityTable.ftrRenderCompressedBuffers) {
+        return false;
+    }
     if (HwHelper::getSubDevicesCount(&hwInfo) > 1) {
         return DebugManager.flags.EnableMultiTileCompression.get() > 0 ? true : false;
     }
@@ -90,4 +93,28 @@ LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMod
         return LocalMemoryAccessMode::CpuAccessDisallowed;
     }
     return LocalMemoryAccessMode::Default;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    if (hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 ||
+        DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get() == 1) {
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
+    return !HwHelper::get(hwInfo.platform.eDisplayCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
+    return HwHelper::get(hwInfo.platform.eDisplayCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
+    return true;
 }

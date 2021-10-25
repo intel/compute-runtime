@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/local_work_size.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
@@ -29,6 +30,7 @@
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_blit_properties.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -38,6 +40,7 @@
 #include "opencl/source/memory_manager/migration_controller.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/program/printf_handler.h"
+#include "opencl/source/utilities/cl_logger.h"
 
 #include "pipe_control_args.h"
 
@@ -166,7 +169,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     TagNodeBase *hwTimeStamps = nullptr;
 
-    auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
@@ -330,7 +333,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 getGpgpuCommandStreamReceiver().setMediaVFEStateDirty(true);
 
                 if (devQueueHw->getSchedulerReturnInstance() > 0) {
-                    waitUntilComplete(completionStamp.taskCount, bcsTaskCount, completionStamp.flushStamp, false);
+                    waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
                     this->runSchedulerSimulation(*devQueueHw, *parentKernel);
                 }
             }
@@ -367,9 +370,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             completionStamp.taskLevel = taskLevel;
 
             if (eventBuilder.getEvent() && isProfilingEnabled()) {
-                TimeStampData submitTimeStamp;
-                this->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
-                eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
                 eventBuilder.getEvent()->setSubmitTimeStamp();
                 eventBuilder.getEvent()->setStartTimeStamp();
             }
@@ -406,10 +406,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     queueOwnership.unlock();
-    commandStreamRecieverOwnership.unlock();
+    commandStreamReceiverOwnership.unlock();
 
     if (blocking) {
-        waitUntilComplete(blockQueue, (blockQueue ? nullptr : printfHandler.get()));
+        waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()));
     }
     if (migratedMemory) {
         getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
@@ -428,7 +428,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
                                                           KernelOperation *blockedCommandsData,
                                                           TimestampPacketDependencies &timestampPacketDependencies) {
     TagNodeBase *hwPerfCounter = nullptr;
-    FileLoggerInstance().dumpKernelArgs(&multiDispatchInfo);
+    getClFileLogger().dumpKernelArgs(&multiDispatchInfo);
 
     printfHandler.reset(PrintfHandler::create(multiDispatchInfo, *device));
     if (printfHandler) {
@@ -667,7 +667,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
                       this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation(),
                       devQueueHw->getDebugQueue());
 
-    auto preemptionMode = PreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo);
+    auto preemptionMode = ClPreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo);
     GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         *this->commandStream,
         *devQueueHw,
@@ -816,10 +816,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         DEBUG_BREAK_IF(device->getDeviceInfo().preemptionSupported != false);
     }
 
-    TimeStampData submitTimeStamp = {};
     if (isProfilingEnabled() && eventBuilder.getEvent()) {
-        this->getDevice().getOSTime()->getCpuTime(&submitTimeStamp.CPUTimeinNS);
-        eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
+        eventBuilder.getEvent()->setSubmitTimeStamp();
 
         auto hwTimestampNode = eventBuilder.getEvent()->getHwTimeStampNode();
         if (hwTimestampNode) {
@@ -861,7 +859,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         {},                                                                                         //pipelineSelectArgs
         this->flushStamp->getStampReference(),                                                      //flushStampReference
         getThrottle(),                                                                              //throttle
-        PreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo),                       //preemptionMode
+        ClPreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo),                     //preemptionMode
         numGrfRequired,                                                                             //numGrfRequired
         L3CachingSettings::l3CacheOn,                                                               //l3CacheSettings
         kernel->getThreadArbitrationPolicy(),                                                       //threadArbitrationPolicy
@@ -912,7 +910,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     if (enqueueProperties.blitPropertiesContainer->size() > 0) {
-        this->bcsTaskCount = bcsCsr->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+        const auto newTaskCount = bcsCsr->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
         dispatchFlags.implicitFlush = true;
     }
 
@@ -945,7 +944,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     const EnqueueProperties &enqueueProperties,
     EventsRequest &eventsRequest,
     EventBuilder &externalEventBuilder,
-    std::unique_ptr<PrintfHandler> printfHandler,
+    std::unique_ptr<PrintfHandler> &&printfHandler,
     CommandStreamReceiver *bcsCsr) {
 
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
@@ -1004,7 +1003,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             allSurfaces.push_back(surface->duplicate());
         }
 
-        PreemptionMode preemptionMode = PreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo);
+        PreemptionMode preemptionMode = ClPreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo);
         bool slmUsed = multiDispatchInfo.usesSlm() || multiDispatchInfo.peekParentKernel();
         command = std::make_unique<CommandComputeKernel>(*this,
                                                          blockedCommandsData,
@@ -1062,10 +1061,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     }
 
     if (eventBuilder.getEvent() && isProfilingEnabled()) {
-        TimeStampData submitTimeStamp;
-
-        getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
-        eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
+        eventBuilder.getEvent()->setSubmitTimeStamp();
         eventBuilder.getEvent()->setStartTimeStamp();
     }
 
@@ -1129,7 +1125,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
-        this->bcsTaskCount = bcsCsr->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+        const auto newTaskCount = bcsCsr->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
     }
 
     return completionStamp;
@@ -1165,7 +1162,7 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 template <typename GfxFamily>
 template <uint32_t cmdType>
 void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
-    auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     EventBuilder eventBuilder;
@@ -1244,10 +1241,10 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
 
     queueOwnership.unlock();
-    commandStreamRecieverOwnership.unlock();
+    commandStreamReceiverOwnership.unlock();
 
     if (blocking) {
-        waitUntilComplete(blockQueue, nullptr);
+        waitForAllEngines(blockQueue, nullptr);
     }
 }
 

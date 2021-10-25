@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -62,10 +62,10 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
 
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesWhenGettingCmdSizeThenSizeIsCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.is3DPipelineSelectWARequired(device->getHardwareInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(device->getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
         cmdsSize += 2 * sizeof(PIPELINE_SELECT);
-        if (Gen12LPHelpers::pipeControlWaRequired(device->getHardwareInfo().platform.eProductFamily)) {
+        if (SpecialUltHelperGen12lp::isPipeControlWArequired(device->getHardwareInfo().platform.eProductFamily)) {
             cmdsSize += 2 * sizeof(PIPE_CONTROL);
         }
     }
@@ -89,10 +89,10 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesWhenGettingCmdSi
 
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesWhenGettingCmdSizeThenSizeIsCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.is3DPipelineSelectWARequired(device->getHardwareInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(device->getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
         cmdsSize += 2 * sizeof(PIPELINE_SELECT);
-        if (Gen12LPHelpers::pipeControlWaRequired(device->getHardwareInfo().platform.eProductFamily)) {
+        if (SpecialUltHelperGen12lp::isPipeControlWArequired(device->getHardwareInfo().platform.eProductFamily)) {
             cmdsSize += 2 * sizeof(PIPE_CONTROL);
         }
     }
@@ -117,11 +117,11 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesWhenGettingCmdSize
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmdValuesAreCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     auto cmdsSizeWABeginOffset = 0;
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.is3DPipelineSelectWARequired(device->getHardwareInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(device->getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
         cmdsSizeWABeginOffset += sizeof(PIPELINE_SELECT);
         cmdsSize += sizeof(PIPELINE_SELECT);
-        if (Gen12LPHelpers::pipeControlWaRequired(device->getHardwareInfo().platform.eProductFamily)) {
+        if (SpecialUltHelperGen12lp::isPipeControlWArequired(device->getHardwareInfo().platform.eProductFamily)) {
             cmdsSizeWABeginOffset += sizeof(PIPE_CONTROL);
             cmdsSize += sizeof(PIPE_CONTROL);
         }
@@ -157,11 +157,11 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmd
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesThenCoherencyCmdValuesAreCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     auto cmdsSizeWABeginOffset = 0;
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.is3DPipelineSelectWARequired(device->getHardwareInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(device->getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
         cmdsSizeWABeginOffset += sizeof(PIPELINE_SELECT);
         cmdsSize += sizeof(PIPELINE_SELECT);
-        if (Gen12LPHelpers::pipeControlWaRequired(device->getHardwareInfo().platform.eProductFamily)) {
+        if (SpecialUltHelperGen12lp::isPipeControlWArequired(device->getHardwareInfo().platform.eProductFamily)) {
             cmdsSizeWABeginOffset += sizeof(PIPE_CONTROL);
             cmdsSize += sizeof(PIPE_CONTROL);
         }
@@ -230,7 +230,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
                 EXPECT_FALSE(foundOne);
                 foundOne = true;
                 auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));
-                if (!expectPipeControl && !Gen12LPHelpers::pipeControlWaRequired(device->getHardwareInfo().platform.eProductFamily)) {
+                if (!expectPipeControl && !SpecialUltHelperGen12lp::isPipeControlWArequired(device->getHardwareInfo().platform.eProductFamily)) {
                     EXPECT_EQ(nullptr, pc);
                 } else {
                     EXPECT_NE(nullptr, pc);

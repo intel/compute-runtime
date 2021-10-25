@@ -5,20 +5,20 @@
  *
  */
 
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
+#include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 

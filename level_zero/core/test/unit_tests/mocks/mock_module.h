@@ -90,6 +90,12 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
 
         return NEO::TranslationOutput::ErrorCode::Success;
     }
+    NEO::TranslationOutput::ErrorCode link(const NEO::Device &device,
+                                           const NEO::TranslationInput &input,
+                                           NEO::TranslationOutput &output) override {
+
+        return NEO::TranslationOutput::ErrorCode::Success;
+    }
 };
 template <typename T1, typename T2>
 struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
@@ -98,6 +104,14 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
     NEO::TranslationOutput::ErrorCode build(const NEO::Device &device,
                                             const NEO::TranslationInput &input,
                                             NEO::TranslationOutput &output) override {
+
+        EXPECT_EQ(moduleNumSpecConstants, input.specializedValues.size());
+
+        return NEO::TranslationOutput::ErrorCode::Success;
+    }
+    NEO::TranslationOutput::ErrorCode link(const NEO::Device &device,
+                                           const NEO::TranslationInput &input,
+                                           NEO::TranslationOutput &output) override {
 
         EXPECT_EQ(moduleNumSpecConstants, input.specializedValues.size());
 
@@ -120,6 +134,15 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
     const std::vector<T2> moduleSpecConstantsValuesT2{static_cast<T2>(std::numeric_limits<T1>::max()) + 60u, static_cast<T2>(std::numeric_limits<T1>::max()) + 50u, static_cast<T2>(std::numeric_limits<T1>::max()) + 40u};
     const std::vector<uint32_t> moduleSpecConstantsSizes{sizeof(T2), sizeof(T1), sizeof(T2), sizeof(T1), sizeof(T2), sizeof(T1)};
     static_assert(sizeof(T1) < sizeof(T2));
+};
+
+struct MockCompilerInterfaceLinkFailure : public NEO::CompilerInterface {
+    NEO::TranslationOutput::ErrorCode link(const NEO::Device &device,
+                                           const NEO::TranslationInput &input,
+                                           NEO::TranslationOutput &output) override {
+
+        return NEO::TranslationOutput::ErrorCode::BuildFailure;
+    }
 };
 
 } // namespace ult

@@ -38,6 +38,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     auto sizeCrossThreadData = dispatchInterface->getCrossThreadDataSize();
     auto sizePerThreadData = dispatchInterface->getPerThreadDataSize();
     auto sizePerThreadDataForWholeGroup = dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
+    auto pImplicitArgs = dispatchInterface->getImplicitArgs();
 
     const HardwareInfo &hwInfo = device->getHardwareInfo();
 
@@ -51,7 +52,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
     size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec,
-                                                                        isInternal, isCooperative);
+                                                                        isInternal, isCooperative, isIndirect, dispatchInterface);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
         auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *bbEnd = Family::cmdInitBatchBufferEnd;
@@ -142,7 +143,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         UNRECOVERABLE_IF(!(ptr));
         offsetThreadData = heapIndirect->getHeapGpuStartOffset() + static_cast<uint64_t>(heapIndirect->getUsed() - sizeThreadData);
 
-        auto pImplicitArgs = dispatchInterface->getImplicitArgs();
         if (pImplicitArgs) {
             offsetThreadData -= sizeof(ImplicitArgs);
             pImplicitArgs->localIdTablePtr = heapIndirect->getGraphicsAllocation()->getGpuAddress() + heapIndirect->getUsed() - iohRequiredSize;
@@ -153,10 +153,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                  dispatchInterface->getCrossThreadData(), sizeCrossThreadData);
 
         if (isIndirect) {
-            void *gpuPtr = reinterpret_cast<void *>(heapIndirect->getHeapGpuBase() + heapIndirect->getUsed() - sizeThreadData);
-            EncodeIndirectParams<Family>::setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, gpuPtr);
-            EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, gpuPtr, dispatchInterface->getGroupSize());
-            EncodeIndirectParams<Family>::setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, gpuPtr, dispatchInterface->getGroupSize());
+            auto gpuPtr = heapIndirect->getGraphicsAllocation()->getGpuAddress() + heapIndirect->getUsed() - sizeThreadData;
+            uint64_t implicitArgsGpuPtr = 0u;
+            if (pImplicitArgs) {
+                implicitArgsGpuPtr = gpuPtr - sizeof(ImplicitArgs);
+            }
+            EncodeIndirectParams<Family>::encode(container, gpuPtr, dispatchInterface, implicitArgsGpuPtr);
         }
 
         ptr = ptrOffset(ptr, sizeCrossThreadData);
@@ -332,7 +334,7 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart,
                                                                           const Vec3<size_t> &groupCount, bool isInternal,
-                                                                          bool isCooperative) {
+                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface) {
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;
@@ -347,6 +349,15 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
+    if (isIndirect) {
+        UNRECOVERABLE_IF(dispatchInterface == nullptr);
+        totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), false);
+        if (dispatchInterface->getImplicitArgs()) {
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
+            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), true);
+        }
+    }
 
     totalSize += sizeof(MI_BATCH_BUFFER_END);
 
@@ -359,6 +370,11 @@ inline void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void
 
 template <typename Family>
 inline void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
+}
+
+template <typename Family>
+void EncodeStateBaseAddress<Family>::setIohAddressForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
+    sbaAddress.IndirectObjectBaseAddress = sbaCmd.getIndirectObjectBaseAddress();
 }
 
 template <typename Family>
@@ -433,9 +449,9 @@ inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &devic
 }
 
 template <typename GfxFamily>
-inline void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                                                   bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    encodeExtraCacheSettings(surfaceState, *gmmHelper->getHardwareInfo());
+inline void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
+    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
+    encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
 }
 
 template <typename GfxFamily>

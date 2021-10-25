@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
@@ -23,18 +24,16 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
+#include "shared/test/common/mocks/mock_host_ptr_manager.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
-#include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
-#include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_command_stream_fixture.h"
@@ -61,7 +60,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitFo
         .Times(1)
         .WillRepeatedly(copyIoctlParam(&calledWait));
 
-    csr->waitForFlushStamp(handleToWait, 1, 0);
+    csr->waitForFlushStamp(handleToWait);
     EXPECT_TRUE(memcmp(&expectedWait, &calledWait, sizeof(drm_i915_gem_wait)) == 0);
 }
 
@@ -859,10 +858,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreate
     executionEnvironment.rootDeviceEnvironments[1]->setHwInfo(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[1]->initGmm();
     executionEnvironment.rootDeviceEnvironments[1]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[1]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom()));
+    executionEnvironment.rootDeviceEnvironments[1]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0])));
     auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, 1, gemCloseWorkerMode::gemCloseWorkerActive);
     auto pageTableManager = csr->createPageTableManager();
-    EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[1]->pageTableManager.get(), pageTableManager);
+    EXPECT_EQ(csr->pageTableManager.get(), pageTableManager);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmCsrThenEnableBatching) {
@@ -893,11 +892,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
     auto mockMngr = new MockGmmPageTableMngr();
-    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(mockMngr);
-    auto gmm = std::make_unique<MockGmm>();
+    csr->pageTableManager.reset(mockMngr);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
     GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
     EXPECT_CALL(*mockMngr, updateAuxTable(::testing::_)).Times(1).WillOnce(::testing::Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {ddiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
-    auto result = executionEnvironment.rootDeviceEnvironments[0]->pageTableManager->updateAuxTable(0, gmm.get(), true);
+    auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), true);
     EXPECT_EQ(ddiUpdateAuxTable.BaseGpuVA, 0ull);
     EXPECT_EQ(ddiUpdateAuxTable.BaseResInfo, gmm->gmmResourceInfo->peekHandle());
     EXPECT_EQ(ddiUpdateAuxTable.DoNotWait, true);
@@ -908,11 +908,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpda
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
     auto mockMngr = new MockGmmPageTableMngr();
-    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(mockMngr);
-    auto gmm = std::make_unique<MockGmm>();
+    csr->pageTableManager.reset(mockMngr);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
     GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
     EXPECT_CALL(*mockMngr, updateAuxTable(::testing::_)).Times(1).WillOnce(::testing::Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {ddiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
-    auto result = executionEnvironment.rootDeviceEnvironments[0]->pageTableManager->updateAuxTable(0, gmm.get(), false);
+    auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), false);
     EXPECT_EQ(ddiUpdateAuxTable.BaseGpuVA, 0ull);
     EXPECT_EQ(ddiUpdateAuxTable.BaseResInfo, gmm->gmmResourceInfo->peekHandle());
     EXPECT_EQ(ddiUpdateAuxTable.DoNotWait, true);

@@ -7,8 +7,8 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -106,7 +106,7 @@ TEST_F(CommandListCreate, givenNonExistingPtrThenAppendMemAdviseReturnsError) {
     ASSERT_NE(nullptr, commandList);
 
     auto res = commandList->appendMemAdvise(device, nullptr, 0, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
 TEST_F(CommandListCreate, givenNonExistingPtrThenAppendMemoryPrefetchReturnsError) {
@@ -118,7 +118,33 @@ TEST_F(CommandListCreate, givenNonExistingPtrThenAppendMemoryPrefetchReturnsErro
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
-TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseReturnsSuccess) {
+TEST_F(CommandListCreate, givenValidPtrWhenAppendMemAdviseFailsThenReturnError) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto res = context->allocDeviceMem(device->toHandle(),
+                                       &deviceDesc,
+                                       size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    memoryManager->failSetMemAdvise = true;
+
+    res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+
+    res = context->freeMem(ptr);
+    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(CommandListCreate, givenValidPtrWhenAppendMemAdviseSucceedsThenReturnSuccess) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -177,7 +203,7 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearReadMostlyT
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -209,7 +235,7 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearPreferredLo
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -241,7 +267,7 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearNonAtomicTh
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -273,7 +299,7 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearCachingThen
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -283,10 +309,13 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearCachingThen
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>((L0::Device::fromHandle(device)));
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.cached_memory);
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    EXPECT_EQ(1, memoryManager->memAdviseFlags.cached_memory);
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_UNCACHED);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(0, flags.cached_memory);
+    EXPECT_EQ(0, memoryManager->memAdviseFlags.cached_memory);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -307,7 +336,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerThenAppend
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -355,7 +384,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerThenGpuDom
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -396,7 +425,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -442,7 +471,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -511,7 +540,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -566,7 +595,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -607,7 +636,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -653,7 +682,7 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidPtrAndPageFaultHandlerAndGpuDo
     EXPECT_NE(nullptr, ptr);
 
     ze_result_t returnValue;
-    L0::MemAdviseFlags flags;
+    NEO::MemAdviseFlags flags;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 

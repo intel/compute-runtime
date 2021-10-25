@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -49,16 +50,16 @@ cl_uint TestSimdTable[] = {
 namespace ULT {
 struct AUBHelloWorld
     : public HelloWorldFixture<AUBHelloWorldFixtureFactory>,
-      public HardwareParse,
+      public ClHardwareParse,
       public ::testing::Test {
 
     void SetUp() override {
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::TearDown();
     }
 };
@@ -164,6 +165,8 @@ HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
+    getSimulatedCsr<FamilyType>()->initializeEngine();
+
     writeMemory<FamilyType>(destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
     writeMemory<FamilyType>(srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
 
@@ -206,18 +209,18 @@ INSTANTIATE_TEST_CASE_P(
 
 struct AUBSimpleArg
     : public SimpleArgFixture<AUBSimpleArgFixtureFactory>,
-      public HardwareParse,
+      public ClHardwareParse,
       public ::testing::Test {
 
     using SimpleArgKernelFixture::SetUp;
 
     void SetUp() override {
         SimpleArgFixture<AUBSimpleArgFixtureFactory>::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         SimpleArgFixture<AUBSimpleArgFixtureFactory>::TearDown();
     }
 };
@@ -278,7 +281,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, WhenEnqueingKernelThenAdressesAreAlign
 }
 
 HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
-
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -289,6 +291,9 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+
+    pCmdQ->getGpgpuCommandStreamReceiver().overwriteFlatBatchBufferHelper(new FlatBatchBufferHelperHw<FamilyType>(*pCmdQ->getDevice().getExecutionEnvironment()));
+
     pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
     auto retVal = pCmdQ->enqueueKernel(
@@ -461,7 +466,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
     void *bufferGpuAddress = nullptr;
     std::unique_ptr<Buffer> outBuffer;
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
 };
 
 using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;
@@ -987,7 +992,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, device->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
         contextCl,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &contextCl->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &contextCl->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,

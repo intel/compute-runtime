@@ -8,6 +8,8 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/program/kernel_info.h"
+#include "shared/source/program/kernel_info_from_patchtokens.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -15,8 +17,6 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
-#include "opencl/source/program/kernel_info.h"
-#include "opencl/source/program/kernel_info_from_patchtokens.h"
 #include "test.h"
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
@@ -32,7 +32,11 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
-void NEO::populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes);
+namespace NEO {
+void populatePointerKernelArg(ArgDescPointer &dst,
+                              CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless,
+                              KernelDescriptor::AddressingMode addressingMode);
+}
 
 namespace L0 {
 namespace ult {
@@ -331,7 +335,7 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedW
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
     uint32_t copyForGlobalSurface = 1u;
-    uint32_t copyForIsa = 1u;
+    uint32_t copyForIsa = 4u;
     uint32_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
                                                                  copyForGlobalSurface + copyForIsa;
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
@@ -1404,7 +1408,8 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
     neoDevice->incRefInternal();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex());
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
     Mock<Module> mockModule(&mockDevice, nullptr);
     kernel.module = &mockModule;
     NEO::MockGraphicsAllocation alloc;
@@ -1437,7 +1442,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessT
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex());
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
 
     auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
     size_t size = hwHelper.getRenderSurfaceStateSize();
@@ -1471,7 +1477,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulTh
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex());
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
 
     auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
     size_t size = hwHelper.getRenderSurfaceStateSize();
@@ -1746,7 +1753,8 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfac
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex());
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
     auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
     const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
@@ -2121,6 +2129,36 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     kernel->setGlobalOffsetExp(1, 2, 3);
     kernel->patchGlobalOffset();
     EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+}
+
+TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsAndPrintfStringsMapWhenPrintOutputThenProperStringIsPrinted) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+    kernelDescriptor->kernelAttributes.flags.usesPrintf = false;
+    kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = false;
+    std::string expectedString("test123");
+    kernelDescriptor->kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
+
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    auto printfAllocation = reinterpret_cast<uint32_t *>(kernel->getPrintfBufferAllocation()->getUnderlyingBuffer());
+    printfAllocation[0] = 8;
+    printfAllocation[1] = 0;
+
+    EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);
+    ASSERT_NE(nullptr, kernel->getImplicitArgs());
+
+    testing::internal::CaptureStdout();
+    kernel->printPrintfOutput();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(expectedString.c_str(), output.c_str());
 }
 
 TEST_F(KernelImplicitArgTests, givenKernelWithoutImplicitArgsWhenPatchingImplicitArgsThenNothingHappens) {

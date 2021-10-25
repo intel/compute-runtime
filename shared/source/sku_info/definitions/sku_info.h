@@ -12,7 +12,8 @@
 
 namespace NEO {
 
-using BcsInfoMask = std::bitset<1>;
+constexpr inline size_t bcsInfoMaskSize = 1u;
+using BcsInfoMask = std::bitset<bcsInfoMaskSize>;
 
 struct FeatureTable : FeatureTableBase {
     BcsInfoMask ftrBcsInfo = 0;

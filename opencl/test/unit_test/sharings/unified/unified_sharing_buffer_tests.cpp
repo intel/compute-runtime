@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/unified/unified_buffer.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_mocks.h"

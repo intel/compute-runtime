@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
@@ -23,26 +24,25 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 
-#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_hw_helper.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
@@ -790,31 +790,39 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    DeviceBitfield devices(0b11);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
-    EXPECT_TRUE(csr->getTagAddress() == nullptr);
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
-    EXPECT_TRUE(csr->getTagAddress() != nullptr);
-    EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
+    EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
+    auto tagAddress = csr->getTagAddress();
+    for (uint32_t i = 0; i < 2; i++) {
+        EXPECT_EQ(*tagAddress, initialHardwareTag);
+        tagAddress = ptrOffset(tagAddress, 8);
+    }
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledInMultiRootDeviceEnvironmentThenTagAllocationIsBeingAllocated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 10u);
-    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    DeviceBitfield devices(0b1111);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
 
     EXPECT_EQ(nullptr, csr->getTagAllocation());
-    EXPECT_TRUE(csr->getTagAddress() == nullptr);
 
     csr->initializeTagAllocation();
 
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
-    EXPECT_TRUE(csr->getTagAddress() != nullptr);
-    EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
+    EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
+    auto tagAddress = csr->getTagAddress();
+    for (uint32_t i = 0; i < 4; i++) {
+        EXPECT_EQ(*tagAddress, initialHardwareTag);
+        tagAddress = ptrOffset(tagAddress, 8);
+    }
 
     auto tagsMultiAllocation = csr->getTagsMultiAllocation();
     auto graphicsAllocation0 = tagsMultiAllocation->getGraphicsAllocation(0);
@@ -859,10 +867,9 @@ TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTa
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
-    EXPECT_TRUE(csr->getTagAddress() == nullptr);
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
-    EXPECT_TRUE(csr->getTagAddress() != nullptr);
+    EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
     EXPECT_EQ(*csr->getTagAddress(), static_cast<uint32_t>(-1));
 }
 
@@ -1005,10 +1012,9 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckDisabledWhen
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = false;
-    csr.mockTagAddress = 1u;
+    csr.mockTagAddress[0] = 1u;
     csr.taskCount = 1u;
     EXPECT_FALSE(csr.checkImplicitFlushForGpuIdle());
 }
@@ -1019,10 +1025,9 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckEnabledWhenG
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = true;
-    csr.mockTagAddress = 1u;
+    csr.mockTagAddress[0] = 1u;
     csr.taskCount = 1u;
     EXPECT_TRUE(csr.checkImplicitFlushForGpuIdle());
 }
@@ -1033,14 +1038,47 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuNotIdleImplicitFlushCheckEnabledWh
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.callParentGetTagAddress = false;
 
     csr.useGpuIdleImplicitFlush = true;
-    csr.mockTagAddress = 1u;
+    csr.mockTagAddress[0] = 1u;
     csr.taskCount = 2u;
     EXPECT_FALSE(csr.checkImplicitFlushForGpuIdle());
 
-    csr.mockTagAddress = 2u;
+    csr.mockTagAddress[0] = 2u;
+}
+
+namespace CpuIntrinsicsTests {
+extern std::atomic<uint32_t> pauseCounter;
+extern volatile uint32_t *pauseAddress;
+extern uint32_t pauseValue;
+extern uint32_t pauseOffset;
+} // namespace CpuIntrinsicsTests
+
+TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingForTaskCountForCleaningTemporaryAllocationsThenExpectAllPartitionTaskCountsAreChecked) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(0b11);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+
+    csr.mockTagAddress[0] = 0u;
+    csr.mockTagAddress[2] = 0u;
+    csr.taskCount = 3u;
+    csr.activePartitions = 2;
+
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
+
+    CpuIntrinsicsTests::pauseAddress = &csr.mockTagAddress[0];
+    CpuIntrinsicsTests::pauseValue = 3u;
+    CpuIntrinsicsTests::pauseOffset = 8;
+
+    CpuIntrinsicsTests::pauseCounter = 0;
+    csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
+    EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
+
+    CpuIntrinsicsTests::pauseAddress = nullptr;
 }
 
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
@@ -1100,7 +1138,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
     auto temporaryAllocation = std::make_unique<MemoryAllocation>(0,
-                                                                  GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, mockMaxOsContextCount);
+                                                                  GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     auto allocationPtr = temporaryAllocation.get();
     temporaryAllocation->updateTaskCount(0u, 0u);
     commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
@@ -1111,6 +1149,22 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
 
     auto hostSurfaceAllocationPtr = hostSurface.getAllocation();
     EXPECT_EQ(allocationPtr, hostSurfaceAllocationPtr);
+}
+
+TEST_F(CreateAllocationForHostSurfaceTest, whenCreatingAllocationFromHostPtrSurfaceThenLockMutex) {
+    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    size_t size = sizeof(memory);
+    HostPtrSurface surface(const_cast<char *>(memory), size, true);
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&commandStreamReceiver, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
+    commandStreamReceiver.osContext = osContext;
+    EXPECT_EQ(0, commandStreamReceiver.hostPtrSurfaceCreationMutexLockCount);
+    commandStreamReceiver.createAllocationForHostSurface(surface, true);
+    EXPECT_EQ(1, commandStreamReceiver.hostPtrSurfaceCreationMutexLockCount);
 }
 
 TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyAllowedIsCreatedThenCopyAllocationIsCreatedAndMemoryCopied) {
@@ -1416,6 +1470,7 @@ struct MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> 
     using CommandStreamReceiverSimulatedHw<FamilyType>::CommandStreamReceiverSimulatedHw;
     using CommandStreamReceiverSimulatedHw<FamilyType>::getDeviceIndex;
     void pollForCompletion() override {}
+    void initializeEngine() override {}
     bool writeMemory(GraphicsAllocation &gfxAllocation) override { return true; }
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {}
     void writeMMIO(uint32_t offset, uint32_t value) override {}
@@ -1506,43 +1561,27 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
 
 using CommandStreamReceiverPageTableManagerTest = ::testing::Test;
 
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonDefaultEngineTypeWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    auto defaultEngineType = getChosenEngineType(*hwInfo);
-    auto engineType = aub_stream::EngineType::ENGINE_BCS;
-    EXPECT_NE(defaultEngineType, engineType);
-    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());
-    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(engineType));
-}
-
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.initializeMemoryManager();
-    DeviceBitfield deviceBitfield(1);
-    MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    auto defaultEngineType = getChosenEngineType(*hwInfo);
 
     GmmPageTableMngr *dummyPageTableManager = reinterpret_cast<GmmPageTableMngr *>(0x1234);
 
-    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(dummyPageTableManager);
-    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(defaultEngineType));
-    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.release();
+    commandStreamReceiver.pageTableManager.reset(dummyPageTableManager);
+    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager());
+    commandStreamReceiver.pageTableManager.release();
 }
 
-TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndNonExisitingPageTableManagerWhenNeedsPageTableManagerIsCalledThenSupportOfPageTableManagerIsReturned) {
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonExisitingPageTableManagerWhenNeedsPageTableManagerIsCalledThenSupportOfPageTableManagerIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    auto defaultEngineType = getChosenEngineType(*hwInfo);
     bool supportsPageTableManager = HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
-    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());
+    EXPECT_EQ(nullptr, commandStreamReceiver.pageTableManager.get());
 
-    EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager(defaultEngineType));
+    EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager());
 }

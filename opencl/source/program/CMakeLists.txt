@@ -15,10 +15,6 @@ set(RUNTIME_SRCS_PROGRAM
     ${CMAKE_CURRENT_SOURCE_DIR}/create.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}internal_options.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_from_patchtokens.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_from_patchtokens.h
     ${CMAKE_CURRENT_SOURCE_DIR}/link.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler.h

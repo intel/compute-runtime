@@ -6,10 +6,10 @@
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
 using HwHelperTestGen11 = HwHelperTest;
@@ -17,14 +17,6 @@ using HwHelperTestGen11 = HwHelperTest;
 GEN11TEST_F(HwHelperTestGen11, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
-}
-
-GEN11TEST_F(HwHelperTestGen11, WhenSettingCapabilityCoherencyFlagThenFlagIsSet) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-    EXPECT_TRUE(coherency);
 }
 
 GEN11TEST_F(HwHelperTestGen11, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
@@ -37,13 +29,6 @@ GEN11TEST_F(HwHelperTestGen11, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
-GEN11TEST_F(HwHelperTestGen11, givenGen11PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    // Test default method implementation
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
 }
 
 GEN11TEST_F(HwHelperTestGen11, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {

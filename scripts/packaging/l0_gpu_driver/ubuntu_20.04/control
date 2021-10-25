@@ -1,0 +1,27 @@
+Source: intel-compute-runtime
+Section: libs
+Priority: optional
+Maintainer: Intel Graphics Team <linux-graphics@intel.com>
+XSBC-Original-Maintainer: Debian OpenCL Maintainers <pkg-opencl-devel@lists.alioth.debian.org>
+Build-Depends: debhelper (>= 11),
+ cmake,
+ level-zero-devel,
+ intel-igc-opencl-devel,
+ intel-gmmlib-devel,
+# libva-dev,
+ pkg-config
+Standards-Version: 4.3.0
+Homepage: https://github.com/oneapi-src/level-zero
+
+Package: intel-level-zero-gpu
+Architecture: amd64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ intel-igc-opencl,
+ intel-gmmlib
+Description: Intel(R) Graphics Compute Runtime for oneAPI Level Zero.
+ Level Zero is the primary low-level interface for language and runtime
+ libraries. Level Zero offers fine-grain control over accelerators
+ capabilities, delivering a simplified and low-latency interface to
+ hardware, and efficiently exposing hardware capabilities to applications.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,10 +23,13 @@ class PowerImp : public Power, NEO::NonCopyableOrMovableClass {
     ze_result_t powerSetEnergyThreshold(double threshold) override;
 
     PowerImp() = default;
-    PowerImp(OsSysman *pOsSysman);
+    PowerImp(OsSysman *pOsSysman, ze_device_handle_t device);
     ~PowerImp() override;
 
     OsPower *pOsPower = nullptr;
     void init();
+
+  private:
+    ze_device_handle_t deviceHandle = {};
 };
 } // namespace L0

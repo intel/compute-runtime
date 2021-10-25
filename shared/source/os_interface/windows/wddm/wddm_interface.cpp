@@ -81,7 +81,7 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
     UmKmDataTempStorage<COMMAND_BUFFER_HEADER> internalRepresentation;
     if (wddm.getHwDeviceId()->getUmKmDataTranslator()->enabled()) {
         internalRepresentation.resize(wddm.getHwDeviceId()->getUmKmDataTranslator()->getSizeForCommandBufferHeaderDataInternalRepresentation());
-        bool translated = wddm.getHwDeviceId()->getUmKmDataTranslator()->tranlateCommandBufferHeaderDataToInternalRepresentation(internalRepresentation.data(), internalRepresentation.size(), *pHeader);
+        bool translated = wddm.getHwDeviceId()->getUmKmDataTranslator()->translateCommandBufferHeaderDataToInternalRepresentation(internalRepresentation.data(), internalRepresentation.size(), *pHeader);
         UNRECOVERABLE_IF(false == translated);
         SubmitCommand.pPrivateDriverData = internalRepresentation.data();
         SubmitCommand.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());

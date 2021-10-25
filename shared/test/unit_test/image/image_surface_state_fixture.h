@@ -13,8 +13,8 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 #include <memory>
@@ -27,6 +27,7 @@ class ImageSurfaceStateTests : public DeviceFixture,
     ImageSurfaceStateTests() = default;
     void SetUp() override {
         DeviceFixture::SetUp();
+        mockGmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
         gmmHelper = pDevice->getGmmHelper();
     }
 
@@ -34,7 +35,7 @@ class ImageSurfaceStateTests : public DeviceFixture,
         DeviceFixture::TearDown();
     }
 
-    MockGmm mockGmm;
+    std::unique_ptr<MockGmm> mockGmm;
     GmmHelper *gmmHelper = nullptr;
     NEO::ImageInfo imageInfo;
 };

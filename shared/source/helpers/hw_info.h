@@ -49,7 +49,6 @@ struct RuntimeCapabilityTable {
     bool ftrRenderCompressedImages;
     bool ftr64KBpages;
     bool instrumentationEnabled;
-    bool forceStatelessCompilationFor32Bit;
     const char *platformType;
     const char *deviceName;
     bool debuggerSupported;
@@ -66,13 +65,6 @@ struct RuntimeCapabilityTable {
     bool isIntegratedDevice;
     bool supportsMediaBlock;
     bool fusedEuEnabled;
-};
-
-struct HardwareCapabilities {
-    size_t image3DMaxWidth;
-    size_t image3DMaxHeight;
-    uint64_t maxMemAllocSize;
-    bool isStatelesToStatefullWithOffsetSupported;
 };
 
 struct HardwareInfo {

@@ -9,11 +9,12 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_debugger.h"
 
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 #include "test.h"
 
@@ -94,6 +95,119 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandDebugKeyAndStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
+    EXPECT_NE(stateBaseAddressItor, pipeControlItor);
+    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandDebugKeyAndStateSipWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+
+    auto sipType = SipKernel::getSipKernelType(*pDevice);
+    SipKernel::initSipKernel(sipType, *pDevice);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto pipeControlIterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+
+    auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);
+
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+
+    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipCmd->getSystemInstructionPointer());
+}
+
+HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandDebugKeyAndStateSipWhenA0SteppingIsActivatedThenOnlyGlobalSipIsProgrammed, IsXEHP) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+
+    hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
+    SipKernel::initSipKernel(sipType, *mockDevice);
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
+
+    flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
+
+    commandStreamReceiver.flushTask(
+        commandStream,
+        0,
+        dsh,
+        ioh,
+        ssh,
+        taskLevel,
+        flushTaskFlags,
+        *mockDevice);
+
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto itorLRI = findMmio<FamilyType>(cmdList.begin(), cmdList.end(), 0xE42C);
+    EXPECT_NE(cmdList.end(), itorLRI);
+
+    auto cmdLRI = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
+    auto sipAddress = cmdLRI->getDataDword() & 0xfffffff8;
+    auto sipAllocation = SipKernel::getSipKernel(*mockDevice).getSipAllocation();
+
+    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenNotReprogrammingSshButInitProgrammingFlagsThenBindingTablePoolIsProgrammed) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -150,11 +264,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_FALSE(sbaCmd.getDynamicStateBufferSizeModifyEnable());
     EXPECT_EQ(0u, sbaCmd.getDynamicStateBaseAddress());
     EXPECT_EQ(0u, sbaCmd.getDynamicStateBufferSize());
-
-    EXPECT_FALSE(sbaCmd.getIndirectObjectBaseAddressModifyEnable());
-    EXPECT_FALSE(sbaCmd.getIndirectObjectBufferSizeModifyEnable());
-    EXPECT_EQ(0u, sbaCmd.getIndirectObjectBaseAddress());
-    EXPECT_EQ(0u, sbaCmd.getIndirectObjectBufferSize());
 
     EXPECT_FALSE(sbaCmd.getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(0u, sbaCmd.getSurfaceStateBaseAddress());
@@ -426,7 +535,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
     flushTask(commandStreamReceiver);
 
     auto &commandStreamCSR = commandStreamReceiver.commandStream;
-    HardwareParse::parseCommands<FamilyType>(commandStreamCSR, 0);
+    parseCommands<FamilyType>(commandStreamCSR, 0);
     HardwareParse::findHardwareCommands<FamilyType>();
 
     ASSERT_NE(nullptr, cmdStateBaseAddress);
@@ -434,7 +543,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
 
     EXPECT_EQ(dsh.getCpuBase(), reinterpret_cast<void *>(cmd.getDynamicStateBaseAddress()));
     EXPECT_EQ(commandStreamReceiver.getMemoryManager()->getInternalHeapBaseAddress(commandStreamReceiver.rootDeviceIndex, ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()), cmd.getInstructionBaseAddress());
-    EXPECT_EQ(ioh.getCpuBase(), reinterpret_cast<void *>(cmd.getIndirectObjectBaseAddress()));
     EXPECT_EQ(ssh.getCpuBase(), reinterpret_cast<void *>(cmd.getSurfaceStateBaseAddress()));
 
     EXPECT_EQ(l1CacheOnMocs, cmd.getStatelessDataPortAccessMemoryObjectControlState());
@@ -682,4 +790,200 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_EQ(commandStreamReceiverStream.getCpuBase(), bbEndAddress);
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiverStream.getGraphicsAllocation()));
+}
+
+struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public CommandStreamReceiverFlushTaskXeHPAndLaterTests {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        parsePipeControl = true;
+        CommandStreamReceiverFlushTaskXeHPAndLaterTests::SetUp();
+    }
+
+    template <typename GfxFamily>
+    void verifyPipeControl(UltCommandStreamReceiver<GfxFamily> &commandStreamReceiver, uint32_t expectedTaskCount, bool workLoadPartition) {
+        using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+        uint64_t gpuAddressTagAllocation = commandStreamReceiver.getTagAllocation()->getGpuAddress();
+        uint32_t gpuAddressLow = static_cast<uint32_t>(gpuAddressTagAllocation & 0x0000FFFFFFFFULL);
+        uint32_t gpuAddressHigh = static_cast<uint32_t>(gpuAddressTagAllocation >> 32);
+
+        bool pipeControlTagUpdate = false;
+        bool pipeControlWorkloadPartition = false;
+
+        auto itorPipeControl = pipeControlList.begin();
+        while (itorPipeControl != pipeControlList.end()) {
+            auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
+            if (pipeControl->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                pipeControlTagUpdate = true;
+                if (pipeControl->getWorkloadPartitionIdOffsetEnable()) {
+                    pipeControlWorkloadPartition = true;
+                }
+                EXPECT_EQ(gpuAddressLow, pipeControl->getAddress());
+                EXPECT_EQ(gpuAddressHigh, pipeControl->getAddressHigh());
+                EXPECT_EQ(expectedTaskCount, pipeControl->getImmediateData());
+                break;
+            }
+            itorPipeControl++;
+        }
+
+        EXPECT_TRUE(pipeControlTagUpdate);
+        if (workLoadPartition) {
+            EXPECT_TRUE(pipeControlWorkloadPartition);
+        } else {
+            EXPECT_FALSE(pipeControlWorkloadPartition);
+        }
+    }
+
+    template <typename GfxFamily>
+    void verifyActivePartitionConfig(UltCommandStreamReceiver<GfxFamily> &commandStreamReceiver, bool activePartitionExists) {
+        using MI_LOAD_REGISTER_MEM = typename GfxFamily::MI_LOAD_REGISTER_MEM;
+        using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+        uint64_t expectedWparidData = 0u;
+        if (activePartitionExists) {
+            expectedWparidData = commandStreamReceiver.getWorkPartitionAllocationGpuAddress();
+        }
+        uint32_t expectedWparidRegister = 0x221C;
+        uint32_t expectedAddressOffsetData = 8;
+        uint32_t expectedAddressOffsetRegister = 0x23B4;
+
+        bool wparidConfiguration = false;
+        bool addressOffsetConfiguration = false;
+
+        auto lrmList = getCommandsList<MI_LOAD_REGISTER_MEM>();
+        auto itorWparidRegister = lrmList.begin();
+        while (itorWparidRegister != lrmList.end()) {
+            auto loadRegisterMem = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(*itorWparidRegister);
+
+            if (loadRegisterMem->getRegisterAddress() == expectedWparidRegister) {
+                wparidConfiguration = true;
+                EXPECT_EQ(expectedWparidData, loadRegisterMem->getMemoryAddress());
+                break;
+            }
+            itorWparidRegister++;
+        }
+
+        auto itorAddressOffsetRegister = lriList.begin();
+        while (itorAddressOffsetRegister != lriList.end()) {
+            auto loadRegisterImm = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorAddressOffsetRegister);
+
+            if (loadRegisterImm->getRegisterOffset() == expectedAddressOffsetRegister) {
+                addressOffsetConfiguration = true;
+                EXPECT_EQ(expectedAddressOffsetData, loadRegisterImm->getDataDword());
+                break;
+            }
+            itorAddressOffsetRegister++;
+        }
+
+        if (activePartitionExists) {
+            EXPECT_TRUE(wparidConfiguration);
+            EXPECT_TRUE(addressOffsetConfiguration);
+        } else {
+            EXPECT_FALSE(wparidConfiguration);
+            EXPECT_FALSE(addressOffsetConfiguration);
+        }
+    }
+
+    template <typename GfxFamily>
+    void prepareLinearStream(LinearStream &parsedStream, size_t offset) {
+        cmdList.clear();
+        lriList.clear();
+        pipeControlList.clear();
+
+        parseCommands<GfxFamily>(parsedStream, offset);
+        findHardwareCommands<GfxFamily>();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleStaticActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndActivePartitionConfig) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
+    commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    EXPECT_TRUE(commandStreamReceiver.staticWorkPartitioningEnabled);
+    flushTask(commandStreamReceiver, true);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, true);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleDynamicActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    commandStreamReceiver.staticWorkPartitioningEnabled = false;
+    flushTask(commandStreamReceiver, true);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenSingleStaticActivePartitionWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    commandStreamReceiver.activePartitions = 1;
+    commandStreamReceiver.taskCount = 3;
+    flushTask(commandStreamReceiver, true);
+
+    parseCommands<FamilyType>(commandStream, 0);
+    parsePipeControl = true;
+    findHardwareCommands<FamilyType>();
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleStaticActivePartitionsWhenFlushingTaskTwiceThenExpectTagUpdatePipeControlWithPartitionFlagOnAndNoActivePartitionConfigAtSecondFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
+    commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    EXPECT_TRUE(commandStreamReceiver.staticWorkPartitioningEnabled);
+    flushTask(commandStreamReceiver, true);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, true);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, true);
+
+    size_t usedBeforeCmdStream = commandStream.getUsed();
+    size_t usedBeforeCsrCmdStream = commandStreamReceiver.commandStream.getUsed();
+
+    flushTask(commandStreamReceiver, true);
+
+    prepareLinearStream<FamilyType>(commandStream, usedBeforeCmdStream);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 5, true);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, usedBeforeCsrCmdStream);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
 }

@@ -217,3 +217,19 @@ zetGetDebugProcAddrTable(
 
     return result;
 }
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zetGetMetricGroupExpProcAddrTable(
+    ze_api_version_t version,
+    zet_metric_group_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    pDdiTable->pfnCalculateMultipleMetricValuesExp = zetMetricGroupCalculateMultipleMetricValuesExp;
+
+    return result;
+}

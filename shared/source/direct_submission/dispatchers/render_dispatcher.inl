@@ -30,9 +30,11 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
                                                               uint64_t gpuAddress,
                                                               uint64_t immediateData,
                                                               const HardwareInfo &hwInfo,
-                                                              bool useNotifyEnable) {
+                                                              bool useNotifyEnable,
+                                                              bool partitionedWorkload) {
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
     PipeControlArgs args(true);
+    args.workloadPartitionOffset = partitionedWorkload;
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
         cmdBuffer,
         POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,

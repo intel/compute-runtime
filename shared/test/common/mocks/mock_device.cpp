@@ -11,11 +11,10 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/tests_configuration.h"
-
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "opencl/test/unit_test/mocks/mock_ostime.h"
 
 using namespace NEO;
 
@@ -47,7 +46,10 @@ const char *MockDevice::getProductAbbrev() const {
 MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex)
     : RootDevice(executionEnvironment, rootDeviceIndex) {
     UltDeviceFactory::initializeMemoryManager(*executionEnvironment);
-    this->osTime = MockOSTime::create();
+
+    if (!getOSTime()) {
+        getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
+    }
     auto &hwInfo = getHardwareInfo();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
     initializeCaps();
@@ -62,8 +64,8 @@ bool MockDevice::createDeviceImpl() {
 }
 
 void MockDevice::setOSTime(OSTime *osTime) {
-    this->osTime.reset(osTime);
-};
+    getRootDeviceEnvironmentRef().osTime.reset(osTime);
+}
 
 void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
     executionEnvironment->memoryManager.reset(memoryManager);

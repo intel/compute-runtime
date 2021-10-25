@@ -30,20 +30,16 @@ struct Mock<FirmwareFsAccess> : public FirmwareFsAccess {
         val.push_back("mtd5: 00200000 00001000 \"i915-spi.42.auto.OptionROM\"");
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t readValFailure(const std::string file, std::vector<std::string> &val) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    ze_result_t readMtdValSuccess(const std::string file, std::vector<std::string> &val) {
+        val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
+        val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
+        return ZE_RESULT_SUCCESS;
     }
 };
 
 template <>
 struct Mock<FirmwareInterface> : public FirmwareUtil {
 
-    ze_result_t mockFwDeviceInit(void) {
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t mockFwDeviceInitFail(void) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
     ze_result_t mockFwGetVersion(std::string &fwVersion) {
         fwVersion = mockFwVersion;
         return ZE_RESULT_SUCCESS;
@@ -52,14 +48,13 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
         fwVersion = mockOpromVersion;
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t mockGetFirstDevice(igsc_device_info *info) {
+    ze_result_t mockGetFwVersion(std::string fwType, std::string &firmwareVersion) {
+        if (fwType == "GSC") {
+            firmwareVersion = mockFwVersion;
+        } else if (fwType == "OptionROM") {
+            firmwareVersion = mockOpromVersion;
+        }
         return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t mockFwFlash(void *pImage, uint32_t size) {
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t mockFwGetVersionFailed(std::string &fwVersion) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
     Mock<FirmwareInterface>() = default;
@@ -67,12 +62,17 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
     MOCK_METHOD(ze_result_t, fwDeviceInit, (), (override));
     MOCK_METHOD(ze_result_t, fwGetVersion, (std::string & fwVersion), (override));
     MOCK_METHOD(ze_result_t, opromGetVersion, (std::string & fwVersion), (override));
+    MOCK_METHOD(ze_result_t, pscGetVersion, (std::string & fwVersion), (override));
     MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
     MOCK_METHOD(ze_result_t, fwFlashGSC, (void *pImage, uint32_t size), (override));
     MOCK_METHOD(ze_result_t, fwFlashOprom, (void *pImage, uint32_t size), (override));
+    MOCK_METHOD(ze_result_t, fwFlashIafPsc, (void *pImage, uint32_t size), (override));
+    MOCK_METHOD(ze_result_t, getFwVersion, (std::string fwType, std::string &firmwareVersion), (override));
+    MOCK_METHOD(ze_result_t, flashFirmware, (std::string fwType, void *pImage, uint32_t size), (override));
     MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));
     MOCK_METHOD(ze_result_t, fwSupportedDiagTests, (std::vector<std::string> & supportedDiagTests), (override));
     MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult, uint32_t subdeviceId), (override));
+    MOCK_METHOD(void, getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes), (override));
 };
 
 class PublicLinuxFirmwareImp : public L0::LinuxFirmwareImp {

@@ -9,9 +9,10 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
+#include "opencl/test/unit_test/linux/mock_os_layer.h"
 #include "test.h"
 
 namespace NEO {
@@ -25,7 +26,7 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenFileDescriptorIsSetWi
     rootDeviceEnvironment->osInterface.reset(osInterface);
 
     auto drm = new DrmMock(fakeFd, *rootDeviceEnvironment);
-    drm->setPciPath("01:23.4");
+    drm->setPciPath("0000:01:23.4");
     EXPECT_EQ(0, drm->queryAdapterBDF());
 
     osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));

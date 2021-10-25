@@ -206,7 +206,7 @@ class Drm : public DriverModel {
 
     static bool isi915Version(int fd);
 
-    static Drm *create(std::unique_ptr<HwDeviceIdDrm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
+    static Drm *create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void overrideBindSupport(bool &useVmBind);
     std::string getPciPath() {
         return hwDeviceId->getPciPath();
@@ -234,9 +234,18 @@ class Drm : public DriverModel {
 
     std::unique_lock<std::mutex> lockBindFenceMutex();
 
-  protected:
-    Drm(std::unique_ptr<HwDeviceIdDrm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
+    void setPciDomain(uint32_t domain) {
+        pciDomain = domain;
+    }
 
+    uint32_t getPciDomain() {
+        return pciDomain;
+    }
+
+  protected:
+    Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
+
+    uint32_t createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isSpecialContextRequested);
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
     bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
     std::string generateUUID();
@@ -275,6 +284,7 @@ class Drm : public DriverModel {
 
     drm_i915_gem_context_param_sseu sseu{};
     ADAPTER_BDF adapterBDF{};
+    uint32_t pciDomain = 0;
 
     TopologyMap topologyMap;
     struct IoctlStatisticsEntry {

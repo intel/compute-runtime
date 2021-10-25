@@ -15,10 +15,10 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
@@ -125,8 +125,8 @@ TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterRootDeviceThanAvailable
 
     EXPECT_EQ(devices.size(), 2u);
     EXPECT_EQ(devices[0]->getNumSubDevices(), 4u);
+    EXPECT_EQ(devices[0]->getNumGenericSubDevices(), 4u);
     EXPECT_EQ(devices[1]->getNumGenericSubDevices(), 0u);
-    EXPECT_EQ(devices[1]->getNumSubDevices(), 0u);
 }
 
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterSubDeviceThanAvailableWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {

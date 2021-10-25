@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -15,19 +18,16 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
+#include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
-#include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
@@ -70,9 +70,9 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         }
     }
 
-    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override {
         checkAndActivateAubSubCaptureParameterization.wasCalled = true;
-        checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo = &dispatchInfo;
+        checkAndActivateAubSubCaptureParameterization.kernelName = &kernelName;
         return {false, false};
     }
 
@@ -101,7 +101,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
 
     struct CheckAndActivateAubSubCaptureParameterization {
         bool wasCalled = false;
-        const MultiDispatchInfo *receivedDispatchInfo = nullptr;
+        const std::string *kernelName = nullptr;
     } checkAndActivateAubSubCaptureParameterization;
 };
 
@@ -229,11 +229,36 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenWait
     csrWithAubDump.aubCSR.reset(mockAubCsr);
 
     EXPECT_FALSE(mockAubCsr->pollForCompletionCalled);
-    csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, false, 1, 0);
+    csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, false);
     EXPECT_TRUE(mockAubCsr->pollForCompletionCalled);
 
     csrWithAubDump.aubCSR.reset(nullptr);
-    csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, false, 1, 0);
+    csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, false);
+}
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenPollForCompletionCalledThenAubCsrPollForCompletionCalled) {
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
+
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+    MockAubCenter *mockAubCenter = new MockAubCenter(defaultHwInfo.get(), *gmmHelper, false, "file_name.aub", CommandStreamReceiverType::CSR_HW_WITH_AUB);
+    mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(new MockAubManager());
+
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    DeviceBitfield deviceBitfield(1);
+    CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("file_name.aub", *executionEnvironment, 0, deviceBitfield);
+    csrWithAubDump.initializeTagAllocation();
+
+    csrWithAubDump.aubCSR.reset(nullptr);
+    csrWithAubDump.pollForCompletion();
+
+    auto mockAubCsr = new MockAubCsr<FamilyType>("file_name.aub", false, *executionEnvironment, 0, deviceBitfield);
+    mockAubCsr->initializeTagAllocation();
+    csrWithAubDump.aubCSR.reset(mockAubCsr);
+
+    EXPECT_FALSE(mockAubCsr->pollForCompletionCalled);
+    csrWithAubDump.pollForCompletion();
+    EXPECT_TRUE(mockAubCsr->pollForCompletionCalled);
 }
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenCreatingAubCsrThenInitializeTagAllocation) {
@@ -536,17 +561,15 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenCheckAndActivateAubSubCaptureIsCalledThenBaseCsrCommandStreamReceiverIsCalled) {
-    const DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-    csrWithAubDump->checkAndActivateAubSubCapture(multiDispatchInfo);
+    std::string kernelName = "";
+    csrWithAubDump->checkAndActivateAubSubCapture(kernelName);
 
     EXPECT_TRUE(csrWithAubDump->checkAndActivateAubSubCaptureParameterization.wasCalled);
-    EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo);
+    EXPECT_EQ(&kernelName, csrWithAubDump->checkAndActivateAubSubCaptureParameterization.kernelName);
 
     if (createAubCSR) {
         EXPECT_TRUE(csrWithAubDump->getAubMockCsr().checkAndActivateAubSubCaptureParameterization.wasCalled);
-        EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->getAubMockCsr().checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo);
+        EXPECT_EQ(&kernelName, csrWithAubDump->getAubMockCsr().checkAndActivateAubSubCaptureParameterization.kernelName);
     }
 }
 

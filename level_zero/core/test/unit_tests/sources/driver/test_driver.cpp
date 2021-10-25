@@ -53,6 +53,16 @@ TEST(zeInit, whenCallingZeInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCalle
     EXPECT_EQ(0u, driver.initCalledCount);
 }
 
+using DriverHandleImpTest = Test<DeviceFixture>;
+TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsThendeviceBitfieldsAreUpdatedInAccordanceWithNeoDevice) {
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto newNeoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    driverHandle->updateRootDeviceBitFields(newNeoDevice);
+    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto entry = driverHandle->deviceBitfields.find(rootDeviceIndex);
+    EXPECT_EQ(newNeoDevice->getDeviceBitfield(), entry->second);
+}
+
 using DriverVersionTest = Test<DeviceFixture>;
 
 TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
@@ -177,7 +187,7 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     neoDevice->injectMemoryManager(currMemoryManager);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = L0::Device::create(driverHandle.get(), neoDevice, 0, false, &result);
+    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
 
     context->addDeviceAndSubDevices(device);
 

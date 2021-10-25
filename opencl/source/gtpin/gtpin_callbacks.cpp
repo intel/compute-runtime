@@ -265,4 +265,18 @@ void gtpinSetIgcInit(void *pIgcInitPtr) {
     pIgcInit = static_cast<igc_init_t *>(pIgcInitPtr);
 }
 
+void gtpinRemoveCommandQueue(void *pCmdQueue) {
+    if (isGTPinInitialized) {
+        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
+        size_t n = 0;
+        while (n < kernelExecQueue.size()) {
+            if (kernelExecQueue[n].pCommandQueue == pCmdQueue) {
+                kernelExecQueue.erase(kernelExecQueue.begin() + n);
+            } else {
+                n++;
+            }
+        }
+    }
+}
+
 } // namespace NEO

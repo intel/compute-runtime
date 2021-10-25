@@ -6,39 +6,12 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/utilities/compiler_support.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 using HwHelperTestDg1 = HwHelperTest;
-
-DG1TEST_F(HwHelperTestDg1, givenDg1PlatformWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
-    hardwareInfo.featureTable.ftrLocalMemory = true;
-
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
-    EXPECT_TRUE(helper.isLocalMemoryEnabled(hardwareInfo));
-}
-
-DG1TEST_F(HwHelperTestDg1, givenDg1PlatformWithoutLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenFalseIsReturned) {
-    hardwareInfo.featureTable.ftrLocalMemory = false;
-
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
-    EXPECT_FALSE(helper.isLocalMemoryEnabled(hardwareInfo));
-}
-
-DG1TEST_F(HwHelperTestDg1, givenDg1PlatformWhenSetupHardwareCapabilitiesIsCalledThenThenSpecificImplementationIsUsed) {
-    hardwareInfo.featureTable.ftrLocalMemory = true;
-
-    HardwareCapabilities hwCaps = {0};
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.setupHardwareCapabilities(&hwCaps, hardwareInfo);
-
-    EXPECT_EQ(2048u, hwCaps.image3DMaxHeight);
-    EXPECT_EQ(2048u, hwCaps.image3DMaxWidth);
-    EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
-}
 
 DG1TEST_F(HwHelperTestDg1, givenDg1A0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -74,27 +47,12 @@ DG1TEST_F(HwHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundReq
         switch (stepping) {
         case REVISION_A0:
             EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            CPP_ATTRIBUTE_FALLTHROUGH;
+            [[fallthrough]];
         default:
             EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
             EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
         }
     }
-}
-
-DG1TEST_F(HwHelperTestDg1, givenDg1WhenSteppingA0ThenIntegerDivisionEmulationIsEnabled) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    uint32_t stepping = REVISION_A0;
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
-}
-
-DG1TEST_F(HwHelperTestDg1, givenDg1WhenSteppingB0ThenIntegerDivisionEmulationIsNotEnabled) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }
 
 DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledThenIsLockableIsSet) {

@@ -273,3 +273,78 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPrefetchDisablingIsRequir
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isPrefetchDisablingRequired(pInHwInfo));
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    auto isRcs = false;
+
+    EXPECT_FALSE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(pInHwInfo, isRcs));
+}
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfHeapInLocalMemThenFalseIsReturned, IsAtMostGen12lp) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.heapInLocalMem(pInHwInfo));
+}
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenSettingCapabilityCoherencyFlagThenFlagIsSet, IsAtMostGen11) {
+    auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    bool coherency = false;
+    hwInfoConfig.setCapabilityCoherencyFlag(pInHwInfo, coherency);
+    EXPECT_TRUE(coherency);
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isAdditionalMediaSamplerProgrammingRequired());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfInitialFlagsProgrammingIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isInitialFlagsProgrammingRequired());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfReturnedCmdSizeForMediaSamplerAdjustmentIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfExtraParametersAreInvalidThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.extraParametersInvalid(pInHwInfo));
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPipeControlWAIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.pipeControlWARequired(pInHwInfo));
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfImagePitchAlignmentWAIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.imagePitchAlignmentWARequired(pInHwInfo));
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfForceEmuInt32DivRemSPWAIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isForceEmuInt32DivRemSPWARequired(pInHwInfo));
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIf3DPipelineSelectWAIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.is3DPipelineSelectWARequired());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfStorageInfoAdjustmentIsRequiredThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isStorageInfoAdjustmentRequired());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfBlitterForImagesIsSupportedThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_FALSE(hwInfoConfig.isBlitterForImagesSupported());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isTile64With3DSurfaceOnBCSSupported(pInHwInfo));
+}

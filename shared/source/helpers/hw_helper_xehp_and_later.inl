@@ -40,18 +40,8 @@ inline uint32_t HwHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
 }
 
 template <typename GfxFamily>
-void HwHelperHw<GfxFamily>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-    coherencyFlag = false;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
     return hwInfo.featureTable.ftrLocalMemory;
-}
-
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::heapInLocalMem(const HardwareInfo &hwInfo) const {
-    return !(hwInfo.platform.eProductFamily == IGFX_XE_HP_SDV && isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo));
 }
 
 template <typename GfxFamily>
@@ -61,11 +51,6 @@ bool HwHelperHw<GfxFamily>::hvAlign4Required() const {
 
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
-    return true;
-}
-
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isNewResidencyModelSupported() const {
     return true;
 }
 
@@ -190,6 +175,11 @@ inline bool HwHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_
     if (size >= defaultThreshold) {
         return false;
     }
+    return true;
+}
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
     return true;
 }
 } // namespace NEO

@@ -114,9 +114,9 @@ void MultipleDevicesWithCustomHwInfo::SetUp() {
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = numEuPerSubslice;
     hwInfo.gtSystemInfo.NumThreadsPerEu = numThreadsPerEu;
 
-    hwInfo.gtSystemInfo.MaxSlicesSupported = 2 * sliceCount;
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 2 * subsliceCount;
-    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 2 * subsliceCount;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = sliceCount;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = sliceCount * subsliceCount;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = sliceCount * subsliceCount;
 
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = 1;
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = numSubDevices;

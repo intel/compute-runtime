@@ -8,6 +8,9 @@
 #pragma once
 #if _WIN32
 #include <windows.h>
+
+#include <winternl.h>
+
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <ntstatus.h>
@@ -18,26 +21,15 @@
 #undef RegOpenKeyExA
 #undef RegQueryValueExA
 #pragma warning(disable : 4273)
-LSTATUS APIENTRY RegOpenKeyExA(
-    HKEY hKey,
-    LPCSTR lpSubKey,
-    DWORD ulOptions,
-    REGSAM samDesired,
-    PHKEY phkResult);
-LSTATUS APIENTRY RegQueryValueExA(
-    HKEY hKey,
-    LPCSTR lpValueName,
-    LPDWORD lpReserved,
-    LPDWORD lpType,
-    LPBYTE lpData,
-    LPDWORD lpcbData);
 #else
 #include <cstdint>
 #if __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
 #endif
+
 #include <winadapter.h>
+
 #if __clang__
 #pragma clang diagnostic pop
 #endif

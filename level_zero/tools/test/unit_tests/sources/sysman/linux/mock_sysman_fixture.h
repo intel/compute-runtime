@@ -14,10 +14,13 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/sysman.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_procfs_access_fixture.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysfs_access_fixture.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 
 using ::testing::_;
+using ::testing::Matcher;
 using ::testing::NiceMock;
 using namespace NEO;
 
@@ -38,22 +41,35 @@ class PublicLinuxSysmanImp : public L0::LinuxSysmanImp {
     using LinuxSysmanImp::pPmuInterface;
     using LinuxSysmanImp::pProcfsAccess;
     using LinuxSysmanImp::pSysfsAccess;
-    using LinuxSysmanImp::pXmlParser;
 };
 
 class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
   public:
+    Mock<LinuxSysfsAccess> *pSysfsAccess = nullptr;
+    Mock<LinuxProcfsAccess> *pProcfsAccess = nullptr;
     void SetUp() override {
         DeviceFixture::SetUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
         setenv("ZES_ENABLE_SYSMAN", "1", 1);
-        device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
+        device->setSysmanHandle(new SysmanDeviceImp(device->toHandle()));
         pSysmanDevice = device->getSysmanHandle();
         pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
+
+        pSysfsAccess = new NiceMock<Mock<LinuxSysfsAccess>>;
+        pProcfsAccess = new NiceMock<Mock<LinuxProcfsAccess>>;
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+        pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
+
+        ON_CALL(*pSysfsAccess, getRealPath(_, Matcher<std::string &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<LinuxSysfsAccess>::getRealPathVal));
+        ON_CALL(*pProcfsAccess, getFileName(_, _, Matcher<std::string &>(_)))
+            .WillByDefault(::testing::Invoke(pProcfsAccess, &Mock<LinuxProcfsAccess>::getMockFileName));
+
+        pSysmanDeviceImp->init();
     }
     void TearDown() override {
         DeviceFixture::TearDown();
@@ -68,6 +84,8 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
 
 class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Test {
   public:
+    Mock<LinuxSysfsAccess> *pSysfsAccess = nullptr;
+    Mock<LinuxProcfsAccess> *pProcfsAccess = nullptr;
     void SetUp() override {
         MultiDeviceFixture::SetUp();
         device = driverHandle->devices[0];
@@ -76,11 +94,27 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         auto &osInterface = device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
         setenv("ZES_ENABLE_SYSMAN", "1", 1);
-        device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
+        device->setSysmanHandle(new SysmanDeviceImp(device->toHandle()));
         pSysmanDevice = device->getSysmanHandle();
+        for (auto &subDevice : static_cast<DeviceImp *>(device)->subDevices) {
+            static_cast<DeviceImp *>(subDevice)->setSysmanHandle(pSysmanDevice);
+        }
+
         pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
+
+        pSysfsAccess = new NiceMock<Mock<LinuxSysfsAccess>>;
+        pProcfsAccess = new NiceMock<Mock<LinuxProcfsAccess>>;
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+        pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
+
+        ON_CALL(*pSysfsAccess, getRealPath(_, Matcher<std::string &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<LinuxSysfsAccess>::getRealPathVal));
+        ON_CALL(*pProcfsAccess, getFileName(_, _, Matcher<std::string &>(_)))
+            .WillByDefault(::testing::Invoke(pProcfsAccess, &Mock<LinuxProcfsAccess>::getMockFileName));
+
+        pSysmanDeviceImp->init();
         subDeviceCount = numSubDevices;
     }
     void TearDown() override {
@@ -100,6 +134,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
 class PublicFsAccess : public L0::FsAccess {
   public:
     using FsAccess::accessSyscall;
+    using FsAccess::statSyscall;
 };
 
 class PublicSysfsAccess : public L0::SysfsAccess {

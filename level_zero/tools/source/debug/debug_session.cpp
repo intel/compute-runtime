@@ -63,7 +63,7 @@ DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : c
         const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
         const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
         const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-        uint32_t subDeviceCount = 1;
+        uint32_t subDeviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
 
         for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
             for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
@@ -155,6 +155,45 @@ bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
     }
 
     return requestedThreadsStopped;
+}
+
+ze_result_t DebugSession::sanityMemAccessThreadCheck(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc) {
+    if (DebugSession::isThreadAll(thread)) {
+        if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        } else {
+            return ZE_RESULT_SUCCESS;
+        }
+    } else if (DebugSession::isSingleThread(thread)) {
+        if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
+        if (!areRequestedThreadsStopped(thread)) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        } else {
+            return ZE_RESULT_SUCCESS;
+        }
+    }
+
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
+void DebugSession::fillDevicesFromThread(ze_device_thread_t thread, std::vector<uint8_t> &devices) {
+    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+    UNRECOVERABLE_IF(devices.size() < deviceCount);
+
+    uint32_t deviceIndex = 0;
+    convertToPhysical(thread, deviceIndex);
+    bool singleDevice = (thread.slice != UINT32_MAX && deviceCount > 1) || deviceCount == 1;
+
+    if (singleDevice) {
+        devices[deviceIndex] = 1;
+    } else {
+        for (uint32_t i = 0; i < deviceCount; i++) {
+            devices[i] = 1;
+        }
+    }
 }
 
 bool DebugSession::isBindlessSystemRoutine() {

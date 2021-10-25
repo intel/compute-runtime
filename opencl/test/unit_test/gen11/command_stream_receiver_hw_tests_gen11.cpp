@@ -8,12 +8,12 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/mocks/mock_csr.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"

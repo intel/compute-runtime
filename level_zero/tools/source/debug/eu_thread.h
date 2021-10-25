@@ -123,11 +123,11 @@ class EuThread {
         return true;
     }
 
-    bool isStopped() {
+    bool isStopped() const {
         return state == State::Stopped;
     }
 
-    bool isRunning() {
+    bool isRunning() const {
         return state != State::Stopped;
     }
 
@@ -138,15 +138,15 @@ class EuThread {
         return threadString.str();
     }
 
-    std::string toString() {
+    std::string toString() const {
         return toString(threadId);
     }
 
-    ThreadId getThreadId() {
+    ThreadId getThreadId() const {
         return threadId;
     }
 
-    uint64_t getMemoryHandle() { return memoryHandle; }
+    uint64_t getMemoryHandle() const { return memoryHandle; }
 
   public:
     static constexpr uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();

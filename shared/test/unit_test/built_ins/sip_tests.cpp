@@ -10,9 +10,9 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 using namespace NEO;
@@ -34,6 +34,7 @@ struct RawBinarySipFixture : public DeviceFixture {
         backupRewindCalled = std::make_unique<VariableBackup<uint32_t>>(&IoFunctions::mockRewindCalled, 0u);
         backupFreadCalled = std::make_unique<VariableBackup<uint32_t>>(&IoFunctions::mockFreadCalled, 0u);
         backupFcloseCalled = std::make_unique<VariableBackup<uint32_t>>(&IoFunctions::mockFcloseCalled, 0u);
+        backupFailAfterNFopenCount = std::make_unique<VariableBackup<uint32_t>>(&IoFunctions::failAfterNFopenCount, 0u);
 
         DeviceFixture::SetUp();
     }
@@ -57,7 +58,20 @@ struct RawBinarySipFixture : public DeviceFixture {
     std::unique_ptr<VariableBackup<uint32_t>> backupRewindCalled;
     std::unique_ptr<VariableBackup<uint32_t>> backupFreadCalled;
     std::unique_ptr<VariableBackup<uint32_t>> backupFcloseCalled;
+    std::unique_ptr<VariableBackup<uint32_t>> backupFailAfterNFopenCount;
 };
+
+TEST(SipBinaryFromFile, givenFilenameWhenCreatingHeaderFilenameThenSuffixIsAddedBeforeExtension) {
+    std::string fileName = "abc.bin";
+    auto headerName = MockSipKernel::createHeaderFilename(fileName);
+    EXPECT_EQ("abc_header.bin", headerName);
+}
+
+TEST(SipBinaryFromFile, givenFilenameWithoutExtnesionWhenCreatingHeaderFilenameThenSuffixIsAdded) {
+    std::string fileName = "abc";
+    auto headerName = MockSipKernel::createHeaderFilename(fileName);
+    EXPECT_EQ("abc_header", headerName);
+}
 
 using RawBinarySipTest = Test<RawBinarySipFixture>;
 
@@ -65,7 +79,34 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromF
     bool ret = SipKernel::initSipKernel(SipKernelType::Csr, *pDevice);
     EXPECT_TRUE(ret);
 
-    EXPECT_EQ(1u, IoFunctions::mockFopenCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFopenCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFseekCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFtellCalled);
+    EXPECT_EQ(2u, IoFunctions::mockRewindCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFreadCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFcloseCalled);
+
+    EXPECT_EQ(SipKernelType::Csr, SipKernel::getSipKernelType(*pDevice));
+
+    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::Csr);
+    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
+    ASSERT_NE(nullptr, sipKernel);
+    auto storedAllocation = sipKernel->getSipAllocation();
+
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+    EXPECT_NE(nullptr, storedAllocation);
+    EXPECT_EQ(storedAllocation, sipAllocation);
+
+    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    EXPECT_NE(0u, header.size());
+}
+
+TEST_F(RawBinarySipTest, givenFileHeaderMissingWhenInitSipKernelThenSipIsLoadedFromFileWithoutHeader) {
+    IoFunctions::failAfterNFopenCount = 1;
+    bool ret = SipKernel::initSipKernel(SipKernelType::Csr, *pDevice);
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(2u, IoFunctions::mockFopenCalled);
     EXPECT_EQ(1u, IoFunctions::mockFseekCalled);
     EXPECT_EQ(1u, IoFunctions::mockFtellCalled);
     EXPECT_EQ(1u, IoFunctions::mockRewindCalled);
@@ -82,6 +123,9 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromF
     auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
     EXPECT_NE(nullptr, storedAllocation);
     EXPECT_EQ(storedAllocation, sipAllocation);
+
+    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    EXPECT_EQ(0u, header.size());
 }
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelAndDebuggerActiveThenDbgSipIsLoadedFromFile) {
@@ -90,12 +134,12 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelAndDebuggerActiveThe
     bool ret = SipKernel::initSipKernel(currentSipKernelType, *pDevice);
     EXPECT_TRUE(ret);
 
-    EXPECT_EQ(1u, IoFunctions::mockFopenCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFseekCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFtellCalled);
-    EXPECT_EQ(1u, IoFunctions::mockRewindCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFreadCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFcloseCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFopenCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFseekCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFtellCalled);
+    EXPECT_EQ(2u, IoFunctions::mockRewindCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFreadCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFcloseCalled);
 
     EXPECT_LE(SipKernelType::DbgCsr, currentSipKernelType);
 
@@ -186,12 +230,12 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoaded
     bool ret = SipKernel::initSipKernel(SipKernelType::Csr, *pDevice);
     EXPECT_TRUE(ret);
 
-    EXPECT_EQ(1u, IoFunctions::mockFopenCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFseekCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFtellCalled);
-    EXPECT_EQ(1u, IoFunctions::mockRewindCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFreadCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFcloseCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFopenCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFseekCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFtellCalled);
+    EXPECT_EQ(2u, IoFunctions::mockRewindCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFreadCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFcloseCalled);
 
     EXPECT_EQ(SipKernelType::Csr, SipKernel::getSipKernelType(*pDevice));
 
@@ -210,20 +254,34 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoaded
     ret = SipKernel::initSipKernel(SipKernelType::Csr, *pDevice);
     EXPECT_TRUE(ret);
 
-    EXPECT_EQ(1u, IoFunctions::mockFopenCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFseekCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFtellCalled);
-    EXPECT_EQ(1u, IoFunctions::mockRewindCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFreadCalled);
-    EXPECT_EQ(1u, IoFunctions::mockFcloseCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFopenCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFseekCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFtellCalled);
+    EXPECT_EQ(2u, IoFunctions::mockRewindCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFreadCalled);
+    EXPECT_EQ(2u, IoFunctions::mockFcloseCalled);
 
     auto secondSipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
     ASSERT_NE(nullptr, secondSipKernel);
     auto secondStoredAllocation = sipKernel->getSipAllocation();
     EXPECT_NE(nullptr, secondStoredAllocation);
-
     EXPECT_EQ(sipKernel, secondSipKernel);
     EXPECT_EQ(storedAllocation, secondStoredAllocation);
+}
+
+TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingBindlessDebugSipThenSipIsLoadedFromFile) {
+    auto sipAllocation = SipKernel::getBindlessDebugSipKernel(*pDevice).getSipAllocation();
+
+    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::DbgBindless);
+    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
+    ASSERT_NE(nullptr, sipKernel);
+    auto storedAllocation = sipKernel->getSipAllocation();
+
+    EXPECT_NE(nullptr, storedAllocation);
+    EXPECT_EQ(storedAllocation, sipAllocation);
+
+    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    EXPECT_NE(0u, header.size());
 }
 
 struct HexadecimalHeaderSipKernel : public SipKernel {
@@ -272,4 +330,36 @@ TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceT
     auto sipAllocation = sipKernel.getSipAllocation();
     auto sipAllocation2 = sipKernel2.getSipAllocation();
     EXPECT_EQ(sipAllocation, sipAllocation2);
+}
+
+using StateSaveAreaSipTest = Test<RawBinarySipFixture>;
+
+TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
+    MockSipData::useMockSip = true;
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
+    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+}
+
+TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
+    MockSipData::useMockSip = true;
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
+    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+}
+
+TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {
+    MockSipData::useMockSip = true;
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader();
+    EXPECT_EQ(0x3F1000u, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+}
+TEST(DebugBindlessSip, givenActiveDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.UseBindlessDebugSip.set(1);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+    mockDevice->setDebuggerActive(true);
+
+    auto sipType = NEO::SipKernel::getSipKernelType(*mockDevice);
+
+    EXPECT_EQ(SipKernelType::DbgBindless, sipType);
 }

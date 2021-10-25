@@ -9,6 +9,7 @@ set(NEO_SHARED_aub_tests_configurations
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
 
 add_subdirectories()

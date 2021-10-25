@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/performance_counters_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 
-#include "opencl/source/os_interface/linux/performance_counters_linux.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
 #include "gtest/gtest.h"

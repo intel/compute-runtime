@@ -927,6 +927,14 @@ extern CL_API_ENTRY cl_program CL_API_CALL clCreateProgramWithILKHR(
     size_t length,
     cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_2;
 
+extern CL_API_ENTRY cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(
+    cl_command_queue command_queue,
+    cl_kernel kernel,
+    cl_uint work_dim,
+    const size_t *global_work_offset,
+    const size_t *global_work_size,
+    size_t *suggested_local_work_size) CL_API_SUFFIX__VERSION_3_0;
+
 void *clHostMemAllocINTEL(
     cl_context context,
     const cl_mem_properties_intel *properties,

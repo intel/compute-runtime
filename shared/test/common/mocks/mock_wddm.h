@@ -48,7 +48,7 @@ class WddmMock : public Wddm {
     using Wddm::timestampFrequency;
     using Wddm::wddmInterface;
 
-    WddmMock(std::unique_ptr<HwDeviceIdWddm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {}
+    WddmMock(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {}
     WddmMock(RootDeviceEnvironment &rootDeviceEnvironment);
     ~WddmMock();
 
@@ -57,7 +57,7 @@ class WddmMock : public Wddm {
     bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) override;
     bool mapGpuVirtualAddress(WddmAllocation *allocation);
     bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
-    NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResource, D3DKMT_HANDLE *outSharedHandle) override;
+    NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResource, uint64_t *outSharedHandle) override;
     bool createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle) override;
     bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) override;
 
@@ -80,8 +80,8 @@ class WddmMock : public Wddm {
     void setHeap32(uint64_t base, uint64_t size);
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
     bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) override;
-    void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override;
-    int virtualFree(void *ptr, size_t size, unsigned long flags) override;
+    void *virtualAlloc(void *inPtr, size_t size, bool topDownHint) override;
+    void virtualFree(void *ptr, size_t size) override;
     void releaseReservedAddress(void *reservedAddress) override;
     VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
     D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) override;

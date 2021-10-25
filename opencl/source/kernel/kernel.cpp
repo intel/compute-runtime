@@ -19,19 +19,22 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_device_side_enqueue.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/execution_model/device_enqueue.h"
@@ -39,9 +42,7 @@
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/helpers/sampler_helpers.h"
-#include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/image_transformer.h"
 #include "opencl/source/kernel/kernel.inl"
 #include "opencl/source/kernel/kernel_info_cl.h"
@@ -51,7 +52,6 @@
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/source/sampler/sampler.h"
 
 #include "patch_list.h"
@@ -137,7 +137,7 @@ void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, Graphic
     }
 
     void *ssh = getSurfaceStateHeap();
-    if ((nullptr != ssh) & isValidOffset(arg.bindful)) {
+    if ((nullptr != ssh) && isValidOffset(arg.bindful)) {
         auto surfaceState = ptrOffset(ssh, arg.bindful);
         void *addressToPatch = reinterpret_cast<void *>(allocation.getGpuAddressToPatch());
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
@@ -1091,7 +1091,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
                                                                 hwHelper.getBarriersCountFromHasBarriers(barrierCount),
                                                                 workDim,
                                                                 localWorkSize);
-    auto isEngineInstanced = commandQueue->getCommandStreamReceiver(false).getOsContext().isEngineInstanced();
+    auto isEngineInstanced = commandQueue->getGpgpuCommandStreamReceiver().getOsContext().isEngineInstanced();
     maxWorkGroupCount = hwHelper.adjustMaxWorkGroupCount(maxWorkGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
     return maxWorkGroupCount;
 }
@@ -1615,7 +1615,7 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
     if (argVal) {
         storeKernelArg(argIndex, NONE_OBJ, nullptr, nullptr, argSize);
 
-        auto crossThreadDataEnd = ptrOffset(crossThreadData, crossThreadDataSize);
+        [[maybe_unused]] auto crossThreadDataEnd = ptrOffset(crossThreadData, crossThreadDataSize);
         const auto &argAsVal = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex].as<ArgDescValue>();
         for (const auto &element : argAsVal.elements) {
             DEBUG_BREAK_IF(element.size <= 0);
@@ -1624,7 +1624,6 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
             auto pSrc = ptrOffset(argVal, element.sourceOffset);
 
             DEBUG_BREAK_IF(!(ptrOffset(pDst, element.size) <= crossThreadDataEnd));
-            UNUSED_VARIABLE(crossThreadDataEnd);
 
             if (element.sourceOffset < argSize) {
                 size_t maxBytesToCopy = argSize - element.sourceOffset;
@@ -1952,11 +1951,11 @@ size_t Kernel::getInstructionHeapSizeForExecutionModel() const {
 
     size_t totalSize = 0;
     if (isParentKernel) {
-        totalSize = kernelBinaryAlignement - 1; // for initial alignment
+        totalSize = kernelBinaryAlignment - 1; // for initial alignment
         for (uint32_t i = 0; i < blockCount; i++) {
             const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
             totalSize += pBlockInfo->heapInfo.KernelHeapSize;
-            totalSize = alignUp(totalSize, kernelBinaryAlignement);
+            totalSize = alignUp(totalSize, kernelBinaryAlignment);
         }
     }
     return totalSize;

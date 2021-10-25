@@ -9,17 +9,16 @@
 
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
-
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
-#include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_host_ptr_manager.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include <atomic>
 
 namespace NEO {
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
-int closeInputFd = 0;
+std::atomic<int> closeInputFd(0);
 std::atomic<int> closeCalledCount(0);
 std::vector<void *> mmapVector(64);
 

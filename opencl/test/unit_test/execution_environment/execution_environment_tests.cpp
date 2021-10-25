@@ -22,13 +22,13 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/unit_test/utilities/destructor_counted.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
@@ -82,7 +82,10 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
     device->incRefInternal();
     platform.reset(nullptr);
     EXPECT_EQ(1, device->getRefInternalCount());
-    EXPECT_EQ(1, executionEnvironment->getRefInternalCount());
+
+    int32_t expectedRefCount = 1 + device->getNumSubDevices();
+
+    EXPECT_EQ(expectedRefCount, executionEnvironment->getRefInternalCount());
 
     device->decRefInternal();
 }

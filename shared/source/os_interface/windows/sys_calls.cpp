@@ -50,6 +50,14 @@ DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
 char *getenv(const char *variableName) {
     return ::getenv(variableName);
 }
+
+LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
+    return RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
+}
+
+LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
+    return RegQueryValueExA(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
+}
 } // namespace SysCalls
 
 } // namespace NEO

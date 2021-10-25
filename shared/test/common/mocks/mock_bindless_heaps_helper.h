@@ -12,7 +12,7 @@ using namespace NEO;
 class MockBindlesHeapsHelper : public BindlessHeapsHelper {
   public:
     using BaseClass = BindlessHeapsHelper;
-    MockBindlesHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex) : BaseClass(memManager, isMultiOsContextCapable, rootDeviceIndex) {
+    MockBindlesHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) : BaseClass(memManager, isMultiOsContextCapable, rootDeviceIndex, deviceBitfield) {
         globalSsh = surfaceStateHeaps[BindlesHeapType::GLOBAL_SSH].get();
         specialSsh = surfaceStateHeaps[BindlesHeapType::SPECIAL_SSH].get();
         scratchSsh = surfaceStateHeaps[BindlesHeapType::SPECIAL_SSH].get();

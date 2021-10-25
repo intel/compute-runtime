@@ -37,7 +37,7 @@ XEHPTEST_F(PreemptionXeHPTest, givenRevisionA0toBWhenProgrammingSipThenGlobalSip
         mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
         auto sipAllocation = SipKernel::getSipKernel(*mockDevice).getSipAllocation();
 
-        size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+        size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
         StackVec<char, 1024> streamStorage(1024);
         LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
 

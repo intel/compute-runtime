@@ -8,9 +8,11 @@
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_banks.h"
@@ -19,6 +21,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -26,14 +29,11 @@
 #include "shared/test/common/mocks/mock_tbx_csr.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -169,6 +169,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentHas
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledForGraphicsAllocationWithNonZeroSizeThenItShouldReturnTrue) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    tbxCsr->initializeEngine();
     MemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
@@ -182,6 +183,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledWithGraphicsAllocationThatIsOnlyOneTimeWriteableThenGraphicsAllocationIsUpdated) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    tbxCsr->initializeEngine();
     MemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
@@ -197,6 +199,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledWithGraphicsAllocationThatIsOnlyOneTimeWriteableButAlreadyWrittenThenGraphicsAllocationIsNotUpdated) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    tbxCsr->initializeEngine();
     MemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
@@ -212,6 +215,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledForGraphicsAllocationWithZeroSizeThenItShouldReturnFalse) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    tbxCsr->initializeEngine();
     MockGraphicsAllocation graphicsAllocation((void *)0x1234, 0);
 
     EXPECT_FALSE(tbxCsr->writeMemory(graphicsAllocation));
@@ -219,6 +223,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidencyIsCalledWithoutAllocationsForResidencyThenItShouldProcessAllocationsFromMemoryManager) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    tbxCsr->initializeEngine();
     MemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
@@ -238,6 +243,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidencyIsCalledWithAllocationsForResidencyThenItShouldProcessGivenAllocations) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    tbxCsr->initializeEngine();
     MemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
@@ -361,7 +367,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKm
 
     tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};
 
-    tbxCsr.waitForTaskCountWithKmdNotifyFallback(0u, 0u, false, false, 1, 0);
+    tbxCsr.waitForTaskCountWithKmdNotifyFallback(0u, 0u, false, false);
 
     std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &allocation1, &allocation2, &allocation3};
     EXPECT_EQ(expectedDownloadedAllocations, tbxCsr.downloadedAllocations);
@@ -507,6 +513,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
     MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
     tbxCsr.setupContext(osContext);
+    tbxCsr.initializeEngine();
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
@@ -816,13 +823,9 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
     EXPECT_FALSE(tbxCsr.dumpTbxNonWritable);
 
-    auto status = tbxCsr.checkAndActivateAubSubCapture(multiDispatchInfo);
+    auto status = tbxCsr.checkAndActivateAubSubCapture("");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 
@@ -841,14 +844,9 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
     EXPECT_FALSE(tbxCsr.dumpTbxNonWritable);
 
-    auto status = tbxCsr.checkAndActivateAubSubCapture(multiDispatchInfo);
+    auto status = tbxCsr.checkAndActivateAubSubCapture("kernelName");
     EXPECT_TRUE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 
@@ -867,14 +865,9 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
     EXPECT_FALSE(tbxCsr.dumpTbxNonWritable);
 
-    auto status = tbxCsr.checkAndActivateAubSubCapture(multiDispatchInfo);
+    auto status = tbxCsr.checkAndActivateAubSubCapture("kernelName");
     EXPECT_TRUE(status.isActive);
     EXPECT_TRUE(status.wasActiveInPreviousEnqueue);
 
@@ -886,8 +879,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInNonSubCaptureModeWhenCheckAndActiva
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
     tbxCsr.setupContext(osContext);
 
-    MultiDispatchInfo dispatchInfo;
-    auto status = tbxCsr.checkAndActivateAubSubCapture(dispatchInfo);
+    auto status = tbxCsr.checkAndActivateAubSubCapture("");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -914,7 +906,8 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCor
 
     MockCommandQueueHw<FamilyType> cmdQ(&context, pClDevice, nullptr);
     cmdQ.gpgpuEngine = &engineControl0;
-    cmdQ.bcsEngine = &engineControl1;
+    cmdQ.clearBcsEngines();
+    cmdQ.bcsEngines[0] = &engineControl1;
 
     cl_int error = CL_SUCCESS;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, error));

@@ -110,7 +110,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenFreeGpuVirtualAddressIsCalledThenKmDa
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenMakeResidentIsCalledThenKmDafListenerNotifyMakeResidentIsFedWithCorrectParams) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
 
     wddmWithKmDafMock->makeResident(&allocation.handle, 1, false, nullptr, 0x1000);
 
@@ -123,7 +123,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenMakeResidentIsCalledThenKmDafListener
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenEvictIsCalledThenKmDafListenerNotifyEvictIsFedWithCorrectParams) {
-    MockWddmAllocation allocation;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
     uint64_t sizeToTrim;
 
     wddmWithKmDafMock->evict(&allocation.handle, 1, sizeToTrim);

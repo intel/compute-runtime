@@ -18,27 +18,49 @@ namespace L0 {
 ze_result_t MetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDataSize,
                                         uint8_t *pRawData) {
     ze_result_t result = ZE_RESULT_SUCCESS;
+    const size_t metricStreamerSize = metricStreamers.size();
 
-    if (metricStreamers.size() > 0) {
+    if (metricStreamerSize > 0) {
         auto pMetricStreamer = MetricStreamer::fromHandle(metricStreamers[0]);
         // Return required size if requested.
         if (*pRawDataSize == 0) {
-            *pRawDataSize = static_cast<MetricStreamerImp *>(pMetricStreamer)->getRequiredBufferSize(maxReportCount) * metricStreamers.size();
+            const size_t headerSize = sizeof(MetricGroupCalculateHeader);
+            const size_t rawDataOffsetsRequiredSize = sizeof(uint32_t) * metricStreamerSize;
+            const size_t rawDataSizesRequiredSize = sizeof(uint32_t) * metricStreamerSize;
+            const size_t rawDataRequiredSize = static_cast<MetricStreamerImp *>(pMetricStreamer)->getRequiredBufferSize(maxReportCount) * metricStreamerSize;
+            *pRawDataSize = headerSize + rawDataOffsetsRequiredSize + rawDataSizesRequiredSize + rawDataRequiredSize;
             return ZE_RESULT_SUCCESS;
         }
 
-        size_t sizePerSubDevice = *pRawDataSize / metricStreamers.size();
+        MetricGroupCalculateHeader *pRawDataHeader = reinterpret_cast<MetricGroupCalculateHeader *>(pRawData);
+        pRawDataHeader->magic = MetricGroupCalculateHeader::magicValue;
+        pRawDataHeader->dataCount = static_cast<uint32_t>(metricStreamerSize);
+
+        // Relative offsets in the header allow to move/copy the buffer.
+        pRawDataHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+        pRawDataHeader->rawDataSizes = static_cast<uint32_t>(pRawDataHeader->rawDataOffsets + (sizeof(uint32_t) * metricStreamerSize));
+        pRawDataHeader->rawDataOffset = static_cast<uint32_t>(pRawDataHeader->rawDataSizes + (sizeof(uint32_t) * metricStreamerSize));
+
+        const size_t sizePerSubDevice = (*pRawDataSize - pRawDataHeader->rawDataOffset) / metricStreamerSize;
         DEBUG_BREAK_IF(sizePerSubDevice == 0);
-        *pRawDataSize = 0;
-        for (auto metricStreamerHandle : metricStreamers) {
+        *pRawDataSize = pRawDataHeader->rawDataOffset;
+
+        uint32_t *pRawDataOffsetsUnpacked = reinterpret_cast<uint32_t *>(pRawData + pRawDataHeader->rawDataOffsets);
+        uint32_t *pRawDataSizesUnpacked = reinterpret_cast<uint32_t *>(pRawData + pRawDataHeader->rawDataSizes);
+        uint8_t *pRawDataUnpacked = reinterpret_cast<uint8_t *>(pRawData + pRawDataHeader->rawDataOffset);
+
+        for (size_t i = 0; i < metricStreamerSize; ++i) {
 
             size_t readSize = sizePerSubDevice;
-            pMetricStreamer = MetricStreamer::fromHandle(metricStreamerHandle);
-            result = pMetricStreamer->readData(maxReportCount, &readSize, pRawData + *pRawDataSize);
+            const uint32_t rawDataOffset = (i != 0) ? (pRawDataSizesUnpacked[i - 1] + pRawDataOffsetsUnpacked[i - 1]) : 0;
+            pMetricStreamer = MetricStreamer::fromHandle(metricStreamers[i]);
+            result = pMetricStreamer->readData(maxReportCount, &readSize, pRawDataUnpacked + rawDataOffset);
             // Return at first error.
             if (result != ZE_RESULT_SUCCESS) {
                 return result;
             }
+            pRawDataSizesUnpacked[i] = static_cast<uint32_t>(readSize);
+            pRawDataOffsetsUnpacked[i] = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] + pRawDataSizesUnpacked[i] : 0;
             *pRawDataSize += readSize;
         }
     } else {
@@ -270,10 +292,10 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto pDevice = Device::fromHandle(hDevice);
+    const auto pDeviceImp = static_cast<const DeviceImp *>(pDevice);
 
-    if (pDevice->isMultiDeviceCapable()) {
-        const auto deviceImp = static_cast<const DeviceImp *>(pDevice);
-        const uint32_t subDeviceCount = deviceImp->numSubDevices;
+    if (pDeviceImp->metricContext->isMultiDeviceCapable()) {
+        const uint32_t subDeviceCount = pDeviceImp->numSubDevices;
         auto pMetricStreamer = new MetricStreamerImp();
         UNRECOVERABLE_IF(pMetricStreamer == nullptr);
 
@@ -284,7 +306,7 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
         for (uint32_t i = 0; i < subDeviceCount; i++) {
 
             auto metricGroupsSubDevice = metricGroupRootDevice->getMetricGroups()[i];
-            result = openForDevice(deviceImp->subDevices[i], metricGroupsSubDevice, desc, &metricStreamers[i]);
+            result = openForDevice(pDeviceImp->subDevices[i], metricGroupsSubDevice, desc, &metricStreamers[i]);
             if (result != ZE_RESULT_SUCCESS) {
                 for (uint32_t j = 0; j < i; j++) {
                     auto metricStreamerSubDevice = MetricStreamer::fromHandle(metricStreamers[j]);

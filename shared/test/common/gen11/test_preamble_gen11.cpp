@@ -59,9 +59,9 @@ GEN11TEST_F(Gen11PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    auto pVfeCmd = PreambleHelper<ICLFamily>::getSpaceForVfeState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<ICLFamily>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<ICLFamily>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u, emptyProperties);
+    PreambleHelper<ICLFamily>::programVfeState(pVfeCmd, pDevice->getHardwareInfo(), 0u, 0, 168u, emptyProperties);
 
     parseCommands<ICLFamily>(cs);
 
@@ -79,9 +79,9 @@ GEN11TEST_F(Gen11PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammi
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
-    auto pVfeCmd = PreambleHelper<ICLFamily>::getSpaceForVfeState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<ICLFamily>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<ICLFamily>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u, emptyProperties);
+    PreambleHelper<ICLFamily>::programVfeState(pVfeCmd, pDevice->getHardwareInfo(), 0u, 0, 168u, emptyProperties);
 
     parseCommands<ICLFamily>(cs);
 
@@ -159,4 +159,31 @@ GEN11TEST_F(ThreadArbitrationGen11, whenGetSupportThreadArbitrationPoliciesIsCal
     EXPECT_NE(supportedPolicies.end(), std::find(supportedPolicies.begin(),
                                                  supportedPolicies.end(),
                                                  ThreadArbitrationPolicy::RoundRobinAfterDependency));
+}
+using PreambleFixtureGen11 = PreambleFixture;
+GEN11TEST_F(PreambleFixtureGen11, whenKernelDebuggingCommandsAreProgrammedThenCorrectRegisterAddressesAndValuesAreSet) {
+    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+
+    auto bufferSize = PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true);
+    auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
+
+    LinearStream stream(buffer.get(), bufferSize);
+    PreambleHelper<FamilyType>::programKernelDebugging(&stream);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream);
+    auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
+
+    ASSERT_EQ(2u, cmdList.size());
+
+    auto it = cmdList.begin();
+
+    MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
+    EXPECT_EQ(0x20d8u, pCmd->getRegisterOffset());
+    EXPECT_EQ((1u << 5) | (1u << 21), pCmd->getDataDword());
+    it++;
+
+    pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
+    EXPECT_EQ(0xe400u, pCmd->getRegisterOffset());
+    EXPECT_EQ((1u << 7) | (1u << 4), pCmd->getDataDword());
 }

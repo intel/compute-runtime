@@ -9,10 +9,9 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
-
-#include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 
@@ -395,14 +394,15 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     auto rootDeviceIndex = unifiedMemoryProperties.device
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
-    size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
+    size_t alignedSizeCpu = alignUp<size_t>(size, MemoryConstants::pageSize2Mb);
+    size_t alignedSizeGpu = alignUp<size_t>(size, MemoryConstants::pageSize64k);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        true, // allocateMemory
-                                       alignedSize, GraphicsAllocation::AllocationType::SVM_CPU,
+                                       alignedSizeCpu, GraphicsAllocation::AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
-    cpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    cpuProperties.alignment = MemoryConstants::pageSize2Mb;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false, cacheRegion);
     GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties);
@@ -425,13 +425,13 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
 
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        false,
-                                       alignedSize,
+                                       alignedSizeGpu,
                                        GraphicsAllocation::AllocationType::SVM_GPU,
                                        false,
                                        multiStorageAllocation,
                                        subDevices};
 
-    gpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    gpuProperties.alignment = MemoryConstants::pageSize64k;
     MemoryPropertiesHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false, cacheRegion);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties, svmPtr);
     if (!allocationGpu) {

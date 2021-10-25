@@ -11,9 +11,8 @@
 #include "shared/source/helpers/array_count.h"
 
 #include "opencl/source/api/cl_types.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/image.h"
-
-#include "validators.h"
 
 namespace NEO {
 

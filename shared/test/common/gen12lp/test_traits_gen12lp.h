@@ -11,4 +11,7 @@
 template <>
 struct TestTraits<IGFX_GEN12LP_CORE> {
     static constexpr bool auxBuiltinsSupported = true;
+    static constexpr bool programOnlyChangedFieldsInComputeStateMode = true;
+    static constexpr bool iohInSbaSupported = true;
+    static constexpr bool auxTranslationSupported = true;
 };

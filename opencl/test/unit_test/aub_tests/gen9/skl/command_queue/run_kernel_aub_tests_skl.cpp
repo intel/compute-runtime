@@ -208,7 +208,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
         event2);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    HardwareParse::parseCommands<FamilyType>(*pCmdQ2);
+    ClHardwareParse::parseCommands<FamilyType>(*pCmdQ2);
 
     // Compute our memory expecations based on kernel execution
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
@@ -323,7 +323,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto srcImage = Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -334,7 +334,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
 
     auto refImage = Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,

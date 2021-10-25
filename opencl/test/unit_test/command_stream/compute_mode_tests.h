@@ -9,9 +9,9 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
 
 using namespace NEO;
@@ -68,7 +68,9 @@ struct ComputeModeRequirements : public ::testing::Test {
     template <typename FamilyType>
     void SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo));
+        device->executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hardwareInfo);
         csr = new myCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
+
         device->resetCommandStreamReceiver(csr);
         AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
 

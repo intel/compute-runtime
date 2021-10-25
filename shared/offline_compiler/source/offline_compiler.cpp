@@ -14,16 +14,16 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_library.h"
-
-#include "opencl/source/platform/extensions.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
@@ -51,16 +51,6 @@
 #endif
 
 namespace NEO {
-
-template <typename T = void>
-bool areNotNullptr() {
-    return true;
-}
-
-template <typename T, typename... RT>
-bool areNotNullptr(T t, RT... rt) {
-    return (t != nullptr) && areNotNullptr<RT...>(rt...);
-}
 
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 
@@ -180,7 +170,7 @@ int OfflineCompiler::buildIrBinary() {
 
     if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
         updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
-        retVal = CL_BUILD_PROGRAM_FAILURE;
+        retVal = BUILD_PROGRAM_FAILURE;
         return retVal;
     }
 
@@ -314,9 +304,10 @@ void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t erro
     std::string errorString = (errorStringSize && pErrorString) ? std::string(pErrorString, pErrorString + errorStringSize) : "";
     if (errorString[0] != '\0') {
         if (buildLog.empty()) {
-            buildLog.assign(errorString);
+            buildLog.assign(errorString.c_str());
         } else {
-            buildLog.append("\n" + errorString);
+            buildLog.append("\n");
+            buildLog.append(errorString.c_str());
         }
     }
 }
@@ -448,7 +439,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         return retVal;
     }
 
-    if (options.find(CompilerOptions::generateDebugInfo.str()) != std::string::npos) {
+    if (CompilerOptions::contains(options, CompilerOptions::generateDebugInfo.str())) {
         if (hwInfo.platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             internalOptions = CompilerOptions::concatenate(internalOptions, CompilerOptions::debugKernelEnable);
         }
@@ -458,22 +449,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         internalOptions = CompilerOptions::concatenate("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes", internalOptions);
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     } else {
-        std::string extensionsList = getExtensionsList(hwInfo);
-        if (requiresAdditionalExtensions(options)) {
-            extensionsList += "cl_khr_3d_image_writes ";
-        }
-        OpenClCFeaturesContainer openclCFeatures;
-        if (requiresOpenClCFeatures(options)) {
-            getOpenclCFeaturesList(hwInfo, openclCFeatures);
-        }
-
-        auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
-        auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
-        internalOptions = CompilerOptions::concatenate(oclVersion, compilerExtensions, internalOptions);
-
-        if (hwInfo.capabilityTable.supportsImages) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
-        }
+        appendExtensionsToInternalOptions(hwInfo, options, internalOptions);
     }
 
     parseDebugSettings();
@@ -609,7 +585,10 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     igcFeWa.get()->SetFtrGTX(hwInfo.featureTable.ftrGTX);
     igcFeWa.get()->SetFtr5Slice(hwInfo.featureTable.ftr5Slice);
 
-    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(isMidThreadPreemptionSupported(hwInfo));
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (compilerHwInfoConfig) {
+        igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
+    }
     igcFeWa.get()->SetFtrIoMmuPageFaulting(hwInfo.featureTable.ftrIoMmuPageFaulting);
     igcFeWa.get()->SetFtrWddm2Svm(hwInfo.featureTable.ftrWddm2Svm);
     igcFeWa.get()->SetFtrPooledEuEnabled(hwInfo.featureTable.ftrPooledEuEnabled);
@@ -971,7 +950,7 @@ void OfflineCompiler::storeBinary(
     delete[] pDst;
     pDst = new char[srcSize];
 
-    dstSize = (cl_uint)srcSize;
+    dstSize = static_cast<uint32_t>(srcSize);
     memcpy_s(pDst, dstSize, pSrc, srcSize);
 }
 

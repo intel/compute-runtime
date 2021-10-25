@@ -5,17 +5,16 @@
  *
  */
 
-#include "shared/test/common/cmd_parse/hw_parse.h"
-
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "test.h"
 
 using namespace NEO;
 
 struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFactory>,
-                                    public HardwareParse {
+                                    public ClHardwareParse {
     typedef HelloWorldTest<HelloWorldFixtureFactory> Parent;
     using Parent::createCommandQueue;
     using Parent::pCmdQ;
@@ -27,12 +26,12 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
 
     void SetUp() override {
         Parent::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
         delete pCmdQ2;
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         Parent::TearDown();
     }
 
@@ -56,7 +55,7 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
             &event1);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
-        HardwareParse::parseCommands<FamilyType>(*pCmdQ);
+        ClHardwareParse::parseCommands<FamilyType>(*pCmdQ);
 
         // Create a second command queue (beyond the default one)
         pCmdQ2 = createCommandQueue(pClDevice);
@@ -73,7 +72,7 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
             &event2);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
-        HardwareParse::parseCommands<FamilyType>(*pCmdQ2);
+        ClHardwareParse::parseCommands<FamilyType>(*pCmdQ2);
 
         Event *E1 = castToObject<Event>(event1);
         ASSERT_NE(nullptr, E1);

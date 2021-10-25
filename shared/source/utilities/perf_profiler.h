@@ -36,8 +36,8 @@ class PerfProfiler {
 
     static void readAndVerify(std::istream &stream, const std::string &token);
 
-    PerfProfiler(int id, std::unique_ptr<std::ostream> logOut = {nullptr},
-                 std::unique_ptr<std::ostream> sysLogOut = {nullptr});
+    PerfProfiler(int id, std::unique_ptr<std::ostream> &&logOut = {nullptr},
+                 std::unique_ptr<std::ostream> &&sysLogOut = {nullptr});
     ~PerfProfiler();
 
     void apiEnter() {

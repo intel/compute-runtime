@@ -27,9 +27,9 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/compiler_support.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <algorithm>
@@ -73,6 +73,7 @@ MemoryManager::~MemoryManager() {
     for (auto &engine : registeredEngines) {
         engine.osContext->decRefInternal();
     }
+    registeredEngines.clear();
     if (reservedMemory) {
         MemoryManager::alignedFreeWrapper(reservedMemory);
     }
@@ -261,11 +262,24 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
     return false;
 }
 
+void MemoryManager::updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex) {
+    // rootDeviceIndexToContextId map would contain the first entry for context for each rootDevice
+    auto entry = rootDeviceIndexToContextId.insert(std::pair<uint32_t, uint32_t>(rootDeviceIndex, latestContextId));
+    if (entry.second == false) {
+        if (latestContextId == std::numeric_limits<uint32_t>::max()) {
+            // If we are here, it means we are reinitializing the contextId.
+            latestContextId = entry.first->second;
+        }
+    }
+}
+
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
                                                      const EngineDescriptor &engineDescriptor) {
+    auto rootDeviceIndex = commandStreamReceiver->getRootDeviceIndex();
+    updateLatestContextIdForRootDevice(rootDeviceIndex);
+
     auto contextId = ++latestContextId;
-    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->osInterface.get(),
-                                       contextId, engineDescriptor);
+    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), contextId, engineDescriptor);
     osContext->incRefInternal();
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);
@@ -414,6 +428,10 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.preferRenderCompressed = CompressionSelector::preferRenderCompressedBuffer(properties, *hwInfo);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
 
+    if (properties.allocationType == GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+        allocationData.flags.zeroMemory = 1;
+    }
+
     if (properties.allocationType == GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA) {
         allocationData.flags.use32BitFrontWindow = true;
     } else {
@@ -490,11 +508,16 @@ GraphicsAllocation *MemoryManager::allocateInternalGraphicsMemoryWithHostCopy(ui
 }
 
 bool MemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
-    auto index = graphicsAllocation->getRootDeviceIndex();
-    if (executionEnvironment.rootDeviceEnvironments[index]->pageTableManager.get()) {
-        return executionEnvironment.rootDeviceEnvironments[index]->pageTableManager->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
+    bool ret = false;
+    for (auto engine : registeredEngines) {
+        if (engine.commandStreamReceiver->pageTableManager.get()) {
+            ret = engine.commandStreamReceiver->pageTableManager->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
+            if (!ret) {
+                break;
+            }
+        }
     }
-    return false;
+    return ret;
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {
@@ -518,7 +541,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (use32Allocator || isAllocationOnLimitedGPU ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwHelper::get(hwInfo->platform.eRenderCoreFamily).heapInLocalMem(*hwInfo) : false;
+        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwInfoConfig::get(hwInfo->platform.eProductFamily)->heapInLocalMem(*hwInfo) : false;
         return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMem);
     }
     if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {
@@ -729,7 +752,7 @@ bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
     switch (imgInfo.imgDesc.imageType) {
     case ImageType::Image3D:
         imageDepth = imgInfo.imgDesc.imageDepth;
-        CPP_ATTRIBUTE_FALLTHROUGH;
+        [[fallthrough]];
     case ImageType::Image2D:
     case ImageType::Image2DArray:
         imageHeight = imgInfo.imgDesc.imageHeight;

@@ -32,8 +32,8 @@ void powerGetTimestamp(uint64_t &timestamp) {
 }
 
 ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
-    pProperties->onSubdevice = false;
-    pProperties->subdeviceId = 0;
+    pProperties->onSubdevice = isSubdevice;
+    pProperties->subdeviceId = subdeviceId;
     pProperties->canControl = canControl;
     pProperties->isEnergyThresholdSupported = false;
     pProperties->defaultLimit = -1;
@@ -58,16 +58,25 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t LinuxPowerImp::getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy) {
+    const std::string key("PACKAGE_ENERGY");
+    uint64_t energy = 0;
+    ze_result_t result = pPmt->readValue(key, energy);
+    // PMT will return energy counter in Q20 format(fixed point representation) where first 20 bits(from LSB) represent decimal part and remaining integral part which is converted into joule by division with 1048576(2^20) and then converted into microjoules
+    pEnergy->energy = (energy / 1048576) * convertJouleToMicroJoule;
+    return result;
+}
 ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
-    ze_result_t result = pSysfsAccess->read(i915HwmonDir + "/" + energyCounterNode, pEnergy->energy);
-    if (result != ZE_RESULT_SUCCESS) {
-        const std::string key("PACKAGE_ENERGY");
-        uint64_t energy = 0;
-        result = pPmt->readValue(key, energy);
-        // PMT will return energy counter in Q20 format(fixed point representation) where first 20 bits(from LSB) represent decimal part and remaining integral part which is converted into joule by division with 1048576(2^20) and then converted into microjoules
-        pEnergy->energy = (energy / 1048576) * convertJouleToMicroJoule;
-    }
     powerGetTimestamp(pEnergy->timestamp);
+    ze_result_t result = pSysfsAccess->read(energyHwmonDir + "/" + energyCounterNode, pEnergy->energy);
+    if (result != ZE_RESULT_SUCCESS) {
+        if (pPmt != nullptr) {
+            return getPmtEnergyCounter(pEnergy);
+        }
+    }
+    if (result != ZE_RESULT_SUCCESS) {
+        return getErrorCode(result);
+    }
     return result;
 }
 
@@ -131,6 +140,13 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
         if (ZE_RESULT_SUCCESS != result) {
             return getErrorCode(result);
         }
+        if (isSustainedPowerLimitEnabled != static_cast<uint64_t>(pSustained->enabled)) {
+            result = pSysfsAccess->write(i915HwmonDir + "/" + sustainedPowerLimitEnabled, static_cast<int>(pSustained->enabled));
+            if (ZE_RESULT_SUCCESS != result) {
+                return getErrorCode(result);
+            }
+            isSustainedPowerLimitEnabled = static_cast<uint64_t>(pSustained->enabled);
+        }
 
         if (isSustainedPowerLimitEnabled) {
             val = static_cast<uint32_t>(pSustained->power) * milliFactor; // Convert milliWatts to microwatts
@@ -144,6 +160,7 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
                 return getErrorCode(result);
             }
         }
+        result = ZE_RESULT_SUCCESS;
     }
     if (pBurst != nullptr) {
         result = pSysfsAccess->write(i915HwmonDir + "/" + burstPowerLimitEnabled, static_cast<int>(pBurst->enabled));
@@ -159,7 +176,6 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
             }
         }
     }
-
     return result;
 }
 
@@ -187,7 +203,9 @@ bool LinuxPowerImp::isPowerModuleSupported() {
             i915HwmonDir = hwmonDir + "/" + tempHwmonDirEntry;
             hwmonDirExists = true;
             canControl = true;
-            break;
+        }
+        if (isEnergyHwmonDir(name) == true) {
+            energyHwmonDir = hwmonDir + "/" + tempHwmonDirEntry;
         }
     }
     if (hwmonDirExists == false) {
@@ -196,16 +214,14 @@ bool LinuxPowerImp::isPowerModuleSupported() {
     return true;
 }
 
-LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman) {
+LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    // Lets hardcode subDeviceId to 0, as we are expecting this code to execute on device without subdevice
-    uint32_t subDeviceId = 0;
-    pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subDeviceId);
+    pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
 }
 
-OsPower *OsPower::create(OsSysman *pOsSysman) {
-    LinuxPowerImp *pLinuxPowerImp = new LinuxPowerImp(pOsSysman);
+OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    LinuxPowerImp *pLinuxPowerImp = new LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId);
     return static_cast<OsPower *>(pLinuxPowerImp);
 }
 

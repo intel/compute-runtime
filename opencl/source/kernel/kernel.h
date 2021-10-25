@@ -15,6 +15,8 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/kernel_execution_type.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -24,9 +26,7 @@
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/properties_helper.h"
-#include "opencl/source/kernel/kernel_execution_type.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 
 #include <vector>
@@ -43,7 +43,7 @@ class MultiDeviceKernel;
 
 class Kernel : public ReferenceTrackedObject<Kernel> {
   public:
-    static const uint32_t kernelBinaryAlignement = 64;
+    static const uint32_t kernelBinaryAlignment = 64;
 
     enum kernelArgType {
         NONE_OBJ,
@@ -528,6 +528,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     }
     cl_int patchPrivateSurface();
 
+    bool containsStatelessWrites = true;
     const ExecutionEnvironment &executionEnvironment;
     Program *program;
     ClDevice &clDevice;
@@ -546,7 +547,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool usingImages = false;
     bool usingImagesOnly = false;
     bool auxTranslationRequired = false;
-    bool containsStatelessWrites = true;
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;

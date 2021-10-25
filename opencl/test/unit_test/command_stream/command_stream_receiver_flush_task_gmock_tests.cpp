@@ -23,6 +23,8 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/ult_hw_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_csr.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
@@ -31,11 +33,9 @@
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
@@ -44,6 +44,7 @@
 
 #include "gtest/gtest.h"
 #include "reg_configs_common.h"
+#include "test_traits_common.h"
 
 using namespace NEO;
 
@@ -52,7 +53,8 @@ using ::testing::Invoke;
 
 using CommandStreamReceiverFlushTaskGmockTests = UltCommandStreamReceiverTest;
 
-HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenCsrInBatchingModeThreeRecordedCommandBufferEnabledBatchBufferFlatteningAndPatchInfoCollectionWhenFlushBatchedSubmissionsIsCalledThenBatchBuffersAndPatchInfoAreCollected) {
+HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
+          givenCsrInBatchingModeThreeRecordedCommandBufferEnabledBatchBufferFlatteningAndPatchInfoCollectionWhenFlushBatchedSubmissionsIsCalledThenBatchBuffersAndPatchInfoAreCollected, MatchAny) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
@@ -80,7 +82,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenCsrInBatchingModeThreeRe
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.outOfOrderExecutionAllowed = true;
 
-    EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(10);
+    constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 10 : 9;
+
+    EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(expectedCallsCount);
     size_t removePatchInfoDataCount = 4 * UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
     EXPECT_CALL(*mockHelper, removePatchInfoData(::testing::_)).Times(static_cast<int>(removePatchInfoDataCount));
     EXPECT_CALL(*mockHelper, registerCommandChunk(::testing::_)).Times(4);
@@ -153,7 +157,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
                        *pDevice);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataIsCollected) {
+HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataIsCollected, MatchAny) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
@@ -168,9 +172,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
+    constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
+
     std::vector<PatchInfoData> patchInfoDataVector;
     EXPECT_CALL(*mockHelper, setPatchInfoData(_))
-        .Times(4)
+        .Times(expectedCallsCount)
         .WillRepeatedly(Invoke([&](const PatchInfoData &data) {
             patchInfoDataVector.push_back(data);
             return true;
@@ -185,7 +191,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(4u, patchInfoDataVector.size());
+    EXPECT_EQ(expectedCallsCount, patchInfoDataVector.size());
 
     for (auto &patchInfoData : patchInfoDataVector) {
         uint64_t expectedAddress = 0u;
@@ -208,16 +214,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
     }
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectStateBaseAddresPatchInfoIsCalledThenAppropriateAddressesAreTaken) {
+HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectStateBaseAddresPatchInfoIsCalledThenAppropriateAddressesAreTaken, MatchAny) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     std::unique_ptr<MockCsrHw2<FamilyType>> mockCsr(new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment);
     mockCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
+    constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
+
     std::vector<PatchInfoData> patchInfoDataVector;
     EXPECT_CALL(*mockHelper, setPatchInfoData(_))
-        .Times(4)
+        .Times(expectedCallsCount)
         .WillRepeatedly(Invoke([&](const PatchInfoData &data) {
             patchInfoDataVector.push_back(data);
             return true;
@@ -231,11 +239,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectStateB
 
     mockCsr->collectStateBaseAddresPatchInfo(baseAddress, commandOffset, dsh, ioh, ssh, generalStateBase);
 
-    ASSERT_EQ(patchInfoDataVector.size(), 4u);
+    ASSERT_EQ(patchInfoDataVector.size(), expectedCallsCount);
     PatchInfoData dshPatch = patchInfoDataVector[0];
     PatchInfoData gshPatch = patchInfoDataVector[1];
     PatchInfoData sshPatch = patchInfoDataVector[2];
-    PatchInfoData iohPatch = patchInfoDataVector[3];
 
     for (auto &patch : patchInfoDataVector) {
         EXPECT_EQ(patch.targetAllocation, baseAddress);
@@ -246,9 +253,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectStateB
     EXPECT_EQ(dshPatch.sourceAllocation, dsh.getGraphicsAllocation()->getGpuAddress());
     EXPECT_EQ(dshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET);
 
-    //IOH
-    EXPECT_EQ(iohPatch.sourceAllocation, ioh.getGraphicsAllocation()->getGpuAddress());
-    EXPECT_EQ(iohPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET);
+    if constexpr (TestTraits<gfxCoreFamily>::iohInSbaSupported) {
+        //IOH
+        PatchInfoData iohPatch = patchInfoDataVector[3];
+
+        EXPECT_EQ(iohPatch.sourceAllocation, ioh.getGraphicsAllocation()->getGpuAddress());
+        EXPECT_EQ(iohPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET);
+    }
 
     //SSH
     EXPECT_EQ(sshPatch.sourceAllocation, ssh.getGraphicsAllocation()->getGpuAddress());

@@ -49,7 +49,7 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     if (!memoryInfo) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    for (auto region : memoryInfo->regions) {
+    for (auto region : memoryInfo->getDrmRegionInfos()) {
         if (region.region.memory_class == I915_MEMORY_CLASS_DEVICE) {
             deviceRegions.push_back(region);
         }

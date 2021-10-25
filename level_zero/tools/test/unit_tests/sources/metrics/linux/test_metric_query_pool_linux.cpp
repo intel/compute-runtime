@@ -8,8 +8,9 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
@@ -63,6 +64,148 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenGetContextDataIsCalled
 
     EXPECT_EQ(contextData.ClientData->Linux.Adapter->DrmFileDescriptor, osInterface.getDriverModel()->as<Drm>()->getFileDescriptor());
     EXPECT_EQ(contextData.ClientData->Linux.Adapter->Type, LinuxAdapterType::DrmFileDescriptor);
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenActivateConfigurationIsCalledThenReturnsSuccess) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .WillOnce(Return(StatusCode::Success));
+    EXPECT_TRUE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenActivateConfigurationIsCalledAndMetricLibraryActivateFailsThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .WillOnce(Return(StatusCode::Failed));
+    EXPECT_FALSE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenInCorrectConfigurationWhenActivateConfigurationIsCalledThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = nullptr;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    ON_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .WillByDefault(Return(StatusCode::Success));
+    EXPECT_FALSE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenMetricLibraryIsInIncorrectInitializedStateWhenActivateConfigurationIsCalledThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_ERROR_UNKNOWN;
+
+    ON_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
+        .WillByDefault(Return(StatusCode::Success));
+    EXPECT_FALSE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenDeActivateConfigurationIsCalledThenReturnsSuccess) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .WillOnce(Return(StatusCode::Success));
+    EXPECT_TRUE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenDeActivateConfigurationIsCalledAndMetricLibraryDeActivateFailsThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .WillOnce(Return(StatusCode::Failed));
+    EXPECT_FALSE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenInCorrectConfigurationWhenDeActivateConfigurationIsCalledThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = nullptr;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    ON_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .WillByDefault(Return(StatusCode::Success));
+    EXPECT_FALSE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenMetricLibraryIsInIncorrectInitializedStateWhenDeActivateConfigurationIsCalledThenReturnsFail) {
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_ERROR_UNKNOWN;
+
+    ON_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
+        .WillByDefault(Return(StatusCode::Success));
+    EXPECT_FALSE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenCacheConfigurationIsCalledThenCacheingIsSuccessfull) {
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup0;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .WillOnce(Return(&metricsConcurrentGroup0));
+
+    EXPECT_CALL(metricsConcurrentGroup0, GetParams())
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup0, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDelete(_))
+        .WillOnce(Return(StatusCode::Success));
+
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+
+    mockMetricsLibrary->deleteAllConfigurations();
+    mockMetricsLibrary->cacheConfiguration(metricGroups[0], dummyConfigurationHandle);
+    EXPECT_EQ(mockMetricsLibrary->getConfiguration(metricGroups[0]).data, dummyConfigurationHandle.data);
+}
+
+TEST_F(MetricQueryPoolLinuxTest, WhenMetricLibraryGetFileNameIsCalledThenCorrectFilenameIsReturned) {
+    EXPECT_STREQ(MetricsLibrary::getFilename(), "libigdml.so.1");
 }
 
 class MetricEnumerationTestLinux : public MetricContextFixture,
@@ -371,6 +514,70 @@ TEST_F(MetricEnumerationTestLinux, givenIncorrectDrmFileForFstatWhenGetMetricsAd
     NEO::SysCalls::fstatFuncRetVal = -1;
 
     EXPECT_EQ(mockMetricEnumeration->baseGetAdapterId(drmMajor, drmMinor), false);
+}
+
+TEST(MetricsApiDependencyTest, givenReportTriggerAvailableWhenIsReportTriggerAvailableIsCalledThenReturnSuccess) {
+
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    VariableBackup<NEO::IoFunctions::freadFuncPtr> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        *(static_cast<uint8_t *>(ptr)) = '0';
+        return size;
+    });
+
+    EXPECT_EQ(MetricEnumeration::isReportTriggerAvailable(), true);
+    EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1u);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 1u);
+}
+
+TEST(MetricsApiDependencyTest, givenPerfStreamParanoidFileNotAvailableWhenIsReportTriggerAvailableIsCalledThenFailIsReturned) {
+
+    VariableBackup<NEO::IoFunctions::fopenFuncPtr> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        return nullptr;
+    });
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    NEO::IoFunctions::mockFreadCalled = 0;
+    EXPECT_EQ(MetricEnumeration::isReportTriggerAvailable(), false);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 0u);
+    EXPECT_EQ(NEO::IoFunctions::mockFreadCalled, 0u);
+}
+
+TEST(MetricsApiDependencyTest, givenPerfStreamParanoidFileAvailableWithNoDataWhenIsReportTriggerAvailableIsCalledThenFailIsReturned) {
+
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    VariableBackup<NEO::IoFunctions::freadFuncPtr> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        return 0;
+    });
+    EXPECT_EQ(MetricEnumeration::isReportTriggerAvailable(), false);
+    EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1u);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 1u);
+}
+
+TEST(MetricsApiDependencyTest, givenPerfStreamParanoidFileAvailableWithDataOtherThanZeroWhenIsReportTriggerAvailableIsCalledThenFailIsReturned) {
+
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    VariableBackup<NEO::IoFunctions::freadFuncPtr> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        *(static_cast<uint8_t *>(ptr)) = '1';
+        return 1;
+    });
+    EXPECT_EQ(MetricEnumeration::isReportTriggerAvailable(), false);
+    EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1u);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 1u);
+}
+
+TEST(MetricsApiDependencyTest, givenReportTriggerAvailableWhenIsMetricApiAvailableIsCalledThenReturnSuccessForReportTriggerAvailability) {
+
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
+    VariableBackup<NEO::IoFunctions::freadFuncPtr> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        *(static_cast<uint8_t *>(ptr)) = '0';
+        return size;
+    });
+    MetricContext::isMetricApiAvailable();
+    EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1u);
+    EXPECT_EQ(NEO::IoFunctions::mockFcloseCalled, 1u);
 }
 
 } // namespace ult

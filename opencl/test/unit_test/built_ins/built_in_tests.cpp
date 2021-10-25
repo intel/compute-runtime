@@ -13,8 +13,12 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_builtinslib.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
@@ -29,12 +33,9 @@
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
-#include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
@@ -137,6 +138,13 @@ struct AuxBuiltinsMatcher {
         return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported;
     }
 };
+
+HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinThenResourceSizeIsNonZero, MatchAny) {
+    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+
+    EXPECT_EQ(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported,
+              mockBuiltinsLib->getBuiltinResource(EBuiltInOps::AuxTranslation, BuiltinCode::ECodeType::Binary, *pDevice).size() != 0);
+}
 
 INSTANTIATE_TEST_CASE_P(,
                         AuxBuiltInTests,
@@ -493,7 +501,7 @@ TEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesF
 HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin, AuxBuiltinsMatcher) {
     BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pClDevice);
-    pBuiltIns->BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::AuxTranslation)].first.reset(mockAuxBuiltInOp);
+    pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(rootDeviceIndex, EBuiltInOps::AuxTranslation, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
 
     auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
@@ -1346,14 +1354,8 @@ TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenValid
 }
 
 TEST_F(BuiltInTests, WhenBuiltinsLibIsCreatedThenAllStoragesSizeIsTwo) {
-    class MockBuiltinsLib : BuiltinsLib {
-      public:
-        StoragesContainerT &getAllStorages() {
-            return BuiltinsLib::allStorages;
-        }
-    };
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
-    EXPECT_EQ(2u, mockBuiltinsLib->getAllStorages().size());
+    EXPECT_EQ(2u, mockBuiltinsLib->allStorages.size());
 }
 
 TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
@@ -1397,12 +1399,6 @@ TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
 }
 
 TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
-    class MockBuiltinsLib : BuiltinsLib {
-      public:
-        BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
-            return BuiltinsLib::getBuiltinResource(builtin, requestedCodeType, device);
-        }
-    };
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::AuxTranslation, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
@@ -1423,14 +1419,8 @@ TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourc
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
-    class MockBuiltinsLib : BuiltinsLib {
-      public:
-        BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
-            return BuiltinsLib::getBuiltinResource(builtin, requestedCodeType, device);
-        }
-    };
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::AuxTranslation, BuiltinCode::ECodeType::Binary, *pDevice).size());
+
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferRect, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());

@@ -37,4 +37,19 @@ bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwI
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isNewResidencyModelSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+    coherencyFlag = false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO

@@ -54,6 +54,20 @@ inline bool isParamEnabled(int argc, char *argv[], const char *shortName, const 
     return false;
 }
 
+inline int getParamValue(int argc, char *argv[], const char *shortName, const char *longName, int defaultValue) {
+    char **arg = &argv[1];
+    char **argE = &argv[argc];
+
+    for (; arg != argE; ++arg) {
+        if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
+            arg++;
+            return atoi(*arg);
+        }
+    }
+
+    return defaultValue;
+}
+
 inline bool isVerbose(int argc, char *argv[]) {
     bool enabled = isParamEnabled(argc, argv, "-v", "--verbose");
     if (enabled == false) {

@@ -10,7 +10,6 @@
 
 using Family = NEO::TGLLPFamily;
 
-#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_base.inl"
 #include "shared/source/helpers/hw_helper_bdw_and_later.inl"
@@ -22,28 +21,13 @@ using Family = NEO::TGLLPFamily;
 namespace NEO {
 
 template <>
-void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
-    caps->image3DMaxHeight = 2048;
-    caps->image3DMaxWidth = 2048;
-    //With statefull messages we have an allocation cap of 4GB
-    //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
-    caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
-    caps->isStatelesToStatefullWithOffsetSupported = true;
+size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
+    return 2048;
 }
 
 template <>
 bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::isOffsetToSkipSetFFIDGPWARequired(hwInfo);
-}
-
-template <>
-bool HwHelperHw<Family>::is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::is3DPipelineSelectWARequired(hwInfo);
-}
-
-template <>
-bool HwHelperHw<Family>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
-    return Gen12LPHelpers::isForceEmuInt32DivRemSPWARequired(hwInfo);
+    return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>
@@ -66,7 +50,7 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
 
 template <>
 bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::isLocalMemoryEnabled(hwInfo);
+    return hwInfo.featureTable.ftrLocalMemory;
 }
 
 template <>
@@ -86,25 +70,9 @@ bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphics
 }
 
 template <>
-void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-    coherencyFlag = true;
-    HwHelper &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
-    if (pHwInfo->platform.eProductFamily == IGFX_TIGERLAKE_LP && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *pHwInfo)) {
-        //stepping A devices - turn off coherency
-        coherencyFlag = false;
-    }
-
-    Gen12LPHelpers::adjustCoherencyFlag(pHwInfo->platform.eProductFamily, coherencyFlag);
-}
-
-template <>
 uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) const {
-    if (Gen12LPHelpers::imagePitchAlignmentWaRequired(hwInfo->platform.eProductFamily)) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-        if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo)) {
-            return 64u;
-        }
-        return 4u;
+    if (HwInfoConfig::get(hwInfo->platform.eProductFamily)->imagePitchAlignmentWARequired(*hwInfo)) {
+        return 64u;
     }
     return 4u;
 }
@@ -152,14 +120,11 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
-    if (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
-            PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-            cmd.setCommandStreamerStallEnable(true);
-            auto pipeControl = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
-            *pipeControl = cmd;
-        }
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo)) {
+        PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+        cmd.setCommandStreamerStallEnable(true);
+        auto pipeControl = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
+        *pipeControl = cmd;
     }
 }
 
@@ -209,25 +174,24 @@ uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3ena
 }
 
 template <>
-bool MemorySynchronizationCommands<TGLLPFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    return (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+bool MemorySynchronizationCommands<Family>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
+    return HwInfoConfig::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo);
 }
 
 template <>
-bool MemorySynchronizationCommands<TGLLPFamily>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
-    return MemorySynchronizationCommands<TGLLPFamily>::isPipeControlWArequired(hwInfo);
+bool MemorySynchronizationCommands<Family>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
+    return MemorySynchronizationCommands<Family>::isPipeControlWArequired(hwInfo);
 }
 
 template <>
-void HwHelperHw<TGLLPFamily>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
+void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
         if (GraphicsAllocation::isCpuAccessRequired(properties.allocationType)) {
             allocationData.flags.useSystemMemory = true;
         }
     }
-    if (IGFX_DG1 == hwInfo.platform.eProductFamily) {
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
         if (properties.allocationType == GraphicsAllocation::AllocationType::BUFFER) {
             allocationData.storageInfo.isLockable = true;
         }

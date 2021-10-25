@@ -7,13 +7,13 @@
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/kernel/kernel_arg_buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

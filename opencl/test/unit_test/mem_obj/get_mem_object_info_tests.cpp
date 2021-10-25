@@ -9,12 +9,12 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "gtest/gtest.h"
 

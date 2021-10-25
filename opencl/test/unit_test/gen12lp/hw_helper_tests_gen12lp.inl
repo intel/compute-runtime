@@ -6,14 +6,14 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "engine_node.h"
@@ -39,29 +39,6 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingMaxBarriersPerSliceThenCorrectSize
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpSkuWhenGettingCapabilityCoherencyFlagThenExpectValidValue) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-
-    const bool checkDone = SpecialUltHelperGen12lp::additionalCoherencyCheck(hardwareInfo.platform.eProductFamily, coherency);
-    if (checkDone) {
-        return;
-    }
-
-    if (hardwareInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
-        helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-        EXPECT_TRUE(coherency);
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-        helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-        EXPECT_FALSE(coherency);
-    } else {
-        EXPECT_TRUE(coherency);
-    }
-}
-
 GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     auto stepping = hardwareInfo.platform.usRevId;
@@ -79,17 +56,6 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, WhenAdjustingDefaultEngineTypeThenRcsIsSet) {
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpPlatformWhenSetupHardwareCapabilitiesIsCalledThenShouldSetCorrectValues) {
-    HardwareCapabilities hwCaps = {0};
-
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&hwCaps, hardwareInfo);
-
-    EXPECT_EQ(2048u, hwCaps.image3DMaxHeight);
-    EXPECT_EQ(2048u, hwCaps.image3DMaxWidth);
-    EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCompressionPreferenceThenReturnCorrectValue) {
@@ -447,4 +413,18 @@ HWTEST2_F(HwHelperTestGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIp
 GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
     EXPECT_EQ(expectedCapabilities, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities());
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenLocalMemoryFeatureDisabledWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
+    hardwareInfo.featureTable.ftrLocalMemory = true;
+
+    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
+    EXPECT_TRUE(helper.isLocalMemoryEnabled(hardwareInfo));
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenLocalMemoryFeatureEnabledWhenIsLocalMemoryEnabledIsCalledThenFalseIsReturned) {
+    hardwareInfo.featureTable.ftrLocalMemory = false;
+
+    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
+    EXPECT_FALSE(helper.isLocalMemoryEnabled(hardwareInfo));
 }

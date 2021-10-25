@@ -11,24 +11,25 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
+#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
-#include "opencl/test/unit_test/custom_event_listener.h"
-#include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "gmock/gmock.h"
-#include "mock_gmm_client_context.h"
 
 #include <algorithm>
 #include <fstream>
@@ -61,7 +62,6 @@ bool disabled = false;
 } // namespace NEO
 
 using namespace NEO;
-TestEnvironment *gEnvironment;
 
 PRODUCT_FAMILY productFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
 GFXCORE_FAMILY renderCoreFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eRenderCoreFamily;
@@ -432,7 +432,12 @@ int main(int argc, char **argv) {
 
     //ULTs timeout
     if (enable_alarm) {
-        unsigned int alarmTime = NEO::ultIterationMaxTime * ::testing::GTEST_FLAG(repeat);
+        auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
+        auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
+        if (ultIterationMaxTimeEnv != nullptr) {
+            currentUltIterationMaxTime = atoi(ultIterationMaxTimeEnv);
+        }
+        unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
 
         struct sigaction sa;
         sa.sa_handler = &handle_SIGALRM;

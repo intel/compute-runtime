@@ -14,10 +14,10 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -26,6 +26,8 @@
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "gtest/gtest.h"
@@ -41,6 +43,20 @@ extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 namespace L0 {
 namespace ult {
 
+TEST(L0DeviceTest, GivenCreatedDeviceHandleWhenCallingdeviceReinitThenNewDeviceHandleIsNotCreated) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);
+    ASSERT_NE(nullptr, device);
+    static_cast<DeviceImp *>(device)->releaseResources();
+
+    auto newNeoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    EXPECT_EQ(device, Device::deviceReinit(device->getDriverHandle(), device, newNeoDevice, &returnValue));
+    delete device;
+}
+
 TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPageFaultCmdListImmediateWithInitializedCmdQIsCreated) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     DebugManagerStateRestore restorer;
@@ -51,7 +67,7 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     hwInfo.featureTable.ftrLocalMemory = true;
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     auto deviceImp = static_cast<DeviceImp *>(device.get());
     ASSERT_NE(nullptr, deviceImp->pageFaultCommandList);
@@ -59,6 +75,37 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     ASSERT_NE(nullptr, deviceImp->pageFaultCommandList->cmdQImmediate);
     EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getCsr());
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getSynchronousMode());
+}
+
+TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddDisabledNeoDevies) {
+    constexpr uint32_t numSubDevices = 3;
+    constexpr uint32_t numMaskedSubDevices = 2;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
+
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->parseAffinityMask();
+    auto deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, numSubDevices, *executionEnvironment.release());
+    auto rootDevice = deviceFactory->rootDevices[0];
+    EXPECT_NE(nullptr, rootDevice);
+    EXPECT_EQ(numMaskedSubDevices, rootDevice->getNumSubDevices());
+
+    auto driverHandle = std::make_unique<DriverHandleImp>();
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), rootDevice, false, &returnValue));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+    ASSERT_EQ(numMaskedSubDevices, deviceImp->numSubDevices);
+
+    EXPECT_EQ(0b1u, deviceImp->subDevices[0]->getNEODevice()->getDeviceBitfield().to_ulong());
+    EXPECT_EQ(0b100u, deviceImp->subDevices[1]->getNEODevice()->getDeviceBitfield().to_ulong());
 }
 
 TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInitialized) {
@@ -77,7 +124,7 @@ TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInit
     EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
     EXPECT_FALSE(NEO::MockSipData::called);
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
 
     EXPECT_EQ(NEO::SipKernelType::Csr, NEO::MockSipData::calledType);
@@ -124,7 +171,7 @@ TEST(L0DeviceTest, givenDisabledPreemptionWhenCreatingDeviceThenSipKernelIsNotIn
     EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
     EXPECT_FALSE(NEO::MockSipData::called);
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
 
     EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
@@ -142,7 +189,7 @@ TEST(L0DeviceTest, givenDeviceWithoutFCLCompilerLibraryThenInvalidDependencyRetu
     auto oldFclDllName = Os::frontEndDllName;
     Os::frontEndDllName = "invalidFCL";
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
@@ -160,7 +207,7 @@ TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryThenInvalidDependencyRetu
     auto oldIgcDllName = Os::igcDllName;
     Os::igcDllName = "invalidIGC";
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
@@ -180,7 +227,7 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyRetu
     Os::frontEndDllName = "invalidFCL";
     Os::igcDllName = "invalidIGC";
 
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, &returnValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
@@ -194,7 +241,7 @@ TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsRet
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -232,7 +279,7 @@ TEST(L0DeviceTest, givenFilledTopologyForZeroSubDeviceWhenGettingApiSliceForHigh
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -258,7 +305,7 @@ TEST(L0DeviceTest, givenInvalidPhysicalSliceIdWhenGettingApiSliceIdThenFalseIsRe
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -284,7 +331,7 @@ TEST(L0DeviceTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThenFalseIsRe
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -311,7 +358,7 @@ TEST(L0DeviceTest, givenEmptyTopologyWhenGettingApiSliceIdThenFalseIsReturned) {
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -329,7 +376,7 @@ TEST(L0DeviceTest, givenDeviceWithoutSubDevicesWhenGettingPhysicalSliceIdThenCor
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -358,7 +405,7 @@ TEST(L0DeviceTest, givenTopologyNotAvaialbleWhenGettingPhysicalSliceIdThenFalseI
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
     ASSERT_NE(nullptr, device);
 
     auto deviceImp = static_cast<DeviceImp *>(device.get());
@@ -796,12 +843,11 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     deviceProperties.maxMemAllocSize = 0;
     device->getProperties(&deviceProperties);
     EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
-    HardwareCapabilities hwCaps = {0};
+
     auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&hwCaps, *defaultHwInfo);
     auto expectedSize = this->neoDevice->getDeviceInfo().globalMemSize;
     if (!this->neoDevice->getDeviceInfo().sharedSystemAllocationsSupport) {
-        expectedSize = std::min(expectedSize, hwCaps.maxMemAllocSize);
+        expectedSize = std::min(expectedSize, hwHelper.getMaxMemAllocSize());
     }
     EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
 }
@@ -1390,6 +1436,25 @@ TEST_F(MultipleDevicesTest, whenCallingGetMemoryPropertiesWithSubDevicesThenCorr
     EXPECT_EQ(memProperties.totalSize, device0->getNEODevice()->getDeviceInfo().globalMemSize);
 }
 
+TEST_F(MultipleDevicesTest, WhenGettingDevicePropertiesGetSubslicesPerSliceWhenImplicitScalingDisabledandEnabled) {
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.type = ZE_DEVICE_TYPE_GPU;
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSubSlicesSupported = 48;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSlicesSupported = 3;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = 8;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 1;
+
+    DebugManager.flags.EnableWalkerPartition.set(0);
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ(((device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount * device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount) / numSubDevices), deviceProperties.numSubslicesPerSlice);
+
+    DebugManager.flags.EnableWalkerPartition.set(1);
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ((device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount * device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount), deviceProperties.numSubslicesPerSlice);
+}
+
 TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
 
@@ -1439,7 +1504,95 @@ TEST_F(MultipleDevicesTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
     EXPECT_TRUE(canAccess);
 }
 
-TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerSuccessfullyCompletes) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = true;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsTrue) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+}
+
+TEST_F(MultipleDevicesTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerReturnsSameValueEachTime) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+
+    res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+}
+
+TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerReturnsFalse) {
+    struct MockDeviceFail : public Mock<DeviceImp> {
+        struct MockCommandQueueImp : public Mock<CommandQueue> {
+            ze_result_t destroy() override {
+                return ZE_RESULT_SUCCESS;
+            }
+
+            ze_result_t executeCommandLists(uint32_t numCommandLists,
+                                            ze_command_list_handle_t *phCommandLists,
+                                            ze_fence_handle_t hFence, bool performMigration) override { return ZE_RESULT_ERROR_UNKNOWN; }
+        };
+
+        MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+            this->driverHandle = device->getDriverHandle();
+        }
+
+        ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
+                                       ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createCommandList(const ze_command_list_desc_t *desc,
+                                      ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        MockCommandList commandList;
+        MockCommandQueueImp commandQueue;
+    };
+
+    MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(canAccess);
+    delete device0;
+}
+
+TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -1874,7 +2027,8 @@ struct MultipleDevicesDifferentLocalMemorySupportTest : public MultipleDevicesTe
     L0::Device *deviceWithoutLocalMemory = nullptr;
 };
 
-TEST_F(MultipleDevicesDifferentLocalMemorySupportTest, givenTwoDevicesWithDifferentLocalMemorySupportThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesDifferentLocalMemorySupportTest, givenTwoDevicesWithDifferentLocalMemorySupportThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     ze_bool_t canAccess = true;
     ze_result_t res = deviceWithLocalMemory->canAccessPeer(deviceWithoutLocalMemory->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -1904,7 +2058,8 @@ struct MultipleDevicesDifferentFamilyAndLocalMemorySupportTest : public Multiple
     L0::Device *deviceKBL = nullptr;
 };
 
-TEST_F(MultipleDevicesDifferentFamilyAndLocalMemorySupportTest, givenTwoDevicesFromDifferentFamiliesThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesDifferentFamilyAndLocalMemorySupportTest, givenTwoDevicesFromDifferentFamiliesThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     PRODUCT_FAMILY deviceSKLFamily = deviceSKL->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     PRODUCT_FAMILY deviceKBLFamily = deviceKBL->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     EXPECT_NE(deviceSKLFamily, deviceKBLFamily);
@@ -1930,7 +2085,8 @@ struct MultipleDevicesSameFamilyAndLocalMemorySupportTest : public MultipleDevic
     L0::Device *device1 = nullptr;
 };
 
-TEST_F(MultipleDevicesSameFamilyAndLocalMemorySupportTest, givenTwoDevicesFromSameFamilyThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesSameFamilyAndLocalMemorySupportTest, givenTwoDevicesFromSameFamilyThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
     PRODUCT_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     PRODUCT_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     EXPECT_EQ(device0Family, device1Family);
@@ -2059,7 +2215,7 @@ TEST(zeDevice, givenImagesSupportedWhenGettingImagePropertiesThenValidValuesAreR
     NEO::MockCompilerEnableGuard mock(true);
     DriverHandleImp driverHandle{};
     NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, 1, false, &errorValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));
     DeviceInfo &deviceInfo = neoDevice->deviceInfo;
 
     deviceInfo.imageSupport = true;
@@ -2090,7 +2246,7 @@ TEST(zeDevice, givenNoImagesSupportedWhenGettingImagePropertiesThenZeroValuesAre
     NEO::MockCompilerEnableGuard mock(true);
     DriverHandleImp driverHandle{};
     NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, 1, false, &errorValue));
+    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));
     DeviceInfo &deviceInfo = neoDevice->deviceInfo;
 
     neoDevice->deviceInfo.imageSupport = false;

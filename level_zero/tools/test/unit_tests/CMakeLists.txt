@@ -28,47 +28,20 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
-               ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/test_mode.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/create_builtin_functions_lib.cpp
                ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+               ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
                ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
 )
 
 target_sources(${TARGET_NAME} PRIVATE
-               ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
-               ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
-               ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/io_functions.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
-               $<TARGET_OBJECTS:igdrcl_libult_common>
+               $<TARGET_OBJECTS:neo_libult_common>
+               $<TARGET_OBJECTS:neo_libult_cs>
+               $<TARGET_OBJECTS:neo_libult>
 )
-
-if(UNIX)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-  )
-  if(NOT DISABLE_WDDM_LINUX)
-    target_sources(${TARGET_NAME} PRIVATE
-                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-    )
-  endif()
-else()
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/options.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/sys_calls.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxcore_factory.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
-  )
-endif()
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
 
@@ -81,22 +54,9 @@ target_include_directories(${TARGET_NAME}
                            PRIVATE
                            $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            ${IGC_COMMON_PARENT_DIR}
 )
-
-if(UNIX)
-  target_include_directories(${TARGET_NAME}
-                             BEFORE
-                             PRIVATE
-                             ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/linux
-  )
-else()
-  target_include_directories(${TARGET_NAME}
-                             BEFORE
-                             PRIVATE
-                             ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/windows
-  )
-endif()
 
 if(UNIX)
   target_link_libraries(${TARGET_NAME} pthread rt)

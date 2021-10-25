@@ -8,31 +8,25 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/ult_hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 #include "engine_node.h"
 #include "pipe_control_args.h"
 
-using HwHelperTestXeHPAndLater = HwHelperTest;
+using HwHelperTestXeHPAndLater = Test<ClDeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenGettingMaxBarriersPerSliceThen32IsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, whenCapabilityCoherencyFlagSetTrueThenOverrideToFalse) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    bool coherency = true;
-    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-    EXPECT_FALSE(coherency);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGetGpuTimeStampInNSIsCalledThenOnlyLow32BitsFromTimeStampAreUsedAndCorrectValueIsReturned) {
@@ -64,18 +58,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, GiveCcsNodeThenDefaultEng
     EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenSetupHardwareCapabilitiesIsCalledThenThenSpecificImplementationIsUsed) {
-    hardwareInfo.featureTable.ftrLocalMemory = true;
-
-    HardwareCapabilities hwCaps = {0};
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.setupHardwareCapabilities(&hwCaps, hardwareInfo);
-
-    EXPECT_EQ(16384u, hwCaps.image3DMaxHeight);
-    EXPECT_EQ(16384u, hwCaps.image3DMaxWidth);
-    EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWithLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
     hardwareInfo.featureTable.ftrLocalMemory = true;
 
@@ -98,11 +80,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatform
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenCheckTimestampPacketWriteThenReturnTrue) {
     auto &hwHelper = HwHelperHw<FamilyType>::get();
     EXPECT_TRUE(hwHelper.timestampPacketWriteSupported());
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenCheckNewResidencyModelSupportedThenReturnTrue) {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_TRUE(hwHelper.isNewResidencyModelSupported());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenAllFlagsSetWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEnginesAndOneBcsEngine) {
@@ -448,4 +425,26 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenPostSyncPi
         }
     }
     EXPECT_TRUE(foundPostSyncPipeControl);
+}
+
+using HwInfoConfigTestXeHpAndLater = ::testing::Test;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, givenXeHPAndLaterPlatformWhenCheckNewResidencyModelSupportedThenReturnTrue) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    EXPECT_TRUE(hwInfoConfig->isNewResidencyModelSupported());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, whenCapabilityCoherencyFlagSetTrueThenOverrideToFalse) {
+    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+
+    bool coherency = true;
+    hwInfoConfig.setCapabilityCoherencyFlag(*defaultHwInfo, coherency);
+    EXPECT_FALSE(coherency);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, givenXeHPAndLaterPlatformWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &hwInfo = *defaultHwInfo;
+
+    EXPECT_FALSE(hwInfoConfig.isTile64With3DSurfaceOnBCSSupported(hwInfo));
 }

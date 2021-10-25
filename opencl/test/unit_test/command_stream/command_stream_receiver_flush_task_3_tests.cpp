@@ -11,24 +11,24 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
+#include "shared/test/common/mocks/mock_svm_manager.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
-#include "opencl/test/unit_test/mocks/mock_svm_manager.h"
 #include "test.h"
 
 using namespace NEO;
@@ -1031,7 +1031,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    commandQueue.waitUntilComplete(false, nullptr);
+    commandQueue.waitForAllEngines(false, nullptr);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -1059,7 +1059,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    commandQueue.waitUntilComplete(false, nullptr);
+    commandQueue.waitForAllEngines(false, nullptr);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -1844,7 +1844,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFlus
     pDevice->resetCommandStreamReceiver(csr);
 
     MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->pageTableManager.reset(pageTableManager);
+    csr->pageTableManager.reset(pageTableManager);
+    MockGmmPageTableMngr *pageTableManager2 = new MockGmmPageTableMngr();
+    csr2->pageTableManager.reset(pageTableManager2);
 
     EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr, ::testing::_)).Times(1);
     EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr2, ::testing::_)).Times(0);
@@ -1865,10 +1867,139 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFlus
 
     csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
 
-    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr2, ::testing::_)).Times(1);
+    EXPECT_CALL(*pageTableManager2, initContextAuxTableRegister(csr2, ::testing::_)).Times(1);
     pDevice->resetCommandStreamReceiver(csr2);
     csr2->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
     EXPECT_TRUE(csr2->pageTableManagerInitialized);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCallBlitBufferThenPageTableManagerInitializedForProperCsr) {
+    auto bcsCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto bcsCsr2 = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(bcsCsr);
+
+    MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
+    bcsCsr->pageTableManager.reset(pageTableManager);
+    MockGmmPageTableMngr *pageTableManager2 = new MockGmmPageTableMngr();
+    bcsCsr2->pageTableManager.reset(pageTableManager2);
+
+    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(bcsCsr, ::testing::_)).Times(1);
+    EXPECT_CALL(*pageTableManager2, initContextAuxTableRegister(bcsCsr2, ::testing::_)).Times(0);
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
+    EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
+
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               //dstAllocation
+                                                                     graphicsAllocation,               //srcAllocation
+                                                                     0,                                //dstOffset
+                                                                     0,                                //srcOffset
+                                                                     0,                                //copySize
+                                                                     0,                                //srcRowPitch
+                                                                     0,                                //srcSlicePitch
+                                                                     0,                                //dstRowPitch
+                                                                     0,                                //dstSlicePitch
+                                                                     bcsCsr->getClearColorAllocation() //clearColorAllocation
+    );
+    BlitPropertiesContainer container;
+    container.push_back(blitProperties);
+
+    bcsCsr->blitBuffer(container, true, false, *pDevice);
+
+    EXPECT_TRUE(bcsCsr->pageTableManagerInitialized);
+    EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
+
+    EXPECT_CALL(*pageTableManager2, initContextAuxTableRegister(bcsCsr2, ::testing::_)).Times(1);
+    pDevice->resetCommandStreamReceiver(bcsCsr2);
+    bcsCsr2->blitBuffer(container, true, false, *pDevice);
+
+    EXPECT_TRUE(bcsCsr2->pageTableManagerInitialized);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCallBlitBufferAndPageTableManagerInitializedThenNotInitializeAgain) {
+    auto bcsCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(bcsCsr);
+
+    MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
+    bcsCsr->pageTableManager.reset(pageTableManager);
+
+    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(bcsCsr, ::testing::_)).Times(1);
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
+
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               //dstAllocation
+                                                                     graphicsAllocation,               //srcAllocation
+                                                                     0,                                //dstOffset
+                                                                     0,                                //srcOffset
+                                                                     0,                                //copySize
+                                                                     0,                                //srcRowPitch
+                                                                     0,                                //srcSlicePitch
+                                                                     0,                                //dstRowPitch
+                                                                     0,                                //dstSlicePitch
+                                                                     bcsCsr->getClearColorAllocation() //clearColorAllocation
+    );
+    BlitPropertiesContainer container;
+    container.push_back(blitProperties);
+
+    bcsCsr->blitBuffer(container, true, false, *pDevice);
+
+    EXPECT_TRUE(bcsCsr->pageTableManagerInitialized);
+
+    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(bcsCsr, ::testing::_)).Times(0);
+    bcsCsr->blitBuffer(container, true, false, *pDevice);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNullPageTableManagerWhenCallBlitBufferThenPageTableManagerIsNotInitialized) {
+    auto bcsCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto bcsCsr2 = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(bcsCsr);
+
+    bcsCsr->pageTableManager.reset(nullptr);
+    bcsCsr2->pageTableManager.reset(nullptr);
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
+    EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
+
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               //dstAllocation
+                                                                     graphicsAllocation,               //srcAllocation
+                                                                     0,                                //dstOffset
+                                                                     0,                                //srcOffset
+                                                                     0,                                //copySize
+                                                                     0,                                //srcRowPitch
+                                                                     0,                                //srcSlicePitch
+                                                                     0,                                //dstRowPitch
+                                                                     0,                                //dstSlicePitch
+                                                                     bcsCsr->getClearColorAllocation() //clearColorAllocation
+    );
+    BlitPropertiesContainer container;
+    container.push_back(blitProperties);
+
+    bcsCsr->blitBuffer(container, true, false, *pDevice);
+
+    EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
+    EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
+
+    pDevice->resetCommandStreamReceiver(bcsCsr2);
+    bcsCsr2->blitBuffer(container, true, false, *pDevice);
+
+    EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
+
+    bcsCsr2->pageTableManagerInitialized = true;
+    EXPECT_NO_THROW(bcsCsr2->blitBuffer(container, true, false, *pDevice));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -1878,7 +2009,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenInit
     pDevice->resetCommandStreamReceiver(csr);
 
     MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->pageTableManager.reset(pageTableManager);
+    csr->pageTableManager.reset(pageTableManager);
 
     EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr, ::testing::_)).Times(2).WillRepeatedly(::testing::Return(GMM_ERROR));
 

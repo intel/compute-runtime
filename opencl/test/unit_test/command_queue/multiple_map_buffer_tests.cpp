@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 using namespace NEO;
@@ -100,7 +101,7 @@ struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
             buffer->setSharingHandler(new SharingHandler());
             auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
             for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-                gfxAllocation->setGmm(new MockGmm(), handleId);
+                gfxAllocation->setGmm(new MockGmm(pDevice->getGmmClientContext()), handleId);
             }
         }
         return std::unique_ptr<MockBuffer<FamilyType>>(buffer);
@@ -162,6 +163,25 @@ HWTEST_F(MultipleMapBufferTest, givenReadOnlyMapWhenUnmappedOnGpuThenEnqueueMark
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
     EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
     EXPECT_EQ(cmdQ->writeBufferCalled, 0u);
+    EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
+}
+
+HWTEST_F(MultipleMapBufferTest, givenWriteInvalidateMapWhenMappedOnGpuThenCallEnqueueMarker) {
+    auto buffer = createMockBuffer<FamilyType>(true);
+    auto cmdQ = createMockCmdQ<FamilyType>();
+    EXPECT_FALSE(buffer->mappingOnCpuAllowed());
+
+    size_t offset = 1;
+    size_t size = 3;
+    void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE_INVALIDATE_REGION, offset, size, 0, nullptr, nullptr, nullptr);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(cmdQ->readBufferCalled, 0u);
+    EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
+
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(cmdQ->writeBufferCalled, 1u);
     EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
 }
 
@@ -243,6 +263,23 @@ HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDo
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
     EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
     EXPECT_EQ(0u, buffer->transferFromHostPtrCalled);
+}
+
+HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenWriteInvalidateMappedOnCpuThenDontMakeCpuCopy) {
+    auto buffer = createMockBuffer<FamilyType>(false);
+    auto cmdQ = createMockCmdQ<FamilyType>();
+    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
+
+    size_t offset = 1;
+    size_t size = 3;
+    void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE_INVALIDATE_REGION, offset, size, 0, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->transferToHostPtrCalled);
+
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->transferFromHostPtrCalled);
 }
 
 HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {

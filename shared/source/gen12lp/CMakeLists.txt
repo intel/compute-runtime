@@ -4,18 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(SUPPORT_DG1)
-  set(SHARED_SRCS_ADDITIONAL_FILES_GEN12LP
-      ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}helpers_gen12lp_dg1.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/helpers_gen12lp.h
-  )
-else()
-  set(SHARED_SRCS_ADDITIONAL_FILES_GEN12LP
-      ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}helpers_gen12lp.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/helpers_gen12lp.h
-  )
-endif()
-
 set_property(GLOBAL PROPERTY SHARED_SRCS_ADDITIONAL_FILES_GEN12LP ${SHARED_SRCS_ADDITIONAL_FILES_GEN12LP})
 
 if(SUPPORT_ADLP)
@@ -25,4 +13,7 @@ if(SUPPORT_ADLP)
   )
   set_property(GLOBAL APPEND PROPERTY CORE_SRCS_GENX_ALL_BASE ${HW_DEFINITIONS_ADLP})
 endif()
-add_subdirectories()
+
+if(SUPPORT_GEN12LP)
+  add_subdirectories()
+endif()

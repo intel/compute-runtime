@@ -168,23 +168,25 @@ ze_result_t FsAccess::write(const std::string file, const std::string val) {
 }
 
 ze_result_t FsAccess::canRead(const std::string file) {
-    if (access(file.c_str(), F_OK)) {
+    struct stat sb;
+    if (statSyscall(file.c_str(), &sb) != 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    if (access(file.c_str(), R_OK)) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    if (sb.st_mode & S_IRUSR) {
+        return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_SUCCESS;
+    return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
 ze_result_t FsAccess::canWrite(const std::string file) {
-    if (access(file.c_str(), F_OK)) {
+    struct stat sb;
+    if (statSyscall(file.c_str(), &sb) != 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    if (access(file.c_str(), W_OK)) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    if (sb.st_mode & S_IWUSR) {
+        return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_SUCCESS;
+    return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
 bool FsAccess::fileExists(const std::string file) {

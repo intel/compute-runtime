@@ -9,16 +9,16 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
@@ -56,7 +56,7 @@ struct TestParam {
 };
 template <typename InputType>
 struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory>,
-                               public HardwareParse,
+                               public ClHardwareParse,
                                ::testing::TestWithParam<InputType> {
     typedef HelloWorldFixture<HelloWorldFixtureFactory> ParentClass;
     using ParentClass::pCmdBuffer;
@@ -117,10 +117,10 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
 
     void SetUp() override {
         ParentClass::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         ParentClass::TearDown();
     }
     size_t globalWorkSize[3];
@@ -623,49 +623,91 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
 }
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenOutputPrinted) {
-    typedef typename FamilyType::PARSE PARSE;
+    testing::internal::CaptureStdout();
 
-    // In scenarios with 32bit allocator and 64 bit tests this code won't work
-    // due to inability to retrieve original buffer pointer as it is done in this test.
-    auto memoryManager = pDevice->getMemoryManager();
-    if (!memoryManager->peekForce32BitAllocations() && !memoryManager->isLimitedRange(0)) {
-        testing::internal::CaptureStdout();
+    auto userEvent = make_releaseable<UserEvent>(context);
 
-        auto userEvent = make_releaseable<UserEvent>(context);
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
+    std::string testString = "test";
+    mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
 
-        MockKernelWithInternals mockKernel(*pClDevice);
-        mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
-        std::string testString = "test";
-        mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
 
-        cl_uint workDim = 1;
-        size_t globalWorkOffset[3] = {0, 0, 0};
+    FillValues();
 
-        FillValues();
+    cl_event blockedEvent = userEvent.get();
+    cl_event outEvent{};
+    auto retVal = pCmdQ->enqueueKernel(
+        mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        1,
+        &blockedEvent,
+        &outEvent);
 
-        cl_event blockedEvent = userEvent.get();
-        auto retVal = pCmdQ->enqueueKernel(
-            mockKernel,
-            workDim,
-            globalWorkOffset,
-            globalWorkSize,
-            localWorkSize,
-            1,
-            &blockedEvent,
-            nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
-        ASSERT_EQ(CL_SUCCESS, retVal);
+    auto pOutEvent = castToObject<Event>(outEvent);
 
-        auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData());
-        auto printfAllocation = reinterpret_cast<uint32_t *>(*crossThreadData);
-        printfAllocation[0] = 8;
-        printfAllocation[1] = 0;
+    auto printfAllocation = reinterpret_cast<uint32_t *>(static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler()->getSurface()->getUnderlyingBuffer());
+    printfAllocation[0] = 8;
+    printfAllocation[1] = 0;
 
-        userEvent->setStatus(CL_COMPLETE);
+    pOutEvent->release();
 
-        std::string output = testing::internal::GetCapturedStdout();
-        EXPECT_STREQ("test", output.c_str());
-    }
+    userEvent->setStatus(CL_COMPLETE);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ("test", output.c_str());
+}
+
+HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithImplicitArgsWithoutPrintfInParentKernelBlockedByEventWhenEventUnblockedThenOutputPrinted) {
+    auto userEvent = make_releaseable<UserEvent>(context);
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+    std::string testString = "test";
+    mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = false;
+    mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
+    *mockKernel.mockKernel->pImplicitArgs = {};
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+
+    FillValues();
+
+    cl_event blockedEvent = userEvent.get();
+    cl_event outEvent{};
+    auto retVal = pCmdQ->enqueueKernel(
+        mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        1,
+        &blockedEvent,
+        &outEvent);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto pOutEvent = castToObject<Event>(outEvent);
+
+    auto printfAllocation = reinterpret_cast<uint32_t *>(static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler()->getSurface()->getUnderlyingBuffer());
+    printfAllocation[0] = 8;
+    printfAllocation[1] = 0;
+
+    pOutEvent->release();
+
+    testing::internal::CaptureStdout();
+    userEvent->setStatus(CL_COMPLETE);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_STREQ("test", output.c_str());
 }
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,
@@ -741,12 +783,12 @@ typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 
 struct EnqueueAuxKernelTests : public EnqueueKernelTest {
     template <typename FamilyType>
-    class MyCmdQ : public CommandQueueHw<FamilyType> {
+    class MyCmdQ : public MockCommandQueueHw<FamilyType> {
       public:
         using CommandQueueHw<FamilyType>::commandStream;
         using CommandQueueHw<FamilyType>::gpgpuEngine;
-        using CommandQueueHw<FamilyType>::bcsEngine;
-        MyCmdQ(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
+        using CommandQueueHw<FamilyType>::bcsEngines;
+        MyCmdQ(Context *context, ClDevice *device) : MockCommandQueueHw<FamilyType>(context, device, nullptr) {}
         void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection) override {
             CommandQueueHw<FamilyType>::dispatchAuxTranslationBuiltin(multiDispatchInfo, auxTranslationDirection);
             auxTranslationDirections.push_back(auxTranslationDirection);
@@ -759,9 +801,9 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
                                                       auxTranslationDirection);
         }
 
-        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             waitCalled++;
-            CommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
+            MockCommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
         }
 
         std::vector<AuxTranslationDirection> auxTranslationDirections;
@@ -890,12 +932,11 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
     auto hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(hwInfo);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
-    cmdQ.bcsEngine = cmdQ.gpgpuEngine;
-
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
 
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer;
@@ -948,7 +989,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
     cl_queue_properties queueProperties = {};
     auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pClDevice, queueProperties);
     context->setDefaultDeviceQueue(mockDevQueue.get());
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
+
+    MockParentKernel::CreateParams createParams{};
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, createParams));
     parentKernel->initialize();
 
     parentKernel->auxTranslationRequired = false;
@@ -967,7 +1010,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelButNoDeviceQ
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     size_t gws[3] = {1, 0, 0};
 
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
+    MockParentKernel::CreateParams createParams{};
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, createParams));
     parentKernel->initialize();
 
     auto status = cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);

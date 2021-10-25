@@ -8,16 +8,16 @@
 #pragma once
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/copy_engine_state.h"
-#include "opencl/source/event/hw_timestamps.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/task_information.h"
-#include "opencl/source/os_interface/performance_counters.h"
 
 #include <atomic>
 #include <cstdint>
@@ -284,10 +284,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         this->queueTimeStamp = *queueTimeStamp;
     };
 
-    void setSubmitTimeStamp(TimeStampData *submitTimeStamp) {
-        this->submitTimeStamp = *submitTimeStamp;
-    };
-
     void setQueueTimeStamp();
     void setSubmitTimeStamp();
 
@@ -330,6 +326,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         }
     }
 
+    void calculateSubmitTimestampData();
     uint64_t getTimeInNSFromTimestampData(const TimeStampData &timestamp) const;
     bool calcProfilingData();
     MOCKABLE_VIRTUAL void calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS);

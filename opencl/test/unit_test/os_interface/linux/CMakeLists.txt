@@ -8,8 +8,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.h
@@ -25,8 +23,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_engine_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_system_info_tests.cpp
@@ -45,15 +41,14 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
-if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+if(I915_LOCAL_MEM_EXP)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests_dg1.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_allocate_in_device_pool_tests_dg1.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests_exp.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_tests.cpp
   )
 else()
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_info_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_manager_allocate_in_device_pool_tests.cpp
   )
 endif()
 if(NEO__LIBVA_FOUND)
@@ -61,6 +56,20 @@ if(NEO__LIBVA_FOUND)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_va_sharing_tests.cpp
   )
 endif()
+
+if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper_tests_dg1.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prod_dg1.h
+  )
+endif()
+
+if(SUPPORT_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
+  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper_tests_xe_hp_sdv.cpp
+  )
+endif()
+
 if(UNIX)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_linux})
 endif()

@@ -217,8 +217,7 @@ void run_client(int commSocket, uint32_t clientId) {
     }
 
     // Copy from heap to IPC buffer memory
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeIpcBuffer, heapBuffer, allocSize, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEvent(cmdList, events[0]));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeIpcBuffer, heapBuffer, allocSize, events[0], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdList, 1, &events[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));

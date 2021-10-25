@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
+
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/va/va_surface.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests.h"
 #include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
 #include "test.h"
 
@@ -18,8 +20,9 @@ using DrmVaSharingTest = Test<DrmMemoryManagerFixture>;
 
 TEST_F(DrmVaSharingTest, givenDrmMemoryManagerWhenSharedVaSurfaceIsImportedWithDrmPrimeFdToHandleThenDrmPrimeFdCanBeClosed) {
     mock->ioctl_expected.total = -1;
-
-    MockContext context(device);
+    device->incRefInternal();
+    MockClDevice clDevice{device};
+    MockContext context(&clDevice);
     MockVaSharing vaSharing;
     VASurfaceID vaSurfaceId = 0u;
 

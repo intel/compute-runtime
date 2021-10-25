@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw_base.inl"
+#include "shared/source/helpers/address_patch.h"
+
+#include "hw_cmds.h"
 
 namespace NEO {
 
@@ -39,8 +42,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
 
     size_t size = 0;
-    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
-    if (hwHelper.is3DPipelineSelectWARequired(peekHwInfo())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(peekHwInfo().platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
         size += (2 * PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo()));
     }
     size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
@@ -88,11 +91,26 @@ bool CommandStreamReceiverHw<GfxFamily>::isMultiOsContextCapable() const {
 }
 
 template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::setPipeControlPriorToNonPipelinedStateCommandExtraProperties(PipeControlArgs &args) {}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
+    addPipeControlCmd(commandStream, args);
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
     PipeControlArgs args(true);
     args.textureCacheInvalidationEnable = true;
-    addPipeControlCmd(commandStream, args);
+
+    addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
 }
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags) {}
 
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsNewResourceImplicitFlush() const {
@@ -116,6 +134,24 @@ void CommandStreamReceiverHw<GfxFamily>::programPerDssBackedBuffer(LinearStream 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
     return 0;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh) {
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+
+    PatchInfoData indirectObjectPatchInfo = {ioh.getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::IndirectObjectHeap, commandBufferAddress,
+                                             commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    flatBatchBufferHelper->setPatchInfoData(indirectObjectPatchInfo);
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForActivePartitionConfig() const {
+    return 0;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
 }
 
 } // namespace NEO

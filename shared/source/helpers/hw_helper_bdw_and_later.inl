@@ -26,17 +26,7 @@ inline uint32_t HwHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
 }
 
 template <typename GfxFamily>
-void HwHelperHw<GfxFamily>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-    coherencyFlag = true;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::heapInLocalMem(const HardwareInfo &hwInfo) const {
     return false;
 }
 
@@ -47,11 +37,6 @@ bool HwHelperHw<GfxFamily>::hvAlign4Required() const {
 
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
-    return false;
-}
-
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isNewResidencyModelSupported() const {
     return false;
 }
 
@@ -139,4 +124,8 @@ bool HwHelperHw<GfxFamily>::additionalPipeControlArgsRequired() const {
     return false;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
+    return false;
+}
 } // namespace NEO

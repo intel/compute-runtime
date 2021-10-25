@@ -89,7 +89,7 @@ NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {
     }
     return false;
 }
-NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, D3DKMT_HANDLE *outSharedHandle) {
+NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle) {
     createAllocationResult.called++;
     if (callBaseDestroyAllocations) {
         createAllocationStatus = Wddm::createAllocation(alignedCpuPtr, gmm, outHandle, outResourceHandle, outSharedHandle);
@@ -234,15 +234,14 @@ bool WddmMock::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monito
     return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence);
 }
 
-void *WddmMock::virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) {
-    void *address = Wddm::virtualAlloc(inPtr, size, flags, type);
+void *WddmMock::virtualAlloc(void *inPtr, size_t size, bool topDownHint) {
+    void *address = Wddm::virtualAlloc(inPtr, size, topDownHint);
     virtualAllocAddress = reinterpret_cast<uintptr_t>(address);
     return address;
 }
 
-int WddmMock::virtualFree(void *ptr, size_t size, unsigned long flags) {
-    int success = Wddm::virtualFree(ptr, size, flags);
-    return success;
+void WddmMock::virtualFree(void *ptr, size_t size) {
+    Wddm::virtualFree(ptr, size);
 }
 
 void WddmMock::releaseReservedAddress(void *reservedAddress) {

@@ -7,6 +7,8 @@
 
 #include "shared/source/utilities/cpuintrinsics.h"
 
+#include "shared/source/helpers/ptr_math.h"
+
 #include <atomic>
 #include <cstdint>
 
@@ -17,6 +19,7 @@ std::atomic<uint32_t> pauseCounter(0u);
 
 volatile uint32_t *pauseAddress = nullptr;
 uint32_t pauseValue = 0u;
+uint32_t pauseOffset = 0u;
 } // namespace CpuIntrinsicsTests
 
 namespace NEO {
@@ -30,6 +33,7 @@ void pause() {
     CpuIntrinsicsTests::pauseCounter++;
     if (CpuIntrinsicsTests::pauseAddress != nullptr) {
         *CpuIntrinsicsTests::pauseAddress = CpuIntrinsicsTests::pauseValue;
+        CpuIntrinsicsTests::pauseAddress = ptrOffset(CpuIntrinsicsTests::pauseAddress, CpuIntrinsicsTests::pauseOffset);
     }
 }
 

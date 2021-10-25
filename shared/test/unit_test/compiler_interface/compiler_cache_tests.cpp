@@ -11,12 +11,10 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/source/compiler_interface/default_cl_cache_config.h"
-#include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
 #include <array>
@@ -237,22 +235,6 @@ TEST(CompilerCacheTests, GivenNonExistantConfigWhenLoadingFromCacheThenNullIsRet
     EXPECT_EQ(0U, size);
 }
 
-TEST(CompilerCacheTests, GivenExistingConfigWhenLoadingFromCacheThenBinaryIsLoaded) {
-    CompilerCache cache(getDefaultClCompilerCacheConfig());
-    static const char *hash = "SOME_HASH";
-    std::unique_ptr<char> data(new char[32]);
-    for (size_t i = 0; i < 32; i++)
-        data.get()[i] = static_cast<char>(i);
-
-    bool ret = cache.cacheBinary(hash, static_cast<const char *>(data.get()), 32);
-    EXPECT_TRUE(ret);
-
-    size_t size;
-    auto loadedBin = cache.loadCachedBinary(hash, size);
-    EXPECT_NE(nullptr, loadedBin);
-    EXPECT_NE(0U, size);
-}
-
 TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsReturned) {
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
@@ -312,8 +294,7 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
 }
 
 TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
-    MockClDevice device{new MockDevice};
-    MockContext context(&device, true);
+    MockDevice device{};
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "__kernel k() {}";
@@ -336,7 +317,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto retVal = compilerInterface->build(device.getDevice(), inputArgs, translationOutput);
+    auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, retVal);
 
     gEnvironment->fclPopDebugVars();
@@ -344,8 +325,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
 }
 
 TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
-    MockClDevice device{new MockDevice};
-    MockContext context(&device, true);
+    MockDevice device{};
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "#include \"file.h\"\n__kernel k() {}";
@@ -361,7 +341,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
     auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto retVal = compilerInterface->build(device.getDevice(), inputArgs, translationOutput);
+    auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, retVal);
 
     gEnvironment->fclPopDebugVars();

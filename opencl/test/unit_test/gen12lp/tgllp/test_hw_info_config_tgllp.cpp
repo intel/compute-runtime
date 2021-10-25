@@ -48,6 +48,30 @@ TGLLPTEST_F(TgllpHwInfoConfig, whenUsingCorrectConfigValueThenCorrectHwInfoIsRet
     EXPECT_EQ(2u, gtSystemInfo.DualSubSliceCount);
 }
 
+TGLLPTEST_F(TgllpHwInfoConfig, givenA0SteppingAndTgllpPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    std::array<std::pair<uint32_t, bool>, 3> revisions = {
+        {{REVISION_A0, true},
+         {REVISION_B, false},
+         {REVISION_C, false}}};
+
+    for (const auto &[revision, paramBool] : revisions) {
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, hwInfo);
+
+        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+
+        EXPECT_EQ(paramBool, hwInfoConfig->pipeControlWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig->imagePitchAlignmentWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig->isForceEmuInt32DivRemSPWARequired(hwInfo));
+    }
+}
+
+TGLLPTEST_F(TgllpHwInfoConfig, givenHwInfoConfigWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.is3DPipelineSelectWARequired());
+}
+
 using TgllpHwInfo = ::testing::Test;
 
 TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {

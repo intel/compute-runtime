@@ -18,8 +18,12 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_descriptor_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hw_helper_extended_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hw_helper_extended_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_binary_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_filename_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_management.h

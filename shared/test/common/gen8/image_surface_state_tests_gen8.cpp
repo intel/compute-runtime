@@ -17,11 +17,11 @@ GEN8TEST_F(ImageSurfaceStateTestsGen8, givenGmmWithMediaCompressedWhenSetFlagsFo
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
     castSurfaceState->setAuxiliarySurfaceMode(FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 
-    mockGmm.gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = false;
-    EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, &mockGmm);
+    mockGmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = false;
+    EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, mockGmm.get());
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    mockGmm.gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
-    EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, &mockGmm);
+    mockGmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, mockGmm.get());
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
 

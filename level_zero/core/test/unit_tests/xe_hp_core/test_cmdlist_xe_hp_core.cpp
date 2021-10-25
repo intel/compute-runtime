@@ -232,8 +232,8 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithTimestampEventAnd
         cmdList, ptrOffset(pCommandList->commandContainer.getCommandStream()->getCpuBase(), 0), pCommandList->commandContainer.getCommandStream()->getUsed()));
 
     EXPECT_LT(1u, pCommandList->partitionCount);
-    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorLri);
+    auto itorLri = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_LE(2u, itorLri.size());
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
     uint32_t postSyncCount = 0u;
@@ -609,7 +609,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEventWhenInvokingAppendLaunchKerne
         auto &postSync = cmd->getPostSync();
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
         EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
-        EXPECT_EQ(true, postSync.getL3Flush());
         postSyncFound = true;
     }
     EXPECT_TRUE(postSyncFound);
@@ -656,7 +655,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventWhenInvokingAppendLa
         auto &postSync = cmd->getPostSync();
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
         EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
-        EXPECT_EQ(false, postSync.getL3Flush());
         postSyncFound = true;
     }
     EXPECT_TRUE(postSyncFound);

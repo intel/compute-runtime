@@ -49,15 +49,6 @@ inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInf
 }
 
 template <>
-inline bool HwHelperHw<Family>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo) const {
-    if ((hwInfo.platform.eProductFamily == IGFX_XE_HP_SDV && hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1) ||
-        DebugManager.flags.ProgramAdditionalPipeControlBeforeStateComputeModeCommand.get() == 1) {
-        return true;
-    }
-    return false;
-}
-
-template <>
 bool HwHelperHw<Family>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
     if (hwInfo.platform.usRevId < HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo)) {
         return false;
@@ -127,11 +118,6 @@ std::string HwHelperHw<Family>::getExtensions() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isBlitterForImagesSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
@@ -152,6 +138,7 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(PIPE_C
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
     pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
     pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);
+    pipeControl.setAmfsFlushEnable(args.amfsFlushEnable);
 
     if (DebugManager.flags.FlushAllCaches.get()) {
         pipeControl.setHdcPipelineFlush(true);

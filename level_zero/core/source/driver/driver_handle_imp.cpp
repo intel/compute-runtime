@@ -139,6 +139,26 @@ DriverHandleImp::~DriverHandleImp() {
     }
 }
 
+void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &neoDevice) {
+    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto entry = this->deviceBitfields.find(rootDeviceIndex);
+    entry->second = neoDevice->getDeviceBitfield();
+}
+
+void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice) {
+    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
+
+    if (enableProgramDebugging) {
+        if (neoDevice->getDebugger() != nullptr) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
+            UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
+        }
+        rootDeviceEnvironment->debugger = DebuggerL0::create(neoDevice.get());
+    }
+}
+
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
     bool multiOsContextDriver = false;
     for (auto &neoDevice : neoDevices) {
@@ -155,24 +175,15 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         }
 
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
-        auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
 
-        if (enableProgramDebugging) {
-            if (neoDevice->getDebugger() != nullptr) {
-                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                                      "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
-                UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
-            }
-            rootDeviceEnvironment->debugger = DebuggerL0::create(neoDevice.get());
-        }
+        enableRootDeviceDebugger(neoDevice);
 
         this->rootDeviceIndices.insert(rootDeviceIndex);
         this->deviceBitfields.insert({rootDeviceIndex, neoDevice->getDeviceBitfield()});
 
         auto pNeoDevice = neoDevice.release();
 
-        auto subDevicesMask = static_cast<uint32_t>(rootDeviceEnvironment->deviceAffinityMask.getGenericSubDevicesMask().to_ulong());
-        auto device = Device::create(this, pNeoDevice, subDevicesMask, false, &returnValue);
+        auto device = Device::create(this, pNeoDevice, false, &returnValue);
         this->devices.push_back(device);
 
         multiOsContextDriver |= device->isMultiDeviceCapable();
@@ -427,15 +438,15 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                                                             NEO::SvmAllocationData *allocData,
                                                             void *ptr,
                                                             uintptr_t *peerGpuAddress) {
-    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() != 1) {
+    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 0) {
         return nullptr;
     }
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    NEO::GraphicsAllocation *alloc = nullptr;
 
     NEO::SvmAllocationData *peerAllocData = nullptr;
     void *peerPtr = nullptr;
-    NEO::GraphicsAllocation *alloc = nullptr;
 
     std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
 

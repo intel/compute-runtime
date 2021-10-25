@@ -33,7 +33,6 @@ class Platform;
 class SourceLevelDebugger;
 struct DeviceInfo;
 struct EngineControl;
-struct HardwareCapabilities;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
 struct SelectorCopyEngine;
@@ -85,7 +84,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     SourceLevelDebugger *getSourceLevelDebugger();
     ExecutionEnvironment *getExecutionEnvironment() const;
     const RootDeviceEnvironment &getRootDeviceEnvironment() const;
-    const HardwareCapabilities &getHardwareCapabilities() const;
     bool isFullRangeSvm() const;
     bool areSharedSystemAllocationsAllowed() const;
     uint32_t getRootDeviceIndex() const;

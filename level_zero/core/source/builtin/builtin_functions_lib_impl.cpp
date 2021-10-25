@@ -9,6 +9,12 @@
 
 #include "shared/source/built_ins/built_ins.h"
 
+namespace NEO {
+const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
+    return nullptr;
+}
+} // namespace NEO
+
 namespace L0 {
 
 std::unique_lock<BuiltinFunctionsLib::MutexType> BuiltinFunctionsLib::obtainUniqueOwnership() {
@@ -224,7 +230,7 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
     auto builtInCodeType = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() ? BuiltInCodeType::Intermediate : BuiltInCodeType::Binary;
     auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, builtInCodeType, *device->getNEODevice());
 
-    ze_result_t res;
+    [[maybe_unused]] ze_result_t res;
     std::unique_ptr<Module> module;
     ze_module_handle_t moduleHandle;
     ze_module_desc_t moduleDesc = {};
@@ -242,7 +248,7 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
     kernelDesc.pKernelName = builtInName;
     res = module->createKernel(&kernelDesc, &kernelHandle);
     DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);
-    UNUSED_VARIABLE(res);
+
     kernel.reset(Kernel::fromHandle(kernelHandle));
     return std::unique_ptr<BuiltinData>(new BuiltinData{std::move(module), std::move(kernel)});
 }

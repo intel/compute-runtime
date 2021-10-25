@@ -42,6 +42,7 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool emitSelfCleanup,
     args.emitPipeControlStall = ImplicitScalingHelper::isPipeControlStallRequired();
     args.emitBatchBufferEnd = false;
     args.staticPartitioning = staticPartitioning;
+    args.preferredStaticPartitioning = preferStaticPartitioning;
 
     return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily>(args));
 }
@@ -76,6 +77,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
     args.emitBatchBufferEnd = false;
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;
     args.staticPartitioning = staticPartitioning;
+    args.preferredStaticPartitioning = preferStaticPartitioning;
 
     if (staticPartitioning) {
         UNRECOVERABLE_IF(tileCount != partitionCount);

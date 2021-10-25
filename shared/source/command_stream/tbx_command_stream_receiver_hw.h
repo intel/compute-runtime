@@ -6,12 +6,11 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/page_table.h"
-
-#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
 
 #include "aub_mapper.h"
 
@@ -44,7 +43,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode, uint32_t partitionCount, uint32_t offsetSize) override;
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override;
     void downloadAllocations() override;
 
@@ -55,7 +54,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void writeMMIO(uint32_t offset, uint32_t value) override;
     bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
 
-    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override;
 
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBufferTbx(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
@@ -74,7 +73,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
                                const DeviceBitfield deviceBitfield);
     ~TbxCommandStreamReceiverHw() override;
 
-    void initializeEngine();
+    void initializeEngine() override;
 
     MemoryManager *getMemoryManager() {
         return CommandStreamReceiver::getMemoryManager();
@@ -98,5 +97,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     bool dumpTbxNonWritable = false;
+    bool isEngineInitialized = false;
 };
 } // namespace NEO
