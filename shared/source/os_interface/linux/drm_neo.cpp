@@ -33,7 +33,6 @@
 #include <cstdio>
 #include <cstring>
 #include <linux/limits.h>
-#include <regex>
 
 namespace NEO {
 
@@ -515,6 +514,8 @@ void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int
 std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     executionEnvironment.osEnvironment = std::make_unique<OsEnvironment>();
+    std::string devicePrefix = std::string(Os::pciDevicesDirectory) + "/pci-";
+    const char *renderDeviceSuffix = "-render";
     size_t numRootDevices = 0u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
@@ -542,14 +543,11 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
     }
 
     do {
-        const std::regex renderRegex(".*(\\d\\d\\d\\d:\\d\\d:\\d\\d\\.\\d)-render$");
         for (std::vector<std::string>::iterator file = files.begin(); file != files.end(); ++file) {
-            std::smatch fnMatch;
-            auto reMatch = std::regex_match(*file, fnMatch, renderRegex);
-            if (!reMatch) {
+            if (file->find(renderDeviceSuffix) == std::string::npos) {
                 continue;
             }
-            std::string pciPath = fnMatch[1];
+            std::string pciPath = file->substr(devicePrefix.size(), file->size() - devicePrefix.size() - strlen(renderDeviceSuffix));
 
             if (DebugManager.flags.ForceDeviceId.get() != "unk") {
                 if (file->find(DebugManager.flags.ForceDeviceId.get().c_str()) == std::string::npos) {

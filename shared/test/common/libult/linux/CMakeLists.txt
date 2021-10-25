@@ -10,9 +10,6 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.h
   )
-  target_sources(neo_libult PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/directory_linux.cpp
-  )
 
   add_subdirectories()
 endif()

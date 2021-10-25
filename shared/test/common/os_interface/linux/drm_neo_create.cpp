@@ -17,15 +17,13 @@ namespace NEO {
 
 class DrmMockDefault : public DrmMock {
   public:
-    DrmMockDefault(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
+    DrmMockDefault(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
         storedRetVal = 0;
         storedRetValForDeviceID = 0;
         storedRetValForDeviceRevID = 0;
         storedRetValForPooledEU = 0;
         storedRetValForMinEUinPool = 0;
         setGtType(GTTYPE_GT1);
-        if (hwDeviceIdIn != nullptr)
-            this->hwDeviceId = std::move(hwDeviceIdIn);
     }
 };
 
@@ -37,7 +35,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     if (pDrmToReturnFromCreateFunc) {
         return *pDrmToReturnFromCreateFunc;
     }
-    auto drm = new DrmMockDefault(std::move(hwDeviceId), rootDeviceEnvironment);
+    auto drm = new DrmMockDefault(rootDeviceEnvironment);
 
     const HardwareInfo *hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
