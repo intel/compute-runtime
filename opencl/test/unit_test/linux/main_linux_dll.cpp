@@ -293,38 +293,38 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
 
     delete drm;
 
-    // std::string output = ::testing::internal::GetCapturedStdout();
-    // EXPECT_STRNE("", output.c_str());
+    std::string output = ::testing::internal::GetCapturedStdout();
+    EXPECT_STRNE("", output.c_str());
 
-    // std::string_view requestString("Request");
-    // std::string_view totalTimeString("Total time(ns)");
-    // std::string_view countString("Count");
-    // std::string_view avgTimeString("Avg time per ioctl");
-    // std::string_view minString("Min");
-    // std::string_view maxString("Max");
+    std::string_view requestString("Request");
+    std::string_view totalTimeString("Total time(ns)");
+    std::string_view countString("Count");
+    std::string_view avgTimeString("Avg time per ioctl");
+    std::string_view minString("Min");
+    std::string_view maxString("Max");
 
-    // std::size_t position = output.find(requestString);
-    // EXPECT_NE(std::string::npos, position);
-    // position += requestString.size();
+    std::size_t position = output.find(requestString);
+    EXPECT_NE(std::string::npos, position);
+    position += requestString.size();
 
-    // position = output.find(totalTimeString, position);
-    // EXPECT_NE(std::string::npos, position);
-    // position += totalTimeString.size();
+    position = output.find(totalTimeString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += totalTimeString.size();
 
-    // position = output.find(countString, position);
-    // EXPECT_NE(std::string::npos, position);
-    // position += countString.size();
+    position = output.find(countString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += countString.size();
 
-    // position = output.find(avgTimeString, position);
-    // EXPECT_NE(std::string::npos, position);
-    // position += avgTimeString.size();
+    position = output.find(avgTimeString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += avgTimeString.size();
 
-    // position = output.find(minString, position);
-    // EXPECT_NE(std::string::npos, position);
-    // position += minString.size();
+    position = output.find(minString, position);
+    EXPECT_NE(std::string::npos, position);
+    position += minString.size();
 
-    // position = output.find(maxString, position);
-    // EXPECT_NE(std::string::npos, position);
+    position = output.find(maxString, position);
+    EXPECT_NE(std::string::npos, position);
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevicesAndNoDevicesAreCreated) {
