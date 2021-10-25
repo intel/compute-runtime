@@ -1221,7 +1221,7 @@ TEST_F(HwHelperTest, whenFtrGpGpuMidThreadLevelPreemptFeatureDisabledThenFalseIs
     EXPECT_FALSE(result);
 }
 
-TEST_F(HwHelperTest, whenGettingDefaultRevisionIdThenCorrectValueIsReturned) {
+HWTEST_F(HwHelperTest, whenGettingDefaultRevisionIdThenCorrectValueIsReturned) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     auto revisionId = hwHelper.getDefaultRevisionId(*defaultHwInfo);
     if ((defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN9_CORE) &&

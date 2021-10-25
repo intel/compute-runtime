@@ -42,7 +42,10 @@ XEHPTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenDebugVariableIsEnabledThenUsmH
     check(params);
 }
 
-XEHPTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenDebugVariableIsDisabledThenUsmHostMemSupportIsDisabled) {
+XEHPTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenA0AndDebugVariableIsDisabledThenUsmHostMemSupportIsDisabled) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    defaultHwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *defaultHwInfo);
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableHostUsmSupport.set(0);
     std::vector<TestParams> params = {{CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, 0}};
@@ -61,8 +64,8 @@ XEHPTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenDebugVariableIsDisabledThenUsm
 }
 
 XEHPTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenB0ThenUsmHostMemSupportIsSetCorrectly) {
-    auto steppingSave = defaultHwInfo->platform.usRevId;
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
     std::vector<TestParams> params = {{CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL}};
     std::vector<TestParams> disabledParameters = {{CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, 0u}};
@@ -80,6 +83,4 @@ XEHPTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenB0ThenUsmHostMemSupportIsSetCo
         DebugManager.flags.EnableHostUsmSupport.set(1);
         check(params);
     }
-
-    defaultHwInfo->platform.usRevId = steppingSave;
 }

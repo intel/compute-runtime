@@ -705,7 +705,7 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
     }
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_NOT_COMPRESSED], buffer.get());
 
-    if (isCompressed) {
+    if (isCompressed || is32bit) {
         Buffer::provideCompressionHint(GraphicsAllocation::AllocationType::BUFFER, context.get(), buffer.get());
     }
     EXPECT_TRUE(containsHint(expectedHint, userData));

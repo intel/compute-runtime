@@ -308,3 +308,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreHelperWhenCheckDirectSubm
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
     EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 5, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
 }
+
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, whenGettingDefaultRevisionThenB0IsReturned) {
+    EXPECT_EQ(HwInfoConfigHw<IGFX_XE_HP_SDV>::get()->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo), HwHelperHw<FamilyType>::get().getDefaultRevisionId(*defaultHwInfo));
+}

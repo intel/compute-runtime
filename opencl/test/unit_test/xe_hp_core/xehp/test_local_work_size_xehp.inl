@@ -99,7 +99,7 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, givenXeHPAndForceWorkgroupSize1x1x1Flag
         EXPECT_NE(1u, expectedLws.x * expectedLws.y * expectedLws.z);
     }
 }
-XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpWhenKernelIsaIsBelowThresholdAndThereAreNoImageBarriersAndSlmThenSmallWorkgorupSizeIsSelected) {
+XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpA0WhenKernelIsaIsBelowThresholdAndThereAreNoImageBarriersAndSlmThenSmallWorkgorupSizeIsSelected) {
     auto program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -114,6 +114,9 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpWhenKernelIsaIsBelowThresholdAn
 
     auto maxWgSize = pClDevice->getSharedDeviceInfo().maxWorkGroupSize;
 
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_EQ(64u, expectedLws.x * expectedLws.y * expectedLws.z);
@@ -139,7 +142,7 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpWhenKernelIsaIsBelowThresholdAn
 
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 0u;
     //on B0 algorithm is disabled
-    pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = REVISION_B;
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_EQ(maxWgSize, expectedLws.x * expectedLws.y * expectedLws.z);

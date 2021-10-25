@@ -364,19 +364,27 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenIsPipeControlWArequir
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, whenGettingPreferenceForSmallKernelsThenCertainThresholdIsTested) {
     DebugManagerStateRestore restorer;
+    auto &hwInfo = pDevice->getHardwareInfo();
     auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(helper.preferSmallWorkgroupSizeForKernel(512u, this->pClDevice->getHardwareInfo()));
-    EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(10000u, this->pClDevice->getHardwareInfo()));
-    EXPECT_TRUE(helper.preferSmallWorkgroupSizeForKernel(2047u, this->pClDevice->getHardwareInfo()));
-    EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(2048u, this->pClDevice->getHardwareInfo()));
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(512u, hwInfo));
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(10000u, hwInfo));
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(2047u, hwInfo));
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(2048u, hwInfo));
+    } else {
+        EXPECT_TRUE(helper.preferSmallWorkgroupSizeForKernel(512u, hwInfo));
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(10000u, hwInfo));
+        EXPECT_TRUE(helper.preferSmallWorkgroupSizeForKernel(2047u, hwInfo));
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(2048u, hwInfo));
 
-    DebugManager.flags.OverrideKernelSizeLimitForSmallDispatch.set(1u);
-    EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(1u, this->pClDevice->getHardwareInfo()));
-    EXPECT_TRUE(helper.preferSmallWorkgroupSizeForKernel(0u, this->pClDevice->getHardwareInfo()));
+        DebugManager.flags.OverrideKernelSizeLimitForSmallDispatch.set(1u);
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(1u, hwInfo));
+        EXPECT_TRUE(helper.preferSmallWorkgroupSizeForKernel(0u, hwInfo));
 
-    DebugManager.flags.OverrideKernelSizeLimitForSmallDispatch.set(0u);
-    EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(1u, this->pClDevice->getHardwareInfo()));
-    EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(0u, this->pClDevice->getHardwareInfo()));
+        DebugManager.flags.OverrideKernelSizeLimitForSmallDispatch.set(0u);
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(1u, hwInfo));
+        EXPECT_FALSE(helper.preferSmallWorkgroupSizeForKernel(0u, hwInfo));
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGettingBindlessSurfaceExtendedMessageDescriptorValueThenCorrectValueIsReturned) {
