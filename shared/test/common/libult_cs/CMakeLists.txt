@@ -15,8 +15,8 @@ add_library(neo_libult_cs OBJECT EXCLUDE_FROM_ALL
 set_target_properties(neo_libult_cs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(neo_libult_cs PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
 set_property(TARGET neo_libult_cs APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
-target_include_directories(neo_libult_cs PRIVATE $<TARGET_PROPERTY:${NEO_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_definitions(neo_libult_cs PRIVATE $<TARGET_PROPERTY:${NEO_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+target_include_directories(neo_libult_cs PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(neo_libult_cs PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 create_project_source_tree(neo_libult_cs)
 
 add_subdirectories()

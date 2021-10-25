@@ -771,6 +771,7 @@ endif()
 
 add_subdirectory_unique(shared/source)
 add_subdirectory_unique(shared/generate_cpp_array)
+add_subdirectory_unique(shared/test/unit_test)
 
 set(TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared/tools${BRANCH_DIR_SUFFIX}")
 if(EXISTS ${TOOLS_DIR})
@@ -829,8 +830,6 @@ else()
     generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
   endif()
 endif()
-
-add_subdirectory_unique(shared/test/unit_test)
 
 if(DEFAULT_TESTED_PLATFORM AND NOT SKIP_NEO_UNIT_TESTS)
   add_subdirectory_unique(${NEO_RUNTIME_TESTS_SUB_DIR} ${NEO_BUILD_DIR}/${NEO_RUNTIME_TESTS_SUB_DIR})
