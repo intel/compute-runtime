@@ -70,12 +70,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         container.allocateNextCommandBuffer();
     }
 
-    if (kernelDescriptor.extendedInfo) {
-        bool specialModeRequired = kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired();
-        if (PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(container.lastPipelineSelectModeRequired, specialModeRequired, hwInfo)) {
-            container.lastPipelineSelectModeRequired = specialModeRequired;
-            EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
-        }
+    bool specialModeRequired = kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode;
+    if (PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(container.lastPipelineSelectModeRequired, specialModeRequired, hwInfo)) {
+        container.lastPipelineSelectModeRequired = specialModeRequired;
+        EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
     }
 
     WALKER_TYPE walkerCmd = Family::cmdInitGpgpuWalker;
@@ -581,7 +579,7 @@ template <typename Family>
 void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
     auto pipelineSelectCmd = Family::cmdInitPipelineSelect;
-    auto isSpecialModeSelected = kernelDescriptor.extendedInfo && kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired();
+    auto isSpecialModeSelected = kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode;
 
     PreambleHelper<Family>::appendProgramPipelineSelect(&pipelineSelectCmd, isSpecialModeSelected, container.getDevice()->getHardwareInfo());
 

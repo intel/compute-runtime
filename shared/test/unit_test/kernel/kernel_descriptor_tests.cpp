@@ -109,8 +109,3 @@ TEST(KernelDescriptorAttributesSupportsBuffersBiggerThan4Gb, GivenStatefulBuffer
     desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     EXPECT_FALSE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
 }
-
-TEST(KernelDescriptorTest, givenExtendedInfoWhenAskingForSpecialPipelineSelectModeThenReturnFalse) {
-    NEO::ExtendedInfoBase extendedInfo;
-    EXPECT_FALSE(extendedInfo.specialPipelineSelectModeRequired());
-}

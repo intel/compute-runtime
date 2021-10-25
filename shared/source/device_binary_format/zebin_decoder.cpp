@@ -253,6 +253,8 @@ DecodeError readZeInfoExecutionEnvironment(const NEO::Yaml::YamlParser &parser, 
             validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.has4GBBuffers, context, outErrReason);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::hasDeviceEnqueue == key) {
             validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasDeviceEnqueue, context, outErrReason);
+        } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::hasDpas == key) {
+            validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasDpas, context, outErrReason);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::hasFenceForImageAccess == key) {
             validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasFenceForImageAccess, context, outErrReason);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::hasGlobalAtomics == key) {
@@ -1005,6 +1007,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = execEnv.hasFenceForImageAccess;
     kernelDescriptor.kernelAttributes.flags.useGlobalAtomics = execEnv.hasGlobalAtomics;
     kernelDescriptor.kernelAttributes.flags.usesStatelessWrites = (false == execEnv.hasNoStatelessWrite);
+    kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = execEnv.hasDpas;
     kernelDescriptor.entryPoints.skipPerThreadDataLoad = execEnv.offsetToSkipPerThreadDataLoad;
     kernelDescriptor.entryPoints.skipSetFFIDGP = execEnv.offsetToSkipSetFfidGp;
     kernelDescriptor.kernelMetadata.requiredSubGroupSize = execEnv.requiredSubGroupSize;

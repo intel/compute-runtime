@@ -28,7 +28,6 @@ using InstructionsSegmentOffset = uint16_t;
 
 struct ExtendedInfoBase {
     virtual ~ExtendedInfoBase() = default;
-    virtual bool specialPipelineSelectModeRequired() const { return false; }
 };
 
 struct KernelDescriptor {
@@ -84,6 +83,7 @@ struct KernelDescriptor {
 
         union {
             struct {
+                bool usesSpecialPipelineSelectMode : 1;
                 bool usesStringMapForPrintf : 1;
                 bool usesPrintf : 1;
                 bool usesFencesForReadWriteImages : 1;

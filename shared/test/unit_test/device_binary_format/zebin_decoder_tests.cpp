@@ -946,6 +946,7 @@ kernels:
         grf_count : 13
         has_4gb_buffers : true
         has_device_enqueue : true
+        has_dpas : true
         has_fence_for_image_access : true
         has_global_atomics : true
         has_multi_scratch_spaces : true
@@ -987,6 +988,7 @@ kernels:
     EXPECT_EQ(13, execEnv.grfCount);
     EXPECT_TRUE(execEnv.has4GBBuffers);
     EXPECT_TRUE(execEnv.hasDeviceEnqueue);
+    EXPECT_TRUE(execEnv.hasDpas);
     EXPECT_TRUE(execEnv.hasFenceForImageAccess);
     EXPECT_TRUE(execEnv.hasGlobalAtomics);
     EXPECT_TRUE(execEnv.hasMultiScratchSpaces);

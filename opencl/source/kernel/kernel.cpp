@@ -2788,7 +2788,7 @@ void Kernel::reconfigureKernel() {
         maxKernelWorkGroupSize >>= 1;
     }
     this->containsStatelessWrites = kernelDescriptor.kernelAttributes.flags.usesStatelessWrites;
-    this->specialPipelineSelectMode = kernelDescriptor.extendedInfo.get() ? kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired() : false;
+    this->specialPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode;
 }
 bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     if (false == HwHelper::cacheFlushAfterWalkerSupported(commandQueue.getDevice().getHardwareInfo())) {
