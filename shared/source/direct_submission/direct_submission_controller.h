@@ -25,6 +25,8 @@ class DirectSubmissionController {
     void registerDirectSubmission(CommandStreamReceiver *csr);
     void unregisterDirectSubmission(CommandStreamReceiver *csr);
 
+    static bool isSupported();
+
   protected:
     struct DirectSubmissionState {
         bool isStopped = false;

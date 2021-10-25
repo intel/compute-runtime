@@ -86,8 +86,8 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
     }
 }
 
-DirectSubmissionController *ExecutionEnvironment::getDirectSubmissionController() {
-    auto initializeDirectSubmissionController = false;
+DirectSubmissionController *ExecutionEnvironment::initializeDirectSubmissionController() {
+    auto initializeDirectSubmissionController = DirectSubmissionController::isSupported();
 
     if (DebugManager.flags.EnableDirectSubmissionController.get() != -1) {
         initializeDirectSubmissionController = DebugManager.flags.EnableDirectSubmissionController.get();

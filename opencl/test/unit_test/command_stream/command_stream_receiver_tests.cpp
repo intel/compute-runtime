@@ -403,7 +403,7 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenIni
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
 
-    auto controller = static_cast<DirectSubmissionControllerMock *>(device->executionEnvironment->getDirectSubmissionController());
+    auto controller = static_cast<DirectSubmissionControllerMock *>(device->executionEnvironment->initializeDirectSubmissionController());
     controller->keepControlling.store(false);
     EXPECT_EQ(controller->directSubmissions.size(), 0u);
 
@@ -444,7 +444,7 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerDisabledWhenIn
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
 
-    auto controller = static_cast<DirectSubmissionControllerMock *>(device->executionEnvironment->getDirectSubmissionController());
+    auto controller = static_cast<DirectSubmissionControllerMock *>(device->executionEnvironment->initializeDirectSubmissionController());
     EXPECT_EQ(controller, nullptr);
 }
 

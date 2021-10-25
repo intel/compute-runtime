@@ -163,20 +163,20 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported(device->getRootDeviceIndex()));
 }
 
-TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetWhenGetDirectSubmissionControllerThenNotNull) {
+TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetWhenInitializeDirectSubmissionControllerThenNotNull) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableDirectSubmissionController.set(1);
 
-    auto controller = platform()->peekExecutionEnvironment()->getDirectSubmissionController();
+    auto controller = platform()->peekExecutionEnvironment()->initializeDirectSubmissionController();
 
     EXPECT_NE(controller, nullptr);
 }
 
-TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenGetDirectSubmissionControllerThenNull) {
+TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenInitializeDirectSubmissionControllerThenNull) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableDirectSubmissionController.set(0);
 
-    auto controller = platform()->peekExecutionEnvironment()->getDirectSubmissionController();
+    auto controller = platform()->peekExecutionEnvironment()->initializeDirectSubmissionController();
 
     EXPECT_EQ(controller, nullptr);
 }

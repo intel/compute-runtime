@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
@@ -795,6 +796,10 @@ TEST_F(DrmTests, whenCreateDrmIsCalledThenProperHwInfoIsSetup) {
     EXPECT_NE(IGFX_UNKNOWN_CORE, currentHwInfo->platform.eRenderCoreFamily);
     EXPECT_LT(0u, currentHwInfo->gtSystemInfo.EUCount);
     EXPECT_LT(0u, currentHwInfo->gtSystemInfo.SubSliceCount);
+}
+
+TEST(DirectSubmissionControllerTest, whenCheckDirectSubmissionControllerSupportThenReturnsTrue) {
+    EXPECT_TRUE(DirectSubmissionController::isSupported());
 }
 
 TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {

@@ -41,7 +41,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::~CommandStreamReceiverHw() {
-    auto directSubmissionController = executionEnvironment.getDirectSubmissionController();
+    auto directSubmissionController = executionEnvironment.directSubmissionController.get();
     if (directSubmissionController) {
         directSubmissionController->unregisterDirectSubmission(this);
     }
@@ -1438,7 +1438,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
                 directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(device, osContext);
                 ret = directSubmission->initialize(submitOnInit);
             }
-            auto directSubmissionController = executionEnvironment.getDirectSubmissionController();
+            auto directSubmissionController = executionEnvironment.initializeDirectSubmissionController();
             if (directSubmissionController) {
                 directSubmissionController->registerDirectSubmission(this);
             }
