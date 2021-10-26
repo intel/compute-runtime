@@ -853,3 +853,25 @@ TEST_F(DrmTests, givenValidPciPathThenPciBusInfoIsAvailable) {
         EXPECT_EQ(drm->getPciBusInfo().pciFunction, referenceData[idx - 7][3]);
     }
 }
+TEST_F(DrmTests, givenInValidPciPathThenNothingIsReturned) {
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, false);
+    VariableBackup<decltype(entryIndex)> backupEntryIndex(&entryIndex, 0u);
+
+    openFull = openWithCounter;
+
+    entryIndex = 11;
+    openCounter = 1;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+
+    entryIndex = 12;
+    openCounter = 1;
+    hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+
+    entryIndex = 13;
+    openCounter = 1;
+    hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+}

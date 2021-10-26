@@ -115,6 +115,9 @@ struct dirent entries[] = {
     {0, 0, 0, 0, "pci-0000:b3:03.1-render"},
     {0, 0, 0, 0, "pci-0000:00:b3.1-render"},
     {0, 0, 0, 0, "pci-0000:00:03.a-render"},
+    {0, 0, 0, 0, "pci-0000:00:03.a-render-12"},
+    {0, 0, 0, 0, "pcii0000:00:03.a-render"},
+    {0, 0, 0, 0, "pcii-render"},
 };
 
 uint32_t entryIndex = 0u;

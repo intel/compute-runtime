@@ -33,7 +33,6 @@
 #include <cstdio>
 #include <cstring>
 #include <linux/limits.h>
-#include <regex>
 
 namespace NEO {
 
@@ -542,17 +541,26 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
     }
 
     do {
-        const std::regex renderRegex(".*([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]\\.[0-9a-fA-F])-render$");
+        const char *renderDeviceSuffix = "-render";
         for (std::vector<std::string>::iterator file = files.begin(); file != files.end(); ++file) {
-            std::smatch fnMatch;
-            auto reMatch = std::regex_match(*file, fnMatch, renderRegex);
-            if (!reMatch) {
+            std::string_view devicePathView(file->c_str(), file->size());
+            devicePathView = devicePathView.substr(strlen(Os::pciDevicesDirectory));
+
+            auto rdsPos = devicePathView.rfind(renderDeviceSuffix);
+            if (rdsPos == std::string::npos) {
                 continue;
             }
-            std::string pciPath = fnMatch[1];
+            if (rdsPos < devicePathView.size() - strlen(renderDeviceSuffix)) {
+                continue;
+            }
+            // at least 'pci-0000:00:00.0' -> 16
+            if (rdsPos < 16 || devicePathView[rdsPos - 13] != '-') {
+                continue;
+            }
+            std::string pciPath(devicePathView.substr(rdsPos - 12, 12));
 
             if (DebugManager.flags.ForceDeviceId.get() != "unk") {
-                if (file->find(DebugManager.flags.ForceDeviceId.get().c_str()) == std::string::npos) {
+                if (devicePathView.find(DebugManager.flags.ForceDeviceId.get().c_str()) == std::string::npos) {
                     continue;
                 }
             }
