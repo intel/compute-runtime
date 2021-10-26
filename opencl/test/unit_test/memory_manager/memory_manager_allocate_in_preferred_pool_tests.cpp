@@ -661,7 +661,7 @@ HWTEST_F(GetAllocationDataTestHw, givenTimestampPacketTagBufferTypeWhenGetAlloca
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_EQ(UnitTestHelper<FamilyType>::requiresTimestampPacketsInSystemMemory(), allocData.flags.useSystemMemory);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::requiresTimestampPacketsInSystemMemory(*defaultHwInfo), allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 

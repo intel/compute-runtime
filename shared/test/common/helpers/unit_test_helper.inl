@@ -76,7 +76,7 @@ inline uint64_t UnitTestHelper<GfxFamily>::getAtomicMemoryAddress(const typename
 }
 
 template <typename GfxFamily>
-inline bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory() {
+inline bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory(HardwareInfo &hwInfo) {
     return true;
 }
 

@@ -47,7 +47,7 @@ struct UnitTestHelper {
 
     static uint64_t getAtomicMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic);
 
-    static bool requiresTimestampPacketsInSystemMemory();
+    static bool requiresTimestampPacketsInSystemMemory(HardwareInfo &hwInfo);
 
     static void setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value);
 
