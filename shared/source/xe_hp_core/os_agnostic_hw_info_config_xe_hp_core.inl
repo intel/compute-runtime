@@ -97,11 +97,13 @@ LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMod
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    if (hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 ||
-        DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get() == 1) {
-        return true;
+    bool required = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1;
+
+    if (DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        required = DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get();
     }
-    return false;
+
+    return required;
 }
 
 template <>

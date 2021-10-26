@@ -133,3 +133,14 @@ XEHPTEST_F(XeHPHwInfoConfig, givenProgramPipeControlPriorToNonPipelinedStateComm
 
     EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
 }
+
+XEHPTEST_F(XeHPHwInfoConfig, givenProgramPipeControlPriorToNonPipelinedStateCommandDisabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenFalseIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(0);
+
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    auto isRcs = false;
+
+    EXPECT_FALSE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+}
