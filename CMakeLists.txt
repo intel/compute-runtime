@@ -339,20 +339,6 @@ else()
   message(FATAL_ERROR "Metrics Discovery headers not available!")
 endif()
 
-if(SUPPORT_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
-  set(I915_LOCAL_MEM_EXP TRUE)
-endif()
-if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
-  set(I915_LOCAL_MEM_EXP TRUE)
-endif()
-
-if(I915_LOCAL_MEM_EXP)
-  get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party/uapi/drm_tip" ABSOLUTE)
-else()
-  get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)
-endif()
-message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
-
 if(NOT DEFINED KHRONOS_HEADERS_DIR)
   get_filename_component(DIR_tmp "${CMAKE_CURRENT_SOURCE_DIR}/third_party/opencl_headers" ABSOLUTE)
   if(IS_DIRECTORY ${DIR_tmp})
@@ -457,6 +443,20 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Get available platfroms
 include(platforms.cmake)
+
+if(SUPPORT_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
+  set(I915_LOCAL_MEM_EXP TRUE)
+endif()
+if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+  set(I915_LOCAL_MEM_EXP TRUE)
+endif()
+
+if(I915_LOCAL_MEM_EXP)
+  get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party/uapi/drm_tip" ABSOLUTE)
+else()
+  get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)
+endif()
+message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
 
 # Enable/Disable BuiltIns compilation during build
 set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
