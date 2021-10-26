@@ -14,6 +14,7 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/pipe.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
@@ -423,10 +424,8 @@ TEST_F(CloneKernelTest, GivenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect)
     EXPECT_EQ(3, sampler->getRefInternalCount());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, GivenArgDeviceQueueWhenCloningKernelThenKernelInfoIsCorrect) {
+HWTEST2_F(CloneKernelTest, GivenArgDeviceQueueWhenCloningKernelThenKernelInfoIsCorrect, DeviceEnqueueSupport) {
     pKernelInfo->addArgDevQueue(0, 0x20, sizeof(void *));
-
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device1);
 
     cl_queue_properties queueProps[5] = {
         CL_QUEUE_PROPERTIES,

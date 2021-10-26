@@ -15,4 +15,5 @@ struct TestTraits<IGFX_GEN11_CORE> {
     static constexpr bool iohInSbaSupported = true;
     static constexpr bool auxTranslationSupported = false;
     static constexpr bool isUsingNonDefaultIoctls = false;
+    static constexpr bool deviceEnqueueSupport = true;
 };

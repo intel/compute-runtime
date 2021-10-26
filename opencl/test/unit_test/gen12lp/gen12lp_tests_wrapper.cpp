@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,7 @@
 #include "opencl/test/unit_test/gen12lp/kernel_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/profiling_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/sampler_tests_gen12lp.inl"
-#include "opencl/test/unit_test/gen12lp/scheduler_source_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/tbx_command_stream_receiver_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/test_device_caps_gen12lp.inl"
-#include "opencl/test/unit_test/gen12lp/test_device_queue_hw_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/test_platform_caps_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/test_sample_gen12lp.inl"

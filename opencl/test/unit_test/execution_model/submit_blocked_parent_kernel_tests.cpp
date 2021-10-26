@@ -12,6 +12,7 @@
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
@@ -79,7 +80,7 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
     HwTimeStamps *timestampAddedInCleanupSection = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentKernelCommandIsSubmittedThenItWaitsForcriticalSectionReleasement) {
+HWTEST2_F(ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentKernelCommandIsSubmittedThenItWaitsForcriticalSectionReleasement, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -120,7 +121,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritca
     delete cmdComputeKernel;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenPassedDshIsUsed) {
+HWTEST2_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenPassedDshIsUsed, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -184,7 +185,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
     delete cmdComputeKernel;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenIndirectStateAndEMCleanupSectionIsSetup) {
+HWTEST2_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenIndirectStateAndEMCleanupSectionIsSetup, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -225,7 +226,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
     delete cmdComputeKernel;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingWhenCommandIsSubmittedThenEMCleanupSectionsSetsCompleteTimestamp) {
+HWTEST2_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingWhenCommandIsSubmittedThenEMCleanupSectionsSetsCompleteTimestamp, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -266,7 +267,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
     delete cmdComputeKernel;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenSchedulerIsDispatched) {
+HWTEST2_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenSchedulerIsDispatched, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -305,7 +306,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
     delete cmdComputeKernel;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapsWhenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
+HWTEST2_F(ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapsWhenParentKernelIsSubmittedThenQueueHeapsAreNotUsed, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -362,7 +363,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
     delete cmdComputeKernel;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmittedThenExistingSSHIsUsed) {
+HWTEST2_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmittedThenExistingSSHIsUsed, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -408,7 +409,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
     delete cmdComputeKernel;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommandQueueWhenDispatchWalkerIsCalledThenHeapsHaveProperSizes) {
+HWTEST2_F(ParentKernelCommandQueueFixture, givenBlockedCommandQueueWhenDispatchWalkerIsCalledThenHeapsHaveProperSizes, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};

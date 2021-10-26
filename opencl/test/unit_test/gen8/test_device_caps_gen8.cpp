@@ -82,3 +82,6 @@ GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckingImageSupportThenReturnTrue) {
 GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckingMediaBlockSupportThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsMediaBlock);
 }
+GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckingDeviceEnqueueSupportThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue);
+}

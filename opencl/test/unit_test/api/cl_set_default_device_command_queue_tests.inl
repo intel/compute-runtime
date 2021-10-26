@@ -9,6 +9,7 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/device_queue/device_queue.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "test.h"
 
 #include "cl_api_tests.h"
@@ -50,14 +51,14 @@ struct clSetDefaultDeviceCommandQueueApiTest : public api_tests {
     cl_command_queue deviceQueue = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidParamsWhenSettingDefaultDeviceQueueThenSuccessIsReturned) {
+HWTEST2_F(clSetDefaultDeviceCommandQueueApiTest, GivenValidParamsWhenSettingDefaultDeviceQueueThenSuccessIsReturned, DeviceEnqueueSupport) {
     retVal = clSetDefaultDeviceCommandQueue(pContext, testedClDevice, deviceQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(static_cast<_device_queue *>(deviceQueue), static_cast<_device_queue *>(pContext->getDefaultDeviceQueue()));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidParamsWhenReplacingDefaultDeviceQueueThenSuccessIsReturned) {
+HWTEST2_F(clSetDefaultDeviceCommandQueueApiTest, GivenValidParamsWhenReplacingDefaultDeviceQueueThenSuccessIsReturned, DeviceEnqueueSupport) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES,
                                         CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE,
                                         0,
@@ -78,12 +79,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidPar
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullContextWhenSettingDefaultDeviceQueueThenClInvalidContextErrorIsReturned) {
+HWTEST2_F(clSetDefaultDeviceCommandQueueApiTest, GivenNullContextWhenSettingDefaultDeviceQueueThenClInvalidContextErrorIsReturned, DeviceEnqueueSupport) {
     retVal = clSetDefaultDeviceCommandQueue(nullptr, testedClDevice, deviceQueue);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceWhenSettingDefaultDeviceQueueThenClInvalidDeviceErrorIsReturned) {
+HWTEST2_F(clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceWhenSettingDefaultDeviceQueueThenClInvalidDeviceErrorIsReturned, DeviceEnqueueSupport) {
     retVal = clSetDefaultDeviceCommandQueue(pContext, nullptr, deviceQueue);
     ASSERT_EQ(CL_INVALID_DEVICE, retVal);
 }
@@ -96,12 +97,12 @@ TEST_F(clSetDefaultDeviceCommandQueueApiTest, GivenDeviceNotSupportingDeviceEnqu
     ASSERT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
+HWTEST2_F(clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned, DeviceEnqueueSupport) {
     retVal = clSetDefaultDeviceCommandQueue(pContext, testedClDevice, nullptr);
     ASSERT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenHostQueueAsDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
+HWTEST2_F(clSetDefaultDeviceCommandQueueApiTest, GivenHostQueueAsDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned, DeviceEnqueueSupport) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, 0, 0, 0};
     cl_command_queue hostQueue = clCreateCommandQueueWithProperties(pContext, testedClDevice, properties, &retVal);
     ASSERT_NE(nullptr, hostQueue);
@@ -114,7 +115,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenHostQueu
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenIncorrectDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
+HWTEST2_F(clSetDefaultDeviceCommandQueueApiTest, GivenIncorrectDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned, DeviceEnqueueSupport) {
     auto context2 = clCreateContext(nullptr, 1u, &testedClDevice, nullptr, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES,

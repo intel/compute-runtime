@@ -14,4 +14,5 @@ struct TestTraits<IGFX_GEN8_CORE> {
     static constexpr bool programOnlyChangedFieldsInComputeStateMode = true;
     static constexpr bool iohInSbaSupported = true;
     static constexpr bool isUsingNonDefaultIoctls = false;
+    static constexpr bool deviceEnqueueSupport = false;
 };

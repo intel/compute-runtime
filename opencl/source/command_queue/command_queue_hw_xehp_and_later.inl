@@ -9,13 +9,10 @@
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue_hw_base.inl"
+#include "opencl/source/command_queue/command_queue_hw_disabled_device_enqueue.inl"
 #include "opencl/source/memory_manager/resource_surface.h"
 
 namespace NEO {
-
-template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::runSchedulerSimulation(DeviceQueueHw<GfxFamily> &devQueueHw, Kernel &parentKernel) {
-}
 
 template <>
 void CommandQueueHw<Family>::submitCacheFlush(Surface **surfaces,

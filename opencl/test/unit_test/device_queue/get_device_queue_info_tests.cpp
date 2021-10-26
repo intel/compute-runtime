@@ -7,6 +7,7 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;
@@ -31,7 +32,7 @@ class GetDeviceQueueInfoTest : public DeviceHostQueueFixture<DeviceQueue> {
     DeviceQueue *deviceQueue = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueContextWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
+HWTEST2_F(GetDeviceQueueInfoTest, GivenQueueContextWhenGettingDeviceQueueInfoThenSuccessIsReturned, DeviceEnqueueSupport) {
     cl_context contextReturned = nullptr;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -43,7 +44,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueContextWhenGetting
     EXPECT_EQ((cl_context)pContext, contextReturned);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueDeviceWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
+HWTEST2_F(GetDeviceQueueInfoTest, GivenQueueDeviceWhenGettingDeviceQueueInfoThenSuccessIsReturned, DeviceEnqueueSupport) {
     cl_device_id deviceExpected = testedClDevice;
     cl_device_id deviceIdReturned = nullptr;
 
@@ -56,7 +57,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueDeviceWhenGettingD
     EXPECT_EQ(deviceExpected, deviceIdReturned);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueuePropertiesWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
+HWTEST2_F(GetDeviceQueueInfoTest, GivenQueuePropertiesWhenGettingDeviceQueueInfoThenSuccessIsReturned, DeviceEnqueueSupport) {
     cl_command_queue_properties propertiesReturned = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -68,7 +69,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueuePropertiesWhenGett
     EXPECT_EQ(deviceQueueProperties::allProperties[1], propertiesReturned);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueSizeWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
+HWTEST2_F(GetDeviceQueueInfoTest, GivenQueueSizeWhenGettingDeviceQueueInfoThenSuccessIsReturned, DeviceEnqueueSupport) {
     cl_uint queueSizeReturned = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -81,7 +82,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueSizeWhenGettingDev
 }
 
 // OCL 2.1
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueDeviceDefaultWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
+HWTEST2_F(GetDeviceQueueInfoTest, GivenQueueDeviceDefaultWhenGettingDeviceQueueInfoThenSuccessIsReturned, DeviceEnqueueSupport) {
     cl_command_queue commandQueueReturned = nullptr;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -95,11 +96,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueDeviceDefaultWhenG
     EXPECT_EQ(deviceQueue, commandQueueReturned);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, WhenGettingDeviceQueueInfoThenProfilingIsEnabled) {
+HWTEST2_F(GetDeviceQueueInfoTest, WhenGettingDeviceQueueInfoThenProfilingIsEnabled, DeviceEnqueueSupport) {
     EXPECT_TRUE(deviceQueue->isProfilingEnabled());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenInvalidParamWhenGettingDeviceQueueInfoThenInvalidValueErrorIsReturned) {
+HWTEST2_F(GetDeviceQueueInfoTest, GivenInvalidParamWhenGettingDeviceQueueInfoThenInvalidValueErrorIsReturned, DeviceEnqueueSupport) {
     uint32_t tempValue = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(

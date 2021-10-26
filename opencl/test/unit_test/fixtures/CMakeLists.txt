@@ -19,6 +19,7 @@ set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/device_info_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_instrumentation_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_instrumentation_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_queue_matcher.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_handler_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/execution_model_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/execution_model_kernel_fixture.h

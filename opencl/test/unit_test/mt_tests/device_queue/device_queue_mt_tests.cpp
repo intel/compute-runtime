@@ -7,6 +7,7 @@
 
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
@@ -17,7 +18,7 @@ using namespace NEO;
 
 typedef ::testing::Test DeviceQueueHwMtTest;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwMtTest, givenTakenIgilCriticalSectionWhenSecondThreadIsWaitingThenDontHang) {
+HWTEST2_F(DeviceQueueHwMtTest, givenTakenIgilCriticalSectionWhenSecondThreadIsWaitingThenDontHang, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

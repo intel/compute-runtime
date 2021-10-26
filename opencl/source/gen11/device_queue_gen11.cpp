@@ -9,8 +9,8 @@
 #include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/device_queue/device_queue_hw.h"
-#include "opencl/source/device_queue/device_queue_hw_bdw_and_later.inl"
 #include "opencl/source/device_queue/device_queue_hw_profiling.inl"
+#include "opencl/source/device_queue/device_queue_hw_skl_and_later.inl"
 #include "opencl/source/gen11/device_enqueue.h"
 
 namespace NEO {

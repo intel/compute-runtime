@@ -10,6 +10,7 @@
 
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -19,7 +20,7 @@ using namespace DeviceHostQueue;
 
 using DeviceQueueSimpleTest = ::testing::Test;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, WhenExecutionModelDispatchIsSetupThenNoAdditionalActionsOccur) {
+HWTEST2_F(DeviceQueueSimpleTest, WhenExecutionModelDispatchIsSetupThenNoAdditionalActionsOccur, DeviceEnqueueSupport) {
     DeviceQueue devQueue;
     char buffer[20];
 
@@ -37,7 +38,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, WhenExecutionModelDispatchIsS
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, WhenResettingDeviceQueueThenIndirectHeapIsNotUsed) {
+HWTEST2_F(DeviceQueueSimpleTest, WhenResettingDeviceQueueThenIndirectHeapIsNotUsed, DeviceEnqueueSupport) {
     DeviceQueue devQueue;
     devQueue.resetDeviceQueue();
     EXPECT_EQ(nullptr, devQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
@@ -69,7 +70,7 @@ class DeviceQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
     ClDevice *device;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, GivenDeviceQueueCapWhenCreatingAdditionalDeviceQueuesThenQueueIsNotCreated) {
+HWTEST2_F(DeviceQueueTest, GivenDeviceQueueCapWhenCreatingAdditionalDeviceQueuesThenQueueIsNotCreated, DeviceEnqueueSupport) {
     auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
     const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = 1;
 
@@ -85,7 +86,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, GivenDeviceQueueCapWhenCreatingAddi
     const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, GivenDeviceQueueWhenEventPoolIsCreatedThenTimestampResolutionIsSet) {
+HWTEST2_F(DeviceQueueTest, GivenDeviceQueueWhenEventPoolIsCreatedThenTimestampResolutionIsSet, DeviceEnqueueSupport) {
     auto timestampResolution = static_cast<float>(device->getProfilingTimerResolution());
 
     auto deviceQueue = std::unique_ptr<DeviceQueue>(createQueueObject());
@@ -98,7 +99,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, GivenDeviceQueueWhenEventPoolIsCrea
 
 typedef DeviceQueueTest DeviceQueueBuffer;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenNoPropertyWhenCreatingQueueThenPreferredSizeIsSet) {
+HWTEST2_F(DeviceQueueBuffer, GivenNoPropertyWhenCreatingQueueThenPreferredSizeIsSet, DeviceEnqueueSupport) {
     auto &deviceInfo = device->getDeviceInfo();
     deviceQueue = createQueueObject(); // only minimal properties
     ASSERT_NE(deviceQueue, nullptr);
@@ -106,7 +107,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenNoPropertyWhenCreatingQueueT
     deviceQueue->release();
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenInvalidPropertyWhenCreatingQueueThenPreferredSizeIsSet) {
+HWTEST2_F(DeviceQueueBuffer, GivenInvalidPropertyWhenCreatingQueueThenPreferredSizeIsSet, DeviceEnqueueSupport) {
     cl_queue_properties properties[5] = {CL_QUEUE_PROPERTIES, deviceQueueProperties::minimumProperties[1],
                                          CL_QUEUE_SIZE, 0, 0};
     auto &deviceInfo = device->getDeviceInfo();
@@ -123,7 +124,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenInvalidPropertyWhenCreatingQ
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenValidSizeWhenCreatingQueueThenProvidedSizeIsSet) {
+HWTEST2_F(DeviceQueueBuffer, GivenValidSizeWhenCreatingQueueThenProvidedSizeIsSet, DeviceEnqueueSupport) {
     auto &deviceInfo = device->getDeviceInfo();
     cl_uint validSize = deviceInfo.queueOnDevicePreferredSize - 1;
     cl_queue_properties properties[5] = {CL_QUEUE_PROPERTIES, deviceQueueProperties::minimumProperties[1],
@@ -138,7 +139,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenValidSizeWhenCreatingQueueTh
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, WhenDeviceQueueIsCreatedThenItIsCorrectlyInitialized) {
+HWTEST2_F(DeviceQueueBuffer, WhenDeviceQueueIsCreatedThenItIsCorrectlyInitialized, DeviceEnqueueSupport) {
     auto &deviceInfo = device->getDeviceInfo();
 
     deviceQueue = createQueueObject();
@@ -164,7 +165,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, WhenDeviceQueueIsCreatedThenItIsC
 
 typedef DeviceQueueTest DeviceQueueStackBuffer;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, WhenDeviceQueueIsCreatedThenAllocatedResourcesAreZeroed) {
+HWTEST2_F(DeviceQueueStackBuffer, WhenDeviceQueueIsCreatedThenAllocatedResourcesAreZeroed, DeviceEnqueueSupport) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -173,7 +174,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, WhenDeviceQueueIsCreatedThen
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, WhenDeviceQueueIsCreatedThenStackBufferIsAllocated) {
+HWTEST2_F(DeviceQueueStackBuffer, WhenDeviceQueueIsCreatedThenStackBufferIsAllocated, DeviceEnqueueSupport) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -189,7 +190,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, WhenDeviceQueueIsCreatedThen
 
 typedef DeviceQueueTest DeviceQueueStorageBuffer;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStorageBuffer, WhenDeviceQueueIsCreatedThenStorageBufferIsAllocated) {
+HWTEST2_F(DeviceQueueStorageBuffer, WhenDeviceQueueIsCreatedThenStorageBufferIsAllocated, DeviceEnqueueSupport) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -203,7 +204,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStorageBuffer, WhenDeviceQueueIsCreatedTh
 
 typedef DeviceQueueTest DefaultDeviceQueue;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, GivenSingleDeviceQueueIsSupportedWhenSecondDeviceQueueIsCreatedThenReuseDeviceQueue) {
+HWTEST2_F(DefaultDeviceQueue, GivenSingleDeviceQueueIsSupportedWhenSecondDeviceQueueIsCreatedThenReuseDeviceQueue, DeviceEnqueueSupport) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0, 0};
 
     auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
@@ -229,7 +230,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, GivenSingleDeviceQueueIsSupporte
     const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, GivenMultipleDeviceQueuesIsSupportedWhenSecondDeviceQueueIsCreatedThenReuseDeviceQueue) {
+HWTEST2_F(DefaultDeviceQueue, GivenMultipleDeviceQueuesIsSupportedWhenSecondDeviceQueueIsCreatedThenReuseDeviceQueue, DeviceEnqueueSupport) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0, 0};
 
     auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
@@ -257,7 +258,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, GivenMultipleDeviceQueuesIsSuppo
 
 typedef DeviceQueueTest DeviceQueueEventPool;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueEventPool, WhenDeviceQueueIsCreatedThenEventPoolBufferIsAllocated) {
+HWTEST2_F(DeviceQueueEventPool, WhenDeviceQueueIsCreatedThenEventPoolBufferIsAllocated, DeviceEnqueueSupport) {
     auto &deviceInfo = device->getDeviceInfo();
 
     // number of events + event pool representation
@@ -274,7 +275,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueEventPool, WhenDeviceQueueIsCreatedThenEv
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, WhenDeviceQueueIsCreatedThenDshBufferIsAllocated) {
+HWTEST2_F(DeviceQueueTest, WhenDeviceQueueIsCreatedThenDshBufferIsAllocated, DeviceEnqueueSupport) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -285,7 +286,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, WhenDeviceQueueIsCreatedThenDshBuff
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, WhenDispatchingSchedulerThenNoAssertsOccur) {
+HWTEST2_F(DeviceQueueTest, WhenDispatchingSchedulerThenNoAssertsOccur, DeviceEnqueueSupport) {
     DeviceQueue devQueue;
     MockProgram program(toClDeviceVector(*device));
     MockCommandQueue cmdQ(nullptr, nullptr, 0, false);

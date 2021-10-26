@@ -12,6 +12,7 @@
 #include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -34,7 +35,7 @@ class ExecutionModelSchedulerFixture : public ExecutionModelSchedulerTest,
     }
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSchedulerThenProgrammingIsCorrect) {
+HWTEST2_F(ExecutionModelSchedulerFixture, WhenDispatchingSchedulerThenProgrammingIsCorrect, DeviceEnqueueSupport) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -157,7 +158,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
     EXPECT_EQ(slbAddress, bbStart->getBatchBufferStartAddressGraphicsaddress472());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSchedulerThenStandardCmdqIohIsNotUsed) {
+HWTEST2_F(ExecutionModelSchedulerFixture, WhenDispatchingSchedulerThenStandardCmdqIohIsNotUsed, DeviceEnqueueSupport) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -191,7 +192,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
     EXPECT_EQ(0u, ioh.getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, GivenEarlyReturnSetToFirstInstanceWhenDispatchingSchedulerThenBbStartCmdIsNotInserted) {
+HWTEST2_F(ParentKernelCommandQueueFixture, GivenEarlyReturnSetToFirstInstanceWhenDispatchingSchedulerThenBbStartCmdIsNotInserted, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -229,7 +230,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, GivenEarlyReturnSet
     EXPECT_EQ(hwParser.cmdList.end(), hwParser.itorBBStartAfterWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenForceDispatchingSchedulerThenSchedulerKernelIsEnqueued) {
+HWTEST2_F(ExecutionModelSchedulerFixture, WhenForceDispatchingSchedulerThenSchedulerKernelIsEnqueued, DeviceEnqueueSupport) {
 
     DebugManagerStateRestore dbgRestorer;
 

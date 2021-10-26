@@ -16,6 +16,7 @@
 #include "shared/source/helpers/simd_helper.h"
 
 #include "opencl/source/command_queue/gpgpu_walker_base.inl"
+#include "opencl/source/command_queue/gpgpu_walker_disabled_device_enqueue.inl"
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {
@@ -87,18 +88,6 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     }
 
     return localWorkSize;
-}
-
-template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
-    LinearStream &commandStream,
-    DeviceQueueHw<GfxFamily> &devQueueHw,
-    PreemptionMode preemptionMode,
-    SchedulerKernel &scheduler,
-    IndirectHeap *ssh,
-    IndirectHeap *dsh,
-    bool isCcsUsed) {
-    UNRECOVERABLE_IF(true);
 }
 
 template <typename GfxFamily>

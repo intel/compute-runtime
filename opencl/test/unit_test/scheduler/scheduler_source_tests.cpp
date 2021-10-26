@@ -11,6 +11,7 @@
 
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "test.h"
@@ -24,7 +25,7 @@
 using namespace NEO;
 using namespace BuiltinKernelsSimulation;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, SchedulerSourceTest, WhenEnqueingThenGpgpuWalkerIsPatchedCorrectly) {
+HWTEST2_F(SchedulerSourceTest, WhenEnqueingThenGpgpuWalkerIsPatchedCorrectly, DeviceEnqueueSupport) {
     using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

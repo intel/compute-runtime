@@ -35,6 +35,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -1070,7 +1071,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithDeviceEnqueueIsUsedThenKernelCreateAndSubmitCallbacksAreNotCalled) {
+HWTEST2_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithDeviceEnqueueIsUsedThenKernelCreateAndSubmitCallbacksAreNotCalled, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pDevice);
 
     gtpinCallbacks.onContextCreate = OnContextCreate;

@@ -21,6 +21,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
@@ -35,7 +36,7 @@ static const char *KernelNames[] = {"kernel_reflection", "simple_block_kernel"};
 
 typedef ExecutionModelKernelTest ParentKernelEnqueueTest;
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDSHHasCorrectlyFilledInterfaceDesriptorTables) {
+HWTEST2_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDSHHasCorrectlyFilledInterfaceDesriptorTables, DeviceEnqueueSupport) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
@@ -122,7 +123,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlockKernelWithPrivateSurfaceWhenParentKernelIsEnqueuedThenPrivateSurfaceIsMadeResident) {
+HWTEST2_P(ParentKernelEnqueueTest, GivenBlockKernelWithPrivateSurfaceWhenParentKernelIsEnqueuedThenPrivateSurfaceIsMadeResident, DeviceEnqueueSupport) {
     size_t offset[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
     int32_t executionStamp = 0;
@@ -151,7 +152,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlockKernelWithPrivate
     EXPECT_TRUE(privateSurface->isResident(mockCSR->getOsContext().getContextId()));
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlocksWithPrivateMemoryWhenEnqueueKernelThatIsBlockedByUserEventIsCalledThenPrivateAllocationIsMadeResidentWhenEventUnblocks) {
+HWTEST2_P(ParentKernelEnqueueTest, GivenBlocksWithPrivateMemoryWhenEnqueueKernelThatIsBlockedByUserEventIsCalledThenPrivateAllocationIsMadeResidentWhenEventUnblocks, DeviceEnqueueSupport) {
     size_t offset[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
@@ -186,7 +187,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlocksWithPrivateMemor
     EXPECT_TRUE(csr.isMadeResident(privateAllocation));
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelIsCalledThenBlockKernelIsaAllocationIsMadeResident) {
+HWTEST2_P(ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelIsCalledThenBlockKernelIsaAllocationIsMadeResident, DeviceEnqueueSupport) {
     size_t offset[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
@@ -202,7 +203,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenParentKernelWithBlocks
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlockKernelManagerFilledWithBlocksWhenMakeInternalAllocationsResidentIsCalledThenAllSurfacesAreMadeResident) {
+HWTEST2_P(ParentKernelEnqueueTest, GivenBlockKernelManagerFilledWithBlocksWhenMakeInternalAllocationsResidentIsCalledThenAllSurfacesAreMadeResident, DeviceEnqueueSupport) {
     auto blockKernelManager = pKernel->getProgram()->getBlockKernelManager();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
@@ -215,7 +216,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlockKernelManagerFill
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelThatIsBlockedByUserEventIsCalledThenBlockKernelIsaAllocationIsMadeResidentWhenEventUnblocks) {
+HWTEST2_P(ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelThatIsBlockedByUserEventIsCalledThenBlockKernelIsaAllocationIsMadeResidentWhenEventUnblocks, DeviceEnqueueSupport) {
     size_t offset[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
@@ -240,7 +241,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenParentKernelWithBlocks
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedSecondTimeThenDeviceQueueDSHIsResetToInitialOffset) {
+HWTEST2_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedSecondTimeThenDeviceQueueDSHIsResetToInitialOffset, DeviceEnqueueSupport) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
@@ -269,7 +270,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     EXPECT_EQ(executionModelDSHUsedAfterFirst, executionModelDSHUsedAfterSecond);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelAndNotUsedSSHWhenEnqueuedThenSSHIsNotReallocated) {
+HWTEST2_P(ParentKernelEnqueueTest, givenParentKernelAndNotUsedSSHWhenEnqueuedThenSSHIsNotReallocated, DeviceEnqueueSupport) {
     const size_t globalOffsets[3] = {0, 0, 0};
     const size_t workItems[3] = {1, 1, 1};
 
@@ -285,7 +286,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelAndNotUsed
     EXPECT_EQ(ssh->getGraphicsAllocation(), ssh2->getGraphicsAllocation());
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenBlocksSurfaceStatesAreCopied) {
+HWTEST2_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenBlocksSurfaceStatesAreCopied, DeviceEnqueueSupport) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -345,7 +346,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenReflectionSurfaceIsCreated) {
+HWTEST2_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenReflectionSurfaceIsCreated, DeviceEnqueueSupport) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -359,7 +360,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     EXPECT_NE(nullptr, pKernel->getKernelReflectionSurface());
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueIsNotReset) {
+HWTEST2_P(ParentKernelEnqueueTest, givenBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueIsNotReset, DeviceEnqueueSupport) {
     const size_t globalOffsets[3] = {0, 0, 0};
     const size_t workItems[3] = {1, 1, 1};
     cl_queue_properties properties[3] = {0};
@@ -380,7 +381,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenBlockedQueueWhenParent
     EXPECT_FALSE(mockDevQueue.isEMCriticalSectionFree());
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenNonBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueDSHAddressIsProgrammedInStateBaseAddressAndDSHIsMadeResident) {
+HWTEST2_P(ParentKernelEnqueueTest, givenNonBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueDSHAddressIsProgrammedInStateBaseAddressAndDSHIsMadeResident, DeviceEnqueueSupport) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
@@ -442,7 +443,7 @@ class ParentKernelEnqueueFixture : public ExecutionModelSchedulerTest,
     }
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedThenDefaultDeviceQueueAndEventPoolIsPatched) {
+HWTEST2_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedThenDefaultDeviceQueueAndEventPoolIsPatched, DeviceEnqueueSupport) {
 
     if (pClDevice->areOcl21FeaturesSupported()) {
         size_t offset[3] = {0, 0, 0};
@@ -466,7 +467,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedThenBlocksDSHOnReflectionSurfaceArePatchedWithDeviceQueueAndEventPoolAddresses) {
+HWTEST2_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedThenBlocksDSHOnReflectionSurfaceArePatchedWithDeviceQueueAndEventPoolAddresses, DeviceEnqueueSupport) {
 
     if (pClDevice->areOcl21FeaturesSupported()) {
         size_t offset[3] = {0, 0, 0};
@@ -501,7 +502,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedToNonBlockedQueueThenDeviceQueueCriticalSetionIsAcquired) {
+HWTEST2_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedToNonBlockedQueueThenDeviceQueueCriticalSetionIsAcquired, DeviceEnqueueSupport) {
 
     if (pClDevice->areOcl21FeaturesSupported()) {
         size_t offset[3] = {0, 0, 0};
@@ -516,7 +517,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedToBlockedQueueThenDeviceQueueCriticalSetionIsNotAcquired) {
+HWTEST2_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedToBlockedQueueThenDeviceQueueCriticalSetionIsNotAcquired, DeviceEnqueueSupport) {
 
     if (pClDevice->areOcl21FeaturesSupported()) {
         size_t offset[3] = {0, 0, 0};
@@ -535,7 +536,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedToNonBlockedQueueThenFlushCsrWithSlm) {
+HWTEST2_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedToNonBlockedQueueThenFlushCsrWithSlm, DeviceEnqueueSupport) {
 
     if (pClDevice->areOcl21FeaturesSupported()) {
         size_t offset[3] = {0, 0, 0};
@@ -550,7 +551,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedWithSchedulerReturnInstanceThenRunSimulation) {
+HWTEST2_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedWithSchedulerReturnInstanceThenRunSimulation, DeviceEnqueueSupport) {
 
     if (pClDevice->areOcl21FeaturesSupported()) {
 
@@ -580,7 +581,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, givenCsrInBatchingModeWhenExecutionModelKernelIsSubmittedThenItIsFlushed) {
+HWTEST2_F(ParentKernelEnqueueFixture, givenCsrInBatchingModeWhenExecutionModelKernelIsSubmittedThenItIsFlushed, DeviceEnqueueSupport) {
     if (pClDevice->areOcl21FeaturesSupported()) {
         auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
         mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
@@ -603,7 +604,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, givenCsrInBatchingModeWh
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedThenMarkCsrMediaVfeStateDirty) {
+HWTEST2_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedThenMarkCsrMediaVfeStateDirty, DeviceEnqueueSupport) {
 
     if (pClDevice->areOcl21FeaturesSupported()) {
         size_t offset[3] = {0, 0, 0};

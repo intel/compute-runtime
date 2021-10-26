@@ -28,7 +28,6 @@ struct EnableOCLGen12LP {
         populateFactoryTable<ClHwHelperHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
         populateFactoryTable<CommandStreamReceiverHw<Family>>();
-        populateFactoryTable<DeviceQueueHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();

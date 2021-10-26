@@ -15,6 +15,7 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
@@ -992,7 +993,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTranslationIsRequiredThenMakeEnqueueBlocking) {
+HWTEST2_F(EnqueueAuxKernelTests, givenParentKernelWhenAuxTranslationIsRequiredThenMakeEnqueueBlocking, DeviceEnqueueSupport) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
 
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);

@@ -27,6 +27,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
 target_include_directories(igdrcl_mt_tests PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SOURCE_DIR}/opencl/source/gen_common
 )
 
