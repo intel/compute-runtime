@@ -39,6 +39,8 @@ class ClHwHelper {
     virtual std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const = 0;
     virtual cl_version getDeviceIpVersion(const HardwareInfo &hwInfo) const = 0;
     virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities() const = 0;
+    virtual bool allowImageCompression(cl_image_format format) const = 0;
+    virtual bool isFormatRedescribable(cl_image_format format) const = 0;
 
   protected:
     virtual bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const = 0;
@@ -68,6 +70,8 @@ class ClHwHelperHw : public ClHwHelper {
     std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const override;
     cl_version getDeviceIpVersion(const HardwareInfo &hwInfo) const override;
     cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities() const override;
+    bool allowImageCompression(cl_image_format format) const override;
+    bool isFormatRedescribable(cl_image_format format) const override;
 
   protected:
     bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const override;

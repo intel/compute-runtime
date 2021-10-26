@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mem_obj/image_compression_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
@@ -683,4 +684,28 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceSt
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
     EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
     EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
+}
+
+HWTEST2_F(ImageCompressionTests, givenXeHpCoreAndRedescribableFormatWhenCreatingAllocationThenDoNotPreferRenderCompression, IsXeHpCore) {
+    MockContext context{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 5;
+    imageDesc.image_height = 5;
+
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = std::unique_ptr<Image>(Image::create(
+        mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedImgInfo.preferRenderCompression);
+
+    imageFormat.image_channel_order = CL_RG;
+    surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    image = std::unique_ptr<Image>(Image::create(
+        mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_TRUE(myMemoryManager->capturedImgInfo.preferRenderCompression);
 }

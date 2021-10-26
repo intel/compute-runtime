@@ -147,7 +147,6 @@ class Image : public MemObj {
     void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
     void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
 
-    static bool isFormatRedescribable(cl_image_format format);
     Image *redescribe();
     Image *redescribeFillImage();
     ImageCreatFunc createFunction;

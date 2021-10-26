@@ -75,12 +75,12 @@ namespace NEO {
     {{CL_sBGRA,           CL_UNORM_INT8},     {GMM_FORMAT_B8G8R8A8_UNORM_SRGB_TYPE, GFX3DSTATE_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB     , 0, 4, 1, 4}}
 
 #define DEPTHFORMATS \
-    {{ CL_DEPTH,          CL_FLOAT},         {GMM_FORMAT_R32_FLOAT_TYPE,           GFX3DSTATE_SURFACEFORMAT_R32_FLOAT               , 0, 1, 4, 4}}, \
-    {{ CL_DEPTH,          CL_UNORM_INT16},   {GMM_FORMAT_R16_UNORM_TYPE,           GFX3DSTATE_SURFACEFORMAT_R16_UNORM               , 0, 1, 2, 2}}
+    {{ CL_DEPTH,          CL_FLOAT},          {GMM_FORMAT_R32_FLOAT_TYPE,           GFX3DSTATE_SURFACEFORMAT_R32_FLOAT               , 0, 1, 4, 4}}, \
+    {{ CL_DEPTH,          CL_UNORM_INT16},    {GMM_FORMAT_R16_UNORM_TYPE,           GFX3DSTATE_SURFACEFORMAT_R16_UNORM               , 0, 1, 2, 2}}
 
 #define DEPTHSTENCILFORMATS \
-    {{ CL_DEPTH_STENCIL,  CL_UNORM_INT24},   {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_R24_UNORM_X8_TYPELESS   , 0, 1, 4, 4}}, \
-    {{ CL_DEPTH_STENCIL,  CL_FLOAT},         {GMM_FORMAT_R32G32_FLOAT_TYPE,        GFX3DSTATE_SURFACEFORMAT_R32_FLOAT_X8X24_TYPELESS, 0, 2, 4, 8}}
+    {{ CL_DEPTH_STENCIL,  CL_UNORM_INT24},    {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_R24_UNORM_X8_TYPELESS   , 0, 1, 4, 4}}, \
+    {{ CL_DEPTH_STENCIL,  CL_FLOAT},          {GMM_FORMAT_R32G32_FLOAT_TYPE,        GFX3DSTATE_SURFACEFORMAT_R32_FLOAT_X8X24_TYPELESS, 0, 2, 4, 8}}
 
 //Initialize this with the required formats first.
 //Append the optional one later
@@ -100,12 +100,12 @@ const ClSurfaceFormatInfo SurfaceFormats::packedYuvSurfaceFormats[] = {
 };
 
 const ClSurfaceFormatInfo SurfaceFormats::planarYuvSurfaceFormats[] = {
-    {{CL_NV12_INTEL,      CL_UNORM_INT8},     {GMM_FORMAT_NV12,                     GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8                    , 0, 1, 1, 1}}
+    {{CL_NV12_INTEL,      CL_UNORM_INT8},     {GMM_FORMAT_NV12,                     GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8            , 0, 1, 1, 1}}
 };
 
 const ClSurfaceFormatInfo SurfaceFormats::packedSurfaceFormats[] = {
-    {{CL_RGBA,          CL_UNORM_INT16},    {GMM_FORMAT_Y210,                       GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM      , 0, 4, 2, 8}},
-    {{CL_RG,            CL_UNORM_INT16},    {GMM_FORMAT_YUY2_2x1,                   GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM       , 0, 2, 2, 4}}
+    {{CL_RGBA,            CL_UNORM_INT16},    {GMM_FORMAT_Y210,                     GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM      , 0, 4, 2, 8}},
+    {{CL_RG,              CL_UNORM_INT16},    {GMM_FORMAT_YUY2_2x1,                 GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM       , 0, 2, 2, 4}}
  };
 
 const ClSurfaceFormatInfo SurfaceFormats::readOnlyDepthSurfaceFormats[] = { DEPTHFORMATS, DEPTHSTENCILFORMATS };

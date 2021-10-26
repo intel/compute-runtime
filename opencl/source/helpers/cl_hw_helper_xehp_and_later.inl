@@ -26,4 +26,8 @@ cl_device_feature_capabilities_intel ClHwHelperHw<GfxFamily>::getSupportedDevice
     return ClDeviceHelper::getExtraCapabilities();
 }
 
+template <typename GfxFamily>
+bool ClHwHelperHw<GfxFamily>::isFormatRedescribable(cl_image_format format) const {
+    return false;
+}
 } // namespace NEO

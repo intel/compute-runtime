@@ -23,6 +23,7 @@
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
@@ -196,11 +197,13 @@ Image *Image::create(Context *context,
 
         auto hostPtrRowPitch = imageDesc->image_row_pitch ? imageDesc->image_row_pitch : imageWidth * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
         auto hostPtrSlicePitch = imageDesc->image_slice_pitch ? imageDesc->image_slice_pitch : hostPtrRowPitch * imageHeight;
+        auto &clHwHelper = ClHwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
         imgInfo.linearStorage = !defaultHwHelper.tilingAllowed(context->isSharedContext, Image::isImage1d(*imageDesc),
                                                                memoryProperties.flags.forceLinearStorage);
         imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
                                                                                        *context, true);
-        imgInfo.preferRenderCompression &= !Image::isFormatRedescribable(surfaceFormat->OCLImageFormat);
+        imgInfo.preferRenderCompression &= clHwHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
+        imgInfo.preferRenderCompression &= !clHwHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
 
         if (!context->getDevice(0)->getSharedDeviceInfo().imageSupport && !imgInfo.linearStorage) {
             errcodeRet = CL_INVALID_OPERATION;
@@ -1000,19 +1003,6 @@ static const uint32_t redescribeTableBytes[] = {
     29, // {CL_RG, CL_UNSIGNED_INT32}      8 byte
     7   // {CL_RGBA, CL_UNSIGNED_INT32}    16 byte
 };
-
-bool Image::isFormatRedescribable(cl_image_format format) {
-    const ArrayRef<const ClSurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
-    for (auto indexInRedescribeTable = 0u; indexInRedescribeTable < sizeof(redescribeTableBytes) / sizeof(uint32_t); indexInRedescribeTable++) {
-        const uint32_t formatIndex = redescribeTableBytes[indexInRedescribeTable];
-        const cl_image_format nonRedescribableFormat = readWriteSurfaceFormats[formatIndex].OCLImageFormat;
-        if (nonRedescribableFormat.image_channel_data_type == format.image_channel_data_type &&
-            nonRedescribableFormat.image_channel_order == format.image_channel_order) {
-            return false;
-        }
-    }
-    return true;
-}
 
 Image *Image::redescribe() {
     const uint32_t bytesPerPixel = this->surfaceFormatInfo.surfaceFormat.NumChannels * surfaceFormatInfo.surfaceFormat.PerChannelSizeInBytes;

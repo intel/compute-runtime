@@ -1320,3 +1320,25 @@ HWTEST_F(HwHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorrectVal
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(expectedBaseAddress, hwHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState));
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
+    static const cl_image_format redescribeFormats[] = {
+        {CL_R, CL_UNSIGNED_INT8},
+        {CL_R, CL_UNSIGNED_INT16},
+        {CL_R, CL_UNSIGNED_INT32},
+        {CL_RG, CL_UNSIGNED_INT32},
+        {CL_RGBA, CL_UNSIGNED_INT32},
+    };
+    MockContext context;
+    auto &clHwHelper = ClHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+
+    const ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::readWrite();
+    for (const auto &format : formats) {
+        const cl_image_format oclFormat = format.OCLImageFormat;
+        bool expectedResult = true;
+        for (const auto &nonRedescribableFormat : redescribeFormats) {
+            expectedResult &= (memcmp(&oclFormat, &nonRedescribableFormat, sizeof(cl_image_format)) != 0);
+        }
+        EXPECT_EQ(expectedResult, clHwHelper.isFormatRedescribable(oclFormat));
+    }
+}
