@@ -10,14 +10,6 @@ get_property(COMPUTE_RUNTIME_MOCKABLE_DEFINITIONS
              PROPERTY COMPILE_DEFINITIONS
 )
 
-if(WIN32)
-  set(COMPUTE_RUNTIME_MOCKABLE_DEFINITIONS
-      ${COMPUTE_RUNTIME_MOCKABLE_DEFINITIONS}
-      WDDM_VERSION_NUMBER=23
-      CONST_FROM_WDK_10_0_18328_0=
-  )
-endif()
-
 #Extract compute runtime INCLUDE_DIRECTORIES
 get_property(COMPUTE_RUNTIME_MOCKABLE_INCLUDES
              TARGET ${NEO_SHARED_MOCKABLE_LIB_NAME}
@@ -41,9 +33,6 @@ add_library(compute_runtime_mockable_extra
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context_base.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_resource_info_common.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_sip.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
-            ${NEO_SHARED_DIRECTORY}/debug_settings/debug_settings_manager.cpp
 )
 
 set_property(TARGET compute_runtime_mockable_extra APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
@@ -53,7 +42,6 @@ set_property(TARGET compute_runtime_mockable_extra APPEND_STRING PROPERTY COMPIL
 target_include_directories(compute_runtime_mockable_extra
                            PUBLIC
                            ${COMPUTE_RUNTIME_MOCKABLE_INCLUDES}
-                           ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
 )
 
 #Additional compile definitions for ULT builds
@@ -68,5 +56,5 @@ target_link_libraries(compute_runtime_mockable_extra
 )
 set_target_properties(compute_runtime_mockable_extra PROPERTIES
                       POSITION_INDEPENDENT_CODE ON
-                      FOLDER "ze_intel_gpu"
+                      FOLDER ${TARGET_NAME_L0}
 )
