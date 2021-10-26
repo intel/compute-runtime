@@ -587,6 +587,24 @@ TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhe
     EXPECT_EQ(gdiMockConfig.mockAllocationHandle, gdiMockConfig.receivedLock2Args.hAllocation);
 }
 
+TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhenAllocatingThroughKmdIsPreferredThenEnforceProperAlignment) {
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
+    osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;
+    osEnvironment->gdi->lock2 = lock2Mock;
+    osEnvironment->gdi->destroyAllocation2 = destroyAllocations2Mock;
+
+    MockWddmLinuxMemoryManager memoryManager{mockExecEnv};
+
+    NEO::AllocationData allocData = {};
+    allocData.size = 3U;
+
+    auto alloc = memoryManager.allocate32BitGraphicsMemoryImpl(allocData, false);
+    ASSERT_NE(nullptr, alloc);
+    EXPECT_TRUE(isAligned<MemoryConstants::allocationAlignment>(alloc->getUnderlyingBufferSize()));
+    memoryManager.freeGraphicsMemoryImpl(alloc);
+}
+
 class MockOsTimeLinux : public NEO::OSTimeLinux {
   public:
     MockOsTimeLinux(NEO::OSInterface *osInterface, std::unique_ptr<NEO::DeviceTime> deviceTime) : NEO::OSTimeLinux(osInterface, std::move(deviceTime)) {}

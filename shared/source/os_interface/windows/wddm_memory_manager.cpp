@@ -346,6 +346,8 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
             return nullptr;
         }
         ptrAligned = pSysMem;
+    } else {
+        sizeAligned = alignUp(sizeAligned, MemoryConstants::allocationAlignment);
     }
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
