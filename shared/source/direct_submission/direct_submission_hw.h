@@ -154,5 +154,6 @@ class DirectSubmissionHw {
     bool disableCacheFlush = false;
     bool disableMonitorFence = false;
     bool partitionedMode = false;
+    bool partitionConfigSet = true;
 };
 } // namespace NEO

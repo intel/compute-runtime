@@ -45,6 +45,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::hwInfo;
     using BaseClass::osContext;
+    using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
     using BaseClass::performDiagnosticMode;
     using BaseClass::ringBuffer;
@@ -56,6 +57,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::semaphorePtr;
     using BaseClass::semaphores;
     using BaseClass::setReturnAddress;
+    using BaseClass::startRingBuffer;
     using BaseClass::stopRingBuffer;
     using BaseClass::switchRingBuffersAllocations;
     using BaseClass::workloadMode;

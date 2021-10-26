@@ -67,6 +67,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::handleNewResourcesSubmission;
     using BaseClass::handleResidency;
     using BaseClass::isNewResourceHandleNeeded;
+    using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
     using BaseClass::ringStart;
     using BaseClass::submit;
@@ -314,13 +315,20 @@ HWTEST_F(DrmDirectSubmissionTest, givenMultipleActiveTilesWhenWaitingForTagUpdat
     EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenRenderDispatcherAndMultiTileDeviceWhenCreatingDirectSubmissionThenExpectActiveTilesMatchSubDeviceCount) {
+HWTEST_F(DrmDirectSubmissionTest,
+         givenRenderDispatcherAndMultiTileDeviceWhenCreatingDirectSubmissionUsingMultiTileContextThenExpectActiveTilesMatchSubDeviceCount) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
     device->deviceBitfield.set(0b11);
     device->rootCsrCreated = true;
     device->numSubDevices = 2;
+
+    osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(), 0u,
+                                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                              PreemptionMode::ThreadGroup, device->getDeviceBitfield()));
+    osContext->ensureContextInitialized();
+    EXPECT_EQ(2u, osContext->getDeviceBitfield().count());
 
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
     ultCsr->staticWorkPartitioningEnabled = true;
@@ -331,6 +339,32 @@ HWTEST_F(DrmDirectSubmissionTest, givenRenderDispatcherAndMultiTileDeviceWhenCre
 
     EXPECT_EQ(2u, directSubmission.activeTiles);
     EXPECT_TRUE(directSubmission.partitionedMode);
+    EXPECT_FALSE(directSubmission.partitionConfigSet);
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenRenderDispatcherAndMultiTileDeviceWhenCreatingDirectSubmissionSingleTileContextThenExpectActiveTilesEqualsSingleTile) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+    device->deviceBitfield.set(0b11);
+    device->rootCsrCreated = true;
+    device->numSubDevices = 2;
+
+    EXPECT_EQ(1u, osContext->getDeviceBitfield().count());
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
+    ultCsr->staticWorkPartitioningEnabled = true;
+    ultCsr->createWorkPartitionAllocation(*device);
+
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+
+    EXPECT_EQ(1u, directSubmission.activeTiles);
+    EXPECT_FALSE(directSubmission.partitionedMode);
+    EXPECT_TRUE(directSubmission.partitionConfigSet);
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
@@ -342,11 +376,18 @@ HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherAndMultiTileDeviceWhenCr
     VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
     device->deviceBitfield.set(0b11);
 
+    osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(), 0u,
+                                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                              PreemptionMode::ThreadGroup, device->getDeviceBitfield()));
+    osContext->ensureContextInitialized();
+    EXPECT_EQ(2u, osContext->getDeviceBitfield().count());
+
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
                                                                      *osContext.get());
 
     EXPECT_EQ(1u, directSubmission.activeTiles);
     EXPECT_FALSE(directSubmission.partitionedMode);
+    EXPECT_TRUE(directSubmission.partitionConfigSet);
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);

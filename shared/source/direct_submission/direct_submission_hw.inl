@@ -144,12 +144,12 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit) {
     if (ret && submitOnInit) {
         size_t startBufferSize = Dispatcher::getSizePreemption() +
                                  getSizeSemaphoreSection();
-        if (this->partitionedMode) {
-            startBufferSize += EncodeSetMMIO<GfxFamily>::sizeMEM;
-            startBufferSize += EncodeSetMMIO<GfxFamily>::sizeIMM;
-        }
+
         Dispatcher::dispatchPreemption(ringCommandStream);
         if (this->partitionedMode) {
+            startBufferSize += (EncodeSetMMIO<GfxFamily>::sizeMEM +
+                                EncodeSetMMIO<GfxFamily>::sizeIMM);
+
             EncodeSetMMIO<GfxFamily>::encodeMEM(ringCommandStream,
                                                 PartitionRegisters<GfxFamily>::wparidCCSOffset,
                                                 this->workPartitionAllocation->getGpuAddress());
@@ -157,6 +157,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit) {
                                                 PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
                                                 CommonConstants::partitionAddressOffset,
                                                 true);
+            this->partitionConfigSet = true;
         }
         if (workloadMode == 1) {
             dispatchDiagnosticModeSection();
@@ -178,11 +179,26 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
     }
 
     size_t startSize = getSizeSemaphoreSection();
+    if (!this->partitionConfigSet) {
+        startSize += (EncodeSetMMIO<GfxFamily>::sizeMEM +
+                      EncodeSetMMIO<GfxFamily>::sizeIMM);
+    }
     size_t requiredSize = startSize + getSizeDispatch() + getSizeEnd();
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
         switchRingBuffers();
     }
     uint64_t gpuStartVa = getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
+
+    if (!this->partitionConfigSet) {
+        EncodeSetMMIO<GfxFamily>::encodeMEM(ringCommandStream,
+                                            PartitionRegisters<GfxFamily>::wparidCCSOffset,
+                                            this->workPartitionAllocation->getGpuAddress());
+        EncodeSetMMIO<GfxFamily>::encodeIMM(ringCommandStream,
+                                            PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                            CommonConstants::partitionAddressOffset,
+                                            true);
+        this->partitionConfigSet = true;
+    }
 
     currentQueueWorkCount++;
     dispatchSemaphoreSection(currentQueueWorkCount);
