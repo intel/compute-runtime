@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "test.h"
@@ -76,4 +77,9 @@ BDWTEST_F(BdwHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
+}
+
+using CompilerHwInfoConfigHelperTestsBdw = ::testing::Test;
+BDWTEST_F(CompilerHwInfoConfigHelperTestsBdw, givenBdwWhenIsStatelessToStatefulBufferOffsetSupportedIsCalledThenReturnsTrue) {
+    EXPECT_FALSE(CompilerHwInfoConfig::get(productFamily)->isStatelessToStatefulBufferOffsetSupported());
 }

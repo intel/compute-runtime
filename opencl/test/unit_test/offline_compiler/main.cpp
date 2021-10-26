@@ -19,6 +19,7 @@ const char *fSeparator = "/";
 #endif
 
 Environment *gEnvironment;
+extern GFXCORE_FAMILY renderCoreFamily;
 
 std::string getRunPath() {
     char *cwd;
@@ -75,6 +76,15 @@ int main(int argc, char **argv) {
             } else if (strcmp("--rev_id", argv[i]) == 0) {
                 ++i;
                 revId = argv[i];
+            }
+        }
+    }
+
+    for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
+        if (NEO::hardwarePrefix[productId] && (0 == strcmp(devicePrefix.c_str(), NEO::hardwarePrefix[productId]))) {
+            if (NEO::hardwareInfoTable[productId]) {
+                renderCoreFamily = NEO::hardwareInfoTable[productId]->platform.eRenderCoreFamily;
+                break;
             }
         }
     }

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
@@ -36,4 +37,9 @@ RKLTEST_F(RklHwInfoConfig, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequi
 RKLTEST_F(RklHwInfoConfig, givenHwInfoConfigWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.is3DPipelineSelectWARequired());
+}
+
+using CompilerHwInfoConfigHelperTestsRkl = ::testing::Test;
+RKLTEST_F(CompilerHwInfoConfigHelperTestsRkl, givenRklWhenIsForceEmuInt32DivRemSPRequiredIsCalledThenReturnsTrue) {
+    EXPECT_TRUE(CompilerHwInfoConfig::get(productFamily)->isForceEmuInt32DivRemSPRequired());
 }

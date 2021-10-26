@@ -66,6 +66,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/device_binary_format/zebin_tests.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
     ${IGDRCL_SRCS_cloc}
     ${IGDRCL_SRCS_offline_compiler_mock}
     ${NEO_CORE_tests_compiler_mocks}
@@ -90,9 +91,11 @@ link_directories(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 add_executable(ocloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
 
 target_include_directories(ocloc_tests PRIVATE
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            $<TARGET_PROPERTY:ocloc_lib,INCLUDE_DIRECTORIES>
 )
-target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS>)
+target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS> ${TESTED_GEN_FLAGS_DEFINITONS})
 
 target_link_libraries(ocloc_tests gmock-gtest)
 

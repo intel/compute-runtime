@@ -90,12 +90,12 @@ class OfflineCompiler {
   protected:
     OfflineCompiler();
 
-    int getHardwareInfo(std::string deviceName);
+    int initHardwareInfo(std::string deviceName);
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
     void setStatelessToStatefullBufferOffsetFlag();
-    void resolveExtraSettings();
+    void appendExtraInternalOptions(const HardwareInfo &hwInfo, std::string &internalOptions);
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     MOCKABLE_VIRTUAL int buildSourceCode();

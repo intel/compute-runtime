@@ -29,6 +29,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.h
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_bdw_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
@@ -50,7 +51,6 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/decoder/helper.h
     ${OCLOC_DIRECTORY}/source/decoder/iga_wrapper.h
     ${OCLOC_DIRECTORY}/source/decoder/translate_platform_base.h
-    ${OCLOC_DIRECTORY}/source${BRANCH_DIR_SUFFIX}extra_settings.cpp
     ${OCLOC_DIRECTORY}/source/multi_command.cpp
     ${OCLOC_DIRECTORY}/source/multi_command.h
     ${OCLOC_DIRECTORY}/source/ocloc_api.cpp
@@ -116,6 +116,7 @@ macro(macro_for_each_platform)
     foreach(BRANCH ${BRANCH_DIR_LIST})
       foreach(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
                 ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
+                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}/compiler_hw_info_config_${PLATFORM_IT_LOWER}.inl
         )
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})

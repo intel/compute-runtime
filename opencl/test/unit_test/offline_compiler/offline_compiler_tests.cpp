@@ -765,43 +765,6 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugS
     EXPECT_NE(std::string::npos, found);
 }
 
-TEST(OfflineCompilerTest, GivenBdwThenStatelessToStatefullOptimizationIsDisabled) {
-    DebugManagerStateRestore stateRestore;
-    MockOfflineCompiler mockOfflineCompiler;
-    mockOfflineCompiler.deviceName = "bdw";
-
-    mockOfflineCompiler.parseDebugSettings();
-
-    std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
-    EXPECT_EQ(std::string::npos, found);
-}
-
-TEST(OfflineCompilerTest, GivenSklThenStatelessToStatefullOptimizationIsEnabled) {
-    DebugManagerStateRestore stateRestore;
-    MockOfflineCompiler mockOfflineCompiler;
-    mockOfflineCompiler.deviceName = "skl";
-
-    mockOfflineCompiler.parseDebugSettings();
-
-    std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
-    EXPECT_NE(std::string::npos, found);
-}
-
-TEST(OfflineCompilerTest, GivenSklAndDisabledViaDebugThenStatelessToStatefullOptimizationDisabled) {
-    DebugManagerStateRestore stateRestore;
-    MockOfflineCompiler mockOfflineCompiler;
-    mockOfflineCompiler.deviceName = "skl";
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
-
-    mockOfflineCompiler.parseDebugSettings();
-
-    std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
-    EXPECT_EQ(std::string::npos, found);
-}
-
 TEST(OfflineCompilerTest, GivenDelimitersWhenGettingStringThenParseIsCorrect) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
@@ -851,9 +814,9 @@ TEST(OfflineCompilerTest, GivenValidParamWhenGettingHardwareInfoThenSuccessIsRet
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    EXPECT_EQ(CL_INVALID_DEVICE, mockOfflineCompiler->getHardwareInfo("invalid"));
+    EXPECT_EQ(CL_INVALID_DEVICE, mockOfflineCompiler->initHardwareInfo("invalid"));
     EXPECT_EQ(PRODUCT_FAMILY::IGFX_UNKNOWN, mockOfflineCompiler->getHardwareInfo().platform.eProductFamily);
-    EXPECT_EQ(CL_SUCCESS, mockOfflineCompiler->getHardwareInfo(gEnvironment->devicePrefix.c_str()));
+    EXPECT_EQ(CL_SUCCESS, mockOfflineCompiler->initHardwareInfo(gEnvironment->devicePrefix.c_str()));
     EXPECT_NE(PRODUCT_FAMILY::IGFX_UNKNOWN, mockOfflineCompiler->getHardwareInfo().platform.eProductFamily);
 }
 
@@ -1472,7 +1435,7 @@ TEST(OfflineCompilerTest, givenNoRevisionIdWhenCompilerIsInitializedThenHwInfoHa
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    mockOfflineCompiler->getHardwareInfo(gEnvironment->devicePrefix.c_str());
+    mockOfflineCompiler->initHardwareInfo(gEnvironment->devicePrefix.c_str());
     auto revId = mockOfflineCompiler->hwInfo.platform.usRevId;
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
@@ -1511,36 +1474,6 @@ TEST(OfflineCompilerTest, whenDeviceIsSpecifiedThenDefaultConfigFromTheDeviceIsU
     EXPECT_EQ(subSlicePerSliceCount * sliceCount, hwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(euPerSubSliceCount * subSlicePerSliceCount * sliceCount, hwInfo.gtSystemInfo.EUCount);
 }
-
-struct WorkaroundApplicableForDevice {
-    const char *deviceName;
-    bool applicable;
-};
-
-using OfflineCompilerTestWithParams = testing::TestWithParam<WorkaroundApplicableForDevice>;
-
-TEST_P(OfflineCompilerTestWithParams, givenRklWhenExtraSettingsResolvedThenForceEmuInt32DivRemSPIsApplied) {
-    WorkaroundApplicableForDevice params = GetParam();
-    MockOfflineCompiler mockOfflineCompiler;
-    mockOfflineCompiler.deviceName = params.deviceName;
-
-    mockOfflineCompiler.parseDebugSettings();
-
-    std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::forceEmuInt32DivRemSP.data());
-    if (params.applicable) {
-        EXPECT_NE(std::string::npos, found);
-    } else {
-        EXPECT_EQ(std::string::npos, found);
-    }
-}
-
-WorkaroundApplicableForDevice workaroundApplicableForDeviceArray[] = {{"rkl", true}, {"dg1", false}, {"tgllp", false}};
-
-INSTANTIATE_TEST_CASE_P(
-    WorkaroundApplicable,
-    OfflineCompilerTestWithParams,
-    testing::ValuesIn(workaroundApplicableForDeviceArray));
 
 TEST(OclocCompile, whenDetectedPotentialInputTypeMismatchThenEmitsWarning) {
     std::string sourceOclC = "__kernel void k() { }";
@@ -1589,7 +1522,7 @@ TEST(OclocCompile, whenDetectedPotentialInputTypeMismatchThenEmitsWarning) {
             "-device",
             gEnvironment->devicePrefix.c_str()};
 
-        ocloc.getHardwareInfo(gEnvironment->devicePrefix.c_str());
+        ocloc.initHardwareInfo(gEnvironment->devicePrefix.c_str());
         int retVal = ocloc.initialize(argv.size(), argv);
         ASSERT_EQ(0, retVal);
 
@@ -1713,4 +1646,26 @@ TEST(OclocCompile, givenSpirvInputThenDontGenerateSpirvFile) {
     EXPECT_TRUE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "bin"));
     EXPECT_FALSE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "spv"));
 }
+
+TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefullBufferOffsetFlagThenStatelessToStatefullOptimizationIsSetCorrectly) {
+    DebugManagerStateRestore stateRestore;
+    MockOfflineCompiler mockOfflineCompiler;
+    {
+        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
+        mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+        mockOfflineCompiler.setStatelessToStatefullBufferOffsetFlag();
+        std::string internalOptions = mockOfflineCompiler.internalOptions;
+        size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
+        EXPECT_EQ(std::string::npos, found);
+    }
+    {
+        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
+        mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+        mockOfflineCompiler.setStatelessToStatefullBufferOffsetFlag();
+        std::string internalOptions = mockOfflineCompiler.internalOptions;
+        size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
+        EXPECT_NE(std::string::npos, found);
+    }
+}
+
 } // namespace NEO

@@ -316,7 +316,7 @@ std::string &OfflineCompiler::getBuildLog() {
     return buildLog;
 }
 
-int OfflineCompiler::getHardwareInfo(std::string deviceName) {
+int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     int retVal = INVALID_DEVICE;
 
     overridePlatformName(deviceName);
@@ -433,7 +433,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         }
     }
 
-    retVal = deviceName.empty() ? SUCCESS : getHardwareInfo(deviceName.c_str());
+    retVal = deviceName.empty() ? SUCCESS : initHardwareInfo(deviceName.c_str());
     if (retVal != SUCCESS) {
         argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
         return retVal;
@@ -450,6 +450,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     } else {
         appendExtensionsToInternalOptions(hwInfo, options, internalOptions);
+        appendExtraInternalOptions(hwInfo, internalOptions);
     }
 
     parseDebugSettings();
@@ -698,8 +699,9 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
 
 void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
     bool isStatelessToStatefulBufferOffsetSupported = true;
-    if (deviceName == "bdw") {
-        isStatelessToStatefulBufferOffsetSupported = false;
+    if (!deviceName.empty()) {
+        const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
+        isStatelessToStatefulBufferOffsetSupported = compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported();
     }
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         isStatelessToStatefulBufferOffsetSupported = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
@@ -709,9 +711,18 @@ void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
     }
 }
 
+void OfflineCompiler::appendExtraInternalOptions(const HardwareInfo &hwInfo, std::string &internalOptions) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
+    }
+    if (compilerHwInfoConfig.isForceEmuInt32DivRemSPRequired()) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
+    }
+}
+
 void OfflineCompiler::parseDebugSettings() {
     setStatelessToStatefullBufferOffsetFlag();
-    resolveExtraSettings();
 }
 
 std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName) {

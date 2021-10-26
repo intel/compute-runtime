@@ -14,18 +14,20 @@ namespace NEO {
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
+    using OfflineCompiler::appendExtraInternalOptions;
     using OfflineCompiler::argHelper;
     using OfflineCompiler::deviceName;
     using OfflineCompiler::elfBinary;
     using OfflineCompiler::fclDeviceCtx;
+    using OfflineCompiler::forceStatelessToStatefulOptimization;
     using OfflineCompiler::genBinary;
     using OfflineCompiler::genBinarySize;
     using OfflineCompiler::generateFilePathForIr;
     using OfflineCompiler::generateOptsSuffix;
-    using OfflineCompiler::getHardwareInfo;
     using OfflineCompiler::getStringWithinDelimiters;
     using OfflineCompiler::hwInfo;
     using OfflineCompiler::igcDeviceCtx;
+    using OfflineCompiler::initHardwareInfo;
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;
     using OfflineCompiler::internalOptions;
@@ -37,6 +39,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::outputFile;
     using OfflineCompiler::parseCommandLine;
     using OfflineCompiler::parseDebugSettings;
+    using OfflineCompiler::setStatelessToStatefullBufferOffsetFlag;
     using OfflineCompiler::sourceCode;
     using OfflineCompiler::storeBinary;
     using OfflineCompiler::updateBuildLog;
