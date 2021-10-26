@@ -52,7 +52,6 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_ptr_manager.h
@@ -94,4 +93,16 @@ else()
   )
 endif()
 
-set_property(GLOBAL PROPERTY NEO_CORE_tests_mocks ${NEO_CORE_tests_mocks})
+add_library(neo_shared_mocks OBJECT EXCLUDE_FROM_ALL ${NEO_CORE_tests_mocks})
+
+set_target_properties(neo_shared_mocks PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(neo_shared_mocks PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
+set_property(TARGET neo_shared_mocks APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
+target_include_directories(neo_shared_mocks PRIVATE
+                           $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
+                           $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                           ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
+                           ${IGC_COMMON_PARENT_DIR}
+)
+target_compile_definitions(neo_shared_mocks PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+create_project_source_tree(neo_shared_mocks)

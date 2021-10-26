@@ -9,6 +9,8 @@ if(WIN32)
 
   set(NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS
       $<TARGET_OBJECTS:neo_libult_common>
+      $<TARGET_OBJECTS:neo_shared_mocks>
+      $<TARGET_OBJECTS:neo_unit_tests_config>
       $<TARGET_OBJECTS:igdrcl_libult>
       $<TARGET_OBJECTS:igdrcl_libult_env>
       $<TARGET_OBJECTS:mock_gmm>
@@ -19,7 +21,6 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp
                  ${NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS}
-                 ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
@@ -32,8 +33,6 @@ if(WIN32)
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/os_memory_virtual_alloc_ult.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
   )

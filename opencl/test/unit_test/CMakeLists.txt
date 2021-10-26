@@ -28,8 +28,6 @@ add_dependencies(unit_tests copy_test_files_per_product)
 
 set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
 )
 
@@ -60,23 +58,13 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_VME_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
+    $<TARGET_OBJECTS:neo_shared_mocks>
+    $<TARGET_OBJECTS:neo_unit_tests_config>
 )
 if(TARGET ${SCHEDULER_BINARY_LIB_NAME})
   list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS
        $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
   )
-endif()
-
-if(DEFINED AUB_STREAM_PROJECT_NAME)
-  add_library(aub_stream_mock_lib OBJECT EXCLUDE_FROM_ALL
-              ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
-  )
-  list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS
-       $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>
-       $<TARGET_OBJECTS:aub_stream_mock_lib>
-  )
-else()
-  list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp)
 endif()
 
 add_executable(igdrcl_tests

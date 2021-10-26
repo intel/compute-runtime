@@ -28,15 +28,13 @@ if(NOT SKIP_UNIT_TESTS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/ult_specific_config.cpp
                  ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/api_specific_config_shared_tests.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                  $<TARGET_OBJECTS:mock_gmm>
                  $<TARGET_OBJECTS:neo_libult_common>
                  $<TARGET_OBJECTS:neo_libult_cs>
                  $<TARGET_OBJECTS:neo_libult>
+                 $<TARGET_OBJECTS:neo_shared_mocks>
   )
 
   set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
@@ -74,9 +72,8 @@ if(NOT SKIP_UNIT_TESTS)
     add_subdirectories()
   endif()
 
-  get_property(NEO_CORE_tests_mocks GLOBAL PROPERTY NEO_CORE_tests_mocks)
-  target_sources(${TARGET_NAME} PRIVATE ${NEO_CORE_tests_mocks})
-  add_dependencies(${TARGET_NAME} prepare_test_kernel_for_shared)
+  target_sources(${TARGET_NAME} PRIVATE $<TARGET_OBJECTS:neo_unit_tests_config>)
+  add_dependencies(unit_tests prepare_test_kernel_for_shared)
   add_dependencies(unit_tests ${TARGET_NAME})
 
   create_project_source_tree(${TARGET_NAME})

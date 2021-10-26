@@ -25,8 +25,6 @@ add_supported_test_product_families_definition()
 add_executable(
                ${TARGET_NAME}
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
-               ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.cpp
-               ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/sources/builtin/create_ult_builtin_functions_lib.cpp
                ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
 )
@@ -39,8 +37,6 @@ target_sources(
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
                ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
-               ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
-               ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
 )
 
 target_sources(
@@ -50,6 +46,8 @@ target_sources(
                $<TARGET_OBJECTS:neo_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>
                $<TARGET_OBJECTS:neo_libult>
+               $<TARGET_OBJECTS:neo_shared_mocks>
+               $<TARGET_OBJECTS:neo_unit_tests_config>
 )
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
@@ -77,7 +75,7 @@ endif()
 
 target_link_libraries(
                       ${TARGET_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME}
-                      compute_runtime_mockable_extra ${HW_LIBS_ULT} gmock-gtest
+                      ${HW_LIBS_ULT} gmock-gtest ${NEO_EXTRA_LIBS}
 )
 
 target_sources(${TARGET_NAME} PRIVATE $<TARGET_OBJECTS:mock_gmm>

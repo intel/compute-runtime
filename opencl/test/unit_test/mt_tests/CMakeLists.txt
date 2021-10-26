@@ -11,15 +11,14 @@ set(OPENCL_MT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_custom_target(run_mt_unit_tests)
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/test_mode.h
-               ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
-               ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
                $<TARGET_OBJECTS:igdrcl_libult>
                $<TARGET_OBJECTS:neo_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>
                $<TARGET_OBJECTS:neo_libult>
+               $<TARGET_OBJECTS:neo_shared_mocks>
+               $<TARGET_OBJECTS:neo_unit_tests_config>
                $<TARGET_OBJECTS:igdrcl_libult_env>
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>

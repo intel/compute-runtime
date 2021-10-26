@@ -8,9 +8,6 @@ include(cmake/verify_l0_support.cmake)
 
 if(BUILD_WITH_L0)
   set(TARGET_NAME_L0 ze_intel_gpu)
-  if(NOT SKIP_UNIT_TESTS)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/l0_tests.cmake)
-  endif()
 
   # Level Zero third party detection
   if(DEFINED LEVEL_ZERO_ROOT)
