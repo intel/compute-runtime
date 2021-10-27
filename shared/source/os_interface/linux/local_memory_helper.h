@@ -40,7 +40,7 @@ class LocalMemoryHelperImpl : public LocalMemoryHelper {
         return &instance;
     }
     uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
-    std::unique_ptr<uint8_t[]> translateIfRequired(uint8_t *dataQuery, int32_t length);
+    std::unique_ptr<uint8_t[]> translateIfRequired(uint8_t *dataQuery, int32_t length) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

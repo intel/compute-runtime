@@ -57,14 +57,14 @@ if(NEO__LIBVA_FOUND)
   )
 endif()
 
-if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+if(TESTS_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper_tests_dg1.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prod_dg1.h
   )
 endif()
 
-if(SUPPORT_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
+if(TESTS_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper_tests_xe_hp_sdv.cpp
   )
