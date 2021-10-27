@@ -256,8 +256,8 @@ using LinesCache = StackVec<Line, 512>;
 
 std::string constructYamlError(size_t lineNumber, const char *lineBeg, const char *parsePos, const char *reason = nullptr);
 
-static std::regex inlineCollectionRegex(R"regex(^\[(\s*(\d|\w)+,?)+\]\s*\n)regex");
-constexpr ConstStringRef inlineCollectionYamlErrorMsg = "NEO::Yaml : Inline collection is not in valid regex format - ^\\[(\\s*(\\d|\\w)+,?)+\\]\\s*\\n";
+static std::regex inlineCollectionRegex(R"regex(^\[(\s*(\d|\w)+,?)+\s*\]\s*\n)regex");
+constexpr ConstStringRef inlineCollectionYamlErrorMsg = "NEO::Yaml : Inline collection is not in valid regex format - ^\\[(\\s*(\\d|\\w)+,?)+\\s*\\]\\s*\\n";
 
 bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens, std::string &outErrReason, std::string &outWarning);
 
