@@ -43,6 +43,7 @@ D3DSharing<D3D>::~D3DSharing() {
 
 template <typename D3D>
 void D3DSharing<D3D>::synchronizeObject(UpdateData &updateData) {
+    std::unique_lock<std::mutex> lock(this->mtx);
     sharingFunctions->getDeviceContext(d3dQuery);
     if (!sharedResource) {
         sharingFunctions->copySubresourceRegion(resourceStaging, 0, resource, subresource);
@@ -58,6 +59,7 @@ void D3DSharing<D3D>::synchronizeObject(UpdateData &updateData) {
 template <typename D3D>
 void D3DSharing<D3D>::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     if (!sharedResource) {
+        std::unique_lock<std::mutex> lock(this->mtx);
         sharingFunctions->getDeviceContext(d3dQuery);
         sharingFunctions->copySubresourceRegion(resource, subresource, resourceStaging, 0);
         if (!context->getInteropUserSyncEnabled()) {

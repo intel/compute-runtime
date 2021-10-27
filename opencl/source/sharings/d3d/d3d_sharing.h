@@ -47,5 +47,6 @@ class D3DSharing : public SharingHandler {
     D3DQuery *d3dQuery = nullptr;
     bool sharedResource = false;
     unsigned int subresource = 0;
+    std::mutex mtx;
 };
 } // namespace NEO
