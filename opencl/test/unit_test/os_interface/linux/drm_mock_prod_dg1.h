@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "opencl/test/unit_test/os_interface/linux/drm_mock_exp.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock_impl.h"
 
 namespace PROD_DG1 {
 #undef DRM_IOCTL_I915_GEM_CREATE_EXT
@@ -17,10 +17,10 @@ namespace PROD_DG1 {
 
 using namespace NEO;
 
-class DrmMockProdDg1 : public DrmMockExp {
+class DrmMockProdDg1 : public DrmTipMock {
   public:
     DrmMockProdDg1(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockProdDg1(rootDeviceEnvironment, defaultHwInfo.get()) {}
-    DrmMockProdDg1(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMockExp(rootDeviceEnvironment) {
+    DrmMockProdDg1(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmTipMock(rootDeviceEnvironment) {
         rootDeviceEnvironment.setHwInfo(inputHwInfo);
     }
 

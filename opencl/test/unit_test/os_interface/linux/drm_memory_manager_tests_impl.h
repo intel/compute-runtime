@@ -10,13 +10,13 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
 
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture_exp.h"
+#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture_impl.h"
 
 namespace NEO {
 
-class DrmMemoryManagerFixtureExp : public DrmMemoryManagerFixture {
+class DrmMemoryManagerFixtureImpl : public DrmMemoryManagerFixture {
   public:
-    DrmMockCustomExp *mockExp;
+    DrmMockCustomImpl *mockExp;
 
     void SetUp() override {
         backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
@@ -24,12 +24,12 @@ class DrmMemoryManagerFixtureExp : public DrmMemoryManagerFixture {
 
         MemoryManagementFixture::SetUp();
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
-        mockExp = new DrmMockCustomExp(*executionEnvironment->rootDeviceEnvironments[0]);
+        mockExp = new DrmMockCustomImpl(*executionEnvironment->rootDeviceEnvironments[0]);
         DrmMemoryManagerFixture::SetUp(mockExp, true);
     }
 
     void TearDown() override {
-        mockExp->testIoctlsExp();
+        mockExp->testIoctls();
         DrmMemoryManagerFixture::TearDown();
     }
     std::unique_ptr<VariableBackup<UltHwConfig>> backup;

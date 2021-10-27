@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/linux/local_memory_helper.h"
 
-#include "third_party/uapi/drm_tip/drm/i915_drm.h"
+#include "third_party/uapi/drm/i915_drm.h"
 
 #include <memory>
 

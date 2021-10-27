@@ -19,8 +19,8 @@
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests_exp.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock_exp.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests_impl.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock_impl.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_memory_info.h"
 #include "test.h"
 
@@ -32,14 +32,14 @@ BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, si
 
 class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
   public:
-    DrmMockExp *mock;
+    DrmTipMock *mock;
 
     void SetUp() override {
         const bool localMemoryEnabled = true;
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
-        mock = new DrmMockExp(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+        mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         mock->memoryInfo.reset(new MockMemoryInfo());
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
@@ -67,14 +67,14 @@ class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
 
 class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
   public:
-    DrmMockCustomExp *mock;
+    DrmMockCustomImpl *mock;
 
     void SetUp() override {
         const bool localMemoryEnabled = true;
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-        mock = new DrmMockCustomExp(*executionEnvironment->rootDeviceEnvironments[0]);
+        mock = new DrmMockCustomImpl(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
 
@@ -171,7 +171,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
-        auto mock = new DrmMockExp(*executionEnvironment->rootDeviceEnvironments[i]);
+        auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         drm_i915_memory_region_info regionInfo[2] = {};
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
@@ -190,7 +190,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
 
-    static_cast<DrmMockExp *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>())->outputFd = 7;
+    static_cast<DrmTipMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>())->outputFd = 7;
 
     auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
 
@@ -198,7 +198,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
     EXPECT_NE(static_cast<DrmAllocation *>(multiGraphics.getDefaultGraphicsAllocation())->getMmapPtr(), nullptr);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         if (i != 0) {
-            EXPECT_EQ(static_cast<DrmMockExp *>(executionEnvironment->rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<Drm>())->inputFd, 7);
+            EXPECT_EQ(static_cast<DrmTipMock *>(executionEnvironment->rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<Drm>())->inputFd, 7);
         }
         EXPECT_NE(multiGraphics.getGraphicsAllocation(i), nullptr);
         memoryManager->freeGraphicsMemory(multiGraphics.getGraphicsAllocation(i));
@@ -216,7 +216,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
-        auto mock = new DrmMockExp(*executionEnvironment->rootDeviceEnvironments[i]);
+        auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         drm_i915_memory_region_info regionInfo[2] = {};
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
@@ -275,7 +275,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
-    auto mock = new DrmMockExp(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     drm_i915_memory_region_info regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
@@ -311,7 +311,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemo
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
-        auto mock = new DrmMockExp(*executionEnvironment->rootDeviceEnvironments[i]);
+        auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         mock->memoryInfo.reset(nullptr);
         mock->ioctlCallsCount = 0;
@@ -472,14 +472,14 @@ class DrmMemoryManagerLocalMemoryMemoryBankMock : public TestedDrmMemoryManager 
 
 class DrmMemoryManagerLocalMemoryMemoryBankTest : public ::testing::Test {
   public:
-    DrmMockExp *mock;
+    DrmTipMock *mock;
 
     void SetUp() override {
         const bool localMemoryEnabled = true;
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
-        mock = new DrmMockExp(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+        mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         mock->memoryInfo.reset(new MockMemoryInfo());
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
@@ -668,7 +668,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithL
     EXPECT_EQ(nullptr, bo.peekLockedAddress());
 }
 
-using DrmMemoryManagerFailInjectionTest = Test<DrmMemoryManagerFixtureExp>;
+using DrmMemoryManagerFailInjectionTest = Test<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation, NonDefaultIoctlsSupported) {
     mock->ioctl_expected.total = -1; //don't care
@@ -816,13 +816,13 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
     drmMemoryManger.freeGraphicsMemory(allocation);
 }
 
-using DrmMemoryManagerTestExp = Test<DrmMemoryManagerFixtureExp>;
+using DrmMemoryManagerTestImpl = Test<DrmMemoryManagerFixtureImpl>;
 
-HWTEST2_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryThenCallIoctlGemMapOffsetAndReturnLockedPtr, NonDefaultIoctlsSupported) {
-    mockExp->ioctlExp_expected.gemCreateExt = 1;
+HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryThenCallIoctlGemMapOffsetAndReturnLockedPtr, NonDefaultIoctlsSupported) {
+    mockExp->ioctlImpl_expected.gemCreateExt = 1;
     mockExp->ioctl_expected.gemWait = 1;
     mockExp->ioctl_expected.gemClose = 1;
-    mockExp->ioctlExp_expected.gemMmapOffset = 1;
+    mockExp->ioctlImpl_expected.gemMmapOffset = 1;
     mockExp->memoryInfo.reset(new MockMemoryInfo());
 
     AllocationData allocData;
@@ -854,8 +854,8 @@ HWTEST2_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapThenReturnNullPtr) {
-    mockExp->ioctlExp_expected.gemMmapOffset = 2;
+TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapThenReturnNullPtr) {
+    mockExp->ioctlImpl_expected.gemMmapOffset = 2;
     this->ioctlResExt = {mockExp->ioctl_cnt.total, -1};
     mockExp->ioctl_res_ext = &ioctlResExt;
 
@@ -870,8 +870,8 @@ TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAll
     mockExp->ioctl_res_ext = &mockExp->NONE;
 }
 
-TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapFunctionOffsetThenReturnNullPtr) {
-    mockExp->ioctlExp_expected.gemMmapOffset = 2;
+TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapFunctionOffsetThenReturnNullPtr) {
+    mockExp->ioctlImpl_expected.gemMmapOffset = 2;
     mockExp->returnIoctlExtraErrorValue = true;
     mockExp->failOnMmapOffset = true;
 
@@ -886,7 +886,7 @@ TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAll
     mockExp->ioctl_res_ext = &mockExp->NONE;
 }
 
-TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {
+TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {
     DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -895,7 +895,7 @@ TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAll
     memoryManager->unlockResource(&drmAllocation);
 }
 
-TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoThenReturnMemoryRegionSize) {
+TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoThenReturnMemoryRegionSize) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
@@ -908,7 +908,7 @@ TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCal
     EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0)), memoryManager.getLocalMemorySize(0u, 0xF));
 }
 
-TEST_F(DrmMemoryManagerTestExp, givenLocalMemoryDisabledWhenQueryMemoryInfoThenReturnTrueAndDontCreateMemoryInfo) {
+TEST_F(DrmMemoryManagerTestImpl, givenLocalMemoryDisabledWhenQueryMemoryInfoThenReturnTrueAndDontCreateMemoryInfo) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(0);
     MockExecutionEnvironment executionEnvironment;
@@ -919,7 +919,7 @@ TEST_F(DrmMemoryManagerTestExp, givenLocalMemoryDisabledWhenQueryMemoryInfoThenR
     EXPECT_EQ(nullptr, drm->memoryInfo);
 }
 
-TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoAndInvalidDeviceBitfieldThenReturnZero) {
+TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoAndInvalidDeviceBitfieldThenReturnZero) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
@@ -932,7 +932,7 @@ TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCal
     EXPECT_EQ(0u, memoryManager.getLocalMemorySize(0u, 0u));
 }
 
-TEST_F(DrmMemoryManagerTestExp, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledButMemoryInfoIsNotAvailableThenSizeZeroIsReturned) {
+TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledButMemoryInfoIsNotAvailableThenSizeZeroIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);

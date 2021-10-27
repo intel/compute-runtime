@@ -23,6 +23,8 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_engine_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_info_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_manager_localmem_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_system_info_tests.cpp
@@ -32,7 +34,7 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_create_command_queue_with_properties_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper_default_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}local_memory_helper_default_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_time_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.h
@@ -42,17 +44,7 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
-if(I915_LOCAL_MEM_EXP)
-  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests_exp.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper_default_tests_exp.cpp
-  )
-else()
-  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_info_tests.cpp
-  )
-endif()
+
 if(NEO__LIBVA_FOUND)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_va_sharing_tests.cpp

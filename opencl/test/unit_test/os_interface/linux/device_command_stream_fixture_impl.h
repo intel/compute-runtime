@@ -8,11 +8,11 @@
 #pragma once
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
-class DrmMockCustomExp : public DrmMockCustom {
+class DrmMockCustomImpl : public DrmMockCustom {
   public:
     using Drm::memoryInfo;
 
-    class IoctlsExp {
+    class Ioctls {
       public:
         void reset() {
             gemCreateExt = 0;
@@ -22,13 +22,13 @@ class DrmMockCustomExp : public DrmMockCustom {
         std::atomic<int32_t> gemMmapOffset;
     };
 
-    IoctlsExp ioctlExp_cnt;
-    IoctlsExp ioctlExp_expected;
+    Ioctls ioctlImpl_cnt;
+    Ioctls ioctlImpl_expected;
 
-    void testIoctlsExp() {
-#define NEO_IOCTL_EXPECT_EQ(PARAM)                                          \
-    if (this->ioctlExp_expected.PARAM >= 0) {                               \
-        EXPECT_EQ(this->ioctlExp_expected.PARAM, this->ioctlExp_cnt.PARAM); \
+    void testIoctls() {
+#define NEO_IOCTL_EXPECT_EQ(PARAM)                                            \
+    if (this->ioctlImpl_expected.PARAM >= 0) {                                \
+        EXPECT_EQ(this->ioctlImpl_expected.PARAM, this->ioctlImpl_cnt.PARAM); \
     }
         NEO_IOCTL_EXPECT_EQ(gemMmapOffset);
 #undef NEO_IOCTL_EXPECT_EQ
@@ -54,7 +54,7 @@ class DrmMockCustomExp : public DrmMockCustom {
             createExtSize = createExtParams->size;
             createExtHandle = createExtParams->handle;
             createExtExtensions = createExtParams->extensions;
-            ioctlExp_cnt.gemCreateExt++;
+            ioctlImpl_cnt.gemCreateExt++;
         } break;
         case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
             auto mmapOffsetParams = reinterpret_cast<drm_i915_gem_mmap_offset *>(arg);
@@ -62,7 +62,7 @@ class DrmMockCustomExp : public DrmMockCustom {
             mmapOffsetPad = mmapOffsetParams->pad;
             mmapOffsetOffset = mmapOffsetParams->offset;
             mmapOffsetFlags = mmapOffsetParams->flags;
-            ioctlExp_cnt.gemMmapOffset++;
+            ioctlImpl_cnt.gemMmapOffset++;
             if (failOnMmapOffset == true) {
                 return -1;
             }
@@ -75,8 +75,8 @@ class DrmMockCustomExp : public DrmMockCustom {
         return 0;
     }
 
-    DrmMockCustomExp(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
-        ioctlExp_cnt.reset();
-        ioctlExp_expected.reset();
+    DrmMockCustomImpl(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
+        ioctlImpl_cnt.reset();
+        ioctlImpl_expected.reset();
     }
 };

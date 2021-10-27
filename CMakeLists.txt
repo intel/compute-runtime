@@ -450,18 +450,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Get available platfroms
 include(platforms.cmake)
 
-if(SUPPORT_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
-  set(I915_LOCAL_MEM_EXP TRUE)
-endif()
-if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
-  set(I915_LOCAL_MEM_EXP TRUE)
-endif()
-
-if(I915_LOCAL_MEM_EXP)
-  get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party/uapi/drm_tip" ABSOLUTE)
-else()
-  get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)
-endif()
+get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)
 message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
 
 # Enable/Disable BuiltIns compilation during build
