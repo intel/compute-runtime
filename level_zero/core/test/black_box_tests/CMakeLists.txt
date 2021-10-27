@@ -23,6 +23,7 @@ set(TEST_TARGETS
     zello_image
     zello_image_view
     zello_dynamic_link
+    zello_events
 )
 
 include_directories(common)

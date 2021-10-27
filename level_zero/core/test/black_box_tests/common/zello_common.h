@@ -161,6 +161,28 @@ ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &
     return zeCommandListCreate(context, device, &descriptor, &cmdList);
 }
 
+void createEventPoolAndEvents(ze_context_handle_t &context,
+                              ze_device_handle_t &device,
+                              ze_event_pool_handle_t &eventPool,
+                              ze_event_pool_flag_t poolFlag,
+                              uint32_t poolSize,
+                              ze_event_handle_t *events,
+                              ze_event_scope_flag_t signalScope,
+                              ze_event_scope_flag_t waitScope) {
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventPoolDesc.count = poolSize;
+    eventPoolDesc.flags = poolFlag;
+    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
+
+    for (uint32_t i = 0; i < poolSize; i++) {
+        eventDesc.index = i;
+        eventDesc.signal = signalScope;
+        eventDesc.wait = waitScope;
+        SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, events + i));
+    }
+}
+
 std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_t &context, ze_driver_handle_t &driverHandle) {
     SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
