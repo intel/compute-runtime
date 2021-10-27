@@ -18,6 +18,7 @@ struct HardwareInfo;
 
 namespace TestChecks {
 bool supportsBlitter(const HardwareInfo *pHardwareInfo);
+bool fullySupportsBlitter(const HardwareInfo *pHardwareInfo);
 bool supportsImages(const HardwareInfo &hardwareInfo);
 bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 bool supportsSvm(const HardwareInfo *pHardwareInfo);
@@ -45,6 +46,11 @@ bool supportsSvm(const Device *pDevice);
 #define REQUIRE_BLITTER_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsBlitter(param) == false) { \
         GTEST_SKIP();                                       \
+    }
+
+#define REQUIRE_FULL_BLITTER_OR_SKIP(param)                      \
+    if (NEO::TestChecks::fullySupportsBlitter(param) == false) { \
+        GTEST_SKIP();                                            \
     }
 
 #define REQUIRE_IMAGES_OR_SKIP(param)                      \

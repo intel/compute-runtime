@@ -267,7 +267,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
     DebugManager.flags.EnableTimestampPacket.set(1);
 
     SetUpImpl<CsrType>();
-    REQUIRE_BLITTER_OR_SKIP(&device->getHardwareInfo());
+    REQUIRE_FULL_BLITTER_OR_SKIP(&device->getHardwareInfo());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
@@ -312,7 +312,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
     DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
 
     SetUpImpl<CsrType>();
-    REQUIRE_BLITTER_OR_SKIP(&device->getHardwareInfo());
+    REQUIRE_FULL_BLITTER_OR_SKIP(&device->getHardwareInfo());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());

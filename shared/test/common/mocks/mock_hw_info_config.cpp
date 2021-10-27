@@ -87,6 +87,11 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::obtainBlitterPreference(const HardwareInfo &h
 }
 
 template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isBlitterFullySupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

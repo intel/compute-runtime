@@ -89,6 +89,9 @@ struct BlitEnqueueTests : public ::testing::Test {
         bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
         capabilityTable.blitterOperationsSupported = true;
 
+        if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(device->getHardwareInfo())) {
+            GTEST_SKIP();
+        }
         if (createBcsEngine) {
             auto &engine = device->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::LowPriority);
             bcsOsContext.reset(OsContext::create(nullptr, 1,

@@ -38,6 +38,11 @@ bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwI
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isBlitterFullySupported(const HardwareInfo &hwInfo) const {
+    return hwInfo.capabilityTable.blitterOperationsSupported;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isNewResidencyModelSupported() const {
     return true;
 }

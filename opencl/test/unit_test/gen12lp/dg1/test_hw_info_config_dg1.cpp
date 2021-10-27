@@ -107,9 +107,26 @@ DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
 }
 
-DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingBlitterPreferenceThenReturnFalse) {
+DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingBlitterPreferenceThenReturnTrue) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     const auto &hardwareInfo = DG1::hwInfo;
 
-    EXPECT_FALSE(hwInfoConfig.obtainBlitterPreference(hardwareInfo));
+    EXPECT_TRUE(hwInfoConfig.obtainBlitterPreference(hardwareInfo));
+}
+
+DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingFullBlitterSupportThenReturnFalse) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const auto &hardwareInfo = DG1::hwInfo;
+
+    EXPECT_FALSE(hwInfoConfig.isBlitterFullySupported(hardwareInfo));
+}
+
+DG1TEST_F(Dg1HwInfo, whenConfigureHwInfoThenBlitterSupportIsEnabled) {
+    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto hardwareInfo = *defaultHwInfo;
+
+    hardwareInfo.capabilityTable.blitterOperationsSupported = false;
+    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
+
+    EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }

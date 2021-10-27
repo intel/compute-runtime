@@ -9,6 +9,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "test.h"
@@ -20,6 +21,16 @@ bool TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
     for (const auto &engine : engines) {
         if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
             return pHardwareInfo->capabilityTable.blitterOperationsSupported;
+        }
+    }
+    return false;
+}
+
+bool TestChecks::fullySupportsBlitter(const HardwareInfo *pHardwareInfo) {
+    auto engines = HwHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);
+    for (const auto &engine : engines) {
+        if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
+            return HwInfoConfig::get(pHardwareInfo->platform.eProductFamily)->isBlitterFullySupported(*pHardwareInfo);
         }
     }
     return false;

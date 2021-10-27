@@ -1506,7 +1506,7 @@ struct CommandQueueHwBlitTest : ClDeviceFixture, ContextFixture, CommandQueueHwF
     using ContextFixture::SetUp;
 
     void SetUp() override {
-        REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+        REQUIRE_FULL_BLITTER_OR_SKIP(defaultHwInfo.get());
 
         DebugManager.flags.EnableBlitterOperationsSupport.set(1);
         DebugManager.flags.EnableTimestampPacket.set(1);

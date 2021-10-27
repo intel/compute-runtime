@@ -137,7 +137,7 @@ TEST(Event, WhenGettingEventInfoThenCqIsReturned) {
 TEST(Event, givenBcsCsrSetInEventWhenPeekingBcsTaskCountThenReturnCorrectTaskCount) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
+    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
     auto device = ReleaseableObjectPtr<MockClDevice>{
         new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockAlignedMallocManagerDevice>(&hwInfo)}};

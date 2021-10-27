@@ -228,7 +228,7 @@ HWTEST_F(EnqueueWriteImageTest, givenDeviceWithBlitterSupportWhenEnqueueWriteIma
     {
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueWriteImageHelper<>::enqueueWriteImage(mockCmdQ.get(), image.get(), CL_FALSE, origin, region);
-        EXPECT_TRUE(mockCmdQ->isBlitEnqueueImageAllowed);
+        EXPECT_EQ(hwInfoConfig->isBlitterFullySupported(*hwInfo), mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {
         DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);

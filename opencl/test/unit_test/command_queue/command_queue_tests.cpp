@@ -250,7 +250,7 @@ TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsC
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
+    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     EXPECT_EQ(2u, device->getNumGenericSubDevices());
@@ -1193,7 +1193,7 @@ TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestamp
 
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
-    if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->obtainBlitterPreference(*defaultHwInfo.get())) {
+    if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(*defaultHwInfo.get())) {
         GTEST_SKIP();
     }
 

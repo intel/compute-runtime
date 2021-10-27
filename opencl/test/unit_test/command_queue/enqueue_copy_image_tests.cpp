@@ -218,6 +218,7 @@ HWTEST_F(EnqueueCopyImageTest, givenDeviceWithBlitterSupportWhenEnqueueCopyImage
     auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
+
     size_t srcOrigin[] = {0, 0, 0};
     size_t dstOrigin[] = {0, 0, 0};
 
@@ -240,7 +241,7 @@ HWTEST_F(EnqueueCopyImageTest, givenDeviceWithBlitterSupportWhenEnqueueCopyImage
     {
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueCopyImageHelper<>::enqueueCopyImage(mockCmdQ.get(), srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region);
-        EXPECT_TRUE(mockCmdQ->isBlitEnqueueImageAllowed);
+        EXPECT_EQ(hwInfoConfig->isBlitterFullySupported(*hwInfo), mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {
         DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);

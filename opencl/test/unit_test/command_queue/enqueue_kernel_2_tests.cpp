@@ -933,7 +933,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
 
     auto hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(hwInfo);
+    REQUIRE_FULL_BLITTER_OR_SKIP(hwInfo);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);

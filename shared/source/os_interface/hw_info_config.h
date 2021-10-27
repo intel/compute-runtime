@@ -48,6 +48,7 @@ class HwInfoConfig {
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
     virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
@@ -109,6 +110,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
     void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
+    bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;

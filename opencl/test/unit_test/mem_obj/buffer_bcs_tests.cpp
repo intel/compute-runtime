@@ -104,6 +104,9 @@ struct BcsBufferTests : public ::testing::Test {
         bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
         capabilityTable.blitterOperationsSupported = true;
 
+        if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(device->getHardwareInfo())) {
+            GTEST_SKIP();
+        }
         if (createBcsEngine) {
             auto &engine = device->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::LowPriority);
             bcsOsContext.reset(OsContext::create(nullptr, 1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, device->getDeviceBitfield())));
@@ -1202,6 +1205,9 @@ struct BcsSvmTests : public BcsBufferTests {
         }
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         BcsBufferTests::SetUpT<FamilyType>();
+        if (IsSkipped()) {
+            GTEST_SKIP();
+        }
 
         deviceMemAlloc = clDeviceMemAllocINTEL(bcsMockContext.get(), device.get(), nullptr, allocSize, 0u, &retVal);
         ASSERT_NE(nullptr, deviceMemAlloc);
