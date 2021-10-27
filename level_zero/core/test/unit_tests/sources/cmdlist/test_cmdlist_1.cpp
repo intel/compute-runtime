@@ -118,7 +118,7 @@ TEST_F(CommandListCreate, givenNonExistingPtrThenAppendMemoryPrefetchReturnsErro
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
-TEST_F(CommandListCreate, givenValidPtrWhenAppendMemAdviseFailsThenReturnError) {
+TEST_F(CommandListCreate, givenValidPtrWhenAppendMemAdviseFailsThenReturnSuccess) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -138,7 +138,7 @@ TEST_F(CommandListCreate, givenValidPtrWhenAppendMemAdviseFailsThenReturnError) 
     memoryManager->failSetMemAdvise = true;
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);

@@ -792,9 +792,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
         }
 
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
-        if (!memoryManager->setMemAdvise(alloc, flags, deviceImp->getRootDeviceIndex())) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
+        memoryManager->setMemAdvise(alloc, flags, deviceImp->getRootDeviceIndex());
 
         deviceImp->memAdviseSharedAllocations[allocData] = flags;
         return ZE_RESULT_SUCCESS;
