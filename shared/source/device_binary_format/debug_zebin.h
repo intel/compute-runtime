@@ -16,21 +16,40 @@
 
 namespace NEO {
 namespace Debug {
-struct GPUSegments {
+struct Segments {
     struct Segment {
-        uintptr_t gpuAddress = std::numeric_limits<uintptr_t>::max();
+        uintptr_t address = std::numeric_limits<uintptr_t>::max();
         ArrayRef<const uint8_t> data;
     };
-    using KernelNameToSectionIdMap = std::unordered_map<std::string, size_t>;
-    Segment varData;
-    Segment constData;
-    StackVec<Segment, 8> kernels;
-    KernelNameToSectionIdMap nameToSectIdMap;
-};
-void patch(uint64_t addr, uint64_t value, NEO::Elf::RELOC_TYPE_ZEBIN type);
-void patchDebugZebin(std::vector<uint8_t> &debugZebin, const GPUSegments &segmentData);
-std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebin, const GPUSegments &segmentData);
+    using CPUSegment = Segment;
+    using GPUSegment = Segment;
+    using KernelNameToSegmentMap = std::unordered_map<std::string, GPUSegment>;
 
-std::vector<uint8_t> getDebugZebin(ArrayRef<const uint8_t> zebin, const GPUSegments &segmentData);
+    GPUSegment varData;
+    GPUSegment constData;
+    CPUSegment stringData;
+    KernelNameToSegmentMap nameToSegMap;
+};
+
+class DebugZebinCreator {
+  public:
+    using Elf = NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>;
+    DebugZebinCreator() = delete;
+    DebugZebinCreator(Elf &zebin, const Segments &segments) : segments(segments), zebin(zebin) {}
+
+    void applyDebugRelocations();
+    void createDebugZebin();
+    inline std::vector<uint8_t> getDebugZebin() { return debugZebin; }
+
+  protected:
+    void applyRelocation(uint64_t addr, uint64_t value, NEO::Elf::RELOC_TYPE_ZEBIN type);
+    const Segments::Segment *getSegmentByName(ConstStringRef sectionName);
+
+    std::vector<uint8_t> debugZebin;
+    const Segments &segments;
+    Elf &zebin;
+};
+
+std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebin, const Segments &segmentData);
 } // namespace Debug
 } // namespace NEO

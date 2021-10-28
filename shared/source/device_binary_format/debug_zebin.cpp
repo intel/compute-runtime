@@ -14,7 +14,7 @@ namespace NEO {
 namespace Debug {
 using namespace Elf;
 
-std::vector<uint8_t> createDebugZebin(NEO::Elf::Elf<EI_CLASS_64> &zebin, const GPUSegments &gpuSegments) {
+void DebugZebinCreator::createDebugZebin() {
     ElfEncoder<EI_CLASS_64> elfEncoder(false, false);
     auto &header = elfEncoder.getElfFileHeader();
     header.machine = zebin.elfFileHeader->machine;
@@ -26,41 +26,24 @@ std::vector<uint8_t> createDebugZebin(NEO::Elf::Elf<EI_CLASS_64> &zebin, const G
     for (uint32_t i = 0; i < zebin.sectionHeaders.size(); i++) {
         const auto &section = zebin.sectionHeaders[i];
         auto sectionName = zebin.getSectionName(i);
-        auto refSectionName = ConstStringRef(sectionName);
+        ArrayRef<const uint8_t> sectionData;
 
-        uint64_t segGpuAddr = 0U;
-        ArrayRef<const uint8_t> data;
-
-        if (refSectionName.startsWith(SectionsNamesZebin::textPrefix.data())) {
-            auto kernelName = sectionName.substr(SectionsNamesZebin::textPrefix.length());
-            auto segmentIdIter = gpuSegments.nameToSectIdMap.find(kernelName);
-            UNRECOVERABLE_IF(segmentIdIter == gpuSegments.nameToSectIdMap.end());
-            const auto &kernel = gpuSegments.kernels[segmentIdIter->second];
-            segGpuAddr = kernel.gpuAddress;
-            data = kernel.data;
-        } else if (refSectionName == SectionsNamesZebin::dataConst) {
-            segGpuAddr = gpuSegments.constData.gpuAddress;
-            data = gpuSegments.constData.data;
-        } else if (refSectionName == SectionsNamesZebin::dataGlobal) {
-            segGpuAddr = gpuSegments.varData.gpuAddress;
-            data = gpuSegments.varData.data;
+        if (auto segment = getSegmentByName(sectionName)) {
+            sectionData = segment->data;
+            elfEncoder.appendProgramHeaderLoad(i, segment->address, sectionData.size());
         } else {
-            data = section.data;
+            sectionData = section.data;
         }
 
-        if (segGpuAddr != 0U) {
-            elfEncoder.appendProgramHeaderLoad(i, segGpuAddr, data.size());
-        }
-
-        auto &sectionHeader = elfEncoder.appendSection(section.header->type, refSectionName, data);
+        auto &sectionHeader = elfEncoder.appendSection(section.header->type, sectionName, sectionData);
         sectionHeader.link = section.header->link;
         sectionHeader.info = section.header->info;
         sectionHeader.name = section.header->name;
     }
-    return elfEncoder.encode();
+    debugZebin = elfEncoder.encode();
 }
 
-void patch(uint64_t addr, uint64_t value, RELOC_TYPE_ZEBIN type) {
+void DebugZebinCreator::applyRelocation(uint64_t addr, uint64_t value, RELOC_TYPE_ZEBIN type) {
     switch (type) {
     default:
         UNRECOVERABLE_IF(type != R_ZE_SYM_ADDR)
@@ -75,47 +58,57 @@ void patch(uint64_t addr, uint64_t value, RELOC_TYPE_ZEBIN type) {
     }
 }
 
-void patchDebugZebin(std::vector<uint8_t> &debugZebin, const GPUSegments &gpuSegments) {
+void DebugZebinCreator::applyDebugRelocations() {
     std::string errors, warnings;
     auto elf = decodeElf(debugZebin, errors, warnings);
 
     for (const auto &reloc : elf.getDebugInfoRelocations()) {
+
         auto sectionName = elf.getSectionName(reloc.symbolSectionIndex);
-        auto refSectionName = ConstStringRef(sectionName);
         uint64_t sectionAddress = 0U;
-        if (refSectionName.startsWith(SectionsNamesZebin::textPrefix.data())) {
-            auto kernelName = sectionName.substr(SectionsNamesZebin::textPrefix.length());
-            auto segmentIdIter = gpuSegments.nameToSectIdMap.find(kernelName);
-            UNRECOVERABLE_IF(segmentIdIter == gpuSegments.nameToSectIdMap.end());
-            sectionAddress = gpuSegments.kernels[segmentIdIter->second].gpuAddress;
-        } else if (refSectionName.startsWith(SectionsNamesZebin::dataConst.data())) {
-            sectionAddress = gpuSegments.constData.gpuAddress;
-        } else if (refSectionName.startsWith(SectionsNamesZebin::dataGlobal.data())) {
-            sectionAddress = gpuSegments.varData.gpuAddress;
-        } else if (refSectionName.startsWith(SectionsNamesZebin::debugPrefix.data())) {
+        if (auto segment = getSegmentByName(sectionName)) {
+            sectionAddress = segment->address;
+        } else if (ConstStringRef(sectionName).startsWith(SectionsNamesZebin::debugPrefix.data())) {
             // do not offset debug symbols
         } else {
             DEBUG_BREAK_IF(true);
             continue;
         }
 
-        auto patchValue = sectionAddress + elf.getSymbolValue(reloc.symbolTableIndex) + reloc.addend;
-        auto patchLocation = reinterpret_cast<uint64_t>(debugZebin.data()) + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset;
-
-        patch(patchLocation, patchValue, static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType));
+        auto value = sectionAddress + elf.getSymbolValue(reloc.symbolTableIndex) + reloc.addend;
+        auto address = reinterpret_cast<uint64_t>(debugZebin.data()) + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset;
+        auto type = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
+        applyRelocation(address, value, type);
     }
 }
 
-std::vector<uint8_t> getDebugZebin(ArrayRef<const uint8_t> zebinBin, const GPUSegments &gpuSegments) {
+std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebinBin, const Segments &gpuSegments) {
     std::string errors, warnings;
     auto zebin = decodeElf(zebinBin, errors, warnings);
     if (false == errors.empty()) {
         return {};
     }
 
-    auto debugZebin = createDebugZebin(zebin, gpuSegments);
-    patchDebugZebin(debugZebin, gpuSegments);
-    return debugZebin;
+    auto dzc = DebugZebinCreator(zebin, gpuSegments);
+    dzc.createDebugZebin();
+    dzc.applyDebugRelocations();
+    return dzc.getDebugZebin();
+}
+
+const Segments::Segment *DebugZebinCreator::getSegmentByName(ConstStringRef sectionName) {
+    if (sectionName.startsWith(SectionsNamesZebin::textPrefix.data())) {
+        auto kernelName = sectionName.substr(SectionsNamesZebin::textPrefix.length());
+        auto kernelSegmentIt = segments.nameToSegMap.find(kernelName.str());
+        UNRECOVERABLE_IF(kernelSegmentIt == segments.nameToSegMap.end());
+        return &kernelSegmentIt->second;
+    } else if (sectionName == SectionsNamesZebin::dataConst) {
+        return &segments.constData;
+    } else if (sectionName == SectionsNamesZebin::dataGlobal) {
+        return &segments.varData;
+    } else if (sectionName == SectionsNamesZebin::dataConstString) {
+        return &segments.stringData;
+    }
+    return nullptr;
 }
 
 } // namespace Debug

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/kernel/implicit_args.h"
@@ -1956,6 +1957,40 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationWhenLinkingModuleThenSegmentIsPat
     EXPECT_EQ(sizeof(ImplicitArgs), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
 
     EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+}
+
+using ModuleWithZebinTest = Test<ModuleWithZebinFixture>;
+TEST_F(ModuleWithZebinTest, givenNoZebinThenSegmentsAreEmpty) {
+    auto segments = module->getZebinSegments();
+
+    EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.constData.address);
+    EXPECT_TRUE(segments.constData.data.empty());
+
+    EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.varData.address);
+    EXPECT_TRUE(segments.varData.data.empty());
+
+    EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.stringData.address);
+    EXPECT_TRUE(segments.stringData.data.empty());
+
+    EXPECT_TRUE(segments.nameToSegMap.empty());
+}
+
+TEST_F(ModuleWithZebinTest, givenZebinSegmentsThenSegmentsArePopulated) {
+    module->addSegments();
+    auto segments = module->getZebinSegments();
+
+    auto checkGPUSeg = [](NEO::GraphicsAllocation *alloc, NEO::Debug::Segments::Segment segment) {
+        EXPECT_EQ(static_cast<uintptr_t>(alloc->getGpuAddressToPatch()), segment.address);
+        EXPECT_EQ(reinterpret_cast<uint8_t *>(alloc->getUnderlyingBuffer()), segment.data.begin());
+        EXPECT_EQ(static_cast<size_t>(alloc->getUnderlyingBufferSize()), segment.data.size());
+    };
+    checkGPUSeg(module->translationUnit->globalConstBuffer, segments.constData);
+    checkGPUSeg(module->translationUnit->globalConstBuffer, segments.varData);
+    checkGPUSeg(module->kernelImmDatas[0]->getIsaGraphicsAllocation(), segments.nameToSegMap["kernel"]);
+
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(module->translationUnit->programInfo.globalStrings.initData), segments.stringData.address);
+    EXPECT_EQ(reinterpret_cast<const uint8_t *>(module->translationUnit->programInfo.globalStrings.initData), segments.stringData.data.begin());
+    EXPECT_EQ(module->translationUnit->programInfo.globalStrings.size, segments.stringData.data.size());
 }
 
 } // namespace ult

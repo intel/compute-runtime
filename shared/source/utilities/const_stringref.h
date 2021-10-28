@@ -59,7 +59,8 @@ class ConstStringRef {
         : ptr(str.data()), len(str.length()) {
     }
 
-    constexpr ConstStringRef substr(int offset, int len) const noexcept {
+    template <typename SizeT>
+    constexpr ConstStringRef substr(SizeT offset, SizeT len) const noexcept {
         if (len >= 0) {
             return ConstStringRef(this->ptr + offset, len);
         } else {
@@ -67,7 +68,8 @@ class ConstStringRef {
         }
     }
 
-    constexpr ConstStringRef substr(int offset) const noexcept {
+    template <typename SizeT>
+    constexpr ConstStringRef substr(SizeT offset) const noexcept {
         return ConstStringRef(this->ptr + offset, this->len - offset);
     }
 

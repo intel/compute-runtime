@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
@@ -431,6 +432,34 @@ ModuleImp::~ModuleImp() {
     kernelImmDatas.clear();
 }
 
+NEO::Debug::Segments ModuleImp::getZebinSegments() {
+    NEO::Debug::Segments segments;
+
+    auto varBuffer = translationUnit->globalVarBuffer;
+    if (varBuffer) {
+        segments.varData = {varBuffer->getGpuAddressToPatch(), {reinterpret_cast<uint8_t *>(varBuffer->getUnderlyingBuffer()), varBuffer->getUnderlyingBufferSize()}};
+    }
+
+    auto constBuffer = translationUnit->globalConstBuffer;
+    if (constBuffer) {
+        segments.constData = {constBuffer->getGpuAddressToPatch(), {reinterpret_cast<uint8_t *>(constBuffer->getUnderlyingBuffer()), constBuffer->getUnderlyingBufferSize()}};
+    }
+
+    auto stringBuffer = translationUnit->programInfo.globalStrings;
+    if (stringBuffer.initData) {
+        segments.stringData = {reinterpret_cast<uintptr_t>(stringBuffer.initData),
+                               {reinterpret_cast<const uint8_t *>(stringBuffer.initData), stringBuffer.size}};
+    }
+
+    for (auto &kernImmData : this->kernelImmDatas) {
+        const auto &isa = kernImmData->getIsaGraphicsAllocation();
+        NEO::Debug::Segments::Segment kernelSegment = {isa->getGpuAddressToPatch(), {reinterpret_cast<uint8_t *>(isa->getUnderlyingBuffer()), isa->getUnderlyingBufferSize()}};
+        segments.nameToSegMap.insert(std::pair(kernImmData->getDescriptor().kernelMetadata.kernelName, kernelSegment));
+    }
+
+    return segments;
+}
+
 bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     bool success = true;
 
@@ -493,9 +522,8 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         }
     }
 
-    verifyDebugCapabilities();
-
     this->updateBuildLog(neoDevice);
+    verifyDebugCapabilities();
 
     if (false == success) {
         return false;
@@ -513,7 +541,33 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 
     checkIfPrivateMemoryPerDispatchIsNeeded();
 
+    success = this->linkBinary();
+
     if (debugEnabled) {
+        passDebugData();
+    }
+
+    return success;
+}
+
+void ModuleImp::passDebugData() {
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+        auto segments = getZebinSegments();
+        auto debugZebin = NEO::Debug::createDebugZebin(refBin, segments);
+
+        translationUnit->debugDataSize = debugZebin.size();
+        translationUnit->debugData.reset(new char[translationUnit->debugDataSize]);
+        memcpy_s(translationUnit->debugData.get(), translationUnit->debugDataSize,
+                 debugZebin.data(), debugZebin.size());
+
+        if (device->getSourceLevelDebugger()) {
+            NEO::DebugData debugData; // pass debug zebin in vIsa field
+            debugData.vIsa = reinterpret_cast<const char *>(debugZebin.data());
+            debugData.vIsaSize = static_cast<uint32_t>(debugZebin.size());
+            device->getSourceLevelDebugger()->notifyKernelDebugData(&debugData, "debug_zebin", nullptr, 0);
+        }
+    } else {
         if (device->getSourceLevelDebugger()) {
             for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
                 NEO::DebugData *notifyDebugData = kernelInfo->kernelDescriptor.external.debugData.get();
@@ -534,8 +588,6 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
             }
         }
     }
-
-    return this->linkBinary();
 }
 
 const KernelImmutableData *ModuleImp::getKernelImmutableData(const char *functionName) const {

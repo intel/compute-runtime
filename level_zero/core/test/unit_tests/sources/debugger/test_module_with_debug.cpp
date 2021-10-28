@@ -297,6 +297,16 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithMultipleRelocationsWhenInitializingM
     EXPECT_NE(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData);
 }
 
+using ModuleWithZebinAndSLDTest = Test<ModuleWithZebinFixture>;
+TEST_F(ModuleWithZebinAndSLDTest, GivenZebinThenCreateDebugZebinAndPassToSLD) {
+    module->addEmptyZebin();
+
+    auto debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
+    module->passDebugData();
+
+    EXPECT_TRUE(module->translationUnit->debugData);
+}
 using KernelDebugSurfaceTest = Test<ModuleFixture>;
 
 HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKernelToCommandListThenBindfulSurfaceStateForDebugSurfaceIsProgrammed) {

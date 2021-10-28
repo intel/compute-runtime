@@ -20,6 +20,11 @@
 #include <memory>
 #include <string>
 
+namespace NEO {
+namespace Debug {
+struct Segments;
+}
+} // namespace NEO
 namespace L0 {
 
 namespace BuildOptions {
@@ -132,6 +137,8 @@ struct ModuleImp : public Module {
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();
     void checkIfPrivateMemoryPerDispatchIsNeeded() override;
+    NEO::Debug::Segments getZebinSegments();
+    void passDebugData();
 
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};

@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
@@ -286,6 +287,88 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
     const uint32_t numKernelArguments = 6;
     std::vector<std::unique_ptr<L0::Module>> modules;
     std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
+};
+
+struct ModuleWithZebinFixture : public DeviceFixture {
+    struct MockImmutableData : public KernelImmutableData {
+        using KernelImmutableData::device;
+        using KernelImmutableData::isaGraphicsAllocation;
+        using KernelImmutableData::kernelDescriptor;
+        MockImmutableData(L0::Device *device) {
+
+            auto mockKernelDescriptor = new NEO::KernelDescriptor;
+            mockKernelDescriptor->kernelMetadata.kernelName = "kernel";
+            kernelDescriptor = mockKernelDescriptor;
+            this->device = device;
+            isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
+                                                                        NEO::GraphicsAllocation::AllocationType::KERNEL_ISA,
+                                                                        reinterpret_cast<void *>(0x1234),
+                                                                        0x1000,
+                                                                        0,
+                                                                        sizeof(uint32_t),
+                                                                        MemoryPool::System4KBPages));
+        }
+
+        ~MockImmutableData() {
+            delete kernelDescriptor;
+        }
+    };
+
+    struct MockModuleWithZebin : public L0::ModuleImp {
+        using ModuleImp::getZebinSegments;
+        using ModuleImp::kernelImmDatas;
+        using ModuleImp::passDebugData;
+        using ModuleImp::translationUnit;
+        MockModuleWithZebin(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::User) {}
+
+        void addSegments() {
+            kernelImmDatas.push_back(std::make_unique<MockImmutableData>(device));
+            translationUnit->globalVarBuffer = new NEO::MockGraphicsAllocation(0,
+                                                                               NEO::GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
+                                                                               reinterpret_cast<void *>(0x1234),
+                                                                               0x1000,
+                                                                               0,
+                                                                               sizeof(uint32_t),
+                                                                               MemoryPool::System4KBPages);
+            translationUnit->globalConstBuffer = new NEO::MockGraphicsAllocation(0,
+                                                                                 NEO::GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
+                                                                                 reinterpret_cast<void *>(0x1234),
+                                                                                 0x1000,
+                                                                                 0,
+                                                                                 sizeof(uint32_t),
+                                                                                 MemoryPool::System4KBPages);
+
+            translationUnit->programInfo.globalStrings.initData = &strings;
+            translationUnit->programInfo.globalStrings.size = sizeof(strings);
+        }
+
+        void addKernelSegment() {
+        }
+
+        void addEmptyZebin() {
+            auto zebin = ZebinTestData::ValidEmptyProgram();
+
+            translationUnit->unpackedDeviceBinarySize = zebin.storage.size();
+            translationUnit->unpackedDeviceBinary.reset(new char[zebin.storage.size()]);
+            memcpy_s(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize,
+                     zebin.storage.data(), zebin.storage.size());
+        }
+
+        ~MockModuleWithZebin() {
+        }
+
+        const char strings[12] = "Hello olleH";
+    };
+    void SetUp() {
+        NEO::MockCompilerEnableGuard mock(true);
+        DeviceFixture::SetUp();
+        module = std::make_unique<MockModuleWithZebin>(device);
+    }
+
+    void TearDown() {
+        DeviceFixture::TearDown();
+    }
+    std::unique_ptr<MockModuleWithZebin> module;
 };
 
 struct ImportHostPointerModuleFixture : public ModuleFixture {
