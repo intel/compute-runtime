@@ -706,17 +706,52 @@ HWTEST_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledForIm
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    ze_copy_region_t dstRegion = {};
-    ze_copy_region_t srcRegion = {};
+    uint32_t width = 16;
+    uint32_t height = 16;
+    ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
+    ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
 
-    auto result = commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
+    auto result = commandList->appendMemoryCopyRegion(dstPtr, &dr, 0, 0, srcPtr, &sr, 0, 0, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandList->destroy();
+}
+
+HWTEST_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledForRegularCommandListForAppendMemoryCopyRegionThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    uint32_t width = 16;
+    uint32_t height = 16;
+    ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
+    ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+    const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    auto result = commandList->appendMemoryCopyRegion(dstPtr, &dr, 0, 0, srcPtr, &sr, 0, 0, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandQueue->synchronize(0);
+
+    commandList->destroy();
+    commandQueue->destroy();
 }
 
 HWTEST_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendMemoryCopyRegionThenSuccessIsReturned) {
@@ -1048,6 +1083,28 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
     context->freeMem(dstPtr);
 }
 
+HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryFillWithDeviceMemoryThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    void *dstPtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstPtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    int pattern = 1;
+
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
+
+    result = commandList->appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 4096u, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    context->freeMem(dstPtr);
+    commandList->destroy();
+}
+
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryFillThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
@@ -1107,12 +1164,22 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForRegularCo
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    void *dstPtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstPtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    int pattern = 1;
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    result = commandList->appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 4096u, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandQueue->synchronize(0);
 
-    auto commandList = CommandList::fromHandle(commandLists[0]);
+    context->freeMem(dstPtr);
     commandList->destroy();
 
     commandQueue->destroy();
@@ -1131,12 +1198,23 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForRegularC
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    void *dstPtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &dstPtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    int pattern = 1;
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    result = commandList->appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 4096u, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandQueue->synchronize(0);
 
-    auto commandList = CommandList::fromHandle(commandLists[0]);
+    context->freeMem(dstPtr);
     commandList->destroy();
 
     commandQueue->destroy();

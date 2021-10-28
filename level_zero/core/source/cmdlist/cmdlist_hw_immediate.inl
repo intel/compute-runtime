@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 
@@ -92,7 +93,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
     if (this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         this->csr->waitForCompletionWithTimeout(false, timeoutMicroseconds, completionStamp.taskCount);
-        this->removeHostPtrAllocations();
+        this->csr->getInternalAllocationStorage()->cleanAllocationList(completionStamp.taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
 
     cmdListBBEndOffset = commandStream->getUsed();

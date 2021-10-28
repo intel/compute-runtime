@@ -10,6 +10,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/device/device_imp.h"
@@ -21,7 +23,9 @@ CommandList::~CommandList() {
         cmdQImmediate->destroy();
     }
     removeDeallocationContainerData();
-    removeHostPtrAllocations();
+    if (this->cmdListType == CommandListType::TYPE_REGULAR || !this->isFlushTaskSubmissionEnabled) {
+        removeHostPtrAllocations();
+    }
     printfFunctionContainer.clear();
 }
 
@@ -56,6 +60,14 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
             return allocation->second;
         }
     }
+    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled) {
+        auto allocation = this->csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+        if (allocation != nullptr) {
+            auto alloc = allocation.get();
+            this->csr->getInternalAllocationStorage()->storeAllocation(std::move(allocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+            return alloc;
+        }
+    }
     return nullptr;
 }
 
@@ -66,7 +78,11 @@ NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64
     }
     alloc = device->allocateMemoryFromHostPtr(buffer, bufferSize);
     UNRECOVERABLE_IF(alloc == nullptr);
-    hostPtrMap.insert(std::make_pair(buffer, alloc));
+    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled) {
+        this->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+    } else {
+        hostPtrMap.insert(std::make_pair(buffer, alloc));
+    }
     return alloc;
 }
 

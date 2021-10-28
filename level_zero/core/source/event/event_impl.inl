@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/memory_manager/internal_allocation_storage.h"
+
 #include "level_zero/core/source/event/event.h"
 
 namespace L0 {
@@ -98,6 +100,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusKernelTimestamp() {
             }
         }
     }
+    this->csr->getInternalAllocationStorage()->cleanAllocationList(this->csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -113,6 +116,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusNonTimestamp() {
             }
         }
     }
+    this->csr->getInternalAllocationStorage()->cleanAllocationList(this->csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     return ZE_RESULT_SUCCESS;
 }
 
