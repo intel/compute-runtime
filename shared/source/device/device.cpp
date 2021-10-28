@@ -566,6 +566,9 @@ EngineControl &Device::getInternalEngine() {
 }
 
 EngineControl *Device::getInternalCopyEngine() {
+    if (!getHardwareInfo().capabilityTable.blitterOperationsSupported) {
+        return nullptr;
+    }
     for (auto &engine : engines) {
         if (engine.osContext->getEngineType() == aub_stream::ENGINE_BCS &&
             engine.osContext->isInternalEngine()) {

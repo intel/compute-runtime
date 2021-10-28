@@ -877,6 +877,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToI
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,
@@ -921,6 +923,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToI
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,
@@ -966,6 +969,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyFromImageToImageUs
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,
@@ -1009,6 +1013,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,
