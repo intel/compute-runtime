@@ -11,6 +11,8 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/utilities/io_functions.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -180,6 +182,8 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     ArrayRef<char> apiOptions;
     ArrayRef<char> internalOptions;
 
+    CompilerCache cache(CompilerCacheConfig{});
+
     for (auto platform : platforms) {
         hwInfo.platform = *platform;
 
@@ -199,7 +203,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
                             strcpy_s(buf3.get(), bufSize, internalOptionsArray[i3].c_str());
                             internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
 
-                            std::string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+                            std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
 
                             if (hashes.find(hash) != hashes.end()) {
                                 FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3;
@@ -212,9 +216,50 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
         }
     }
 
-    std::string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
-    std::string hash2 = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+    std::string hash2 = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
+}
+
+TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFileIsCreated) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.BinaryCacheTrace.set(true);
+
+    static struct VerifyData {
+        bool matched;
+        const char *pattern;
+    } verifyData[] = {
+        {false, "---- input ----"},
+        {false, "---- options ----"},
+        {false, "---- internal options ----"},
+        {false, "---- platform ----"},
+        {false, "---- feature table ----"},
+        {false, "---- workaround table ----"}};
+
+    // reset global array state
+    for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
+        verifyData[idx].matched = false;
+    }
+
+    VariableBackup<NEO::IoFunctions::vfprintfFuncPtr> mockVFprintf(&NEO::IoFunctions::vfprintfPtr, [](FILE *fp, const char *formatStr, va_list) -> int {
+        for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
+            if (strncmp(formatStr, verifyData[idx].pattern, strlen(verifyData[idx].pattern))) {
+                verifyData[idx].matched = true;
+            }
+        }
+        return 0;
+    });
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    ArrayRef<char> src;
+    ArrayRef<char> apiOptions;
+    ArrayRef<char> internalOptions;
+    CompilerCache cache(CompilerCacheConfig{});
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+
+    for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
+        EXPECT_TRUE(verifyData[idx].matched);
+    }
 }
 
 TEST(CompilerCacheTests, GivenEmptyBinaryWhenCachingThenBinaryIsNotCached) {

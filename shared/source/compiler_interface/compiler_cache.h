@@ -26,9 +26,6 @@ struct CompilerCacheConfig {
 
 class CompilerCache {
   public:
-    static const std::string getCachedFileName(const HardwareInfo &hwInfo, ArrayRef<const char> input,
-                                               ArrayRef<const char> options, ArrayRef<const char> internalOptions);
-
     CompilerCache(const CompilerCacheConfig &config);
     virtual ~CompilerCache() = default;
 
@@ -36,6 +33,9 @@ class CompilerCache {
     CompilerCache(CompilerCache &&) = delete;
     CompilerCache &operator=(const CompilerCache &) = delete;
     CompilerCache &operator=(CompilerCache &&) = delete;
+
+    const std::string getCachedFileName(const HardwareInfo &hwInfo, ArrayRef<const char> input,
+                                        ArrayRef<const char> options, ArrayRef<const char> internalOptions);
 
     MOCKABLE_VIRTUAL bool cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize);
     MOCKABLE_VIRTUAL std::unique_ptr<char[]> loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize);

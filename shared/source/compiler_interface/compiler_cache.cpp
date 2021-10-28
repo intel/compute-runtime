@@ -7,12 +7,14 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/casts.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/source/utilities/io_functions.h"
 
 #include "config.h"
 #include "os_inc.h"
@@ -49,6 +51,48 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
            << std::setw(sizeof(res) * 2)
            << std::hex
            << res;
+
+    if (DebugManager.flags.BinaryCacheTrace.get()) {
+        std::string filePath = config.cacheDir + PATH_SEPARATOR + stream.str() + ".trace";
+        std::lock_guard<std::mutex> lock(cacheAccessMtx);
+        auto fp = NEO::IoFunctions::fopenPtr(filePath.c_str(), "w");
+        if (fp) {
+            NEO::IoFunctions::fprintf(fp, "---- input ----\n");
+            NEO::IoFunctions::fprintf(fp, "%s\n", &*input.begin());
+            NEO::IoFunctions::fprintf(fp, "---- options ----\n");
+            NEO::IoFunctions::fprintf(fp, "%s\n", &*options.begin());
+            NEO::IoFunctions::fprintf(fp, "---- internal options ----\n");
+            NEO::IoFunctions::fprintf(fp, "%s\n", &*internalOptions.begin());
+
+            NEO::IoFunctions::fprintf(fp, "---- platform ----\n");
+            NEO::IoFunctions::fprintf(fp, "  eProductFamily=%d\n", hwInfo.platform.eProductFamily);
+            NEO::IoFunctions::fprintf(fp, "  ePCHProductFamily=%d\n", hwInfo.platform.ePCHProductFamily);
+            NEO::IoFunctions::fprintf(fp, "  eDisplayCoreFamily=%d\n", hwInfo.platform.eDisplayCoreFamily);
+            NEO::IoFunctions::fprintf(fp, "  eRenderCoreFamily=%d\n", hwInfo.platform.eRenderCoreFamily);
+            NEO::IoFunctions::fprintf(fp, "  ePlatformType=%d\n", hwInfo.platform.ePlatformType);
+            NEO::IoFunctions::fprintf(fp, "  usDeviceID=%d\n", hwInfo.platform.usDeviceID);
+            NEO::IoFunctions::fprintf(fp, "  usRevId=%d\n", hwInfo.platform.usRevId);
+            NEO::IoFunctions::fprintf(fp, "  usDeviceID_PCH=%d\n", hwInfo.platform.usDeviceID_PCH);
+            NEO::IoFunctions::fprintf(fp, "  usRevId_PCH=%d\n", hwInfo.platform.usRevId_PCH);
+            NEO::IoFunctions::fprintf(fp, "  eGTType=%d\n", hwInfo.platform.eGTType);
+
+            NEO::IoFunctions::fprintf(fp, "---- feature table ----\n");
+            auto featureTable = r_pod_cast<const char *>(&hwInfo.featureTable.packed);
+            for (size_t idx = 0; idx < sizeof(hwInfo.featureTable.packed); idx++) {
+                NEO::IoFunctions::fprintf(fp, "%02x.", (uint8_t)(featureTable[idx]));
+            }
+            NEO::IoFunctions::fprintf(fp, "\n");
+
+            NEO::IoFunctions::fprintf(fp, "---- workaround table ----\n");
+            auto workaroundTable = reinterpret_cast<const char *>(&hwInfo.workaroundTable);
+            for (size_t idx = 0; idx < sizeof(hwInfo.workaroundTable); idx++) {
+                NEO::IoFunctions::fprintf(fp, "%02x.", (uint8_t)(workaroundTable[idx]));
+            }
+            NEO::IoFunctions::fprintf(fp, "\n");
+
+            NEO::IoFunctions::fclosePtr(fp);
+        }
+    }
 
     return stream.str();
 }

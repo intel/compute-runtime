@@ -352,3 +352,6 @@ DECLARE_DEBUG_VARIABLE(bool, SkipFlushingEventsOnGetStatusCalls, false, "When se
 DECLARE_DEBUG_VARIABLE(bool, AllowUnrestrictedSize, false, "Allow allocating memory with greater size than MAX_MEM_ALLOC_SIZE")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramPipeControlPriorToNonPipelinedStateCommand, -1, "-1: default, 0: disable, 1: enable, Program additional PIPE CONTROL command before non pipelined state command")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDrmRegion, -1, "-1: disable, 0+: override to given memory region for all allocations")
+
+/* Binary Cache */
+DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")

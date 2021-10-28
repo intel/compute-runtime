@@ -31,12 +31,13 @@ ClDeviceVector toClDeviceVector(ClDevice &clDevice) {
 int MockProgram::initInternalOptionsCalled = 0;
 
 std::string MockProgram::getCachedFileName() const {
+    CompilerCache cache(CompilerCacheConfig{});
     auto hwInfo = this->context->getDevice(0)->getHardwareInfo();
     auto input = ArrayRef<const char>(this->sourceCode.c_str(), this->sourceCode.size());
     auto opts = ArrayRef<const char>(this->options.c_str(), this->options.size());
     auto internalOptions = getInitInternalOptions();
     auto internalOpts = ArrayRef<const char>(internalOptions.c_str(), internalOptions.size());
-    return CompilerCache::getCachedFileName(hwInfo, input, opts, internalOpts);
+    return cache.getCachedFileName(hwInfo, input, opts, internalOpts);
 }
 
 } // namespace NEO

@@ -66,10 +66,10 @@ TranslationOutput::ErrorCode CompilerInterface::build(
 
     std::string kernelFileHash;
     if (cachingMode == CachingMode::Direct) {
-        kernelFileHash = CompilerCache::getCachedFileName(device.getHardwareInfo(),
-                                                          input.src,
-                                                          input.apiOptions,
-                                                          input.internalOptions);
+        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
+                                                  input.src,
+                                                  input.apiOptions,
+                                                  input.internalOptions);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
             return TranslationOutput::ErrorCode::Success;
@@ -120,9 +120,9 @@ TranslationOutput::ErrorCode CompilerInterface::build(
     }
 
     if (cachingMode == CachingMode::PreProcess) {
-        kernelFileHash = CompilerCache::getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
-                                                          input.apiOptions,
-                                                          input.internalOptions);
+        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
+                                                  input.apiOptions,
+                                                  input.internalOptions);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
             return TranslationOutput::ErrorCode::Success;
