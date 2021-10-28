@@ -565,6 +565,20 @@ EngineControl &Device::getInternalEngine() {
     return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::Internal);
 }
 
+EngineControl &Device::getNextEngineForCommandQueue() {
+    const auto &defaultEngine = this->getDefaultEngine();
+
+    const auto &hardwareInfo = this->getHardwareInfo();
+    const auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
+
+    auto defaultEngineGroupIndex = this->getIndexOfNonEmptyEngineGroup(engineGroupType);
+    auto engines = this->getEngineGroups()[defaultEngineGroupIndex];
+
+    auto engineIndex = this->regularCommandQueuesCreatedWithinDeviceCount++ % engines.size();
+    return this->getEngineGroups()[defaultEngineGroupIndex][engineIndex];
+}
+
 EngineControl *Device::getInternalCopyEngine() {
     if (!getHardwareInfo().capabilityTable.blitterOperationsSupported) {
         return nullptr;
