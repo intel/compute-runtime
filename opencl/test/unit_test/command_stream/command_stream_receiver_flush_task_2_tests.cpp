@@ -125,6 +125,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEmptyQueueWhenFinishingThenTa
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTaskCountToWaitBiggerThanLatestSentTaskCountWhenWaitForCompletionThenFlushPipeControl) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(1);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

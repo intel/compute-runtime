@@ -89,7 +89,9 @@ int CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuffer, Residency
     this->latestSentTaskCount = taskCount + 1;
 
     auto flushed = this->flush(batchBuffer, allocationsForResidency);
-    this->latestFlushedTaskCount = taskCount + 1;
+    if (!isUpdateTagFromWaitEnabled()) {
+        this->latestFlushedTaskCount = taskCount + 1;
+    }
     taskCount++;
 
     return !flushed;
@@ -261,10 +263,6 @@ void CommandStreamReceiver::cleanupResources() {
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
-    if (this->latestSentTaskCount < taskCountToWait) {
-        this->flushTagUpdate();
-    }
-
     uint32_t latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
         if (!this->flushBatchedSubmissions()) {
@@ -279,7 +277,13 @@ bool CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, boo
     std::chrono::high_resolution_clock::time_point time1, time2;
     int64_t timeDiff = 0;
 
+    uint32_t latestSentTaskCount = this->latestFlushedTaskCount;
+    if (latestSentTaskCount < taskCountToWait) {
+        this->flushTagUpdate();
+    }
+
     volatile uint32_t *partitionAddress = pollAddress;
+
     time1 = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < activePartitions; i++) {
         while (*partitionAddress < taskCountToWait && timeDiff <= timeoutMicroseconds) {

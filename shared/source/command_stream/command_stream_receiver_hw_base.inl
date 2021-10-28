@@ -789,7 +789,10 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             flushStampUpdateHelper.updateAll(flushStamp->peekStamp());
 
-            this->latestFlushedTaskCount = lastTaskCount;
+            if (!isUpdateTagFromWaitEnabled()) {
+                this->latestFlushedTaskCount = lastTaskCount;
+            }
+
             this->makeSurfacePackNonResident(surfacesForSubmit);
             resourcePackage.clear();
         }
@@ -882,8 +885,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
-    updateTagFromWait();
-
     int64_t waitTimeout = 0;
     bool enableTimeout = false;
 
@@ -1088,14 +1089,18 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
     BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream);
 
-    MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
+    auto updateTag = !isUpdateTagFromWaitEnabled();
+    updateTag |= blocking;
+    if (updateTag) {
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
 
-    MiFlushArgs args;
-    args.commandWithPostSync = true;
-    args.notifyEnable = isUsedNotifyEnableForPostSync();
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount, args);
+        MiFlushArgs args;
+        args.commandWithPostSync = true;
+        args.notifyEnable = isUsedNotifyEnableForPostSync();
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount, args);
 
-    MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
+    }
 
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
@@ -1129,7 +1134,10 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     flush(batchBuffer, getResidencyAllocations());
     makeSurfacePackNonResident(getResidencyAllocations());
 
-    latestFlushedTaskCount = newTaskCount;
+    if (!isUpdateTagFromWaitEnabled()) {
+        latestFlushedTaskCount = newTaskCount;
+    }
+
     taskCount = newTaskCount;
     auto flushStampToWait = flushStamp->peekStamp();
 
@@ -1145,7 +1153,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
     if (this->osContext != nullptr) {
-        if (this->osContext->getEngineType() == aub_stream::ENGINE_BCS) {
+        if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
             this->flushMiFlushDW();
         } else {
             this->flushPipeControl();
@@ -1176,11 +1184,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
     MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), taskCount, args);
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), taskCount + 1, args);
 
     makeResident(*tagAllocation);
 
     this->flushSmallTask(commandStream, commandStreamStart);
+    this->latestFlushedTaskCount = taskCount.load();
 }
 
 template <typename GfxFamily>
@@ -1215,8 +1224,9 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
 
     PipeControlArgs args(true);
     args.notifyEnable = isUsedNotifyEnableForPostSync();
+    args.workloadPartitionOffset = this->activePartitions > 1 && this->staticWorkPartitioningEnabled;
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(commandStream,
-                                                                                        PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                                                                                        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                                                                                         getTagAllocation()->getGpuAddress(),
                                                                                         taskCount + 1,
                                                                                         peekHwInfo(),
@@ -1225,10 +1235,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
     makeResident(*tagAllocation);
 
     this->flushSmallTask(commandStream, commandStreamStart);
-
-    this->latestFlushedTaskCount = taskCount + 1;
-    this->latestSentTaskCount = taskCount + 1;
-    taskCount++;
+    this->latestFlushedTaskCount = taskCount.load();
 }
 
 template <typename GfxFamily>
@@ -1321,7 +1328,9 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
     BatchBuffer batchBuffer{commandStreamTask.getGraphicsAllocation(), commandStreamStartTask, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
                             commandStreamTask.getUsed(), &commandStreamTask, endingCmdPtr, false};
 
+    this->latestSentTaskCount = taskCount + 1;
     flushHandler(batchBuffer, getResidencyAllocations());
+    taskCount++;
 }
 
 template <typename GfxFamily>

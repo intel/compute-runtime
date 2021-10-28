@@ -558,6 +558,10 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountWrite(NEO::LinearStream &co
 
     UNRECOVERABLE_IF(csr == nullptr);
 
+    if (csr->isUpdateTagFromWaitEnabled()) {
+        return;
+    }
+
     auto taskCountToWrite = csr->peekTaskCount() + 1;
     auto gpuAddress = static_cast<uint64_t>(csr->getTagAllocation()->getGpuAddress());
 

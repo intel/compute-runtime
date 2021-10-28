@@ -176,7 +176,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
             NEO::PipeControlArgs args;
             this->csr->flushNonKernelTask(nullptr, 0, 0, args, false, false, false);
             if (this->isSyncModeQueue) {
-                this->csr->flushTagUpdate();
                 auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
                 this->csr->waitForCompletionWithTimeout(false, timeoutMicroseconds, this->csr->peekTaskCount());
             }
@@ -288,7 +287,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
         }
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_SIGNALED, args, false, false, false);
         if (this->isSyncModeQueue) {
-            this->csr->flushTagUpdate();
             auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
             this->csr->waitForCompletionWithTimeout(false, timeoutMicroseconds, this->csr->peekTaskCount());
         }
@@ -322,7 +320,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
         }
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_CLEARED, args, false, false, false);
         if (this->isSyncModeQueue) {
-            this->csr->flushTagUpdate();
             auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
             this->csr->waitForCompletionWithTimeout(false, timeoutMicroseconds, this->csr->peekTaskCount());
         }
