@@ -318,30 +318,6 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmitiingBatchBufferThenTaskC
     executionEnvironment.memoryManager->freeGraphicsMemoryImpl(commandBuffer);
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenSubmitiingBatchBufferThenTaskCountIsIncrementedAndLatestsValuesSetCorrectly) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
-
-    MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr.getRootDeviceIndex(), MemoryConstants::pageSize});
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
-
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-    ResidencyContainer residencyList;
-
-    auto previousTaskCount = csr.peekTaskCount();
-    auto currentTaskCount = previousTaskCount + 1;
-    csr.submitBatchBuffer(batchBuffer, residencyList);
-
-    EXPECT_EQ(currentTaskCount, csr.peekTaskCount());
-    EXPECT_EQ(previousTaskCount, csr.peekLatestFlushedTaskCount());
-    EXPECT_EQ(currentTaskCount, csr.peekLatestSentTaskCount());
-
-    memoryManager->freeGraphicsMemoryImpl(commandBuffer);
-}
-
 HWTEST_F(CommandStreamReceiverTest, givenOverrideCsrAllocationSizeWhenCreatingCommandStreamCsrGraphicsAllocationThenAllocationHasCorrectSize) {
     DebugManagerStateRestore restore;
 

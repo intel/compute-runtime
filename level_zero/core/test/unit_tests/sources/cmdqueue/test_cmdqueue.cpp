@@ -243,34 +243,6 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
     commandQueue->destroy();
 }
 
-HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitWhenDispatchTaskCountWriteThenNoPipeControlFlushed) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
-
-    const ze_command_queue_desc_t desc = {};
-    ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-
-    commandQueue->dispatchTaskCountWrite(*commandQueue->commandStream, false);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), commandQueue->commandStream->getUsed()));
-
-    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), itor);
-
-    commandQueue->destroy();
-}
-
 HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainerIsEmptyThenMakeResidentWasNotCalled) {
     auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
