@@ -18,7 +18,7 @@ get_l0_gpu_driver_version() {
     __NEO_TAG_TMP=$(git -C ${REPO_DIR} describe --abbrev=1 --tags | awk -F"." '{ nn=split($NF, nfa, "."); if(nn==2) {printf("%s-%s", nfa[1], nfa[2]);} else {print $NF;} }')
     NEO_TAG="${NEO_TAG:-$__NEO_TAG_TMP}"
     unset __NEO_TAG_TMP
-    __NEO_L0_VERSION_PATCH_TMP=$(echo $NEO_TAG | awk -F '-' '{ print $1; }')
+    __NEO_L0_VERSION_PATCH_TMP=$(echo $NEO_TAG | awk -F '-' '{ print $1; }' | sed 's/^0*//')
     NEO_L0_VERSION_PATCH="${NEO_L0_VERSION_PATCH:-$__NEO_L0_VERSION_PATCH_TMP}"
     unset __NEO_L0_VERSION_PATCH_TMP
     __NEO_L0_VERSION_HOTFIX_TMP=$(echo $NEO_TAG | awk -F '-' '{ if(NF>1) {printf(".%s",  $2);} }')
