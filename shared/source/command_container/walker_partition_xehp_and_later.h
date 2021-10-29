@@ -720,4 +720,64 @@ uint64_t estimateSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
     return size;
 }
 
+template <typename GfxFamily>
+uint64_t computeBarrierControlSectionOffset(WalkerPartitionArgs &args) {
+    uint64_t offset = 0u;
+    if (args.emitSelfCleanup) {
+        offset += computeSelfCleanupSectionSize<GfxFamily>(args.useAtomicsForSelfCleanup);
+    }
+    offset += (sizeof(PIPE_CONTROL<GfxFamily>) +
+               computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>() +
+               sizeof(BATCH_BUFFER_START<GfxFamily>));
+    return offset;
+}
+
+template <typename GfxFamily>
+uint64_t estimateBarrierSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
+    uint64_t size = computeBarrierControlSectionOffset<GfxFamily>(args) +
+                    sizeof(BarrierControlSection);
+    if (args.emitSelfCleanup) {
+        size += computeSelfCleanupEndSectionSize<GfxFamily>(barrierControlSectionFieldsForCleanupCount, args.useAtomicsForSelfCleanup);
+    }
+    return size;
+}
+
+template <typename GfxFamily>
+void constructBarrierCommandBuffer(void *cpuPointer,
+                                   uint64_t gpuAddressOfAllocation,
+                                   uint32_t &totalBytesProgrammed,
+                                   WalkerPartitionArgs &args) {
+    void *currentBatchBufferPointer = cpuPointer;
+    const auto controlSectionOffset = computeBarrierControlSectionOffset<GfxFamily>(args);
+
+    const auto finalSyncTileCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(BarrierControlSection, finalSyncTileCount);
+    if (args.emitSelfCleanup) {
+        programSelfCleanupSection<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, finalSyncTileCountField, args.useAtomicsForSelfCleanup);
+    }
+
+    programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args.dcFlush);
+
+    const auto crossTileSyncCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(BarrierControlSection, crossTileSyncCount);
+    programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, crossTileSyncCountField, args.tileCount);
+
+    const auto afterControlSectionOffset = controlSectionOffset + sizeof(BarrierControlSection);
+    programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation + afterControlSectionOffset, false, args.secondaryBatchBuffer);
+
+    DEBUG_BREAK_IF(totalBytesProgrammed != controlSectionOffset);
+    BarrierControlSection *controlSection = putCommand<BarrierControlSection>(currentBatchBufferPointer, totalBytesProgrammed);
+    controlSection->crossTileSyncCount = 0u;
+    controlSection->finalSyncTileCount = 0u;
+    DEBUG_BREAK_IF(totalBytesProgrammed != afterControlSectionOffset);
+
+    if (args.emitSelfCleanup) {
+        programSelfCleanupEndSection<GfxFamily>(currentBatchBufferPointer,
+                                                totalBytesProgrammed,
+                                                finalSyncTileCountField,
+                                                gpuAddressOfAllocation + controlSectionOffset,
+                                                barrierControlSectionFieldsForCleanupCount,
+                                                args.tileCount,
+                                                args.useAtomicsForSelfCleanup);
+    }
+}
+
 } // namespace WalkerPartition

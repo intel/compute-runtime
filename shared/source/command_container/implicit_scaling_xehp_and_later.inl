@@ -96,10 +96,12 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                       staticPartitioning,
                                                                                       useSecondaryBatchBuffer);
 
+    uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
+    void *commandBuffer = commandStream.getSpace(0u);
     if (staticPartitioning) {
         UNRECOVERABLE_IF(tileCount != partitionCount);
-        WalkerPartition::constructStaticallyPartitionedCommandBuffer<GfxFamily>(commandStream.getSpace(0u),
-                                                                                commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed(),
+        WalkerPartition::constructStaticallyPartitionedCommandBuffer<GfxFamily>(commandBuffer,
+                                                                                cmdBufferGpuAddress,
                                                                                 &walkerCmd,
                                                                                 totalProgrammedSize,
                                                                                 args);
@@ -112,8 +114,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
             args.partitionCount = partitionCount;
         }
 
-        WalkerPartition::constructDynamicallyPartitionedCommandBuffer<GfxFamily>(commandStream.getSpace(0u),
-                                                                                 commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed(),
+        WalkerPartition::constructDynamicallyPartitionedCommandBuffer<GfxFamily>(commandBuffer,
+                                                                                 cmdBufferGpuAddress,
                                                                                  &walkerCmd,
                                                                                  totalProgrammedSize,
                                                                                  args);
@@ -124,6 +126,40 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
 template <typename GfxFamily>
 bool &ImplicitScalingDispatch<GfxFamily>::getPipeControlStallRequired() {
     return ImplicitScalingDispatch<GfxFamily>::pipeControlStallRequired;
+}
+
+template <typename GfxFamily>
+size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(bool apiSelfCleanup) {
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.emitSelfCleanup = apiSelfCleanup;
+    args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
+
+    return static_cast<size_t>(WalkerPartition::estimateBarrierSpaceRequiredInCommandBuffer<GfxFamily>(args));
+}
+
+template <typename GfxFamily>
+void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &commandStream,
+                                                                 const DeviceBitfield &devices,
+                                                                 bool apiSelfCleanup,
+                                                                 bool dcFlush,
+                                                                 bool useSecondaryBatchBuffer) {
+    uint32_t totalProgrammedSize = 0u;
+
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.emitSelfCleanup = apiSelfCleanup;
+    args.dcFlush = dcFlush;
+    args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
+    args.tileCount = static_cast<uint32_t>(devices.count());
+    args.secondaryBatchBuffer = useSecondaryBatchBuffer;
+
+    uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
+    void *commandBuffer = commandStream.getSpace(0u);
+
+    WalkerPartition::constructBarrierCommandBuffer<GfxFamily>(commandBuffer,
+                                                              cmdBufferGpuAddress,
+                                                              totalProgrammedSize,
+                                                              args);
+    commandStream.getSpace(totalProgrammedSize);
 }
 
 } // namespace NEO

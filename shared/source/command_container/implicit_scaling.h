@@ -53,6 +53,13 @@ struct ImplicitScalingDispatch {
 
     static bool &getPipeControlStallRequired();
 
+    static size_t getBarrierSize(bool apiSelfCleanup);
+    static void dispatchBarrierCommands(LinearStream &commandStream,
+                                        const DeviceBitfield &devices,
+                                        bool apiSelfCleanup,
+                                        bool dcFlush,
+                                        bool useSecondaryBatchBuffer);
+
   private:
     static bool pipeControlStallRequired;
 };

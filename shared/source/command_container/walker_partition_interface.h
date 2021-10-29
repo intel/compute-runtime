@@ -26,6 +26,7 @@ struct WalkerPartitionArgs {
     bool initializeWparidRegister = false;
     bool emitPipeControlStall = false;
     bool preferredStaticPartitioning = false;
+    bool dcFlush = false;
 };
 
 constexpr uint32_t wparidCCSOffset = 0x221C;
@@ -54,4 +55,10 @@ struct StaticPartitioningControlSection {
     uint32_t finalSyncTileCounter = 0;
 };
 constexpr size_t staticPartitioningFieldsForCleanupCount = sizeof(StaticPartitioningControlSection) / sizeof(uint32_t) - 1;
+
+struct BarrierControlSection {
+    uint32_t crossTileSyncCount = 0u;
+    uint32_t finalSyncTileCount = 0;
+};
+constexpr size_t barrierControlSectionFieldsForCleanupCount = sizeof(BarrierControlSection) / sizeof(uint32_t) - 1;
 } // namespace WalkerPartition
