@@ -166,6 +166,11 @@ TEST(YamlIsMatched, WhenTextIsTooShortThenReturnFalse) {
     EXPECT_FALSE(NEO::Yaml::isMatched(text, text.begin(), "bcd"));
 }
 
+TEST(YamlIsValidInlineCollectionFormat, WhenEndIsReachedThenReturnFalse) {
+    const char coll[8] = "[ 1, 2 ";
+    EXPECT_FALSE(NEO::Yaml::isValidInlineCollectionFormat(coll, coll + 7));
+}
+
 TEST(YamlConsumeNumberOrSign, GivenValidNumberOrSignThenReturnProperEndingPosition) {
     ConstStringRef plus5 = "a+5";
     ConstStringRef minus7 = "b  -7 [";
@@ -479,7 +484,12 @@ TEST(YamlTokenize, GivenInvalidInlineCollectionThenEmitsError) {
     warnings.clear();
     errors.clear();
 
-    success = NEO::Yaml::tokenize("[[1,2,3,4]]\n", lines, tokens, errors, warnings);
+    success = NEO::Yaml::tokenize("[[1,2,3,4]\n", lines, tokens, errors, warnings);
+    EXPECT_FALSE(success);
+    EXPECT_STREQ("NEO::Yaml : Could not parse line : [0] : [[] <-- parser position on error. Reason : NEO::Yaml : Inline collection is not in valid regex format - ^\\[(\\s*(\\d|\\w)+,?)+\\s*\\]\\s*\\n\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    success = NEO::Yaml::tokenize("[1 2 3 4]\n", lines, tokens, errors, warnings);
     EXPECT_FALSE(success);
     EXPECT_STREQ("NEO::Yaml : Could not parse line : [0] : [[] <-- parser position on error. Reason : NEO::Yaml : Inline collection is not in valid regex format - ^\\[(\\s*(\\d|\\w)+,?)+\\s*\\]\\s*\\n\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
@@ -1317,7 +1327,7 @@ TEST(YamlBuildTree, GivenInlineCollectionThenProperlyCreatesChildNodes) {
         R"===(
       banana : yellow
       kiwi : green
-      apple : [red, green, blue]
+      apple : [ red, green, blue ]
       pear : pearish
 )===";
 

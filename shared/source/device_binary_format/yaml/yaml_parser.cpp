@@ -108,6 +108,43 @@ bool tokenizeEndLine(ConstStringRef text, LinesCache &outLines, TokensCache &out
     return true;
 }
 
+bool isValidInlineCollectionFormat(const char *context, const char *contextEnd) {
+    auto consumeAlphaNum = [](const char *&text) {
+        while (isAlphaNumeric(*text)) {
+            text++;
+        }
+    };
+
+    bool endNum = false;
+    bool endCollection = false;
+    context++; // skip '['
+    while (context < contextEnd && *context != '\n') {
+        if (isWhitespace(*context)) {
+            context++;
+        } else if (false == endNum) {
+            if (isAlphaNumeric(*context)) {
+                consumeAlphaNum(context);
+                endNum = true;
+            } else {
+                return false;
+            }
+        } else if (false == endCollection) {
+            if (*context == ',') {
+                context++;
+                endNum = false;
+            } else if (*context == ']') {
+                context++;
+                endCollection = true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+    return endCollection;
+}
+
 bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens, std::string &outErrReason, std::string &outWarning) {
     if (text.empty()) {
         outWarning.append("NEO::Yaml : input text is empty\n");
@@ -200,7 +237,7 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
             break;
         }
         case '[':
-            if (false == std::regex_search(context.pos, inlineCollectionRegex)) {
+            if (false == isValidInlineCollectionFormat(context.pos, text.end())) {
                 outErrReason = constructYamlError(outLines.size(), context.lineBeginPos, context.pos, inlineCollectionYamlErrorMsg.data());
                 return false;
             }
