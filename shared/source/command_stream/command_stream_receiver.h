@@ -235,6 +235,8 @@ class CommandStreamReceiver {
 
     uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
 
+    void startControllingDirectSubmissions();
+
     virtual bool initDirectSubmission(Device &device, OsContext &osContext) {
         return true;
     }

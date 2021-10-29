@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/device/device.h"
+#include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/array_count.h"
@@ -384,6 +385,13 @@ ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
 AubSubCaptureStatus CommandStreamReceiver::checkAndActivateAubSubCapture(const std::string &kernelName) { return {false, false}; }
 
 void CommandStreamReceiver::addAubComment(const char *comment) {}
+
+void CommandStreamReceiver::startControllingDirectSubmissions() {
+    auto controller = this->executionEnvironment.directSubmissionController.get();
+    if (controller) {
+        controller->startControlling();
+    }
+}
 
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);

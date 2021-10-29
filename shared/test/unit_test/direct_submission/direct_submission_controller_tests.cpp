@@ -87,6 +87,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
     csr.taskCount.store(9u);
 
     DirectSubmissionControllerMock controller;
+    executionEnvironment.directSubmissionController.reset(&controller);
+    csr.startControllingDirectSubmissions();
     controller.registerDirectSubmission(&csr);
 
     while (!controller.directSubmissions[&csr].isStopped) {
@@ -97,6 +99,26 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 9u);
 
     controller.unregisterDirectSubmission(&csr);
+    executionEnvironment.directSubmissionController.release();
+}
+
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithStartedControllingWhenShuttingDownThenNoHang) {
+    DirectSubmissionControllerMock controller;
+    EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
+
+    controller.startControlling();
+    controller.keepControlling.store(false);
+    controller.directSubmissionControllingThread->join();
+    controller.directSubmissionControllingThread.reset();
+}
+
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithNotStartedControllingWhenShuttingDownThenNoHang) {
+    DirectSubmissionControllerMock controller;
+    EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
+
+    controller.keepControlling.store(false);
+    controller.directSubmissionControllingThread->join();
+    controller.directSubmissionControllingThread.reset();
 }
 
 } // namespace NEO

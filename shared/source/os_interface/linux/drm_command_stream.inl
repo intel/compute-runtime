@@ -109,9 +109,11 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
     }
 
     if (this->directSubmission.get()) {
+        this->startControllingDirectSubmissions();
         return this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
     }
     if (this->blitterDirectSubmission.get()) {
+        this->startControllingDirectSubmissions();
         return this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
     }
 

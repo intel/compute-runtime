@@ -25,6 +25,8 @@ class DirectSubmissionController {
     void registerDirectSubmission(CommandStreamReceiver *csr);
     void unregisterDirectSubmission(CommandStreamReceiver *csr);
 
+    void startControlling();
+
     static bool isSupported();
 
   protected:
@@ -41,6 +43,7 @@ class DirectSubmissionController {
 
     std::unique_ptr<Thread> directSubmissionControllingThread;
     std::atomic_bool keepControlling = true;
+    std::atomic_bool runControlling = false;
 
     int timeout = 5;
 };

@@ -42,8 +42,18 @@ void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceive
     directSubmissions.erase(csr);
 }
 
+void DirectSubmissionController::startControlling() {
+    this->runControlling.store(true);
+}
+
 void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
     auto controller = reinterpret_cast<DirectSubmissionController *>(self);
+
+    while (!controller->runControlling.load()) {
+        if (!controller->keepControlling.load()) {
+            return nullptr;
+        }
+    }
 
     while (true) {
 
