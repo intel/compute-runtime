@@ -25,6 +25,7 @@ if(SUPPORT_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_raytracing_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_interface.h
        ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_xehp_and_later.h
   )
 endif()

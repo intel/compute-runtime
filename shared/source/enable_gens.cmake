@@ -20,6 +20,7 @@ set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
     create_device_command_stream_receiver
     direct_submission
     experimental_command_buffer
+    implicit_scaling
     hw_helper
     hw_info
     preamble

@@ -10,8 +10,6 @@
 #include "shared/source/command_container/command_encoder_raytracing_xehp_and_later.inl"
 #include "shared/source/command_container/command_encoder_xehp_and_later.inl"
 #include "shared/source/command_container/encode_compute_mode_tgllp_and_later.inl"
-#include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/command_container/implicit_scaling_xehp_and_later.inl"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/xe_hp_core/hw_cmds_base.h"
 
@@ -72,6 +70,5 @@ template struct EncodeMiFlushDW<Family>;
 template struct EncodeMemoryPrefetch<Family>;
 template struct EncodeMiArbCheck<Family>;
 template struct EncodeWA<Family>;
-template struct ImplicitScalingDispatch<Family>;
 template struct EncodeEnableRayTracing<Family>;
 } // namespace NEO
