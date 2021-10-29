@@ -37,7 +37,7 @@ ze_result_t LinuxDiagnosticsImp::osRunDiagTests(uint32_t start, uint32_t end, ze
 }
 
 LinuxDiagnosticsImp::LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests, ze_bool_t onSubdevice, uint32_t subdeviceId) : osDiagType(diagTests), isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();

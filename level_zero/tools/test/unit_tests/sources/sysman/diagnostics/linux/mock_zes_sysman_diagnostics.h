@@ -22,12 +22,16 @@ const std::string mockdeviceDirDiag("/sys/devices/pci0000:89/0000:89:02.0/0000:8
 const std::string mockRemove("remove");
 const std::string mockRescan("rescan");
 const std::string mockRealPathConfig("/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/config");
+const std::string mockRootAddress("0000:8a:00.0");
+const std::string mockRootWrongAddress("0000:7a:00.0");
+const std::string mockSlotPath1("/sys/bus/pci/slots/1/");
 const std::string mockDeviceName("/MOCK_DEVICE_NAME");
+const std::string mockSlotPath("/sys/bus/pci/slots/");
 
-class DiagnosticsInterface : public FirmwareUtil {};
+class DiagnosticsFwInterface : public FirmwareUtil {};
 
 template <>
-struct Mock<DiagnosticsInterface> : public FirmwareUtil {
+struct Mock<DiagnosticsFwInterface> : public FirmwareUtil {
 
     ze_result_t mockFwDeviceInit(void) {
         return ZE_RESULT_SUCCESS;
@@ -47,8 +51,12 @@ struct Mock<DiagnosticsInterface> : public FirmwareUtil {
         *pResult = ZES_DIAG_RESULT_NO_ERRORS;
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t mockFwRunDiagTestsReturnSuccessWithResultRepair(std::string &osDiagType, zes_diag_result_t *pResult, uint32_t subDeviceId) {
+        *pResult = ZES_DIAG_RESULT_REBOOT_FOR_REPAIR;
+        return ZE_RESULT_SUCCESS;
+    }
 
-    Mock<DiagnosticsInterface>() = default;
+    Mock<DiagnosticsFwInterface>() = default;
 
     MOCK_METHOD(ze_result_t, fwDeviceInit, (), (override));
     MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
@@ -63,6 +71,7 @@ struct Mock<DiagnosticsInterface> : public FirmwareUtil {
 class DiagSysfsAccess : public SysfsAccess {};
 template <>
 struct Mock<DiagSysfsAccess> : public DiagSysfsAccess {
+
     ze_result_t getRealPathVal(const std::string file, std::string &val) {
         if (file.compare(deviceDirDiag) == 0) {
             val = mockdeviceDirDiag;
@@ -103,6 +112,7 @@ struct Mock<DiagSysfsAccess> : public DiagSysfsAccess {
 class DiagFsAccess : public FsAccess {};
 template <>
 struct Mock<DiagFsAccess> : public DiagFsAccess {
+
     ze_result_t mockFsWrite(const std::string file, std::string val) {
         if (std::string::npos != file.find(mockRemove)) {
             return ZE_RESULT_SUCCESS;
@@ -112,9 +122,52 @@ struct Mock<DiagFsAccess> : public DiagFsAccess {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
     }
+
+    ze_result_t mockFsReadAddress(const std::string file, std::string &val) {
+        if (file.compare(mockSlotPath1)) {
+            val = mockRootAddress;
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+    }
+
+    ze_result_t mockFsReadWrongAddress(const std::string file, std::string &val) {
+        if (file.compare(mockSlotPath1)) {
+            val = mockRootWrongAddress;
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+    }
+
+    ze_result_t listDirectorySuccess(const std::string directory, std::vector<std::string> &listOfslots) {
+        if (directory.compare(mockSlotPath) == 0) {
+            listOfslots.push_back("1");
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t listDirectoryFailure(const std::string directory, std::vector<std::string> &events) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t getRealPathVal(const std::string file, std::string &val) {
+        if (file.compare(deviceDirDiag) == 0) {
+            val = mockdeviceDirDiag;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     Mock<DiagFsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, write, (const std::string file, const std::string val), (override));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
+    MOCK_METHOD(ze_result_t, getRealPath, (const std::string path, std::string &val), (override));
+    MOCK_METHOD(ze_result_t, listDirectory, (const std::string path, std::vector<std::string> &list), (override));
 };
 
 class DiagProcfsAccess : public ProcfsAccess {};
@@ -184,6 +237,16 @@ struct Mock<DiagProcfsAccess> : public DiagProcfsAccess {
         ourDevicePid = 0;
     }
 
+    ze_result_t mockFsWrite(const std::string file, std::string val) {
+        if (std::string::npos != file.find(mockRemove)) {
+            return ZE_RESULT_SUCCESS;
+        } else if (std::string::npos != file.find(mockRescan)) {
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+    }
+
     Mock<DiagProcfsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, listProcesses, (std::vector<::pid_t> & list), (override));
@@ -192,6 +255,8 @@ struct Mock<DiagProcfsAccess> : public DiagProcfsAccess {
     MOCK_METHOD(ze_result_t, getFileName, (const ::pid_t pid, const int fd, std::string &val), (override));
     MOCK_METHOD(bool, isAlive, (const ::pid_t pid), (override));
     MOCK_METHOD(void, kill, (const ::pid_t pid), (override));
+    MOCK_METHOD(ze_result_t, listDirectory, (const std::string path, std::vector<std::string> &list), (override));
+    MOCK_METHOD(ze_result_t, write, (const std::string file, const std::string val), (override));
 };
 
 class PublicLinuxDiagnosticsImp : public L0::LinuxDiagnosticsImp {
@@ -200,6 +265,7 @@ class PublicLinuxDiagnosticsImp : public L0::LinuxDiagnosticsImp {
     using LinuxDiagnosticsImp::openFunction;
     using LinuxDiagnosticsImp::pFsAccess;
     using LinuxDiagnosticsImp::pFwInterface;
+    using LinuxDiagnosticsImp::pLinuxSysmanImp;
     using LinuxDiagnosticsImp::pProcfsAccess;
     using LinuxDiagnosticsImp::preadFunction;
     using LinuxDiagnosticsImp::pSysfsAccess;

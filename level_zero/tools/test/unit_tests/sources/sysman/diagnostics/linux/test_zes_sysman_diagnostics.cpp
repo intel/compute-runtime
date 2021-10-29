@@ -17,7 +17,7 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
 
   protected:
     zes_diag_handle_t hSysmanDiagnostics = {};
-    std::unique_ptr<Mock<DiagnosticsInterface>> pMockDiagInterface;
+    std::unique_ptr<Mock<DiagnosticsFwInterface>> pMockFwInterface;
     FirmwareUtil *pFwUtilInterfaceOld = nullptr;
 
     void SetUp() override {
@@ -27,14 +27,14 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::SetUp();
 
         pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
-        pMockDiagInterface = std::make_unique<NiceMock<Mock<DiagnosticsInterface>>>();
-        pLinuxSysmanImp->pFwUtilInterface = pMockDiagInterface.get();
-        ON_CALL(*pMockDiagInterface.get(), fwDeviceInit())
-            .WillByDefault(::testing::Invoke(pMockDiagInterface.get(), &Mock<DiagnosticsInterface>::mockFwDeviceInit));
-        ON_CALL(*pMockDiagInterface.get(), getFirstDevice(_))
-            .WillByDefault(::testing::Invoke(pMockDiagInterface.get(), &Mock<DiagnosticsInterface>::mockGetFirstDevice));
-        ON_CALL(*pMockDiagInterface.get(), fwSupportedDiagTests(_))
-            .WillByDefault(::testing::Invoke(pMockDiagInterface.get(), &Mock<DiagnosticsInterface>::mockFwSupportedDiagTests));
+        pMockFwInterface = std::make_unique<NiceMock<Mock<DiagnosticsFwInterface>>>();
+        pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface.get();
+        ON_CALL(*pMockFwInterface.get(), fwDeviceInit())
+            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<DiagnosticsFwInterface>::mockFwDeviceInit));
+        ON_CALL(*pMockFwInterface.get(), getFirstDevice(_))
+            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<DiagnosticsFwInterface>::mockGetFirstDevice));
+        ON_CALL(*pMockFwInterface.get(), fwSupportedDiagTests(_))
+            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<DiagnosticsFwInterface>::mockFwSupportedDiagTests));
         for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
             delete handle;
         }
@@ -138,8 +138,8 @@ TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDia
 TEST_F(ZesDiagnosticsFixture, GivenFailedFirmwareInitializationWhenInitializingDiagnosticsContextThenexpectNoHandles) {
     std::vector<ze_device_handle_t> deviceHandles;
     clear_and_reinit_handles(deviceHandles);
-    ON_CALL(*pMockDiagInterface.get(), fwDeviceInit())
-        .WillByDefault(::testing::Invoke(pMockDiagInterface.get(), &Mock<DiagnosticsInterface>::mockFwDeviceInitFail));
+    ON_CALL(*pMockFwInterface.get(), fwDeviceInit())
+        .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<DiagnosticsFwInterface>::mockFwDeviceInitFail));
     pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
 
     EXPECT_EQ(0u, pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.size());
@@ -156,8 +156,8 @@ TEST_F(ZesDiagnosticsFixture, GivenSupportedTestsWhenInitializingDiagnosticsCont
 TEST_F(ZesDiagnosticsFixture, GivenFirmwareInitializationFailureThenCreateHandleMustFail) {
     std::vector<ze_device_handle_t> deviceHandles;
     clear_and_reinit_handles(deviceHandles);
-    ON_CALL(*pMockDiagInterface.get(), fwDeviceInit())
-        .WillByDefault(::testing::Invoke(pMockDiagInterface.get(), &Mock<DiagnosticsInterface>::mockFwDeviceInitFail));
+    ON_CALL(*pMockFwInterface.get(), fwDeviceInit())
+        .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<DiagnosticsFwInterface>::mockFwDeviceInitFail));
     pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
     EXPECT_EQ(0u, pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.size());
 }

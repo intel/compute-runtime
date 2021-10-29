@@ -25,8 +25,10 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
     LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests, ze_bool_t onSubdevice, uint32_t subdeviceId);
     ~LinuxDiagnosticsImp() override = default;
     std::string osDiagType = "unknown";
+    ze_result_t osColdReset();
 
   protected:
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     FirmwareUtil *pFwInterface = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
     FsAccess *pFsAccess = nullptr;
