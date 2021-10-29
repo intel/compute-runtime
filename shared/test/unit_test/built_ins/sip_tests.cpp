@@ -15,6 +15,8 @@
 
 #include "test.h"
 
+#include "common/StateSaveAreaHeader.h"
+
 using namespace NEO;
 
 struct RawBinarySipFixture : public DeviceFixture {
@@ -348,8 +350,11 @@ TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAr
 
 TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {
     MockSipData::useMockSip = true;
-    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader();
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
     EXPECT_EQ(0x3F1000u, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    EXPECT_EQ(0x1800u * 1 * 8 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
 }
 TEST(DebugBindlessSip, givenActiveDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
     DebugManagerStateRestore restorer;

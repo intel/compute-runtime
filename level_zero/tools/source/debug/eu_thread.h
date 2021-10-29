@@ -71,12 +71,13 @@ class EuThread {
             return false;
         }
         state = State::Stopped;
+        PRINT_DEBUGGER_THREAD_LOG("Stopped thread: %s", toString().c_str());
         return true;
     }
 
     bool verifyStopped(uint8_t newCounter) {
 
-        PRINT_DEBUGGER_INFO_LOG("EuThread::verifyStopped() Thread: %s newCounter == %d oldCounter == %d", toString().c_str(), (int32_t)newCounter, (int32_t)systemRoutineCounter);
+        PRINT_DEBUGGER_THREAD_LOG("EuThread::verifyStopped() Thread: %s newCounter == %d oldCounter == %d", toString().c_str(), (int32_t)newCounter, (int32_t)systemRoutineCounter);
 
         if (newCounter == systemRoutineCounter) {
             if (newCounter % 2 != 0) {
@@ -115,11 +116,13 @@ class EuThread {
     }
 
     bool resumeThread() {
-        memoryHandle = invalidHandle;
         if (state != State::Stopped) {
+            PRINT_DEBUGGER_THREAD_LOG("Resuming already RUNNING thread: %s", toString().c_str());
             return false;
         }
+        PRINT_DEBUGGER_THREAD_LOG("Resumed thread: %s", toString().c_str());
         state = State::Running;
+        memoryHandle = invalidHandle;
         return true;
     }
 
@@ -153,7 +156,7 @@ class EuThread {
 
   protected:
     ThreadId threadId;
-    State state = State::Unavailable;
+    std::atomic<State> state = State::Unavailable;
     uint8_t systemRoutineCounter = 0;
     std::atomic<uint64_t> memoryHandle = invalidHandle;
 };

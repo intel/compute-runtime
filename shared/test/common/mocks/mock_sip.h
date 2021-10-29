@@ -46,6 +46,6 @@ extern bool returned;
 extern bool useMockSip;
 
 void clearUseFlags();
-std::vector<char> createStateSaveAreaHeader();
+std::vector<char> createStateSaveAreaHeader(uint32_t version);
 } // namespace MockSipData
 } // namespace NEO

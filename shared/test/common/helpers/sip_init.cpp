@@ -27,7 +27,7 @@ void clearUseFlags() {
     called = false;
 }
 
-std::vector<char> createStateSaveAreaHeader() {
+std::vector<char> createStateSaveAreaHeader(uint32_t version) {
     SIP::StateSaveAreaHeader stateSaveAreaHeader = {
         {
             // versionHeader
@@ -71,7 +71,56 @@ std::vector<char> createStateSaveAreaHeader() {
         },
     };
 
-    char *begin = reinterpret_cast<char *>(&stateSaveAreaHeader);
+    SIP::StateSaveAreaHeader stateSaveAreaHeader2 = {
+        {
+            // versionHeader
+            "tssarea", // magic
+            0,         // reserved1
+            {          // version
+             2,        // major
+             0,        // minor
+             0},       // patch
+            40,        // size
+            {0, 0, 0}, // reserved2
+        },
+        {
+            // regHeader
+            1,                       // num_slices
+            1,                       // num_subslices_per_slice
+            8,                       // num_eus_per_subslice
+            7,                       // num_threads_per_eu
+            0,                       // state_area_offset
+            6144,                    // state_save_size
+            0,                       // slm_area_offset
+            0,                       // slm_bank_size
+            0,                       // slm_bank_valid
+            4740,                    // sr_magic_offset
+            {0, 128, 256, 32},       // grf
+            {4096, 1, 256, 32},      // addr
+            {4128, 2, 32, 4},        // flag
+            {4156, 1, 32, 4},        // emask
+            {4160, 2, 128, 16},      // sr
+            {4192, 1, 128, 16},      // cr
+            {4256, 1, 96, 12},       // notification
+            {4288, 1, 128, 16},      // tdr
+            {4320, 10, 256, 32},     // acc
+            {0, 0, 0, 0},            // mme
+            {4672, 1, 32, 4},        // ce
+            {4704, 1, 128, 16},      // sp
+            {4768, 1, 128 * 8, 128}, // cmd
+            {4640, 1, 128, 16},      // tm
+            {0, 0, 0, 0},            // fc
+            {4736, 1, 32, 4},        // dbg
+        },
+    };
+
+    char *begin = nullptr;
+
+    if (version == 1) {
+        begin = reinterpret_cast<char *>(&stateSaveAreaHeader);
+    } else if (version == 2) {
+        begin = reinterpret_cast<char *>(&stateSaveAreaHeader2);
+    }
     return std::vector<char>(begin, begin + sizeof(stateSaveAreaHeader));
 }
 } // namespace MockSipData

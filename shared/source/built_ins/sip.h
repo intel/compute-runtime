@@ -47,6 +47,13 @@ class SipKernel {
     static const size_t maxDbgSurfaceSize;
     static SipClassType classType;
 
+    enum class COMMAND : uint32_t {
+        RESUME,
+        READY,
+        SLM_READ,
+        SLM_WRITE
+    };
+
   protected:
     static bool initSipKernelImpl(SipKernelType type, Device &device);
     static const SipKernel &getSipKernelImpl(Device &device);
