@@ -763,7 +763,6 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
     allocData.flags.allocateMemory = true;
     allocData.type = GraphicsAllocation::AllocationType::KERNEL_ISA;
     allocData.rootDeviceIndex = rootDeviceIndex;
-    allocData.storageInfo.memoryBanks.set(0, true);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     auto allocation = drmMemoryManger.allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
@@ -786,7 +785,6 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
     allocData.flags.allocateMemory = true;
     allocData.type = GraphicsAllocation::AllocationType::KERNEL_ISA;
     allocData.rootDeviceIndex = rootDeviceIndex;
-    allocData.storageInfo.memoryBanks.set(0, true);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     auto allocation = drmMemoryManger.allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);

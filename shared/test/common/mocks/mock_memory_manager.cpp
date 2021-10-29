@@ -157,12 +157,6 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromExistingStora
     return allocation;
 }
 
-bool MockMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield dstMemoryBanks) {
-    copyMemoryToAllocationBanksCalled++;
-    copyMemoryToAllocationBanksParamsPassed.push_back({graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, dstMemoryBanks});
-    return OsAgnosticMemoryManager::copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, dstMemoryBanks);
-};
-
 FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount, ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {
     this->failedAllocationsCount = failedAllocationsCount;
 }
