@@ -50,23 +50,21 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
     auto controller = reinterpret_cast<DirectSubmissionController *>(self);
 
     while (!controller->runControlling.load()) {
+
         if (!controller->keepControlling.load()) {
             return nullptr;
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(controller->timeout));
     }
 
     while (true) {
 
-        auto start = std::chrono::steady_clock::now();
-        int diff = 0u;
-        do {
-            if (!controller->keepControlling.load()) {
-                return nullptr;
-            }
+        if (!controller->keepControlling.load()) {
+            return nullptr;
+        }
 
-            auto timestamp = std::chrono::steady_clock::now();
-            diff = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(timestamp - start).count());
-        } while (diff <= controller->timeout);
+        std::this_thread::sleep_for(std::chrono::milliseconds(controller->timeout));
 
         controller->checkNewSubmissions();
     }
