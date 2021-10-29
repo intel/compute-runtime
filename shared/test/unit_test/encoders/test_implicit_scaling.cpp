@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/walker_partition_interface.h"
 #include "shared/test/common/fixtures/implicit_scaling_fixture.h"
 
 TEST_F(ImplicitScalingTests, givenMultiTileDeviceWhenApiAndOsSupportThenFeatureEnabled) {
@@ -61,21 +62,70 @@ TEST_F(ImplicitScalingTests, givenForceUseAtomicsWhenCheckingAtomicsForSelfClean
 }
 
 TEST_F(ImplicitScalingTests, givenDefaultSettingsIsFalseWhenCheckingProgramSelfCleanupThenExpectFalse) {
-    EXPECT_FALSE(ImplicitScalingHelper::isSelfCleanupRequired(false));
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.crossTileAtomicSynchronization = true;
+    args.synchronizeBeforeExecution = true;
+    args.staticPartitioning = false;
+
+    EXPECT_FALSE(ImplicitScalingHelper::isSelfCleanupRequired(args, false));
 }
 
-TEST_F(ImplicitScalingTests, givenDefaultSettingsIsTrueWhenCheckingProgramSelfCleanupThenExpectTrue) {
-    EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(true));
+TEST_F(ImplicitScalingTests,
+       givenDefaultSettingsAndCrossTileSyncBeforeAndStaticPartititionIsTrueAndCrossTileSyncAfterFalseWhenCheckingProgramSelfCleanupThenExpectTrue) {
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.crossTileAtomicSynchronization = false;
+    args.synchronizeBeforeExecution = true;
+    args.staticPartitioning = true;
+
+    EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(args, true));
+}
+
+TEST_F(ImplicitScalingTests,
+       givenDefaultSettingsAndCrossTileSyncAfterAndStaticPartitionIsTrueAndCrossTileSyncBeforeExecFalseWhenCheckingProgramSelfCleanupThenExpectTrue) {
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.crossTileAtomicSynchronization = true;
+    args.synchronizeBeforeExecution = false;
+    args.staticPartitioning = true;
+
+    EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(args, true));
+}
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsAndStaticPartititionIsTrueAndAllCrossTileSyncTrueWhenCheckingProgramSelfCleanupThenExpectTrue) {
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.crossTileAtomicSynchronization = true;
+    args.synchronizeBeforeExecution = true;
+    args.staticPartitioning = true;
+
+    EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(args, true));
+}
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsIsTrueAndStaticPartititionAndAllCrossTileSyncFalseWhenCheckingProgramSelfCleanupThenExpectTrue) {
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.crossTileAtomicSynchronization = false;
+    args.synchronizeBeforeExecution = false;
+    args.staticPartitioning = true;
+
+    EXPECT_FALSE(ImplicitScalingHelper::isSelfCleanupRequired(args, true));
 }
 
 TEST_F(ImplicitScalingTests, givenForceNotProgramSelfCleanupWhenDefaultSelfCleanupIsTrueThenExpectFalse) {
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.crossTileAtomicSynchronization = true;
+    args.synchronizeBeforeExecution = true;
+    args.staticPartitioning = false;
+
     DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(0);
-    EXPECT_FALSE(ImplicitScalingHelper::isSelfCleanupRequired(true));
+    EXPECT_FALSE(ImplicitScalingHelper::isSelfCleanupRequired(args, true));
 }
 
 TEST_F(ImplicitScalingTests, givenForceProgramSelfCleanupWhenDefaultSelfCleanupIsFalseThenExpectTrue) {
+    WalkerPartition::WalkerPartitionArgs args = {};
+    args.crossTileAtomicSynchronization = false;
+    args.synchronizeBeforeExecution = false;
+    args.staticPartitioning = true;
+
     DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(1);
-    EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(false));
+    EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(args, false));
 }
 
 TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingToProgramWparidRegisterThenExpectTrue) {
@@ -93,17 +143,19 @@ TEST_F(ImplicitScalingTests, givenForceProgramWparidRegisterWhenCheckingRegister
 }
 
 TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingToUsePipeControlThenExpectTrue) {
-    EXPECT_TRUE(ImplicitScalingHelper::isPipeControlStallRequired());
+    EXPECT_TRUE(ImplicitScalingHelper::isPipeControlStallRequired(true));
+
+    EXPECT_FALSE(ImplicitScalingHelper::isPipeControlStallRequired(false));
 }
 
 TEST_F(ImplicitScalingTests, givenForceNotUsePipeControlWhenCheckingPipeControlUseThenExpectFalse) {
     DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
-    EXPECT_FALSE(ImplicitScalingHelper::isPipeControlStallRequired());
+    EXPECT_FALSE(ImplicitScalingHelper::isPipeControlStallRequired(true));
 }
 
 TEST_F(ImplicitScalingTests, givenForceUsePipeControlWhenCheckingPipeControlUseThenExpectTrue) {
     DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
-    EXPECT_TRUE(ImplicitScalingHelper::isPipeControlStallRequired());
+    EXPECT_TRUE(ImplicitScalingHelper::isPipeControlStallRequired(false));
 }
 
 TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingSemaphoreUseThenExpectFalse) {
@@ -121,15 +173,17 @@ TEST_F(ImplicitScalingTests, givenForceSemaphoreUseWhenCheckingSemaphoreUseThenE
 }
 
 TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingCrossTileAtomicSyncThenExpectDefaultDefined) {
-    EXPECT_EQ(ImplicitScaling::crossTileAtomicSynchronization, ImplicitScalingHelper::isCrossTileAtomicRequired());
+    EXPECT_FALSE(ImplicitScalingHelper::isCrossTileAtomicRequired(false));
+
+    EXPECT_TRUE(ImplicitScalingHelper::isCrossTileAtomicRequired(true));
 }
 
 TEST_F(ImplicitScalingTests, givenForceDisableWhenCheckingCrossTileAtomicSyncThenExpectFalse) {
     DebugManager.flags.UseCrossAtomicSynchronization.set(0);
-    EXPECT_FALSE(ImplicitScalingHelper::isCrossTileAtomicRequired());
+    EXPECT_FALSE(ImplicitScalingHelper::isCrossTileAtomicRequired(true));
 }
 
 TEST_F(ImplicitScalingTests, givenForceEnableWhenCheckingCrossTileAtomicSyncThenExpectTrue) {
     DebugManager.flags.UseCrossAtomicSynchronization.set(1);
-    EXPECT_TRUE(ImplicitScalingHelper::isCrossTileAtomicRequired());
+    EXPECT_TRUE(ImplicitScalingHelper::isCrossTileAtomicRequired(false));
 }

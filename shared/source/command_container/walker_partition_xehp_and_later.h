@@ -596,6 +596,11 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
 }
 
 template <typename GfxFamily>
+bool isStartAndControlSectionRequired(WalkerPartitionArgs &args) {
+    return args.synchronizeBeforeExecution || args.crossTileAtomicSynchronization || args.emitSelfCleanup;
+}
+
+template <typename GfxFamily>
 uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args) {
     const auto beforeExecutionSyncAtomicSize = args.synchronizeBeforeExecution
                                                    ? computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>()
@@ -615,6 +620,9 @@ uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args
     const auto pipeControlSize = args.emitPipeControlStall
                                      ? sizeof(PIPE_CONTROL<GfxFamily>)
                                      : 0u;
+    const auto bbStartSize = isStartAndControlSectionRequired<GfxFamily>(args)
+                                 ? sizeof(BATCH_BUFFER_START<GfxFamily>)
+                                 : 0u;
     return beforeExecutionSyncAtomicSize +
            wparidRegisterSize +
            pipeControlSize +
@@ -622,7 +630,7 @@ uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args
            selfCleanupSectionSize +
            afterExecutionSyncAtomicSize +
            afterExecutionSyncPostSyncSize +
-           sizeof(BATCH_BUFFER_START<GfxFamily>);
+           bbStartSize;
 }
 
 template <typename GfxFamily>
@@ -670,16 +678,18 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
         programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, args.tileCount);
     }
 
-    // Jump over the control section
-    programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation + afterControlSectionOffset, false, args.secondaryBatchBuffer);
+    // Jump over the control section only when needed
+    if (isStartAndControlSectionRequired<GfxFamily>(args)) {
+        programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation + afterControlSectionOffset, false, args.secondaryBatchBuffer);
 
-    // Control section
-    DEBUG_BREAK_IF(totalBytesProgrammed != controlSectionOffset);
-    StaticPartitioningControlSection *controlSection = putCommand<StaticPartitioningControlSection>(currentBatchBufferPointer, totalBytesProgrammed);
-    controlSection->synchronizeBeforeWalkerCounter = 0u;
-    controlSection->synchronizeAfterWalkerCounter = 0u;
-    controlSection->finalSyncTileCounter = 0u;
-    DEBUG_BREAK_IF(totalBytesProgrammed != afterControlSectionOffset);
+        // Control section
+        DEBUG_BREAK_IF(totalBytesProgrammed != controlSectionOffset);
+        StaticPartitioningControlSection *controlSection = putCommand<StaticPartitioningControlSection>(currentBatchBufferPointer, totalBytesProgrammed);
+        controlSection->synchronizeBeforeWalkerCounter = 0u;
+        controlSection->synchronizeAfterWalkerCounter = 0u;
+        controlSection->finalSyncTileCounter = 0u;
+        DEBUG_BREAK_IF(totalBytesProgrammed != afterControlSectionOffset);
+    }
 
     // Cleanup section
     if (args.emitSelfCleanup) {
@@ -696,11 +706,10 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
 
 template <typename GfxFamily>
 uint64_t estimateSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
-
     uint64_t size = {};
     if (args.staticPartitioning) {
         size += computeStaticPartitioningControlSectionOffset<GfxFamily>(args);
-        size += sizeof(StaticPartitioningControlSection);
+        size += isStartAndControlSectionRequired<GfxFamily>(args) ? sizeof(StaticPartitioningControlSection) : 0u;
         size += args.emitSelfCleanup ? computeSelfCleanupEndSectionSize<GfxFamily>(staticPartitioningFieldsForCleanupCount, args.useAtomicsForSelfCleanup) : 0u;
     } else {
         size += computeControlSectionOffset<GfxFamily>(args);

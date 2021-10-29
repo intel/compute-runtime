@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 
+#include "shared/source/command_container/walker_partition_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -36,17 +37,17 @@ bool ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired() {
 }
 
 bool ImplicitScalingHelper::isSemaphoreProgrammingRequired() {
-    auto semaphoreProgrammingRequired = ImplicitScaling::semaphoreProgrammingRequired;
-    int overrideSemaphoreProgrammingRequired = NEO::DebugManager.flags.SynchronizeWithSemaphores.get();
+    auto semaphoreProgrammingRequired = false;
+    int overrideSemaphoreProgrammingRequired = DebugManager.flags.SynchronizeWithSemaphores.get();
     if (overrideSemaphoreProgrammingRequired != -1) {
         semaphoreProgrammingRequired = !!overrideSemaphoreProgrammingRequired;
     }
     return semaphoreProgrammingRequired;
 }
 
-bool ImplicitScalingHelper::isCrossTileAtomicRequired() {
-    auto crossTileAtomicSynchronization = ImplicitScaling::crossTileAtomicSynchronization;
-    int overrideCrossTileAtomicSynchronization = NEO::DebugManager.flags.UseCrossAtomicSynchronization.get();
+bool ImplicitScalingHelper::isCrossTileAtomicRequired(bool defaultCrossTileRequirement) {
+    auto crossTileAtomicSynchronization = defaultCrossTileRequirement;
+    int overrideCrossTileAtomicSynchronization = DebugManager.flags.UseCrossAtomicSynchronization.get();
     if (overrideCrossTileAtomicSynchronization != -1) {
         crossTileAtomicSynchronization = !!overrideCrossTileAtomicSynchronization;
     }
@@ -62,7 +63,12 @@ bool ImplicitScalingHelper::isAtomicsUsedForSelfCleanup() {
     return useAtomics;
 }
 
-bool ImplicitScalingHelper::isSelfCleanupRequired(bool defaultSelfCleanup) {
+bool ImplicitScalingHelper::isSelfCleanupRequired(const WalkerPartition::WalkerPartitionArgs &args, bool apiSelfCleanup) {
+    bool defaultSelfCleanup = apiSelfCleanup &&
+                              (args.crossTileAtomicSynchronization ||
+                               args.synchronizeBeforeExecution ||
+                               !args.staticPartitioning);
+
     int overrideProgramSelfCleanup = DebugManager.flags.ProgramWalkerPartitionSelfCleanup.get();
     if (overrideProgramSelfCleanup != -1) {
         defaultSelfCleanup = !!(overrideProgramSelfCleanup);
@@ -79,13 +85,12 @@ bool ImplicitScalingHelper::isWparidRegisterInitializationRequired() {
     return initWparidRegister;
 }
 
-bool ImplicitScalingHelper::isPipeControlStallRequired() {
-    bool emitPipeControl = true;
+bool ImplicitScalingHelper::isPipeControlStallRequired(bool defaultEmitPipeControl) {
     int overrideUsePipeControl = DebugManager.flags.UsePipeControlAfterPartitionedWalker.get();
     if (overrideUsePipeControl != -1) {
-        emitPipeControl = !!(overrideUsePipeControl);
+        defaultEmitPipeControl = !!(overrideUsePipeControl);
     }
-    return emitPipeControl;
+    return defaultEmitPipeControl;
 }
 
 } // namespace NEO

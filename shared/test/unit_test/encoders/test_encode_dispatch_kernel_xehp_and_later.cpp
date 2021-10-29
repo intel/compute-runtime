@@ -979,11 +979,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelThenExpectSelfCleanupSection) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingRequiresPipeControlStallWhenEncodingDispatchKernelThenExpectCrossTileSyncAndSelfCleanupSection) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
     VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1069,6 +1074,88 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     auto inTileCountFieldImm = static_cast<MI_STORE_DATA_IMM *>(*storeCmd);
     EXPECT_EQ(expectedCleanupGpuVa, inTileCountFieldImm->getAddress());
     EXPECT_EQ(expectedData, inTileCountFieldImm->getDataDword0());
+
+    GenCmdList pipeControlList = hwParser.getCommandsList<PIPE_CONTROL>();
+    EXPECT_EQ(1u, pipeControlList.size());
+
+    GenCmdList miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(4u, miAtomicList.size());
+
+    GenCmdList miSemaphoreWaitList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(3u, miSemaphoreWaitList.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling,
+            givenImplicitScalingRequiresNoPipeControlStallWhenEncodingDispatchKernelThenExpectCrossTileSyncAndSelfCleanupSection) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
+
+    uint32_t dims[] = {16, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    DebugManager.flags.EnableWalkerPartition.set(0);
+    bool isInternal = false;
+    size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
+
+    DebugManager.flags.EnableWalkerPartition.set(1);
+
+    uint32_t partitionCount = 0;
+    bool requiresUncachedMocs = false;
+
+    size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false, false, dispatchInterface.get());
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
+
+    EXPECT_EQ(2u, partitionCount);
+    size_t partitionedWalkerSize = cmdContainer->getCommandStream()->getUsed();
+
+    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::getSize(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
+    EXPECT_EQ(partitionEstimateSize, baseEstimateSize + expectedPartitionedWalkerSize);
+    EXPECT_EQ(expectedPartitionedWalkerSize, partitionedWalkerSize);
+
+    GenCmdList partitionedWalkerList;
+    CmdParse<FamilyType>::parseCommandBuffer(
+        partitionedWalkerList,
+        cmdContainer->getCommandStream()->getCpuBase(),
+        partitionedWalkerSize);
+    auto startCmdList = findAll<BATCH_BUFFER_START *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    EXPECT_EQ(3u, startCmdList.size());
+    bool secondary = true;
+    for (auto &ptr : startCmdList) {
+        BATCH_BUFFER_START *startCmd = reinterpret_cast<BATCH_BUFFER_START *>(*ptr);
+        secondary &= static_cast<bool>(startCmd->getSecondLevelBatchBuffer());
+    }
+    EXPECT_TRUE(secondary);
+
+    auto itor = find<WALKER_TYPE *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    ASSERT_NE(itor, partitionedWalkerList.end());
+    auto partitionWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    EXPECT_EQ(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
+    uint32_t expectedPartitionSize = (dims[0] + partitionCount - 1u) / partitionCount;
+    EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdContainer->getCommandStream());
+    GenCmdList storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(4u, storeDataImmList.size());
+
+    GenCmdList pipeControlList = hwParser.getCommandsList<PIPE_CONTROL>();
+    EXPECT_EQ(0u, pipeControlList.size());
+
+    GenCmdList miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(4u, miAtomicList.size());
+
+    GenCmdList miSemaphoreWaitList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(3u, miSemaphoreWaitList.size());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelOnInternalEngineThenExpectNoWalkerPartitioning) {

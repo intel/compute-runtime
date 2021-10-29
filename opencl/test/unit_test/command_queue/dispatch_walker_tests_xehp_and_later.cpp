@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -1066,8 +1067,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsRequiredWhenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
     DebugManager.flags.EnableWalkerPartition.set(1u);
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
     UltClDeviceFactory deviceFactory{1, 2};
     MockClDevice *device = deviceFactory.rootDevices[0];
     MockContext context{device};
@@ -1089,6 +1091,63 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     testArgs.initializeWparidRegister = true;
     testArgs.crossTileAtomicSynchronization = true;
     testArgs.emitPipeControlStall = true;
+    testArgs.partitionCount = 2u;
+    testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
+
+    DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
+    testArgs.staticPartitioning = false;
+    testArgs.synchronizeBeforeExecution = false;
+    csr.staticWorkPartitioningEnabled = false;
+    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
+    auto returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
+    EXPECT_EQ(returnedSize, partitionSize + baseSize);
+
+    testArgs.staticPartitioning = true;
+    csr.staticWorkPartitioningEnabled = true;
+    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
+    returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
+    EXPECT_EQ(returnedSize, partitionSize + baseSize);
+
+    DebugManager.flags.SynchronizeWalkerInWparidMode.set(1);
+    testArgs.synchronizeBeforeExecution = true;
+    testArgs.staticPartitioning = false;
+    csr.staticWorkPartitioningEnabled = false;
+    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
+    returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
+    EXPECT_EQ(returnedSize, partitionSize + baseSize);
+
+    testArgs.synchronizeBeforeExecution = true;
+    testArgs.staticPartitioning = true;
+    csr.staticWorkPartitioningEnabled = true;
+    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
+    returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
+    EXPECT_EQ(returnedSize, partitionSize + baseSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsNotRequiredWhenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
+    DebugManager.flags.EnableWalkerPartition.set(1u);
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
+    UltClDeviceFactory deviceFactory{1, 2};
+    MockClDevice *device = deviceFactory.rootDevices[0];
+    MockContext context{device};
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device, nullptr);
+    auto &csr = cmdQ->getUltCommandStreamReceiver();
+
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+
+    auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
+                    (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
+                    HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize);
+
+    DispatchInfo dispatchInfo{};
+    dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
+
+    WalkerPartition::WalkerPartitionArgs testArgs = {};
+    testArgs.initializeWparidRegister = true;
+    testArgs.crossTileAtomicSynchronization = false;
+    testArgs.emitPipeControlStall = false;
     testArgs.partitionCount = 2u;
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
@@ -1157,8 +1216,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeContro
     EXPECT_EQ(returnedSize, baseSize);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsRequiredWhenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
     DebugManager.flags.EnableWalkerPartition.set(1u);
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
@@ -1173,6 +1233,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsMul
     testArgs.initializeWparidRegister = true;
     testArgs.emitPipeControlStall = true;
     testArgs.crossTileAtomicSynchronization = true;
+    testArgs.partitionCount = 16u;
+    testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
+
+    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
+
+    DispatchInfo dispatchInfo{};
+    dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
+
+    auto returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
+    EXPECT_EQ(returnedSize, partitionSize + baseSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsNotRequiredWhenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
+    DebugManager.flags.EnableWalkerPartition.set(1u);
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+
+    auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
+                    (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
+                    HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
+                    EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.KernelHeapSize);
+
+    WalkerPartition::WalkerPartitionArgs testArgs = {};
+    testArgs.initializeWparidRegister = true;
+    testArgs.emitPipeControlStall = false;
+    testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 

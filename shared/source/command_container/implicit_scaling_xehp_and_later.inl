@@ -12,7 +12,39 @@
 namespace NEO {
 
 template <typename GfxFamily>
-size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool emitSelfCleanup,
+WalkerPartition::WalkerPartitionArgs prepareWalkerPartitionArgs(uint64_t workPartitionAllocationGpuVa,
+                                                                uint32_t tileCount,
+                                                                uint32_t partitionCount,
+                                                                bool emitSelfCleanup,
+                                                                bool preferStaticPartitioning,
+                                                                bool staticPartitioning,
+                                                                bool useSecondaryBatchBuffer) {
+    WalkerPartition::WalkerPartitionArgs args = {};
+
+    args.workPartitionAllocationGpuVa = workPartitionAllocationGpuVa;
+    args.partitionCount = partitionCount;
+    args.tileCount = tileCount;
+    args.staticPartitioning = staticPartitioning;
+    args.preferredStaticPartitioning = preferStaticPartitioning;
+
+    args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
+    args.initializeWparidRegister = ImplicitScalingHelper::isWparidRegisterInitializationRequired();
+
+    args.emitPipeControlStall = ImplicitScalingHelper::isPipeControlStallRequired(ImplicitScalingDispatch<GfxFamily>::getPipeControlStallRequired());
+
+    args.synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
+    args.crossTileAtomicSynchronization = ImplicitScalingHelper::isCrossTileAtomicRequired(args.emitPipeControlStall);
+    args.semaphoreProgrammingRequired = ImplicitScalingHelper::isSemaphoreProgrammingRequired();
+
+    args.emitSelfCleanup = ImplicitScalingHelper::isSelfCleanupRequired(args, emitSelfCleanup);
+    args.emitBatchBufferEnd = false;
+    args.secondaryBatchBuffer = useSecondaryBatchBuffer;
+
+    return args;
+}
+
+template <typename GfxFamily>
+size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool apiSelfCleanup,
                                                    bool preferStaticPartitioning,
                                                    const DeviceBitfield &devices,
                                                    const Vec3<size_t> &groupStart,
@@ -29,20 +61,13 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool emitSelfCleanup,
                                                                                                       &partitionType,
                                                                                                       &staticPartitioning);
     UNRECOVERABLE_IF(staticPartitioning && (tileCount != partitionCount));
-    WalkerPartition::WalkerPartitionArgs args = {};
-
-    args.partitionCount = partitionCount;
-    args.tileCount = tileCount;
-    args.synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
-    args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
-    args.emitSelfCleanup = ImplicitScalingHelper::isSelfCleanupRequired(emitSelfCleanup);
-    args.initializeWparidRegister = ImplicitScalingHelper::isWparidRegisterInitializationRequired();
-    args.crossTileAtomicSynchronization = ImplicitScalingHelper::isCrossTileAtomicRequired();
-    args.semaphoreProgrammingRequired = ImplicitScalingHelper::isSemaphoreProgrammingRequired();
-    args.emitPipeControlStall = ImplicitScalingHelper::isPipeControlStallRequired();
-    args.emitBatchBufferEnd = false;
-    args.staticPartitioning = staticPartitioning;
-    args.preferredStaticPartitioning = preferStaticPartitioning;
+    WalkerPartition::WalkerPartitionArgs args = prepareWalkerPartitionArgs<GfxFamily>(0u,
+                                                                                      tileCount,
+                                                                                      partitionCount,
+                                                                                      apiSelfCleanup,
+                                                                                      preferStaticPartitioning,
+                                                                                      staticPartitioning,
+                                                                                      false);
 
     return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily>(args));
 }
@@ -53,7 +78,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                           const DeviceBitfield &devices,
                                                           uint32_t &partitionCount,
                                                           bool useSecondaryBatchBuffer,
-                                                          bool emitSelfCleanup,
+                                                          bool apiSelfCleanup,
                                                           bool usesImages,
                                                           uint64_t workPartitionAllocationGpuVa) {
     uint32_t totalProgrammedSize = 0u;
@@ -63,21 +88,13 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
     bool staticPartitioning = false;
     partitionCount = WalkerPartition::computePartitionCountAndSetPartitionType<GfxFamily>(&walkerCmd, tileCount, preferStaticPartitioning, usesImages, &staticPartitioning);
 
-    WalkerPartition::WalkerPartitionArgs args = {};
-    args.workPartitionAllocationGpuVa = workPartitionAllocationGpuVa;
-    args.partitionCount = partitionCount;
-    args.tileCount = tileCount;
-    args.synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
-    args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
-    args.emitSelfCleanup = ImplicitScalingHelper::isSelfCleanupRequired(emitSelfCleanup);
-    args.initializeWparidRegister = ImplicitScalingHelper::isWparidRegisterInitializationRequired();
-    args.crossTileAtomicSynchronization = ImplicitScalingHelper::isCrossTileAtomicRequired();
-    args.semaphoreProgrammingRequired = ImplicitScalingHelper::isSemaphoreProgrammingRequired();
-    args.emitPipeControlStall = ImplicitScalingHelper::isPipeControlStallRequired();
-    args.emitBatchBufferEnd = false;
-    args.secondaryBatchBuffer = useSecondaryBatchBuffer;
-    args.staticPartitioning = staticPartitioning;
-    args.preferredStaticPartitioning = preferStaticPartitioning;
+    WalkerPartition::WalkerPartitionArgs args = prepareWalkerPartitionArgs<GfxFamily>(workPartitionAllocationGpuVa,
+                                                                                      tileCount,
+                                                                                      partitionCount,
+                                                                                      apiSelfCleanup,
+                                                                                      preferStaticPartitioning,
+                                                                                      staticPartitioning,
+                                                                                      useSecondaryBatchBuffer);
 
     if (staticPartitioning) {
         UNRECOVERABLE_IF(tileCount != partitionCount);
@@ -102,6 +119,11 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                  args);
     }
     commandStream.getSpace(totalProgrammedSize);
+}
+
+template <typename GfxFamily>
+bool &ImplicitScalingDispatch<GfxFamily>::getPipeControlStallRequired() {
+    return ImplicitScalingDispatch<GfxFamily>::pipeControlStallRequired;
 }
 
 } // namespace NEO

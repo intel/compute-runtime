@@ -14,11 +14,3 @@ using namespace NEO;
 TEST(ImplicitScalingApiTests, givenOpenClApiUsedThenSupportEnabled) {
     EXPECT_TRUE(ImplicitScaling::apiSupport);
 }
-
-TEST(ImplicitScalingApiTests, givenOpenClApiUsedThenSemaphoreProgrammingRequiredIsFalse) {
-    EXPECT_FALSE(ImplicitScaling::semaphoreProgrammingRequired);
-}
-
-TEST(ImplicitScalingApiTests, givenOpenClApiUsedThenCrossTileAtomicSynchronization) {
-    EXPECT_TRUE(ImplicitScaling::crossTileAtomicSynchronization);
-}

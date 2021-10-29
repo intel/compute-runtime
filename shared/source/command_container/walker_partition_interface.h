@@ -46,12 +46,12 @@ struct BatchBufferControlData {
     uint32_t inTileCount = 0u;
     uint32_t finalSyncTileCount = 0u;
 };
-static constexpr inline size_t dynamicPartitioningFieldsForCleanupCount = sizeof(BatchBufferControlData) / sizeof(uint32_t) - 1;
+constexpr size_t dynamicPartitioningFieldsForCleanupCount = sizeof(BatchBufferControlData) / sizeof(uint32_t) - 1;
 
 struct StaticPartitioningControlSection {
     uint32_t synchronizeBeforeWalkerCounter = 0;
     uint32_t synchronizeAfterWalkerCounter = 0;
     uint32_t finalSyncTileCounter = 0;
 };
-static constexpr inline size_t staticPartitioningFieldsForCleanupCount = sizeof(StaticPartitioningControlSection) / sizeof(uint32_t) - 1;
+constexpr size_t staticPartitioningFieldsForCleanupCount = sizeof(StaticPartitioningControlSection) / sizeof(uint32_t) - 1;
 } // namespace WalkerPartition

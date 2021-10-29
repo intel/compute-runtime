@@ -14,8 +14,6 @@
 namespace NEO {
 namespace ImplicitScaling {
 bool apiSupport = false;
-bool semaphoreProgrammingRequired = false;
-bool crossTileAtomicSynchronization = false;
 } // namespace ImplicitScaling
 bool CompressionSelector::preferRenderCompressedBuffer(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
     return false;

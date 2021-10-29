@@ -12,5 +12,8 @@ namespace NEO {
 
 using Family = XeHpFamily;
 
+template <>
+bool ImplicitScalingDispatch<Family>::pipeControlStallRequired = true;
+
 template struct ImplicitScalingDispatch<Family>;
 } // namespace NEO

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -39,8 +40,11 @@ struct EnqueueWithWalkerPartitionTests : public ::testing::Test {
     std::unique_ptr<MockContext> context;
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests, givenCsrWithSpecificNumberOfTilesWhenDispatchingThenConstructCmdBufferForAllSupportedTiles) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests,
+            givenCsrWithSpecificNumberOfTilesAndPipeControlWithStallRequiredWhenDispatchingThenConstructCmdBufferForAllSupportedTiles) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
 
     MockCommandQueueHw<FamilyType> commandQueue(context.get(), rootDevice.get(), nullptr);
     commandQueue.gpgpuEngine = &engineControlForFusedQueue;

@@ -32,4 +32,10 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+if(TESTS_XE_HP_CORE)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hp.cpp
+  )
+endif()
+
 add_subdirectories()

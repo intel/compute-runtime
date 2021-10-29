@@ -339,7 +339,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
                                                                              &walker,
                                                                              totalBytesProgrammed,
                                                                              testArgs);
-    EXPECT_EQ(controlSectionOffset + sizeof(StaticPartitioningControlSection), totalBytesProgrammed);
+    EXPECT_EQ(controlSectionOffset, totalBytesProgrammed);
 
     auto parsedOffset = 0u;
     {
@@ -399,20 +399,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
         EXPECT_EQ(1u, miSemaphoreWait->getSemaphoreDataDword());
     }
-    {
-        auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, batchBufferStart);
-        parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
-        EXPECT_FALSE(batchBufferStart->getPredicationEnable());
-        const auto afterControlSectionAddress = cmdBufferGpuAddress + controlSectionOffset + sizeof(StaticPartitioningControlSection);
-        EXPECT_EQ(afterControlSectionAddress, batchBufferStart->getBatchBufferStartAddress());
-    }
-    {
-        auto controlSection = reinterpret_cast<StaticPartitioningControlSection *>(ptrOffset(cmdBuffer, parsedOffset));
-        parsedOffset += sizeof(StaticPartitioningControlSection);
-        StaticPartitioningControlSection expectedControlSection = {};
-        EXPECT_EQ(0, std::memcmp(&expectedControlSection, controlSection, sizeof(StaticPartitioningControlSection)));
-    }
+
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
 
@@ -1162,6 +1149,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     testArgs.emitSelfCleanup = false;
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.useAtomicsForSelfCleanup = false;
+    testArgs.emitPipeControlStall = false;
     testArgs.staticPartitioning = true;
 
     checkForProperCmdBufferAddressOffset = false;
@@ -1170,9 +1158,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     testArgs.workPartitionAllocationGpuVa = 0x8000444000;
     auto walker = createWalker<FamilyType>(postSyncAddress);
 
-    uint64_t expectedControlSectionOffset = sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
-                                            sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
-                                            sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+    uint64_t expectedControlSectionOffset = sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
 
     uint32_t totalBytesProgrammed{};
     const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<FamilyType>(testArgs);
@@ -1190,27 +1176,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
         auto computeWalker = genCmdCast<WalkerPartition::COMPUTE_WALKER<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, computeWalker);
         parsedOffset += sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
-    }
-    {
-        auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, pipeControl);
-        parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
-        EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
-    }
-    {
-        auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, batchBufferStart);
-        parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
-        EXPECT_FALSE(batchBufferStart->getPredicationEnable());
-        const auto afterControlSectionAddress = cmdBufferGpuAddress + controlSectionOffset + sizeof(StaticPartitioningControlSection);
-        EXPECT_EQ(afterControlSectionAddress, batchBufferStart->getBatchBufferStartAddress());
-    }
-    {
-        auto controlSection = reinterpret_cast<StaticPartitioningControlSection *>(ptrOffset(cmdBuffer, parsedOffset));
-        parsedOffset += sizeof(StaticPartitioningControlSection);
-        StaticPartitioningControlSection expectedControlSection = {};
-        EXPECT_EQ(0, std::memcmp(&expectedControlSection, controlSection, sizeof(StaticPartitioningControlSection)));
     }
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
@@ -1231,8 +1196,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     auto walker = createWalker<FamilyType>(postSyncAddress);
 
     uint64_t expectedControlSectionOffset = sizeof(WalkerPartition::LOAD_REGISTER_MEM<FamilyType>) +
-                                            sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
-                                            sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+                                            sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
 
     uint32_t totalBytesProgrammed{};
     const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<FamilyType>(testArgs);
@@ -1259,20 +1223,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
         auto computeWalker = genCmdCast<WalkerPartition::COMPUTE_WALKER<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, computeWalker);
         parsedOffset += sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
-    }
-    {
-        auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, batchBufferStart);
-        parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
-        EXPECT_FALSE(batchBufferStart->getPredicationEnable());
-        const auto afterControlSectionAddress = cmdBufferGpuAddress + controlSectionOffset + sizeof(StaticPartitioningControlSection);
-        EXPECT_EQ(afterControlSectionAddress, batchBufferStart->getBatchBufferStartAddress());
-    }
-    {
-        auto controlSection = reinterpret_cast<StaticPartitioningControlSection *>(ptrOffset(cmdBuffer, parsedOffset));
-        parsedOffset += sizeof(StaticPartitioningControlSection);
-        StaticPartitioningControlSection expectedControlSection = {};
-        EXPECT_EQ(0, std::memcmp(&expectedControlSection, controlSection, sizeof(StaticPartitioningControlSection)));
     }
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }

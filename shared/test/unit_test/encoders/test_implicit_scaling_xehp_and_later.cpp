@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/command_container/walker_partition_interface.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/implicit_scaling_fixture.h"
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCmdBufferThenConsumedSizeMatchEstimatedAndCmdBufferHasCorrectCmds) {
@@ -140,6 +143,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenDi
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
+    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
+
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
@@ -190,6 +195,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+
+    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
 
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -339,4 +346,393 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenDynamicPartitioningPrefe
     GenCmdList pipeControlList = hwParser.getCommandsList<PIPE_CONTROL>();
     auto itorPipeControl = find<PIPE_CONTROL *>(pipeControlList.begin(), pipeControlList.end());
     EXPECT_EQ(itorPipeControl, pipeControlList.end());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPipeControlIsRequiredWhenApiRequiresCleanupSectionThenDoAddPipeControlCrossTileSyncAndCleanupSection) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
+
+    uint64_t workPartitionAllocationAddress = 0x1000;
+
+    WALKER_TYPE walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdXDimension(32);
+
+    size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
+                          sizeof(WALKER_TYPE) +
+                          sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(PIPE_CONTROL) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::StaticPartitioningControlSection) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_STORE_DATA_IMM) * 2 +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    uint32_t partitionCount = 0;
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, partitionCount, true, true, false, workPartitionAllocationAddress);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+    EXPECT_EQ(twoTile.count(), partitionCount);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto loadRegisterMemList = hwParser.getCommandsList<MI_LOAD_REGISTER_MEM>();
+    EXPECT_EQ(1u, loadRegisterMemList.size());
+
+    auto computeWalkerList = hwParser.getCommandsList<WALKER_TYPE>();
+    EXPECT_EQ(1u, computeWalkerList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(3u, storeDataImmList.size());
+
+    EXPECT_EQ(1u, hwParser.pipeControlList.size());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(3u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(3u, miSemaphoreList.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPipeControlIsNotRequiredWhenApiRequiresCleanupSectionThenDoNotAddPipeControlCrossTileSyncAndCleanupSection) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
+
+    uint64_t workPartitionAllocationAddress = 0x1000;
+
+    WALKER_TYPE walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdXDimension(32);
+
+    size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
+                          sizeof(WALKER_TYPE);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    uint32_t partitionCount = 0;
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, partitionCount, true, true, false, workPartitionAllocationAddress);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+    EXPECT_EQ(twoTile.count(), partitionCount);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto loadRegisterMemList = hwParser.getCommandsList<MI_LOAD_REGISTER_MEM>();
+    EXPECT_EQ(1u, loadRegisterMemList.size());
+
+    auto computeWalkerList = hwParser.getCommandsList<WALKER_TYPE>();
+    EXPECT_EQ(1u, computeWalkerList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(0u, bbStartList.size());
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(0u, storeDataImmList.size());
+
+    EXPECT_EQ(0u, hwParser.pipeControlList.size());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(0u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(0u, miSemaphoreList.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPipeControlIsNotRequiredAndForcedCrossTileSyncWhenApiRequiresCleanupSectionThenDoNotAddPipeControlAndAddCrossTileSyncAndCleanupSection) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
+
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
+
+    uint64_t workPartitionAllocationAddress = 0x1000;
+
+    WALKER_TYPE walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdXDimension(32);
+
+    size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
+                          sizeof(WALKER_TYPE) +
+                          sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::StaticPartitioningControlSection) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_STORE_DATA_IMM) * 2 +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    uint32_t partitionCount = 0;
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, partitionCount, true, true, false, workPartitionAllocationAddress);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+    EXPECT_EQ(twoTile.count(), partitionCount);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto loadRegisterMemList = hwParser.getCommandsList<MI_LOAD_REGISTER_MEM>();
+    EXPECT_EQ(1u, loadRegisterMemList.size());
+
+    auto computeWalkerList = hwParser.getCommandsList<WALKER_TYPE>();
+    EXPECT_EQ(1u, computeWalkerList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(3u, storeDataImmList.size());
+
+    EXPECT_EQ(0u, hwParser.pipeControlList.size());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(3u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(3u, miSemaphoreList.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPipeControlIsNotRequiredAndForcedCrossTileSyncWhenApiRequiresNoCleanupSectionThenDoNotAddPipeControlAndCleanupSectionAndAddCrossTileSync) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
+
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
+
+    uint64_t workPartitionAllocationAddress = 0x1000;
+
+    WALKER_TYPE walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdXDimension(32);
+
+    size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
+                          sizeof(WALKER_TYPE) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::StaticPartitioningControlSection);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    uint32_t partitionCount = 0;
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, partitionCount, true, false, false, workPartitionAllocationAddress);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+    EXPECT_EQ(twoTile.count(), partitionCount);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto loadRegisterMemList = hwParser.getCommandsList<MI_LOAD_REGISTER_MEM>();
+    EXPECT_EQ(1u, loadRegisterMemList.size());
+
+    auto computeWalkerList = hwParser.getCommandsList<WALKER_TYPE>();
+    EXPECT_EQ(1u, computeWalkerList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(0u, storeDataImmList.size());
+
+    EXPECT_EQ(0u, hwParser.pipeControlList.size());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(1u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(1u, miSemaphoreList.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPipeControlIsNotRequiredAndForcedCrossTileSyncBeforeExecWhenApiRequiresCleanupSectionThenDoNotAddPipeControlAndAddCrossTileSyncAndCleanupSection) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.SynchronizeWalkerInWparidMode.set(1);
+
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
+
+    uint64_t workPartitionAllocationAddress = 0x1000;
+
+    WALKER_TYPE walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdXDimension(32);
+
+    size_t expectedSize = sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_LOAD_REGISTER_MEM) +
+                          sizeof(WALKER_TYPE) +
+                          sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::StaticPartitioningControlSection) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_STORE_DATA_IMM) * 2 +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    uint32_t partitionCount = 0;
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, partitionCount, true, true, false, workPartitionAllocationAddress);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+    EXPECT_EQ(twoTile.count(), partitionCount);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto loadRegisterMemList = hwParser.getCommandsList<MI_LOAD_REGISTER_MEM>();
+    EXPECT_EQ(1u, loadRegisterMemList.size());
+
+    auto computeWalkerList = hwParser.getCommandsList<WALKER_TYPE>();
+    EXPECT_EQ(1u, computeWalkerList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(3u, storeDataImmList.size());
+
+    EXPECT_EQ(0u, hwParser.pipeControlList.size());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(4u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(4u, miSemaphoreList.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPipeControlIsNotRequiredAndForcedCleanupSectionWhenApiNotRequiresCleanupSectionThenDoNotAddPipeControlAndCrossTileSyncAndAddCleanupSection) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(1);
+
+    VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
+
+    uint64_t workPartitionAllocationAddress = 0x1000;
+
+    WALKER_TYPE walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdXDimension(32);
+
+    size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
+                          sizeof(WALKER_TYPE) +
+                          sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::StaticPartitioningControlSection) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_STORE_DATA_IMM) * 2 +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    uint32_t partitionCount = 0;
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, partitionCount, true, false, false, workPartitionAllocationAddress);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+    EXPECT_EQ(twoTile.count(), partitionCount);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto loadRegisterMemList = hwParser.getCommandsList<MI_LOAD_REGISTER_MEM>();
+    EXPECT_EQ(1u, loadRegisterMemList.size());
+
+    auto computeWalkerList = hwParser.getCommandsList<WALKER_TYPE>();
+    EXPECT_EQ(1u, computeWalkerList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(3u, storeDataImmList.size());
+
+    EXPECT_EQ(0u, hwParser.pipeControlList.size());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(3u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(3u, miSemaphoreList.size());
 }
