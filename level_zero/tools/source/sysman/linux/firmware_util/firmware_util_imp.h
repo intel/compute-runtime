@@ -46,6 +46,8 @@ typedef int (*pIgscDeviceOpromVersion)(struct igsc_device_handle *handle,
                                        uint32_t opromType,
                                        struct igsc_oprom_version *version);
 
+typedef int (*pIgscDeviceClose)(struct igsc_device_handle *handle);
+
 extern pIgscDeviceInitByDevice deviceInitByDevice;
 extern pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
 extern pIgscDeviceFwVersion deviceGetFwVersion;
@@ -57,6 +59,7 @@ extern pIgscImageOpromInit imageOpromInit;
 extern pIgscImageOpromType imageOpromType;
 extern pIgscDeviceOpromUpdate deviceOpromUpdate;
 extern pIgscDeviceOpromVersion deviceOpromVersion;
+extern pIgscDeviceClose deviceClose;
 
 class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
   public:

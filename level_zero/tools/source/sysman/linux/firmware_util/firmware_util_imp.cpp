@@ -20,6 +20,7 @@ const std::string fwImageOpromInit = "igsc_image_oprom_init";
 const std::string fwImageOpromType = "igsc_image_oprom_type";
 const std::string fwDeviceOpromUpdate = "igsc_device_oprom_update";
 const std::string fwDeviceOpromVersion = "igsc_device_oprom_version";
+const std::string fwDeviceClose = "igsc_device_close";
 
 pIgscDeviceInitByDevice deviceInitByDevice;
 pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
@@ -32,6 +33,7 @@ pIgscImageOpromInit imageOpromInit;
 pIgscImageOpromType imageOpromType;
 pIgscDeviceOpromUpdate deviceOpromUpdate;
 pIgscDeviceOpromVersion deviceOpromVersion;
+pIgscDeviceClose deviceClose;
 
 template <class T>
 bool FirmwareUtilImp::getSymbolAddr(const std::string name, T &proc) {
@@ -52,6 +54,7 @@ bool FirmwareUtilImp::loadEntryPoints() {
     ok = ok && getSymbolAddr(fwImageOpromType, imageOpromType);
     ok = ok && getSymbolAddr(fwDeviceOpromUpdate, deviceOpromUpdate);
     ok = ok && getSymbolAddr(fwDeviceOpromVersion, deviceOpromVersion);
+    ok = ok && getSymbolAddr(fwDeviceClose, deviceClose);
     return ok;
 }
 
@@ -177,6 +180,7 @@ FirmwareUtilImp::FirmwareUtilImp(const std::string &pciBDF) {
 };
 
 FirmwareUtilImp::~FirmwareUtilImp() {
+    deviceClose(&fwDeviceHandle);
     if (nullptr != libraryHandle) {
         delete libraryHandle;
         libraryHandle = nullptr;
