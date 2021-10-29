@@ -398,6 +398,11 @@ HWTEST_F(CommandStreamReceiverTest, whenClearColorAllocationIsCreatedThenItIsDes
     EXPECT_EQ(nullptr, csr.clearColorAllocation);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenNoDirectSubmissionWhenCheckTaskCountFromWaitEnabledThenReturnsFalse) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
+}
+
 struct InitDirectSubmissionFixture {
     void SetUp() {
         DebugManager.flags.EnableDirectSubmission.set(1);
@@ -487,6 +492,44 @@ HWTEST_F(InitDirectSubmissionTest, whenDirectSubmissionEnabledOnRcsThenExpectFea
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+
+    csr.reset();
+}
+
+HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionWhenCheckTaskCountFromWaitEnabledThenReturnsTrue) {
+    auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
+    osContext->ensureContextInitialized();
+    osContext->setDefaultContext(true);
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
+
+    bool ret = csr->initDirectSubmission(*device, *osContext.get());
+    EXPECT_TRUE(ret);
+
+    EXPECT_TRUE(csr->isUpdateTagFromWaitEnabled());
+
+    csr.reset();
+}
+
+HWTEST_F(InitDirectSubmissionTest, givenBlitterDirectSubmissionWhenCheckTaskCountFromWaitEnabledThenReturnsTrue) {
+    auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
+    osContext->ensureContextInitialized();
+    osContext->setDefaultContext(true);
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].submitOnInit = false;
+
+    bool ret = csr->initDirectSubmission(*device, *osContext.get());
+    EXPECT_TRUE(ret);
+
+    EXPECT_TRUE(csr->isUpdateTagFromWaitEnabled());
 
     csr.reset();
 }
