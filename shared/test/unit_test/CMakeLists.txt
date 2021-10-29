@@ -73,7 +73,7 @@ if(NOT SKIP_UNIT_TESTS)
   endif()
 
   target_sources(${TARGET_NAME} PRIVATE $<TARGET_OBJECTS:neo_unit_tests_config>)
-  add_dependencies(unit_tests prepare_test_kernel_for_shared)
+  add_dependencies(unit_tests prepare_test_kernels_for_shared)
   add_dependencies(unit_tests ${TARGET_NAME})
 
   create_project_source_tree(${TARGET_NAME})

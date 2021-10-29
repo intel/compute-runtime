@@ -122,6 +122,6 @@ if(MSVC)
   )
 endif()
 
-add_dependencies(unit_tests ${TARGET_NAME} prepare_l0_test_kernels)
+add_dependencies(unit_tests ${TARGET_NAME} prepare_test_kernels_for_l0)
 
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)

@@ -21,7 +21,8 @@ endfunction()
 ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
-add_custom_target(prepare_test_kernels)
+add_custom_target(prepare_test_kernels_for_ocl)
+add_dependencies(prepare_test_kernels_for_ocl ${SCHEDULER_BINARY_LIB_NAME})
 add_custom_target(copy_test_files_per_product)
 add_custom_target(run_unit_tests ALL)
 add_dependencies(unit_tests copy_test_files_per_product)
@@ -156,8 +157,8 @@ endfunction()
 add_dependencies(unit_tests
                  igdrcl_tests
                  test_dynamic_lib
-                 prepare_test_kernels
-                 prepare_test_kernel_for_shared
+                 prepare_test_kernels_for_ocl
+                 prepare_test_kernels_for_shared
 )
 
 set_target_properties(igdrcl_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
@@ -168,7 +169,7 @@ endif()
 
 set_target_properties(unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(copy_test_files_per_product PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
-set_target_properties(prepare_test_kernels PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+set_target_properties(prepare_test_kernels_for_ocl PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 
 target_include_directories(igdrcl_tests BEFORE PRIVATE
@@ -548,16 +549,8 @@ macro(macro_for_each_gen)
       endif()
 
       foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
-        if(NEO_DISABLE_BUILTINS_COMPILATION)
-          add_custom_target(prepare_test_kernels_${family_name_with_type}_${REVISION_ID} DEPENDS ${kernels_to_compile_${family_name_with_type}_${REVISION_ID}} copy_compiler_files)
-          # cp -a ../neo_test_kernels/XE_HPC_COREcore bin/
-          # message(FATAL_ERROR "list: ${kernels_to_compile_${family_name_with_type}_${REVISION_ID}}")
-          add_dependencies(prepare_test_kernels prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
-
-        else()
-          add_custom_target(prepare_test_kernels_${family_name_with_type}_${REVISION_ID} DEPENDS ${kernels_to_compile_${family_name_with_type}_${REVISION_ID}} copy_compiler_files)
-          add_dependencies(prepare_test_kernels prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
-        endif()
+        add_custom_target(prepare_test_kernels_${family_name_with_type}_${REVISION_ID} DEPENDS ${kernels_to_compile_${family_name_with_type}_${REVISION_ID}} copy_compiler_files)
+        add_dependencies(prepare_test_kernels_for_ocl prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
         set_target_properties(prepare_test_kernels_${family_name_with_type}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}/${REVISION_ID}")
       endforeach()
     endif()

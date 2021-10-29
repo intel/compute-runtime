@@ -17,8 +17,8 @@ if(NOT SKIP_NEO_UNIT_TESTS OR NOT SKIP_L0_UNIT_TESTS)
 
   if(NOT SKIP_NEO_UNIT_TESTS)
     add_dependencies(run_${product}_${revision_id}_aub_tests copy_test_files_per_product)
-    add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels)
-    add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernel_for_shared)
+    add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_ocl)
+    add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_shared)
   endif()
 
   add_dependencies(run_aub_tests run_${product}_${revision_id}_aub_tests)
@@ -68,7 +68,7 @@ if(NOT SKIP_NEO_UNIT_TESTS)
 endif()
 
 if(NOT SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
-  add_dependencies(run_${product}_${revision_id}_aub_tests prepare_l0_test_kernels)
+  add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_l0)
 
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
     set(l0_aub_test_cmd_prefix $<TARGET_FILE:ze_intel_gpu_aub_tests>)

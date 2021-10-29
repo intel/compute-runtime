@@ -6,8 +6,8 @@
 
 include(gen_kernel.cmake)
 
-add_custom_target(prepare_l0_test_kernels)
-set_target_properties(prepare_l0_test_kernels PROPERTIES FOLDER ${TARGET_NAME_L0})
+add_custom_target(prepare_test_kernels_for_l0)
+set_target_properties(prepare_test_kernels_for_l0 PROPERTIES FOLDER ${TARGET_NAME_L0})
 
 set(TEST_MODULES
     ${CMAKE_CURRENT_SOURCE_DIR}/test_modules/test_kernel.cl
@@ -27,5 +27,5 @@ endmacro()
 apply_macro_for_each_gen("TESTED")
 add_custom_target(l0_common_test_kernels DEPENDS ${l0_test_kernel_outputs} copy_compiler_files)
 set_target_properties(l0_common_test_kernels PROPERTIES FOLDER ${TARGET_NAME_L0})
-add_dependencies(prepare_l0_test_kernels l0_common_test_kernels)
+add_dependencies(prepare_test_kernels_for_l0 l0_common_test_kernels)
 
