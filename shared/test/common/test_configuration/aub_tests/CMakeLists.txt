@@ -21,6 +21,13 @@ if(UNIX)
 else()
   list(APPEND NEO_SHARED_aub_tests_configurations
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
+       ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
+  )
+endif()
+
+if(WIN32 OR(UNIX AND NOT DISABLE_WDDM_LINUX))
+  list(APPEND NEO_SHARED_aub_tests_configurations
+       ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
   )
 endif()
 

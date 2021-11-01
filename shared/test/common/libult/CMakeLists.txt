@@ -111,9 +111,6 @@ add_library(neo_libult_common OBJECT EXCLUDE_FROM_ALL
 )
 
 set(neo_libult_common_SRCS_LIB_ULT_WIN
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory${BRANCH_DIR_SUFFIX}mock_gmm_memory.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/mock_gmm_memory_base.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/mock_gmm_memory_base.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.cpp
@@ -128,15 +125,11 @@ set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_LINUX ${neo_libult_c
 
 if(UNIX AND NOT DISABLE_WDDM_LINUX)
   target_sources(neo_libult_common PRIVATE
-                 ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
   )
 endif()
 if(WIN32)
   target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_LIB_ULT_WIN})
-  target_include_directories(neo_libult_common PRIVATE
-                             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory${BRANCH_DIR_SUFFIX}
-  )
 elseif(UNIX)
   target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 endif()
@@ -159,7 +152,6 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/os_memory_virtual_alloc_ult.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_create.cpp
