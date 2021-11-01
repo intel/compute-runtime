@@ -5,7 +5,7 @@
 %define _source_payload w5T16.xzdio
 %define _binary_payload w5T16.xzdio
 
-Name: intel-opencl
+Name:    intel-opencl
 Epoch:   1
 Version: %{ver}
 Release: %{rel}%{?dist}

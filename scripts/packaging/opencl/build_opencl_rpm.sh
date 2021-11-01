@@ -60,6 +60,9 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     if [ -f "$PATCH_SPEC" ]; then
         source "$PATCH_SPEC"
     fi
+    if [ -z "${BRANCH_SUFFIX}" ]; then
+        sed -i '/^Epoch: /d' ${SPEC}
+    fi
 
     # Update spec file with new version
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC

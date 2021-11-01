@@ -8,7 +8,7 @@
 %define igc_sover 1
 
 %if !0%{?build_type:1}
-%define build_type Release
+%define build_type  Release
 %endif
 
 %define _source_payload w5T16.xzdio
