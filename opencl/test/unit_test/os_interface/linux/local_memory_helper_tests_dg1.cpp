@@ -90,6 +90,8 @@ DG1TEST_F(LocalMemoryHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPr
 }
 
 DG1TEST_F(LocalMemoryHelperTestsDg1, givenDg1AndMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 

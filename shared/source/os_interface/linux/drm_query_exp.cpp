@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/engine_info_impl.h"
@@ -44,6 +45,12 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
 }
 
 bool Drm::queryMemoryInfo() {
+    auto pHwInfo = getRootDeviceEnvironment().getHardwareInfo();
+    auto isLocalMemSupported = HwHelper::get(pHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*pHwInfo);
+    if (!isLocalMemSupported) {
+        return true;
+    }
+
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty, length);
     if (dataQuery) {
