@@ -321,6 +321,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return requiresCacheFlushAfterWalker;
     }
 
+    static void *convertAddressWithOffsetToGpuVa(void *ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation);
+
     void updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount);
     uint32_t peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const;
 

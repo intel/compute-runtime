@@ -51,26 +51,38 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
+    const size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
+    const uint32_t rootDeviceIndex = getDevice().getRootDeviceIndex();
+    InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
+    GraphicsAllocation *mapAllocation = nullptr;
+    bool isCpuCopyAllowed = false;
+    getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
+
     auto eBuiltInOps = EBuiltInOps::CopyBufferRect;
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
 
-    size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
     void *srcPtr = const_cast<void *>(ptr);
 
     MemObjSurface dstBufferSurf(buffer);
     HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
-    Surface *surfaces[] = {&dstBufferSurf, &hostPtrSurf};
+    GeneralSurface mapSurface;
+    Surface *surfaces[] = {&dstBufferSurf, nullptr};
 
-    if (region[0] != 0 &&
-        region[1] != 0 &&
-        region[2] != 0) {
-        bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
-        if (!status) {
-            return CL_OUT_OF_RESOURCES;
+    if (region[0] != 0 && region[1] != 0 && region[2] != 0) {
+        if (mapAllocation) {
+            surfaces[1] = &mapSurface;
+            mapSurface.setGraphicsAllocation(mapAllocation);
+            srcPtr = convertAddressWithOffsetToGpuVa(srcPtr, memoryType, *mapAllocation);
+        } else {
+            surfaces[1] = &hostPtrSurf;
+            bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
-        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
 
     void *alignedSrcPtr = alignDown(srcPtr, 4);

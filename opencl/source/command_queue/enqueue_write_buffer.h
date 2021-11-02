@@ -77,11 +77,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
-        //get offset between base cpu ptr of map allocation and dst ptr
-        if ((memoryType != DEVICE_UNIFIED_MEMORY) && (memoryType != SHARED_UNIFIED_MEMORY)) {
-            size_t srcOffset = ptrDiff(srcPtr, mapAllocation->getUnderlyingBuffer());
-            srcPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + srcOffset);
-        }
+        srcPtr = convertAddressWithOffsetToGpuVa(srcPtr, memoryType, *mapAllocation);
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {

@@ -85,11 +85,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
-        //get offset between base cpu ptr of map allocation and dst ptr
-        if ((memoryType != DEVICE_UNIFIED_MEMORY) && (memoryType != SHARED_UNIFIED_MEMORY)) {
-            size_t dstOffset = ptrDiff(dstPtr, mapAllocation->getUnderlyingBuffer());
-            dstPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + dstOffset);
-        }
+        dstPtr = convertAddressWithOffsetToGpuVa(dstPtr, memoryType, *mapAllocation);
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
