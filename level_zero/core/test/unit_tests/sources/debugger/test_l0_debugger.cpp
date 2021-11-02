@@ -71,6 +71,11 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSip
     EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
 }
 
+TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenFusedEusAreDisabled) {
+    EXPECT_TRUE(driverHandle->enableProgramDebugging);
+    EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.fusedEuEnabled);
+}
+
 TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);

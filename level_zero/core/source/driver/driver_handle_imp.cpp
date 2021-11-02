@@ -155,6 +155,8 @@ void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neo
                                   "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
             UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
         }
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.fusedEuEnabled = false;
+
         rootDeviceEnvironment->debugger = DebuggerL0::create(neoDevice.get());
     }
 }
