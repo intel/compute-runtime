@@ -13,6 +13,14 @@ namespace NEO {
 
 LocalMemoryHelper *localMemoryHelperFactory[IGFX_MAX_PRODUCT] = {};
 
+LocalMemoryHelper *LocalMemoryHelper::get(PRODUCT_FAMILY product) {
+    auto localMemHelper = localMemoryHelperFactory[product];
+    if (!localMemHelper) {
+        return LocalMemoryHelperDefault::get();
+    }
+    return localMemHelper;
+}
+
 uint32_t LocalMemoryHelper::ioctl(Drm *drm, unsigned long request, void *arg) {
     return drm->ioctl(request, arg);
 }

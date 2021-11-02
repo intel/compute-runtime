@@ -45,6 +45,9 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_inc.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}local_memory_helper_default.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}engine_info_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/flags${BRANCH_DIR_SUFFIX}drm_query_flags.h
@@ -100,8 +103,6 @@ if(I915_LOCAL_MEM_EXP)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_exp.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_tip.h
        ${CMAKE_CURRENT_SOURCE_DIR}/memory_info_impl.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper.cpp
   )
 else()
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX

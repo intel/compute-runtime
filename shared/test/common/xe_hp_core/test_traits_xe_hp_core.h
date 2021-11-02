@@ -20,4 +20,5 @@ struct TestTraits<IGFX_XE_HP_CORE> {
     static constexpr bool programOnlyChangedFieldsInComputeStateMode = false;
     static constexpr bool iohInSbaSupported = false;
     static constexpr bool auxTranslationSupported = true;
+    static constexpr bool isUsingNonDefaultIoctls = true;
 };

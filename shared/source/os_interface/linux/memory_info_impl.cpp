@@ -7,9 +7,6 @@
 
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/linux/local_memory_helper.h"
-
 #include "drm/i915_drm.h"
 
 namespace NEO {
@@ -21,11 +18,6 @@ MemoryInfoImpl::MemoryInfoImpl(const drm_i915_memory_region_info *regionInfo, si
                  [](const drm_i915_memory_region_info &memoryRegionInfo) {
                      return (memoryRegionInfo.region.memory_class == I915_MEMORY_CLASS_DEVICE);
                  });
-}
-
-uint32_t MemoryInfoImpl::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
-    auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
-    return LocalMemoryHelper::get(pHwInfo->platform.eProductFamily)->createGemExt(drm, data, dataSize, allocSize, handle);
 }
 
 void MemoryInfoImpl::assignRegionsFromDistances(const void *distanceInfosPtr, size_t size) {

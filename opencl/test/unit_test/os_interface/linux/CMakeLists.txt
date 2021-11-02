@@ -40,6 +40,7 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}local_memory_helper_default_tests.cpp
 )
 if(I915_LOCAL_MEM_EXP)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux

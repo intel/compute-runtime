@@ -11,6 +11,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "gtest/gtest.h"
+#include "test_traits_common.h"
 
 using namespace NEO;
 
@@ -110,5 +111,15 @@ class DrmMockExp : public DrmMock {
             return gemCreateExtRetVal;
         }
         return -1;
+    }
+};
+
+struct NonDefaultIoctlsSupported {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if (productFamily == IGFX_DG1) {
+            return true;
+        }
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::isUsingNonDefaultIoctls;
     }
 };
