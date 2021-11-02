@@ -43,6 +43,7 @@ static constexpr ConstStringRef textPrefix = ".text.";
 static constexpr ConstStringRef dataConst = ".data.const";
 static constexpr ConstStringRef dataGlobalConst = ".data.global_const";
 static constexpr ConstStringRef dataGlobal = ".data.global";
+static constexpr ConstStringRef dataConstString = ".data.const.string";
 static constexpr ConstStringRef symtab = ".symtab";
 static constexpr ConstStringRef relTablePrefix = ".rel.";
 static constexpr ConstStringRef spv = ".spv";

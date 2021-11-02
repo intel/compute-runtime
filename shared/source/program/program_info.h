@@ -37,6 +37,7 @@ struct ProgramInfo {
 
     GlobalSurfaceInfo globalConstants;
     GlobalSurfaceInfo globalVariables;
+    GlobalSurfaceInfo globalStrings;
     std::unique_ptr<LinkerInput> linkerInput;
 
     std::vector<KernelInfo *> kernelInfos;

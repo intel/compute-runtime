@@ -294,12 +294,14 @@ TEST(LinkerInputTests, WhenGettingSegmentForSectionNameThenCorrectSegmentIsRetur
     auto segmentConst = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataConst.str());
     auto segmentGlobalConst = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataGlobalConst.str());
     auto segmentGlobal = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataGlobal.str());
+    auto segmentConstString = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataConstString.str());
     auto segmentInstructions = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::textPrefix.str());
     auto segmentInstructions2 = NEO::LinkerInput::getSegmentForSection(".text.abc");
 
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentConst);
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentGlobalConst);
     EXPECT_EQ(NEO::SegmentType::GlobalVariables, segmentGlobal);
+    EXPECT_EQ(NEO::SegmentType::GlobalStrings, segmentConstString);
     EXPECT_EQ(NEO::SegmentType::Instructions, segmentInstructions);
     EXPECT_EQ(NEO::SegmentType::Instructions, segmentInstructions2);
 }
@@ -972,9 +974,10 @@ TEST(LinkerTests, givenEmptyLinkerInputThenLinkerOutputIsEmpty) {
     NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    auto linkResult = linker.link(globalVar, globalConst, exportedFunc,
-                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals, nullptr, nullptr, nullptr);
+    auto linkResult = linker.link(
+        globalVar, globalConst, exportedFunc, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
+        unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
     auto relocatedSymbols = linker.extractRelocatedSymbols();
@@ -990,9 +993,10 @@ TEST(LinkerTests, givenInvalidLinkerInputThenLinkerFails) {
     NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    auto linkResult = linker.link(globalVar, globalConst, exportedFunc,
-                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals, nullptr, nullptr, nullptr);
+    auto linkResult = linker.link(
+        globalVar, globalConst, exportedFunc, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
+        unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::Error, linkResult);
 }
 
@@ -1018,9 +1022,10 @@ TEST(LinkerTests, givenUnresolvedExternalWhenPatchingInstructionsThenLinkPartial
     NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
 
-    auto linkResult = linker.link(globalVar, globalConst, exportedFunc,
-                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals, nullptr, nullptr, nullptr);
+    auto linkResult = linker.link(
+        globalVar, globalConst, exportedFunc, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
+        unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -1112,9 +1117,10 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsArePrope
     NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
     NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
 
-    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
-                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals,
-                                  nullptr, nullptr, nullptr);
+    auto linkResult = linker.link(
+        globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals,
+        nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
@@ -1170,18 +1176,20 @@ TEST(LinkerTests, givenInvalidSymbolOffsetWhenPatchingInstructionsThenRelocation
     NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
     NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
 
-    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
-                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals, nullptr, nullptr, nullptr);
+    auto linkResult = linker.link(
+        globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
+        unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::Error, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
 
     globalVarSegment.segmentSize = symGlobalVariable.s_offset + symGlobalVariable.s_size;
-    linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
-                             patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals,
-                             nullptr, nullptr, nullptr);
+    linkResult = linker.link(
+        globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals,
+        nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
 }
 
@@ -1218,9 +1226,10 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFails) {
     NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
     NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
 
-    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
-                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals, nullptr, nullptr, nullptr);
+    auto linkResult = linker.link(
+        globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
+        unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(1U, relocatedSymbols.size());
@@ -1228,9 +1237,10 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFails) {
     EXPECT_TRUE(unresolvedExternals[0].internalError);
 
     patchableInstructionSegments[0].segmentSize = relocA.r_offset + sizeof(uintptr_t);
-    linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
-                             patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                             unresolvedExternals, nullptr, nullptr, nullptr);
+    linkResult = linker.link(
+        globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
+        unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
 }
 
@@ -1269,19 +1279,69 @@ TEST(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocationFa
 
     ASSERT_EQ(1U, linkerInput.symbols.count("A"));
     linkerInput.symbols["A"].segment = NEO::SegmentType::Unknown;
-    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
-                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals, nullptr, nullptr, nullptr);
+    auto linkResult = linker.link(
+        globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
+        unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::Error, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, relocatedSymbols.size());
     ASSERT_EQ(0U, unresolvedExternals.size());
 
     linkerInput.symbols["A"].segment = NEO::SegmentType::GlobalVariables;
-    linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
+    linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                              patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
                              unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+}
+
+TEST(LinkerTests, givenValidStringSymbolsAndRelocationsWhenPatchingThenItIsProperlyPatched) {
+    NEO::Linker::SegmentInfo stringSegment;
+    stringSegment.gpuAddress = 0x1234;
+    stringSegment.segmentSize = 0x10;
+
+    uint8_t instructionSegment[32] = {};
+    NEO::Linker::PatchableSegment seg0;
+    seg0.hostPointer = instructionSegment;
+    seg0.segmentSize = sizeof(instructionSegment);
+    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
+
+    WhiteBox<NEO::LinkerInput> linkerInput;
+
+    SymbolInfo strSymbol;
+    strSymbol.segment = SegmentType::GlobalStrings;
+    strSymbol.offset = 0U;
+    strSymbol.size = 8U;
+    linkerInput.symbols.insert({".str", strSymbol});
+
+    NEO::LinkerInput::RelocationInfo relocation;
+    relocation.offset = 0x8U;
+    relocation.relocationSegment = NEO::SegmentType::Instructions;
+    relocation.symbolName = ".str";
+    relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    linkerInput.relocations.push_back({relocation});
+
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    auto linkResult = linker.link(
+        {}, {}, {}, stringSegment,
+        nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+        nullptr, nullptr, nullptr);
+    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(0U, unresolvedExternals.size());
+    EXPECT_EQ(1U, linker.extractRelocatedSymbols().size());
+
+    uintptr_t strAddr = stringSegment.gpuAddress + strSymbol.offset;
+    uintptr_t patchAddr = reinterpret_cast<uintptr_t>(instructionSegment) + static_cast<uintptr_t>(relocation.offset);
+
+    constexpr bool is64Bit = sizeof(void *) == 8;
+    if (is64Bit) {
+        EXPECT_EQ(static_cast<uint64_t>(strAddr), *reinterpret_cast<const uint64_t *>(patchAddr));
+    } else {
+        EXPECT_EQ(static_cast<uint32_t>(strAddr), *reinterpret_cast<const uint32_t *>(patchAddr));
+    }
 }
 
 TEST(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThenTheyAreProperlyPatched) {
@@ -1420,7 +1480,7 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThenThe
     NEO::Linker linker(linkerInput);
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, exportedFunctionsSegmentInfo,
+    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, exportedFunctionsSegmentInfo, {},
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
                                   unresolvedExternals, device.get(), initGlobalConstantData, initGlobalVariablesData);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
@@ -1477,7 +1537,7 @@ TEST(LinkerTests, givenInvalidSymbolWhenPatchingDataSegmentsThenRelocationIsUnre
     NEO::Linker linker(linkerInput);
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {},
+    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
                                   unresolvedExternals, device.get(), initGlobalConstantData, initGlobalVariablesData);
     EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
@@ -1514,7 +1574,7 @@ TEST(LinkerTests, givenInvalidRelocationOffsetWhenPatchingDataSegmentsThenReloca
     NEO::Linker linker(linkerInput);
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {},
+    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
                                   unresolvedExternals, device.get(), initGlobalConstantData, initGlobalVariablesData);
     EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
@@ -1536,7 +1596,7 @@ TEST(LinkerTests, givenInvalidRelocationSegmentWhenPatchingDataSegmentsThenReloc
     NEO::Linker linker(linkerInput);
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    auto linkResult = linker.link({}, {}, {},
+    auto linkResult = linker.link({}, {}, {}, {},
                                   nullptr, nullptr, {},
                                   unresolvedExternals, device.get(), nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
@@ -1574,7 +1634,7 @@ TEST(LinkerTests, given32BitBinaryWithValidSymbolsAndRelocationsWhenPatchingData
     NEO::Linker linker(linkerInput);
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {},
+    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
                                   unresolvedExternals, device.get(), initGlobalConstantData, initGlobalVariablesData);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
@@ -1862,7 +1922,7 @@ TEST(LinkerTests, givenImplicitArgRelocationThenPatchRelocationWithSizeOfImplici
     seg0.segmentSize = instructionSegment.size();
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
 
-    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
+    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                                   nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
                                   nullptr, nullptr, nullptr);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);

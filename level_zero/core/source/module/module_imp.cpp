@@ -635,6 +635,7 @@ bool ModuleImp::linkBinary() {
     Linker::SegmentInfo globals;
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
+    Linker::SegmentInfo strings;
     GraphicsAllocation *globalsForPatching = translationUnit->globalVarBuffer;
     GraphicsAllocation *constantsForPatching = translationUnit->globalConstBuffer;
     if (globalsForPatching != nullptr) {
@@ -644,6 +645,10 @@ bool ModuleImp::linkBinary() {
     if (constantsForPatching != nullptr) {
         constants.gpuAddress = static_cast<uintptr_t>(constantsForPatching->getGpuAddress());
         constants.segmentSize = constantsForPatching->getUnderlyingBufferSize();
+    }
+    if (translationUnit->programInfo.globalStrings.initData != nullptr) {
+        strings.gpuAddress = reinterpret_cast<uintptr_t>(translationUnit->programInfo.globalStrings.initData);
+        strings.segmentSize = translationUnit->programInfo.globalStrings.size;
     }
     if (linkerInput->getExportedFunctionsSegmentId() >= 0) {
         auto exportedFunctionHeapId = linkerInput->getExportedFunctionsSegmentId();
@@ -663,7 +668,7 @@ bool ModuleImp::linkBinary() {
         }
     }
 
-    auto linkStatus = linker.link(globals, constants, exportedFunctions,
+    auto linkStatus = linker.link(globals, constants, exportedFunctions, strings,
                                   globalsForPatching, constantsForPatching,
                                   isaSegmentsForPatching, unresolvedExternalsInfo, this->device->getNEODevice(),
                                   translationUnit->programInfo.globalConstants.initData,

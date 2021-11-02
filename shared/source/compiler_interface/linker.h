@@ -23,6 +23,7 @@ class GraphicsAllocation;
 enum class SegmentType : uint32_t {
     Unknown,
     GlobalConstants,
+    GlobalStrings,
     GlobalVariables,
     Instructions,
 };
@@ -182,12 +183,12 @@ struct Linker {
         : data(data) {
     }
 
-    LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo,
+    LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo, const SegmentInfo &globalStringsSegInfo,
                        GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg, const PatchableSegments &instructionsSegments,
                        UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData, const void *variablesInitData) {
         bool success = data.isValid();
         auto initialUnresolvedExternalsCount = outUnresolvedExternals.size();
-        success = success && processRelocations(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo);
+        success = success && processRelocations(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo, globalStringsSegInfo);
         if (!success) {
             return LinkingStatus::Error;
         }
@@ -214,7 +215,7 @@ struct Linker {
     const LinkerInput &data;
     RelocatedSymbolsMap relocatedSymbols;
 
-    bool processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions);
+    bool processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings);
 
     void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals);
 

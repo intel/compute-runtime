@@ -86,6 +86,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "someOtherKernel", std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataConst, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataGlobal, std::string{});
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataConstString, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::debugInfo, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::debugAbbrev, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Elf::SectionsNamesZebin::symtab, std::string{});
@@ -112,6 +113,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     ASSERT_EQ(2U, sections.textKernelSections.size());
     ASSERT_EQ(1U, sections.globalDataSections.size());
     ASSERT_EQ(1U, sections.constDataSections.size());
+    ASSERT_EQ(1U, sections.constDataStringSections.size());
     ASSERT_EQ(1U, sections.zeInfoSections.size());
     ASSERT_EQ(1U, sections.symtabSections.size());
     ASSERT_EQ(1U, sections.spirvSections.size());
@@ -122,6 +124,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     EXPECT_STREQ((NEO::Elf::SectionsNamesZebin::textPrefix.str() + "someOtherKernel").c_str(), strings + sections.textKernelSections[1]->header->name);
     EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::dataGlobal.data(), strings + sections.globalDataSections[0]->header->name);
     EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::dataConst.data(), strings + sections.constDataSections[0]->header->name);
+    EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::dataConstString.data(), strings + sections.constDataStringSections[0]->header->name);
     EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::zeInfo.data(), strings + sections.zeInfoSections[0]->header->name);
     EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::symtab.data(), strings + sections.symtabSections[0]->header->name);
     EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::spv.data(), strings + sections.spirvSections[0]->header->name);
@@ -2208,6 +2211,26 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataSectionThenSetsUpInitDataAndSi
     EXPECT_EQ(0, memcmp(programInfo.globalConstants.initData, data, sizeof(data)));
     EXPECT_EQ(0U, programInfo.globalVariables.size);
     EXPECT_EQ(nullptr, programInfo.globalVariables.initData);
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataStringsSectionThenSetsUpInitDataAndSize) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    const uint8_t data[] = {'H', 'e', 'l', 'l', 'o', '!'};
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataConstString, data);
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_EQ(sizeof(data), programInfo.globalStrings.size);
+    EXPECT_NE(nullptr, programInfo.globalStrings.initData);
+    EXPECT_EQ(sizeof(data), programInfo.globalStrings.size);
+    EXPECT_EQ(0, memcmp(programInfo.globalStrings.initData, data, sizeof(data)));
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenIntelGTNoteSectionThenAddsItToZebinSections) {

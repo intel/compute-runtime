@@ -54,7 +54,7 @@ const KernelInfo *Program::getKernelInfo(size_t ordinal, uint32_t rootDeviceInde
     return kernelInfoArray[ordinal];
 }
 
-cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData) {
+cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData, const ProgramInfo::GlobalSurfaceInfo &stringsInfo) {
     auto linkerInput = getLinkerInput(pDevice->getRootDeviceIndex());
     if (linkerInput == nullptr) {
         return CL_SUCCESS;
@@ -65,6 +65,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     Linker::SegmentInfo globals;
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
+    Linker::SegmentInfo strings;
     GraphicsAllocation *globalsForPatching = getGlobalSurface(rootDeviceIndex);
     GraphicsAllocation *constantsForPatching = getConstantSurface(rootDeviceIndex);
     if (globalsForPatching != nullptr) {
@@ -74,6 +75,10 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     if (constantsForPatching != nullptr) {
         constants.gpuAddress = static_cast<uintptr_t>(constantsForPatching->getGpuAddress());
         constants.segmentSize = constantsForPatching->getUnderlyingBufferSize();
+    }
+    if (stringsInfo.initData != nullptr) {
+        strings.gpuAddress = reinterpret_cast<uintptr_t>(stringsInfo.initData);
+        strings.segmentSize = stringsInfo.size;
     }
     if (linkerInput->getExportedFunctionsSegmentId() >= 0) {
         // Exported functions reside in instruction heap of one of kernels
@@ -95,7 +100,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     }
 
     Linker::UnresolvedExternals unresolvedExternalsInfo;
-    bool linkSuccess = LinkingStatus::LinkedFully == linker.link(globals, constants, exportedFunctions,
+    bool linkSuccess = LinkingStatus::LinkedFully == linker.link(globals, constants, exportedFunctions, strings,
                                                                  globalsForPatching, constantsForPatching,
                                                                  isaSegmentsForPatching, unresolvedExternalsInfo,
                                                                  pDevice, constantsInitData, variablesInitData);
@@ -236,7 +241,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
         kernelInfo->apply(deviceInfoConstants);
     }
 
-    return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalVariables.initData);
+    return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalVariables.initData, src.globalStrings);
 }
 
 void Program::processDebugData(uint32_t rootDeviceIndex) {

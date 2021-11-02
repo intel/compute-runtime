@@ -98,6 +98,8 @@ DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSect
                 out.constDataSections.push_back(&elfSectionHeader);
             } else if (sectionName == NEO::Elf::SectionsNamesZebin::dataGlobal) {
                 out.globalDataSections.push_back(&elfSectionHeader);
+            } else if (sectionName == NEO::Elf::SectionsNamesZebin::dataConstString) {
+                out.constDataStringSections.push_back(&elfSectionHeader);
             } else if (sectionName.startsWith(NEO::Elf::SectionsNamesZebin::debugPrefix.data())) {
                 // ignoring intentionally
             } else {
@@ -164,6 +166,7 @@ DecodeError validateZebinSectionsCount(const ZebinSections &sections, std::strin
     bool valid = validateZebinSectionsCountAtMost(sections.zeInfoSections, NEO::Elf::SectionsNamesZebin::zeInfo, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.globalDataSections, NEO::Elf::SectionsNamesZebin::dataGlobal, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.constDataSections, NEO::Elf::SectionsNamesZebin::dataConst, 1U, outErrReason, outWarning);
+    valid &= validateZebinSectionsCountAtMost(sections.constDataStringSections, NEO::Elf::SectionsNamesZebin::dataConstString, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.symtabSections, NEO::Elf::SectionsNamesZebin::symtab, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.spirvSections, NEO::Elf::SectionsNamesZebin::spv, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.noteIntelGTSections, NEO::Elf::SectionsNamesZebin::noteIntelGT, 1U, outErrReason, outWarning);
@@ -1212,6 +1215,11 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     if (false == zebinSections.constDataSections.empty()) {
         dst.globalConstants.initData = zebinSections.constDataSections[0]->data.begin();
         dst.globalConstants.size = zebinSections.constDataSections[0]->data.size();
+    }
+
+    if (false == zebinSections.constDataStringSections.empty()) {
+        dst.globalStrings.initData = zebinSections.constDataStringSections[0]->data.begin();
+        dst.globalStrings.size = zebinSections.constDataStringSections[0]->data.size();
     }
 
     if (false == zebinSections.symtabSections.empty()) {

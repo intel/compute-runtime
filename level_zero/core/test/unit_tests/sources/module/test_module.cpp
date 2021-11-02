@@ -1859,6 +1859,42 @@ TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTb
     EXPECT_TRUE(allocation->isAubWritable(std::numeric_limits<uint32_t>::max()));
 }
 
+TEST_F(ModuleTests, givenConstDataStringSectionWhenLinkingModuleThenSegmentIsPatched) {
+    auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
+
+    char data[64]{};
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.pKernelHeap = data;
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+    auto patchAddr = reinterpret_cast<uintptr_t>(ptrOffset(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer(), 0x8));
+    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
+    pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->relocations.push_back({{".str", 0x8, LinkerInput::RelocationInfo::Type::Address, SegmentType::Instructions}});
+    linkerInput->symbols.insert({".str", {0x0, 0x8, SegmentType::GlobalStrings}});
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    const char constStringData[] = "Hello World!\n";
+    auto stringsAddr = reinterpret_cast<uintptr_t>(constStringData);
+    pModule->translationUnit->programInfo.globalStrings.initData = constStringData;
+    pModule->translationUnit->programInfo.globalStrings.size = sizeof(constStringData);
+
+    auto status = pModule->linkBinary();
+    EXPECT_TRUE(status);
+
+    constexpr bool is64Bit = sizeof(void *) == 8;
+    if (is64Bit) {
+        EXPECT_EQ(static_cast<uint64_t>(stringsAddr), *reinterpret_cast<uint64_t *>(patchAddr));
+    } else {
+        EXPECT_EQ(static_cast<uint32_t>(stringsAddr), *reinterpret_cast<uint32_t *>(patchAddr));
+    }
+}
+
 TEST_F(ModuleTests, givenImplicitArgsRelocationWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired) {
     auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
 

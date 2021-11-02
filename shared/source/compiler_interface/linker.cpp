@@ -29,6 +29,8 @@ SegmentType LinkerInput::getSegmentForSection(ConstStringRef name) {
         return NEO::SegmentType::GlobalConstants;
     } else if (name == NEO::Elf::SectionsNamesZebin::dataGlobal) {
         return NEO::SegmentType::GlobalVariables;
+    } else if (name == NEO::Elf::SectionsNamesZebin::dataConstString) {
+        return NEO::SegmentType::GlobalStrings;
     } else if (name.startsWith(NEO::Elf::SpecialSectionNames::text.data())) {
         return NEO::SegmentType::Instructions;
     }
@@ -243,7 +245,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
     }
 }
 
-bool Linker::processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions) {
+bool Linker::processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings) {
     relocatedSymbols.reserve(data.getSymbols().size());
     for (auto &symbol : data.getSymbols()) {
         const SegmentInfo *seg = nullptr;
@@ -256,6 +258,9 @@ bool Linker::processRelocations(const SegmentInfo &globalVariables, const Segmen
             break;
         case SegmentType::GlobalConstants:
             seg = &globalConstants;
+            break;
+        case SegmentType::GlobalStrings:
+            seg = &globalStrings;
             break;
         case SegmentType::Instructions:
             seg = &exportedFunctions;
