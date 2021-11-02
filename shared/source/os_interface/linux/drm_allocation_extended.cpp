@@ -42,4 +42,8 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     return true;
 }
 
+bool DrmAllocation::shouldAllocationPageFault(Drm *drm) {
+    return false;
+}
+
 } // namespace NEO

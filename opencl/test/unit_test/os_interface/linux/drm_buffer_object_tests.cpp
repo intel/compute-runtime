@@ -532,3 +532,14 @@ TEST_F(DrmBufferObjectTest, given48bitAddressWhenSetThenAddressIsCanonized) {
     auto boAddress = bo.peekAddress();
     EXPECT_EQ(boAddress, expectedAddress);
 }
+
+TEST_F(DrmBufferObjectTest, whenBoRequiresExplicitResidencyThenTheCorrespondingQueryReturnsCorrectValue) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
+    MockBufferObject bo(&drm, 0, 0, 1);
+
+    for (auto required : {false, true}) {
+        bo.requireExplicitResidency(required);
+        EXPECT_EQ(required, bo.isExplicitResidencyRequired());
+    }
+}

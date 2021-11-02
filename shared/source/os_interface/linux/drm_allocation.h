@@ -88,6 +88,7 @@ class DrmAllocation : public GraphicsAllocation {
     void freeRegisteredBOBindExtHandles(Drm *drm);
     void linkWithRegisteredHandle(uint32_t handle);
     MOCKABLE_VIRTUAL void markForCapture();
+    bool shouldAllocationPageFault(Drm *drm);
 
   protected:
     BufferObjects bufferObjects{};

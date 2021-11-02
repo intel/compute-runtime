@@ -138,6 +138,7 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
                 }
 
                 bo->requireImmediateBinding(true);
+                bo->requireExplicitResidency(!shouldAllocationPageFault(drm));
             }
         }
     }

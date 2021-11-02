@@ -71,4 +71,11 @@ uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t
 void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpecialContextRequested) {
 }
 
+void Drm::queryPageFaultSupport() {
+}
+
+bool Drm::hasPageFaultSupport() {
+    return false;
+}
+
 } // namespace NEO

@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 
 #include "test.h"
 
@@ -114,4 +115,23 @@ TEST(DrmQueryTest, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
     for (auto ioctlParamCodeString : ioctlParamCodeStringMap) {
         EXPECT_STREQ(IoctlHelper::getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
     }
+}
+
+TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalse) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.queryPageFaultSupport();
+
+    EXPECT_FALSE(drm.hasPageFaultSupport());
+}
+
+TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledThenReturnFalse) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::MemoryNull);
+    EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
 }

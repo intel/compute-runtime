@@ -172,6 +172,9 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL bool isVmBindAvailable();
     MOCKABLE_VIRTUAL bool registerResourceClasses();
 
+    void queryPageFaultSupport();
+    bool hasPageFaultSupport();
+
     MOCKABLE_VIRTUAL uint32_t registerResource(ResourceClass classType, const void *data, size_t size);
     MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);
     MOCKABLE_VIRTUAL uint32_t registerIsaCookie(uint32_t isaHandle);
@@ -323,6 +326,7 @@ class Drm : public DriverModel {
     bool bindAvailable = false;
     bool directSubmissionActive = false;
     bool contextDebugSupported = false;
+    bool pageFaultSupported = false;
 
   private:
     int getParamIoctl(int param, int *dstValue);
