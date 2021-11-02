@@ -53,6 +53,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         commandStream->replaceGraphicsAllocation(bufferAllocation);
         isCopyOnlyCommandQueue = copyOnly;
         preemptionCmdSyncProgramming = getPreemptionCmdProgramming();
+        activeSubDevices = static_cast<uint32_t>(csr->getOsContext().getDeviceBitfield().count());
     }
     return returnValue;
 }
@@ -156,8 +157,9 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
         }
     }
 
-    csr->getOsContext().ensureContextInitialized();
-    csr->initDirectSubmission(*device->getNEODevice(), csr->getOsContext());
+    auto &osContext = csr->getOsContext();
+    osContext.ensureContextInitialized();
+    csr->initDirectSubmission(*device->getNEODevice(), osContext);
     return commandQueue;
 }
 

@@ -1592,6 +1592,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPoll
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 using CommandQueueSynchronizeTest = Test<ContextFixture>;
+using MultiTileCommandQueueSynchronizeTest = Test<SingleRootMultiSubDeviceFixture>;
 
 template <typename GfxFamily>
 struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
@@ -1698,7 +1699,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSynchronizeThenExpectTheSameNumberCsrSynchronizeCalls) {
+HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSynchronizeThenExpectTheSameNumberCsrSynchronizeCalls, IsWithinXeGfxFamily) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
@@ -1717,13 +1718,15 @@ HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSync
                                                            returnValue));
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
+    EXPECT_EQ(2u, commandQueue->activeSubDevices);
 
     auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
     commandList->partitionCount = 2;
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     uint64_t timeout = std::numeric_limits<uint64_t>::max();
     commandQueue->synchronize(timeout);
@@ -1733,7 +1736,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSync
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-HWTEST_F(CommandQueueSynchronizeTest, givenCsrHasMultipleActivePartitionWhenExecutingCmdListOnNewCmdQueueThenExpectCmdPartitionCountMatchCsrActivePartitions) {
+HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartitionWhenExecutingCmdListOnNewCmdQueueThenExpectCmdPartitionCountMatchCsrActivePartitions, IsWithinXeGfxFamily) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
@@ -1753,14 +1756,42 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCsrHasMultipleActivePartitionWhenExec
                                                            returnValue));
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
+    EXPECT_EQ(2u, commandQueue->activeSubDevices);
 
     auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
     commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(2u, commandQueue->partitionCount);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenSingleTileCsrWhenExecutingMultiTileCommandListThenExpectErrorOnExecute) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+    EXPECT_EQ(1u, commandQueue->activeSubDevices);
+
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+    commandList->partitionCount = 2;
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(returnValue, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }

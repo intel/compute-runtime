@@ -71,6 +71,13 @@ struct MultiDeviceFixture {
     L0::ContextImp *context = nullptr;
 };
 
+struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {
+    void SetUp() override;
+
+    L0::Device *device = nullptr;
+    NEO::Device *neoDevice = nullptr;
+};
+
 struct ContextFixture : DeviceFixture {
     void SetUp() override;
     void TearDown() override;

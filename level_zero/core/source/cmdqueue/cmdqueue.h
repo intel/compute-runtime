@@ -58,6 +58,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
   protected:
     NEO::PreemptionMode commandQueuePreemptionMode = NEO::PreemptionMode::Initial;
     uint32_t partitionCount = 1;
+    uint32_t activeSubDevices = 1;
     bool preemptionCmdSyncProgramming = true;
     bool commandQueueDebugCmdsProgrammed = false;
     bool isCopyOnlyCommandQueue = false;

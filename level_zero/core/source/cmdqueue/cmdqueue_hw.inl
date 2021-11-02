@@ -88,6 +88,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
 
+        if (this->activeSubDevices < commandList->partitionCount) {
+            return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
+        }
+
         if (commandList->containsCooperativeKernels()) {
             anyCommandListWithCooperativeKernels = true;
         } else {

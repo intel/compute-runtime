@@ -1116,6 +1116,8 @@ using IsAtLeastGen12lp = IsAtLeastGfxCore<IGFX_GEN12LP_CORE>;
 using IsAtLeastXeHpCore = IsAtLeastGfxCore<IGFX_XE_HP_CORE>;
 using IsAtMostXeHpCore = IsAtMostGfxCore<IGFX_XE_HP_CORE>;
 
+using IsWithinXeGfxFamily = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HP_CORE>;
+
 using IsADLS = IsProduct<IGFX_ALDERLAKE_S>;
 using IsBXT = IsProduct<IGFX_BROXTON>;
 using IsCFL = IsProduct<IGFX_COFFEELAKE>;

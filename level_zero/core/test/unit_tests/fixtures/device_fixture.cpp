@@ -138,5 +138,13 @@ void MultipleDevicesWithCustomHwInfo::SetUp() {
     driverHandle->initialize(std::move(devices));
 }
 
+void SingleRootMultiSubDeviceFixture::SetUp() {
+    MultiDeviceFixture::numRootDevices = 1u;
+    MultiDeviceFixture::SetUp();
+
+    device = driverHandle->devices[0];
+    neoDevice = device->getNEODevice();
+}
+
 } // namespace ult
 } // namespace L0
