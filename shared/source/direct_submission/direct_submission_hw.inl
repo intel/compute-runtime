@@ -33,7 +33,6 @@ template <typename GfxFamily, typename Dispatcher>
 DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
                                                               OsContext &osContext)
     : device(device), osContext(osContext) {
-    UNRECOVERABLE_IF(!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush));
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
@@ -46,6 +45,9 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
     if (disableCacheFlushKey != -1) {
         disableCpuCacheFlush = disableCacheFlushKey == 1 ? true : false;
     }
+
+    UNRECOVERABLE_IF(!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush) && !disableCpuCacheFlush);
+
     hwInfo = &device.getHardwareInfo();
     createDiagnostic();
 }

@@ -356,6 +356,11 @@ HWTEST_F(CommandStreamReceiverTest, whenClearColorAllocationIsCreatedThenItIsDes
     EXPECT_EQ(nullptr, csr.clearColorAllocation);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenNoDirectSubmissionWhenCheckTaskCountFromWaitEnabledThenReturnsFalse) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
+}
+
 struct InitDirectSubmissionFixture {
     void SetUp() {
         DebugManager.flags.EnableDirectSubmission.set(1);

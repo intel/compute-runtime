@@ -1406,6 +1406,30 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
     EXPECT_EQ(0ull, bbStart->getBatchBufferStartAddressGraphicsaddress472());
 }
 
+HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenFlushTagUpdateThenBatchBufferStartIsProgrammed) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    using DirectSubmission = MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>;
+
+    csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(*pDevice, *csr.osContext);
+    csr.recordFlusheBatchBuffer = true;
+    DirectSubmission *directSubmission = reinterpret_cast<DirectSubmission *>(csr.blitterDirectSubmission.get());
+    bool initRet = directSubmission->initialize(true);
+    EXPECT_TRUE(initRet);
+
+    csr.flushTagUpdate();
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr.commandStream, 0u);
+
+    MI_BATCH_BUFFER_START *bbStart = hwParser.getCommand<MI_BATCH_BUFFER_START>();
+    ASSERT_NE(nullptr, bbStart);
+}
+
 struct BcsTestsImages : public BcsTests {
     size_t rowPitch = 0;
     size_t slicePitch = 0;

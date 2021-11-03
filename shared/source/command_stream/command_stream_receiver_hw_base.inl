@@ -1120,7 +1120,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     flush(batchBuffer, getResidencyAllocations());
     makeSurfacePackNonResident(getResidencyAllocations());
 
-    if (!isUpdateTagFromWaitEnabled()) {
+    if (updateTag) {
         latestFlushedTaskCount = newTaskCount;
     }
 
@@ -1295,7 +1295,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
 
     void *endingCmdPtr = nullptr;
 
-    if (isDirectSubmissionEnabled()) {
+    if (isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled()) {
         endingCmdPtr = commandStreamTask.getSpace(0);
         EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStreamTask,
                                                                         0ull,
