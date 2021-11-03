@@ -13,7 +13,8 @@ struct TestTraits<IGFX_XE_HP_CORE> {
     static constexpr bool surfaceStateCompressionParamsSupported = true;
     static constexpr bool clearColorAddressMatcher = true;
     static constexpr bool auxBuiltinsSupported = true;
-    static constexpr bool compressionAubsSupported = true;
+    static constexpr bool localMemCompressionAubsSupported = true;
+    static constexpr bool systemMemCompressionAubsSupported = false;
     static constexpr bool l3ControlSupported = true;
     static constexpr bool forceNonCoherentSupported = true;
     static constexpr bool threadPreemptionDisableBitMatcher = true;

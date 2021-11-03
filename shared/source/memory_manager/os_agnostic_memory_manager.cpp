@@ -102,6 +102,20 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         if (allocationData.type == GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
             memoryAllocation->storageInfo = allocationData.storageInfo;
         }
+
+        auto pHwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+        if (HwHelper::get(pHwInfo->platform.eRenderCoreFamily).renderCompressedBuffersSupported(*pHwInfo) &&
+            allocationData.flags.preferRenderCompressed) {
+            auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
+                                             allocationData.hostPtr,
+                                             sizeAligned,
+                                             alignment,
+                                             allocationData.flags.uncacheable,
+                                             true,
+                                             allocationData.flags.useSystemMemory,
+                                             allocationData.storageInfo);
+            memoryAllocation->setDefaultGmm(gmm.release());
+        }
     }
     counter++;
     return memoryAllocation;
@@ -142,15 +156,17 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
     auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationDataAlign);
     if (memoryAllocation) {
         static_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
-        auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
-                                         allocationData.hostPtr,
-                                         allocationDataAlign.size,
-                                         allocationDataAlign.alignment,
-                                         allocationData.flags.uncacheable,
-                                         allocationData.flags.preferRenderCompressed,
-                                         allocationData.flags.useSystemMemory,
-                                         allocationData.storageInfo);
-        memoryAllocation->setDefaultGmm(gmm.release());
+        if (memoryAllocation->getDefaultGmm() == nullptr) {
+            auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
+                                             allocationData.hostPtr,
+                                             allocationDataAlign.size,
+                                             allocationDataAlign.alignment,
+                                             allocationData.flags.uncacheable,
+                                             allocationData.flags.preferRenderCompressed,
+                                             allocationData.flags.useSystemMemory,
+                                             allocationData.storageInfo);
+            memoryAllocation->setDefaultGmm(gmm.release());
+        }
     }
     return memoryAllocation;
 }
