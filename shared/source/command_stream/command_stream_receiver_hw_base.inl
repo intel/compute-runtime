@@ -1134,7 +1134,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     flush(batchBuffer, getResidencyAllocations());
     makeSurfacePackNonResident(getResidencyAllocations());
 
-    if (updateTag) {
+    if (!isUpdateTagFromWaitEnabled()) {
         latestFlushedTaskCount = newTaskCount;
     }
 
@@ -1341,7 +1341,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchB
 
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
-    bool enabled = isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
+    bool enabled = false;
 
     if (DebugManager.flags.UpdateTaskCountFromWait.get() != -1) {
         enabled = DebugManager.flags.UpdateTaskCountFromWait.get();
