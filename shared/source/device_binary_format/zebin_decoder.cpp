@@ -997,6 +997,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
         kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = outExperimentalProperties.hasNonKernelArgAtomic;
     }
 
+    kernelDescriptor.kernelAttributes.flags.passInlineData = true;
     kernelDescriptor.kernelAttributes.barrierCount = execEnv.barrierCount;
     kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = execEnv.disableMidThreadPreemption;
     kernelDescriptor.kernelAttributes.numGrfRequired = execEnv.grfCount;
