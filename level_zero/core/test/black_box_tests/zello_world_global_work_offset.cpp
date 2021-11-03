@@ -6,6 +6,7 @@
  */
 
 #include "shared/offline_compiler/source/ocloc_api.h"
+#include "shared/source/helpers/string.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 
@@ -258,11 +259,11 @@ int main(int argc, char *argv[]) {
     bool outputValidationSuccessful;
 
     const char *defaultPath = "/usr/local/lib/";
-    char userPath[256];
+    char userPath[256]{};
     if (argc == 2) {
-        strncpy(userPath, argv[1], 256);
+        strncpy_s(userPath, sizeof(userPath), argv[1], 256);
     } else {
-        strncpy(userPath, defaultPath, 256);
+        strncpy_s(userPath, sizeof(userPath), defaultPath, strlen(defaultPath));
     }
 
     uint32_t extensionsCount = 0;
