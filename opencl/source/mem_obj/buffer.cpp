@@ -23,6 +23,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -386,7 +387,15 @@ Buffer *Buffer::create(Context *context,
             bool gpuCopyRequired = (gmm && gmm->isCompressionEnabled) || !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
 
             if (gpuCopyRequired) {
-                auto blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(pBuffer->getContext()->getDevice(0u)->getDevice(), allocationInfo[rootDeviceIndex].memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
+
+                auto &device = pBuffer->getContext()->getDevice(0u)->getDevice();
+                auto &hwInfo = device.getHardwareInfo();
+                auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+                auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
+
+                if (hwInfoConfig->isBlitterFullySupported(hwInfo)) {
+                    blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, allocationInfo[rootDeviceIndex].memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
+                }
 
                 if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
                     auto cmdQ = context->getSpecialQueue(rootDeviceIndex);

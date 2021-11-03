@@ -29,40 +29,7 @@
 #include <cinttypes>
 
 using namespace NEO;
-
 struct BcsBufferTests : public ::testing::Test {
-    class BcsMockContext : public MockContext {
-      public:
-        BcsMockContext(ClDevice *device) : MockContext(device) {
-            bcsOsContext.reset(OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, device->getDeviceBitfield())));
-            bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
-            bcsCsr->setupContext(*bcsOsContext);
-            bcsCsr->initializeTagAllocation();
-            bcsCsr->createGlobalFenceAllocation();
-
-            auto mockBlitMemoryToAllocation = [this](const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                     Vec3<size_t> size) -> BlitOperationResult {
-                auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                                      *bcsCsr, memory, nullptr,
-                                                                                      hostPtr,
-                                                                                      memory->getGpuAddress(), 0,
-                                                                                      0, 0, size, 0, 0, 0, 0);
-
-                BlitPropertiesContainer container;
-                container.push_back(blitProperties);
-                bcsCsr->blitBuffer(container, true, false, const_cast<Device &>(device));
-
-                return BlitOperationResult::Success;
-            };
-            blitMemoryToAllocationFuncBackup = mockBlitMemoryToAllocation;
-        }
-
-        std::unique_ptr<OsContext> bcsOsContext;
-        std::unique_ptr<CommandStreamReceiver> bcsCsr;
-        VariableBackup<BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup{
-            &BlitHelperFunctions::blitMemoryToAllocation};
-    };
-
     template <typename FamilyType>
     class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
       public:
@@ -149,7 +116,11 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhe
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithNotDefaultRootDeviceIndexAndBcsCsrWhenCreatingThenUseBlitOperation) {
     auto rootDeviceIndex = 1u;
-    std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+    std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
     std::unique_ptr<BcsMockContext> newBcsMockContext = std::make_unique<BcsMockContext>(newDevice.get());
 
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(newBcsMockContext->bcsCsr.get());
@@ -160,6 +131,28 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithNotDefaultRootDeviceIndexAndBc
     EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
     auto bufferForBlt = clUniquePtr(Buffer::create(newBcsMockContext.get(), CL_MEM_COPY_HOST_PTR, 2000, &hostPtr, retVal));
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+}
+
+using NoBcsBufferTests = ::testing::Test;
+HWTEST_F(NoBcsBufferTests, givenProductWithNoFullyBlitterSupportWhenCreatingBufferWithCopyHostPtrThenDontUseBlitOperation) {
+    uint32_t hostPtr = 0;
+    auto rootDeviceIndex = 1u;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+
+    EXPECT_FALSE(HwInfoConfig::get(hwInfo.platform.eProductFamily)->isBlitterFullySupported(hwInfo));
+    std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
+    std::unique_ptr<BcsMockContext> newBcsMockContext = std::make_unique<BcsMockContext>(newDevice.get());
+
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(newBcsMockContext->bcsCsr.get());
+
+    static_cast<MockMemoryManager *>(newDevice->getExecutionEnvironment()->memoryManager.get())->enable64kbpages[rootDeviceIndex] = true;
+    static_cast<MockMemoryManager *>(newDevice->getExecutionEnvironment()->memoryManager.get())->localMemorySupported[rootDeviceIndex] = true;
+
+    EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
+    cl_int retVal = 0;
+    auto bufferForBlt = clUniquePtr(Buffer::create(newBcsMockContext.get(), CL_MEM_COPY_HOST_PTR, sizeof(hostPtr), &hostPtr, retVal));
+    EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIsCalledThenUseBcsCsr) {

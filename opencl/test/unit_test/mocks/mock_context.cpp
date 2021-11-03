@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -211,4 +212,28 @@ MockUnrestrictiveContextMultiGPU::MockUnrestrictiveContextMultiGPU() : MockConte
     initializeWithDevices(ClDeviceVector{deviceIds, 6}, true);
 }
 
+BcsMockContext::BcsMockContext(ClDevice *device) : MockContext(device) {
+    bcsOsContext.reset(OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, device->getDeviceBitfield())));
+    bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
+    bcsCsr->setupContext(*bcsOsContext);
+    bcsCsr->initializeTagAllocation();
+    bcsCsr->createGlobalFenceAllocation();
+
+    auto mockBlitMemoryToAllocation = [this](const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                             Vec3<size_t> size) -> BlitOperationResult {
+        auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                              *bcsCsr, memory, nullptr,
+                                                                              hostPtr,
+                                                                              memory->getGpuAddress(), 0,
+                                                                              0, 0, size, 0, 0, 0, 0);
+
+        BlitPropertiesContainer container;
+        container.push_back(blitProperties);
+        bcsCsr->blitBuffer(container, true, false, const_cast<Device &>(device));
+
+        return BlitOperationResult::Success;
+    };
+    blitMemoryToAllocationFuncBackup = mockBlitMemoryToAllocation;
+}
+BcsMockContext::~BcsMockContext() = default;
 } // namespace NEO
