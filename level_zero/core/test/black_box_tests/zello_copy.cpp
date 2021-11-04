@@ -227,7 +227,7 @@ void testAppendMemoryFillWithSomePattern(ze_context_handle_t context, ze_device_
     const size_t allocSize = 4096 + 7;
 
     char pattern0 = 5;
-    const size_t pattern1Size = 9;
+    const size_t pattern1Size = 8;
     char *pattern1 = new char[pattern1Size];
     void *zeBuffer0 = nullptr;
     void *zeBuffer1 = nullptr;
@@ -293,21 +293,16 @@ void testAppendMemoryFillWithSomePattern(ze_context_handle_t context, ze_device_
 
     if (validRet == true) {
         uint8_t *zeBufferChar1 = reinterpret_cast<uint8_t *>(zeBuffer1);
-        size_t j = 0;
         for (size_t i = 0; i < allocSize; i++) {
-            if (zeBufferChar1[i] != pattern1[j]) {
+            if (zeBufferChar1[i] != pattern1[i % pattern1Size]) {
                 validRet = false;
                 if (verbose) {
                     std::cout << "dstBufferChar1[" << i << " ] "
                               << static_cast<unsigned int>(zeBufferChar1[i])
-                              << "!= pattern1[" << j << " ] "
-                              << static_cast<unsigned int>(pattern1[j]) << "\n";
+                              << "!= pattern1[" << i % pattern1Size << " ] "
+                              << static_cast<unsigned int>(pattern1[i % pattern1Size]) << "\n";
                 }
                 break;
-            }
-            j++;
-            if (j >= pattern1Size) {
-                j = 0;
             }
         }
     }
@@ -472,5 +467,5 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
     std::cout << "\nZello Copy Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-    return outputValidationSuccessful;
+    return (outputValidationSuccessful ? 0 : 1);
 }

@@ -301,6 +301,6 @@ int main(int argc, char *argv[]) {
     testAppendImageViewCopy(context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Copy Image Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+    std::cout << "\nZello Image View Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
     return (outputValidationSuccessful ? 0 : 1);
 }
