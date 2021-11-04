@@ -23,6 +23,7 @@ link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
 add_custom_target(prepare_test_kernels_for_ocl)
 add_dependencies(prepare_test_kernels_for_ocl ${SCHEDULER_BINARY_LIB_NAME})
+add_dependencies(prepare_test_kernels_for_ocl ${BUILTINS_BINARIES_BINDFUL_LIB_NAME})
 add_custom_target(copy_test_files_per_product)
 add_custom_target(run_unit_tests ALL)
 add_dependencies(unit_tests copy_test_files_per_product)
