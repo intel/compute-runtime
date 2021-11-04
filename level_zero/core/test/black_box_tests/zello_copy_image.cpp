@@ -124,5 +124,5 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
     std::cout << "\nZello Copy Image Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-    return 0;
+    return (outputValidationSuccessful ? 0 : 1);
 }
