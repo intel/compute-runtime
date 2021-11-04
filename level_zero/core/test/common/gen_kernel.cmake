@@ -6,20 +6,18 @@
 
 function(level_zero_gen_kernels target_list platform_name suffix options)
 
-  if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-    if(NOT DEFINED cloc_cmd_prefix)
-      if(WIN32)
-        set(cloc_cmd_prefix ocloc)
+  if(NOT DEFINED cloc_cmd_prefix)
+    if(WIN32)
+      set(cloc_cmd_prefix ocloc)
+    else()
+      if(DEFINED NEO__IGC_LIBRARY_PATH)
+        set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
       else()
-        if(DEFINED NEO__IGC_LIBRARY_PATH)
-          set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-        else()
-          set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-        endif()
+        set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
       endif()
     endif()
-    list(APPEND results copy_compiler_files)
   endif()
+  list(APPEND results copy_compiler_files)
 
   set(outputdir "${TargetDir}/level_zero/${suffix}/test_files/${NEO_ARCH}/")
 
@@ -33,6 +31,8 @@ function(level_zero_gen_kernels target_list platform_name suffix options)
       set(output_files
           ${outputpath_base}.bin
           ${outputpath_base}.gen
+          ${outputpath_base}.spv
+          ${outputpath_base}.dbg
       )
 
       add_custom_command(
@@ -45,7 +45,7 @@ function(level_zero_gen_kernels target_list platform_name suffix options)
 
       list(APPEND ${target_list} ${output_files})
     else()
-      foreach(_file_name "bin" "gen")
+      foreach(_file_name "bin" "gen" "spv" "dbg")
         set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/level_zero/${suffix}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${_file_name}
