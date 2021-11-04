@@ -42,7 +42,6 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
                              ${VISA_INCLUDE_DIR}
                              ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/create_command_stream_receiver_${DRIVER_MODEL}
                              ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission/create_direct_submission_${DRIVER_MODEL}
-                             ${IGC_COMMON_PARENT_DIR}
   )
 
   if(WIN32 OR NOT DISABLE_WDDM_LINUX)

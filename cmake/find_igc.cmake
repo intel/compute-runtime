@@ -91,10 +91,6 @@ elseif(IS_DIRECTORY "${IGC_OCL_ADAPTOR_DIR}/../../visa")
 endif()
 message(STATUS "VISA Dir: ${VISA_DIR}")
 
-if(IS_DIRECTORY "${IGC_OCL_ADAPTOR_DIR}/../common")
-  get_filename_component(IGC_COMMON_PARENT_DIR "${IGC_OCL_ADAPTOR_DIR}/../" ABSOLUTE)
-endif()
-
 if(IS_DIRECTORY "${VISA_DIR}/include")
   set(VISA_INCLUDE_DIR "${VISA_DIR}/include")
 else()

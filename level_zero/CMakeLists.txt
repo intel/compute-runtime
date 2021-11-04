@@ -306,8 +306,6 @@ if(BUILD_WITH_L0)
                              ${COMPUTE_RUNTIME_DEFINITIONS}
   )
 
-  target_include_directories(${TARGET_NAME_L0} PRIVATE ${IGC_COMMON_PARENT_DIR})
-
   if(UNIX)
     target_include_directories(${TARGET_NAME_L0} PUBLIC
                                ${L0_ROOT_DIR}/core/source/os_interface/linux
@@ -417,7 +415,6 @@ if(BUILD_WITH_L0)
                                ${NEO__GMM_INCLUDE_DIR}
                                ${CIF_BASE_DIR}
                                ${IGC_OCL_ADAPTOR_DIR}
-                               ${IGC_COMMON_PARENT_DIR}
                                ${NEO__IGC_INCLUDE_DIR}
                                ${KHRONOS_HEADERS_DIR}
     )

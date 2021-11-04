@@ -53,7 +53,6 @@ target_include_directories(${TARGET_NAME}
                            $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
-                           ${IGC_COMMON_PARENT_DIR}
 )
 
 if(WIN32)

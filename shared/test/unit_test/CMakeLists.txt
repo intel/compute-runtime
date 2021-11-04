@@ -45,7 +45,6 @@ if(NOT SKIP_UNIT_TESTS)
                              ${ENGINE_NODE_DIR}
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                              ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
-                             ${IGC_COMMON_PARENT_DIR}
   )
 
   if(WIN32)

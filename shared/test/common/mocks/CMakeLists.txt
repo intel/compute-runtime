@@ -102,7 +102,6 @@ target_include_directories(neo_shared_mocks PRIVATE
                            $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
                            ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
-                           ${IGC_COMMON_PARENT_DIR}
 )
 target_compile_definitions(neo_shared_mocks PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 create_project_source_tree(neo_shared_mocks)
