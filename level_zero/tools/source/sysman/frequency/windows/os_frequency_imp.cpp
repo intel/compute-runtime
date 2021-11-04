@@ -14,47 +14,59 @@ namespace L0 {
 ze_result_t WddmFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &properties) {
     readOverclockingInfo();
     uint32_t value = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::FrequencyComponent;
     request.requestId = KmdSysman::Requests::Frequency::FrequencyThrottledEventSupported;
     request.paramInfo = static_cast<uint32_t>(frequencyDomainNumber);
-
-    properties.isThrottleEventSupported = false;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-        properties.isThrottleEventSupported = static_cast<ze_bool_t>(value);
-    }
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Frequency::FrequencyRangeMinDefault;
     request.paramInfo = static_cast<uint32_t>(frequencyDomainNumber);
-
-    properties.min = unsupportedProperty;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        value = 0;
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-        properties.min = static_cast<double>(value);
-    }
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Frequency::FrequencyRangeMaxDefault;
     request.paramInfo = static_cast<uint32_t>(frequencyDomainNumber);
-
-    properties.max = unsupportedProperty;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        value = 0;
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-        properties.max = static_cast<double>(value);
-    }
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Frequency::CanControlFrequency;
     request.paramInfo = static_cast<uint32_t>(frequencyDomainNumber);
+    vRequests.push_back(request);
+
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
+
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
+        return status;
+    }
+
+    properties.isThrottleEventSupported = false;
+    if (vResponses[0].returnCode == ZE_RESULT_SUCCESS) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        properties.isThrottleEventSupported = static_cast<ze_bool_t>(value);
+    }
+
+    properties.min = unsupportedProperty;
+    if (vResponses[1].returnCode == ZE_RESULT_SUCCESS) {
+        value = 0;
+        memcpy_s(&value, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
+        properties.min = static_cast<double>(value);
+    }
+
+    properties.max = unsupportedProperty;
+    if (vResponses[2].returnCode == ZE_RESULT_SUCCESS) {
+        value = 0;
+        memcpy_s(&value, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
+        properties.max = static_cast<double>(value);
+    }
 
     properties.canControl = false;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
+    if (vResponses[3].returnCode == ZE_RESULT_SUCCESS) {
         value = 0;
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+        memcpy_s(&value, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
         properties.canControl = (value == 1);
     }
 
@@ -79,71 +91,83 @@ ze_result_t WddmFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimit
 
 ze_result_t WddmFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     uint32_t value = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::FrequencyComponent;
     request.requestId = KmdSysman::Requests::Frequency::CurrentRequestedFrequency;
     request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentTdpFrequency;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentResolvedFrequency;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentEfficientFrequency;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentVoltage;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentThrottleReasons;
+    vRequests.push_back(request);
+
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
+
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
+        return status;
+    }
 
     pState->request = unsupportedProperty;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
         pState->request = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentTdpFrequency;
-
     pState->tdp = unsupportedProperty;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
         pState->tdp = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentResolvedFrequency;
-
     pState->actual = unsupportedProperty;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
         pState->actual = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentEfficientFrequency;
-
     pState->efficient = unsupportedProperty;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[3].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
         pState->efficient = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentVoltage;
-
     pState->currentVoltage = unsupportedProperty;
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[4].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[4].dataBuffer, sizeof(uint32_t));
         pState->currentVoltage = static_cast<double>(value);
         pState->currentVoltage /= milliVoltsFactor;
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentThrottleReasons;
-    request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
+    if (vResponses[5].returnCode == KmdSysman::Success) {
         KmdThrottleReasons value = {0};
         pState->throttleReasons = {0};
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+        memcpy_s(&value, sizeof(uint32_t), vResponses[5].dataBuffer, sizeof(uint32_t));
 
-        if (value.powerlimit1) {
+        if (value.power3) {
             pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_AVE_PWR_CAP;
         }
-        if (value.powerlimit2) {
+        if (value.power4) {
             pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_BURST_PWR_CAP;
         }
-        if (value.powerlimit4) {
+        if (value.current1) {
             pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT;
         }
-        if (value.thermal) {
+        if (value.thermal1 || value.thermal2 || value.thermal3 || value.thermal4) {
             pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
         }
     }
@@ -184,57 +208,49 @@ ze_result_t WddmFrequencyImp::getOcFrequencyTarget(double *pCurrentOcFrequency) 
 }
 
 ze_result_t WddmFrequencyImp::setOcFrequencyTarget(double currentOcFrequency) {
-    if (currentFrequencyTarget != currentOcFrequency) {
-        currentFrequencyTarget = currentOcFrequency;
-        return applyOcSettings();
-    }
-
-    return ZE_RESULT_SUCCESS;
+    this->currentFrequencyTarget = currentOcFrequency;
+    return applyOcSettings();
 }
 
 ze_result_t WddmFrequencyImp::getOcVoltageTarget(double *pCurrentVoltageTarget, double *pCurrentVoltageOffset) {
-    ze_result_t status = ZE_RESULT_SUCCESS;
     uint32_t unsignedValue = 0;
     int32_t signedValue = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::FrequencyComponent;
     request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageTarget;
     request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&unsignedValue, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    *pCurrentVoltageTarget = currentVoltageTarget = static_cast<double>(unsignedValue);
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageOffset;
+    vRequests.push_back(request);
 
-    status = pKmdSysManager->requestSingle(request, response);
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    memcpy_s(&signedValue, sizeof(int32_t), response.dataBuffer, sizeof(int32_t));
-    *pCurrentVoltageOffset = currentVoltageOffset = static_cast<double>(signedValue);
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&unsignedValue, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        *pCurrentVoltageTarget = currentVoltageTarget = static_cast<double>(unsignedValue);
+    }
 
-    return status;
-}
-
-ze_result_t WddmFrequencyImp::setOcVoltageTarget(double currentVoltageTarget, double currentVoltageOffset) {
-    if (this->currentVoltageTarget != currentVoltageTarget || this->currentVoltageOffset != currentVoltageOffset) {
-        this->currentVoltageTarget = currentVoltageTarget;
-        this->currentVoltageOffset = currentVoltageOffset;
-        return applyOcSettings();
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&signedValue, sizeof(int32_t), vResponses[1].dataBuffer, sizeof(int32_t));
+        *pCurrentVoltageOffset = currentVoltageOffset = static_cast<double>(signedValue);
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t WddmFrequencyImp::setOcVoltageTarget(double currentVoltageTarget, double currentVoltageOffset) {
+    this->currentVoltageTarget = currentVoltageTarget;
+    this->currentVoltageOffset = currentVoltageOffset;
+    return applyOcSettings();
 }
 
 ze_result_t WddmFrequencyImp::getOcMode(zes_oc_mode_t *pCurrentOcMode) {
@@ -352,7 +368,7 @@ ze_result_t WddmFrequencyImp::setOcTjMax(double ocTjMax) {
 
     request.commandId = KmdSysman::Command::Set;
     request.componentId = KmdSysman::Component::FrequencyComponent;
-    request.requestId = KmdSysman::Requests::Frequency::CurrentIccMax;
+    request.requestId = KmdSysman::Requests::Frequency::CurrentTjMax;
     request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
     request.dataSize = sizeof(uint32_t);
 
@@ -407,189 +423,191 @@ ze_result_t WddmFrequencyImp::getRange(double *min, double *max) {
 }
 
 ze_result_t WddmFrequencyImp::applyOcSettings() {
-    ze_result_t status = ZE_RESULT_SUCCESS;
     int32_t value = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Set;
     request.componentId = KmdSysman::Component::FrequencyComponent;
-    request.requestId = KmdSysman::Requests::Frequency::CurrentFixedMode;
     request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
     request.dataSize = sizeof(int32_t);
 
     // Fixed mode not supported.
+    request.requestId = KmdSysman::Requests::Frequency::CurrentFixedMode;
     value = 0;
     memcpy_s(request.dataBuffer, sizeof(int32_t), &value, sizeof(int32_t));
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageMode;
-
     value = (currentVoltageMode == ZES_OC_MODE_OVERRIDE) ? 1 : 0;
     memcpy_s(request.dataBuffer, sizeof(int32_t), &value, sizeof(int32_t));
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageOffset;
-
     value = static_cast<int32_t>(currentVoltageOffset);
     memcpy_s(request.dataBuffer, sizeof(int32_t), &value, sizeof(int32_t));
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageTarget;
-
     value = static_cast<int32_t>(currentVoltageTarget);
     memcpy_s(request.dataBuffer, sizeof(int32_t), &value, sizeof(int32_t));
+    vRequests.push_back(request);
 
-    status = pKmdSysManager->requestSingle(request, response);
+    request.requestId = KmdSysman::Requests::Frequency::CurrentFrequencyTarget;
+    value = static_cast<int32_t>(currentFrequencyTarget);
+    memcpy_s(request.dataBuffer, sizeof(int32_t), &value, sizeof(int32_t));
+    vRequests.push_back(request);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
+
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentFrequencyTarget;
+    for (uint32_t i = 0; i < vResponses.size(); i++) {
+        if (vResponses[i].returnCode != KmdSysman::ReturnCodes::Success) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
 
-    value = static_cast<int32_t>(currentFrequencyTarget);
-    memcpy_s(request.dataBuffer, sizeof(int32_t), &value, sizeof(int32_t));
-
-    return pKmdSysManager->requestSingle(request, response);
+    return status;
 }
 
 void WddmFrequencyImp::readOverclockingInfo() {
     uint32_t value = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::FrequencyComponent;
-    request.requestId = KmdSysman::Requests::Frequency::ExtendedOcSupported;
     request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
 
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    request.requestId = KmdSysman::Requests::Frequency::ExtendedOcSupported;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::FixedModeSupported;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::HighVoltageModeSupported;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::HighVoltageEnabled;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentIccMax;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::FrequencyOcSupported;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentTjMax;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::MaxNonOcFrequencyDefault;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::MaxNonOcVoltageDefault;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::MaxOcFrequencyDefault;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::MaxOcVoltageDefault;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentFrequencyTarget;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageTarget;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageOffset;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageMode;
+    vRequests.push_back(request);
+
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
+
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
+        return;
+    }
+
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
         ocCapabilities.isExtendedModeSupported = static_cast<ze_bool_t>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::FixedModeSupported;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
         ocCapabilities.isFixedModeSupported = static_cast<ze_bool_t>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::HighVoltageModeSupported;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
         ocCapabilities.isHighVoltModeCapable = static_cast<ze_bool_t>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::HighVoltageEnabled;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[3].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
         ocCapabilities.isHighVoltModeEnabled = static_cast<ze_bool_t>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentIccMax;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[4].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[4].dataBuffer, sizeof(uint32_t));
         ocCapabilities.isIccMaxSupported = static_cast<ze_bool_t>(value > 0);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::FrequencyOcSupported;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[5].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[5].dataBuffer, sizeof(uint32_t));
         ocCapabilities.isOcSupported = static_cast<ze_bool_t>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentTjMax;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[6].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[6].dataBuffer, sizeof(uint32_t));
         ocCapabilities.isTjMaxSupported = static_cast<ze_bool_t>(value > 0);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::MaxNonOcFrequencyDefault;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[7].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[7].dataBuffer, sizeof(uint32_t));
         ocCapabilities.maxFactoryDefaultFrequency = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::MaxNonOcVoltageDefault;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[8].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[8].dataBuffer, sizeof(uint32_t));
         ocCapabilities.maxFactoryDefaultVoltage = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::MaxOcFrequencyDefault;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[9].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[9].dataBuffer, sizeof(uint32_t));
         ocCapabilities.maxOcFrequency = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::MaxOcVoltageDefault;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[10].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[10].dataBuffer, sizeof(uint32_t));
         ocCapabilities.maxOcVoltage = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentFrequencyTarget;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[11].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[11].dataBuffer, sizeof(uint32_t));
         currentFrequencyTarget = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageTarget;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[12].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[12].dataBuffer, sizeof(uint32_t));
         currentVoltageTarget = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageOffset;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[13].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[13].dataBuffer, sizeof(uint32_t));
         currentVoltageOffset = static_cast<double>(value);
     }
 
-    request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageMode;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[14].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[14].dataBuffer, sizeof(uint32_t));
         currentVoltageMode = value ? ZES_OC_MODE_OVERRIDE : ZES_OC_MODE_INTERPOLATIVE;
-    }
-
-    if (currentFrequencyTarget == 0.0 || currentVoltageTarget == 0.0) {
-        if (currentFrequencyTarget == 0.0) {
-            currentFrequencyTarget = ocCapabilities.maxFactoryDefaultFrequency;
-        }
-
-        if (currentVoltageTarget == 0.0) {
-            currentVoltageTarget = ocCapabilities.maxFactoryDefaultVoltage;
-        }
     }
 }
 

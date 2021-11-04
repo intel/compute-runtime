@@ -13,107 +13,104 @@ ze_result_t WddmPowerImp::getProperties(zes_power_properties_t *pProperties) {
     pProperties->onSubdevice = false;
     pProperties->subdeviceId = 0;
 
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PowerComponent;
     request.requestId = KmdSysman::Requests::Power::EnergyThresholdSupported;
-
-    ze_result_t status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&pProperties->canControl, sizeof(ze_bool_t), response.dataBuffer, sizeof(ze_bool_t));
-    memcpy_s(&pProperties->isEnergyThresholdSupported, sizeof(ze_bool_t), response.dataBuffer, sizeof(ze_bool_t));
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Power::TdpDefault;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&pProperties->defaultLimit, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Power::MinPowerLimitDefault;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&pProperties->minLimit, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Power::MaxPowerLimitDefault;
+    vRequests.push_back(request);
 
-    status = pKmdSysManager->requestSingle(request, response);
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    memcpy_s(&pProperties->maxLimit, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&pProperties->canControl, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
+        memcpy_s(&pProperties->isEnergyThresholdSupported, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
+    }
 
-    return status;
+    pProperties->defaultLimit = -1;
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&pProperties->defaultLimit, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
+    }
+
+    pProperties->minLimit = -1;
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&pProperties->minLimit, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
+    }
+
+    pProperties->maxLimit = -1;
+    if (vResponses[3].returnCode == KmdSysman::Success) {
+        memcpy_s(&pProperties->maxLimit, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
     uint32_t energyUnits = 0;
     uint32_t timestampFrequency = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PowerComponent;
+
     request.requestId = KmdSysman::Requests::Power::EnergyCounterUnits;
-
-    ze_result_t status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&energyUnits, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Power::CurrentEnergyCounter;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    uint32_t valueCounter = 0;
-    uint64_t valueTimeStamp = 0;
-    memcpy_s(&valueCounter, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    uint32_t conversionUnit = (1 << energyUnits);
-    double valueConverted = static_cast<double>(valueCounter) / static_cast<double>(conversionUnit);
-    valueConverted *= static_cast<double>(convertJouleToMicroJoule);
-    pEnergy->energy = static_cast<uint64_t>(valueConverted);
-    memcpy_s(&valueTimeStamp, sizeof(uint64_t), (response.dataBuffer + sizeof(uint32_t)), sizeof(uint64_t));
+    vRequests.push_back(request);
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::ActivityComponent;
     request.requestId = KmdSysman::Requests::Activity::TimestampFrequency;
+    vRequests.push_back(request);
 
-    status = pKmdSysManager->requestSingle(request, response);
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    memcpy_s(&timestampFrequency, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    double timeFactor = 1.0 / static_cast<double>(timestampFrequency);
-    timeFactor = static_cast<double>(valueTimeStamp) * timeFactor;
-    timeFactor *= static_cast<double>(microFacor);
-    pEnergy->timestamp = static_cast<uint64_t>(timeFactor);
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&energyUnits, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+    }
 
-    return status;
+    uint32_t valueCounter = 0;
+    uint64_t valueTimeStamp = 0;
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueCounter, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
+        uint32_t conversionUnit = (1 << energyUnits);
+        double valueConverted = static_cast<double>(valueCounter) / static_cast<double>(conversionUnit);
+        valueConverted *= static_cast<double>(convertJouleToMicroJoule);
+        pEnergy->energy = static_cast<uint64_t>(valueConverted);
+        memcpy_s(&valueTimeStamp, sizeof(uint64_t), (vResponses[1].dataBuffer + sizeof(uint32_t)), sizeof(uint64_t));
+    }
+
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&timestampFrequency, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
+        double timeFactor = 1.0 / static_cast<double>(timestampFrequency);
+        timeFactor = static_cast<double>(valueTimeStamp) * timeFactor;
+        timeFactor *= static_cast<double>(microFacor);
+        pEnergy->timestamp = static_cast<uint64_t>(timeFactor);
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t WddmPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, zes_power_burst_limit_t *pBurst, zes_power_peak_limit_t *pPeak) {

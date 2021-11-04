@@ -55,128 +55,139 @@ bool WddmMemoryImp::isMemoryModuleSupported() {
     return (value > 0);
 }
 ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
-    ze_result_t status = ZE_RESULT_SUCCESS;
     uint32_t valueSmall = 0;
     uint64_t valueLarge = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subdeviceId;
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::MemoryComponent;
+
     request.requestId = KmdSysman::Requests::Memory::MemoryType;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    switch (valueSmall) {
-    case KmdSysman::MemoryType::DDR4: {
-        pProperties->type = ZES_MEM_TYPE_DDR4;
-    } break;
-    case KmdSysman::MemoryType::DDR5: {
-        pProperties->type = ZES_MEM_TYPE_DDR5;
-    } break;
-    case KmdSysman::MemoryType::LPDDR5: {
-        pProperties->type = ZES_MEM_TYPE_LPDDR5;
-    } break;
-    case KmdSysman::MemoryType::LPDDR4: {
-        pProperties->type = ZES_MEM_TYPE_LPDDR4;
-    } break;
-    case KmdSysman::MemoryType::DDR3: {
-        pProperties->type = ZES_MEM_TYPE_DDR3;
-    } break;
-    case KmdSysman::MemoryType::LPDDR3: {
-        pProperties->type = ZES_MEM_TYPE_LPDDR3;
-    } break;
-    default: {
-        pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
-    } break;
-    }
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Memory::PhysicalSize;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&valueLarge, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
-    pProperties->physicalSize = valueLarge;
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Memory::NumChannels;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    pProperties->numChannels = valueSmall;
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Memory::MemoryLocation;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    pProperties->location = static_cast<zes_mem_loc_t>(valueSmall);
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Memory::MemoryWidth;
+    vRequests.push_back(request);
 
-    status = pKmdSysManager->requestSingle(request, response);
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    pProperties->busWidth = valueSmall;
+    pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        switch (valueSmall) {
+        case KmdSysman::MemoryType::DDR4: {
+            pProperties->type = ZES_MEM_TYPE_DDR4;
+        } break;
+        case KmdSysman::MemoryType::DDR5: {
+            pProperties->type = ZES_MEM_TYPE_DDR5;
+        } break;
+        case KmdSysman::MemoryType::LPDDR5: {
+            pProperties->type = ZES_MEM_TYPE_LPDDR5;
+        } break;
+        case KmdSysman::MemoryType::LPDDR4: {
+            pProperties->type = ZES_MEM_TYPE_LPDDR4;
+        } break;
+        case KmdSysman::MemoryType::DDR3: {
+            pProperties->type = ZES_MEM_TYPE_DDR3;
+        } break;
+        case KmdSysman::MemoryType::LPDDR3: {
+            pProperties->type = ZES_MEM_TYPE_LPDDR3;
+        } break;
+        default: {
+            pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
+        } break;
+        }
+    }
+
+    pProperties->physicalSize = 0;
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueLarge, sizeof(uint64_t), vResponses[1].dataBuffer, sizeof(uint64_t));
+        pProperties->physicalSize = valueLarge;
+    }
+
+    pProperties->numChannels = -1;
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
+        pProperties->numChannels = valueSmall;
+    }
+
+    pProperties->location = ZES_MEM_LOC_FORCE_UINT32;
+    if (vResponses[3].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
+        pProperties->location = static_cast<zes_mem_loc_t>(valueSmall);
+    }
+
+    pProperties->busWidth = -1;
+    if (vResponses[4].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[4].dataBuffer, sizeof(uint32_t));
+        pProperties->busWidth = valueSmall;
+    }
+
+    pProperties->subdeviceId = 0;
+    pProperties->onSubdevice = false;
 
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
-    ze_result_t status = ZE_RESULT_SUCCESS;
     uint32_t valueSmall = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
-
-    pBandwidth->writeCounter = 0;
+    uint64_t valueLarge = 0;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::MemoryComponent;
+
     request.requestId = KmdSysman::Requests::Memory::MaxBandwidth;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    pBandwidth->maxBandwidth = valueSmall;
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Memory::CurrentBandwidthRead;
+    vRequests.push_back(request);
 
-    status = pKmdSysManager->requestSingle(request, response);
+    request.requestId = KmdSysman::Requests::Memory::CurrentBandwidthWrite;
+    vRequests.push_back(request);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
+
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    pBandwidth->readCounter = valueSmall * MbpsToBytesPerSecond;
+    pBandwidth->maxBandwidth = 0;
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        pBandwidth->maxBandwidth = valueSmall * MbpsToBytesPerSecond;
+    }
+
+    pBandwidth->readCounter = 0;
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueLarge, sizeof(uint64_t), vResponses[1].dataBuffer, sizeof(uint64_t));
+        pBandwidth->readCounter = valueLarge;
+    }
+
+    pBandwidth->writeCounter = 0;
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueLarge, sizeof(uint64_t), vResponses[2].dataBuffer, sizeof(uint64_t));
+        pBandwidth->writeCounter = valueLarge;
+    }
 
     std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
     pBandwidth->timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();

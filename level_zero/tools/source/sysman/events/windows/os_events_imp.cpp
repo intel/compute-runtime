@@ -82,8 +82,12 @@ ze_result_t WddmEventsImp::eventRegister(zes_event_type_flags_t events) {
         registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_SLEEP_STATE_EXIT, KmdSysman::Events::EnterD0);
     }
 
-    if (events & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
-        registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, KmdSysman::Events::EnterTDR);
+    if (events & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
+        registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH, KmdSysman::Events::EnterTDR);
+    }
+
+    if (events & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
+        registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH, KmdSysman::Events::ExitTDR);
     }
 
     return (eventList.size() == 0) ? ZE_RESULT_ERROR_UNSUPPORTED_FEATURE : ZE_RESULT_SUCCESS;
@@ -93,32 +97,39 @@ bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout
     HANDLE events[MAXIMUM_WAIT_OBJECTS];
     pEvent = 0;
 
-    if (eventList.size() == 0) {
-        return false;
+    // Note: whatever happens on this function, it should return true. If that's not the case, the upper loop in sysman.cpp will
+    // cause an infinite loop for the case of "Infinite timeout". This may work on Linux since the implementation is poll based,
+    // windows uses WaitForMultipleObjects, which is a blocking call.
+
+    // no events no listen. Less than MAXIMUM_WAIT_OBJECTS - 2 to left space for the exit handle.
+    if (eventList.size() == 0 || (eventList.size() >= (MAXIMUM_WAIT_OBJECTS - 2))) {
+        pEvent = ZES_EVENT_TYPE_FLAG_FORCE_UINT32;
+        return true;
     }
 
+    // set every handle from pos 1 onwards...
     for (uint32_t i = 0; i < eventList.size(); i++) {
         events[i] = eventList[i].windowsHandle;
     }
-
     events[eventList.size()] = exitHandle;
 
     // Setting the last handle for the exit handle, then the exit handle is signaled, it breaks from the wait.
     uint32_t signaledEvent = WaitForMultipleObjects(static_cast<uint32_t>(eventList.size() + 1), events, FALSE, static_cast<uint32_t>(timeout));
 
-    // Was a timeout
+    ResetEvent(exitHandle);
+    // Was a timeout, exit event loop.
     if (signaledEvent == WAIT_TIMEOUT) {
-        return false;
+        return true;
     }
 
-    // Was the exit event
-    if (signaledEvent >= eventList.size()) {
-        ResetEvent(exitHandle);
-        return false;
+    // Was the exit event and exit event loop.
+    if (signaledEvent == eventList.size()) {
+        pEvent = ZES_EVENT_TYPE_FLAG_FORCE_UINT32;
+    } else {
+        pEvent = eventList[signaledEvent].id;
     }
 
-    pEvent = eventList[signaledEvent].id;
-
+    // Whatever reason exit the loop, WaitForMultipleObjects exited, exit from the loop must follow.
     return true;
 }
 

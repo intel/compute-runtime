@@ -365,6 +365,12 @@ enum MemoryType {
     LPDDR4,
     DDR3,
     LPDDR3,
+    GDDR4,
+    GDDR5,
+    GDDR5X,
+    GDDR6,
+    GDDR6X,
+    GDDR7,
     UknownMemType,
 
     MaxMemoryTypes,
@@ -408,6 +414,41 @@ enum PciLinkSpeedType {
     PciLinkSpeed16_0,
 
     MaxPciLinkSpeedTypes,
+};
+
+enum ReturnCodes {
+    Success = 0,
+
+    PcuError,
+    IllegalCommand,
+    TimeOut,
+    IllegalData,
+    IllegalSubCommand,
+    OverclockingLocked,
+    DomainServiceNotSupported,
+    FrequencyExceedsMax,
+    VoltageExceedsMax,
+    OverclockingNotSupported,
+    InvalidVr,
+    InvalidIccMax,
+    VoltageOverrideDisabled,
+    ServiceNotAvailable,
+    InvalidRequestType,
+    InvalidComponent,
+    BufferNotLargeEnough,
+    GetNotSupported,
+    SetNotSupported,
+    MissingProperties,
+    InvalidEvent,
+    CreateEventError,
+    ErrorVersion,
+    ErrorSize,
+    ErrorNoElements,
+    ErrorBufferCorrupted,
+    VTNotSupported,
+    NotInitialized,
+    PropertyNotSet,
+    InvalidFlipType,
 };
 
 enum PciLinkWidthType {

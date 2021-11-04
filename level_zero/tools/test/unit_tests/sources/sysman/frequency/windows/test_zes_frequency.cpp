@@ -425,7 +425,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetFrequencyTarget(handle, freqTarget));
         double newFreqTarget = 0.0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetFrequencyTarget(handle, &newFreqTarget));
-        EXPECT_DOUBLE_EQ(freqTarget, newFreqTarget);
+        EXPECT_DOUBLE_EQ(newFreqTarget, freqTarget);
         domainIndex++;
     }
 }

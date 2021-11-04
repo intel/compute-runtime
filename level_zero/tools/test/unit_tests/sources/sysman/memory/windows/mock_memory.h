@@ -34,7 +34,8 @@ struct Mock<MemoryKmdSysManager> : public MemoryKmdSysManager {
     uint32_t mockMemoryBus = 256;
     uint32_t mockMemoryChannels = 2;
     uint32_t mockMemoryMaxBandwidth = 4256000000;
-    uint32_t mockMemoryCurrentBandwidth = 561321;
+    uint32_t mockMemoryCurrentBandwidthRead = 561321;
+    uint32_t mockMemoryCurrentBandwidthWrite = 664521;
     uint32_t mockMemoryDomains = 1;
 
     void getMemoryProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
@@ -110,7 +111,13 @@ struct Mock<MemoryKmdSysManager> : public MemoryKmdSysManager {
         } break;
         case KmdSysman::Requests::Memory::CurrentBandwidthRead: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
-            *pValue = mockMemoryCurrentBandwidth;
+            *pValue = mockMemoryCurrentBandwidthRead;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Memory::CurrentBandwidthWrite: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockMemoryCurrentBandwidthWrite;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;

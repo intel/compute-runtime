@@ -33,7 +33,7 @@ template <>
 struct Mock<MockKmdSysManager> : public MockKmdSysManager {
 
     ze_bool_t allowSetCalls = false;
-
+    ze_bool_t fanSupported = false;
     uint32_t mockPowerLimit1 = 2500;
 
     MockEventHandle handles[KmdSysman::Events::MaxEvents][mockKmdMaxHandlesPerEvent];
@@ -278,8 +278,12 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
             arrayID = KmdSysman::Events::EnterD0;
         }
 
-        if (idEvent & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
+        if (idEvent & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
             arrayID = KmdSysman::Events::EnterTDR;
+        }
+
+        if (idEvent & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
+            arrayID = KmdSysman::Events::ExitTDR;
         }
 
         for (uint32_t i = 0; i < mockKmdMaxHandlesPerEvent; i++) {

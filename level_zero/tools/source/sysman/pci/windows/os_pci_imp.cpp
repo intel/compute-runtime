@@ -19,64 +19,55 @@ ze_result_t WddmPciImp::getProperties(zes_pci_properties_t *properties) {
 ze_result_t WddmPciImp::getPciBdf(std::string &bdf) {
     uint32_t valueSmall = 0;
     uint32_t domain = 0, bus = 0, dev = 0, func = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PciComponent;
+    request.paramInfo = (isLmemSupported) ? KmdSysman::PciDomainsType::PciRootPort : KmdSysman::PciDomainsType::PciCurrentDevice;
+
     request.requestId = KmdSysman::Requests::Pci::Bus;
-
-    if (isLmemSupported) {
-        request.paramInfo = KmdSysman::PciDomainsType::PciRootPort;
-    } else {
-        request.paramInfo = KmdSysman::PciDomainsType::PciCurrentDevice;
-    }
-
-    ze_result_t status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    bus = valueSmall;
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Pci::Domain;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    domain = valueSmall;
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Pci::Device;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    dev = valueSmall;
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Pci::Function;
+    vRequests.push_back(request);
 
-    status = pKmdSysManager->requestSingle(request, response);
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    func = valueSmall;
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        bus = valueSmall;
+    }
+
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
+        domain = valueSmall;
+    }
+
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
+        dev = valueSmall;
+    }
+
+    if (vResponses[3].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
+        func = valueSmall;
+    }
 
     bdf = std::to_string(domain) + std::string(":") + std::to_string(bus) + std::string(":") + std::to_string(dev) + std::string(".") + std::to_string(func);
 
-    return status;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t WddmPciImp::getMaxLinkSpeed(double &maxLinkSpeed) {
@@ -87,12 +78,7 @@ ze_result_t WddmPciImp::getMaxLinkSpeed(double &maxLinkSpeed) {
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PciComponent;
     request.requestId = KmdSysman::Requests::Pci::MaxLinkSpeed;
-
-    if (isLmemSupported) {
-        request.paramInfo = KmdSysman::PciDomainsType::PciRootPort;
-    } else {
-        request.paramInfo = KmdSysman::PciDomainsType::PciCurrentDevice;
-    }
+    request.paramInfo = (isLmemSupported) ? KmdSysman::PciDomainsType::PciRootPort : KmdSysman::PciDomainsType::PciCurrentDevice;
 
     ze_result_t status = pKmdSysManager->requestSingle(request, response);
 
@@ -114,12 +100,7 @@ ze_result_t WddmPciImp::getMaxLinkWidth(int32_t &maxLinkwidth) {
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PciComponent;
     request.requestId = KmdSysman::Requests::Pci::MaxLinkWidth;
-
-    if (isLmemSupported) {
-        request.paramInfo = KmdSysman::PciDomainsType::PciRootPort;
-    } else {
-        request.paramInfo = KmdSysman::PciDomainsType::PciCurrentDevice;
-    }
+    request.paramInfo = (isLmemSupported) ? KmdSysman::PciDomainsType::PciRootPort : KmdSysman::PciDomainsType::PciCurrentDevice;
 
     ze_result_t status = pKmdSysManager->requestSingle(request, response);
 
@@ -135,8 +116,9 @@ ze_result_t WddmPciImp::getMaxLinkWidth(int32_t &maxLinkwidth) {
 
 ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
     uint32_t valueSmall = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     state->qualityIssues = ZES_PCI_LINK_QUAL_ISSUE_FLAG_FORCE_UINT32;
     state->stabilityIssues = ZES_PCI_LINK_STAB_ISSUE_FLAG_FORCE_UINT32;
@@ -144,31 +126,31 @@ ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PciComponent;
-    request.requestId = KmdSysman::Requests::Pci::CurrentLinkSpeed;
+    request.paramInfo = (isLmemSupported) ? KmdSysman::PciDomainsType::PciRootPort : KmdSysman::PciDomainsType::PciCurrentDevice;
 
-    if (isLmemSupported) {
-        request.paramInfo = KmdSysman::PciDomainsType::PciRootPort;
-    } else {
-        request.paramInfo = KmdSysman::PciDomainsType::PciCurrentDevice;
+    request.requestId = KmdSysman::Requests::Pci::CurrentLinkSpeed;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Pci::CurrentLinkWidth;
+    vRequests.push_back(request);
+
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
+
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
+        return status;
     }
 
-    ze_result_t status = pKmdSysManager->requestSingle(request, response);
-
-    if (status == ZE_RESULT_SUCCESS) {
-        memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
         state->speed.gen = static_cast<int32_t>(valueSmall);
     }
 
-    request.requestId = KmdSysman::Requests::Pci::CurrentLinkWidth;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status == ZE_RESULT_SUCCESS) {
-        memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
         state->speed.width = static_cast<int32_t>(valueSmall);
     }
 
-    return status;
+    return ZE_RESULT_SUCCESS;
 }
 
 bool WddmPciImp::resizableBarSupported() {

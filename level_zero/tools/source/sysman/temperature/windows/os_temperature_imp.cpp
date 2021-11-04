@@ -10,10 +10,10 @@
 namespace L0 {
 
 ze_result_t WddmTemperatureImp::getProperties(zes_temp_properties_t *pProperties) {
-    ze_result_t status = ZE_RESULT_SUCCESS;
     uint32_t value = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
 
     pProperties->type = this->type;
     pProperties->onSubdevice = false;
@@ -38,47 +38,41 @@ ze_result_t WddmTemperatureImp::getProperties(zes_temp_properties_t *pProperties
     }
 
     request.requestId = KmdSysman::Requests::Temperature::TempCriticalEventSupported;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&pProperties->isCriticalTempSupported, sizeof(ze_bool_t), response.dataBuffer, sizeof(ze_bool_t));
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Temperature::TempThreshold1EventSupported;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&pProperties->isThreshold1Supported, sizeof(ze_bool_t), response.dataBuffer, sizeof(ze_bool_t));
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Temperature::TempThreshold2EventSupported;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&pProperties->isThreshold2Supported, sizeof(ze_bool_t), response.dataBuffer, sizeof(ze_bool_t));
+    vRequests.push_back(request);
 
     request.requestId = KmdSysman::Requests::Temperature::MaxTempSupported;
+    vRequests.push_back(request);
 
-    status = pKmdSysManager->requestSingle(request, response);
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    pProperties->maxTemperature = static_cast<double>(value);
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&pProperties->isCriticalTempSupported, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
+    }
 
-    return status;
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&pProperties->isThreshold1Supported, sizeof(ze_bool_t), vResponses[1].dataBuffer, sizeof(ze_bool_t));
+    }
+
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&pProperties->isThreshold2Supported, sizeof(ze_bool_t), vResponses[2].dataBuffer, sizeof(ze_bool_t));
+    }
+
+    if (vResponses[3].returnCode == KmdSysman::Success) {
+        memcpy_s(&value, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
+        pProperties->maxTemperature = static_cast<double>(value);
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t WddmTemperatureImp::getSensorTemperature(double *pTemperature) {

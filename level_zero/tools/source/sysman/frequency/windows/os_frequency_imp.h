@@ -19,14 +19,21 @@ struct KmdThrottleReasons {
     union {
         uint32_t bitfield;
         struct {
-            uint32_t reserved1 : KMD_BIT_RANGE(16, 0);
-            uint32_t thermal : KMD_BIT_RANGE(17, 17);
-            uint32_t reserved2 : KMD_BIT_RANGE(23, 18);
-            uint32_t powerlimit4 : KMD_BIT_RANGE(24, 24);
-            uint32_t reserved3 : KMD_BIT_RANGE(25, 25);
-            uint32_t powerlimit1 : KMD_BIT_RANGE(26, 26);
-            uint32_t powerlimit2 : KMD_BIT_RANGE(27, 27);
-            uint32_t reserved4 : KMD_BIT_RANGE(31, 28);
+            uint32_t thermal1 : KMD_BIT_RANGE(0, 0);
+            uint32_t thermal2 : KMD_BIT_RANGE(1, 1);
+            uint32_t reserved1 : KMD_BIT_RANGE(3, 2);
+            uint32_t power1 : KMD_BIT_RANGE(4, 4);
+            uint32_t power2 : KMD_BIT_RANGE(5, 5);
+            uint32_t thermal3 : KMD_BIT_RANGE(6, 6);
+            uint32_t thermal4 : KMD_BIT_RANGE(7, 7);
+            uint32_t current1 : KMD_BIT_RANGE(8, 8);
+            uint32_t reserved2 : KMD_BIT_RANGE(9, 9);
+            uint32_t power3 : KMD_BIT_RANGE(10, 10);
+            uint32_t power4 : KMD_BIT_RANGE(11, 11);
+            uint32_t inefficient1 : KMD_BIT_RANGE(12, 12);
+            uint32_t reserved3 : KMD_BIT_RANGE(13, 13);
+            uint32_t inefficient2 : KMD_BIT_RANGE(14, 14);
+            uint32_t reserved4 : KMD_BIT_RANGE(31, 15);
         };
     };
 };
