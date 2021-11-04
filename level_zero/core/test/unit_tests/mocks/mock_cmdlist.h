@@ -51,6 +51,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::hostPtrMap;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
+    using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
     using BaseClass::requiredStreamState;
     using BaseClass::unifiedMemoryControls;
@@ -70,6 +71,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::clearCommandsToPatch;
     using BaseClass::commandsToPatch;
     using BaseClass::finalStreamState;
+    using BaseClass::partitionCount;
     using BaseClass::requiredStreamState;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
@@ -82,6 +84,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::initialize;
+    using BaseClass::partitionCount;
 
     WhiteBox(Device *device);
     ~WhiteBox() override;

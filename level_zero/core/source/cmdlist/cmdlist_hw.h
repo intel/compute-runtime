@@ -13,6 +13,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 
 #include "igfxfmid.h"
+#include "pipe_control_args.h"
 
 namespace NEO {
 enum class ImageType;
@@ -240,6 +241,8 @@ struct CommandListCoreFamily : CommandListImp {
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);
     void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
     void programThreadArbitrationPolicy(Device *device);
+    void appendComputeBarrierCommand();
+    NEO::PipeControlArgs createBarrierFlags();
 
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize);

@@ -44,5 +44,35 @@ class CommandListFixture : public DeviceFixture {
     std::unique_ptr<Event> event;
 };
 
+struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
+    void SetUp() {
+        SingleRootMultiSubDeviceFixture::SetUp();
+        ze_result_t returnValue;
+        commandList.reset(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+
+        commandList->partitionCount = 2;
+
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        eventPoolDesc.count = 2;
+
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.wait = 0;
+        eventDesc.signal = 0;
+
+        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+        event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    }
+
+    void TearDown() {
+        SingleRootMultiSubDeviceFixture::TearDown();
+    }
+
+    std::unique_ptr<L0::ult::CommandList> commandList;
+    std::unique_ptr<EventPool> eventPool;
+    std::unique_ptr<Event> event;
+};
+
 } // namespace ult
 } // namespace L0

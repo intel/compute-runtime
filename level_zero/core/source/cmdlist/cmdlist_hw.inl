@@ -2288,4 +2288,32 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask) {}
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
+                                                                uint32_t numWaitEvents,
+                                                                ze_event_handle_t *phWaitEvents) {
+
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents);
+    if (ret) {
+        return ret;
+    }
+    appendEventForProfiling(hSignalEvent, true);
+
+    if (!hSignalEvent) {
+        if (isCopyOnly()) {
+            size_t estimatedSizeRequired = NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+            increaseCommandStreamSpace(estimatedSizeRequired);
+
+            NEO::MiFlushArgs args;
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args);
+        } else {
+            appendComputeBarrierCommand();
+        }
+    } else {
+        appendSignalEventPostWalker(hSignalEvent);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0
