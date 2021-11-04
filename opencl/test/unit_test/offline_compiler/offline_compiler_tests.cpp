@@ -1286,6 +1286,43 @@ TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadO
     EXPECT_FALSE(result);
 }
 
+class MyOclocArgHelper : public OclocArgHelper {
+  public:
+    std::unique_ptr<char[]> loadDataFromFile(const std::string &filename, size_t &retSize) override {
+        auto file = std::make_unique<char[]>(fileContent.size() + 1);
+        strcpy_s(file.get(), fileContent.size() + 1, fileContent.c_str());
+        retSize = fileContent.size();
+        return file;
+    }
+
+    bool fileExists(const std::string &filename) const override {
+        return true;
+    }
+
+    std::string fileContent;
+};
+
+TEST(OfflineCompilerTest, givenEmptyFileWhenReadOptionsFromFileThenSuccessIsReturned) {
+    std::string options;
+    std::string filename("non_existing_file");
+
+    auto helper = std::make_unique<MyOclocArgHelper>();
+    helper->fileContent = "";
+
+    EXPECT_TRUE(OfflineCompiler::readOptionsFromFile(options, filename, helper.get()));
+    EXPECT_TRUE(options.empty());
+}
+
+TEST(OfflineCompilerTest, givenNoCopyRightsWhenReadOptionsFromFileThenSuccessIsReturned) {
+    std::string options;
+    std::string filename("non_existing_file");
+
+    auto helper = std::make_unique<MyOclocArgHelper>();
+    helper->fileContent = "-dummy_option";
+    EXPECT_TRUE(OfflineCompiler::readOptionsFromFile(options, filename, helper.get()));
+    EXPECT_STREQ(helper->fileContent.c_str(), options.c_str());
+}
+
 TEST(OfflineCompilerTest, givenEmptyDirectoryWhenGenerateFilePathIsCalledThenTrailingSlashIsNotAppended) {
     std::string path = generateFilePath("", "a", "b");
     EXPECT_STREQ("ab", path.c_str());
