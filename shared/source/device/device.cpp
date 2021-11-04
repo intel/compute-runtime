@@ -307,6 +307,10 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::Regular;
     const bool createAsEngineInstanced = engineInstanced && EngineHelpers::isCcs(engineType);
 
+    if (EngineHelpers::isBcs(engineType) && !hwInfo.capabilityTable.blitterOperationsSupported) {
+        return true;
+    }
+
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver = createCommandStreamReceiver();
     if (!commandStreamReceiver) {
         return false;

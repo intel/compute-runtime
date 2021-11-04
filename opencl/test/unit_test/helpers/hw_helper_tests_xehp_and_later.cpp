@@ -94,6 +94,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenAllFlagsSetWhenGetGp
     hwInfo.featureTable.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.featureTable.ftrRcsNode = true;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
@@ -142,6 +143,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenCcsDisabledWhenGetGp
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 0;
 
@@ -163,6 +165,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenCcsDisabledAndNumber
     hwInfo.featureTable.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));

@@ -11,6 +11,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
@@ -781,37 +782,37 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
 typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 
+template <typename FamilyType>
+class MyCmdQ : public MockCommandQueueHw<FamilyType> {
+  public:
+    using CommandQueueHw<FamilyType>::commandStream;
+    using CommandQueueHw<FamilyType>::gpgpuEngine;
+    using CommandQueueHw<FamilyType>::bcsEngines;
+    MyCmdQ(Context *context, ClDevice *device) : MockCommandQueueHw<FamilyType>(context, device, nullptr) {}
+    void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection) override {
+        CommandQueueHw<FamilyType>::dispatchAuxTranslationBuiltin(multiDispatchInfo, auxTranslationDirection);
+        auxTranslationDirections.push_back(auxTranslationDirection);
+        Kernel *lastKernel = nullptr;
+        for (const auto &dispatchInfo : multiDispatchInfo) {
+            lastKernel = dispatchInfo.getKernel();
+            dispatchInfos.emplace_back(dispatchInfo);
+        }
+        dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), *multiDispatchInfo.getKernelObjsForAuxTranslation(),
+                                                  auxTranslationDirection);
+    }
+
+    void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList) override {
+        waitCalled++;
+        MockCommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList);
+    }
+
+    std::vector<AuxTranslationDirection> auxTranslationDirections;
+    std::vector<DispatchInfo> dispatchInfos;
+    std::vector<std::tuple<Kernel *, size_t, KernelObjsForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
+    uint32_t waitCalled = 0;
+};
+
 struct EnqueueAuxKernelTests : public EnqueueKernelTest {
-    template <typename FamilyType>
-    class MyCmdQ : public MockCommandQueueHw<FamilyType> {
-      public:
-        using CommandQueueHw<FamilyType>::commandStream;
-        using CommandQueueHw<FamilyType>::gpgpuEngine;
-        using CommandQueueHw<FamilyType>::bcsEngines;
-        MyCmdQ(Context *context, ClDevice *device) : MockCommandQueueHw<FamilyType>(context, device, nullptr) {}
-        void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection) override {
-            CommandQueueHw<FamilyType>::dispatchAuxTranslationBuiltin(multiDispatchInfo, auxTranslationDirection);
-            auxTranslationDirections.push_back(auxTranslationDirection);
-            Kernel *lastKernel = nullptr;
-            for (const auto &dispatchInfo : multiDispatchInfo) {
-                lastKernel = dispatchInfo.getKernel();
-                dispatchInfos.emplace_back(dispatchInfo);
-            }
-            dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), *multiDispatchInfo.getKernelObjsForAuxTranslation(),
-                                                      auxTranslationDirection);
-        }
-
-        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList) override {
-            waitCalled++;
-            MockCommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList);
-        }
-
-        std::vector<AuxTranslationDirection> auxTranslationDirections;
-        std::vector<DispatchInfo> dispatchInfos;
-        std::vector<std::tuple<Kernel *, size_t, KernelObjsForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
-        uint32_t waitCalled = 0;
-    };
-
     void SetUp() override {
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         EnqueueKernelTest::SetUp();
@@ -927,16 +928,27 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
     EXPECT_TRUE(kernelAfter->isBuiltIn);
 }
 
-HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
+using BlitAuxKernelTests = ::testing::Test;
+HWTEST_F(BlitAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    UltClDeviceFactory factory{1, 0};
+    auto rootDeviceIndex = 0u;
+    auto pClDevice = factory.rootDevices[rootDeviceIndex];
+    auto pDevice = factory.pUltDeviceFactory->rootDevices[rootDeviceIndex];
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
     auto hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
     REQUIRE_FULL_BLITTER_OR_SKIP(hwInfo);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
-    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
+    MockContext context(pClDevice);
+    MockKernelWithInternals mockKernel(context.getDevices(), &context);
+    MyCmdQ<FamilyType> cmdQ(&context, pClDevice);
 
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer;

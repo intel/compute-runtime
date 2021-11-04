@@ -234,9 +234,11 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
 
 TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDeviceCreatesCorrectNumberOfEngines) {
     auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
     auto executionEnvironment = new MockExecutionEnvironment;
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
     MockDevice device(executionEnvironment, 0);
     EXPECT_EQ(0u, device.engines.size());
     device.createEngines();
@@ -305,6 +307,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
         hwInfo->featureTable.ftrCCSNode = (numCcs > 0);
+        hwInfo->capabilityTable.blitterOperationsSupported = true;
         HwHelper::get(hwInfo->platform.eRenderCoreFamily).adjustDefaultEngineType(hwInfo);
 
         if (!multiCcsDevice(*hwInfo, numCcs)) {

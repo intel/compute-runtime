@@ -5,15 +5,19 @@
  *
  */
 
-#include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> DeviceTest;
+TEST(DeviceTest, whenBlitterOperationsSupportIsDisabledThenNoInternalCopyEngineIsReturned) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = false;
 
-TEST_F(DeviceTest, whenBlitterOperationsSupportIsDisabledThenNoInternalCopyEngineIsReturned) {
-    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
-    EXPECT_EQ(nullptr, pDevice->getInternalCopyEngine());
+    UltDeviceFactory factory{1, 0};
+    EXPECT_EQ(nullptr, factory.rootDevices[0]->getInternalCopyEngine());
 }

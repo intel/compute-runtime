@@ -1691,7 +1691,11 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseCorrectEngine) {
     auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
-    MockContext context{};
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    MockContext context{&clDevice};
     cl_command_queue_properties properties[5] = {};
 
     fillProperties(properties, 0, 0);
@@ -1732,6 +1736,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWh
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
     auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 2};
     MockContext context{deviceFactory.subDevices[0]};
     cl_command_queue_properties properties[5] = {};
@@ -1758,6 +1765,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
     auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 0, 1>>();
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 

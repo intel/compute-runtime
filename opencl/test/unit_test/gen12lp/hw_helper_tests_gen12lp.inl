@@ -71,6 +71,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeNotSetAndBcsInfoSetWhenGetGpgp
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));

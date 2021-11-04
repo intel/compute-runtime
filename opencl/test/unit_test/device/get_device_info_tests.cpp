@@ -725,6 +725,8 @@ using GetDeviceInfoQueueFamilyTest = ::testing::Test;
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
     auto raiiHwHelper = MockHwHelper<FamilyType, 3, 1>::overrideHwHelper();
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 0};
     ClDevice &clDevice = *deviceFactory.rootDevices[0];
     size_t paramRetSize{};
@@ -746,6 +748,8 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThen
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
     auto raiiHwHelper = MockHwHelper<FamilyType, 3, 1>::overrideHwHelper();
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 2};
     ClDevice &clDevice = *deviceFactory.subDevices[1];
     size_t paramRetSize{};
@@ -776,6 +780,8 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
     mockHwHelper.disableEngineSupportOnSubDevice = 0b10; // subdevice 1
     mockHwHelper.disabledSubDeviceEngineType = aub_stream::EngineType::ENGINE_BCS;
 
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 2};
     ClDevice &clDevice0 = *deviceFactory.subDevices[0];
     ClDevice &clDevice1 = *deviceFactory.subDevices[1];

@@ -253,7 +253,8 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
 struct CrossDeviceDependenciesTests : public ::testing::Test {
 
     void SetUp() override {
-
+        VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
         auto device1 = deviceFactory->rootDevices[1];
         auto device2 = deviceFactory->rootDevices[2];
@@ -502,7 +503,6 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
 
     for (auto &rootDeviceEnvironment : deviceFactory->rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments) {
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
         REQUIRE_FULL_BLITTER_OR_SKIP(rootDeviceEnvironment->getHardwareInfo());
     }
 

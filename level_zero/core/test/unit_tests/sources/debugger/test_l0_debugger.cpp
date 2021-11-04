@@ -517,7 +517,13 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
     commandList->destroy();
 }
 
-using L0DebuggerInternalUsageTest = L0DebuggerTest;
+struct L0DebuggerInternalUsageTest : public L0DebuggerTest {
+    void SetUp() override {
+        VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        L0DebuggerTest::SetUp();
+    }
+};
 HWTEST_F(L0DebuggerInternalUsageTest, givenFlushTaskSubmissionEnabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 

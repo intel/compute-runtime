@@ -1533,13 +1533,15 @@ TEST(CreateWorkPartitionAllocationTest, givenDisabledBlitterWhenInitializingWork
 TEST(CreateWorkPartitionAllocationTest, givenEnabledBlitterWhenInitializingWorkPartitionAllocationThenDontCopyOnCpu) {
     DebugManagerStateRestore restore{};
     VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
     UltDeviceFactory deviceFactory{1, 2};
     MockDevice &device = *deviceFactory.rootDevices[0];
     auto memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
     auto commandStreamReceiver = device.getDefaultEngine().commandStreamReceiver;
 
-    device.getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     REQUIRE_BLITTER_OR_SKIP(&device.getHardwareInfo());
     memoryManager->freeGraphicsMemory(commandStreamReceiver->getWorkPartitionAllocation());
 

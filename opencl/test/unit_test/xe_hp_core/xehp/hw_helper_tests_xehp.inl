@@ -52,6 +52,7 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontS
     hwInfo.featureTable.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.featureTable.ftrRcsNode = false;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
@@ -76,6 +77,7 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEng
     hwInfo.featureTable.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.featureTable.ftrRcsNode = false;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 

@@ -35,6 +35,7 @@ struct BlitXE_HP_CORETests : public ::testing::Test {
 
         HardwareInfo hwInfo = *defaultHwInfo;
         hwInfo.featureTable.ftrBcsInfo = 1;
+        hwInfo.capabilityTable.blitterOperationsSupported = true;
 
         clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     }

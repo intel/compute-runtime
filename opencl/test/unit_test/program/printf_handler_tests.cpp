@@ -129,8 +129,8 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
     for (auto enable : {-1, 0, 1}) {
         DebugManager.flags.EnableStatelessCompression.set(enable);
 
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-        MockContext context;
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        MockContext context(device.get());
 
         auto kernelInfo = std::make_unique<MockKernelInfo>();
         kernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);

@@ -857,7 +857,15 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DThatIsZeroCopyWhenReadImageWithTheSam
     pEvent->release();
 }
 
-HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
+struct EnqueueReadImageTestWithBcs : EnqueueReadImageTest {
+    void SetUp() override {
+        VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        EnqueueReadImageTest::SetUp();
+    }
+};
+
+HWTEST_F(EnqueueReadImageTestWithBcs, givenDeviceWithBlitterSupportWhenEnqueueReadImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);

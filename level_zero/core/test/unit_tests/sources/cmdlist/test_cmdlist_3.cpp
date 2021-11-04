@@ -873,11 +873,16 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
 
 using ImageSupported = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeHpCore) {
+struct CommandListCreateWithBcs : public CommandListCreate {
+    void SetUp() override {
+        VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        CommandListCreate::SetUp();
+    }
+};
+HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeHpCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
-
-    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
@@ -919,7 +924,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToI
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingCopyWintInvalidRegionArguementsThenErrorIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingCopyWintInvalidRegionArguementsThenErrorIsReturned, IsAtLeastXeHpCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -965,7 +970,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToI
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeHpCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -1009,7 +1014,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyFromImageToImageUs
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndInvalidWaitHandleUsingCopyEngineThenErrorIsReturned, Platforms) {
+HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndInvalidWaitHandleUsingCopyEngineThenErrorIsReturned, Platforms) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -1176,7 +1181,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListForCopyEnigneThenItHasImmediateCommandQueueCreated) {
+TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateCommandListForCopyEnigneThenItHasImmediateCommandQueueCreated) {
     auto &engines = neoDevice->getEngineGroups();
     uint32_t numaAvailableEngineGroups = 0;
     for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {

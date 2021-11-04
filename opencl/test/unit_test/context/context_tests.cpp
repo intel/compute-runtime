@@ -549,6 +549,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenLocalMemoryAllocationWhenB
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(true);
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 2};
 
     ClDevice *devicesToTest[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1]};

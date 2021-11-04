@@ -66,19 +66,12 @@ struct BcsBufferTests : public ::testing::Test {
         DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
-        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-        auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
-        bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
-        capabilityTable.blitterOperationsSupported = true;
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.capabilityTable.blitterOperationsSupported = true;
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
         if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(device->getHardwareInfo())) {
             GTEST_SKIP();
-        }
-        if (createBcsEngine) {
-            auto &engine = device->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::LowPriority);
-            bcsOsContext.reset(OsContext::create(nullptr, 1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, device->getDeviceBitfield())));
-            engine.osContext = bcsOsContext.get();
-            engine.commandStreamReceiver->setupContext(*bcsOsContext);
         }
 
         bcsMockContext = std::make_unique<BcsMockContext>(device.get());
@@ -105,9 +98,9 @@ struct BcsBufferTests : public ::testing::Test {
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
-    auto newMemoryManager = new MockMemoryManager(true, true, *device->getExecutionEnvironment());
-    device->getExecutionEnvironment()->memoryManager.reset(newMemoryManager);
-    bcsMockContext->memoryManager = newMemoryManager;
+
+    static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get())->enable64kbpages[0] = true;
+    static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get())->localMemorySupported[0] = true;
 
     EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
     auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_COPY_HOST_PTR, 2000, &hostPtr, retVal));

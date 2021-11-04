@@ -86,6 +86,7 @@ TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
 TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenReturnIt) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0)};
 
@@ -101,14 +102,6 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenReturnIt) {
     EXPECT_EQ(deviceEngine.osContext->isLowPriority(), true);
 
     EXPECT_THROW(mockClDevice.getEngine(aub_stream::ENGINE_VCS, EngineUsage::Regular), std::exception);
-}
-
-TEST_F(DeviceTest, givenDeviceWhenAskedForEngineWithValidIndexThenReturnIt) {
-    auto &engines = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
-    for (uint32_t i = 0; i < engines.size(); i++) {
-        auto &deviceEngine = pDevice->getEngine(i);
-        EXPECT_EQ(deviceEngine.osContext->getEngineType(), engines[i].first);
-    }
 }
 
 TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngineSelectedThenIndexZeroEngineIsReturned) {
@@ -323,9 +316,10 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
 }
 
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     auto memoryManager = device->getMemoryManager();
-    auto &hwInfo = device->getHardwareInfo();
     auto numEnginesForDevice = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size();
     if (device->getNumGenericSubDevices() > 1) {
         numEnginesForDevice *= device->getNumGenericSubDevices();
@@ -346,6 +340,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     for (auto i = 0u; i < numDevices; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     }
 
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -421,8 +416,9 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     }
-    auto hwInfo = *defaultHwInfo;
+    auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     const auto &numGpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size();
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
