@@ -45,11 +45,10 @@ GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenChangedL3ConfigWhenL3IsProgramm
     void *buffer = alignedMalloc(bufferSize, 64);
 
     LinearStream stream(buffer, bufferSize);
-    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     uint32_t l3Config = 0x12345678;
 
-    csr.programL3(stream, flags, l3Config);
+    csr.programL3(stream, l3Config);
 
     this->parseCommands<FamilyType>(stream);
 

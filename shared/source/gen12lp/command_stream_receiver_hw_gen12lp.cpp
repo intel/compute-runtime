@@ -19,7 +19,7 @@ namespace NEO {
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
 template <>
-void CommandStreamReceiverHw<Family>::programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
+void CommandStreamReceiverHw<Family>::programL3(LinearStream &csr, uint32_t &newL3Config) {
 }
 
 template <>

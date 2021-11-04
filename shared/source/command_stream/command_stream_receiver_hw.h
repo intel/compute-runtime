@@ -136,8 +136,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
-    void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
-    void programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
+    void programL3(LinearStream &csr, uint32_t &newL3Config);
+    void programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs);
     void programAdditionalPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs, bool is3DPipeline);
     void programAdditionalStateBaseAddress(LinearStream &csr, typename GfxFamily::STATE_BASE_ADDRESS &cmd, Device &device);

@@ -39,7 +39,6 @@ GEN9TEST_F(UltCommandStreamReceiverTest, whenPreambleIsProgrammedThenStateSipCmd
     pDevice->setPreemptionMode(PreemptionMode::Disabled);
     pDevice->setDebuggerActive(true);
     uint32_t newL3Config;
-    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     auto cmdSizePreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
     StackVec<char, 4096> preambleBuffer;
@@ -47,7 +46,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, whenPreambleIsProgrammedThenStateSipCmd
 
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    commandStreamReceiver.programPreamble(preambleStream, *pDevice, dispatchFlags, newL3Config);
+    commandStreamReceiver.programPreamble(preambleStream, *pDevice, newL3Config);
 
     this->parseCommands<FamilyType>(preambleStream);
     auto itorStateSip = find<STATE_SIP *>(this->cmdList.begin(), this->cmdList.end());

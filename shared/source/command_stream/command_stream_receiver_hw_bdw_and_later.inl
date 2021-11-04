@@ -21,7 +21,7 @@ template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return true; }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
+inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config) {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     if (csrSizeRequestFlags.l3ConfigChanged && this->isPreambleSent) {
         // Add a PIPE_CONTROL w/ CS_stall
