@@ -151,13 +151,6 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlCmd(
-    LinearStream &commandStream,
-    PipeControlArgs &args) {
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
-}
-
-template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programHardwareContext(LinearStream &cmdStream) {
     programEnginePrologue(cmdStream);
 }
@@ -469,7 +462,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             PipeControlArgs args;
             args.textureCacheInvalidationEnable = true;
-            addPipeControlCmd(commandStreamCSR, args);
+            MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStreamCSR, args);
             if (this->samplerCacheFlushRequired == SamplerCacheFlushState::samplerCacheFlushBefore) {
                 this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushAfter;
             } else {

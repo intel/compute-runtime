@@ -51,7 +51,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 args.vfCacheInvalidationEnable = true;
                 args.constantCacheInvalidationEnable = true;
                 args.stateCacheInvalidationEnable = true;
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
                 uint32_t numSubslices = peekHwInfo().gtSystemInfo.SubSliceCount;
                 uint32_t numSubslicesWithVme = numSubslices / 2; // 1 VME unit per DSS
@@ -70,7 +70,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                                            false);
 
                 args = {};
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
                 lastVmeSubslicesConfig = true;
             }
@@ -86,10 +86,10 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 args.constantCacheInvalidationEnable = true;
                 args.stateCacheInvalidationEnable = true;
                 args.genericMediaStateClear = true;
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
                 args = {};
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
                 // In Gen11-LP, software programs this register as if GT consists of
                 // 2 slices with 4 subslices in each slice. Hardware maps this to the
@@ -111,7 +111,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                                            reg.TheStructure.RawData[0],
                                            false);
 
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
             }
         }
     }

@@ -95,7 +95,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::setPipeControlPriorToNonPipeline
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
-    addPipeControlCmd(commandStream, args);
+    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
 }
 
 template <typename GfxFamily>
