@@ -31,12 +31,12 @@ namespace NEO {
 struct RootDeviceEnvironment;
 
 template <typename GfxFamily>
-using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
-template <typename GfxFamily>
 using MI_STORE_REG_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM_CMD;
 
 template <typename GfxFamily>
 class GpgpuWalkerHelper {
+    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+
   public:
     static void applyWADisableLSQCROPERFforOCL(LinearStream *pCommandStream,
                                                const Kernel &kernel,
@@ -46,7 +46,7 @@ class GpgpuWalkerHelper {
     static size_t getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel);
 
     static size_t setGpgpuWalkerThreadData(
-        WALKER_TYPE<GfxFamily> *walkerCmd,
+        WALKER_TYPE *walkerCmd,
         const KernelDescriptor &kernelDescriptor,
         const size_t globalOffsets[3],
         const size_t startWorkGroups[3],
@@ -80,7 +80,7 @@ class GpgpuWalkerHelper {
 
     static void setupTimestampPacket(
         LinearStream *cmdStream,
-        WALKER_TYPE<GfxFamily> *walkerCmd,
+        WALKER_TYPE *walkerCmd,
         TagNodeBase *timestampPacketNode,
         const RootDeviceEnvironment &rootDeviceEnvironment);
 

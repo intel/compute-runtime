@@ -71,7 +71,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     const Vec3<size_t> &startOfWorkgroups) {
 
     auto walkerCmdBuf = allocateWalkerSpace(commandStream, kernel);
-    WALKER_TYPE<GfxFamily> walkerCmd = GfxFamily::cmdInitGpgpuWalker;
+    WALKER_TYPE walkerCmd = GfxFamily::cmdInitGpgpuWalker;
     uint32_t dim = dispatchInfo.getDim();
     uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
 

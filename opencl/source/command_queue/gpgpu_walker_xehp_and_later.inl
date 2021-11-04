@@ -22,7 +22,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
-    WALKER_TYPE<GfxFamily> *walkerCmd,
+    WALKER_TYPE *walkerCmd,
     const KernelDescriptor &kernelDescriptor,
     const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
@@ -50,7 +50,7 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     }
 
     walkerCmd->setExecutionMask(static_cast<uint32_t>(executionMask));
-    walkerCmd->setSimdSize(getSimdConfig<WALKER_TYPE<GfxFamily>>(simd));
+    walkerCmd->setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
     walkerCmd->setMessageSimd(walkerCmd->getSimdSize());
 
     walkerCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
@@ -103,7 +103,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
-                                                        WALKER_TYPE<GfxFamily> *walkerCmd,
+                                                        WALKER_TYPE *walkerCmd,
                                                         TagNodeBase *timestampPacketNode,
                                                         const RootDeviceEnvironment &rootDeviceEnvironment) {
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;

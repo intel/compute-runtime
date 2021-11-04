@@ -91,10 +91,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
-    WALKER_TYPE<GfxFamily> *walkerCmd,
+    WALKER_TYPE *walkerCmd,
     uint32_t &sizeCrossThreadData) {
 
-    indirectHeap.align(WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    indirectHeap.align(WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *dest = nullptr;
@@ -139,7 +139,7 @@ bool HardwareCommandsHelper<GfxFamily>::resetBindingTablePrefetch(Kernel &kernel
 
 template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
-    WALKER_TYPE<GfxFamily> *walkerCmd,
+    WALKER_TYPE *walkerCmd,
     uint32_t &interfaceDescriptorIndex) {
 }
 

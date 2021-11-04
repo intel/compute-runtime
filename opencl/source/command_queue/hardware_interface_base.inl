@@ -23,9 +23,8 @@
 namespace NEO {
 
 template <typename GfxFamily>
-inline WALKER_TYPE<GfxFamily> *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream,
-                                                                                 const Kernel &kernel) {
-    auto walkerCmd = commandStream.getSpaceForCmd<WALKER_TYPE<GfxFamily>>();
+inline typename GfxFamily::WALKER_TYPE *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream, const Kernel &kernel) {
+    auto walkerCmd = commandStream.getSpaceForCmd<WALKER_TYPE>();
     return walkerCmd;
 }
 

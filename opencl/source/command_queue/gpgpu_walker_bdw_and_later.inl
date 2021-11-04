@@ -19,7 +19,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
-    WALKER_TYPE<GfxFamily> *walkerCmd,
+    WALKER_TYPE *walkerCmd,
     const KernelDescriptor &kernelDescriptor,
     const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
@@ -45,11 +45,11 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     if (!executionMask)
         executionMask = ~executionMask;
 
-    using SIMD_SIZE = typename WALKER_TYPE<GfxFamily>::SIMD_SIZE;
+    using SIMD_SIZE = typename WALKER_TYPE::SIMD_SIZE;
 
     walkerCmd->setRightExecutionMask(static_cast<uint32_t>(executionMask));
     walkerCmd->setBottomExecutionMask(static_cast<uint32_t>(0xffffffff));
-    walkerCmd->setSimdSize(getSimdConfig<WALKER_TYPE<GfxFamily>>(simd));
+    walkerCmd->setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
 
     walkerCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
     walkerCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));
@@ -166,7 +166,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     LinearStream *cmdStream,
-    WALKER_TYPE<GfxFamily> *walkerCmd,
+    WALKER_TYPE *walkerCmd,
     TagNodeBase *timestampPacketNode,
     const RootDeviceEnvironment &rootDeviceEnvironment) {
 

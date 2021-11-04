@@ -214,7 +214,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     const uint64_t offsetInterfaceDescriptorTable,
     uint32_t &interfaceDescriptorIndex,
     PreemptionMode preemptionMode,
-    WALKER_TYPE<GfxFamily> *walkerCmd,
+    WALKER_TYPE *walkerCmd,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
     const Device &device) {
@@ -327,7 +327,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     setInterfaceDescriptorOffset(walkerCmd, interfaceDescriptorIndex);
 
     auto indirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
-                                      WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+                                      WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     walkerCmd->setIndirectDataLength(indirectDataLength);
 
     return offsetCrossThreadData;

@@ -28,12 +28,10 @@ template <class T>
 class TagNode;
 
 template <typename GfxFamily>
-using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
-
-template <typename GfxFamily>
 class HardwareInterface {
   public:
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
+    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
     static void dispatchWalker(
         CommandQueue &commandQueue,
@@ -97,8 +95,8 @@ class HardwareInterface {
         const Vec3<size_t> &numberOfWorkgroups,
         const Vec3<size_t> &startOfWorkgroups);
 
-    static WALKER_TYPE<GfxFamily> *allocateWalkerSpace(LinearStream &commandStream,
-                                                       const Kernel &kernel);
+    static WALKER_TYPE *allocateWalkerSpace(LinearStream &commandStream,
+                                            const Kernel &kernel);
 
     static void obtainIndirectHeaps(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo,
                                     bool blockedQueue, IndirectHeap *&dsh, IndirectHeap *&ioh, IndirectHeap *&ssh);
