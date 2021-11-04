@@ -773,14 +773,7 @@ else()
   set(NEO_EXTRA_LIBS dl pthread rt)
 endif()
 
-add_subdirectory_unique(shared/source)
-add_subdirectory_unique(shared/generate_cpp_array)
-add_subdirectory_unique(shared/test/unit_test)
-
-set(TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared/tools${BRANCH_DIR_SUFFIX}")
-if(EXISTS ${TOOLS_DIR})
-  add_subdirectory_unique(${TOOLS_DIR})
-endif()
+add_subdirectory_unique(shared)
 
 macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
   set(NEO_STATIC_LIB_NAME ${LIB_NAME})
