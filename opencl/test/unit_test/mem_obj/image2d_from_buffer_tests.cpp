@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -13,7 +14,6 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/platform/extensions.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

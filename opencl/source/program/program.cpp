@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
@@ -28,7 +29,6 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
 

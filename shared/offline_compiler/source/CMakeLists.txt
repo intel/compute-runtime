@@ -41,8 +41,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/kernel${BRANCH_DIR_SUFFIX}kernel_descriptor.cpp
     ${NEO_SHARED_DIRECTORY}/kernel${BRANCH_DIR_SUFFIX}kernel_descriptor.h
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
-    ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.cpp
-    ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.h
+    ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.cpp
+    ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.h
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h
     ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp

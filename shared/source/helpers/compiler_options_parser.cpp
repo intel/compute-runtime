@@ -8,8 +8,8 @@
 #include "shared/source/helpers/compiler_options_parser.h"
 
 #include "shared/source/compiler_interface/compiler_options/compiler_options_base.h"
-
-#include "opencl/source/platform/extensions.h"
+#include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include <cstdint>
 #include <sstream>

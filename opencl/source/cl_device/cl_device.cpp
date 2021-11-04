@@ -7,6 +7,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/sub_device.h"
@@ -18,7 +19,6 @@
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {

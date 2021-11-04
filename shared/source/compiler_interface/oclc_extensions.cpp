@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/platform/extensions.h"
+#include "shared/source/compiler_interface/oclc_extensions.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"

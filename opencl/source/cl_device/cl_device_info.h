@@ -7,16 +7,14 @@
 
 #pragma once
 
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 
 #include <vector>
 
 namespace NEO {
-
-using OpenClCFeaturesContainer = StackVec<cl_name_version, 15>;
 
 struct ClDeviceInfoParam {
     union {

@@ -7,9 +7,8 @@
 
 #include "sharing_factory.h"
 
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-
-#include "opencl/source/platform/extensions.h"
 
 namespace NEO {
 

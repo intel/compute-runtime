@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -27,7 +28,6 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/platform/extensions.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
 #include "CL/cl_ext.h"

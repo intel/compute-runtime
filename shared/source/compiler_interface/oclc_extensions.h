@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,17 @@
 
 #pragma once
 
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "opencl/source/cl_device/cl_device_info.h"
+#include "CL/cl.h"
 
 #include <string>
 
+using OpenClCFeaturesContainer = StackVec<cl_name_version, 15>;
+
 namespace NEO {
+struct HardwareInfo;
+
 namespace Extensions {
 constexpr const char *const sharingFormatQuery = "cl_intel_sharing_format_query ";
 }

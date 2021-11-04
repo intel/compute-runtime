@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -21,7 +22,6 @@
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/platform/extensions.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
