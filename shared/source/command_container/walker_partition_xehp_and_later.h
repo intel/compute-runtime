@@ -14,8 +14,14 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 
+#include "pipe_control_args.h"
+
 #include <cassert>
 #include <optional>
+
+namespace NEO {
+struct PipeControlArgs;
+}
 
 namespace WalkerPartition {
 
@@ -288,16 +294,10 @@ void programMiLoadRegisterMem(void *&inputAddress, uint32_t &totalBytesProgramme
 }
 
 template <typename GfxFamily>
-void programPipeControlCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, bool dcFlush) {
+void programPipeControlCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, NEO::PipeControlArgs &args) {
     auto pipeControl = putCommand<PIPE_CONTROL<GfxFamily>>(inputAddress, totalBytesProgrammed);
     PIPE_CONTROL<GfxFamily> cmd = GfxFamily::cmdInitPipeControl;
-
-    if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
-        cmd.setDcFlushEnable(dcFlush);
-    }
-    if (NEO::DebugManager.flags.DoNotFlushCaches.get()) {
-        cmd.setDcFlushEnable(false);
-    }
+    NEO::MemorySynchronizationCommands<GfxFamily>::setPipeControl(cmd, args);
     *pipeControl = cmd;
 }
 
@@ -538,7 +538,8 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
     }
 
     if (args.emitPipeControlStall) {
-        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true);
+        NEO::PipeControlArgs args(true);
+        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args);
     }
 
     if (args.semaphoreProgrammingRequired) {
@@ -665,7 +666,8 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
     }
 
     if (args.emitPipeControlStall) {
-        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true); // flush L3 cache
+        NEO::PipeControlArgs args(true);
+        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args);
     }
 
     // Synchronize tiles after walker
@@ -746,7 +748,8 @@ template <typename GfxFamily>
 void constructBarrierCommandBuffer(void *cpuPointer,
                                    uint64_t gpuAddressOfAllocation,
                                    uint32_t &totalBytesProgrammed,
-                                   WalkerPartitionArgs &args) {
+                                   WalkerPartitionArgs &args,
+                                   NEO::PipeControlArgs &flushArgs) {
     void *currentBatchBufferPointer = cpuPointer;
     const auto controlSectionOffset = computeBarrierControlSectionOffset<GfxFamily>(args);
 
@@ -755,7 +758,7 @@ void constructBarrierCommandBuffer(void *cpuPointer,
         programSelfCleanupSection<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, finalSyncTileCountField, args.useAtomicsForSelfCleanup);
     }
 
-    programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args.dcFlush);
+    programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, flushArgs);
 
     const auto crossTileSyncCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(BarrierControlSection, crossTileSyncCount);
     programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, crossTileSyncCountField, args.tileCount);

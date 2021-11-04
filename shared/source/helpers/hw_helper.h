@@ -418,6 +418,7 @@ struct MemorySynchronizationCommands {
                                            uint64_t immediateData,
                                            PipeControlArgs &args);
     static void setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo);
+    static void setPipeControl(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
 
     static void addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
@@ -440,7 +441,6 @@ struct MemorySynchronizationCommands {
     static bool isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo);
 
   protected:
-    static void setPipeControl(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
     static void setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
 };
 

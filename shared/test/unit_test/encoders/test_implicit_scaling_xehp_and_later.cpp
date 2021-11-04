@@ -755,7 +755,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, false, false, false);
+    PipeControlArgs flushArgs(false);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, false, false);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -804,7 +805,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(true);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, true, true, true);
+    PipeControlArgs flushArgs(true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -856,7 +858,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(true);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, true, true, true);
+    PipeControlArgs flushArgs(true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 

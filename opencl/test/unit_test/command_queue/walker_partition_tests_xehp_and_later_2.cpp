@@ -328,7 +328,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenMiLoadRegisterRegWhenItI
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlCommandWhenItIsProgrammedThenItIsProperlySet) {
     auto expectedUsedSize = sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
     void *pipeControlCAddress = cmdBufferAddress;
-    WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, true);
+    PipeControlArgs args(true);
+    WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, args);
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(pipeControlCAddress);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
@@ -340,7 +341,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlComman
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlCommandWhenItIsProgrammedWithDcFlushFalseThenExpectDcFlushFlagFalse) {
     auto expectedUsedSize = sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
     void *pipeControlCAddress = cmdBufferAddress;
-    WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, false);
+    PipeControlArgs args(false);
+    WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, args);
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(pipeControlCAddress);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
@@ -354,7 +356,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlComman
     DebugManager.flags.DoNotFlushCaches.set(true);
     auto expectedUsedSize = sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
     void *pipeControlCAddress = cmdBufferAddress;
-    WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, true);
+    PipeControlArgs args(true);
+    WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, args);
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(pipeControlCAddress);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
@@ -1368,10 +1371,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenDo
     EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs));
     EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
 
+    PipeControlArgs flushArgs(false);
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
-                                                               testArgs);
+                                                               testArgs,
+                                                               flushArgs);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 
@@ -1415,7 +1420,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     testArgs.tileCount = 4u;
     testArgs.emitSelfCleanup = true;
     testArgs.secondaryBatchBuffer = true;
-    testArgs.dcFlush = true;
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
@@ -1434,10 +1438,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs));
     EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
 
+    PipeControlArgs flushArgs(true);
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
-                                                               testArgs);
+                                                               testArgs,
+                                                               flushArgs);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 
@@ -1528,7 +1534,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     testArgs.tileCount = 4u;
     testArgs.emitSelfCleanup = true;
     testArgs.secondaryBatchBuffer = true;
-    testArgs.dcFlush = true;
     testArgs.useAtomicsForSelfCleanup = true;
 
     uint32_t totalBytesProgrammed = 0u;
@@ -1548,10 +1553,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs));
     EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
 
+    PipeControlArgs flushArgs(true);
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
-                                                               testArgs);
+                                                               testArgs,
+                                                               flushArgs);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 

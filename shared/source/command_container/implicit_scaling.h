@@ -16,6 +16,7 @@ struct WalkerPartitionArgs;
 
 namespace NEO {
 class LinearStream;
+struct PipeControlArgs;
 
 namespace ImplicitScaling {
 extern bool apiSupport;
@@ -56,8 +57,8 @@ struct ImplicitScalingDispatch {
     static size_t getBarrierSize(bool apiSelfCleanup);
     static void dispatchBarrierCommands(LinearStream &commandStream,
                                         const DeviceBitfield &devices,
+                                        PipeControlArgs &flushArgs,
                                         bool apiSelfCleanup,
-                                        bool dcFlush,
                                         bool useSecondaryBatchBuffer);
 
   private:

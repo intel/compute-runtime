@@ -140,14 +140,13 @@ size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(bool apiSelfCleanup) {
 template <typename GfxFamily>
 void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &commandStream,
                                                                  const DeviceBitfield &devices,
+                                                                 PipeControlArgs &flushArgs,
                                                                  bool apiSelfCleanup,
-                                                                 bool dcFlush,
                                                                  bool useSecondaryBatchBuffer) {
     uint32_t totalProgrammedSize = 0u;
 
     WalkerPartition::WalkerPartitionArgs args = {};
     args.emitSelfCleanup = apiSelfCleanup;
-    args.dcFlush = dcFlush;
     args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
     args.tileCount = static_cast<uint32_t>(devices.count());
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;
@@ -158,7 +157,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
     WalkerPartition::constructBarrierCommandBuffer<GfxFamily>(commandBuffer,
                                                               cmdBufferGpuAddress,
                                                               totalProgrammedSize,
-                                                              args);
+                                                              args,
+                                                              flushArgs);
     commandStream.getSpace(totalProgrammedSize);
 }
 
