@@ -6,7 +6,7 @@
 
 if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
   add_custom_target(builtins)
-  set_target_properties(builtins PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUIILINS_PROJECTS_FOLDER}")
+  set_target_properties(builtins PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}")
   set(BUILTINS_OUTDIR_WITH_ARCH "${TargetDir}/built_ins/${NEO_ARCH}")
   add_dependencies(${BUILTINS_BINARIES_BINDFUL_LIB_NAME} builtins)
   add_dependencies(${BUILTINS_BINARIES_BINDLESS_LIB_NAME} builtins)
@@ -164,7 +164,7 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
         set(target_name builtins_${family_name_with_type})
         add_custom_target(${target_name})
         add_dependencies(builtins ${target_name})
-        set_target_properties(${target_name} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUIILINS_PROJECTS_FOLDER}/${family_name_with_type}")
+        set_target_properties(${target_name} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}/${family_name_with_type}")
         foreach(MODE ${BIND_MODES})
           unset(BUILTINS_COMMANDS)
           foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
@@ -193,7 +193,7 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
           set_property(GLOBAL PROPERTY GENERATED_BUILTINS_CPPS_${MODE} ${GENERATED_BUILTINS_CPPS_${MODE}})
           add_custom_target(${target_name}_${MODE} DEPENDS ${BUILTINS_COMMANDS})
           add_dependencies(${target_name} ${target_name}_${MODE})
-          set_target_properties(${target_name}_${MODE} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUIILINS_PROJECTS_FOLDER}/${family_name_with_type}")
+          set_target_properties(${target_name}_${MODE} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}/${family_name_with_type}")
         endforeach()
       endif()
     endforeach()
@@ -218,7 +218,7 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
   add_library(${BUILTINS_SPIRV_LIB_NAME} OBJECT ${OUTPUT_LIST_CPP_FILES})
   set_target_properties(${BUILTINS_SPIRV_LIB_NAME} PROPERTIES
                         POSITION_INDEPENDENT_CODE ON
-                        FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUIILINS_PROJECTS_FOLDER}"
+                        FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}"
   )
 
   apply_macro_for_each_gen("SUPPORTED")

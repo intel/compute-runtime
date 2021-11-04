@@ -15,7 +15,7 @@ endif()
 project(neo)
 set(MSVC_DEF_ADDITIONAL_EXPORTS "")
 set(OPENCL_RUNTIME_PROJECTS_FOLDER "opencl runtime")
-set(OPENCL_BUIILINS_PROJECTS_FOLDER "built_ins")
+set(OPENCL_BUILTINS_PROJECTS_FOLDER "built_ins")
 
 if(NOT TARGET ${BIKSIM_LIB_NAME})
   add_subdirectory(builtin_kernels_simulation)
