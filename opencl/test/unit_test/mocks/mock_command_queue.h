@@ -19,6 +19,7 @@ namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::bcsEngines;
+    using CommandQueue::bcsEngineTypes;
     using CommandQueue::blitEnqueueAllowed;
     using CommandQueue::blitEnqueueImageAllowed;
     using CommandQueue::bufferCpuCopyAllowed;
@@ -37,12 +38,14 @@ class MockCommandQueue : public CommandQueue {
 
     void clearBcsEngines() {
         std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
+        bcsEngineTypes.clear();
     }
 
     void insertBcsEngine(aub_stream::EngineType bcsEngineType) {
         const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
         const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::Regular);
         bcsEngines[index] = engine;
+        bcsEngineTypes.push_back(bcsEngineType);
     }
 
     size_t countBcsEngines() const {

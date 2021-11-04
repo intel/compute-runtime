@@ -89,6 +89,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
             auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
             bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)] = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
+            bcsEngineTypes.push_back(bcsEngineType);
         }
     }
 
@@ -142,7 +143,7 @@ CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver(aub_stream::Eng
     }
 }
 
-CommandStreamReceiver *CommandQueue::getAnyBcs() const {
+CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
     for (const EngineControl *engine : this->bcsEngines) {
         if (engine != nullptr) {
             return engine->commandStreamReceiver;
@@ -151,13 +152,9 @@ CommandStreamReceiver *CommandQueue::getAnyBcs() const {
     return nullptr;
 }
 
-CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
-    return getAnyBcs();
-}
-
 CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const {
     if (isCopyOnly) {
-        return *getAnyBcs();
+        return *getBcsCommandStreamReceiver(bcsEngineTypes[0]);
     }
 
     if (!blitEnqueueAllowed(args)) {
@@ -193,8 +190,8 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     CommandStreamReceiver *selectedCsr = nullptr;
     if (preferBcs) {
         selectedCsr = getBcsCommandStreamReceiver(preferredBcsEngineType);
-        if (selectedCsr == nullptr) {
-            selectedCsr = getAnyBcs();
+        if (selectedCsr == nullptr && !bcsEngineTypes.empty()) {
+            selectedCsr = getBcsCommandStreamReceiver(bcsEngineTypes[0]);
         }
     }
     if (selectedCsr == nullptr) {
@@ -928,6 +925,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     if (isEngineCopyOnly) {
         std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
         bcsEngines[EngineHelpers::getBcsIndex(engineType)] = &device->getEngine(engineType, EngineUsage::Regular);
+        bcsEngineTypes = {engineType};
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
