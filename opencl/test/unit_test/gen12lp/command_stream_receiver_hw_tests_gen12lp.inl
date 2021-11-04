@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/gen12lp/special_ult_helper_gen12lp.h"
+#include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/mocks/mock_csr.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"

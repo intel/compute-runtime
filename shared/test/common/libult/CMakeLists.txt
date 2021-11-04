@@ -36,6 +36,10 @@ macro(macro_for_each_gen)
       if(EXISTS ${SRC_FILE})
         list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
+      set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common/${BRANCH}${GEN_TYPE_LOWER}/unit_test_helper_${GEN_TYPE_LOWER}.cpp)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+      endif()
       foreach(SRC_IT "enable_" "enable_family_full_core_" "implicit_scaling_")
         set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}${SRC_IT}${GEN_TYPE_LOWER}.cpp)
         if(EXISTS ${SRC_FILE})
@@ -72,6 +76,8 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/abort.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_tbx_sockets.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/debug_settings_reader_creator.cpp
@@ -94,6 +100,12 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info_impl.cpp
 )
+
+if(TESTS_XEHP_AND_LATER)
+  list(APPEND neo_libult_common_SRCS_LIB_ULT
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xehp_and_later.inl
+  )
+endif()
 
 get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)
 

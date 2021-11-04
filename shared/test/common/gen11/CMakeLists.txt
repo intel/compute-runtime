@@ -21,7 +21,6 @@ if(TESTS_GEN11)
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_gen11.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_math_gen11.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen11.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_gen11.cpp
   )
 
 endif()

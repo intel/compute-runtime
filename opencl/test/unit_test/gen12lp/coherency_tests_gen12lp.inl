@@ -9,8 +9,8 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "test.h"

@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/test/common/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"

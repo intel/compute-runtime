@@ -23,7 +23,6 @@ if(TESTS_GEN9)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen9.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen9.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_gen9.cpp
-      ${NEO_SOURCE_DIR}/shared/test/common/gen9/unit_test_helper_gen9.cpp
   )
 
   get_property(NEO_CORE_TESTS_GEN9 GLOBAL PROPERTY NEO_CORE_TESTS_GEN9)

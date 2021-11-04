@@ -5,18 +5,12 @@
  *
  */
 
-#include "shared/test/common/gen12lp/special_ult_helper_gen12lp.h"
-
-#include "test.h"
+#include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
 
 namespace NEO {
 
 bool SpecialUltHelperGen12lp::additionalCoherencyCheck(PRODUCT_FAMILY productFamily, bool coherency) {
-    if (productFamily == IGFX_DG1) {
-        EXPECT_FALSE(coherency);
-        return true;
-    }
-    return false;
+    return productFamily == IGFX_DG1;
 }
 
 bool SpecialUltHelperGen12lp::isAdditionalCapabilityCoherencyFlagSettingRequired(PRODUCT_FAMILY productFamily) {

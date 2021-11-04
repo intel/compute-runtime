@@ -14,7 +14,6 @@ if(TESTS_XE_HP_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_traits_xe_hp_core.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_xe_hp_core.cpp
   )
   set_property(GLOBAL PROPERTY NEO_CORE_TESTS_XE_HP_CORE ${NEO_CORE_TESTS_XE_HP_CORE})
   add_subdirectories()

@@ -6,7 +6,7 @@
 
 if(TESTS_GEN9)
   target_sources(igdrcl_aub_tests PRIVATE
-                 ${NEO_SOURCE_DIR}/shared/test/common/gen9/unit_test_helper_gen9.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   )
   add_subdirectories()
 endif()

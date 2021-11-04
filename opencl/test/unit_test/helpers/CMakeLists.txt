@@ -39,8 +39,6 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/aligned_memory_tests.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_manager_state_restore.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.inl
 )
 
 if(MSVC OR COMPILER_SUPPORTS_SSE42)
@@ -55,7 +53,6 @@ if(TESTS_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xehp_and_later.cpp
-       ${NEO_SOURCE_DIR}/shared/test/common/helpers/unit_test_helper_xehp_and_later.inl
   )
 endif()
 
