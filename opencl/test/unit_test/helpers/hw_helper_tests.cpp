@@ -1321,6 +1321,16 @@ HWTEST_F(HwHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorrectVal
     EXPECT_EQ(expectedBaseAddress, hwHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState));
 }
 
+HWTEST_F(HwHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValueIsReturned) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    RENDER_SURFACE_STATE renderSurfaceState;
+    uint32_t expectedPitch = 0x400;
+    renderSurfaceState.setSurfacePitch(expectedPitch);
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(expectedPitch, hwHelper.getRenderSurfaceStatePitch(&renderSurfaceState));
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
     static const cl_image_format redescribeFormats[] = {
         {CL_R, CL_UNSIGNED_INT8},

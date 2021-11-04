@@ -203,4 +203,14 @@ bool DebugSession::isBindlessSystemRoutine() {
     return false;
 }
 
+size_t DebugSession::getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId threadId) {
+    auto hwInfo = connectedDevice->getHwInfo();
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+
+    auto threadOffset = (((threadId.slice * numSubslicesPerSlice + threadId.subslice) * numEuPerSubslice + threadId.eu) * numThreadsPerEu + threadId.thread) * ptss;
+    return threadOffset;
+}
+
 } // namespace L0

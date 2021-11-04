@@ -87,6 +87,8 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     std::vector<EuThread::ThreadId> getSingleThreadsForDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo);
 
+    size_t getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId threadId);
+
     DebugAreaHeader debugArea;
 
     Device *connectedDevice = nullptr;

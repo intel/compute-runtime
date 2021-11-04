@@ -430,6 +430,29 @@ TEST(DebugSession, givenDifferentCombinationsOfThreadsAndMemoryTypeCheckExpected
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 }
 
+TEST(DebugSession, givenDifferentThreadsWhenGettingPerThreadScratchOffsetThenCorrectOffsetReturned) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto debugSession = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
+
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    EuThread::ThreadId thread0Eu0 = {0, 0, 0, 0, 0};
+    EuThread::ThreadId thread0Eu1 = {0, 0, 0, 1, 0};
+    EuThread::ThreadId thread2Subslice1 = {0, 0, 1, 0, 2};
+
+    const uint32_t ptss = 128;
+
+    auto size = debugSession->getPerThreadScratchOffset(ptss, thread0Eu0);
+    EXPECT_EQ(0u, size);
+
+    size = debugSession->getPerThreadScratchOffset(ptss, thread0Eu1);
+    EXPECT_EQ(ptss * numThreadsPerEu, size);
+
+    size = debugSession->getPerThreadScratchOffset(ptss, thread2Subslice1);
+    EXPECT_EQ(2 * ptss + ptss * hwInfo.gtSystemInfo.MaxEuPerSubSlice * numThreadsPerEu, size);
+}
+
 using DebugSessionMultiTile = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(DebugSessionMultiTile, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValueReturned) {

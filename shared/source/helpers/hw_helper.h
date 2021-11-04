@@ -146,6 +146,7 @@ class HwHelper {
 
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
     virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const = 0;
+    virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState) const = 0;
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual bool isStatelesToStatefullWithOffsetSupported() const = 0;
@@ -200,6 +201,14 @@ class HwHelperHw : public HwHelper {
         DataPortBindlessSurfaceExtendedMessageDescriptor messageExtDescriptor = {};
         messageExtDescriptor.setBindlessSurfaceOffset(surfStateOffset);
         return messageExtDescriptor.getBindlessSurfaceOffsetToPatch();
+    }
+
+    uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const override {
+        return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
+    }
+
+    uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState) const override {
+        return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfacePitch();
     }
 
     const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const override;
@@ -369,7 +378,6 @@ class HwHelperHw : public HwHelper {
     void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
 
     bool isScratchSpaceSurfaceStateAccessible() const override;
-    uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const override;
 
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
