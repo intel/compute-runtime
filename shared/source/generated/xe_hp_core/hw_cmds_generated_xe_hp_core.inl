@@ -5863,10 +5863,10 @@ typedef struct tagCFE_STATE {
     }
     inline void setMaximumNumberOfThreads(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff0000);
-        TheStructure.Common.MaximumNumberOfThreads = value - 1;
+        TheStructure.Common.MaximumNumberOfThreads = value;
     }
     inline uint32_t getMaximumNumberOfThreads(void) const {
-        return TheStructure.Common.MaximumNumberOfThreads + 1;
+        return TheStructure.Common.MaximumNumberOfThreads;
     }
 } CFE_STATE;
 STATIC_ASSERT(24 == sizeof(CFE_STATE));
