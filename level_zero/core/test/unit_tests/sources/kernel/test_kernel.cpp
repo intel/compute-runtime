@@ -71,6 +71,7 @@ TEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFromC
     Mock<Kernel> mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
     mockKernel.descriptor.kernelAttributes.simdSize = 1;
+    mockKernel.descriptor.kernelAttributes.numLocalIdChannels = 3;
     mockKernel.module = &mockModule;
     auto grfSize = mockModule.getDevice()->getHwInfo().capabilityTable.grfSize;
     uint32_t groupSize[3] = {2, 3, 5};

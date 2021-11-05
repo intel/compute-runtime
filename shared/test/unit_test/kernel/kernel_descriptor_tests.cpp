@@ -36,7 +36,7 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(2U, desc.kernelAttributes.workgroupDimensionsOrder[2]);
     EXPECT_EQ(0U, desc.kernelAttributes.gpuPointerSize);
     EXPECT_EQ(8U, desc.kernelAttributes.simdSize);
-    EXPECT_EQ(3U, desc.kernelAttributes.numLocalIdChannels);
+    EXPECT_EQ(0U, desc.kernelAttributes.numLocalIdChannels);
 
     EXPECT_EQ(0U, desc.entryPoints.skipPerThreadDataLoad);
     EXPECT_EQ(0U, desc.entryPoints.skipSetFFIDGP);

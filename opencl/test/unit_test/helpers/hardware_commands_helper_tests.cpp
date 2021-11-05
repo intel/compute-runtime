@@ -551,6 +551,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = 1;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = 0;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
+    modifiedKernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 3;
     MockKernel mockKernel(kernel->getProgram(), modifiedKernelInfo, *pClDevice, false);
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
