@@ -180,6 +180,8 @@ endif()
 
 add_library(neo_libult OBJECT EXCLUDE_FROM_ALL ${neo_libult_SRCS})
 
+add_subdirectories()
+
 foreach(target_name "neo_libult_common" "neo_libult")
   set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
   set_target_properties(${target_name} PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
@@ -190,7 +192,6 @@ foreach(target_name "neo_libult_common" "neo_libult")
                              ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
   )
   target_compile_definitions(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+  # please do not add new sources below this function
   create_project_source_tree(${target_name})
 endforeach()
-
-add_subdirectories()
