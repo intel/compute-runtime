@@ -16,9 +16,4 @@ bool CompilerHwInfoConfigHw<gfxProduct>::isMidThreadPreemptionSupported(const Ha
     return hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool CompilerHwInfoConfigHw<gfxProduct>::isForceToStatelessRequired() const {
-    return false;
-}
-
 } // namespace NEO

@@ -66,7 +66,6 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     kernelDebugEnabled = clDevices[0]->isDebuggerActive();
 }
 void Program::initInternalOptions(std::string &internalOptions) const {
-
     auto pClDevice = clDevices[0];
     auto force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
     internalOptions = getOclVersionCompilerInternalOption(pClDevice->getEnabledClVersion());
@@ -75,7 +74,7 @@ void Program::initInternalOptions(std::string &internalOptions) const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
     }
 
-    if ((isBuiltIn && is32bit) || forceToStatelessNeeded() ||
+    if ((isBuiltIn && is32bit) || pClDevice->areSharedSystemAllocationsAllowed() ||
         DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
@@ -135,20 +134,6 @@ Program::~Program() {
     if (context && !isBuiltIn) {
         context->decRefInternal();
     }
-}
-
-bool Program::forceToStatelessNeeded() const {
-    auto preferStateful = false;
-    if (auto it = options.find(NEO::CompilerOptions::smallerThan4gbBuffersOnly.data()); it != std::string::npos) {
-        preferStateful = true;
-    }
-
-    if (DebugManager.flags.UseSmallerThan4gbBuffersOnly.get() != -1) {
-        preferStateful = static_cast<bool>(DebugManager.flags.UseSmallerThan4gbBuffersOnly.get());
-    }
-
-    auto forceStateless = !preferStateful && clDevices[0]->areSharedSystemAllocationsAllowed();
-    return forceStateless;
 }
 
 cl_int Program::createProgramFromBinary(
@@ -502,22 +487,6 @@ cl_int Program::packDeviceBinary(ClDevice &clDevice) {
     }
 
     return CL_SUCCESS;
-}
-
-bool Program::containsStatefulAccess(uint32_t rootDeviceIndex) const {
-    auto &buildInfo = buildInfos[rootDeviceIndex];
-    for (const auto &kernelInfo : buildInfo.kernelInfoArray) {
-        for (const auto &arg : kernelInfo->kernelDescriptor.payloadMappings.explicitArgs) {
-            auto isStatefulAccess = arg.is<ArgDescriptor::ArgTPointer>() &&
-                                    (isValidOffset(arg.as<ArgDescPointer>().bindless) ||
-                                     isValidOffset(arg.as<ArgDescPointer>().bindful));
-            if (isStatefulAccess) {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
 
 void Program::setBuildStatus(cl_build_status status) {
