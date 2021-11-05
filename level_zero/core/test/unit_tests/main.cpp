@@ -21,6 +21,7 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/unit_test/base_ult_config_listener.h"
+#include "shared/test/unit_test/test_stats.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
@@ -146,6 +147,7 @@ void applyWorkarounds() {
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
+    bool showTestStats = false;
     applyWorkarounds();
 
     testing::InitGoogleMock(&argc, argv);
@@ -230,7 +232,14 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp("--enable_default_listener", argv[i])) {
             useDefaultListener = true;
+        } else if (!strcmp("--show_test_stats", argv[i])) {
+            showTestStats = true;
         }
+    }
+
+    if (showTestStats) {
+        std::cout << getTestStats() << std::endl;
+        return 0;
     }
 
     productFamily = hwInfoForTests.platform.eProductFamily;

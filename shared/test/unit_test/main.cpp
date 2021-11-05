@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/base_ult_config_listener.h"
+#include "shared/test/unit_test/test_stats.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "gmock/gmock.h"
@@ -180,7 +181,7 @@ int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool enable_alarm = true;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
-
+    bool showTestStats = false;
     applyWorkarounds();
 
 #if defined(__linux__)
@@ -220,6 +221,8 @@ int main(int argc, char **argv) {
             useDefaultListener = true;
         } else if (!strcmp("--disable_alarm", argv[i])) {
             enable_alarm = false;
+        } else if (!strcmp("--show_test_stats", argv[i])) {
+            showTestStats = true;
         } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { //disable tests which raise page fault signal during execution
             NEO::PagaFaultManagerTestConfig::disabled = true;
         } else if (!strcmp("--tbx", argv[i])) {
@@ -299,6 +302,11 @@ int main(int argc, char **argv) {
             std::transform(dumpImageFormat.begin(), dumpImageFormat.end(), dumpImageFormat.begin(), ::toupper);
             DebugManager.flags.AUBDumpImageFormat.set(dumpImageFormat);
         }
+    }
+
+    if (showTestStats) {
+        std::cout << getTestStats() << std::endl;
+        return 0;
     }
 
     productFamily = hwInfoForTests.platform.eProductFamily;

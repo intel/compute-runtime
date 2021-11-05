@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/unit_test/test_stats.h"
 
 #include "environment.h"
 #include "limits.h"
@@ -37,6 +38,8 @@ std::string getRunPath() {
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
+    bool showTestStats = false;
+
     std::string devicePrefix("skl");
     std::string familyNameWithType("Gen9core");
     std::string revId("0");
@@ -76,8 +79,15 @@ int main(int argc, char **argv) {
             } else if (strcmp("--rev_id", argv[i]) == 0) {
                 ++i;
                 revId = argv[i];
+            } else if (!strcmp("--show_test_stats", argv[i])) {
+                showTestStats = true;
             }
         }
+    }
+
+    if (showTestStats) {
+        std::cout << getTestStats() << std::endl;
+        return 0;
     }
 
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
