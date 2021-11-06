@@ -4,9 +4,8 @@
 # SPDX-License-Identifier: MIT
 #
 
-project(${OCLOC_NAME}_lib)
+project(ocloc_lib)
 
-set(OCLOC_NAME "ocloc")
 set(OCLOC_FOLDER_NAME "offline_compiler")
 
 set(CLOC_LIB_SRCS_LIB
@@ -150,12 +149,12 @@ set(CLOC_LIB_SRCS
     ${CLOC_LIB_SRCS_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
-add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS})
+add_library(ocloc_lib SHARED ${CLOC_LIB_SRCS})
 
 add_subdirectories()
 
-create_project_source_tree(${OCLOC_NAME}_lib)
-set_target_properties(${OCLOC_NAME}_lib PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
+create_project_source_tree(ocloc_lib)
+set_target_properties(ocloc_lib PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
 
 set(CLOC_LIB_INCLUDES
     ${ENGINE_NODE_DIR}
@@ -166,20 +165,20 @@ set(CLOC_LIB_INCLUDES
     ${NEO__IGC_INCLUDE_DIR}
 )
 
-target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${CLOC_LIB_INCLUDES})
-target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${IGA_INCLUDE_DIR})
+target_include_directories(ocloc_lib BEFORE PRIVATE ${CLOC_LIB_INCLUDES})
+target_include_directories(ocloc_lib BEFORE PRIVATE ${IGA_INCLUDE_DIR})
 
-target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM}
+target_compile_definitions(ocloc_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM}
                            IGA_LIBRARY_NAME=${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
-target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${NEO__IGC_COMPILE_DEFINITIONS})
+target_compile_definitions(ocloc_lib PUBLIC ${NEO__IGC_COMPILE_DEFINITIONS})
 
 if(MSVC)
-  target_link_libraries(${OCLOC_NAME}_lib dbghelp)
+  target_link_libraries(ocloc_lib dbghelp)
 endif()
 
 if(UNIX)
-  target_link_libraries(${OCLOC_NAME}_lib dl pthread)
+  target_link_libraries(ocloc_lib dl pthread)
 endif()
 
 set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB} PARENT_SCOPE)
@@ -189,11 +188,11 @@ set(OCLOC_SRCS
     ${OCLOC_DIRECTORY}/source/main.cpp
 )
 
-add_executable(${OCLOC_NAME} ${OCLOC_SRCS})
-target_link_libraries(${OCLOC_NAME} ${OCLOC_NAME}_lib)
+add_executable(ocloc ${OCLOC_SRCS})
+target_link_libraries(ocloc ocloc_lib)
 
-create_project_source_tree(${OCLOC_NAME})
-set_target_properties(${OCLOC_NAME} PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
+create_project_source_tree(ocloc)
+set_target_properties(ocloc PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
 
 if(MSVC)
   if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -207,42 +206,42 @@ endif()
 
 if(UNIX)
   if(NEO_BUILD_DEBUG_SYMBOLS_PACKAGE)
-    get_filename_component(lib_file_name $<TARGET_FILE:${OCLOC_NAME}_lib> NAME_WE)
+    get_filename_component(lib_file_name $<TARGET_FILE:ocloc_lib> NAME_WE)
     set(symbols_file_name ${lib_file_name}.debug)
-    set(debug_symbols_target_name "${STRIP_SYMBOLS_TARGET}_${OCLOC_NAME}_lib")
+    set(debug_symbols_target_name "${STRIP_SYMBOLS_TARGET}_ocloc_lib")
     add_custom_target(${debug_symbols_target_name}
                       COMMAND sh -c "objcopy --only-keep-debug ${lib_file_name} ${symbols_file_name}"
                       COMMAND sh -c "strip -g ${lib_file_name}"
                       COMMAND sh -c "objcopy --add-gnu-debuglink=${symbols_file_name} ${lib_file_name}"
     )
-    add_dependencies(${debug_symbols_target_name} ${OCLOC_NAME}_lib)
+    add_dependencies(${debug_symbols_target_name} ocloc_lib)
     add_dependencies(${STRIP_SYMBOLS_TARGET} ${debug_symbols_target_name})
     set_property(GLOBAL APPEND PROPERTY DEBUG_SYMBOL_FILES "${symbols_file_name}")
   endif()
 
-  set_property(GLOBAL APPEND PROPERTY NEO_OCL_COMPONENTS_LIST ${OCLOC_NAME})
-  install(FILES $<TARGET_FILE:${OCLOC_NAME}>
+  set_property(GLOBAL APPEND PROPERTY NEO_OCL_COMPONENTS_LIST ocloc)
+  install(FILES $<TARGET_FILE:ocloc>
           DESTINATION ${CMAKE_INSTALL_BINDIR}
           PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-          COMPONENT ${OCLOC_NAME}
+          COMPONENT ocloc
   )
-  install(FILES $<TARGET_FILE:${OCLOC_NAME}_lib>
+  install(FILES $<TARGET_FILE:ocloc_lib>
           DESTINATION ${CMAKE_INSTALL_LIBDIR}
           PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-          COMPONENT ${OCLOC_NAME}
+          COMPONENT ocloc
   )
   install(FILES ${OCLOC_DIRECTORY}/source/ocloc_api.h
           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-          COMPONENT ${OCLOC_NAME}
+          COMPONENT ocloc
   )
 elseif(WIN32)
   if(NEO_WINDOWS_INSTALL)
-    install(TARGETS ${OCLOC_NAME}
+    install(TARGETS ocloc
             DESTINATION ${CMAKE_INSTALL_BINDIR}
             COMPONENT ocloc
     )
-    install(TARGETS ${OCLOC_NAME}_lib
+    install(TARGETS ocloc_lib
             DESTINATION ${CMAKE_INSTALL_LIBDIR}
             COMPONENT ocloc
     )
@@ -253,8 +252,8 @@ elseif(WIN32)
   endif()
 endif()
 
-set(OCLOC_OUTPUT_NAME "${OCLOC_NAME}${OCLOC_BITNESS_SUFFIX}")
-set_target_properties(${OCLOC_NAME}_lib PROPERTIES OUTPUT_NAME ${OCLOC_OUTPUT_NAME})
+set(OCLOC_OUTPUT_NAME "ocloc${OCLOC_BITNESS_SUFFIX}")
+set_target_properties(ocloc_lib PROPERTIES OUTPUT_NAME ${OCLOC_OUTPUT_NAME})
 
 add_custom_target(copy_compiler_files DEPENDS ${NEO__IGC_TARGETS})
 set_target_properties(copy_compiler_files PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
@@ -264,8 +263,8 @@ if(WIN32)
     add_custom_command(
                        TARGET copy_compiler_files
                        PRE_BUILD
-                       COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${OCLOC_NAME}_lib>
-                       COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:${OCLOC_NAME}_lib>
+                       COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:ocloc_lib>
+                       COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:ocloc_lib>
     )
   endforeach()
 endif()
