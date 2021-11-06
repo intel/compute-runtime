@@ -71,6 +71,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo);
     size_t getCmdSizeForActivePartitionConfig() const;
+    size_t getCmdSizeForStallingCommands(const DispatchFlags &dispatchFlags) const;
+    size_t getCmdSizeForStallingNoPostSyncCommands() const;
 
     bool isComputeModeNeeded() const;
     bool isPipelineSelectAlreadyProgrammed() const;
@@ -147,7 +149,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programPerDssBackedBuffer(LinearStream &scr, Device &device, DispatchFlags &dispatchFlags);
     void programStateSip(LinearStream &cmdStream, Device &device);
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
-    void programStallingPipeControlForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags);
+    void programStallingCommandsForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags);
+    void programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream);
     void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programActivePartitionConfig();

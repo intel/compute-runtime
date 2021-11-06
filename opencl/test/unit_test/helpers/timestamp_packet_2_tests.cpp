@@ -26,7 +26,7 @@ HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndNoOutputEventWhenEnqueueingM
     cmdQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
 
     EXPECT_EQ(0u, cmdQ->timestampPacketContainer->peekNodes().size());
-    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+    EXPECT_FALSE(csr.stallingCommandsOnNextFlushRequired);
 }
 
 HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndEventWhenEnqueueingMarkerWithProfilingEnabledThenObtainNewNode) {
@@ -128,7 +128,7 @@ HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenRequestPipeControlOnCsrF
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
 
-    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+    EXPECT_FALSE(csr.stallingCommandsOnNextFlushRequired);
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
 
@@ -143,33 +143,33 @@ HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenRequestPipeControlOnCsrF
     EXPECT_EQ(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // dont obtain new node
     EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
 
-    EXPECT_TRUE(csr.stallingPipeControlOnNextFlushRequired);
+    EXPECT_TRUE(csr.stallingCommandsOnNextFlushRequired);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteDisabledWhenEnqueueingBarrierThenDontRequestPipeControlOnCsrFlush) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = false;
 
-    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+    EXPECT_FALSE(csr.stallingCommandsOnNextFlushRequired);
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
 
     cmdQ.enqueueBarrierWithWaitList(0, nullptr, nullptr);
 
-    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+    EXPECT_FALSE(csr.stallingCommandsOnNextFlushRequired);
 }
 
 HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
-    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+    EXPECT_FALSE(csr.stallingCommandsOnNextFlushRequired);
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
 
     auto userEvent = make_releaseable<UserEvent>();
     cl_event waitlist[] = {userEvent.get()};
     cmdQ.enqueueBarrierWithWaitList(1, waitlist, nullptr);
-    EXPECT_TRUE(csr.stallingPipeControlOnNextFlushRequired);
+    EXPECT_TRUE(csr.stallingCommandsOnNextFlushRequired);
     userEvent->setStatus(CL_COMPLETE);
 }
 
@@ -177,10 +177,10 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenEstimatingCsrStreamSiz
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    csr.stallingPipeControlOnNextFlushRequired = false;
+    csr.stallingCommandsOnNextFlushRequired = false;
     auto sizeWithoutPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, device->getDevice());
 
-    csr.stallingPipeControlOnNextFlushRequired = true;
+    csr.stallingCommandsOnNextFlushRequired = true;
     auto sizeWithPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, device->getDevice());
 
     size_t extendedSize = sizeWithoutPcRequest + sizeof(typename FamilyType::PIPE_CONTROL);
@@ -197,10 +197,10 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWithBarrierWriteWhenEstima
 
     flags.barrierTimestampPacketNodes = &barrierTimestampPacketNode;
 
-    csr.stallingPipeControlOnNextFlushRequired = false;
+    csr.stallingCommandsOnNextFlushRequired = false;
     auto sizeWithoutPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, device->getDevice());
 
-    csr.stallingPipeControlOnNextFlushRequired = true;
+    csr.stallingCommandsOnNextFlushRequired = true;
     auto sizeWithPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, device->getDevice());
 
     size_t extendedSize = sizeWithoutPcRequest + MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(device->getHardwareInfo());
@@ -226,7 +226,7 @@ HWTEST_F(TimestampPacketTests, givenInstructionCacheRequesWhenSizeIsEstimatedThe
 HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPipeControlAndResetRequestFlag) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    csr.stallingPipeControlOnNextFlushRequired = true;
+    csr.stallingCommandsOnNextFlushRequired = true;
     csr.timestampPacketWriteEnabled = true;
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
@@ -234,7 +234,7 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPip
     MockKernelWithInternals mockKernel(*device, context);
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+    EXPECT_FALSE(csr.stallingCommandsOnNextFlushRequired);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);

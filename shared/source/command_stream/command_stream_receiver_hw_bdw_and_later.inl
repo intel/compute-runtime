@@ -154,4 +154,15 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
 }
 
+template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyncCommands() const {
+    return sizeof(typename GfxFamily::PIPE_CONTROL);
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
+    PipeControlArgs args;
+    MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+}
+
 } // namespace NEO

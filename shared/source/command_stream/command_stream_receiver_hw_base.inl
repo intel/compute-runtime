@@ -331,8 +331,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
     TimestampPacketHelper::programCsrDependenciesForForTaskCountContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
 
-    if (stallingPipeControlOnNextFlushRequired) {
-        programStallingPipeControlForBarrier(commandStreamCSR, dispatchFlags);
+    programActivePartitionConfig();
+
+    if (stallingCommandsOnNextFlushRequired) {
+        programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
     }
 
     programEngineModeCommands(commandStreamCSR, dispatchFlags);
@@ -359,7 +361,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
 
     programPreemption(commandStreamCSR, dispatchFlags);
-    programActivePartitionConfig();
 
     bool dshDirty = dshState.updateAndCheck(&dsh);
     bool iohDirty = iohState.updateAndCheck(&ioh);
@@ -656,8 +657,8 @@ void CommandStreamReceiverHw<GfxFamily>::forcePipeControl(NEO::LinearStream &com
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programStallingPipeControlForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags) {
-    stallingPipeControlOnNextFlushRequired = false;
+inline void CommandStreamReceiverHw<GfxFamily>::programStallingCommandsForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags) {
+    stallingCommandsOnNextFlushRequired = false;
 
     auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
 
@@ -672,11 +673,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPipeControlForBar
             0,
             peekHwInfo(),
             args);
-
         dispatchFlags.barrierTimestampPacketNodes->makeResident(*this);
     } else {
-        PipeControlArgs args;
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+        programStallingNoPostSyncCommandsForBarrier(cmdStream);
     }
 }
 
@@ -835,13 +834,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.csrDependencies);
     size += TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(dispatchFlags.csrDependencies);
 
-    if (stallingPipeControlOnNextFlushRequired) {
-        auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
-        if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() > 0) {
-            size += MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
-        } else {
-            size += sizeof(typename GfxFamily::PIPE_CONTROL);
-        }
+    if (stallingCommandsOnNextFlushRequired) {
+        size += getCmdSizeForStallingCommands(dispatchFlags);
     }
 
     if (requiresInstructionCacheFlush) {
@@ -857,7 +851,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
-
     size_t size = 0;
     if ((csrSizeRequestFlags.mediaSamplerConfigChanged ||
          csrSizeRequestFlags.specialPipelineSelectModeChanged ||
@@ -1472,6 +1465,16 @@ void CommandStreamReceiverHw<GfxFamily>::postInitFlagsSetup() {
     int32_t overrideGpuIdleImplicitFlush = DebugManager.flags.PerformImplicitFlushForIdleGpu.get();
     if (overrideGpuIdleImplicitFlush != -1) {
         useGpuIdleImplicitFlush = overrideGpuIdleImplicitFlush == 0 ? false : true;
+    }
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingCommands(const DispatchFlags &dispatchFlags) const {
+    auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
+    if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() > 0) {
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+    } else {
+        return getCmdSizeForStallingNoPostSyncCommands();
     }
 }
 

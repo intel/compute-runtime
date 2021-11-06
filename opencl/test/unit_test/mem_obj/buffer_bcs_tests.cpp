@@ -630,7 +630,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(this->bcsCsr);
 
     auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->gpgpuEngine->commandStreamReceiver);
-    queueCsr->stallingPipeControlOnNextFlushRequired = true;
+    queueCsr->stallingCommandsOnNextFlushRequired = true;
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -712,9 +712,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnque
     };
 
     auto &csrStream = cmdQ->getGpgpuCommandStreamReceiver().getCS(0);
-    EXPECT_TRUE(cmdQ->getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired());
+    EXPECT_TRUE(cmdQ->getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired());
     userEvent0.setStatus(CL_COMPLETE);
-    EXPECT_FALSE(cmdQ->getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired());
+    EXPECT_FALSE(cmdQ->getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired());
     EXPECT_TRUE(pipeControlLookup(csrStream, 0));
 
     auto csrOffset = csrStream.getUsed();
@@ -731,7 +731,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlocked
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(this->bcsCsr);
 
     auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->gpgpuEngine->commandStreamReceiver);
-    queueCsr->stallingPipeControlOnNextFlushRequired = true;
+    queueCsr->stallingCommandsOnNextFlushRequired = true;
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));

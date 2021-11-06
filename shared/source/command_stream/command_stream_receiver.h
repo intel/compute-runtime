@@ -155,8 +155,8 @@ class CommandStreamReceiver {
     GraphicsAllocation *getGlobalFenceAllocation() const { return globalFenceAllocation; }
     GraphicsAllocation *getWorkPartitionAllocation() const { return workPartitionAllocation; }
 
-    void requestStallingPipeControlOnNextFlush() { stallingPipeControlOnNextFlushRequired = true; }
-    bool isStallingPipeControlOnNextFlushRequired() const { return stallingPipeControlOnNextFlushRequired; }
+    void requestStallingCommandsOnNextFlush() { stallingCommandsOnNextFlushRequired = true; }
+    bool isStallingCommandsOnNextFlushRequired() const { return stallingCommandsOnNextFlushRequired; }
 
     virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
     virtual bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
@@ -375,7 +375,7 @@ class CommandStreamReceiver {
     bool bindingTableBaseAddressRequired = false;
     bool mediaVfeStateDirty = true;
     bool lastVmeSubslicesConfig = false;
-    bool stallingPipeControlOnNextFlushRequired = false;
+    bool stallingCommandsOnNextFlushRequired = false;
     bool timestampPacketWriteEnabled = false;
     bool staticWorkPartitioningEnabled = false;
     bool nTo1SubmissionModelEnabled = false;

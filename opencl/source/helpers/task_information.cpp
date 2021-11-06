@@ -354,7 +354,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         enqueueOperationType = EnqueueProperties::Operation::Blit;
 
         UNRECOVERABLE_IF(!barrierNodes);
-        if (commandStreamReceiver.isStallingPipeControlOnNextFlushRequired()) {
+        if (commandStreamReceiver.isStallingCommandsOnNextFlushRequired()) {
             barrierNodes->add(commandStreamReceiver.getTimestampPacketAllocator()->getTag());
         }
     }

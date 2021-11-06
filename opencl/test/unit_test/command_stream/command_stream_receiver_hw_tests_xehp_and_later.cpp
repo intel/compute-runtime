@@ -839,7 +839,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenCreati
 }
 
 HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenXeHpWhenRayTracingEnabledThenDoNotAddCommandBatchBuffer, IsXEHP) {
-
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto cmdSize = commandStreamReceiver.getCmdSizeForPerDssBackedBuffer(pDevice->getHardwareInfo());
     EXPECT_EQ(0u, cmdSize);
@@ -851,4 +850,103 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenXeHpWhenRayTracingEnable
 
     commandStreamReceiver.programPerDssBackedBuffer(cs, *pDevice, dispatchFlags);
     EXPECT_EQ(0u, cs.getUsed());
+}
+
+HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWhenOnlySinglePartitionUsedThenExpectSinglePipeControlAsBarrier, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    constexpr size_t cmdSize = 256;
+    std::unique_ptr<char> buffer(new char[cmdSize]);
+    LinearStream cs(buffer.get(), cmdSize);
+
+    commandStreamReceiver.staticWorkPartitioningEnabled = true;
+    commandStreamReceiver.activePartitions = 1;
+
+    size_t estimatedCmdSize = commandStreamReceiver.getCmdSizeForStallingNoPostSyncCommands();
+    EXPECT_EQ(sizeof(PIPE_CONTROL), estimatedCmdSize);
+
+    commandStreamReceiver.programStallingNoPostSyncCommandsForBarrier(cs);
+    EXPECT_EQ(estimatedCmdSize, cs.getUsed());
+
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionDisabledWhenMultiplePartitionsUsedThenExpectSinglePipeControlAsBarrier, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    constexpr size_t cmdSize = 256;
+    std::unique_ptr<char> buffer(new char[cmdSize]);
+    LinearStream cs(buffer.get(), cmdSize);
+
+    commandStreamReceiver.staticWorkPartitioningEnabled = false;
+    commandStreamReceiver.activePartitions = 2;
+
+    size_t estimatedCmdSize = commandStreamReceiver.getCmdSizeForStallingNoPostSyncCommands();
+    EXPECT_EQ(sizeof(PIPE_CONTROL), estimatedCmdSize);
+
+    commandStreamReceiver.programStallingNoPostSyncCommandsForBarrier(cs);
+    EXPECT_EQ(estimatedCmdSize, cs.getUsed());
+
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWhenMultiplePartitionsUsedThenExpectImplicitScalingWithoutSelfCleanupBarrier, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    constexpr size_t cmdSize = 256;
+    std::unique_ptr<char> buffer(new char[cmdSize]);
+    MockGraphicsAllocation allocation(buffer.get(), cmdSize);
+    allocation.gpuAddress = 0xFF000;
+    LinearStream cs(buffer.get(), cmdSize);
+    cs.replaceGraphicsAllocation(&allocation);
+
+    commandStreamReceiver.staticWorkPartitioningEnabled = true;
+    commandStreamReceiver.activePartitions = 2;
+
+    size_t expectedSize = sizeof(PIPE_CONTROL) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          2 * sizeof(uint32_t);
+    size_t estimatedCmdSize = commandStreamReceiver.getCmdSizeForStallingNoPostSyncCommands();
+    EXPECT_EQ(expectedSize, estimatedCmdSize);
+
+    commandStreamReceiver.programStallingNoPostSyncCommandsForBarrier(cs);
+    EXPECT_EQ(estimatedCmdSize, cs.getUsed());
+
+    void *cmdBuffer = buffer.get();
+    size_t offset = 0;
+
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(cmdBuffer);
+    ASSERT_NE(nullptr, pipeControl);
+    offset += sizeof(PIPE_CONTROL);
+
+    MI_ATOMIC *miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, miAtomic);
+    offset += sizeof(MI_ATOMIC);
+
+    MI_SEMAPHORE_WAIT *miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, miSemaphore);
+    offset += sizeof(MI_SEMAPHORE_WAIT);
+
+    MI_BATCH_BUFFER_START *bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(cmdBuffer, offset));
+    ASSERT_NE(nullptr, bbStart);
+    offset += sizeof(MI_BATCH_BUFFER_START);
+
+    uint32_t *data = reinterpret_cast<uint32_t *>(ptrOffset(cmdBuffer, offset));
+    EXPECT_EQ(0u, *data);
+    offset += sizeof(uint32_t);
+
+    data = reinterpret_cast<uint32_t *>(ptrOffset(cmdBuffer, offset));
+    EXPECT_EQ(0u, *data);
+    offset += sizeof(uint32_t);
+
+    EXPECT_EQ(estimatedCmdSize, offset);
 }

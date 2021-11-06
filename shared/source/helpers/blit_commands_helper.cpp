@@ -149,7 +149,7 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
         blitPropertiesContainer[i + numObjects].outputTimestampPacket = timestampPacketDependencies.nonAuxToAuxNodes.peekNodes()[i];
     }
 
-    gpguCsr.requestStallingPipeControlOnNextFlush();
+    gpguCsr.requestStallingCommandsOnNextFlush();
     auto nodesAllocator = gpguCsr.getTimestampPacketAllocator();
     timestampPacketDependencies.barrierNodes.add(nodesAllocator->getTag());
 

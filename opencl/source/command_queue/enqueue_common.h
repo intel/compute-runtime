@@ -265,7 +265,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         processDispatchForCacheFlush(surfacesForResidency, numSurfaceForResidency, &commandStream, csrDeps);
     } else if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType) {
-            getGpgpuCommandStreamReceiver().requestStallingPipeControlOnNextFlush();
+            getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
         }
 
         for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
@@ -1207,7 +1207,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
         timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
     }
 
-    if (!blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
+    if (!blockQueue && getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired()) {
         timestampPacketDependencies.barrierNodes.add(allocator->getTag());
     }
 

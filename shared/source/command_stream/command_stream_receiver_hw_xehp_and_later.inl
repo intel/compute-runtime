@@ -201,4 +201,27 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     }
 }
 
+template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyncCommands() const {
+    if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
+        return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(false);
+    } else {
+        return sizeof(typename GfxFamily::PIPE_CONTROL);
+    }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
+    PipeControlArgs args;
+    if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
+        ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
+                                                                    this->deviceBitfield,
+                                                                    args,
+                                                                    false,
+                                                                    false);
+    } else {
+        MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+    }
+}
+
 } // namespace NEO

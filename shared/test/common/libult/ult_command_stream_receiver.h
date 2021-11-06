@@ -48,6 +48,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::programEnginePrologue;
     using BaseClass::programPerDssBackedBuffer;
     using BaseClass::programPreamble;
+    using BaseClass::programStallingNoPostSyncCommandsForBarrier;
     using BaseClass::programStateSip;
     using BaseClass::programVFEState;
     using BaseClass::requiresInstructionCacheFlush;
@@ -104,7 +105,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::samplerCacheFlushRequired;
     using BaseClass::CommandStreamReceiver::scratchSpaceController;
-    using BaseClass::CommandStreamReceiver::stallingPipeControlOnNextFlushRequired;
+    using BaseClass::CommandStreamReceiver::stallingCommandsOnNextFlushRequired;
     using BaseClass::CommandStreamReceiver::submissionAggregator;
     using BaseClass::CommandStreamReceiver::tagAddress;
     using BaseClass::CommandStreamReceiver::taskCount;
