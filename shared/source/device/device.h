@@ -65,7 +65,6 @@ class Device : public ReferenceTrackedObject<Device> {
     size_t getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) const;
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
-    EngineControl &getNextEngineForCommandQueue();
     EngineControl &getInternalEngine();
     EngineControl *getInternalCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
@@ -173,7 +172,6 @@ class Device : public ReferenceTrackedObject<Device> {
     aub_stream::EngineType engineInstancedType = aub_stream::EngineType::NUM_ENGINES;
     uint32_t defaultEngineIndex = 0;
     uint32_t numSubDevices = 0;
-    std::atomic_uint32_t regularCommandQueuesCreatedWithinDeviceCount{0};
     bool hasGenericSubDevices = false;
     bool engineInstanced = false;
     bool rootCsrCreated = false;

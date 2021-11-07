@@ -75,7 +75,6 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
         gpgpuEngine = &device->getDefaultEngine();
-
         UNRECOVERABLE_IF(gpgpuEngine->getEngineType() >= aub_stream::EngineType::NUM_ENGINES);
 
         bool bcsAllowed = hwInfoConfig->isBlitterFullySupported(hwInfo) &&

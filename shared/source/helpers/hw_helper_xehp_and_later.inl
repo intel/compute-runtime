@@ -134,11 +134,6 @@ uint32_t HwHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported() const {
-    return true;
-}
-
-template <typename GfxFamily>
 aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const {
     aub_stream::MMIOList mmioList;
 

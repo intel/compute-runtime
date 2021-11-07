@@ -12,7 +12,6 @@ endif()
 
 set(RUNTIME_SRCS_DLL_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_dll.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
