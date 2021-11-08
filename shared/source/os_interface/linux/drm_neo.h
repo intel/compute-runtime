@@ -173,7 +173,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL bool registerResourceClasses();
 
     void queryPageFaultSupport();
-    bool hasPageFaultSupport();
+    bool hasPageFaultSupport() const;
 
     MOCKABLE_VIRTUAL uint32_t registerResource(ResourceClass classType, const void *data, size_t size);
     MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);

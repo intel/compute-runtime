@@ -73,6 +73,7 @@ void DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, s
 
 void DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     if (bo) {
+        bo->requireExplicitResidency(bo->peekDrm()->hasPageFaultSupport() && !shouldAllocationPageFault(bo->peekDrm()));
         if (bufferObjects) {
             if (bo->peekIsReusableAllocation()) {
                 for (auto bufferObject : *bufferObjects) {
@@ -138,7 +139,6 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
                 }
 
                 bo->requireImmediateBinding(true);
-                bo->requireExplicitResidency(!shouldAllocationPageFault(drm));
             }
         }
     }

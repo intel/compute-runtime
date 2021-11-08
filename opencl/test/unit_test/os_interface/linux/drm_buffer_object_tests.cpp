@@ -533,6 +533,17 @@ TEST_F(DrmBufferObjectTest, given48bitAddressWhenSetThenAddressIsCanonized) {
     EXPECT_EQ(boAddress, expectedAddress);
 }
 
+TEST_F(DrmBufferObjectTest, givenBoIsCreatedWhenPageFaultIsSupportedThenExplicitResidencyIsRequiredByDefault) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
+
+    for (auto isPageFaultSupported : {false, true}) {
+        drm.pageFaultSupported = isPageFaultSupported;
+        MockBufferObject bo(&drm, 0, 0, 1);
+        EXPECT_EQ(isPageFaultSupported, bo.isExplicitResidencyRequired());
+    }
+}
+
 TEST_F(DrmBufferObjectTest, whenBoRequiresExplicitResidencyThenTheCorrespondingQueryReturnsCorrectValue) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));

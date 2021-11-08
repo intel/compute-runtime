@@ -126,6 +126,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     drmObject->queryAdapterBDF();
 
+    drmObject->queryPageFaultSupport();
+
     return drmObject.release();
 }
 

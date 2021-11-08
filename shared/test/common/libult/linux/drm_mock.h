@@ -34,6 +34,7 @@ class DrmMock : public Drm {
     using Drm::getQueueSliceCount;
     using Drm::memoryInfo;
     using Drm::nonPersistentContextsSupported;
+    using Drm::pageFaultSupported;
     using Drm::preemptionSupported;
     using Drm::query;
     using Drm::requirePerContextVM;

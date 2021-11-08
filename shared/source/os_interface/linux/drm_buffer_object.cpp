@@ -37,6 +37,7 @@ BufferObject::BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContex
     this->lockedAddress = nullptr;
 
     perContextVmsUsed = drm->isPerContextVMRequired();
+    requiresExplicitResidency = drm->hasPageFaultSupport();
 
     if (perContextVmsUsed) {
         bindInfo.resize(maxOsContextCount);

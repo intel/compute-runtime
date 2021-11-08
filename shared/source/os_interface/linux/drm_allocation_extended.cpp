@@ -42,7 +42,7 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     return true;
 }
 
-bool DrmAllocation::shouldAllocationPageFault(Drm *drm) {
+bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
     return false;
 }
 

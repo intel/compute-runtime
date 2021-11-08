@@ -74,8 +74,4 @@ void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpe
 void Drm::queryPageFaultSupport() {
 }
 
-bool Drm::hasPageFaultSupport() {
-    return false;
-}
-
 } // namespace NEO

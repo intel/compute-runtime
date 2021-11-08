@@ -27,6 +27,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -4802,6 +4803,65 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUp
 
         EXPECT_TRUE(memoryManager.setMemAdvise(&drmAllocation, flags, rootDeviceIndex));
         EXPECT_EQ(isCached ? CachePolicy::WriteBack : CachePolicy::Uncached, bo.peekCachePolicy());
+    }
+}
+
+TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBufferAllocationThenAllocationShouldNotPageFaultAndExplicitResidencyIsNotRequired) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    EXPECT_FALSE(drm.pageFaultSupported);
+
+    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+    uint32_t vmHandleId = 0;
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    std::vector<BufferObject *> bufferObjects;
+    allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true);
+
+    EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
+    EXPECT_FALSE(bo.isExplicitResidencyRequired());
+}
+
+TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBindBoOnAllocationThatShouldPageFaultThenExplicitResidencyIsNotRequired) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.pageFaultSupported = true;
+
+    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+    uint32_t vmHandleId = 0;
+
+    struct MockDrmAllocationToTestPageFault : MockDrmAllocation {
+        MockDrmAllocationToTestPageFault() : MockDrmAllocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory){};
+        bool shouldAllocationPageFault(const Drm *drm) override {
+            return shouldPageFault;
+        }
+        bool shouldPageFault = false;
+    };
+
+    for (auto shouldAllocationPageFault : {false, true}) {
+        MockBufferObject bo(&drm, 0, 0, 1);
+        MockDrmAllocationToTestPageFault allocation;
+        allocation.bufferObjects[0] = &bo;
+        allocation.shouldPageFault = shouldAllocationPageFault;
+
+        std::vector<BufferObject *> bufferObjects;
+        allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true);
+
+        EXPECT_EQ(shouldAllocationPageFault, allocation.shouldAllocationPageFault(&drm));
+        EXPECT_EQ(!shouldAllocationPageFault, bo.isExplicitResidencyRequired());
     }
 }
 
