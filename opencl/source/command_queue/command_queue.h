@@ -322,7 +322,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return requiresCacheFlushAfterWalker;
     }
 
-    static void *convertAddressWithOffsetToGpuVa(void *ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation);
+    template <typename PtrType>
+    static PtrType convertAddressWithOffsetToGpuVa(PtrType ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation);
 
     void updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount);
     uint32_t peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const;
@@ -403,6 +404,18 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     std::unique_ptr<TimestampPacketContainer> deferredTimestampPackets;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
 };
+
+template <typename PtrType>
+PtrType CommandQueue::convertAddressWithOffsetToGpuVa(PtrType ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation) {
+    // If this is device or shared USM pointer, it is already a gpuVA and we don't have to do anything.
+    // Otherwise, we assume this is a cpuVA and we have to convert to gpuVA, while preserving offset from allocation start.
+    const bool isCpuPtr = (memoryType != DEVICE_UNIFIED_MEMORY) && (memoryType != SHARED_UNIFIED_MEMORY);
+    if (isCpuPtr) {
+        size_t dstOffset = ptrDiff(ptr, allocation.getUnderlyingBuffer());
+        ptr = reinterpret_cast<PtrType>(allocation.getGpuAddress() + dstOffset);
+    }
+    return ptr;
+}
 
 using CommandQueueCreateFunc = CommandQueue *(*)(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage);
 

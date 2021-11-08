@@ -88,6 +88,21 @@ cl_int Context::tryGetExistingHostPtrAllocation(const void *ptr,
                                                 GraphicsAllocation *&allocation,
                                                 InternalMemoryType &memoryType,
                                                 bool &isCpuCopyAllowed) {
+    cl_int retVal = tryGetExistingSvmAllocation(ptr, size, rootDeviceIndex, allocation, memoryType, isCpuCopyAllowed);
+    if (retVal != CL_SUCCESS || allocation != nullptr) {
+        return retVal;
+    }
+
+    retVal = tryGetExistingMapAllocation(ptr, size, allocation);
+    return retVal;
+}
+
+cl_int Context::tryGetExistingSvmAllocation(const void *ptr,
+                                            size_t size,
+                                            uint32_t rootDeviceIndex,
+                                            GraphicsAllocation *&allocation,
+                                            InternalMemoryType &memoryType,
+                                            bool &isCpuCopyAllowed) {
     if (getSVMAllocsManager()) {
         SvmAllocationData *svmEntry = getSVMAllocsManager()->getSVMAlloc(ptr);
         if (svmEntry) {
@@ -101,16 +116,19 @@ cl_int Context::tryGetExistingHostPtrAllocation(const void *ptr,
                     isCpuCopyAllowed = false;
                 }
             }
-            return CL_SUCCESS;
         }
     }
+    return CL_SUCCESS;
+}
 
+cl_int Context::tryGetExistingMapAllocation(const void *ptr,
+                                            size_t size,
+                                            GraphicsAllocation *&allocation) {
     if (MapInfo mapInfo = {}; mapOperationsStorage.getInfoForHostPtr(ptr, size, mapInfo)) {
         if (mapInfo.graphicsAllocation) {
             allocation = mapInfo.graphicsAllocation;
         }
     }
-
     return CL_SUCCESS;
 }
 

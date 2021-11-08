@@ -73,8 +73,12 @@ struct CsrSelectionArgs {
     }
 
     static void processResource(const MultiGraphicsAllocation &multiGfxAlloc, uint32_t rootDeviceIndex, Resource &outResource) {
-        outResource.allocation = multiGfxAlloc.getGraphicsAllocation(rootDeviceIndex);
-        outResource.isLocal = outResource.allocation->isAllocatedInLocalMemoryPool();
+        processResource(*multiGfxAlloc.getGraphicsAllocation(rootDeviceIndex), rootDeviceIndex, outResource);
+    }
+
+    static void processResource(const GraphicsAllocation &gfxAlloc, uint32_t rootDeviceIndex, Resource &outResource) {
+        outResource.allocation = &gfxAlloc;
+        outResource.isLocal = gfxAlloc.isAllocatedInLocalMemoryPool();
     }
 
     static inline TransferDirection createTransferDirection(bool srcLocal, bool dstLocal) {

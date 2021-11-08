@@ -103,6 +103,15 @@ class Context : public BaseObject<_cl_context> {
                                            GraphicsAllocation *&allocation,
                                            InternalMemoryType &memoryType,
                                            bool &isCpuCopyAllowed);
+    cl_int tryGetExistingSvmAllocation(const void *ptr,
+                                       size_t size,
+                                       uint32_t rootDeviceIndex,
+                                       GraphicsAllocation *&allocation,
+                                       InternalMemoryType &memoryType,
+                                       bool &isCpuCopyAllowed);
+    cl_int tryGetExistingMapAllocation(const void *ptr,
+                                       size_t size,
+                                       GraphicsAllocation *&allocation);
 
     const std::set<uint32_t> &getRootDeviceIndices() const;
 

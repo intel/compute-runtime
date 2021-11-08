@@ -979,15 +979,4 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
     }
 }
 
-void *CommandQueue::convertAddressWithOffsetToGpuVa(void *ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation) {
-    // If this is device or shared USM pointer, it is already a gpuVA and we don't have to do anything.
-    // Otherwise, we assume this is a cpuVA and we have to convert to gpuVA, while preserving offset from allocation start.
-    const bool isCpuPtr = (memoryType != DEVICE_UNIFIED_MEMORY) && (memoryType != SHARED_UNIFIED_MEMORY);
-    if (isCpuPtr) {
-        size_t dstOffset = ptrDiff(ptr, allocation.getUnderlyingBuffer());
-        ptr = reinterpret_cast<void *>(allocation.getGpuAddress() + dstOffset);
-    }
-    return ptr;
-}
-
 } // namespace NEO

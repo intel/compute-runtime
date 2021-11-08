@@ -57,6 +57,18 @@ struct EnqueueSvmTest : public ClDeviceFixture,
         ClDeviceFixture::TearDown();
     }
 
+    std::pair<ReleaseableObjectPtr<Buffer>, void *> createBufferAndMapItOnGpu() {
+        DebugManagerStateRestore restore{};
+        DebugManager.flags.DisableZeroCopyForBuffers.set(1);
+
+        BufferDefaults::context = this->context;
+        ReleaseableObjectPtr<Buffer> buffer = clUniquePtr(BufferHelper<>::create());
+        void *mappedPtr = pCmdQ->enqueueMapBuffer(buffer.get(), CL_TRUE, CL_MAP_READ, 0, buffer->getSize(), 0, nullptr, nullptr, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, mappedPtr);
+        return {std::move(buffer), mappedPtr};
+    }
+
     cl_int retVal = CL_SUCCESS;
     void *ptrSVM = nullptr;
 };
@@ -1914,4 +1926,136 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemFillThenAllocIsDecommi
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToGpuCalled, 1);
 
     context->memoryManager = memoryManager;
+}
+
+HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToSvmAllocWhenCallingSvmMemcpyThenReuseMappedAllocations) {
+    constexpr size_t size = 1u;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    {
+        auto [buffer, mappedPtr] = createBufferAndMapItOnGpu();
+        std::ignore = buffer;
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+        retVal = this->pCmdQ->enqueueSVMMemcpy(
+            false,     // cl_bool  blocking_copy
+            ptrSVM,    // void *dst_ptr
+            mappedPtr, // const void *src_ptr
+            size,      // size_t size
+            0,         // cl_uint num_events_in_wait_list
+            nullptr,   // cl_evebt *event_wait_list
+            nullptr    // cL_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+    }
+    {
+        auto notMappedPtr = std::make_unique<char[]>(size);
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+        retVal = this->pCmdQ->enqueueSVMMemcpy(
+            false,              // cl_bool  blocking_copy
+            ptrSVM,             // void *dst_ptr
+            notMappedPtr.get(), // const void *src_ptr
+            size,               // size_t size
+            0,                  // cl_uint num_events_in_wait_list
+            nullptr,            // cl_evebt *event_wait_list
+            nullptr             // cL_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
+    }
+}
+
+HWTEST_F(EnqueueSvmTest, givenCopyFromSvmAllocToMappedPtrWhenCallingSvmMemcpyThenReuseMappedAllocations) {
+    constexpr size_t size = 1u;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    {
+        auto [buffer, mappedPtr] = createBufferAndMapItOnGpu();
+        std::ignore = buffer;
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+        retVal = this->pCmdQ->enqueueSVMMemcpy(
+            false,     // cl_bool  blocking_copy
+            mappedPtr, // void *dst_ptr
+            ptrSVM,    // const void *src_ptr
+            size,      // size_t size
+            0,         // cl_uint num_events_in_wait_list
+            nullptr,   // cl_evebt *event_wait_list
+            nullptr    // cL_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+    }
+    {
+        auto notMappedPtr = std::make_unique<char[]>(size);
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+        retVal = this->pCmdQ->enqueueSVMMemcpy(
+            false,              // cl_bool  blocking_copy
+            notMappedPtr.get(), // void *dst_ptr
+            ptrSVM,             // const void *src_ptr
+            size,               // size_t size
+            0,                  // cl_uint num_events_in_wait_list
+            nullptr,            // cl_evebt *event_wait_list
+            nullptr             // cL_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
+    }
+}
+
+HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToMappedPtrWhenCallingSvmMemcpyThenReuseMappedAllocations) {
+    constexpr size_t size = 1u;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    {
+        auto [buffer1, mappedPtr1] = createBufferAndMapItOnGpu();
+        auto [buffer2, mappedPtr2] = createBufferAndMapItOnGpu();
+        std::ignore = buffer1;
+        std::ignore = buffer2;
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+        retVal = this->pCmdQ->enqueueSVMMemcpy(
+            false,      // cl_bool  blocking_copy
+            mappedPtr2, // void *dst_ptr
+            mappedPtr1, // const void *src_ptr
+            size,       // size_t size
+            0,          // cl_uint num_events_in_wait_list
+            nullptr,    // cl_evebt *event_wait_list
+            nullptr     // cL_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+    }
+    {
+        auto [buffer, mappedPtr] = createBufferAndMapItOnGpu();
+        std::ignore = buffer;
+        auto notMappedPtr = std::make_unique<char[]>(size);
+        EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+        retVal = this->pCmdQ->enqueueSVMMemcpy(
+            false,              // cl_bool  blocking_copy
+            mappedPtr,          // void *dst_ptr
+            notMappedPtr.get(), // const void *src_ptr
+            size,               // size_t size
+            0,                  // cl_uint num_events_in_wait_list
+            nullptr,            // cl_evebt *event_wait_list
+            nullptr             // cL_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
+    }
+    {
+        auto notMappedPtr = std::make_unique<char[]>(size);
+        auto [buffer, mappedPtr] = createBufferAndMapItOnGpu();
+        std::ignore = buffer;
+        EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
+        retVal = this->pCmdQ->enqueueSVMMemcpy(
+            false,              // cl_bool  blocking_copy
+            notMappedPtr.get(), // void *dst_ptr
+            mappedPtr,          // const void *src_ptr
+            size,               // size_t size
+            0,                  // cl_uint num_events_in_wait_list
+            nullptr,            // cl_evebt *event_wait_list
+            nullptr             // cL_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(2u, csr.createAllocationForHostSurfaceCalled);
+    }
 }
