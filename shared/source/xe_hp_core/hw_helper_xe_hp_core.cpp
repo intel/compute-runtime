@@ -118,17 +118,14 @@ std::string HwHelperHw<Family>::getExtensions() const {
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
-    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
-
+void MemorySynchronizationCommands<Family>::setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
         if (hwInfo.featureTable.ftrLocalMemory) {
             PIPE_CONTROL cmd = Family::cmdInitPipeControl;
             cmd.setCommandStreamerStallEnable(true);
             cmd.setHdcPipelineFlush(true);
-
-            auto pipeControl = static_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
-            *pipeControl = cmd;
+            *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
+            commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
         }
     }
 }

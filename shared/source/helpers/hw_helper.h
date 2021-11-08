@@ -417,16 +417,32 @@ struct MemorySynchronizationCommands {
                                                           uint64_t immediateData,
                                                           const HardwareInfo &hwInfo,
                                                           PipeControlArgs &args);
+    static void setPipeControlAndProgramPostSyncOperation(void *&commandsBuffer,
+                                                          POST_SYNC_OPERATION operation,
+                                                          uint64_t gpuAddress,
+                                                          uint64_t immediateData,
+                                                          const HardwareInfo &hwInfo,
+                                                          PipeControlArgs &args);
+
     static void addPipeControlWithPostSync(LinearStream &commandStream,
                                            POST_SYNC_OPERATION operation,
                                            uint64_t gpuAddress,
                                            uint64_t immediateData,
                                            PipeControlArgs &args);
+    static void setPipeControlWithPostSync(void *&commandsBuffer,
+                                           POST_SYNC_OPERATION operation,
+                                           uint64_t gpuAddress,
+                                           uint64_t immediateData,
+                                           PipeControlArgs &args);
+
     static void setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo);
     static void setPipeControl(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
 
     static void addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+    static void setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+    static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo);
 
     static void addPipeControl(LinearStream &commandStream, PipeControlArgs &args);
     static void addPipeControlWithCSStallOnly(LinearStream &commandStream);
@@ -437,8 +453,9 @@ struct MemorySynchronizationCommands {
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
 
     static size_t getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo);
+    static size_t getSizeForPipeControlWA(const HardwareInfo &hwInfo);
     static size_t getSizeForSinglePipeControl();
-    static size_t getSizeForSingleSynchronization(const HardwareInfo &hwInfo);
+    static size_t getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForFullCacheFlush();
 

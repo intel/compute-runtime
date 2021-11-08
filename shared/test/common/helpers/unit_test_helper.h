@@ -65,6 +65,8 @@ struct UnitTestHelper {
     static const bool useFullRowForLocalIdsGeneration;
 
     static const bool additionalMiFlushDwRequired;
+
+    static uint64_t getPipeControlPostSyncAddress(const typename GfxFamily::PIPE_CONTROL &pipeControl);
 };
 
 } // namespace NEO

@@ -280,7 +280,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
         stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, hardwareInfo, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
-    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
+    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
     ASSERT_NE(nullptr, pipeControl);
 
@@ -329,7 +329,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
         stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, hardwareInfo, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
-    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
+    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
     ASSERT_NE(nullptr, pipeControl);
 
@@ -359,7 +359,7 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
     MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
         stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, hardwareInfo, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
-    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
+    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
     ASSERT_NE(nullptr, pipeControl);
 

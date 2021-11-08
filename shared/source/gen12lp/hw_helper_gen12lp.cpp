@@ -120,13 +120,13 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
-    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+void MemorySynchronizationCommands<Family>::setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo)) {
         PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+
         cmd.setCommandStreamerStallEnable(true);
-        auto pipeControl = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
-        *pipeControl = cmd;
+        *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
+        commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
     }
 }
 

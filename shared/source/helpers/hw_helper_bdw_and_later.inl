@@ -101,7 +101,7 @@ aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo 
 }
 
 template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>
