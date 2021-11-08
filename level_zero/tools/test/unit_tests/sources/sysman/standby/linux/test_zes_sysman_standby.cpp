@@ -9,6 +9,8 @@
 
 #include "mock_sysfs_standby.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 using ::testing::Matcher;
 
@@ -27,6 +29,9 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
     SysfsAccess *pOriginalSysfsAccess = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         ptestSysfsAccess = std::make_unique<NiceMock<Mock<StandbySysfsAccess>>>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
@@ -55,6 +60,9 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         pLinuxSysmanImp->pSysfsAccess = pOriginalSysfsAccess;
         SysmanDeviceFixture::TearDown();
     }
@@ -257,6 +265,9 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
 
   protected:
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::SetUp();
         mockSubDeviceHandleCount = subDeviceCount;
         ptestSysfsAccess = std::make_unique<NiceMock<Mock<StandbySysfsAccess>>>();
@@ -283,6 +294,9 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         pLinuxSysmanImp->pSysfsAccess = pOriginalSysfsAccess;
         SysmanMultiDeviceFixture::TearDown();
     }

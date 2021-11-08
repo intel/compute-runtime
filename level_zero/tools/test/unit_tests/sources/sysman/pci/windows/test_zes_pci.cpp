@@ -10,6 +10,8 @@
 
 #include "mock_pci.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -18,6 +20,9 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
     Mock<PciKmdSysManager> *pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
@@ -46,6 +51,9 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
         SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;

@@ -8,6 +8,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/temperature/linux/mock_sysfs_temperature.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 std::string rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
@@ -29,6 +31,9 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::SetUp();
         pFsAccess = std::make_unique<NiceMock<Mock<TemperatureFsAccess>>>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
@@ -60,6 +65,9 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
         pSysmanDeviceImp->pTempHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }
@@ -134,6 +142,9 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pFsAccess = std::make_unique<NiceMock<Mock<TemperatureFsAccess>>>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
@@ -165,6 +176,9 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pTempHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }

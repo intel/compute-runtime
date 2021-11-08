@@ -6,6 +6,9 @@
  */
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/firmware/linux/mock_zes_sysman_firmware.h"
+
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 namespace L0 {
 namespace ult {
@@ -20,6 +23,9 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pFsAccess = std::make_unique<NiceMock<Mock<FirmwareFsAccess>>>();
@@ -43,6 +49,9 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pFirmwareHandleContext->init();
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
@@ -246,6 +255,9 @@ class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pFsAccess = std::make_unique<NiceMock<Mock<FirmwareFsAccess>>>();
@@ -257,6 +269,9 @@ class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<FirmwareFsAccess>::readValSuccess));
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;

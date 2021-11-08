@@ -9,6 +9,8 @@
 
 #include "mock_sysfs_performance.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 using ::testing::Matcher;
 
@@ -20,6 +22,9 @@ class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
   protected:
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::SetUp();
         pSysmanDeviceImp->pRasHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
@@ -33,6 +38,9 @@ class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
         pSysmanDeviceImp->pPerformanceHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::TearDown();
     }
 

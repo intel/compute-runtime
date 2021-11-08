@@ -9,6 +9,8 @@
 
 #include "mock_pmt.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 using ::testing::Matcher;
 using ::testing::Return;
@@ -23,6 +25,9 @@ class ZesPmtFixtureMultiDevice : public SysmanMultiDeviceFixture {
     std::unique_ptr<Mock<PmtFsAccess>> pTestFsAccess;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::SetUp();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -46,6 +51,9 @@ class ZesPmtFixtureMultiDevice : public SysmanMultiDeviceFixture {
         PlatformMonitoringTech::create(deviceHandles, pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::TearDown();
         for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
             delete subDeviceIdToPmtEntry.second;
@@ -272,6 +280,9 @@ class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
     std::unique_ptr<Mock<PmtFsAccess>> pTestFsAccess;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -295,6 +306,9 @@ class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
         PlatformMonitoringTech::create(deviceHandles, pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
             delete subDeviceIdToPmtEntry.second;

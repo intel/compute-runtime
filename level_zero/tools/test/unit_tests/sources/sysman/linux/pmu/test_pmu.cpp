@@ -8,6 +8,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/pmu/mock_pmu.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::Matcher;
 using ::testing::Return;
 namespace L0 {
@@ -20,6 +22,9 @@ struct SysmanPmuFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pFsAccess = std::make_unique<NiceMock<Mock<PmuFsAccess>>>();
@@ -37,6 +42,9 @@ struct SysmanPmuFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockGetErrorNoSuccess));
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;

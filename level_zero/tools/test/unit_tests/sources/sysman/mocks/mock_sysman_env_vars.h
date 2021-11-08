@@ -10,6 +10,8 @@
 
 #include "test.h"
 
+extern bool sysmanUltsEnable;
+
 using namespace NEO;
 
 using envVariableMap = std::unordered_map<std::string, std::string>;
@@ -20,6 +22,9 @@ namespace ult {
 class SysmanEnabledFixture : public ::testing::Test {
   public:
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         mockableEnvValues = std::make_unique<envVariableMap>();
         (*mockableEnvValues)["ZES_ENABLE_SYSMAN"] = "1";
         mockableEnvValuesBackup = std::make_unique<VariableBackup<envVariableMap *>>(&IoFunctions::mockableEnvValues, mockableEnvValues.get());

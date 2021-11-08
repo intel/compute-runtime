@@ -9,6 +9,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/engine/windows/mock_engine.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -18,6 +20,9 @@ class SysmanDeviceEngineFixture : public SysmanDeviceFixture {
     Mock<EngineKmdSysManager> *pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
 
         pKmdSysManager = new Mock<EngineKmdSysManager>;
@@ -37,6 +42,9 @@ class SysmanDeviceEngineFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
         if (pKmdSysManager != nullptr) {

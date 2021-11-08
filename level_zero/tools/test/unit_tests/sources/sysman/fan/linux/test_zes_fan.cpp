@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 
 #include "sysman/fan/fan_imp.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -17,10 +19,16 @@ constexpr uint32_t fanHandleComponentCount = 0u;
 class SysmanDeviceFanFixture : public SysmanDeviceFixture {
   protected:
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pSysmanDeviceImp->pFanHandleContext->init();
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
     }
 

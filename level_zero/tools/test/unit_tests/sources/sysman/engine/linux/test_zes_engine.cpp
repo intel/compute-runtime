@@ -9,6 +9,8 @@
 
 #include "mock_engine.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::Matcher;
 using ::testing::Return;
 class OsEngine;
@@ -29,6 +31,9 @@ class ZesEngineFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pMemoryManagerOriginal = device->getDriverHandle()->getMemoryManager();
         pMemoryManager = std::make_unique<::testing::NiceMock<MockMemoryManagerInEngineSysman>>(*neoDevice->getExecutionEnvironment());
@@ -67,6 +72,9 @@ class ZesEngineFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOriginal);
         pLinuxSysmanImp->pDrm = pOriginalDrm;

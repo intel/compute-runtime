@@ -12,6 +12,8 @@
 
 #include <string>
 
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 using ::testing::Invoke;
 using ::testing::Matcher;
@@ -142,6 +144,9 @@ class ZesPciFixture : public SysmanDeviceFixture {
     MemoryManager *pMemoryManagerOld;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
@@ -189,6 +194,9 @@ class ZesPciFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
         SysmanDeviceFixture::TearDown();
         if (nullptr != pPciImp->pOsPci) {

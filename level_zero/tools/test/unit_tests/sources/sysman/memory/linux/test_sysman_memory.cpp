@@ -11,6 +11,8 @@
 
 #include "gtest/gtest.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -22,6 +24,9 @@ constexpr uint32_t memoryHandleComponentCount = 1u;
 class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
   protected:
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
@@ -48,6 +53,9 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
         SysmanDeviceFixture::TearDown();
         if (pMemoryManager != nullptr) {

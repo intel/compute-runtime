@@ -97,6 +97,7 @@ std::string getRunPath(char *argv0) {
 }
 
 std::thread::id tempThreadID;
+bool sysmanUltsEnable = false;
 
 void applyWorkarounds() {
     {
@@ -148,6 +149,12 @@ int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     bool showTestStats = false;
+
+    auto sysmanUltsEnableEnv = getenv("NEO_L0_SYSMAN_ULTS_ENABLE");
+    if (sysmanUltsEnableEnv != nullptr) {
+        sysmanUltsEnable = (strcmp(sysmanUltsEnableEnv, "1") == 0);
+    }
+
     applyWorkarounds();
 
     testing::InitGoogleMock(&argc, argv);

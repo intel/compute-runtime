@@ -10,6 +10,8 @@
 
 #include "mock_events.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::Matcher;
 
 namespace L0 {
@@ -27,6 +29,9 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     SysfsAccess *pSysfsAccessOriginal = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pFsAccess = std::make_unique<NiceMock<Mock<EventsFsAccess>>>();
@@ -50,6 +55,9 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         if (nullptr != pEventsImp->pOsEvents) {
             delete pEventsImp->pOsEvents;
         }

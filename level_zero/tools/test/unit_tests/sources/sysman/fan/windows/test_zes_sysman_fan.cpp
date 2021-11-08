@@ -9,6 +9,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/fan/windows/mock_fan.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -19,6 +21,9 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
     std::unique_ptr<Mock<FanKmdSysManager>> pKmdSysManager;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
     }
 
@@ -42,6 +47,9 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pFanHandleContext->init();
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
     }

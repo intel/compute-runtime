@@ -10,6 +10,8 @@
 
 #include "mock_memory.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -20,6 +22,9 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     Drm *pOriginalDrm = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
@@ -57,6 +62,9 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pDrm = pOriginalDrm;

@@ -9,6 +9,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/temperature/windows/mock_temperature.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -20,6 +22,9 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
 
         pKmdSysManager = new Mock<TemperatureKmdSysManager>;
@@ -47,6 +52,9 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pTempHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
         if (pKmdSysManager != nullptr) {

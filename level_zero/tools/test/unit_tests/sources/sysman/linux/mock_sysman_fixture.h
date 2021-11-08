@@ -19,6 +19,8 @@
 
 #include "sysman/linux/os_sysman_imp.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 using ::testing::Matcher;
 using ::testing::NiceMock;
@@ -48,6 +50,9 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
     Mock<LinuxSysfsAccess> *pSysfsAccess = nullptr;
     Mock<LinuxProcfsAccess> *pProcfsAccess = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         DeviceFixture::SetUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = device->getOsInterface();
@@ -72,6 +77,9 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         pSysmanDeviceImp->init();
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         DeviceFixture::TearDown();
         unsetenv("ZES_ENABLE_SYSMAN");
     }
@@ -87,6 +95,9 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
     Mock<LinuxSysfsAccess> *pSysfsAccess = nullptr;
     Mock<LinuxProcfsAccess> *pProcfsAccess = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         MultiDeviceFixture::SetUp();
         device = driverHandle->devices[0];
         neoDevice = device->getNEODevice();
@@ -118,6 +129,9 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         subDeviceCount = numSubDevices;
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         unsetenv("ZES_ENABLE_SYSMAN");
         MultiDeviceFixture::TearDown();
     }

@@ -10,6 +10,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/frequency/windows/mock_frequency.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -23,6 +25,9 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
     Mock<FrequencyKmdSysManager> *pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
     }
 
@@ -56,6 +61,9 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
         if (pKmdSysManager != nullptr) {

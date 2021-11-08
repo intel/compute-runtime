@@ -9,6 +9,8 @@
 
 #include "mock_fs_ras.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 using ::testing::Matcher;
 using ::testing::NiceMock;
@@ -23,6 +25,9 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
     std::vector<ze_device_handle_t> deviceHandles;
     FsAccess *pFsAccessOriginal = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pFsAccess = std::make_unique<NiceMock<Mock<RasFsAccess>>>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
@@ -41,6 +46,9 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }

@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 namespace L0 {
 namespace ult {
@@ -19,6 +21,9 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
     FirmwareUtil *pFwUtilInterfaceOld = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
 
         pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
@@ -47,6 +52,9 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
     }

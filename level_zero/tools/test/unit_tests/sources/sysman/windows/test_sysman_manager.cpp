@@ -13,6 +13,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::InSequence;
@@ -36,12 +38,18 @@ class SysmanKmdManagerFixture : public ::testing::Test {
     Mock<MockKmdSysManager> *pKmdSysManager = nullptr;
 
     void SetUp() {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         pKmdSysManager = new Mock<MockKmdSysManager>;
 
         EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
             .WillRepeatedly(::testing::Invoke(pKmdSysManager, &Mock<MockKmdSysManager>::mock_escape));
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         if (pKmdSysManager != nullptr) {
             delete pKmdSysManager;
             pKmdSysManager = nullptr;

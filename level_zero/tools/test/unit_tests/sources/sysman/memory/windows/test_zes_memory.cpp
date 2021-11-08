@@ -9,6 +9,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/memory/windows/mock_memory.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -18,6 +20,9 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     Mock<MemoryKmdSysManager> *pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
@@ -55,6 +60,9 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
         SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;

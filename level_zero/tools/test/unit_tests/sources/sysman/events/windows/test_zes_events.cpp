@@ -11,6 +11,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_kmd_sys_manager.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::Matcher;
 
 namespace L0 {
@@ -26,6 +28,9 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     GlobalOperations *pGlobalOperationsOld = nullptr;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
     }
 
@@ -51,6 +56,9 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         if (nullptr != pEventsImp->pOsEvents) {
             delete pEventsImp->pOsEvents;
         }

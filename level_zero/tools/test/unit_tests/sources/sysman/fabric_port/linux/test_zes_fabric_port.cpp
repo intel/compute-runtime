@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 
 #include <limits>
 
+extern bool sysmanUltsEnable;
+
 using ::testing::Return;
 
 namespace L0 {
@@ -23,6 +25,9 @@ class ZesFabricPortFixture : public SysmanDeviceFixture {
     static uint32_t numPorts;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         FabricPortHandleContext *pFabricPortHandleContext = pSysmanDeviceImp->pFabricPortHandleContext;
         if (nullptr != pFabricPortHandleContext->pFabricDevice) {
@@ -41,6 +46,9 @@ class ZesFabricPortFixture : public SysmanDeviceFixture {
         pFabricPortHandleContext->init();
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
     }
 };

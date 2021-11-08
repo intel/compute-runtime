@@ -13,6 +13,8 @@
 
 #include <cmath>
 
+extern bool sysmanUltsEnable;
+
 using ::testing::Invoke;
 
 namespace L0 {
@@ -36,6 +38,9 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
     std::vector<ze_device_handle_t> deviceHandles;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<NiceMock<Mock<FrequencySysfsAccess>>>();
@@ -74,6 +79,9 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
     }

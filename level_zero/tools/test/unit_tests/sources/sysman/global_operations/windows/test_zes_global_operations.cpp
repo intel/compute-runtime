@@ -9,6 +9,8 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/global_operations/windows/mock_global_operations.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
+extern bool sysmanUltsEnable;
+
 namespace L0 {
 namespace ult {
 
@@ -21,6 +23,9 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     Mock<GlobalOpsKmdSysManager> *pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
     }
 
@@ -42,6 +47,9 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         if (nullptr != pGlobalOperationsImp->pOsGlobalOperations) {
             delete pGlobalOperationsImp->pOsGlobalOperations;
         }

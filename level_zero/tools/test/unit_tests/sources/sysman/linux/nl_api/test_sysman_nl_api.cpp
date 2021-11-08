@@ -7,6 +7,8 @@
 
 #include "mock_nl_api.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::Invoke;
 using ::testing::Return;
 
@@ -23,6 +25,9 @@ class SysmanNlApiFixture : public ::testing::Test {
     PublicNlApi testNlApi;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         auto mockNlDll = std::make_unique<MockNlDll>();
 
         testNlApi.genlLibraryHandle = std::move(mockNlDll);

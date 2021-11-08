@@ -11,6 +11,8 @@
 
 #include "mock_global_operations.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::Matcher;
 
 namespace L0 {
@@ -56,6 +58,9 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     std::string expectedModelName;
 
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pEngineHandleContextOld = pSysmanDeviceImp->pEngineHandleContext;
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
@@ -110,6 +115,9 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         if (nullptr != pGlobalOperationsImp->pOsGlobalOperations) {
             delete pGlobalOperationsImp->pOsGlobalOperations;
         }

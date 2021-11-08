@@ -16,6 +16,8 @@
 #include "sysman/power/power_imp.h"
 #include "sysman/sysman_imp.h"
 
+extern bool sysmanUltsEnable;
+
 using ::testing::DoDefault;
 using ::testing::Matcher;
 using ::testing::Return;
@@ -350,6 +352,9 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
     OsPower *pOsPowerOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::SetUp();
         pFsAccess = std::make_unique<NiceMock<Mock<PowerFsAccess>>>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
@@ -393,6 +398,9 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
@@ -416,6 +424,9 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
     OsPower *pOsPowerOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::SetUp();
         pFsAccess = std::make_unique<NiceMock<Mock<PowerFsAccess>>>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
@@ -459,6 +470,9 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     }
     void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
         SysmanMultiDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
