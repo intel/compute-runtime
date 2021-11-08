@@ -9,6 +9,8 @@
 #include "level_zero/core/source/event/event.h"
 #include <level_zero/zet_api.h>
 
+#include "metrics_discovery_api.h"
+
 #include <vector>
 
 struct _zet_metric_group_handle_t {};
@@ -16,11 +18,6 @@ struct _zet_metric_handle_t {};
 struct _zet_metric_streamer_handle_t {};
 struct _zet_metric_query_pool_handle_t {};
 struct _zet_metric_query_handle_t {};
-
-namespace MetricsDiscovery {
-class IMetricSet_1_5;
-class IConcurrentGroup_1_5;
-} // namespace MetricsDiscovery
 
 namespace L0 {
 struct MetricsLibrary;

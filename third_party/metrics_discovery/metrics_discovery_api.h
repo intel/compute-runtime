@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-//     Copyright © 2019-2020, Intel Corporation
+//     Copyright Â© 2019-2020, Intel Corporation
 //
 //     Permission is hereby granted, free of charge, to any person obtaining a
 //     copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 133
+#define MD_API_BUILD_NUMBER_CURRENT 139
 
 namespace MetricsDiscovery
 {
@@ -74,16 +74,17 @@ namespace MetricsDiscovery
     typedef enum EMD_API_MINOR_VERSION
     {
         MD_API_MINOR_NUMBER_0       = 0,
-        MD_API_MINOR_NUMBER_1       = 1, // CalculationAPI
-        MD_API_MINOR_NUMBER_2       = 2, // OverridesAPI
-        MD_API_MINOR_NUMBER_3       = 3, // BatchBuffer Sampling (aka DMA Sampling)
-        MD_API_MINOR_NUMBER_4       = 4, // GT dependent MetricSets
-        MD_API_MINOR_NUMBER_5       = 5, // MaxValue calculation for CalculationAPI
-        MD_API_MINOR_NUMBER_6       = 6, // Multi adapter support
-        MD_API_MINOR_NUMBER_7       = 7,
-        MD_API_MINOR_NUMBER_8       = 8, // TAdapterParams update
-        MD_API_MINOR_NUMBER_9       = 9, // Sub device support.
-        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_9,
+        MD_API_MINOR_NUMBER_1       = 1,  // CalculationAPI
+        MD_API_MINOR_NUMBER_2       = 2,  // OverridesAPI
+        MD_API_MINOR_NUMBER_3       = 3,  // BatchBuffer Sampling (aka DMA Sampling)
+        MD_API_MINOR_NUMBER_4       = 4,  // GT dependent MetricSets
+        MD_API_MINOR_NUMBER_5       = 5,  // MaxValue calculation for CalculationAPI
+        MD_API_MINOR_NUMBER_6       = 6,  // Multi adapter support
+        MD_API_MINOR_NUMBER_7       = 7,  // Compile time equations calculation approach
+        MD_API_MINOR_NUMBER_8       = 8,  // TAdapterParams update
+        MD_API_MINOR_NUMBER_9       = 9,  // Sub device support.
+        MD_API_MINOR_NUMBER_10      = 10, // GetGpuCpuTimestamps API function extended by a correlation indicator param
+        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_10,
         MD_API_MINOR_NUMBER_CEIL    = 0xFFFFFFFF
     } MD_API_MINOR_VERSION;
 
@@ -1228,6 +1229,25 @@ namespace MetricsDiscovery
     ///////////////////////////////////////////////////////////////////////////////
     //
     // Class:
+    //   IMetricsDevice_1_10
+    //
+    // Description:
+    //   Updated 1.5 version to use with 1.10 interface version.
+    //
+    // Updates:
+    // - GetGpuCpuTimestamps:            Update to 1.10 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IMetricsDevice_1_10 : public IMetricsDevice_1_5
+    {
+    public:
+        using IMetricsDevice_1_0::GetGpuCpuTimestamps; // To avoid hiding by 1.10 interface function
+        virtual TCompletionCode GetGpuCpuTimestamps( uint64_t* gpuTimestampNs, uint64_t* cpuTimestampNs, uint32_t* cpuId, uint64_t* correlationIndicatorNs );
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
     //   IAdapter_1_6
     //
     // Description:
@@ -1301,6 +1321,35 @@ namespace MetricsDiscovery
     ///////////////////////////////////////////////////////////////////////////////
     //
     // Class:
+    //   IAdapter_1_10
+    //
+    // Description:
+    //   Abstract interface for GPU adapter.
+    //
+    // Updates:
+    // - OpenMetricsDevice:              Update to 1.10 interface
+    // - OpenMetricsDeviceFromFile:      Update to 1.10 interface
+    // - OpenMetricsSubDevice:           Update to 1.10 interface
+    // - OpenMetricsSubDeviceFromFile:   Update to 1.10 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapter_1_10 : public IAdapter_1_9
+    {
+    public:
+        using IAdapter_1_6::OpenMetricsDevice;
+        using IAdapter_1_6::OpenMetricsDeviceFromFile;
+        using IAdapter_1_9::OpenMetricsSubDevice;
+        using IAdapter_1_9::OpenMetricsSubDeviceFromFile;
+
+        virtual TCompletionCode OpenMetricsDevice( IMetricsDevice_1_10** metricsDevice );
+        virtual TCompletionCode OpenMetricsDeviceFromFile( const char* fileName, void* openParams, IMetricsDevice_1_10** metricsDevice );
+        virtual TCompletionCode OpenMetricsSubDevice( const uint32_t subDeviceIndex, IMetricsDevice_1_10** metricsDevice );
+        virtual TCompletionCode OpenMetricsSubDeviceFromFile( const uint32_t subDeviceIndex, const char* fileName, void* openParams, IMetricsDevice_1_10** metricsDevice );
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
     //   IAdapterGroup_1_6
     //
     // Description:
@@ -1357,19 +1406,77 @@ namespace MetricsDiscovery
         virtual IAdapter_1_9* GetAdapter( uint32_t index );
     };
 
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
+    //   IAdapterGroup_1_10
+    //
+    // Description:
+    //   Abstract interface for the GPU adapters root object.
+    //
+    // Updates:
+    // - GetAdapter:                    Update to 1.10 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapterGroup_1_10 : public IAdapterGroup_1_9
+    {
+    public:
+        virtual IAdapter_1_10* GetAdapter( uint32_t index );
+    };
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Latest interfaces and typedef structs versions:
+    //////////////////////////////////////////////////////////////////////////////////
+    using IAdapterGroupLatest               = IAdapterGroup_1_10;
+    using IAdapterLatest                    = IAdapter_1_10;
+    using IConcurrentGroupLatest            = IConcurrentGroup_1_5;
+    using IEquationLatest                   = IEquation_1_0;
+    using IInformationLatest                = IInformation_1_0;
+    using IMetricLatest                     = IMetric_1_0;
+    using IMetricSetLatest                  = IMetricSet_1_5;
+    using IMetricsDeviceLatest              = IMetricsDevice_1_10;
+    using IOverrideLatest                   = IOverride_1_2;
+    using TAdapterGroupParamsLatest         = TAdapterGroupParams_1_6;
+    using TAdapterIdLatest                  = TAdapterId_1_6;
+    using TAdapterIdLuidLatest              = TAdapterIdLuid_1_6;
+    using TAdapterIdMajorMinorLatest        = TAdapterIdMajorMinor_1_6;
+    using TAdapterParamsLatest              = TAdapterParams_1_9;
+    using TApiSpecificIdLatest              = TApiSpecificId_1_0;
+    using TApiVersionLatest                 = TApiVersion_1_0;
+    using TByteArrayLatest                  = TByteArray_1_0;
+    using TConcurrentGroupParamsLatest      = TConcurrentGroupParams_1_0;
+    using TDeltaFunctionLatest              = TDeltaFunction_1_0;
+    using TEngineIdClassInstanceLatest      = TEngineIdClassInstance_1_9;
+    using TEngineIdLatest                   = TEngineId_1_9;
+    using TEngineParamsLatest               = TEngineParams_1_9;
+    using TEquationElementLatest            = TEquationElement_1_0;
+    using TGlobalSymbolLatest               = TGlobalSymbol_1_0;
+    using TInformationParamsLatest          = TInformationParams_1_0;
+    using TMetricParamsLatest               = TMetricParams_1_0;
+    using TMetricSetParamsLatest            = TMetricSetParams_1_4;
+    using TMetricsDeviceParamsLatest        = TMetricsDeviceParams_1_2;
+    using TOverrideParamsLatest             = TOverrideParams_1_2;
+    using TReadParamsLatest                 = TReadParams_1_0;
+    using TSetDriverOverrideParamsLatest    = TSetDriverOverrideParams_1_2;
+    using TSetFrequencyOverrideParamsLatest = TSetFrequencyOverrideParams_1_2;
+    using TSetOverrideParamsLatest          = TSetOverrideParams_1_2;
+    using TSetQueryOverrideParamsLatest     = TSetQueryOverrideParams_1_2;
+    using TSubDeviceParamsLatest            = TSubDeviceParams_1_9;
+    using TTypedValueLatest                 = TTypedValue_1_0;
+
 #ifdef __cplusplus
     extern "C"
     {
 #endif
 
         // [Current] Factory functions
-        typedef TCompletionCode( MD_STDCALL* OpenAdapterGroup_fn )( IAdapterGroup_1_9** adapterGroup );
+        typedef TCompletionCode( MD_STDCALL* OpenAdapterGroup_fn )( IAdapterGroupLatest** adapterGroup );
 
         // [Legacy] Factory functions
-        typedef TCompletionCode( MD_STDCALL* OpenMetricsDevice_fn )( IMetricsDevice_1_5** metricsDevice );
-        typedef TCompletionCode( MD_STDCALL* OpenMetricsDeviceFromFile_fn )( const char* fileName, void* openParams, IMetricsDevice_1_5** metricsDevice );
-        typedef TCompletionCode( MD_STDCALL* CloseMetricsDevice_fn )( IMetricsDevice_1_5* metricsDevice );
-        typedef TCompletionCode( MD_STDCALL* SaveMetricsDeviceToFile_fn )( const char* fileName, void* saveParams, IMetricsDevice_1_5* metricsDevice );
+        typedef TCompletionCode( MD_STDCALL* OpenMetricsDevice_fn )( IMetricsDeviceLatest** metricsDevice );
+        typedef TCompletionCode( MD_STDCALL* OpenMetricsDeviceFromFile_fn )( const char* fileName, void* openParams, IMetricsDeviceLatest** metricsDevice );
+        typedef TCompletionCode( MD_STDCALL* CloseMetricsDevice_fn )( IMetricsDeviceLatest* metricsDevice );
+        typedef TCompletionCode( MD_STDCALL* SaveMetricsDeviceToFile_fn )( const char* fileName, void* saveParams, IMetricsDeviceLatest* metricsDevice );
 
 #ifdef __cplusplus
     }

@@ -30,10 +30,12 @@ using MetricsDiscovery::IAdapter_1_9;
 using MetricsDiscovery::IAdapterGroup_1_6;
 using MetricsDiscovery::IAdapterGroup_1_8;
 using MetricsDiscovery::IAdapterGroup_1_9;
+using MetricsDiscovery::IAdapterGroupLatest;
 using MetricsDiscovery::IConcurrentGroup_1_5;
 using MetricsDiscovery::IInformation_1_0;
 using MetricsDiscovery::IMetric_1_0;
 using MetricsDiscovery::IMetricsDevice_1_5;
+using MetricsDiscovery::IMetricsDeviceLatest;
 using MetricsDiscovery::IMetricSet_1_0;
 using MetricsDiscovery::IMetricSet_1_5;
 using MetricsDiscovery::IOverride_1_2;
@@ -55,16 +57,16 @@ using MetricsDiscovery::TTypedValue_1_0;
 struct MockMetricsDiscoveryApi {
 
     // Original api functions.
-    static TCompletionCode MD_STDCALL OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDevice_1_5 **device);
-    static TCompletionCode MD_STDCALL CloseMetricsDevice(IMetricsDevice_1_5 *device);
-    static TCompletionCode MD_STDCALL SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDevice_1_5 *device);
-    static TCompletionCode MD_STDCALL OpenAdapterGroup(IAdapterGroup_1_9 **adapterGroup);
+    static TCompletionCode MD_STDCALL OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDeviceLatest **device);
+    static TCompletionCode MD_STDCALL CloseMetricsDevice(IMetricsDeviceLatest *device);
+    static TCompletionCode MD_STDCALL SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDeviceLatest *device);
+    static TCompletionCode MD_STDCALL OpenAdapterGroup(IAdapterGroupLatest **adapterGroup);
 
     // Mocked api functions.
     MOCK_METHOD(TCompletionCode, MockOpenMetricsDeviceFromFile, (const char *, void *, IMetricsDevice_1_5 **));
     MOCK_METHOD(TCompletionCode, MockCloseMetricsDevice, (IMetricsDevice_1_5 *));
     MOCK_METHOD(TCompletionCode, MockSaveMetricsDeviceToFile, (const char *, void *, IMetricsDevice_1_5 *));
-    MOCK_METHOD(TCompletionCode, MockOpenAdapterGroup, (IAdapterGroup_1_9 * *adapterGroup));
+    MOCK_METHOD(TCompletionCode, MockOpenAdapterGroup, (IAdapterGroup_1_9 **));
 };
 
 template <>

@@ -18,20 +18,20 @@ Mock<MetricEnumeration>::~Mock() {
 
 MockMetricsDiscoveryApi *Mock<MetricEnumeration>::g_mockApi = nullptr;
 
-TCompletionCode MockMetricsDiscoveryApi::OpenAdapterGroup(IAdapterGroup_1_9 **group) {
-    return Mock<MetricEnumeration>::g_mockApi->MockOpenAdapterGroup(group);
+TCompletionCode MockMetricsDiscoveryApi::OpenAdapterGroup(IAdapterGroupLatest **group) {
+    return Mock<MetricEnumeration>::g_mockApi->MockOpenAdapterGroup((IAdapterGroup_1_9 **)group);
 }
 
-TCompletionCode MockMetricsDiscoveryApi::OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDevice_1_5 **device) {
-    return Mock<MetricEnumeration>::g_mockApi->MockOpenMetricsDeviceFromFile(fileName, openParams, device);
+TCompletionCode MockMetricsDiscoveryApi::OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDeviceLatest **device) {
+    return Mock<MetricEnumeration>::g_mockApi->MockOpenMetricsDeviceFromFile(fileName, openParams, (IMetricsDevice_1_5 **)device);
 }
 
-TCompletionCode MockMetricsDiscoveryApi::CloseMetricsDevice(IMetricsDevice_1_5 *device) {
-    return Mock<MetricEnumeration>::g_mockApi->MockCloseMetricsDevice(device);
+TCompletionCode MockMetricsDiscoveryApi::CloseMetricsDevice(IMetricsDeviceLatest *device) {
+    return Mock<MetricEnumeration>::g_mockApi->MockCloseMetricsDevice((IMetricsDevice_1_5 *)device);
 }
 
-TCompletionCode MockMetricsDiscoveryApi::SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDevice_1_5 *device) {
-    return Mock<MetricEnumeration>::g_mockApi->MockSaveMetricsDeviceToFile(fileName, saveParams, device);
+TCompletionCode MockMetricsDiscoveryApi::SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDeviceLatest *device) {
+    return Mock<MetricEnumeration>::g_mockApi->MockSaveMetricsDeviceToFile(fileName, saveParams, (IMetricsDevice_1_5 *)device);
 }
 
 void Mock<MetricEnumeration>::setMockedApi(MockMetricsDiscoveryApi *mockedApi) {

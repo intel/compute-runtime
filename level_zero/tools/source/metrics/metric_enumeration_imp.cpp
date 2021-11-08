@@ -111,7 +111,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
     pMetricsDevice = nullptr;
 
     // Open adapter group.
-    openAdapterGroup(&pAdapterGroup);
+    openAdapterGroup((MetricsDiscovery::IAdapterGroupLatest **)&pAdapterGroup);
     if (pAdapterGroup == nullptr) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics adapter groups %s\n", " ");
         cleanupMetricsDiscovery();

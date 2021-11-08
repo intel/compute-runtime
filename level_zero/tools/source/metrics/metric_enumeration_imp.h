@@ -11,8 +11,6 @@
 
 #include "level_zero/tools/source/metrics/metric.h"
 
-#include "metrics_discovery_api.h"
-
 #include <vector>
 
 namespace L0 {
