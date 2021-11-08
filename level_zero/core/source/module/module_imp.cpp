@@ -304,6 +304,18 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
         return false;
     }
 
+    if (programInfo.decodedElf.elfFileHeader) {
+        NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+        uint32_t id = 0;
+        for (auto &kernelInfo : this->programInfo.kernelInfos) {
+            nameToKernelId[kernelInfo->kernelDescriptor.kernelMetadata.kernelName] = id;
+            id++;
+        }
+        programInfo.prepareLinkerInputStorage();
+        programInfo.linkerInput->decodeElfSymbolTableAndRelocations(programInfo.decodedElf, nameToKernelId);
+    }
+
     processDebugData();
 
     size_t slmNeeded = NEO::getMaxInlineSlmNeeded(programInfo);
@@ -332,18 +344,6 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
 
     for (auto &kernelInfo : this->programInfo.kernelInfos) {
         kernelInfo->apply(deviceInfoConstants);
-    }
-
-    if (programInfo.decodedElf.elfFileHeader) {
-        NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-        uint32_t id = 0;
-        for (auto &kernelInfo : this->programInfo.kernelInfos) {
-            nameToKernelId[kernelInfo->kernelDescriptor.kernelMetadata.kernelName] = id;
-            id++;
-        }
-        programInfo.prepareLinkerInputStorage();
-        programInfo.linkerInput->decodeElfSymbolTableAndRelocations(programInfo.decodedElf, nameToKernelId);
     }
 
     auto gfxCore = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;

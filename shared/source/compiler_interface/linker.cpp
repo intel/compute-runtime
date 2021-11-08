@@ -226,8 +226,8 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
                 break;
             case Elf::SYMBOL_TABLE_TYPE::STT_OBJECT:
                 symbolInfo.segment = symbolSegment;
-                traits.exportsGlobalVariables = symbolSegment == SegmentType::GlobalVariables;
-                traits.exportsGlobalConstants = symbolSegment == SegmentType::GlobalConstants;
+                traits.exportsGlobalVariables |= symbolSegment == SegmentType::GlobalVariables;
+                traits.exportsGlobalConstants |= symbolSegment == SegmentType::GlobalConstants;
                 break;
             case Elf::SYMBOL_TABLE_TYPE::STT_FUNC: {
                 auto kernelName = symbolSectionName.substr(static_cast<int>(NEO::Elf::SectionsNamesZebin::textPrefix.length()));

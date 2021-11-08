@@ -1551,6 +1551,49 @@ kernels:
     EXPECT_NE(nullptr, moduleTuValid.programInfo.linkerInput.get());
 }
 
+TEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryAndGlobalsAreExportedThenTheirAllocationTypeIsSVM) {
+    std::string zeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : kernel
+      execution_env :
+        simd_size : 8
+)===";
+    MockElfEncoder<> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_ZEBIN_EXE;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel", std::string{});
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataConst, std::string{"12345678"});
+    auto dataConstSectionIndex = elfEncoder.getLastSectionHeaderIndex();
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataGlobal, std::string{"12345678"});
+    auto dataGlobalSectionIndex = elfEncoder.getLastSectionHeaderIndex();
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64> symbolTable[2] = {};
+    symbolTable[0].name = decltype(symbolTable[0].name)(elfEncoder.appendSectionName("const.data"));
+    symbolTable[0].info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbolTable[0].shndx = decltype(symbolTable[0].shndx)(dataConstSectionIndex);
+    symbolTable[0].size = 4;
+    symbolTable[0].value = 0;
+
+    symbolTable[1].name = decltype(symbolTable[1].name)(elfEncoder.appendSectionName("global.data"));
+    symbolTable[1].info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbolTable[1].shndx = decltype(symbolTable[1].shndx)(dataGlobalSectionIndex);
+    symbolTable[1].size = 4;
+    symbolTable[1].value = 0;
+    elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Elf::SectionsNamesZebin::symtab,
+                             ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(symbolTable), sizeof(symbolTable)));
+    elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, zeInfo);
+    auto zebin = elfEncoder.encode();
+
+    L0::ModuleTranslationUnit moduleTu(this->device);
+    moduleTu.unpackedDeviceBinarySize = zebin.size();
+    moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+    memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
+             zebin.data(), zebin.size());
+    auto retVal = moduleTu.processUnpackedBinary();
+    EXPECT_TRUE(retVal);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_ZERO_COPY, moduleTu.globalConstBuffer->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_ZERO_COPY, moduleTu.globalVarBuffer->getAllocationType());
+}
+
 HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions) {
     struct MockCompilerInterface : CompilerInterface {
         TranslationOutput::ErrorCode build(const NEO::Device &device,
