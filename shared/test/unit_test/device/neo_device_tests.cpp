@@ -21,3 +21,14 @@ TEST(DeviceTest, whenBlitterOperationsSupportIsDisabledThenNoInternalCopyEngineI
     UltDeviceFactory factory{1, 0};
     EXPECT_EQ(nullptr, factory.rootDevices[0]->getInternalCopyEngine());
 }
+
+TEST(DeviceTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineThenAbort) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = false;
+
+    UltDeviceFactory factory{1, 0};
+    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Cooperative}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Internal}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::LowPriority}), std::runtime_error);
+}

@@ -31,6 +31,7 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
   public:
     void SetUp() override {
         hardwareInfo = *defaultHwInfo;
+        hardwareInfo.capabilityTable.blitterOperationsSupported = true;
         uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
         hardwareInfoSetup[productFamily](&hardwareInfo, true, hwInfoConfig);
         SetUpImpl(&hardwareInfo);

@@ -74,7 +74,7 @@ const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(co
         }
     }
 
-    if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
+    if (hwInfo.capabilityTable.blitterOperationsSupported && hwInfo.featureTable.ftrBcsInfo.test(0)) {
         engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
         engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Internal}); // internal usage
     }

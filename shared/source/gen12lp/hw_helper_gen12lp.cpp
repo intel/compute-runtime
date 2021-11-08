@@ -96,8 +96,10 @@ const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const
         engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
     }
 
-    if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
-        engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
+    if (hwInfo.capabilityTable.blitterOperationsSupported) {
+        if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
+            engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
+        }
     }
 
     return engines;

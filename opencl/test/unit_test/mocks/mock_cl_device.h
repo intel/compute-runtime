@@ -76,6 +76,7 @@ class MockClDevice : public ClDevice {
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
         }
+        executionEnvironment->calculateMaxOsContextCount();
         return executionEnvironment;
     }
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }

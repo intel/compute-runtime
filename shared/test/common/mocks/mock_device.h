@@ -129,6 +129,7 @@ class MockDevice : public RootDevice {
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
         }
+        executionEnvironment->calculateMaxOsContextCount();
         return executionEnvironment;
     }
 

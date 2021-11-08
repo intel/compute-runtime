@@ -24,6 +24,9 @@ using namespace NEO;
 
 struct WddmDirectSubmissionFixture : public WddmFixture {
     void SetUp() override {
+        VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
         WddmFixture::SetUp();
 
         wddm->wddmInterface.reset(new WddmMockInterface20(*wddm));

@@ -1352,3 +1352,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenCLImageFormatsWhenCallingIsFormat
         EXPECT_EQ(expectedResult, clHwHelper.isFormatRedescribable(oclFormat));
     }
 }
+
+TEST(HwHelperTests, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+    hwInfo.featureTable.ftrBcsInfo.set(0);
+    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto engineUsageTypes = hwHelper.getGpgpuEngineInstances(hwInfo);
+    for (auto &engineUsageType : engineUsageTypes) {
+        EXPECT_FALSE(EngineHelpers::isBcs(engineUsageType.first));
+    }
+}
