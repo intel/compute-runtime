@@ -5,18 +5,6 @@
 #
 
 set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
-if(NOT DEFINED cloc_cmd_prefix)
-  if(WIN32)
-    set(cloc_cmd_prefix ocloc)
-  else()
-    if(DEFINED NEO__IGC_LIBRARY_PATH)
-      set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-    else()
-      set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-    endif()
-  endif()
-endif()
-
 function(compile_kernels_gen platform_name_with_type revision_id platform_name suffix)
 
   set(outputdir "${TargetDir}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
@@ -38,7 +26,7 @@ function(compile_kernels_gen platform_name_with_type revision_id platform_name s
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
+                         COMMAND ${ocloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )

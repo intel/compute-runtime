@@ -24,7 +24,7 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
   )
 
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    list(APPEND __cloc__options__ "-D DEBUG")
+    list(APPEND __ocloc__options__ "-D DEBUG")
   endif()
 
   set(BUILTINS_INCLUDE_DIR ${TargetDir} PARENT_SCOPE)
@@ -61,22 +61,11 @@ if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
     unset(BUILTIN_CPP)
     # set variable outside function
     set(BUILTIN_CPP built_ins/${NEO_ARCH}/${gen_type_lower}/${BASENAME}_${family_name_with_type}.cpp PARENT_SCOPE)
-    if(NOT DEFINED cloc_cmd_prefix)
-      if(WIN32)
-        set(cloc_cmd_prefix ocloc)
-      else()
-        if(DEFINED NEO__IGC_LIBRARY_PATH)
-          set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-        else()
-          set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
-        endif()
-      endif()
-    endif()
 
-    list(APPEND __cloc__options__ "-cl-kernel-arg-info")
+    list(APPEND __ocloc__options__ "-cl-kernel-arg-info")
     add_custom_command(
                        OUTPUT ${OUTPUT_FILES}
-                       COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -out_dir ${OUTPUTDIR} -options "$<JOIN:${__cloc__options__}, >"
+                       COMMAND ${ocloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -out_dir ${OUTPUTDIR} -options "$<JOIN:${__ocloc__options__}, >"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        DEPENDS ${builtin} ocloc copy_compiler_files
     )
