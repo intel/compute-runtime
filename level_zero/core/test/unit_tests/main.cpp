@@ -69,10 +69,11 @@ extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 extern bool useMockGmm;
 extern TestMode testMode;
 extern const char *executionDirectorySuffix;
+extern const unsigned int ultIterationMaxTime;
 
 namespace MockSipData {
 extern std::unique_ptr<MockSipKernel> mockSipKernel;
-}
+} // namespace MockSipData
 } // namespace NEO
 
 std::string getRunPath(char *argv0) {
@@ -145,8 +146,16 @@ void applyWorkarounds() {
     }
 }
 
+#ifdef __linux__
+void handle_SIGALRM(int signal) {
+    std::cout << "Tests timeout on: " << lastTest << std::endl;
+    abort();
+}
+#endif
+
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
+    bool enableAlarm = true;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     bool showTestStats = false;
 
@@ -156,6 +165,14 @@ int main(int argc, char **argv) {
     }
 
     applyWorkarounds();
+
+    {
+        std::string envVar = std::string("NEO_") + executionName + "_DISABLE_TEST_ALARM";
+        char *envValue = getenv(envVar.c_str());
+        if (envValue != nullptr) {
+            enableAlarm = false;
+        }
+    }
 
     testing::InitGoogleMock(&argc, argv);
 
@@ -227,6 +244,10 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp("--disable_default_listener", argv[i])) {
             useDefaultListener = false;
+        } else if (!strcmp("--enable_default_listener", argv[i])) {
+            useDefaultListener = true;
+        } else if (!strcmp("--disable_alarm", argv[i])) {
+            enableAlarm = false;
         } else if (!strcmp("--tbx", argv[i])) {
             if (testMode == TestMode::AubTests) {
                 testMode = TestMode::AubTestsWithTbx;
@@ -237,8 +258,6 @@ int main(int argc, char **argv) {
                 DebugManager.setReaderImpl(NEO::SettingsReader::create(L0::registryPath));
                 DebugManager.injectSettingsFromReader();
             }
-        } else if (!strcmp("--enable_default_listener", argv[i])) {
-            useDefaultListener = true;
         } else if (!strcmp("--show_test_stats", argv[i])) {
             showTestStats = true;
         }
@@ -353,6 +372,32 @@ int main(int argc, char **argv) {
     MockCompilerDebugVars igcDebugVars;
 
     environment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
+
+#if defined(__linux__)
+    std::cout << "enable SIGALRM handler: " << enableAlarm << std::endl;
+
+    //ULTs timeout
+    if (enableAlarm) {
+        auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
+        auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
+        if (ultIterationMaxTimeEnv != nullptr) {
+            currentUltIterationMaxTime = atoi(ultIterationMaxTimeEnv);
+        }
+        unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
+
+        struct sigaction sa;
+        sa.sa_handler = &handle_SIGALRM;
+        sa.sa_flags = SA_RESTART;
+        sigfillset(&sa.sa_mask);
+        if (sigaction(SIGALRM, &sa, NULL) == -1) {
+            printf("FATAL ERROR: cannot intercept SIGALRM\n");
+            return -2;
+        }
+        alarm(alarmTime);
+        std::cout << "set timeout to: " << alarmTime << std::endl;
+    }
+
+#endif
 
     auto retVal = RUN_ALL_TESTS();
 
