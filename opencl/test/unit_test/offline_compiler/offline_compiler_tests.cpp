@@ -1313,7 +1313,7 @@ TEST(OfflineCompilerTest, givenEmptyFileWhenReadOptionsFromFileThenSuccessIsRetu
     EXPECT_TRUE(options.empty());
 }
 
-TEST(OfflineCompilerTest, givenNoCopyRightsWhenReadOptionsFromFileThenSuccessIsReturned) {
+TEST(OfflineCompilerTest, givenNoCopyrightsWhenReadOptionsFromFileThenSuccessIsReturned) {
     std::string options;
     std::string filename("non_existing_file");
 
