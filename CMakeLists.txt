@@ -461,10 +461,8 @@ else()
 endif()
 message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
 
-if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-  # Enable/Disable BuiltIns compilation during build
-  set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
-endif()
+# Enable/Disable BuiltIns compilation during build
+set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
 
 # Changing the default executable and library output directories
 set(IGDRCL_OUTPUT_DIR "${IGDRCL_OPTION__OUTPUT_DIR}")

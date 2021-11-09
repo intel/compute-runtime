@@ -6,9 +6,7 @@
 
 function(level_zero_gen_kernels target_list platform_name suffix options)
 
-  if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-    list(APPEND results copy_compiler_files)
-  endif()
+  list(APPEND results copy_compiler_files)
 
   set(outputdir "${TargetDir}/level_zero/${suffix}/test_files/${NEO_ARCH}/")
 
@@ -22,6 +20,8 @@ function(level_zero_gen_kernels target_list platform_name suffix options)
       set(output_files
           ${outputpath_base}.bin
           ${outputpath_base}.gen
+          ${outputpath_base}.spv
+          ${outputpath_base}.dbg
       )
 
       add_custom_command(
@@ -34,7 +34,7 @@ function(level_zero_gen_kernels target_list platform_name suffix options)
 
       list(APPEND ${target_list} ${output_files})
     else()
-      foreach(_file_name "bin" "gen")
+      foreach(_file_name "bin" "gen" "spv" "dbg")
         set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/level_zero/${suffix}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${_file_name}
