@@ -42,6 +42,7 @@ set(RUNTIME_SRCS_DLL_BASE
 append_sources_from_properties(RUNTIME_SRCS_DLL_BASE NEO_CORE_SRCS_LINK)
 
 set(RUNTIME_SRCS_DLL_LINUX
+    ${CMAKE_CURRENT_SOURCE_DIR}/linux/command_queue_linux_dll.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
@@ -53,6 +54,7 @@ set(RUNTIME_SRCS_DLL_LINUX
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
+    ${CMAKE_CURRENT_SOURCE_DIR}/windows/command_queue_windows_dll.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
