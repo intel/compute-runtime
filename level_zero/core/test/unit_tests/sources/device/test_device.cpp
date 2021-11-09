@@ -2156,7 +2156,7 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
                 continue;
             }
             auto actualValue = NEO::isValueSet(properties[groupOrdinal].flags, ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
-            EXPECT_EQ(isCooperativeDispatchSupported, actualValue);
+            EXPECT_TRUE(actualValue);
         }
     }
 }
