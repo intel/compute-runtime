@@ -456,7 +456,7 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateMemoryFromHostPtrThenVal
 
     constexpr auto allocationSize = sizeof(int) * dataSize;
 
-    auto allocation = device->allocateMemoryFromHostPtr(data.get(), allocationSize);
+    auto allocation = device->allocateMemoryFromHostPtr(data.get(), allocationSize, false);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, allocation->getAllocationType());
     EXPECT_EQ(rootDeviceIndex, allocation->getRootDeviceIndex());
@@ -565,7 +565,7 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelThenNewAllocati
         buffer[i] = i + 10;
     }
 
-    auto allocation = device->allocateMemoryFromHostPtr(buffer, size);
+    auto allocation = device->allocateMemoryFromHostPtr(buffer, size, true);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, allocation->getAllocationType());
     EXPECT_EQ(rootDeviceIndex, allocation->getRootDeviceIndex());
@@ -574,6 +574,18 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelThenNewAllocati
     EXPECT_EQ(0, memcmp(buffer, allocation->getUnderlyingBuffer(), size));
 
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
+    delete[] buffer;
+}
+
+TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelAndHostPointerCopyIsNotAllowedThenAllocationIsNull) {
+    size_t size = 55;
+    uint64_t *buffer = new uint64_t[size];
+    for (uint32_t i = 0; i < size; i++) {
+        buffer[i] = i + 10;
+    }
+
+    auto allocation = device->allocateMemoryFromHostPtr(buffer, size, false);
+    EXPECT_EQ(nullptr, allocation);
     delete[] buffer;
 }
 

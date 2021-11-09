@@ -409,7 +409,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
 
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pDstRegion);
 
-    auto allocationStruct = getAlignedAllocation(this->device, srcPtr, bufferSize);
+    auto allocationStruct = getAlignedAllocation(this->device, srcPtr, bufferSize, true);
 
     auto rowPitch = pDstRegion->width * bytesPerPixel;
     auto slicePitch =
@@ -525,7 +525,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pSrcRegion);
 
-    auto allocationStruct = getAlignedAllocation(this->device, dstPtr, bufferSize);
+    auto allocationStruct = getAlignedAllocation(this->device, dstPtr, bufferSize, false);
 
     auto rowPitch = pSrcRegion->width * bytesPerPixel;
     auto slicePitch =
@@ -1083,8 +1083,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     DEBUG_BREAK_IF(size != leftSize + middleSizeBytes + rightSize);
 
-    auto dstAllocationStruct = getAlignedAllocation(this->device, dstptr, size);
-    auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, size);
+    auto dstAllocationStruct = getAlignedAllocation(this->device, dstptr, size, false);
+    auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, size, true);
 
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
@@ -1208,8 +1208,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         srcSize = (srcRegion->width * srcRegion->height) + hostPtrSrcOffset;
     }
 
-    auto dstAllocationStruct = getAlignedAllocation(this->device, dstPtr, dstSize);
-    auto srcAllocationStruct = getAlignedAllocation(this->device, srcPtr, srcSize);
+    auto dstAllocationStruct = getAlignedAllocation(this->device, dstPtr, dstSize, false);
+    auto srcAllocationStruct = getAlignedAllocation(this->device, srcPtr, srcSize, true);
 
     dstSize += dstAllocationStruct.offset;
     srcSize += srcAllocationStruct.offset;
@@ -1436,7 +1436,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
     }
 
-    auto dstAllocation = this->getAlignedAllocation(this->device, ptr, size);
+    auto dstAllocation = this->getAlignedAllocation(this->device, ptr, size, false);
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
     }
@@ -1718,7 +1718,8 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(Device *device,
                                                                                         const void *buffer,
-                                                                                        uint64_t bufferSize) {
+                                                                                        uint64_t bufferSize,
+                                                                                        bool hostCopyAllowed) {
     NEO::SvmAllocationData *allocData = nullptr;
     void *ptr = const_cast<void *>(buffer);
     bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr,
@@ -1740,7 +1741,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             //get offset from base of allocation to arg address
             offset += reinterpret_cast<size_t>(ptr) - reinterpret_cast<size_t>(alloc->getUnderlyingBuffer());
         } else {
-            alloc = getHostPtrAlloc(buffer, bufferSize);
+            alloc = getHostPtrAlloc(buffer, bufferSize, hostCopyAllowed);
             alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
         }
 
@@ -2035,7 +2036,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(hSignalEvent);
     }
 
-    auto allocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(uint64_t));
+    auto allocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(uint64_t), false);
     commandContainer.addToResidencyContainer(allocationStruct.alloc);
 
     return ZE_RESULT_SUCCESS;
@@ -2055,7 +2056,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     const size_t *pOffsets, ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    auto dstptrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents);
+    auto dstptrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents, false);
     commandContainer.addToResidencyContainer(dstptrAllocationStruct.alloc);
 
     std::unique_ptr<EventData[]> timestampsData = std::make_unique<EventData[]>(numEvents);
@@ -2098,7 +2099,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps);
         builtinFunction->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestamps);
     } else {
-        auto pOffsetAllocationStruct = getAlignedAllocation(this->device, pOffsets, sizeof(size_t) * numEvents);
+        auto pOffsetAllocationStruct = getAlignedAllocation(this->device, pOffsets, sizeof(size_t) * numEvents, false);
         auto offsetValPtr = static_cast<uintptr_t>(pOffsetAllocationStruct.alloc->getGpuAddress());
         commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
         builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestampsWithOffsets);

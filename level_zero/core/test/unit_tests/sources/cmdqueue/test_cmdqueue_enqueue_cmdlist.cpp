@@ -90,6 +90,33 @@ struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixtu
     ze_command_list_handle_t commandLists[numCommandLists];
 };
 
+HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncachedMOCSThenCachedMOCSAllowedIsFalse) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using PARSE = typename FamilyType::PARSE;
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    auto commandList1 = whitebox_cast(CommandList::fromHandle(commandLists[0]));
+    auto commandList2 = whitebox_cast(CommandList::fromHandle(commandLists[1]));
+    commandList1->requiresUncachedMOCS = true;
+    commandList2->requiresUncachedMOCS = true;
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(commandQueue->cachedMOCSAllowed, false);
+
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandListAddedThenProperSizeExpected) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;

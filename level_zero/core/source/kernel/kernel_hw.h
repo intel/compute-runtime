@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args.h"
@@ -62,10 +63,20 @@ struct KernelHw : public KernelImp {
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 
         bool l3Enabled = true;
+
+        // Allocation MUST be cacheline (64 byte) aligned in order to enable L3 caching otherwise Heap corruption will occur coming from the KMD.
+        // Most commonly this issue will occur with Host Point Allocations from customers.
+        l3Enabled = isL3Capable(*alloc);
+
         auto allocData = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
         if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
             l3Enabled = false;
         }
+
+        if (l3Enabled == false) {
+            this->kernelRequiresUncachedMocsCount++;
+        }
+
         NEO::Device *neoDevice = module->getDevice()->getNEODevice();
 
         NEO::EncodeSurfaceStateArgs args;

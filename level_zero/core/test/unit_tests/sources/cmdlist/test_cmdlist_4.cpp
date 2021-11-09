@@ -300,7 +300,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     size_t offsetSize = 20;
     void *offsetPointer = ptrOffset(importPointer, allocOffset);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device, importPointer, importSize);
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device, importPointer, importSize, false);
     auto gpuBaseAddress = static_cast<size_t>(hostAllocation->getGpuAddress());
     auto expectedAlignedAddress = alignDown(gpuBaseAddress, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
     size_t expectedOffset = gpuBaseAddress - expectedAlignedAddress;
@@ -309,7 +309,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     EXPECT_EQ(hostAllocation, outData.alloc);
     EXPECT_EQ(expectedOffset, outData.offset);
 
-    outData = commandList->getAlignedAllocation(device, offsetPointer, offsetSize);
+    outData = commandList->getAlignedAllocation(device, offsetPointer, offsetSize, false);
     expectedOffset += allocOffset;
     EXPECT_EQ(importPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
@@ -336,7 +336,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     auto hostAllocation = hostDriverHandle->findHostPointerAllocation(offsetPointer, pointerSize, device->getRootDeviceIndex());
     ASSERT_NE(nullptr, hostAllocation);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device, offsetPointer, pointerSize);
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device, offsetPointer, pointerSize, false);
     auto expectedAlignedAddress = static_cast<uintptr_t>(hostAllocation->getGpuAddress());
     EXPECT_EQ(heapPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);

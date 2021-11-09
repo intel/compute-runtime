@@ -81,6 +81,7 @@ struct CommandQueueImp : public CommandQueue {
     ze_command_queue_mode_t getSynchronousMode() const;
     virtual void dispatchTaskCountWrite(NEO::LinearStream &commandStream, bool flushDataCache) = 0;
     virtual bool getPreemptionCmdProgramming() = 0;
+    bool cachedMOCSAllowed = true;
 
   protected:
     MOCKABLE_VIRTUAL int submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,

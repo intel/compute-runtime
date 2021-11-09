@@ -154,7 +154,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGetHostPtrAllocCalledThenCor
     size_t expectedOffset = 0x10;
     auto newBufferPtr = ptrOffset(cpuPtr, expectedOffset);
     auto newBufferSize = allocSize - 0x20;
-    auto newAlloc = commandList->getHostPtrAlloc(newBufferPtr, newBufferSize);
+    auto newAlloc = commandList->getHostPtrAlloc(newBufferPtr, newBufferSize, false);
     EXPECT_NE(nullptr, newAlloc);
     commandList->hostPtrMap.clear();
 }
@@ -222,7 +222,7 @@ HWTEST2_F(CommandListCreate,
     void *baseAddress = alignDown(startMemory, MemoryConstants::pageSize);
     size_t expectedOffset = ptrDiff(startMemory, baseAddress);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device, startMemory, cmdListHostPtrSize);
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device, startMemory, cmdListHostPtrSize, false);
     ASSERT_NE(nullptr, outData.alloc);
     auto firstAlloc = outData.alloc;
     auto expectedGpuAddress = static_cast<uintptr_t>(alignDown(outData.alloc->getGpuAddress(), MemoryConstants::pageSize));
@@ -235,7 +235,7 @@ HWTEST2_F(CommandListCreate,
     expectedOffset = ptrDiff(offsetMemory, baseAddress);
     EXPECT_EQ(outData.offset + offset, expectedOffset);
 
-    outData = commandList->getAlignedAllocation(device, offsetMemory, 4u);
+    outData = commandList->getAlignedAllocation(device, offsetMemory, 4u, false);
     ASSERT_NE(nullptr, outData.alloc);
     EXPECT_EQ(firstAlloc, outData.alloc);
     EXPECT_EQ(startMemory, outData.alloc->getUnderlyingBuffer());

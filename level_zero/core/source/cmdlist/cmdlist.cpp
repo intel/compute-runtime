@@ -71,12 +71,12 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
     return nullptr;
 }
 
-NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64_t bufferSize) {
+NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed) {
     NEO::GraphicsAllocation *alloc = getAllocationFromHostPtrMap(buffer, bufferSize);
     if (alloc) {
         return alloc;
     }
-    alloc = device->allocateMemoryFromHostPtr(buffer, bufferSize);
+    alloc = device->allocateMemoryFromHostPtr(buffer, bufferSize, hostCopyAllowed);
     UNRECOVERABLE_IF(alloc == nullptr);
     if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled) {
         this->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION);

@@ -1889,7 +1889,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
-    EXPECT_THROW(commandList->getAlignedAllocation(device1, ptr, size), std::exception);
+    EXPECT_THROW(commandList->getAlignedAllocation(device1, ptr, size, false), std::exception);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -1915,7 +1915,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device1, ptr, size);
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device1, ptr, size, false);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);
 
     result = context->freeMem(ptr);
@@ -1942,7 +1942,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device0, ptr, size);
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device0, ptr, size, false);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);
 
     result = context->freeMem(ptr);

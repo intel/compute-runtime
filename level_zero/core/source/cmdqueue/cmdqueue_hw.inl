@@ -82,6 +82,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     auto anyCommandListWithCooperativeKernels = false;
     auto anyCommandListWithoutCooperativeKernels = false;
 
+    cachedMOCSAllowed = true;
+
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         if (peekIsCopyOnlyCommandQueue() != commandList->isCopyOnly()) {
@@ -96,6 +98,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             anyCommandListWithCooperativeKernels = true;
         } else {
             anyCommandListWithoutCooperativeKernels = true;
+        }
+        // If the Command List has commands that require uncached MOCS, then any changes to the commands in the queue requires the uncached MOCS
+        if (commandList->requiresUncachedMOCS && cachedMOCSAllowed == true) {
+            cachedMOCSAllowed = false;
         }
     }
 
