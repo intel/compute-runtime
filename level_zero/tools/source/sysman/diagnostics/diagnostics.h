@@ -35,6 +35,7 @@ class Diagnostics : _zes_diag_handle_t {
 
 struct DiagnosticsHandleContext {
     DiagnosticsHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    void releaseDiagnosticsHandles();
     ~DiagnosticsHandleContext();
 
     void init(std::vector<ze_device_handle_t> &deviceHandles);

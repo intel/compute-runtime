@@ -12,12 +12,15 @@
 namespace L0 {
 class OsDiagnostics;
 DiagnosticsHandleContext::~DiagnosticsHandleContext() {
+    releaseDiagnosticsHandles();
+}
+
+void DiagnosticsHandleContext::releaseDiagnosticsHandles() {
     for (Diagnostics *pDiagnostics : handleList) {
         delete pDiagnostics;
     }
     handleList.clear();
 }
-
 void DiagnosticsHandleContext::createHandle(ze_device_handle_t deviceHandle, const std::string &diagTests) {
     Diagnostics *pDiagnostics = new DiagnosticsImp(pOsSysman, diagTests, deviceHandle);
     handleList.push_back(pDiagnostics);

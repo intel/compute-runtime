@@ -12,12 +12,15 @@
 namespace L0 {
 class OsFirmware;
 FirmwareHandleContext::~FirmwareHandleContext() {
+    releaseFwHandles();
+}
+
+void FirmwareHandleContext::releaseFwHandles() {
     for (Firmware *pFirmware : handleList) {
         delete pFirmware;
     }
     handleList.clear();
 }
-
 void FirmwareHandleContext::createHandle(const std::string &fwType) {
     Firmware *pFirmware = new FirmwareImp(pOsSysman, fwType);
     if (pFirmware->isFirmwareEnabled == true) {

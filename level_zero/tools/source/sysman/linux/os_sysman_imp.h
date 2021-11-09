@@ -41,6 +41,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     std::string getPciRootPortDirectoryPath(std::string realPciPath);
     void releasePmtObject();
     ze_result_t createPmtHandles();
+    void createFwUtilInterface();
+    void releaseFwUtilInterface();
     void releaseLocalDrmHandle();
 
   protected:

@@ -37,8 +37,6 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     SysfsAccess *pSysfsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     Device *pDevice = nullptr;
-    FirmwareUtil *pFwInterface = nullptr;
-
     int resetTimeout = 10000; // in milliseconds
     void releaseSysmanDeviceResources();
     void releaseDeviceResources();

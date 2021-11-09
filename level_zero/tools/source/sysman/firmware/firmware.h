@@ -36,6 +36,7 @@ class Firmware : _zes_firmware_handle_t {
 struct FirmwareHandleContext {
     FirmwareHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~FirmwareHandleContext();
+    void releaseFwHandles();
 
     void init();
 

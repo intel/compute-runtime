@@ -9,6 +9,8 @@
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 
+#include "sysman/linux/firmware_util/firmware_util.h"
+
 namespace L0 {
 
 ze_result_t LinuxSysmanImp::init() {
@@ -39,8 +41,20 @@ ze_result_t LinuxSysmanImp::init() {
     pPmuInterface = PmuInterface::create(this);
 
     DEBUG_BREAK_IF(nullptr == pPmuInterface);
-    pFwUtilInterface = FirmwareUtil::create(pDrm->getPciPath());
+
+    createFwUtilInterface();
     return createPmtHandles();
+}
+
+void LinuxSysmanImp::createFwUtilInterface() {
+    std::string realRootPath;
+    auto result = pSysfsAccess->getRealPath("device", realRootPath);
+    if (ZE_RESULT_SUCCESS != result) {
+        return;
+    }
+    auto rootPciPathOfGpuDevice = getPciRootPortDirectoryPath(realRootPath);
+    auto loc = realRootPath.find_last_of('/');
+    pFwUtilInterface = FirmwareUtil::create(realRootPath.substr(loc + 1, std::string::npos));
 }
 
 ze_result_t LinuxSysmanImp::createPmtHandles() {
@@ -146,6 +160,12 @@ void LinuxSysmanImp::releasePmtObject() {
     }
     mapOfSubDeviceIdToPmtObject.clear();
 }
+void LinuxSysmanImp::releaseFwUtilInterface() {
+    if (nullptr != pFwUtilInterface) {
+        delete pFwUtilInterface;
+        pFwUtilInterface = nullptr;
+    }
+}
 
 LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pSysfsAccess) {
@@ -160,14 +180,11 @@ LinuxSysmanImp::~LinuxSysmanImp() {
         delete pFsAccess;
         pFsAccess = nullptr;
     }
-    if (nullptr != pFwUtilInterface) {
-        delete pFwUtilInterface;
-        pFwUtilInterface = nullptr;
-    }
     if (nullptr != pPmuInterface) {
         delete pPmuInterface;
         pPmuInterface = nullptr;
     }
+    releaseFwUtilInterface();
     releasePmtObject();
 }
 
