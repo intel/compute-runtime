@@ -132,6 +132,11 @@ TEST(KernelDescriptorFromPatchtokens, GivenExecutionEnvironmentThenSetsProperPar
     execEnv.StatelessWritesCount = 1U;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites);
+
+    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.useStackCalls);
+    execEnv.HasStackCalls = 1U;
+    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.useStackCalls);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenThreadPayloadThenSetsProperPartsOfDescriptor) {

@@ -954,6 +954,7 @@ kernels:
         has_global_atomics : true
         has_multi_scratch_spaces : true
         has_no_stateless_write : true
+        has_stack_calls : true
         hw_preemption_mode : 2
         offset_to_skip_per_thread_data_load : 23
         offset_to_skip_set_ffid_gp : 29
@@ -980,7 +981,7 @@ kernels:
     auto &execEnvNode = *parser.findNodeWithKeyDfs("execution_env");
     std::string errors;
     std::string warnings;
-    NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv{};
     auto err = NEO::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
@@ -996,6 +997,7 @@ kernels:
     EXPECT_TRUE(execEnv.hasGlobalAtomics);
     EXPECT_TRUE(execEnv.hasMultiScratchSpaces);
     EXPECT_TRUE(execEnv.hasNoStatelessWrite);
+    EXPECT_TRUE(execEnv.hasStackCalls);
     EXPECT_EQ(2, execEnv.hwPreemptionMode);
     EXPECT_EQ(23, execEnv.offsetToSkipPerThreadDataLoad);
     EXPECT_EQ(29, execEnv.offsetToSkipSetFfidGp);
@@ -2630,6 +2632,7 @@ TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescrip
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption, Defaults::disableMidThreadPreemption);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress, Defaults::subgroupIndependentForwardProgress);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, Defaults::hasGlobalAtomics);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useStackCalls, Defaults::hasStackCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue, Defaults::hasDeviceEnqueue);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages, Defaults::hasFenceForImageAccess);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode, Defaults::hasDpas);

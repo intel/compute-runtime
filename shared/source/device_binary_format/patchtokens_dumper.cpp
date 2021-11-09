@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -418,6 +418,7 @@ void dump(const SPatchExecutionEnvironment &value, std::stringstream &out, const
     out << indent << "    uint32_t    NumGRFRequired;// = " << value.NumGRFRequired << "\n";
     out << indent << "    uint32_t    WorkgroupWalkOrderDims;// = " << value.WorkgroupWalkOrderDims << "\n";
     out << indent << "    uint32_t    HasGlobalAtomics;// = " << value.HasGlobalAtomics << "\n";
+    out << indent << "    uint32_t    HasStackCalls;// = " << value.HasStackCalls << "\n";
     out << indent << "}\n";
 }
 

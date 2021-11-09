@@ -103,6 +103,7 @@ struct KernelDescriptor {
                 bool requiresSubgroupIndependentForwardProgress : 1;
                 bool requiresWorkgroupWalkOrder : 1;
                 bool requiresImplicitArgs : 1;
+                bool useStackCalls : 1;
             };
             uint32_t packed;
         } flags;
