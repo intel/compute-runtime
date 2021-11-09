@@ -9,6 +9,7 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/kernel/kernel_hw.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -97,6 +98,7 @@ struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
 template <>
 struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
     using BaseClass = WhiteBox<::L0::Kernel>;
+    ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_properties_t * pKernelProperties))
 
     Mock() : BaseClass(nullptr) {
         NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
