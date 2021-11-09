@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
@@ -34,8 +35,7 @@ cl_int Program::build(
     const char *buildOptions,
     bool enableCaching) {
     cl_int retVal = CL_SUCCESS;
-    std::string internalOptions;
-    initInternalOptions(internalOptions);
+
     auto defaultClDevice = deviceVector[0];
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();
@@ -69,6 +69,9 @@ cl_int Program::build(
             } else if (this->createdFrom != CreatedFrom::BINARY) {
                 options = "";
             }
+            std::string internalOptions;
+            initInternalOptions(internalOptions);
+
             extractInternalOptions(options, internalOptions);
             applyAdditionalOptions(internalOptions);
 
@@ -168,6 +171,12 @@ cl_int Program::build(
                 break;
             }
             phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::BinaryProcessing;
+        }
+
+        const auto &kernelInfoArray = buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray;
+        auto sharedSystemAllocationsAllowed = clDevices[0]->areSharedSystemAllocationsAllowed();
+        if (AddressingModeHelper::containsStatefulAccess(kernelInfoArray) && AddressingModeHelper::forceToStatelessNeeded(options, CompilerOptions::smallerThan4gbBuffersOnly.str(), sharedSystemAllocationsAllowed) && !isBuiltIn) {
+            retVal = CL_BUILD_PROGRAM_FAILURE;
         }
 
         if (retVal != CL_SUCCESS) {

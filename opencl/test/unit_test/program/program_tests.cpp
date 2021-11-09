@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -1650,6 +1651,137 @@ TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=210")) << internalOptions;
     } else {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=120")) << internalOptions;
+    }
+}
+
+TEST_F(ProgramTests, whenForceToStatelessNeededIsCalledThenCorrectResultIsReturned) {
+    DebugManagerStateRestore restorer;
+
+    class MyMockProgram : public Program {
+      public:
+        using Program::options;
+        using Program::Program;
+    };
+
+    MyMockProgram program(pContext, false, toClDeviceVector(*pClDevice));
+    auto sharedSystemAllocationsAllowed = pClDevice->areSharedSystemAllocationsAllowed();
+
+    {
+        DebugManager.flags.UseSmallerThan4gbBuffersOnly.set(-1);
+        program.options = "";
+        EXPECT_EQ(AddressingModeHelper::forceToStatelessNeeded(program.options, NEO::CompilerOptions::smallerThan4gbBuffersOnly.str(), sharedSystemAllocationsAllowed), sharedSystemAllocationsAllowed);
+    }
+    {
+        DebugManager.flags.UseSmallerThan4gbBuffersOnly.set(-1);
+        program.options = "-cl-opt-smaller-than-4GB-buffers-only";
+        EXPECT_FALSE(AddressingModeHelper::forceToStatelessNeeded(program.options, NEO::CompilerOptions::smallerThan4gbBuffersOnly.str(), sharedSystemAllocationsAllowed));
+    }
+    {
+        DebugManager.flags.UseSmallerThan4gbBuffersOnly.set(0);
+        program.options = "";
+        EXPECT_EQ(AddressingModeHelper::forceToStatelessNeeded(program.options, NEO::CompilerOptions::smallerThan4gbBuffersOnly.str(), sharedSystemAllocationsAllowed), sharedSystemAllocationsAllowed);
+    }
+    {
+        DebugManager.flags.UseSmallerThan4gbBuffersOnly.set(0);
+        program.options = "-cl-opt-smaller-than-4GB-buffers-only";
+        EXPECT_EQ(AddressingModeHelper::forceToStatelessNeeded(program.options, NEO::CompilerOptions::smallerThan4gbBuffersOnly.str(), sharedSystemAllocationsAllowed), sharedSystemAllocationsAllowed);
+    }
+    {
+        DebugManager.flags.UseSmallerThan4gbBuffersOnly.set(1);
+        program.options = "";
+        EXPECT_FALSE(AddressingModeHelper::forceToStatelessNeeded(program.options, NEO::CompilerOptions::smallerThan4gbBuffersOnly.str(), sharedSystemAllocationsAllowed));
+    }
+    {
+        DebugManager.flags.UseSmallerThan4gbBuffersOnly.set(1);
+        program.options = "-cl-opt-smaller-than-4GB-buffers-only";
+        EXPECT_FALSE(AddressingModeHelper::forceToStatelessNeeded(program.options, NEO::CompilerOptions::smallerThan4gbBuffersOnly.str(), sharedSystemAllocationsAllowed));
+    }
+}
+
+TEST_F(ProgramTests, whenContainsStatefulAccessIsCalledThenReturnCorrectResult) {
+    std::vector<std::tuple<bool, SurfaceStateHeapOffset, CrossThreadDataOffset>> testParams = {
+        {false, undefined<SurfaceStateHeapOffset>, undefined<CrossThreadDataOffset>},
+        {true, 0x40, undefined<CrossThreadDataOffset>},
+        {true, undefined<SurfaceStateHeapOffset>, 0x40},
+        {true, 0x40, 0x40},
+
+    };
+
+    for (auto &[expectedResult, surfaceStateHeapOffset, crossThreadDataOffset] : testParams) {
+        MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
+        auto kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+        auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+        argDescriptor.as<ArgDescPointer>().bindful = surfaceStateHeapOffset;
+        argDescriptor.as<ArgDescPointer>().bindless = crossThreadDataOffset;
+
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+        program.addKernelInfo(kernelInfo.release(), 0);
+
+        EXPECT_EQ(expectedResult, AddressingModeHelper::containsStatefulAccess(program.buildInfos[0].kernelInfoArray));
+    }
+}
+
+TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledThenCorrectResultIsReturned) {
+    DebugManagerStateRestore restorer;
+
+    class MyMockProgram : public Program {
+      public:
+        using Program::buildInfos;
+        using Program::createdFrom;
+        using Program::irBinary;
+        using Program::irBinarySize;
+        using Program::isBuiltIn;
+        using Program::options;
+        using Program::Program;
+        using Program::sourceCode;
+
+        void setAddressingMode(bool isStateful) {
+            auto kernelInfo = std::make_unique<KernelInfo>();
+            kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+            auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+            if (isStateful) {
+                argDescriptor.as<ArgDescPointer>().bindful = 0x40;
+                argDescriptor.as<ArgDescPointer>().bindless = 0x40;
+            } else {
+                argDescriptor.as<ArgDescPointer>().bindful = undefined<SurfaceStateHeapOffset>;
+                argDescriptor.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
+            }
+
+            kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+            this->buildInfos[0].kernelInfoArray.clear();
+            this->buildInfos[0].kernelInfoArray.push_back(kernelInfo.release());
+        }
+
+        cl_int processGenBinary(const ClDevice &clDevice) override {
+            return CL_SUCCESS;
+        }
+    };
+
+    pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 1;
+
+    std::array<std::tuple<int, bool, int32_t>, 3> testParams = {{{CL_SUCCESS, false, -1},
+                                                                 {CL_SUCCESS, true, 1},
+                                                                 {CL_BUILD_PROGRAM_FAILURE, true, 0}}};
+    for (auto &[result, isStatefulAccess, debuyKey] : testParams) {
+        MyMockProgram program(pContext, false, toClDeviceVector(*pClDevice));
+        program.isBuiltIn = false;
+        program.sourceCode = "test_kernel";
+        program.createdFrom = Program::CreatedFrom::SOURCE;
+        program.setAddressingMode(isStatefulAccess);
+        DebugManager.flags.UseSmallerThan4gbBuffersOnly.set(debuyKey);
+        EXPECT_EQ(result, program.build(toClDeviceVector(*pClDevice), nullptr, false));
+    }
+
+    {
+        MyMockProgram programWithBuiltIn(pContext, true, toClDeviceVector(*pClDevice));
+        programWithBuiltIn.irBinary.reset(new char[16]);
+        programWithBuiltIn.irBinarySize = 16;
+        programWithBuiltIn.isBuiltIn = true;
+        programWithBuiltIn.setAddressingMode(true);
+        DebugManager.flags.UseSmallerThan4gbBuffersOnly.set(0);
+        pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 1u;
+        EXPECT_EQ(CL_SUCCESS, programWithBuiltIn.build(toClDeviceVector(*pClDevice), nullptr, false));
     }
 }
 

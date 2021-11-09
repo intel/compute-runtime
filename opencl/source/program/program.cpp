@@ -15,6 +15,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -74,7 +75,8 @@ void Program::initInternalOptions(std::string &internalOptions) const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
     }
 
-    if ((isBuiltIn && is32bit) || pClDevice->areSharedSystemAllocationsAllowed() ||
+    auto sharedSystemAllocationsAllowed = clDevices[0]->areSharedSystemAllocationsAllowed();
+    if ((isBuiltIn && is32bit) || AddressingModeHelper::forceToStatelessNeeded(options, CompilerOptions::smallerThan4gbBuffersOnly.str(), sharedSystemAllocationsAllowed) ||
         DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
