@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
@@ -21,14 +23,6 @@ struct WhiteBox<::L0::DriverHandle> : public ::L0::DriverHandleImp {
 };
 
 using DriverHandle = WhiteBox<::L0::DriverHandle>;
-#define ADDMETHOD_NOBASE(funcName, retType, defaultReturn, funcParams) \
-    retType funcName##Result = defaultReturn;                          \
-    uint32_t funcName##Called = 0u;                                    \
-    retType funcName funcParams override {                             \
-        funcName##Called++;                                            \
-        return funcName##Result;                                       \
-    }
-
 template <>
 struct Mock<DriverHandle> : public DriverHandleImp {
     Mock();
@@ -37,6 +31,10 @@ struct Mock<DriverHandle> : public DriverHandleImp {
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_driver_properties_t * properties))
     ADDMETHOD_NOBASE(getApiVersion, ze_result_t, ZE_RESULT_SUCCESS, (ze_api_version_t * version))
     ADDMETHOD_NOBASE(getIPCProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_driver_ipc_properties_t * pIPCProperties))
+    ADDMETHOD_NOBASE(importExternalPointer, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr, size_t size))
+    ADDMETHOD_NOBASE(releaseImportedPointer, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr))
+    ADDMETHOD_NOBASE(getHostPointerBaseAddress, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr, void **baseAddress))
+    ADDMETHOD_NOBASE(findHostPointerAllocation, NEO::GraphicsAllocation *, nullptr, (void *ptr, size_t size, uint32_t rootDeviceIndex))
 
     uint32_t num_devices = 1;
     Mock<Device> device;
@@ -54,21 +52,6 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                                size_t alignment,
                                void **ptr);
 
-    ze_result_t importExternalPointer(void *ptr, size_t size) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    ze_result_t releaseImportedPointer(void *ptr) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    ze_result_t getHostPointerBaseAddress(void *ptr, void **baseAddress) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    NEO::GraphicsAllocation *findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override {
-        return nullptr;
-    }
     NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr,
                                                              size_t size,
                                                              uint32_t rootDeviceIndex,
@@ -83,6 +66,5 @@ struct Mock<DriverHandle> : public DriverHandleImp {
         return nullptr;
     }
 };
-#undef ADDMETHOD_NOBASE
 } // namespace ult
 } // namespace L0

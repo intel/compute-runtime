@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/test/unit_tests/mock.h"
@@ -91,32 +93,6 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
 };
 
 using CommandList = WhiteBox<::L0::CommandList>;
-
-#define ADDMETHOD_NOBASE(funcName, retType, defaultReturn, funcParams) \
-    retType funcName##Result = defaultReturn;                          \
-    uint32_t funcName##Called = 0u;                                    \
-    retType funcName funcParams override {                             \
-        funcName##Called++;                                            \
-        return funcName##Result;                                       \
-    }
-
-#define ADDMETHOD_NOBASE_VOIDRETURN(funcName, funcParams) \
-    uint32_t funcName##Called = 0u;                       \
-    void funcName funcParams override {                   \
-        funcName##Called++;                               \
-    }
-
-#define ADDMETHOD(funcName, retType, callBase, defaultReturn, funcParams, invokeParams) \
-    retType funcName##Result = defaultReturn;                                           \
-    bool funcName##CallBase = callBase;                                                 \
-    uint32_t funcName##Called = 0u;                                                     \
-    retType funcName funcParams override {                                              \
-        funcName##Called++;                                                             \
-        if (funcName##CallBase) {                                                       \
-            return BaseClass::funcName invokeParams;                                    \
-        }                                                                               \
-        return funcName##Result;                                                        \
-    }
 
 struct MockCommandList : public CommandList {
     using BaseClass = CommandList;
@@ -355,7 +331,5 @@ struct MockCommandList : public CommandList {
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;
 };
-#undef ADDMETHOD
-#undef ADDMETHOD_NOBASE
 } // namespace ult
 } // namespace L0
