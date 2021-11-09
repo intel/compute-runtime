@@ -665,10 +665,11 @@ ze_result_t ContextImp::createEventPool(const ze_event_pool_desc_t *desc,
                                         uint32_t numDevices,
                                         ze_device_handle_t *phDevices,
                                         ze_event_pool_handle_t *phEventPool) {
-    EventPool *eventPool = EventPool::create(this->driverHandle, this, numDevices, phDevices, desc);
+    ze_result_t result;
+    EventPool *eventPool = EventPool::create(this->driverHandle, this, numDevices, phDevices, desc, result);
 
     if (eventPool == nullptr) {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        return result;
     }
 
     *phEventPool = eventPool->toHandle();

@@ -31,7 +31,7 @@ class CommandListFixture : public DeviceFixture {
         eventDesc.wait = 0;
         eventDesc.signal = 0;
 
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
         event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     }
 
@@ -61,7 +61,7 @@ struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
         eventDesc.wait = 0;
         eventDesc.signal = 0;
 
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
         event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     }
 

@@ -154,7 +154,7 @@ struct EventImp : public Event {
 };
 
 struct EventPool : _ze_event_pool_handle_t {
-    static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc);
+    static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc, ze_result_t &result);
     virtual ~EventPool() = default;
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) = 0;

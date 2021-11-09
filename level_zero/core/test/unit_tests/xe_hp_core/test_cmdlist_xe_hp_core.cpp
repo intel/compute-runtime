@@ -170,7 +170,8 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEventAndWi
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), false, false, false);
@@ -221,7 +222,8 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithTimestampEventAnd
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), false, false, false);
@@ -268,7 +270,8 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventAndWithoutWa
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), false, false, false);
@@ -339,7 +342,9 @@ HWTEST2_F(CommandListCreate, givenNotCopyCommandListWhenProfilingEventBeforeComm
     eventDesc.index = 0;
     eventDesc.signal = 0;
     eventDesc.wait = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     commandList->appendEventForProfiling(event->toHandle(), true);
 
@@ -373,7 +378,9 @@ HWTEST2_F(CommandListCreate, givenNotCopyCommandListWhenProfilingEventAfterComma
     eventDesc.index = 0;
     eventDesc.signal = 0;
     eventDesc.wait = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     commandList->appendEventForProfiling(event->toHandle(), false);
 
@@ -406,7 +413,9 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingEventThenStoreRegC
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     commandList->appendEventForProfiling(event->toHandle(), false);
     GenCmdList cmdList;
@@ -584,7 +593,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEventWhenInvokingAppendLaunchKerne
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -630,7 +640,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventWhenInvokingAppendLa
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};

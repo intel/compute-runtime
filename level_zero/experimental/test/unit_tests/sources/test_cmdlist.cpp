@@ -43,7 +43,7 @@ class CommandListMemoryExtensionFixture : public DeviceFixture {
         eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
         eventDesc.signal = 0;
 
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
         event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
         size_t size = sizeof(uint32_t);

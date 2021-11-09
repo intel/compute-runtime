@@ -32,7 +32,9 @@ struct TimestampEvent : public Test<DeviceFixture> {
         eventDesc.signal = 0;
         eventDesc.wait = 0;
 
-        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, eventPool);
         event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
         ASSERT_NE(nullptr, event);

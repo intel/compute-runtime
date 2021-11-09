@@ -362,8 +362,8 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -406,8 +406,8 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -452,8 +452,8 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -487,8 +487,8 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -538,8 +538,8 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc, ret));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -586,8 +586,8 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc, ret));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -636,8 +636,8 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(hostDriverHandle.get(), context, 0, nullptr, &eventPoolDesc, ret));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};

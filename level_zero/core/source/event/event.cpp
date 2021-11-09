@@ -116,7 +116,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     }
 
     if (!allocatedMemory) {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -154,14 +154,15 @@ ze_result_t Event::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc) {
+EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc, ze_result_t &result) {
     auto eventPool = std::make_unique<EventPoolImp>(desc);
     if (!eventPool) {
+        result = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         DEBUG_BREAK_IF(true);
         return nullptr;
     }
 
-    ze_result_t result = eventPool->initialize(driver, context, numDevices, phDevices);
+    result = eventPool->initialize(driver, context, numDevices, phDevices);
     if (result) {
         return nullptr;
     }

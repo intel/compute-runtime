@@ -261,8 +261,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingHostMemor
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -329,8 +329,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMem
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -391,8 +391,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -452,8 +452,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWit
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -515,8 +515,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -577,8 +577,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -632,8 +632,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -682,8 +682,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndWa
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -715,8 +715,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndIn
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -758,8 +758,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -801,8 +801,8 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSigna
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, ret));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -851,8 +851,8 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -1042,8 +1042,8 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenMemoryCopyRegio
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 2;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::vector<ze_event_handle_t> events;
 
     ze_event_desc_t eventDesc = {};
@@ -1084,7 +1084,8 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
 
     ze_event_handle_t event = nullptr;
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, eventPool);
 
     eventPool->createEvent(&eventDesc, &event);
@@ -1123,7 +1124,8 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
 
     ze_event_handle_t event = nullptr;
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, eventPool);
 
     eventPool->createEvent(&eventDesc, &event);
@@ -1164,7 +1166,8 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
 
     ze_event_handle_t event = nullptr;
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, eventPool);
 
     eventPool->createEvent(&eventDesc, &event);
@@ -1212,7 +1215,8 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
             ze_event_desc_t eventDesc = {};
             eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
             eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-            auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+            auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
             auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
             auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
             auto event2 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));

@@ -150,7 +150,9 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     event->setPacketsInUse(16u);
@@ -196,7 +198,9 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
     eventDesc.index = 0;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     commandList->appendEventReset(event->toHandle());
