@@ -148,6 +148,24 @@ void handle_SIGALRM(int signal) {
 }
 #endif
 
+bool checkAubTestsExecutionPathValidity() {
+    bool valid = true;
+    if ((testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx)) {
+        std::ofstream testFile;
+        std::string aubPath = folderAUB;
+        aubPath += fSeparator;
+        aubPath += "testAubFolder";
+        testFile.open(aubPath, std::ofstream::app);
+        if (testFile.is_open()) {
+            testFile.close();
+        } else {
+            valid = false;
+            std::cout << "ERROR: Aub tests must be run in directory containing \" " << folderAUB << "\" folder!\n";
+        }
+    }
+    return valid;
+}
+
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool enableAlarm = true;
@@ -346,6 +364,10 @@ int main(int argc, char **argv) {
         std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #endif
+
+    if (!checkAubTestsExecutionPathValidity()) {
+        return -1;
+    }
 
     if (useMockGmm) {
         NEO::GmmHelper::createGmmContextWrapperFunc = NEO::GmmClientContext::create<MockGmmClientContext>;

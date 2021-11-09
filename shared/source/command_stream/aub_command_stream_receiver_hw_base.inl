@@ -125,6 +125,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
     if (aubManager) {
         if (!aubManager->isOpen()) {
             aubManager->open(fileName);
+            // This UNRECOVERABLE_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
             UNRECOVERABLE_IF(!aubManager->isOpen());
 
             std::ostringstream str;

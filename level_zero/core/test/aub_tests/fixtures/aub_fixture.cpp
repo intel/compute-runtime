@@ -7,13 +7,16 @@
 
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 
+#include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/unit_test/tests_configuration.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "gtest/gtest.h"
+#include "test_mode.h"
 
 namespace L0 {
 AUBFixtureL0::AUBFixtureL0() = default;
@@ -50,7 +53,12 @@ void AUBFixtureL0::SetUp(const NEO::HardwareInfo *hardwareInfo) {
 
     neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
 
-    this->csr = NEO::AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());
+    if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
+        this->csr = NEO::TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());
+    } else {
+        this->csr = NEO::AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());
+    }
+
     neoDevice->resetCommandStreamReceiver(this->csr);
     prepareCopyEngines(*neoDevice, strfilename.str());
 
