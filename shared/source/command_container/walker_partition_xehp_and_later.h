@@ -12,6 +12,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include "pipe_control_args.h"
@@ -51,6 +52,8 @@ template <typename GfxFamily>
 using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 template <typename GfxFamily>
 using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+template <typename GfxFamily>
+using POST_SYNC_OPERATION = typename PIPE_CONTROL<GfxFamily>::POST_SYNC_OPERATION;
 
 template <typename Command>
 Command *putCommand(void *&inputAddress, uint32_t &totalBytesProgrammed) {
@@ -294,11 +297,28 @@ void programMiLoadRegisterMem(void *&inputAddress, uint32_t &totalBytesProgramme
 }
 
 template <typename GfxFamily>
-void programPipeControlCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, NEO::PipeControlArgs &args) {
+void programPipeControlCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, NEO::PipeControlArgs &flushArgs) {
     auto pipeControl = putCommand<PIPE_CONTROL<GfxFamily>>(inputAddress, totalBytesProgrammed);
     PIPE_CONTROL<GfxFamily> cmd = GfxFamily::cmdInitPipeControl;
-    NEO::MemorySynchronizationCommands<GfxFamily>::setPipeControl(cmd, args);
+    NEO::MemorySynchronizationCommands<GfxFamily>::setPipeControl(cmd, flushArgs);
     *pipeControl = cmd;
+}
+
+template <typename GfxFamily>
+void programPostSyncPipeControlCommand(void *&inputAddress,
+                                       uint32_t &totalBytesProgrammed,
+                                       WalkerPartitionArgs &args,
+                                       NEO::PipeControlArgs &flushArgs,
+                                       const NEO::HardwareInfo &hwInfo) {
+
+    NEO::MemorySynchronizationCommands<GfxFamily>::setPipeControlAndProgramPostSyncOperation(inputAddress,
+                                                                                             POST_SYNC_OPERATION<GfxFamily>::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                                                                                             args.postSyncGpuAddress,
+                                                                                             args.postSyncImmediateValue,
+                                                                                             hwInfo,
+                                                                                             flushArgs);
+
+    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo));
 }
 
 template <typename GfxFamily>
@@ -723,20 +743,28 @@ uint64_t estimateSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
 }
 
 template <typename GfxFamily>
-uint64_t computeBarrierControlSectionOffset(WalkerPartitionArgs &args) {
+uint64_t computeBarrierControlSectionOffset(WalkerPartitionArgs &args,
+                                            const NEO::HardwareInfo &hwInfo) {
     uint64_t offset = 0u;
     if (args.emitSelfCleanup) {
         offset += computeSelfCleanupSectionSize<GfxFamily>(args.useAtomicsForSelfCleanup);
     }
-    offset += (sizeof(PIPE_CONTROL<GfxFamily>) +
-               computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>() +
+
+    if (args.usePostSync) {
+        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+    } else {
+        offset += sizeof(PIPE_CONTROL<GfxFamily>);
+    }
+
+    offset += (computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>() +
                sizeof(BATCH_BUFFER_START<GfxFamily>));
     return offset;
 }
 
 template <typename GfxFamily>
-uint64_t estimateBarrierSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
-    uint64_t size = computeBarrierControlSectionOffset<GfxFamily>(args) +
+uint64_t estimateBarrierSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args,
+                                                     const NEO::HardwareInfo &hwInfo) {
+    uint64_t size = computeBarrierControlSectionOffset<GfxFamily>(args, hwInfo) +
                     sizeof(BarrierControlSection);
     if (args.emitSelfCleanup) {
         size += computeSelfCleanupEndSectionSize<GfxFamily>(barrierControlSectionFieldsForCleanupCount, args.useAtomicsForSelfCleanup);
@@ -749,16 +777,21 @@ void constructBarrierCommandBuffer(void *cpuPointer,
                                    uint64_t gpuAddressOfAllocation,
                                    uint32_t &totalBytesProgrammed,
                                    WalkerPartitionArgs &args,
-                                   NEO::PipeControlArgs &flushArgs) {
+                                   NEO::PipeControlArgs &flushArgs,
+                                   const NEO::HardwareInfo &hwInfo) {
     void *currentBatchBufferPointer = cpuPointer;
-    const auto controlSectionOffset = computeBarrierControlSectionOffset<GfxFamily>(args);
+    const auto controlSectionOffset = computeBarrierControlSectionOffset<GfxFamily>(args, hwInfo);
 
     const auto finalSyncTileCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(BarrierControlSection, finalSyncTileCount);
     if (args.emitSelfCleanup) {
         programSelfCleanupSection<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, finalSyncTileCountField, args.useAtomicsForSelfCleanup);
     }
 
-    programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, flushArgs);
+    if (args.usePostSync) {
+        programPostSyncPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args, flushArgs, hwInfo);
+    } else {
+        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, flushArgs);
+    }
 
     const auto crossTileSyncCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(BarrierControlSection, crossTileSyncCount);
     programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, crossTileSyncCountField, args.tileCount);

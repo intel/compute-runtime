@@ -31,6 +31,7 @@ struct ImplicitScalingFixture : public CommandEncodeStatesFixture {
     DebugManagerStateRestore restorer;
     LinearStream commandStream;
     MockGraphicsAllocation cmdBufferAlloc;
+    HardwareInfo testHardwareInfo = {};
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
     std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
     DeviceBitfield singleTile;

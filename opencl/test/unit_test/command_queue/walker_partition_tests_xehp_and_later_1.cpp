@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+
 #include "opencl/test/unit_test/command_queue/walker_partition_fixture_xehp_and_later.h"
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
@@ -1357,4 +1360,375 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     EXPECT_FALSE(batchBufferStart->getPredicationEnable());
     EXPECT_EQ(gpuVirtualAddress, batchBufferStart->getBatchBufferStartAddress());
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
+            givenPostSyncBarrierProgrammingWhenDoNotEmitSelfCleanupThenExpectPostSyncCommandsAndNoCleanupSection) {
+    testArgs.tileCount = 4u;
+    testArgs.emitSelfCleanup = false;
+    testArgs.usePostSync = true;
+    testArgs.postSyncGpuAddress = 0xDAAB00;
+    testArgs.postSyncImmediateValue = 0x421;
+
+    uint32_t totalBytesProgrammed = 0u;
+    uint64_t gpuVirtualAddress = 0xFF0000;
+
+    auto expectedOffsetSectionSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                                     sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
+                                     sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+
+    auto expectedCommandUsedSize = expectedOffsetSectionSize +
+                                   sizeof(BarrierControlSection);
+
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+
+    PipeControlArgs flushArgs(false);
+    WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
+                                                               gpuVirtualAddress,
+                                                               totalBytesProgrammed,
+                                                               testArgs,
+                                                               flushArgs,
+                                                               testHardwareInfo);
+
+    EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
+    size_t parsedOffset = 0;
+
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
+
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+        constexpr uint64_t zeroGpuAddress = 0;
+        constexpr uint64_t zeroImmediateValue = 0;
+        auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+        EXPECT_EQ(zeroGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+        EXPECT_EQ(zeroImmediateValue, pipeControl->getImmediateData());
+        parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
+        parsedOffset += additionalSyncCmdSize;
+    }
+
+    auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_EQ(false, pipeControl->getDcFlushEnable());
+    EXPECT_EQ(testArgs.postSyncGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(testArgs.postSyncImmediateValue, pipeControl->getImmediateData());
+    parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
+    parsedOffset += additionalSyncCmdSize;
+
+    auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    auto crossTileSyncAddress = gpuVirtualAddress + expectedOffsetSectionSize + offsetof(BarrierControlSection, crossTileSyncCount);
+    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(crossTileSyncAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSemaphoreWait);
+    EXPECT_EQ(crossTileSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
+    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, batchBufferStart);
+    EXPECT_EQ(gpuVirtualAddress + expectedOffsetSectionSize + sizeof(BarrierControlSection), batchBufferStart->getBatchBufferStartAddress());
+    EXPECT_EQ(BATCH_BUFFER_START<FamilyType>::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, batchBufferStart->getSecondLevelBatchBuffer());
+    parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+
+    auto controlSection = reinterpret_cast<BarrierControlSection *>(ptrOffset(cmdBuffer, parsedOffset));
+    EXPECT_EQ(0u, controlSection->crossTileSyncCount);
+    EXPECT_EQ(0u, controlSection->finalSyncTileCount);
+    parsedOffset += sizeof(BarrierControlSection);
+
+    EXPECT_EQ(parsedOffset, expectedCommandUsedSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
+            givenPostSyncBarrierProgrammingWhenEmitsSelfCleanupThenExpectPostSyncCommandsAndStoreDataImmCommandCleanupSection) {
+    testArgs.tileCount = 4u;
+    testArgs.emitSelfCleanup = true;
+    testArgs.secondaryBatchBuffer = true;
+    testArgs.usePostSync = true;
+    testArgs.postSyncGpuAddress = 0xDAAB00;
+    testArgs.postSyncImmediateValue = 0x421;
+
+    uint32_t totalBytesProgrammed = 0u;
+    uint64_t gpuVirtualAddress = 0xFF0000;
+
+    auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
+                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                                     sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
+                                     sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+
+    auto expectedCommandUsedSize = expectedOffsetSectionSize +
+                                   sizeof(BarrierControlSection) +
+                                   sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
+                                   sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
+                                   sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+
+    PipeControlArgs flushArgs(true);
+    WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
+                                                               gpuVirtualAddress,
+                                                               totalBytesProgrammed,
+                                                               testArgs,
+                                                               flushArgs,
+                                                               testHardwareInfo);
+    EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
+
+    size_t parsedOffset = 0;
+
+    uint64_t finalSyncTileCountAddress = gpuVirtualAddress + expectedOffsetSectionSize + offsetof(BarrierControlSection, finalSyncTileCount);
+    constexpr uint32_t expectedData = 0u;
+
+    auto finalSyncTileCountFieldStore = genCmdCast<WalkerPartition::MI_STORE_DATA_IMM<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, finalSyncTileCountFieldStore);
+    EXPECT_EQ(finalSyncTileCountAddress, finalSyncTileCountFieldStore->getAddress());
+    EXPECT_EQ(expectedData, finalSyncTileCountFieldStore->getDataDword0());
+    parsedOffset += sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>);
+
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
+
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+        constexpr uint64_t zeroGpuAddress = 0;
+        constexpr uint64_t zeroImmediateValue = 0;
+        auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+        EXPECT_EQ(zeroGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+        EXPECT_EQ(zeroImmediateValue, pipeControl->getImmediateData());
+        parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
+        parsedOffset += additionalSyncCmdSize;
+    }
+
+    auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(testArgs.postSyncGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(testArgs.postSyncImmediateValue, pipeControl->getImmediateData());
+    parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
+    parsedOffset += additionalSyncCmdSize;
+
+    auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    auto crossTileSyncAddress = gpuVirtualAddress + expectedOffsetSectionSize + offsetof(BarrierControlSection, crossTileSyncCount);
+    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(crossTileSyncAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSemaphoreWait);
+    EXPECT_EQ(crossTileSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
+    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, batchBufferStart);
+    EXPECT_EQ(gpuVirtualAddress + expectedOffsetSectionSize + sizeof(BarrierControlSection), batchBufferStart->getBatchBufferStartAddress());
+    EXPECT_EQ(BATCH_BUFFER_START<FamilyType>::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, batchBufferStart->getSecondLevelBatchBuffer());
+    parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+
+    auto controlSection = reinterpret_cast<BarrierControlSection *>(ptrOffset(cmdBuffer, parsedOffset));
+    EXPECT_EQ(0u, controlSection->crossTileSyncCount);
+    EXPECT_EQ(0u, controlSection->finalSyncTileCount);
+    parsedOffset += sizeof(BarrierControlSection);
+
+    miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSemaphoreWait);
+    EXPECT_EQ(finalSyncTileCountAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
+    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    auto crossTileFieldStore = genCmdCast<WalkerPartition::MI_STORE_DATA_IMM<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, crossTileFieldStore);
+    EXPECT_EQ(crossTileSyncAddress, crossTileFieldStore->getAddress());
+    EXPECT_EQ(expectedData, crossTileFieldStore->getDataDword0());
+    parsedOffset += sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>);
+
+    miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSemaphoreWait);
+    EXPECT_EQ(finalSyncTileCountAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
+    EXPECT_EQ(2u * testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    EXPECT_EQ(parsedOffset, expectedCommandUsedSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
+            givenPostSyncBarrierProgrammingWhenEmitsSelfCleanupUsingAtomicThenExpectPostSyncCommandsAndMiAtomicCommandCleanupSection) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    testHardwareInfo.featureTable.ftrLocalMemory = true;
+
+    testArgs.tileCount = 4u;
+    testArgs.emitSelfCleanup = true;
+    testArgs.secondaryBatchBuffer = true;
+    testArgs.useAtomicsForSelfCleanup = true;
+    testArgs.usePostSync = true;
+    testArgs.postSyncGpuAddress = 0xDAAB00;
+    testArgs.postSyncImmediateValue = 0x421;
+
+    uint32_t totalBytesProgrammed = 0u;
+    uint64_t gpuVirtualAddress = 0xFF0000;
+
+    auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
+                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                                     sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
+                                     sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+
+    auto expectedCommandUsedSize = expectedOffsetSectionSize +
+                                   sizeof(BarrierControlSection) +
+                                   sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
+                                   sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
+                                   sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+
+    PipeControlArgs flushArgs(true);
+    WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
+                                                               gpuVirtualAddress,
+                                                               totalBytesProgrammed,
+                                                               testArgs,
+                                                               flushArgs,
+                                                               testHardwareInfo);
+
+    EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
+
+    size_t parsedOffset = 0;
+
+    uint64_t finalSyncTileCountAddress = gpuVirtualAddress + expectedOffsetSectionSize + offsetof(BarrierControlSection, finalSyncTileCount);
+    constexpr uint32_t expectedData = 0u;
+
+    auto finalSyncTileCountFieldAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, finalSyncTileCountFieldAtomic);
+    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*finalSyncTileCountFieldAtomic);
+    EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(finalSyncTileCountFieldAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, finalSyncTileCountFieldAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, finalSyncTileCountFieldAtomic->getDwordLength());
+    EXPECT_TRUE(finalSyncTileCountFieldAtomic->getInlineData());
+    EXPECT_EQ(expectedData, finalSyncTileCountFieldAtomic->getOperand1DataDword0());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
+
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+        constexpr uint64_t zeroGpuAddress = 0;
+        constexpr uint64_t zeroImmediateValue = 0;
+        auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+        EXPECT_EQ(zeroGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+        EXPECT_EQ(zeroImmediateValue, pipeControl->getImmediateData());
+        parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
+        parsedOffset += additionalSyncCmdSize;
+    }
+
+    auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(testArgs.postSyncGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(testArgs.postSyncImmediateValue, pipeControl->getImmediateData());
+    parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
+    parsedOffset += additionalSyncCmdSize;
+
+    auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    auto crossTileSyncAddress = gpuVirtualAddress + expectedOffsetSectionSize + offsetof(BarrierControlSection, crossTileSyncCount);
+    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(crossTileSyncAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSemaphoreWait);
+    EXPECT_EQ(crossTileSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
+    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, batchBufferStart);
+    EXPECT_EQ(gpuVirtualAddress + expectedOffsetSectionSize + sizeof(BarrierControlSection), batchBufferStart->getBatchBufferStartAddress());
+    EXPECT_EQ(BATCH_BUFFER_START<FamilyType>::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, batchBufferStart->getSecondLevelBatchBuffer());
+    parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
+
+    auto controlSection = reinterpret_cast<BarrierControlSection *>(ptrOffset(cmdBuffer, parsedOffset));
+    EXPECT_EQ(0u, controlSection->crossTileSyncCount);
+    EXPECT_EQ(0u, controlSection->finalSyncTileCount);
+    parsedOffset += sizeof(BarrierControlSection);
+
+    miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSemaphoreWait);
+    EXPECT_EQ(finalSyncTileCountAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
+    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    auto crossTileFieldAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, crossTileFieldAtomic);
+    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*crossTileFieldAtomic);
+    EXPECT_EQ(crossTileSyncAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(crossTileFieldAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, crossTileFieldAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, crossTileFieldAtomic->getDwordLength());
+    EXPECT_TRUE(crossTileFieldAtomic->getInlineData());
+    EXPECT_EQ(expectedData, crossTileFieldAtomic->getOperand1DataDword0());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miAtomic);
+    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
+    EXPECT_FALSE(miAtomic->getReturnDataControl());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
+
+    miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    ASSERT_NE(nullptr, miSemaphoreWait);
+    EXPECT_EQ(finalSyncTileCountAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
+    EXPECT_EQ(2u * testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
+
+    EXPECT_EQ(parsedOffset, expectedCommandUsedSize);
 }

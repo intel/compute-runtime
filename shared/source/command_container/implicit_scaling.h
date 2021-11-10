@@ -15,6 +15,7 @@ struct WalkerPartitionArgs;
 }
 
 namespace NEO {
+struct HardwareInfo;
 class LinearStream;
 struct PipeControlArgs;
 
@@ -54,10 +55,15 @@ struct ImplicitScalingDispatch {
 
     static bool &getPipeControlStallRequired();
 
-    static size_t getBarrierSize(bool apiSelfCleanup);
+    static size_t getBarrierSize(const HardwareInfo &hwInfo,
+                                 bool apiSelfCleanup,
+                                 bool usePostSync);
     static void dispatchBarrierCommands(LinearStream &commandStream,
                                         const DeviceBitfield &devices,
                                         PipeControlArgs &flushArgs,
+                                        const HardwareInfo &hwInfo,
+                                        uint64_t gpuAddress,
+                                        uint64_t immediateData,
                                         bool apiSelfCleanup,
                                         bool useSecondaryBatchBuffer);
 

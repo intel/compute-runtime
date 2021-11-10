@@ -1368,15 +1368,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenDo
     auto expectedCommandUsedSize = expectedOffsetSectionSize +
                                    sizeof(BarrierControlSection);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
 
     PipeControlArgs flushArgs(false);
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
                                                                testArgs,
-                                                               flushArgs);
+                                                               flushArgs,
+                                                               testHardwareInfo);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 
@@ -1435,15 +1436,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
                                    sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
 
     PipeControlArgs flushArgs(true);
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
                                                                testArgs,
-                                                               flushArgs);
+                                                               flushArgs,
+                                                               testHardwareInfo);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 
@@ -1550,15 +1552,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
 
     PipeControlArgs flushArgs(true);
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
                                                                testArgs,
-                                                               flushArgs);
+                                                               flushArgs,
+                                                               testHardwareInfo);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 

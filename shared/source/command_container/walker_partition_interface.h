@@ -13,6 +13,8 @@ namespace WalkerPartition {
 
 struct WalkerPartitionArgs {
     uint64_t workPartitionAllocationGpuVa = 0;
+    uint64_t postSyncGpuAddress = 0;
+    uint64_t postSyncImmediateValue = 0;
     uint32_t partitionCount = 0;
     uint32_t tileCount = 0;
     bool emitBatchBufferEnd = false;
@@ -26,6 +28,7 @@ struct WalkerPartitionArgs {
     bool initializeWparidRegister = false;
     bool emitPipeControlStall = false;
     bool preferredStaticPartitioning = false;
+    bool usePostSync = false;
 };
 
 constexpr uint32_t wparidCCSOffset = 0x221C;

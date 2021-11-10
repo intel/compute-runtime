@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -32,6 +33,7 @@ struct WalkerPartitionTests : public ::testing::Test {
 
     char cmdBuffer[4096u];
     WalkerPartition::WalkerPartitionArgs testArgs = {};
+    HardwareInfo testHardwareInfo = {};
     void *cmdBufferAddress = nullptr;
     uint32_t totalBytesProgrammed = 0u;
     bool checkForProperCmdBufferAddressOffset = true;

@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 void ImplicitScalingFixture::SetUp() {
     CommandEncodeStatesFixture::SetUp();
@@ -24,6 +25,8 @@ void ImplicitScalingFixture::SetUp() {
 
     commandStream.replaceBuffer(alignedMemory, bufferSize);
     commandStream.replaceGraphicsAllocation(&cmdBufferAlloc);
+
+    testHardwareInfo = *defaultHwInfo;
 }
 
 void ImplicitScalingFixture::TearDown() {

@@ -9,6 +9,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/implicit_scaling_fixture.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCmdBufferThenConsumedSizeMatchEstimatedAndCmdBufferHasCorrectCmds) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -752,11 +753,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(false);
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        false,
+                                                                        false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs(false);
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, false, false);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, false, false);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -802,11 +805,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(true);
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        true,
+                                                                        false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs(true);
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, true, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -855,11 +860,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(true);
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        true,
+                                                                        false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs(true);
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, true, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -877,6 +884,241 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
     EXPECT_EQ(3u, miSemaphoreList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+    auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartList.begin());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPostSyncBarrierDispatchWhenApiNotRequiresSelfCleanupThenExpectPostSyncMinimalCommandBuffer) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::BarrierControlSection);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        false,
+                                                                        true);
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    PipeControlArgs flushArgs(false);
+    uint64_t postSyncAddress = 0xFF000A180F0;
+    uint64_t postSyncValue = 0xFF00FF;
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, false, false);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    size_t expectedPipeControls = 1u;
+    size_t expectedSemaphores = 1u;
+
+    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(testHardwareInfo);
+    if (semaphoreAsAdditionalSync) {
+        expectedSemaphores++;
+    }
+
+    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+        expectedPipeControls++;
+        if (semaphoreAsAdditionalSync) {
+            expectedSemaphores++;
+        }
+    }
+    EXPECT_EQ(expectedPipeControls, hwParser.pipeControlList.size());
+
+    auto pipeControlItor = hwParser.pipeControlList.begin();
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
+    if (expectedPipeControls == 2) {
+        constexpr uint64_t zeroGpuAddress = 0;
+        constexpr uint64_t zeroImmediateValue = 0;
+        EXPECT_EQ(zeroGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+        EXPECT_EQ(zeroImmediateValue, pipeControl->getImmediateData());
+        pipeControlItor++;
+        pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
+    }
+    EXPECT_EQ(postSyncAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(postSyncValue, pipeControl->getImmediateData());
+    EXPECT_EQ(false, pipeControl->getDcFlushEnable());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(1u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(expectedSemaphores, miSemaphoreList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+    auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartList.begin());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPostSyncBarrierDispatchWhenApiRequiresSelfCleanupThenExpectPostSyncAndDefaultSelfCleanupSection) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
+                          MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::BarrierControlSection) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        true,
+                                                                        true);
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    PipeControlArgs flushArgs(true);
+    uint64_t postSyncAddress = 0xFF000A180F0;
+    uint64_t postSyncValue = 0xFF00FF;
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, true, true);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(2u, storeDataImmList.size());
+
+    size_t expectedPipeControls = 1u;
+    size_t expectedSemaphores = 3u;
+
+    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(testHardwareInfo);
+    if (semaphoreAsAdditionalSync) {
+        expectedSemaphores++;
+    }
+    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+        expectedPipeControls++;
+        if (semaphoreAsAdditionalSync) {
+            expectedSemaphores++;
+        }
+    }
+    EXPECT_EQ(expectedPipeControls, hwParser.pipeControlList.size());
+    auto pipeControlItor = hwParser.pipeControlList.begin();
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
+    if (expectedPipeControls == 2) {
+        constexpr uint64_t zeroGpuAddress = 0;
+        constexpr uint64_t zeroImmediateValue = 0;
+        EXPECT_EQ(zeroGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+        EXPECT_EQ(zeroImmediateValue, pipeControl->getImmediateData());
+        pipeControlItor++;
+        pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
+    }
+    EXPECT_EQ(postSyncAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(postSyncValue, pipeControl->getImmediateData());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(3u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(expectedSemaphores, miSemaphoreList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+    auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartList.begin());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenPostSyncBarrierDispatchWhenApiRequiresSelfCleanupForcedUseAtomicThenExpectPostSyncAndUseAtomicForSelfCleanupSection) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.UseAtomicsForSelfCleanupSection.set(1);
+    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    testHardwareInfo.featureTable.ftrLocalMemory = true;
+
+    size_t expectedSize = sizeof(MI_ATOMIC) +
+                          MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::BarrierControlSection) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_ATOMIC) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        true,
+                                                                        true);
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    PipeControlArgs flushArgs(true);
+    uint64_t postSyncAddress = 0xFF000A180F0;
+    uint64_t postSyncValue = 0xFF00FF;
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, true, true);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    size_t expectedPipeControls = 1u;
+    size_t expectedSemaphores = 3u;
+
+    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(testHardwareInfo);
+    if (semaphoreAsAdditionalSync) {
+        expectedSemaphores++;
+    }
+    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+        expectedPipeControls++;
+        if (semaphoreAsAdditionalSync) {
+            expectedSemaphores++;
+        }
+    }
+    EXPECT_EQ(expectedPipeControls, hwParser.pipeControlList.size());
+
+    auto pipeControlItor = hwParser.pipeControlList.begin();
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
+    if (expectedPipeControls == 2) {
+        constexpr uint64_t zeroGpuAddress = 0;
+        constexpr uint64_t zeroImmediateValue = 0;
+        EXPECT_EQ(zeroGpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+        EXPECT_EQ(zeroImmediateValue, pipeControl->getImmediateData());
+        pipeControlItor++;
+        pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
+    }
+    EXPECT_EQ(postSyncAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(postSyncValue, pipeControl->getImmediateData());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(5u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(expectedSemaphores, miSemaphoreList.size());
 
     auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
     EXPECT_EQ(1u, bbStartList.size());

@@ -204,7 +204,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyncCommands() const {
     if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
-        return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(false);
+        return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(peekHwInfo(),
+                                                                  false,
+                                                                  false);
     } else {
         return sizeof(typename GfxFamily::PIPE_CONTROL);
     }
@@ -217,6 +219,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
                                                                     this->deviceBitfield,
                                                                     args,
+                                                                    peekHwInfo(),
+                                                                    0,
+                                                                    0,
                                                                     false,
                                                                     false);
     } else {

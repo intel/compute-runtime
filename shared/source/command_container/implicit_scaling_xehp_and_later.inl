@@ -129,18 +129,24 @@ bool &ImplicitScalingDispatch<GfxFamily>::getPipeControlStallRequired() {
 }
 
 template <typename GfxFamily>
-size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(bool apiSelfCleanup) {
+size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(const HardwareInfo &hwInfo,
+                                                          bool apiSelfCleanup,
+                                                          bool usePostSync) {
     WalkerPartition::WalkerPartitionArgs args = {};
     args.emitSelfCleanup = apiSelfCleanup;
     args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
+    args.usePostSync = usePostSync;
 
-    return static_cast<size_t>(WalkerPartition::estimateBarrierSpaceRequiredInCommandBuffer<GfxFamily>(args));
+    return static_cast<size_t>(WalkerPartition::estimateBarrierSpaceRequiredInCommandBuffer<GfxFamily>(args, hwInfo));
 }
 
 template <typename GfxFamily>
 void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &commandStream,
                                                                  const DeviceBitfield &devices,
                                                                  PipeControlArgs &flushArgs,
+                                                                 const HardwareInfo &hwInfo,
+                                                                 uint64_t gpuAddress,
+                                                                 uint64_t immediateData,
                                                                  bool apiSelfCleanup,
                                                                  bool useSecondaryBatchBuffer) {
     uint32_t totalProgrammedSize = 0u;
@@ -150,6 +156,9 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
     args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
     args.tileCount = static_cast<uint32_t>(devices.count());
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;
+    args.usePostSync = gpuAddress > 0;
+    args.postSyncGpuAddress = gpuAddress;
+    args.postSyncImmediateValue = immediateData;
 
     uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
     void *commandBuffer = commandStream.getSpace(0u);
@@ -158,7 +167,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                               cmdBufferGpuAddress,
                                                               totalProgrammedSize,
                                                               args,
-                                                              flushArgs);
+                                                              flushArgs,
+                                                              hwInfo);
     commandStream.getSpace(totalProgrammedSize);
 }
 

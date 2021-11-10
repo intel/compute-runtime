@@ -333,12 +333,20 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
     NEO::PipeControlArgs args = createBarrierFlags();
     if (this->partitionCount > 1) {
-        size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(true);
+        auto neoDevice = device->getNEODevice();
+        auto &hwInfo = neoDevice->getHardwareInfo();
+
+        size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(hwInfo,
+                                                                                               true,
+                                                                                               false);
         increaseCommandStreamSpace(estimatedSizeRequired);
 
         NEO::ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(*commandContainer.getCommandStream(),
-                                                                         device->getNEODevice()->getDeviceBitfield(),
+                                                                         neoDevice->getDeviceBitfield(),
                                                                          args,
+                                                                         hwInfo,
+                                                                         0,
+                                                                         0,
                                                                          true,
                                                                          true);
     } else {
