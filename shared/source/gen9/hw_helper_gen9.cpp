@@ -25,15 +25,6 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
-    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-
-    cmd.setCommandStreamerStallEnable(true);
-    *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
-    commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
-}
-
-template <>
 uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
 }

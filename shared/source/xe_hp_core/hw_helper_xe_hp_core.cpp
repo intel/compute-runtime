@@ -118,16 +118,9 @@ std::string HwHelperHw<Family>::getExtensions() const {
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
-    if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
-        if (hwInfo.featureTable.ftrLocalMemory) {
-            PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-            cmd.setCommandStreamerStallEnable(true);
-            cmd.setHdcPipelineFlush(true);
-            *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
-            commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
-        }
-    }
+void MemorySynchronizationCommands<Family>::setPipeControlWAFlags(PIPE_CONTROL &pipeControl) {
+    pipeControl.setCommandStreamerStallEnable(true);
+    pipeControl.setHdcPipelineFlush(true);
 }
 
 template <>

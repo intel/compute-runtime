@@ -277,14 +277,27 @@ void MemorySynchronizationCommands<GfxFamily>::addPipeControlWithPostSync(
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWA(hwInfo);
-    if (requiredSize > 0) {
-        void *commandBuffer = commandStream.getSpace(requiredSize);
-        setPipeControlWA(commandBuffer, gpuAddress, hwInfo);
+    void *commandBuffer = commandStream.getSpace(requiredSize);
+    setPipeControlWA(commandBuffer, gpuAddress, hwInfo);
+}
+
+template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+    if (MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(hwInfo)) {
+        PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
+        MemorySynchronizationCommands<GfxFamily>::setPipeControlWAFlags(cmd);
+        *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
+        commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
+
+        MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, hwInfo);
     }
 }
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(hwInfo);
+    void *commandBuffer = commandStream.getSpace(requiredSize);
+    setAdditionalSynchronization(commandBuffer, gpuAddress, hwInfo);
 }
 
 template <typename GfxFamily>

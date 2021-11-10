@@ -436,7 +436,7 @@ struct MemorySynchronizationCommands {
                                            PipeControlArgs &args);
 
     static void setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo);
-    static void setPipeControl(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
+    static void setPipeControlWAFlags(PIPE_CONTROL &pipeControl);
 
     static void addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
     static void setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo);
@@ -445,6 +445,8 @@ struct MemorySynchronizationCommands {
     static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo);
 
     static void addPipeControl(LinearStream &commandStream, PipeControlArgs &args);
+    static void setPipeControl(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
+
     static void addPipeControlWithCSStallOnly(LinearStream &commandStream);
 
     static bool isDcFlushAllowed();

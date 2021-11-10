@@ -101,10 +101,6 @@ aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo 
 }
 
 template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
-}
-
-template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo) {
 }
 
@@ -118,6 +114,11 @@ inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraPropert
 
 template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return false; }
+
+template <typename GfxFamily>
+inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlWAFlags(PIPE_CONTROL &pipeControl) {
+    pipeControl.setCommandStreamerStallEnable(true);
+}
 
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::additionalPipeControlArgsRequired() const {
