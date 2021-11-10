@@ -1000,29 +1000,27 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
         kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = outExperimentalProperties.hasNonKernelArgAtomic;
     }
 
-    kernelDescriptor.kernelAttributes.barrierCount = execEnv.barrierCount;
-    kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = execEnv.disableMidThreadPreemption;
-    kernelDescriptor.kernelAttributes.numGrfRequired = execEnv.grfCount;
-    if (execEnv.has4GBBuffers) {
-        kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-    }
-    kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = execEnv.hasDeviceEnqueue;
-    kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = execEnv.hasFenceForImageAccess;
-    kernelDescriptor.kernelAttributes.flags.useGlobalAtomics = execEnv.hasGlobalAtomics;
-    kernelDescriptor.kernelAttributes.flags.usesStatelessWrites = (false == execEnv.hasNoStatelessWrite);
-    kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = execEnv.hasDpas;
     kernelDescriptor.entryPoints.skipPerThreadDataLoad = execEnv.offsetToSkipPerThreadDataLoad;
     kernelDescriptor.entryPoints.skipSetFFIDGP = execEnv.offsetToSkipSetFfidGp;
-    kernelDescriptor.kernelMetadata.requiredSubGroupSize = execEnv.requiredSubGroupSize;
-    kernelDescriptor.kernelAttributes.simdSize = execEnv.simdSize;
-    kernelDescriptor.kernelAttributes.slmInlineSize = execEnv.slmSize;
+    kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = execEnv.disableMidThreadPreemption;
     kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = execEnv.subgroupIndependentForwardProgress;
+    kernelDescriptor.kernelAttributes.flags.useGlobalAtomics = execEnv.hasGlobalAtomics;
+    kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = execEnv.hasDeviceEnqueue;
+    kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = execEnv.hasFenceForImageAccess;
+    kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = execEnv.hasDpas;
+    kernelDescriptor.kernelAttributes.flags.usesStatelessWrites = (false == execEnv.hasNoStatelessWrite);
+    kernelDescriptor.kernelAttributes.barrierCount = execEnv.barrierCount;
+    kernelDescriptor.kernelAttributes.bufferAddressingMode = (execEnv.has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless;
+    kernelDescriptor.kernelAttributes.numGrfRequired = execEnv.grfCount;
     kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] = static_cast<uint16_t>(execEnv.requiredWorkGroupSize[0]);
     kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = static_cast<uint16_t>(execEnv.requiredWorkGroupSize[1]);
     kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = static_cast<uint16_t>(execEnv.requiredWorkGroupSize[2]);
+    kernelDescriptor.kernelAttributes.simdSize = execEnv.simdSize;
+    kernelDescriptor.kernelAttributes.slmInlineSize = execEnv.slmSize;
     kernelDescriptor.kernelAttributes.workgroupWalkOrder[0] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[0]);
     kernelDescriptor.kernelAttributes.workgroupWalkOrder[1] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[1]);
     kernelDescriptor.kernelAttributes.workgroupWalkOrder[2] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[2]);
+    kernelDescriptor.kernelMetadata.requiredSubGroupSize = execEnv.requiredSubGroupSize;
 
     if ((kernelDescriptor.kernelAttributes.simdSize != 1) && (kernelDescriptor.kernelAttributes.simdSize != 8) && (kernelDescriptor.kernelAttributes.simdSize != 16) && (kernelDescriptor.kernelAttributes.simdSize != 32)) {
         outErrReason.append("DeviceBinaryFormat::Zebin : Invalid simd size : " + std::to_string(kernelDescriptor.kernelAttributes.simdSize) + " in context of : " + kernelDescriptor.kernelMetadata.kernelName + ". Expected 1, 8, 16 or 32. Got : " + std::to_string(kernelDescriptor.kernelAttributes.simdSize) + "\n");

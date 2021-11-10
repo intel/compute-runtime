@@ -293,6 +293,9 @@ using HasDpasT = bool;
 using HasFenceForImageAccessT = bool;
 using HasGlobalAtomicsT = bool;
 using HasMultiScratchSpacesT = bool;
+using HasNonKernelArgAtomicT = int32_t;
+using HasNonKernelArgLoadT = int32_t;
+using HasNonKernelArgStoreT = int32_t;
 using HasNoStatelessWriteT = bool;
 using HwPreemptionModeT = int32_t;
 using OffsetToSkipPerThreadDataLoadT = int32_t;
@@ -303,9 +306,6 @@ using SimdSizeT = int32_t;
 using SlmSizeT = int32_t;
 using SubgroupIndependentForwardProgressT = bool;
 using WorkgroupWalkOrderDimensionsT = int32_t[3];
-using HasNonKernelArgLoad = int32_t;
-using HasNonKernelArgStore = int32_t;
-using HasNonKernelArgAtomic = int32_t;
 
 namespace Defaults {
 static constexpr BarrierCountT barrierCount = 0;
@@ -316,6 +316,9 @@ static constexpr HasDpasT hasDpas = false;
 static constexpr HasFenceForImageAccessT hasFenceForImageAccess = false;
 static constexpr HasGlobalAtomicsT hasGlobalAtomics = false;
 static constexpr HasMultiScratchSpacesT hasMultiScratchSpaces = false;
+static constexpr HasNonKernelArgAtomicT hasNonKernelArgAtomic = false;
+static constexpr HasNonKernelArgLoadT hasNonKernelArgLoad = false;
+static constexpr HasNonKernelArgStoreT hasNonKernelArgStore = false;
 static constexpr HasNoStatelessWriteT hasNoStatelessWrite = false;
 static constexpr HwPreemptionModeT hwPreemptionMode = -1;
 static constexpr OffsetToSkipPerThreadDataLoadT offsetToSkipPerThreadDataLoad = 0;
@@ -325,9 +328,6 @@ static constexpr RequiredWorkGroupSizeT requiredWorkGroupSize = {0, 0, 0};
 static constexpr SlmSizeT slmSize = 0;
 static constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = false;
 static constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
-static constexpr HasNonKernelArgLoad hasNonKernelArgLoad = false;
-static constexpr HasNonKernelArgStore hasNonKernelArgStore = false;
-static constexpr HasNonKernelArgAtomic hasNonKernelArgAtomic = false;
 } // namespace Defaults
 
 static constexpr ConstStringRef required[] = {
@@ -359,9 +359,9 @@ struct ExecutionEnvBaseT {
 };
 
 struct ExperimentalPropertiesBaseT {
-    HasNonKernelArgLoad hasNonKernelArgLoad = Defaults::hasNonKernelArgLoad;
-    HasNonKernelArgStore hasNonKernelArgStore = Defaults::hasNonKernelArgStore;
-    HasNonKernelArgAtomic hasNonKernelArgAtomic = Defaults::hasNonKernelArgAtomic;
+    HasNonKernelArgLoadT hasNonKernelArgLoad = Defaults::hasNonKernelArgLoad;
+    HasNonKernelArgStoreT hasNonKernelArgStore = Defaults::hasNonKernelArgStore;
+    HasNonKernelArgAtomicT hasNonKernelArgAtomic = Defaults::hasNonKernelArgAtomic;
 };
 
 } // namespace ExecutionEnv

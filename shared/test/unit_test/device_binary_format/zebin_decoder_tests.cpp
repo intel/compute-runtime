@@ -2593,6 +2593,59 @@ kernels:
     EXPECT_EQ(32, programInfo.kernelInfos[1]->kernelDescriptor.kernelAttributes.simdSize);
 }
 
+TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescriptorWithDefaults) {
+    std::string zeinfo = R"===(
+    kernels:
+        - name : some_kernel
+          execution_env:   
+            simd_size: 32
+            grf_count: 128
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+
+    namespace Defaults = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::Defaults;
+    const auto &kernelDescriptor = programInfo.kernelInfos[0]->kernelDescriptor;
+    EXPECT_EQ(kernelDescriptor.entryPoints.skipPerThreadDataLoad, static_cast<NEO::InstructionsSegmentOffset>(Defaults::offsetToSkipPerThreadDataLoad));
+    EXPECT_EQ(kernelDescriptor.entryPoints.skipSetFFIDGP, static_cast<NEO::InstructionsSegmentOffset>(Defaults::offsetToSkipSetFfidGp));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption, Defaults::disableMidThreadPreemption);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress, Defaults::subgroupIndependentForwardProgress);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, Defaults::hasGlobalAtomics);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue, Defaults::hasDeviceEnqueue);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages, Defaults::hasFenceForImageAccess);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode, Defaults::hasDpas);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites, (false == Defaults::hasNoStatelessWrite));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.barrierCount, static_cast<uint8_t>(Defaults::barrierCount));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.bufferAddressingMode, (Defaults::has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0], static_cast<uint16_t>(Defaults::requiredWorkGroupSize[0]));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1], static_cast<uint16_t>(Defaults::requiredWorkGroupSize[1]));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2], static_cast<uint16_t>(Defaults::requiredWorkGroupSize[2]));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.slmInlineSize, static_cast<uint32_t>(Defaults::slmSize));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.workgroupWalkOrder[0], static_cast<uint8_t>(Defaults::workgroupWalkOrderDimensions[0]));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.workgroupWalkOrder[1], static_cast<uint8_t>(Defaults::workgroupWalkOrderDimensions[1]));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.workgroupWalkOrder[2], static_cast<uint8_t>(Defaults::workgroupWalkOrderDimensions[2]));
+    EXPECT_EQ(kernelDescriptor.kernelMetadata.requiredSubGroupSize, static_cast<uint8_t>(Defaults::requiredSubGroupSize));
+}
+
 TEST(PopulateKernelDescriptor, WhenValidationOfZeinfoSectionsCountFailsThenDecodingFails) {
     NEO::ConstStringRef zeinfo = R"===(
 kernels:
