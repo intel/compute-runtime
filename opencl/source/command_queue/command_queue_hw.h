@@ -63,24 +63,6 @@ class CommandQueueHw : public CommandQueue {
             this->gpgpuEngine = &device->getInternalEngine();
         }
 
-        auto &hwInfo = device->getDevice().getHardwareInfo();
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-        auto assignEngineRoundRobin =
-            !internalUsage &&
-            !this->queueFamilySelected &&
-            !(clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) &&
-            hwHelper.isAssignEngineRoundRobinSupported() &&
-            this->isAssignEngineRoundRobinEnabled();
-
-        if (DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get() != -1) {
-            assignEngineRoundRobin = DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get();
-        }
-
-        if (assignEngineRoundRobin) {
-            this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
-        }
-
         if (getCmdQueueProperties<cl_queue_properties>(properties, CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
             getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
             if (DebugManager.flags.CsrDispatchMode.get() != 0) {
@@ -95,6 +77,8 @@ class CommandQueueHw : public CommandQueue {
 
             auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
             if (stateSaveAreaHeader.size() > 0) {
+                auto &hwInfo = device->getDevice().getHardwareInfo();
+                auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
                 NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
                                                                       device->getDevice(), debugSurface, 0, stateSaveAreaHeader.data(),
                                                                       stateSaveAreaHeader.size());
