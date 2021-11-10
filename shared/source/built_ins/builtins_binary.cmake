@@ -6,6 +6,8 @@
 
 add_library(${BUILTINS_BINARIES_BINDFUL_LIB_NAME} OBJECT EXCLUDE_FROM_ALL builtins_binary.cmake)
 add_library(${BUILTINS_BINARIES_BINDLESS_LIB_NAME} OBJECT EXCLUDE_FROM_ALL builtins_binary.cmake)
+target_compile_definitions(${BUILTINS_BINARIES_BINDFUL_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
+target_compile_definitions(${BUILTINS_BINARIES_BINDLESS_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
 
 # Add builtins sources
 add_subdirectory(registry)

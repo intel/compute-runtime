@@ -1,11 +1,15 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins")
 set(PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER ult_product_targets)
+
+if(NOT TARGET run_mt_unit_tests)
+  add_custom_target(run_mt_unit_tests)
+endif()
 
 if(NOT TARGET run_unit_tests)
   add_custom_target(run_unit_tests ALL)

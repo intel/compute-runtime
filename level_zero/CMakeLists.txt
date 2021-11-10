@@ -297,7 +297,7 @@ if(BUILD_WITH_L0)
   )
 
   get_property(COMPUTE_RUNTIME_DEFINITIONS
-               TARGET ${NEO_RELEASE_LIB_NAME}
+               TARGET ${NEO_SHARED_RELEASE_LIB_NAME}
                PROPERTY COMPILE_DEFINITIONS
   )
 
@@ -396,7 +396,7 @@ if(BUILD_WITH_L0)
       )
     else()
       get_property(COMPUTE_RUNTIME_DEFINITIONS
-                   TARGET ${NEO_RELEASE_LIB_NAME}
+                   TARGET ${NEO_SHARED_RELEASE_LIB_NAME}
                    PROPERTY COMPILE_DEFINITIONS
       )
       target_compile_definitions(${LIB_NAME}

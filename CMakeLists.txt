@@ -127,6 +127,12 @@ if(NOT DEFINED NEO_TARGET_PROCESSOR)
   message(FATAL_ERROR "Unsupported target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
+if(NOT DEFINED NEO_BUILD_WITH_OCL)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/opencl/CMakeLists.txt)
+    set(NEO_BUILD_WITH_OCL TRUE)
+  endif()
+endif()
+
 if(NOT DEFINED BUILD_WITH_L0)
   if("${NEO_BITS}" STREQUAL "64")
     set(BUILD_WITH_L0 TRUE)
@@ -198,14 +204,6 @@ if("${BUILD_TYPE_lower}" STREQUAL "releaseinternal")
 endif("${BUILD_TYPE_lower}" STREQUAL "releaseinternal")
 
 message(STATUS "${CMAKE_BUILD_TYPE} build configuration")
-
-set(NEO_RUNTIME_SUB_DIR "opencl/source")
-set(NEO_RUNTIME_SOURCE_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_SUB_DIR}")
-
-set(NEO_RUNTIME_TESTS_SUB_DIR "opencl/test/unit_test")
-set(NEO_RUNTIME_TESTS_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_TESTS_SUB_DIR}")
-set(NEO_OPENCL_BLACK_BOX_TESTS_SUB_DIR "opencl/test/black_box_test")
-set(NEO_OPENCL_BLACK_BOX_TESTS_DIR "${NEO_SOURCE_DIR}/${NEO_OPENCL_BLACK_BOX_TESTS_SUB_DIR}")
 
 # Set the ocloc directory
 if(NOT DEFINED OCLOC_DIRECTORY)
@@ -779,69 +777,11 @@ endif()
 
 add_subdirectory_unique(shared)
 
-macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
-  set(NEO_STATIC_LIB_NAME ${LIB_NAME})
-  set(SHARINGS_ENABLE_LIB_NAME "${LIB_NAME}_sharings_enable")
-  set(GENERATE_EXECUTABLE ${GENERATE_EXEC})
-
-  if(${MOCKABLE})
-    set(NEO_SHARED_LIB ${NEO_SHARED_MOCKABLE_LIB_NAME})
-  else()
-    set(NEO_SHARED_LIB ${NEO_SHARED_RELEASE_LIB_NAME})
-  endif()
-  if(NOT BUILD_WITHOUT_RUNTIME)
-    add_subdirectory(${NEO_RUNTIME_SUB_DIR} "${NEO_BUILD_DIR}/${LIB_NAME}")
-  else()
-    add_subdirectory(${NEO_RUNTIME_SUB_DIR} "${NEO_BUILD_DIR}/${LIB_NAME}" EXCLUDE_FROM_ALL)
-  endif()
-  target_compile_definitions(${BUILTINS_SOURCES_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-  target_compile_definitions(${BUILTINS_VME_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-  target_compile_definitions(${BUILTINS_BINARIES_BINDFUL_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-  target_compile_definitions(${BUILTINS_BINARIES_BINDLESS_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-  if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
-    target_compile_definitions(${BUILTINS_SPIRV_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-  endif()
-  if(TARGET ${SCHEDULER_BINARY_LIB_NAME})
-    target_compile_definitions(${SCHEDULER_BINARY_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-  endif()
-
-  if(${MOCKABLE})
-    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual)
-    target_compile_definitions(${SHARINGS_ENABLE_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual)
-  else()
-    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-    target_compile_definitions(${SHARINGS_ENABLE_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-  endif()
-endmacro()
-
-set(NEO_DYNAMIC_LIB_NAME "igdrcl_dll") # single NEO dll
-set(NEO_DLL_NAME_BASE "igdrcl")
-
-if(DONT_CARE_OF_VIRTUALS)
-  message(STATUS "All targets will use virtuals")
-
-  set(NEO_RELEASE_LIB_NAME "igdrcl_lib")
-  set(NEO_MOCKABLE_LIB_NAME ${NEO_RELEASE_LIB_NAME})
-  generate_runtime_lib(${NEO_RELEASE_LIB_NAME} TRUE TRUE)
+if(NEO_BUILD_WITH_OCL)
+  add_subdirectory_unique(opencl)
 else()
-  set(NEO_RELEASE_LIB_NAME "igdrcl_lib_release") # Used by dll/so
-  generate_runtime_lib(${NEO_RELEASE_LIB_NAME} FALSE TRUE)
-  if(NOT NEO_SKIP_UNIT_TESTS)
-    set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
-    generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
-  endif()
-endif()
-
-if(DEFAULT_TESTED_PLATFORM AND NOT NEO_SKIP_OCL_UNIT_TESTS)
-  add_subdirectory_unique(${NEO_RUNTIME_TESTS_SUB_DIR} ${NEO_BUILD_DIR}/${NEO_RUNTIME_TESTS_SUB_DIR})
-else()
-  hide_subdir(${NEO_RUNTIME_TESTS_SUB_DIR})
-endif()
-
-if(NOT BUILD_WITHOUT_RUNTIME)
-  add_subdirectory_unique(${NEO_OPENCL_BLACK_BOX_TESTS_SUB_DIR})
-else()
-  hide_subdir(${NEO_OPENCL_BLACK_BOX_TESTS_SUB_DIR})
+  hide_subdir(opencl)
+  set(NEO_SKIP_OCL_UNIT_TESTS TRUE)
 endif()
 
 set(DONT_LINK_ELF_STATICALLY TRUE)
@@ -858,8 +798,6 @@ endif()
 configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
 configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
-
-hide_subdir(${NEO_RUNTIME_SUB_DIR})
 
 if(BUILD_WITH_L0)
   add_subdirectory_unique(level_zero)
