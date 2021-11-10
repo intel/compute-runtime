@@ -773,6 +773,7 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_
         const size_t allocationSizeForSubDevice = pool.allocationSize / metricQueriesSize;
         static_cast<CommandListImp &>(commandList).appendMultiPartitionPrologue(static_cast<uint32_t>(allocationSizeForSubDevice));
         void *buffer = nullptr;
+        bool gpuCommandStatus = true;
 
         // Revert iteration to be ensured that the last set of gpu commands overwrite the previous written sets of gpu commands,
         // so only one of the sub-device contexts will be used to append to command list.
@@ -817,9 +818,14 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_
 
             // Obtain gpu commands from metrics library for each sub-device to update cpu and gpu addresses for
             // each query object in metrics library, so that get data works properly.
-            if (!metricLibrarySubDevice.getGpuCommands(commandBuffer)) {
-                return ZE_RESULT_ERROR_UNKNOWN;
+            gpuCommandStatus = metricLibrarySubDevice.getGpuCommands(commandBuffer);
+            if (!gpuCommandStatus) {
+                break;
             }
+        }
+        static_cast<CommandListImp &>(commandList).appendMultiPartitionEpilogue();
+        if (!gpuCommandStatus) {
+            return ZE_RESULT_ERROR_UNKNOWN;
         }
 
         // Write gpu commands for sub device index 0.

@@ -319,6 +319,17 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {
+
+    const size_t estimatedSizeRequired = sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    increaseCommandStreamSpace(estimatedSizeRequired);
+    NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(commandContainer,
+                                             NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                             CommonConstants::partitionAddressOffset,
+                                             true);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
     NEO::PipeControlArgs args = createBarrierFlags();
     if (this->partitionCount > 1) {

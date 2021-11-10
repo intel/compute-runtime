@@ -179,6 +179,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t partitionDataSize) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
     size_t estimatedSizeRequired = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
     increaseCommandStreamSpace(estimatedSizeRequired);

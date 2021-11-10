@@ -153,6 +153,7 @@ struct CommandListCoreFamily : CommandListImp {
                                             size_t size, ze_event_handle_t hSignalEvent,
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
+    void appendMultiPartitionEpilogue() override;
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;

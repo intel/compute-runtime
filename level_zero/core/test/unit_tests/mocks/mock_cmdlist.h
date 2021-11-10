@@ -327,6 +327,7 @@ struct MockCommandList : public CommandList {
                       ze_command_list_flags_t flags));
 
     ADDMETHOD_NOBASE_VOIDRETURN(appendMultiPartitionPrologue, (uint32_t partitionDataSize));
+    ADDMETHOD_NOBASE_VOIDRETURN(appendMultiPartitionEpilogue, (void));
 
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;
