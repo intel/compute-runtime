@@ -27,7 +27,9 @@ struct ImageCoreFamily : public ImageImp {
         if (layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_NV12 ||
             layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P010 ||
             layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P012 ||
-            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P016) {
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P016 ||
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_RGBP ||
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_BRGP) {
             return true;
         }
         return false;

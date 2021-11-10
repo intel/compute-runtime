@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 namespace L0 {
 namespace ImageFormats {
-constexpr uint32_t ZE_IMAGE_FORMAT_RENDER_LAYOUT_MAX = 41u;
+constexpr uint32_t ZE_IMAGE_FORMAT_RENDER_LAYOUT_MAX = 43u;
 
 using FormatTypes = std::array<NEO::SurfaceFormatInfo, 5u>;
 
@@ -229,11 +229,21 @@ constexpr FormatTypes layout444P = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SU
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutRGBP = {{{GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3}}};
+constexpr FormatTypes layoutBGRP = {{{GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3}}};
 
 constexpr std::array<FormatTypes, ZE_IMAGE_FORMAT_RENDER_LAYOUT_MAX> formats = {layout8, layout16, layout32, layout88, layout8888, layout1616, layout16161616, layout3232, layout32323232, layout1010102,
                                                                                 layout111110, layout565, layout5551, layout4444, layoutY8, layoutNV12, layoutYUYV, layoutVYUY, layoutYVYU, layoutUYVY,
                                                                                 layoutAYUV, layoutP010, layoutY410, layoutP012, layoutY16, layoutP016, layoutY216, layoutP216, layoutP8, layoutYUY2,
                                                                                 layoutA8P8, layoutIA44, layoutAI44, layoutY416, layoutY210, layoutI420, layoutYV12, layout400P, layout422H, layout422V,
-                                                                                layout444P};
+                                                                                layout444P, layoutRGBP, layoutBGRP};
 } // namespace ImageFormats
 } // namespace L0
