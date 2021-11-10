@@ -384,16 +384,16 @@ Buffer *Buffer::create(Context *context,
 
         if (allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr && !copyExecuted) {
             auto gmm = allocationInfo[rootDeviceIndex].memory->getDefaultGmm();
-            bool gpuCopyRequired = (gmm && gmm->isCompressionEnabled) || !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
+            auto isLocalMemory = !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
+            bool gpuCopyRequired = (gmm && gmm->isCompressionEnabled) || isLocalMemory;
 
             if (gpuCopyRequired) {
-
                 auto &device = pBuffer->getContext()->getDevice(0u)->getDevice();
                 auto &hwInfo = device.getHardwareInfo();
                 auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
                 auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
 
-                if (hwInfoConfig->isBlitterFullySupported(hwInfo)) {
+                if (hwInfoConfig->isBlitterFullySupported(hwInfo) && isLocalMemory) {
                     blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, allocationInfo[rootDeviceIndex].memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
                 }
 
