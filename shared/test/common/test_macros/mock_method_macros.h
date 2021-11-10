@@ -15,6 +15,12 @@
         return funcName##Result;                                       \
     }
 
+#define ADDMETHOD_CONST_NOBASE(funcName, retType, defaultReturn, funcParams) \
+    retType funcName##Result = defaultReturn;                                \
+    retType funcName funcParams const override {                             \
+        return funcName##Result;                                             \
+    }
+
 #define ADDMETHOD_NOBASE_VOIDRETURN(funcName, funcParams) \
     uint32_t funcName##Called = 0u;                       \
     void funcName funcParams override {                   \

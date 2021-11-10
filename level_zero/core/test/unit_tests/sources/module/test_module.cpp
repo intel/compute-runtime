@@ -1002,9 +1002,7 @@ TEST_F(ModulePropertyTest, whenZeModuleGetPropertiesIsCalledThenGetPropertiesIsC
     moduleProperties.pNext = nullptr;
 
     // returning error code that is unlikely to be returned by the function
-    EXPECT_CALL(module, getProperties(&moduleProperties))
-        .Times(1)
-        .WillRepeatedly(Return(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT));
+    module.getPropertiesResult = ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
 
     ze_result_t res = zeModuleGetProperties(module.toHandle(), &moduleProperties);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, res);
