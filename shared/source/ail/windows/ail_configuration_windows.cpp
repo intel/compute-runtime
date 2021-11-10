@@ -8,6 +8,8 @@
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 
+// Application detection is performed using the process name of the given application.
+
 namespace NEO {
 bool AILConfiguration::initProcessExecutableName() {
     const DWORD length = MAX_PATH;

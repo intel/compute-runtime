@@ -10,6 +10,8 @@
 
 #include <string_view>
 
+// Application detection is performed using the process name of the given application.
+
 namespace NEO {
 bool AILConfiguration::initProcessExecutableName() {
     char path[512] = {0};

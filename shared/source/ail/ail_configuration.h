@@ -11,6 +11,20 @@
 
 #pragma once
 
+/*
+ * AIL (Application Intelligence Layer) is a set of per-application controls that influence driver behavior.
+ * The primary goal is to improve user experience and/or performance.
+ *
+ * AIL provides application detection mechanism based on running processes in the system.
+ * Mechanism works on Windows and Linux, is flexible and easily extendable to new applications.
+ * 
+ * E.g. AIL can detect running Blender application and enable fp64 emulation on hardware 
+ * that does not support native fp64.
+ * 
+ * Disclaimer: we should never use this for benchmarking or conformance purposes - this would be cheating.
+ * 
+ */
+
 namespace NEO {
 
 enum class AILEnumeration : uint32_t {
