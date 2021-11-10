@@ -54,7 +54,7 @@ Summary:        ocloc package for opencl
    -DNEO_VERSION_BUILD=%{ver} \
    -DBUILD_WITH_L0=0 \
    -DCMAKE_INSTALL_PREFIX=/usr \
-   -DSKIP_UNIT_TESTS=1 \
+   -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DRELEASE_WITH_REGKEYS=1 \
    -Wno-dev
 %make_build

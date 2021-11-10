@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(NOT SKIP_L0_UNIT_TESTS)
+if(NOT NEO_SKIP_L0_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif()
 
-if(NOT SKIP_L0_BLACK_BOX_TESTS)
+if(NOT NEO_SKIP_L0_BLACK_BOX_TESTS)
   add_subdirectory(black_box_tests)
 endif()

@@ -13,9 +13,9 @@ list(GET aub_test_config 4 revision_id)
 
 add_custom_target(run_${product}_${revision_id}_aub_tests ALL)
 
-if(NOT SKIP_NEO_UNIT_TESTS OR NOT SKIP_L0_UNIT_TESTS)
+if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
 
-  if(NOT SKIP_NEO_UNIT_TESTS)
+  if(NOT NEO_SKIP_OCL_UNIT_TESTS)
     add_dependencies(run_${product}_${revision_id}_aub_tests copy_test_files_per_product)
     add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_ocl)
     add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_shared)
@@ -51,7 +51,7 @@ if(NOT SKIP_NEO_UNIT_TESTS OR NOT SKIP_L0_UNIT_TESTS)
 
 endif()
 
-if(NOT SKIP_NEO_UNIT_TESTS)
+if(NOT NEO_SKIP_OCL_UNIT_TESTS)
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
     set(aub_test_cmd_prefix $<TARGET_FILE:igdrcl_aub_tests>)
   else()
@@ -67,7 +67,7 @@ if(NOT SKIP_NEO_UNIT_TESTS)
   )
 endif()
 
-if(NOT SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
+if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
   add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_l0)
 
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)

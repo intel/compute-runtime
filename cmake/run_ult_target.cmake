@@ -13,7 +13,7 @@ list(GET unit_test_config 4 revision_id)
 
 add_custom_target(run_${product}_${revision_id}_unit_tests ALL DEPENDS unit_tests)
 set_target_properties(run_${product}_${revision_id}_unit_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
-if(NOT SKIP_NEO_UNIT_TESTS)
+if(NOT NEO_SKIP_OCL_UNIT_TESTS)
   add_custom_command(
                      TARGET run_${product}_${revision_id}_unit_tests
                      POST_BUILD
@@ -42,7 +42,7 @@ if(NOT SKIP_NEO_UNIT_TESTS)
   endif()
 endif()
 
-if(NOT SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
+if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
   add_custom_command(
                      TARGET run_${product}_${revision_id}_unit_tests
                      POST_BUILD

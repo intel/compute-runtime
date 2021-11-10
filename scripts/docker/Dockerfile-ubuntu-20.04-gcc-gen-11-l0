@@ -8,7 +8,7 @@ RUN apt-get -y update ; apt-get --no-install-recommends install -y --allow-unaut
     apt-get -y update ; DEBIAN_FRONTEND="noninteractive" apt-get --no-install-recommends install -y --allow-unauthenticated \
     cmake make g++ pkg-config libigc-dev intel-gmmlib-dev libze-loader-dev
 RUN mkdir /root/build; cd /root/build ; cmake -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSKIP_NEO_UNIT_TESTS=TRUE \
+    -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DNEO_SKIP_OCL_UNIT_TESTS=TRUE \
     -DSUPPORT_GEN8=0 -DSUPPORT_GEN9=0 -DSUPPORT_GEN11=1 -DSUPPORT_GEN12LP=0 \
     -DBUILD_WITH_L0=1 ../neo; \
     make -j `nproc` ze_intel_gpu run_unit_tests

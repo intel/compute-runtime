@@ -68,7 +68,7 @@ Example:
 
 ```shell
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DSKIP_UNIT_TESTS=1 ../neo
+cmake -DCMAKE_BUILD_TYPE=Release -DNEO_SKIP_UNIT_TESTS=1 ../neo
 make -j`nproc`
 sudo make install
 ```

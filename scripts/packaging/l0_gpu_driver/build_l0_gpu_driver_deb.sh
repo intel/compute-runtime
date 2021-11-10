@@ -12,7 +12,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_DIR="$( cd "$( dirname "${DIR}/../../../../" )" && pwd )"
 
 BUILD_DIR="${REPO_DIR}/../build_l0_gpu_driver"
-SKIP_UNIT_TESTS=${SKIP_UNIT_TESTS:-FALSE}
+NEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS:-FALSE}
 
 BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
 
@@ -130,9 +130,9 @@ EOF
       export DH_INTERNAL_BUILDFLAGS=1
     fi
     if [ "${ENABLE_ULT}" == "0" ]; then
-        SKIP_UNIT_TESTS="TRUE"
+        NEO_SKIP_UNIT_TESTS="TRUE"
     fi
-    export SKIP_UNIT_TESTS
+    export NEO_SKIP_UNIT_TESTS
 
     dch -v ${PKG_VERSION} -m "build $PKG_VERSION"
     dpkg-buildpackage -j`nproc --all` -us -uc -b -rfakeroot

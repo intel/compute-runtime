@@ -54,7 +54,7 @@ exposing hardware capabilities to applications.
    -DNEO_VERSION_BUILD=%{build_id} \
    -DCMAKE_BUILD_TYPE=%{build_type} \
    -DCMAKE_INSTALL_PREFIX=/usr \
-   -DSKIP_UNIT_TESTS=TRUE \
+   -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DRELEASE_WITH_REGKEYS=TRUE \
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \

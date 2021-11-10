@@ -45,7 +45,7 @@ cd build
    -DNEO_VERSION_BUILD=%{ver} \
    -DCMAKE_BUILD_TYPE=Release \
    -DBUILD_WITH_L0=0 \
-   -DSKIP_UNIT_TESTS=1 \
+   -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DRELEASE_WITH_REGKEYS=1
 %make_build

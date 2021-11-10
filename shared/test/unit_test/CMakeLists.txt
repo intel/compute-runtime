@@ -5,7 +5,7 @@
 #
 
 set(SHARED_TEST_PROJECTS_FOLDER "neo shared")
-if(NOT SKIP_UNIT_TESTS)
+if(NOT NEO_SKIP_UNIT_TESTS)
 
   add_custom_target(unit_tests)
 
@@ -67,7 +67,7 @@ if(NOT SKIP_UNIT_TESTS)
   add_subdirectory(${NEO_SHARED_TEST_DIRECTORY}/common "${NEO_BUILD_DIR}/shared/test/common")
   add_subdirectory_unique(mocks)
 
-  if(NOT SKIP_SHARED_UNIT_TESTS)
+  if(NOT NEO_SKIP_SHARED_UNIT_TESTS)
     add_subdirectories()
   endif()
 
