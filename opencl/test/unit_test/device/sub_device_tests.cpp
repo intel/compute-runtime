@@ -394,6 +394,7 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndMoreThanOneCcsWhenCreatin
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
     DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
@@ -517,6 +518,8 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGe
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
+
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
     }
@@ -567,6 +570,8 @@ TEST_F(EngineInstancedDeviceTests, givenEngineInstancedSubDeviceWhenEngineCreati
 TEST_F(EngineInstancedDeviceTests, givenMultipleSubDevicesWhenCallingGetSubDeviceThenReturnCorrectObject) {
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
+
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -621,6 +626,8 @@ TEST_F(EngineInstancedDeviceTests, givenMultipleClSubDevicesWhenCallingGetSubDev
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
+
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
     }
@@ -646,6 +653,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskSetWhenCreatingDevicesThenFi
                                                    {false, false, false, false},
                                                    {false, false, true, true}};
 
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0.0, 0.0.1, 0.0.2, 0.2.2, 0.2.3, 0.1.5");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
@@ -693,6 +701,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceWhenC
     constexpr uint32_t create2ndLevelAsEngineInstanced[2] = {false, true};
     constexpr uint32_t engineInstanced2ndLevelEngineIndex = 1;
 
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.1.1");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
@@ -802,6 +811,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
     DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.4");
@@ -821,6 +831,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 1;
 
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
     DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
@@ -873,6 +884,8 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskWhenCreatingClSubDevicesThen
 HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, IsAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
+
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
@@ -901,6 +914,8 @@ HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingC
 HWTEST_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenCreatingProgramThenAssignAllSubDevices) {
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
+
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
