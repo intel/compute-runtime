@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "gtest/gtest.h"
 
@@ -292,6 +293,12 @@ HWTEST_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress)
 HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBlitThenHeightIsTwo) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
+
+    HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    REQUIRE_BLITTER_OR_SKIP(hwInfo);
+
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -307,13 +314,19 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
     {
         auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
         EXPECT_EQ(cmd->getDestinationY2CoordinateBottom(), 2u);
-        EXPECT_EQ(cmd->getDestinationPitch(), BlitterConstants::maxBlitWidth);
+        EXPECT_EQ(cmd->getDestinationPitch(), BlitterConstants::maxBlitWidth * sizeof(uint32_t));
     }
 }
 
 HWTEST_F(BlitTests, givenMemorySizeIsLessThanTwicenMaxWidthWhenFillPatternWithBlitThenHeightIsOne) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
+
+    HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    REQUIRE_BLITTER_OR_SKIP(hwInfo);
+
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));

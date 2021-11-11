@@ -255,7 +255,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
         }
         tmpCmd.setDestinationX2CoordinateRight(static_cast<uint32_t>(width));
         tmpCmd.setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
-        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
+        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * patternSize));
 
         appendBlitCommandsForFillBuffer(dstAlloc, tmpCmd, rootDeviceEnvironment);
 
