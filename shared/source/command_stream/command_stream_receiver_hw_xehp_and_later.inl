@@ -56,7 +56,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
     }
 
     size_t size = 0;
-    auto hwInfo = peekHwInfo();
+    auto &hwInfo = peekHwInfo();
     if (isComputeModeNeeded()) {
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
@@ -168,7 +168,7 @@ void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
-    auto hwInfo = peekHwInfo();
+    auto &hwInfo = peekHwInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
@@ -189,7 +189,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipeline
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
-    auto hwInfo = peekHwInfo();
+    auto &hwInfo = peekHwInfo();
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     bool debuggingEnabled = device.getDebugger() != nullptr;

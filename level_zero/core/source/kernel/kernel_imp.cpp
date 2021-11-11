@@ -406,8 +406,9 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
 
     if (NEO::DebugManager.flags.EnableComputeWorkSizeND.get()) {
         auto usesImages = getImmutableData()->getDescriptor().kernelAttributes.flags.usesImages;
-        const auto hwInfo = &module->getDevice()->getNEODevice()->getHardwareInfo();
-        const auto &deviceInfo = module->getDevice()->getNEODevice()->getDeviceInfo();
+        auto neoDevice = module->getDevice()->getNEODevice();
+        const auto hwInfo = &neoDevice->getHardwareInfo();
+        const auto &deviceInfo = neoDevice->getDeviceInfo();
         uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
         uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
 

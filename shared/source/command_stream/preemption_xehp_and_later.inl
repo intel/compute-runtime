@@ -14,7 +14,7 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    auto hwInfo = device.getHardwareInfo();
+    auto &hwInfo = device.getHardwareInfo();
     bool debuggingEnabled = device.getDebugger() != nullptr;
 
     if (debuggingEnabled) {
@@ -73,7 +73,7 @@ template <>
 size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, bool isRcs) {
     size_t size = 0;
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
-    auto hwInfo = device.getHardwareInfo();
+    auto &hwInfo = device.getHardwareInfo();
 
     if (debuggingEnabled) {
         HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);

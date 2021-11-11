@@ -332,7 +332,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
                 POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                 baseAddr,
                 Event::STATE_CLEARED,
-                commandContainer.getDevice()->getHardwareInfo(),
+                hwInfo,
                 args);
             baseAddr += event->getSinglePacketSize();
         }

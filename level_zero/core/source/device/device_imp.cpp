@@ -821,7 +821,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
                                                               stateSaveAreaHeader.size());
     }
 
-    for (auto &neoSubDevice : device->neoDevice->getSubDevices()) {
+    for (auto &neoSubDevice : neoDevice->getSubDevices()) {
         if (!neoSubDevice) {
             continue;
         }

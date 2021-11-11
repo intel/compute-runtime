@@ -14,7 +14,7 @@
 namespace L0 {
 
 ze_device_thread_t DebugSession::convertToPhysical(ze_device_thread_t thread, uint32_t &deviceIndex) {
-    auto hwInfo = connectedDevice->getHwInfo();
+    auto &hwInfo = connectedDevice->getHwInfo();
     auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
 
     if (connectedDevice->getNEODevice()->isSubDevice()) {
@@ -28,7 +28,7 @@ ze_device_thread_t DebugSession::convertToPhysical(ze_device_thread_t thread, ui
 }
 
 EuThread::ThreadId DebugSession::convertToThreadId(ze_device_thread_t thread) {
-    auto hwInfo = connectedDevice->getHwInfo();
+    auto &hwInfo = connectedDevice->getHwInfo();
     auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
 
     UNRECOVERABLE_IF(!DebugSession::isSingleThread(thread));
@@ -46,7 +46,7 @@ EuThread::ThreadId DebugSession::convertToThreadId(ze_device_thread_t thread) {
 }
 
 ze_device_thread_t DebugSession::convertToApi(EuThread::ThreadId threadId) {
-    auto hwInfo = connectedDevice->getHwInfo();
+    auto &hwInfo = connectedDevice->getHwInfo();
 
     ze_device_thread_t thread = {static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
 
@@ -59,7 +59,7 @@ ze_device_thread_t DebugSession::convertToApi(EuThread::ThreadId threadId) {
 DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device) {
 
     if (connectedDevice) {
-        auto hwInfo = connectedDevice->getHwInfo();
+        auto &hwInfo = connectedDevice->getHwInfo();
         const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
         const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
         const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
@@ -140,7 +140,7 @@ std::vector<EuThread::ThreadId> DebugSession::getSingleThreadsForDevice(uint32_t
 }
 
 bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
-    auto hwInfo = connectedDevice->getHwInfo();
+    auto &hwInfo = connectedDevice->getHwInfo();
     uint32_t deviceIndex = 0;
     auto physicalThread = convertToPhysical(thread, deviceIndex);
     auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
@@ -204,7 +204,7 @@ bool DebugSession::isBindlessSystemRoutine() {
 }
 
 size_t DebugSession::getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId threadId) {
-    auto hwInfo = connectedDevice->getHwInfo();
+    auto &hwInfo = connectedDevice->getHwInfo();
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
