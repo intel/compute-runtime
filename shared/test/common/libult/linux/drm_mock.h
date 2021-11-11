@@ -107,6 +107,11 @@ class DrmMock : public Drm {
         return allowDebugAttach;
     }
 
+    void queryPageFaultSupport() override {
+        Drm::queryPageFaultSupport();
+        queryPageFaultSupportCalled = true;
+    }
+
     static const int mockFd = 33;
 
     bool failRetTopology = false;
@@ -153,6 +158,8 @@ class DrmMock : public Drm {
     uint32_t receivedContextParamRequestCount = 0;
     drm_i915_gem_context_param receivedContextParamRequest = {};
     uint64_t receivedRecoverableContextValue = std::numeric_limits<uint64_t>::max();
+
+    bool queryPageFaultSupportCalled = false;
 
     //DRM_IOCTL_I915_GEM_EXECBUFFER2
     drm_i915_gem_execbuffer2 execBuffer = {0};
