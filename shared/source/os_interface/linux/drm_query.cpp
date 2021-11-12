@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/linux/local_memory_helper.h"
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/linux/system_info_impl.h"
 
 #include "drm_neo.h"
 #include "drm_query_flags.h"
@@ -102,10 +103,18 @@ bool Drm::isDebugAttachAvailable() {
 }
 
 bool Drm::querySystemInfo() {
-    return false;
-}
+    auto length = 0;
 
-void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {}
+    auto deviceBlobQuery = this->query(DRM_I915_QUERY_HWCONFIG_TABLE, DrmQueryItemFlags::empty, length);
+    auto deviceBlob = reinterpret_cast<uint32_t *>(deviceBlobQuery.get());
+    if (!deviceBlob) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
+        return false;
+    }
+    this->systemInfo.reset(new SystemInfoImpl(deviceBlob, length));
+
+    return true;
+}
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     this->cacheInfo.reset(new CacheInfoImpl());
