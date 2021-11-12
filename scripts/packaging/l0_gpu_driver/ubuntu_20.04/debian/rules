@@ -4,6 +4,7 @@ ver = xxx
 %:
 	dh $@ --builddir build/ --buildsystem=cmake+ninja
 
+NEO_DISABLE_BUILTINS_COMPILATION ?= FALSE
 RELEASE_WITH_REGKEYS ?= FALSE
 IGDRCL_FORCE_USE_LIBVA ?= FALSE
 NEO_SKIP_UNIT_TESTS ?= FALSE
@@ -13,9 +14,10 @@ override_dh_auto_configure:
 		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
 		-DNEO_VERSION_BUILD=$(ver) \
 		-DNEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS} \
+		-DNEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION} \
+		-DNEO_BUILD_WITH_OCL=FALSE \
 		-DRELEASE_WITH_REGKEYS=${RELEASE_WITH_REGKEYS} \
 		-DIGDRCL_FORCE_USE_LIBVA=${IGDRCL_FORCE_USE_LIBVA} \
-		-DNEO_BUILD_WITH_OCL=FALSE \
 		-DL0_INSTALL_UDEV_RULES=1 \
 		-DUDEV_RULES_DIR=/etc/udev/rules.d/ \
 		-Wno-dev
@@ -25,9 +27,9 @@ override_dh_auto_build:
 
 override_dh_install:
 	rm -rf debian/intel-level-zero-gpu/etc/
-	rm -rf debian/intel-level-zero-gpu/usr/lib/x86_64-linux-gnu/intel-opencl/
+	rm -rf debian/intel-level-zero-gpu/usr/lib/${DEB_TARGET_MULTIARCH}/intel-opencl/
 	rm -rf debian/intel-level-zero-gpu/usr/bin/
 	rm -rf debian/intel-level-zero-gpu/usr/include/ocloc_api.h
-	rm -rf debian/intel-level-zero-gpu/usr/lib/x86_64-linux-gnu/libocloc.so
+	rm -rf debian/intel-level-zero-gpu/usr/lib/${DEB_TARGET_MULTIARCH}/libocloc.so
 	rm -rvf debian/intel-level-zero-gpu/usr/lib/debug
 	dh_install
