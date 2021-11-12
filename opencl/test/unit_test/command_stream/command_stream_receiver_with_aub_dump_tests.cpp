@@ -536,6 +536,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     EXPECT_EQ(1u, csrWithAubDump->peekLatestSentTaskCount());
     if (createAubCSR) {
         EXPECT_EQ(csrWithAubDump->peekLatestSentTaskCount(), csrWithAubDump->getAubMockCsr().peekLatestSentTaskCount());
+        EXPECT_EQ(csrWithAubDump->peekLatestSentTaskCount(), csrWithAubDump->getAubMockCsr().peekLatestFlushedTaskCount());
     }
 
     memoryManager->freeGraphicsMemoryImpl(commandBuffer);

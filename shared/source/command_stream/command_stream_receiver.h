@@ -214,6 +214,9 @@ class CommandStreamReceiver {
     void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
         this->latestSentTaskCount = latestSentTaskCount;
     }
+    void setLatestFlushedTaskCount(uint32_t latestFlushedTaskCount) {
+        this->latestFlushedTaskCount = latestFlushedTaskCount;
+    }
 
     virtual uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) = 0;
 

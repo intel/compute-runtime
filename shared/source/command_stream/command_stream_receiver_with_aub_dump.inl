@@ -36,7 +36,9 @@ bool CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBuffer, 
     if (aubCSR) {
         aubCSR->flush(batchBuffer, allocationsForResidency);
         aubCSR->setLatestSentTaskCount(BaseCSR::peekLatestSentTaskCount());
+        aubCSR->setLatestFlushedTaskCount(BaseCSR::peekLatestSentTaskCount());
     }
+
     return BaseCSR::flush(batchBuffer, allocationsForResidency);
 }
 
