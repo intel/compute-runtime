@@ -6,12 +6,12 @@
  */
 
 #pragma once
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
-
-#include "gmock/gmock.h"
 
 namespace L0 {
 namespace ult {
@@ -45,41 +45,13 @@ struct Mock<CommandQueue> : public CommandQueue {
     Mock(L0::Device *device = nullptr, NEO::CommandStreamReceiver *csr = nullptr, const ze_command_queue_desc_t *desc = &default_cmd_queue_desc);
     ~Mock() override;
 
-    MOCK_METHOD(ze_result_t,
-                createFence,
-                (const ze_fence_desc_t *desc,
-                 ze_fence_handle_t *phFence),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                destroy,
-                (),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                executeCommandLists,
-                (uint32_t numCommandLists,
-                 ze_command_list_handle_t *phCommandLists,
-                 ze_fence_handle_t hFence,
-                 bool performMigration),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                executeCommands,
-                (uint32_t numCommands,
-                 void *phCommands,
-                 ze_fence_handle_t hFence),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                synchronize,
-                (uint64_t timeout),
-                (override));
-    MOCK_METHOD(void,
-                dispatchTaskCountWrite,
-                (NEO::LinearStream & commandStream,
-                 bool flushDataCache),
-                (override));
-    MOCK_METHOD(bool,
-                getPreemptionCmdProgramming,
-                (),
-                (override));
+    ADDMETHOD_NOBASE(createFence, ze_result_t, ZE_RESULT_SUCCESS, (const ze_fence_desc_t *desc, ze_fence_handle_t *phFence));
+    ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(executeCommandLists, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, ze_fence_handle_t hFence, bool performMigration));
+    ADDMETHOD_NOBASE(executeCommands, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t numCommands, void *phCommands, ze_fence_handle_t hFence));
+    ADDMETHOD_NOBASE(synchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
+    ADDMETHOD_NOBASE_VOIDRETURN(dispatchTaskCountWrite, (NEO::LinearStream & commandStream, bool flushDataCache));
+    ADDMETHOD_NOBASE(getPreemptionCmdProgramming, bool, false, ());
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
