@@ -19,6 +19,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -950,6 +951,80 @@ HWTEST_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenCreatingProgr
     ASSERT_EQ(2u, associatedSubDevices.size());
     EXPECT_EQ(clSubSubDevice0, associatedSubDevices[0]);
     EXPECT_EQ(clSubSubDevice1, associatedSubDevices[1]);
+}
+
+HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesAreAssignedUsingRoundRobin) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 4;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto &hwInfo = rootDevice->getHardwareInfo();
+    EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+
+    auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
+    cl_device_id device_ids[] = {clRootDevice.get()};
+    ClDeviceVector deviceVector{device_ids, 1};
+    MockContext context(deviceVector);
+
+    std::array<std::unique_ptr<MockCommandQueueHw<FamilyType>>, 24> cmdQs;
+    for (auto &cmdQ : cmdQs) {
+        cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, clRootDevice.get(), nullptr);
+    }
+
+    const auto &defaultEngine = clRootDevice->getDefaultEngine();
+    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
+
+    auto defaultEngineGroupIndex = clRootDevice->getDevice().getIndexOfNonEmptyEngineGroup(engineGroupType);
+    auto engines = clRootDevice->getDevice().getEngineGroups()[defaultEngineGroupIndex];
+
+    for (size_t i = 0; i < cmdQs.size(); i++) {
+        auto engineIndex = i % engines.size();
+        auto expectedCsr = engines[engineIndex].commandStreamReceiver;
+        auto csr = &cmdQs[i]->getGpgpuCommandStreamReceiver();
+
+        EXPECT_EQ(csr, expectedCsr);
+    }
+}
+
+HWTEST_F(EngineInstancedDeviceTests, givenEnableCmdQRoundRobindEngineAssignDisabledWenCreateMultipleCommandQueuesThenDefaultEngineAssigned) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 4;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(0);
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto &hwInfo = rootDevice->getHardwareInfo();
+    EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+
+    auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
+    cl_device_id device_ids[] = {clRootDevice.get()};
+    ClDeviceVector deviceVector{device_ids, 1};
+    MockContext context(deviceVector);
+
+    std::array<std::unique_ptr<MockCommandQueueHw<FamilyType>>, 24> cmdQs;
+    for (auto &cmdQ : cmdQs) {
+        cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, clRootDevice.get(), nullptr);
+    }
+
+    const auto &defaultEngine = clRootDevice->getDefaultEngine();
+
+    for (auto &cmdQ : cmdQs) {
+        auto expectedCsr = defaultEngine.commandStreamReceiver;
+        auto csr = &cmdQ->getGpgpuCommandStreamReceiver();
+
+        EXPECT_EQ(csr, expectedCsr);
+    }
 }
 
 TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) {

@@ -108,6 +108,7 @@ class HwHelper {
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
+    virtual bool isAssignEngineRoundRobinSupported() const = 0;
     virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
@@ -365,6 +366,8 @@ class HwHelperHw : public HwHelper {
     void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const override;
 
     bool additionalPipeControlArgsRequired() const override;
+
+    bool isAssignEngineRoundRobinSupported() const override;
 
     bool isEngineTypeRemappingToHwSpecificRequired() const override;
 

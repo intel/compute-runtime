@@ -22,6 +22,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/linux/drm_wrap.h"
 #include "opencl/test/unit_test/linux/mock_os_layer.h"
@@ -800,6 +801,24 @@ TEST_F(DrmTests, whenCreateDrmIsCalledThenProperHwInfoIsSetup) {
 
 TEST(DirectSubmissionControllerTest, whenCheckDirectSubmissionControllerSupportThenReturnsTrue) {
     EXPECT_TRUE(DirectSubmissionController::isSupported());
+}
+
+TEST(CommandQueueTest, whenCheckEngineRoundRobinAssignThenReturnsTrue) {
+    EXPECT_FALSE(CommandQueue::isAssignEngineRoundRobinEnabled());
+}
+
+TEST(CommandQueueTest, givenEnableCmdQRoundRobindEngineAssignSetWhenCheckEngineRoundRobinAssignThenReturnsTrue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
+
+    EXPECT_TRUE(CommandQueue::isAssignEngineRoundRobinEnabled());
+}
+
+TEST(CommandQueueTest, givenEnableCmdQRoundRobindEngineAssignSetZeroWhenCheckEngineRoundRobinAssignThenReturnsTrue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(0);
+
+    EXPECT_FALSE(CommandQueue::isAssignEngineRoundRobinEnabled());
 }
 
 TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {

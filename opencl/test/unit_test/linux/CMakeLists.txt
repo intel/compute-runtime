@@ -27,6 +27,7 @@ add_executable(igdrcl_${target_name}
                ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
+               ${NEO_SOURCE_DIR}/opencl/source/dll/linux/command_queue_linux_dll.cpp
                ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}drm_other_requests.cpp
 )
