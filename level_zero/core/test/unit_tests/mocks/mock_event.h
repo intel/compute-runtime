@@ -6,19 +6,11 @@
  */
 
 #pragma once
-#include "level_zero/core/source/device/device.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
-
-#include "gmock/gmock.h"
-
-#include <vector>
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
 
 namespace L0 {
 namespace ult {
@@ -43,14 +35,13 @@ struct Mock<Event> : public Event {
     Mock();
     ~Mock() override;
 
-    MOCK_METHOD3(create, L0::Event *(::L0::EventPool *eventPool, const ze_event_desc_t *desc, ::L0::Device *device));
-    MOCK_METHOD0(destroy, ze_result_t());
-    MOCK_METHOD0(hostSignal, ze_result_t());
-    MOCK_METHOD1(hostSynchronize, ze_result_t(uint64_t timeout));
-    MOCK_METHOD0(queryStatus, ze_result_t());
-    MOCK_METHOD0(reset, ze_result_t());
-    MOCK_METHOD1(queryKernelTimestamp, ze_result_t(ze_kernel_timestamp_result_t *dstptr));
-    MOCK_METHOD3(queryTimestampsExp, ze_result_t(::L0::Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps));
+    ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(hostSignal, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
+    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(queryKernelTimestamp, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_timestamp_result_t * dstptr));
+    ADDMETHOD_NOBASE(queryTimestampsExp, ze_result_t, ZE_RESULT_SUCCESS, (::L0::Device * device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps));
 
     // Fake an allocation for event memory
     alignas(16) uint32_t memory = -1;
@@ -61,28 +52,17 @@ struct Mock<Event> : public Event {
 
 template <>
 struct Mock<EventPool> : public EventPool {
-    Mock();
-    ~Mock() override;
+    Mock() = default;
 
-    MOCK_METHOD0(destroy, ze_result_t());
-    MOCK_METHOD0(getPoolSize, size_t());
-    MOCK_METHOD0(getPoolUsedCount, uint32_t());
-    MOCK_METHOD1(getIpcHandle, ze_result_t(ze_ipc_event_pool_handle_t *pIpcHandle));
-    MOCK_METHOD0(closeIpcHandle, ze_result_t());
-    MOCK_METHOD2(createEvent, ze_result_t(const ze_event_desc_t *desc, ze_event_handle_t *phEvent));
-    MOCK_METHOD2(reserveEventFromPool, ze_result_t(int index, ::L0::Event *event));
-    MOCK_METHOD1(releaseEventToPool, ze_result_t(::L0::Event *event));
-    MOCK_METHOD0(getDevice, Device *());
-    MOCK_METHOD0(getEventSize, uint32_t());
-
-    std::vector<int> pool;
+    ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(getIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_event_pool_handle_t * pIpcHandle));
+    ADDMETHOD_NOBASE(closeIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(createEvent, ze_result_t, ZE_RESULT_SUCCESS, (const ze_event_desc_t *desc, ze_event_handle_t *phEvent));
+    ADDMETHOD_NOBASE(getDevice, Device *, nullptr, ());
+    ADDMETHOD_NOBASE(getEventSize, uint32_t, 0u, ());
 
     using EventPool::eventPoolAllocations;
 };
 
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
@@ -35,22 +34,10 @@ struct Mock<Fence> : public Fence {
     }
     ~Mock() override = default;
 
-    MOCK_METHOD(ze_result_t,
-                destroy,
-                (),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                hostSynchronize,
-                (uint64_t),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                queryStatus,
-                (),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                reset,
-                (),
-                (override));
+    ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
+    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
 
     // Fake an allocation for event memory
     alignas(16) uint32_t memory = -1;
