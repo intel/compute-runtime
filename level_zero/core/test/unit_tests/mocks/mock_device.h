@@ -6,10 +6,10 @@
  */
 
 #pragma once
-
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -30,167 +30,48 @@ using Device = WhiteBox<::L0::Device>;
 
 template <>
 struct Mock<Device> : public Device {
-    Mock();
-    ~Mock() override;
+    Mock() = default;
 
-    MOCK_METHOD(uint32_t,
-                getRootDeviceIndex,
-                (),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                canAccessPeer,
-                (ze_device_handle_t hPeerDevice,
-                 ze_bool_t *value),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                createCommandList,
-                (const ze_command_list_desc_t *desc,
-                 ze_command_list_handle_t *commandList),
-                (override));
-
-    MOCK_METHOD(ze_result_t,
-                createCommandListImmediate,
-                (const ze_command_queue_desc_t *desc,
-                 ze_command_list_handle_t *commandList),
-                (override));
-
-    MOCK_METHOD(ze_result_t,
-                createCommandQueue,
-                (const ze_command_queue_desc_t *desc,
-                 ze_command_queue_handle_t *commandQueue),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                createImage,
-                (const ze_image_desc_t *desc,
-                 ze_image_handle_t *phImage),
-                (override));
-
-    MOCK_METHOD(ze_result_t,
-                createModule,
-                (const ze_module_desc_t *desc,
-                 ze_module_handle_t *module,
-                 ze_module_build_log_handle_t *buildLog,
-                 ModuleType type),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                createSampler,
-                (const ze_sampler_desc_t *pDesc,
-                 ze_sampler_handle_t *phSampler),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getComputeProperties,
-                (ze_device_compute_properties_t * pComputeProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getP2PProperties,
-                (ze_device_handle_t hPeerDevice,
-                 ze_device_p2p_properties_t *pP2PProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getKernelProperties,
-                (ze_device_module_properties_t * pKernelProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getMemoryProperties,
-                (uint32_t * pCount,
-                 ze_device_memory_properties_t *pMemProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getMemoryAccessProperties,
-                (ze_device_memory_access_properties_t * pMemAccessProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getProperties,
-                (ze_device_properties_t * pDeviceProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getSubDevices,
-                (uint32_t * pCount,
-                 ze_device_handle_t *phSubdevices),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getCacheProperties,
-                (uint32_t * pCount,
-                 ze_device_cache_properties_t *pCacheProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                reserveCache,
-                (size_t cacheLevel,
-                 size_t cacheReservationSize),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                setCacheAdvice,
-                (void *ptr,
-                 size_t regionSize,
-                 ze_cache_ext_region_t cacheRegion),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                imageGetProperties,
-                (const ze_image_desc_t *desc,
-                 ze_image_properties_t *pImageProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getCommandQueueGroupProperties,
-                (uint32_t * pCount,
-                 ze_command_queue_group_properties_t *pCommandQueueGroupProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getDeviceImageProperties,
-                (ze_device_image_properties_t * pDeviceImageProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getExternalMemoryProperties,
-                (ze_device_external_memory_properties_t * pExternalMemoryProperties),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                getGlobalTimestamps,
-                (uint64_t * hostTimestamp,
-                 uint64_t *deviceTimestamp),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                systemBarrier,
-                (),
-                (override));
+    ADDMETHOD_NOBASE(getRootDeviceIndex, uint32_t, 0u, ());
+    ADDMETHOD_NOBASE(canAccessPeer, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_bool_t *value));
+    ADDMETHOD_NOBASE(createCommandList, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList));
+    ADDMETHOD_NOBASE(createCommandListImmediate, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_queue_desc_t *desc, ze_command_list_handle_t *commandList));
+    ADDMETHOD_NOBASE(createCommandQueue, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_queue_desc_t *desc, ze_command_queue_handle_t *commandQueue));
+    ADDMETHOD_NOBASE(createImage, ze_result_t, ZE_RESULT_SUCCESS, (const ze_image_desc_t *desc, ze_image_handle_t *phImage));
+    ADDMETHOD_NOBASE(createModule, ze_result_t, ZE_RESULT_SUCCESS, (const ze_module_desc_t *desc, ze_module_handle_t *module, ze_module_build_log_handle_t *buildLog, ModuleType type));
+    ADDMETHOD_NOBASE(createSampler, ze_result_t, ZE_RESULT_SUCCESS, (const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler));
+    ADDMETHOD_NOBASE(getComputeProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_compute_properties_t * pComputeProperties));
+    ADDMETHOD_NOBASE(getP2PProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_device_p2p_properties_t *pP2PProperties));
+    ADDMETHOD_NOBASE(getKernelProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_module_properties_t * pKernelProperties));
+    ADDMETHOD_NOBASE(getMemoryProperties, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, ze_device_memory_properties_t *pMemProperties));
+    ADDMETHOD_NOBASE(getMemoryAccessProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_memory_access_properties_t * pMemAccessProperties));
+    ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_properties_t * pDeviceProperties));
+    ADDMETHOD_NOBASE(getSubDevices, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, ze_device_handle_t *phSubdevices));
+    ADDMETHOD_NOBASE(getCacheProperties, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, ze_device_cache_properties_t *pCacheProperties));
+    ADDMETHOD_NOBASE(reserveCache, ze_result_t, ZE_RESULT_SUCCESS, (size_t cacheLevel, size_t cacheReservationSize));
+    ADDMETHOD_NOBASE(setCacheAdvice, ze_result_t, ZE_RESULT_SUCCESS, (void *ptr, size_t regionSize, ze_cache_ext_region_t cacheRegion));
+    ADDMETHOD_NOBASE(imageGetProperties, ze_result_t, ZE_RESULT_SUCCESS, (const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties));
+    ADDMETHOD_NOBASE(getCommandQueueGroupProperties, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, ze_command_queue_group_properties_t *pCommandQueueGroupProperties));
+    ADDMETHOD_NOBASE(getDeviceImageProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_image_properties_t * pDeviceImageProperties));
+    ADDMETHOD_NOBASE(getExternalMemoryProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_external_memory_properties_t * pExternalMemoryProperties));
+    ADDMETHOD_NOBASE(getGlobalTimestamps, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t * hostTimestamp, uint64_t *deviceTimestamp));
+    ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, ());
     // Runtime internal methods
-    MOCK_METHOD(void *,
-                getExecEnvironment,
-                (),
-                (override));
+    ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());
     MOCK_METHOD(NEO::HwHelper &,
                 getHwHelper,
                 (),
                 (override));
-    MOCK_METHOD(bool,
-                isMultiDeviceCapable,
-                (),
-                (const, override));
-    MOCK_METHOD(BuiltinFunctionsLib *,
-                getBuiltinFunctionsLib,
-                (),
-                (override));
-    MOCK_METHOD(uint32_t,
-                getMOCS,
-                (bool l3enabled,
-                 bool l1enabled),
-                (override));
-    MOCK_METHOD(uint32_t,
-                getMaxNumHwThreads,
-                (),
-                (const, override));
+    ADDMETHOD_CONST_NOBASE(isMultiDeviceCapable, bool, false, ());
+    ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltinFunctionsLib *, nullptr, ());
+    ADDMETHOD_CONST_NOBASE(getMaxNumHwThreads, uint32_t, 16u, ());
 
-    MOCK_METHOD(ze_result_t,
-                activateMetricGroups,
-                (uint32_t count,
-                 zet_metric_group_handle_t *phMetricGroups),
-                (override));
+    ADDMETHOD_NOBASE(activateMetricGroups, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));
     MOCK_METHOD(NEO::OSInterface &,
                 getOsInterface,
                 (),
                 (override));
-    MOCK_METHOD(uint32_t,
-                getPlatformInfo,
-                (),
-                (const, override));
+    ADDMETHOD_CONST_NOBASE(getPlatformInfo, uint32_t, 0u, ());
     MOCK_METHOD(MetricContext &,
                 getMetricContext,
                 (),
@@ -199,86 +80,43 @@ struct Mock<Device> : public Device {
                 getHwInfo,
                 (),
                 (const, override));
-    MOCK_METHOD(L0::DriverHandle *,
-                getDriverHandle,
-                (),
-                (override));
-    MOCK_METHOD(void,
-                setDriverHandle,
-                (L0::DriverHandle *),
-                (override));
-
-    MOCK_METHOD(NEO::PreemptionMode,
-                getDevicePreemptionMode,
-                (),
-                (const, override));
+    ADDMETHOD_NOBASE(getDriverHandle, L0::DriverHandle *, nullptr, ());
+    ADDMETHOD_NOBASE_VOIDRETURN(setDriverHandle, (L0::DriverHandle *));
+    ADDMETHOD_CONST_NOBASE(getDevicePreemptionMode, NEO::PreemptionMode, NEO::PreemptionMode::Initial, ());
     MOCK_METHOD(const NEO::DeviceInfo &,
                 getDeviceInfo,
                 (),
                 (const, override));
-    MOCK_METHOD(NEO::Device *,
-                getNEODevice,
-                (),
-                (override));
+    ADDMETHOD_NOBASE(getNEODevice, NEO::Device *, nullptr, ());
     MOCK_METHOD(void,
                 activateMetricGroups,
                 (),
                 (override));
-    MOCK_METHOD(NEO::GraphicsAllocation *,
-                getDebugSurface,
-                (),
-                (const, override));
-    MOCK_METHOD(NEO::GraphicsAllocation *,
-                allocateManagedMemoryFromHostPtr,
-                (void *buffer,
-                 size_t size,
-                 struct L0::CommandList *commandList),
-                (override));
-    MOCK_METHOD(NEO::GraphicsAllocation *,
-                allocateMemoryFromHostPtr,
-                (const void *buffer,
-                 size_t size),
-                (override));
-    MOCK_METHOD(void,
-                setSysmanHandle,
-                (SysmanDevice *),
-                (override));
-    MOCK_METHOD(SysmanDevice *,
-                getSysmanHandle,
-                (),
-                (override));
-    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) override {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) override {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getDebugProperties(zet_device_debug_properties_t *properties) override {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    DebugSession *getDebugSession(const zet_debug_config_t &config) override {
-        return nullptr;
-    }
+    ADDMETHOD_CONST_NOBASE(getDebugSurface, NEO::GraphicsAllocation *, nullptr, ());
+    ADDMETHOD_NOBASE(allocateManagedMemoryFromHostPtr, NEO::GraphicsAllocation *, nullptr, (void *buffer, size_t size, struct L0::CommandList *commandList));
+    ADDMETHOD_NOBASE(allocateMemoryFromHostPtr, NEO::GraphicsAllocation *, nullptr, (const void *buffer, size_t size));
+    ADDMETHOD_NOBASE_VOIDRETURN(setSysmanHandle, (SysmanDevice *));
+    ADDMETHOD_NOBASE(getSysmanHandle, SysmanDevice *, nullptr, ());
+    ADDMETHOD_NOBASE(getCsrForOrdinalAndIndex, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr, uint32_t ordinal, uint32_t index));
+    ADDMETHOD_NOBASE(getCsrForLowPriority, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr));
+    ADDMETHOD_NOBASE(mapOrdinalForAvailableEngineGroup, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * ordinal));
+    ADDMETHOD_NOBASE(getDebugProperties, ze_result_t, ZE_RESULT_SUCCESS, (zet_device_debug_properties_t * properties));
+    ADDMETHOD_NOBASE(getDebugSession, DebugSession *, nullptr, (const zet_debug_config_t &config));
+    ADDMETHOD_NOBASE_VOIDRETURN(removeDebugSession, ());
+    ADDMETHOD_NOBASE(obtainReusableAllocation, NEO::GraphicsAllocation *, nullptr, (size_t requiredSize, NEO::GraphicsAllocation::AllocationType type))
+    ADDMETHOD_NOBASE_VOIDRETURN(storeReusableAllocation, (NEO::GraphicsAllocation & alloc));
 
     DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) override {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         return nullptr;
     }
 
-    void removeDebugSession() override {}
-
-    NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::GraphicsAllocation::AllocationType type) override {
-        return nullptr;
+    uint32_t getMOCS(bool l3enabled, bool l1enabled) override {
+        if (l3enabled && !l1enabled) {
+            return 2;
+        }
+        return 0;
     }
-
-    void storeReusableAllocation(NEO::GraphicsAllocation &alloc) override {}
 };
 
 template <>

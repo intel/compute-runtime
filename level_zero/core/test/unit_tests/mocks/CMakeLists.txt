@@ -19,7 +19,6 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdqueue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_for_spirv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_for_spirv.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_recompile_built_ins.h

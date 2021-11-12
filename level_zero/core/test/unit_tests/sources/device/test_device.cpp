@@ -2202,11 +2202,8 @@ TEST(zeDevice, givenValidImagePropertiesStructWhenGettingImagePropertiesThenSucc
     ze_result_t result;
     ze_device_image_properties_t imageProperties;
 
-    EXPECT_CALL(device, getDeviceImageProperties(&imageProperties))
-        .Times(1)
-        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
-
     result = zeDeviceGetImageProperties(device.toHandle(), &imageProperties);
+    EXPECT_EQ(1u, device.getDeviceImagePropertiesCalled);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
