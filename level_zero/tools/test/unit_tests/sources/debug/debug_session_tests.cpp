@@ -453,6 +453,36 @@ TEST(DebugSession, givenDifferentThreadsWhenGettingPerThreadScratchOffsetThenCor
     EXPECT_EQ(2 * ptss + ptss * hwInfo.gtSystemInfo.MaxEuPerSubSlice * numThreadsPerEu, size);
 }
 
+TEST(DebugSession, GivenLogsEnabledWhenPrintBitmaskCalledThenBitmaskIsPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+
+    ::testing::internal::CaptureStdout();
+
+    uint64_t bitmask[2] = {0x404080808080, 0x1111ffff1111ffff};
+    DebugSession::printBitmask(reinterpret_cast<uint8_t *>(bitmask), sizeof(bitmask));
+
+    auto output = ::testing::internal::GetCapturedStdout();
+
+    EXPECT_THAT(output, testing::HasSubstr(std::string("\nINFO: Bitmask: ")));
+    EXPECT_THAT(output, testing::HasSubstr(std::string("[0] = 0x0000404080808080")));
+    EXPECT_THAT(output, testing::HasSubstr(std::string("[1] = 0x1111ffff1111ffff")));
+}
+
+TEST(DebugSession, GivenLogsDisabledWhenPrintBitmaskCalledThenBitmaskIsNotPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(0);
+
+    ::testing::internal::CaptureStdout();
+
+    uint64_t bitmask[2] = {0x404080808080, 0x1111ffff1111ffff};
+    DebugSession::printBitmask(reinterpret_cast<uint8_t *>(bitmask), sizeof(bitmask));
+
+    auto output = ::testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(0u, output.size());
+}
+
 using DebugSessionMultiTile = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(DebugSessionMultiTile, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValueReturned) {

@@ -213,4 +213,19 @@ size_t DebugSession::getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId t
     return threadOffset;
 }
 
+void DebugSession::printBitmask(uint8_t *bitmask, size_t bitmaskSize) {
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) {
+
+        DEBUG_BREAK_IF(bitmaskSize % sizeof(uint64_t) != 0);
+
+        PRINT_DEBUGGER_LOG(stdout, "\nINFO: Bitmask: ", "");
+
+        for (size_t i = 0; i < bitmaskSize / sizeof(uint64_t); i++) {
+            uint64_t bitmask64 = 0;
+            memcpy_s(&bitmask64, sizeof(uint64_t), &bitmask[i * sizeof(uint64_t)], sizeof(uint64_t));
+            PRINT_DEBUGGER_LOG(stdout, "\n [%lu] = %#018" PRIx64, static_cast<uint64_t>(i), bitmask64);
+        }
+    }
+}
+
 } // namespace L0

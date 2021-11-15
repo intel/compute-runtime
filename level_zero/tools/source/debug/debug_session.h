@@ -69,6 +69,8 @@ struct DebugSession : _zet_debug_session_handle_t {
         return threadMatch && euMatch && subsliceMatch && sliceMatch;
     }
 
+    static void printBitmask(uint8_t *bitmask, size_t bitmaskSize);
+
     virtual ze_device_thread_t convertToPhysical(ze_device_thread_t thread, uint32_t &deviceIndex);
     virtual EuThread::ThreadId convertToThreadId(ze_device_thread_t thread);
     virtual ze_device_thread_t convertToApi(EuThread::ThreadId threadId);
