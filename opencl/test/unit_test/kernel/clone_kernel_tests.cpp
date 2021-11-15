@@ -427,6 +427,8 @@ TEST_F(CloneKernelTest, GivenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect)
 HWTEST2_F(CloneKernelTest, GivenArgDeviceQueueWhenCloningKernelThenKernelInfoIsCorrect, DeviceEnqueueSupport) {
     pKernelInfo->addArgDevQueue(0, 0x20, sizeof(void *));
 
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device1);
+
     cl_queue_properties queueProps[5] = {
         CL_QUEUE_PROPERTIES,
         CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
