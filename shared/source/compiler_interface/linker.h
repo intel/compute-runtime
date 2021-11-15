@@ -19,6 +19,7 @@ namespace NEO {
 
 class Device;
 class GraphicsAllocation;
+struct KernelDescriptor;
 
 enum class SegmentType : uint32_t {
     Unknown,
@@ -138,7 +139,6 @@ struct LinkerInput {
     bool isValid() const {
         return valid;
     }
-    bool areImplicitArgsRequired(uint32_t instructionsSegmentId) const;
 
     bool undefinedSymbolsAllowed = false;
 
@@ -178,6 +178,7 @@ struct Linker {
     using RelocatedSymbolsMap = std::unordered_map<std::string, RelocatedSymbol>;
     using PatchableSegments = std::vector<PatchableSegment>;
     using UnresolvedExternals = std::vector<UnresolvedExternal>;
+    using KernelDescriptorsT = std::vector<KernelDescriptor *>;
 
     Linker(const LinkerInput &data)
         : data(data) {
@@ -185,7 +186,7 @@ struct Linker {
 
     LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo, const SegmentInfo &globalStringsSegInfo,
                        GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg, const PatchableSegments &instructionsSegments,
-                       UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData, const void *variablesInitData) {
+                       UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData, const void *variablesInitData, const KernelDescriptorsT &kernelDescriptors) {
         bool success = data.isValid();
         auto initialUnresolvedExternalsCount = outUnresolvedExternals.size();
         success = success && processRelocations(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo, globalStringsSegInfo);
@@ -195,6 +196,7 @@ struct Linker {
         patchInstructionsSegments(instructionsSegments, outUnresolvedExternals);
         patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg,
                           outUnresolvedExternals, pDevice, constantsInitData, variablesInitData);
+        resolveImplicitArgs(kernelDescriptors, pDevice);
 
         if (initialUnresolvedExternalsCount < outUnresolvedExternals.size()) {
             return LinkingStatus::LinkedPartially;
@@ -224,8 +226,12 @@ struct Linker {
                            std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
                            const void *constantsInitData, const void *variablesInitData);
 
+    void resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, Device *pDevice);
+
     template <typename PatchSizeT>
     void patchIncrement(Device *pDevice, GraphicsAllocation *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue);
+
+    std::unordered_map<uint32_t /*ISA segment id*/, uint32_t * /*implicit args relocation address to patch*/> pImplicitArgsRelocationAddresses;
 };
 
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);

@@ -15,6 +15,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
@@ -302,8 +303,9 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
     }
     UNRECOVERABLE_IF(data.getRelocationsInInstructionSegments().size() > instructionsSegments.size());
     auto segIt = instructionsSegments.begin();
+    uint32_t segId = 0u;
     for (auto relocsIt = data.getRelocationsInInstructionSegments().begin(), relocsEnd = data.getRelocationsInInstructionSegments().end();
-         relocsIt != relocsEnd; ++relocsIt, ++segIt) {
+         relocsIt != relocsEnd; ++relocsIt, ++segIt, ++segId) {
         auto &thisSegmentRelocs = *relocsIt;
         const PatchableSegment &instSeg = *segIt;
         for (const auto &relocation : thisSegmentRelocs) {
@@ -313,7 +315,7 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
             UNRECOVERABLE_IF(nullptr == instSeg.hostPointer);
             auto relocAddress = ptrOffset(instSeg.hostPointer, static_cast<uintptr_t>(relocation.offset));
             if (relocation.symbolName == implicitArgsRelocationSymbolName) {
-                *reinterpret_cast<uint32_t *>(relocAddress) = sizeof(ImplicitArgs);
+                pImplicitArgsRelocationAddresses.insert({segId, reinterpret_cast<uint32_t *>(relocAddress)});
                 continue;
             }
             auto symbolIt = relocatedSymbols.find(relocation.symbolName);
@@ -463,12 +465,15 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
     }
 }
 
-bool LinkerInput::areImplicitArgsRequired(uint32_t instructionsSegmentId) const {
-    if (relocations.size() > instructionsSegmentId) {
-        const auto &segmentRelocations = relocations[instructionsSegmentId];
-        return (segmentRelocations.end() != std::find_if(segmentRelocations.begin(), segmentRelocations.end(), [&](const auto &relocation) { return relocation.symbolName == implicitArgsRelocationSymbolName; }));
+void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, Device *pDevice) {
+    for (auto i = 0u; i < kernelDescriptors.size(); i++) {
+        UNRECOVERABLE_IF(!kernelDescriptors[i]);
+        KernelDescriptor &kernelDescriptor = *kernelDescriptors[i];
+        auto pImplicitArgsReloc = pImplicitArgsRelocationAddresses.find(i);
+        kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = pImplicitArgsReloc != pImplicitArgsRelocationAddresses.end();
+        if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
+            *pImplicitArgsReloc->second = sizeof(ImplicitArgs);
+        }
     }
-    return false;
 }
-
 } // namespace NEO

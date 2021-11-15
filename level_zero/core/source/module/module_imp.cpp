@@ -658,13 +658,16 @@ bool ModuleImp::linkBinary() {
     }
     Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;
+    Linker::KernelDescriptorsT kernelDescriptors;
     if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         patchedIsaTempStorage.reserve(this->kernelImmDatas.size());
+        kernelDescriptors.reserve(this->kernelImmDatas.size());
         for (const auto &kernelInfo : this->translationUnit->programInfo.kernelInfos) {
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
             patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
             isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
+            kernelDescriptors.push_back(&kernelInfo->kernelDescriptor);
         }
     }
 
@@ -672,7 +675,7 @@ bool ModuleImp::linkBinary() {
                                   globalsForPatching, constantsForPatching,
                                   isaSegmentsForPatching, unresolvedExternalsInfo, this->device->getNEODevice(),
                                   translationUnit->programInfo.globalConstants.initData,
-                                  translationUnit->programInfo.globalVariables.initData);
+                                  translationUnit->programInfo.globalVariables.initData, kernelDescriptors);
     this->symbols = linker.extractRelocatedSymbols();
     if (LinkingStatus::LinkedFully != linkStatus) {
         if (moduleBuildLog) {
@@ -701,9 +704,6 @@ bool ModuleImp::linkBinary() {
         }
         kernImmData->getResidencyContainer().insert(kernImmData->getResidencyContainer().end(), this->importedSymbolAllocations.begin(),
                                                     this->importedSymbolAllocations.end());
-
-        auto &kernelDescriptor = const_cast<KernelDescriptor &>(kernImmData->getDescriptor());
-        kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = linkerInput->areImplicitArgsRequired(kernelId);
     }
     return true;
 }
