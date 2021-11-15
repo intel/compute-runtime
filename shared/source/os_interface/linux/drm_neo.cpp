@@ -876,8 +876,4 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     return getMaxGpuFrequencyOfDevice(*this, sysFsPciPath, maxGpuFrequency);
 }
 
-bool Drm::hasPageFaultSupport() const {
-    return pageFaultSupported;
-}
-
 } // namespace NEO
