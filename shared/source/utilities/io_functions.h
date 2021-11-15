@@ -20,6 +20,7 @@ using fseekFuncPtr = decltype(&fseek);
 using ftellFuncPtr = decltype(&ftell);
 using rewindFuncPtr = decltype(&rewind);
 using freadFuncPtr = decltype(&fread);
+using fwriteFuncPtr = decltype(&fwrite);
 
 extern fopenFuncPtr fopenPtr;
 extern vfprintfFuncPtr vfprintfPtr;
@@ -29,6 +30,7 @@ extern fseekFuncPtr fseekPtr;
 extern ftellFuncPtr ftellPtr;
 extern rewindFuncPtr rewindPtr;
 extern freadFuncPtr freadPtr;
+extern fwriteFuncPtr fwritePtr;
 
 inline int fprintf(FILE *fileDesc, char const *const formatStr, ...) {
     va_list args;

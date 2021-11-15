@@ -17,6 +17,7 @@ fseekFuncPtr fseekPtr = &mockFseek;
 ftellFuncPtr ftellPtr = &mockFtell;
 rewindFuncPtr rewindPtr = &mockRewind;
 freadFuncPtr freadPtr = &mockFread;
+fwriteFuncPtr fwritePtr = &mockFwrite;
 
 uint32_t mockFopenCalled = 0;
 FILE *mockFopenReturned = reinterpret_cast<FILE *>(0x40);
@@ -30,6 +31,8 @@ long int mockFtellReturn = 0;
 uint32_t mockRewindCalled = 0;
 uint32_t mockFreadCalled = 0;
 size_t mockFreadReturn = 0;
+uint32_t mockFwriteCalled = 0;
+size_t mockFwriteReturn = 0;
 
 std::unordered_map<std::string, std::string> *mockableEnvValues = nullptr;
 

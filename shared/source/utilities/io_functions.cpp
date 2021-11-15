@@ -17,5 +17,6 @@ fseekFuncPtr fseekPtr = &fseek;
 ftellFuncPtr ftellPtr = &ftell;
 rewindFuncPtr rewindPtr = &rewind;
 freadFuncPtr freadPtr = &fread;
+fwriteFuncPtr fwritePtr = &fwrite;
 } // namespace IoFunctions
 } // namespace NEO

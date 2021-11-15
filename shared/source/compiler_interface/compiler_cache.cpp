@@ -53,12 +53,13 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
            << res;
 
     if (DebugManager.flags.BinaryCacheTrace.get()) {
-        std::string filePath = config.cacheDir + PATH_SEPARATOR + stream.str() + ".trace";
+        std::string traceFilePath = config.cacheDir + PATH_SEPARATOR + stream.str() + ".trace";
+        std::string inputFilePath = config.cacheDir + PATH_SEPARATOR + stream.str() + ".input";
         std::lock_guard<std::mutex> lock(cacheAccessMtx);
-        auto fp = NEO::IoFunctions::fopenPtr(filePath.c_str(), "w");
+        auto fp = NEO::IoFunctions::fopenPtr(traceFilePath.c_str(), "w");
         if (fp) {
             NEO::IoFunctions::fprintf(fp, "---- input ----\n");
-            NEO::IoFunctions::fprintf(fp, "%s\n", &*input.begin());
+            NEO::IoFunctions::fprintf(fp, "<%s>\n", inputFilePath.c_str());
             NEO::IoFunctions::fprintf(fp, "---- options ----\n");
             NEO::IoFunctions::fprintf(fp, "%s\n", &*options.begin());
             NEO::IoFunctions::fprintf(fp, "---- internal options ----\n");
@@ -90,6 +91,11 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
             }
             NEO::IoFunctions::fprintf(fp, "\n");
 
+            NEO::IoFunctions::fclosePtr(fp);
+        }
+        fp = NEO::IoFunctions::fopenPtr(inputFilePath.c_str(), "w");
+        if (fp) {
+            NEO::IoFunctions::fwritePtr(&*input.begin(), input.size(), 1, fp);
             NEO::IoFunctions::fclosePtr(fp);
         }
     }

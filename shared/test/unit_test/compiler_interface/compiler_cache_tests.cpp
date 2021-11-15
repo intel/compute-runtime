@@ -16,8 +16,11 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
 #include "test.h"
+
+#include "os_inc.h"
 
 #include <array>
 #include <list>
@@ -221,7 +224,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
 }
 
-TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFileIsCreated) {
+TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCreated) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.BinaryCacheTrace.set(true);
 
@@ -236,10 +239,21 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFileIsCreate
         {false, "---- feature table ----"},
         {false, "---- workaround table ----"}};
 
-    // reset global array state
+    static std::list<std::string> *openListPtr;
+    auto openList = std::make_unique<std::list<std::string>>(2);
+
+    VariableBackup<std::list<std::string> *> openListBkp(&openListPtr, openList.get());
+
+    // reset global state
     for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
         verifyData[idx].matched = false;
     }
+    openList->clear();
+
+    VariableBackup<NEO::IoFunctions::fopenFuncPtr> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        openListPtr->push_back(filename);
+        return IoFunctions::mockFopenReturned;
+    });
 
     VariableBackup<NEO::IoFunctions::vfprintfFuncPtr> mockVFprintf(&NEO::IoFunctions::vfprintfPtr, [](FILE *fp, const char *formatStr, va_list) -> int {
         for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
@@ -260,6 +274,38 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFileIsCreate
     for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
         EXPECT_TRUE(verifyData[idx].matched);
     }
+    EXPECT_EQ(openList->size(), static_cast<size_t>(2));
+    std::string traceFile = PATH_SEPARATOR + hash + ".trace";
+    std::string inputFile = PATH_SEPARATOR + hash + ".input";
+    EXPECT_NE(std::find(openList->begin(), openList->end(), traceFile), openList->end());
+    EXPECT_NE(std::find(openList->begin(), openList->end(), inputFile), openList->end());
+
+    openList->clear();
+}
+
+TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetAndOpenFailesThenNoCloseOccurs) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.BinaryCacheTrace.set(true);
+
+    VariableBackup<decltype(IoFunctions::mockFopenReturned)> retValBkp(&IoFunctions::mockFopenReturned, reinterpret_cast<FILE *>(0x0));
+
+    // reset global state
+    IoFunctions::mockFopenCalled = 0;
+    IoFunctions::mockFcloseCalled = 0;
+    IoFunctions::mockVfptrinfCalled = 0;
+    IoFunctions::mockFwriteCalled = 0;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    ArrayRef<char> src;
+    ArrayRef<char> apiOptions;
+    ArrayRef<char> internalOptions;
+    CompilerCache cache(CompilerCacheConfig{});
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+
+    EXPECT_EQ(IoFunctions::mockFopenCalled, 2u);
+    EXPECT_EQ(IoFunctions::mockFcloseCalled, 0u);
+    EXPECT_EQ(IoFunctions::mockVfptrinfCalled, 0u);
+    EXPECT_EQ(IoFunctions::mockFwriteCalled, 0u);
 }
 
 TEST(CompilerCacheTests, GivenEmptyBinaryWhenCachingThenBinaryIsNotCached) {

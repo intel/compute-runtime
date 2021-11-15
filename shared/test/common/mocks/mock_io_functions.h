@@ -26,6 +26,8 @@ extern long int mockFtellReturn;
 extern uint32_t mockRewindCalled;
 extern uint32_t mockFreadCalled;
 extern size_t mockFreadReturn;
+extern uint32_t mockFwriteCalled;
+extern size_t mockFwriteReturn;
 
 extern std::unordered_map<std::string, std::string> *mockableEnvValues;
 
@@ -72,6 +74,11 @@ inline void mockRewind(FILE *stream) {
 inline size_t mockFread(void *ptr, size_t size, size_t count, FILE *stream) {
     mockFreadCalled++;
     return mockFreadReturn;
+}
+
+inline size_t mockFwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    mockFwriteCalled++;
+    return mockFwriteReturn;
 }
 
 } // namespace IoFunctions
