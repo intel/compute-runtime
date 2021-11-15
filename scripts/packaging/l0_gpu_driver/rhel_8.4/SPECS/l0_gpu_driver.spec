@@ -43,6 +43,7 @@ cd build
 %cmake .. \
    -DNEO_VERSION_BUILD=%{build_id} \
    -DCMAKE_BUILD_TYPE=Release \
+   -DNEO_BUILD_WITH_OCL=FALSE \
    -DNEO_SKIP_UNIT_TESTS=1 \
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DL0_INSTALL_UDEV_RULES=1 \

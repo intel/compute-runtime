@@ -6,6 +6,7 @@ ver = xxx
 
 RELEASE_WITH_REGKEYS ?= FALSE
 IGDRCL_FORCE_USE_LIBVA ?= FALSE
+NEO_SKIP_UNIT_TESTS ?= FALSE
 
 override_dh_auto_configure:
 	dh_auto_configure -- ${NEO_BUILD_EXTRA_OPTS} \
@@ -14,6 +15,7 @@ override_dh_auto_configure:
 		-DNEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS} \
 		-DRELEASE_WITH_REGKEYS=${RELEASE_WITH_REGKEYS} \
 		-DIGDRCL_FORCE_USE_LIBVA=${IGDRCL_FORCE_USE_LIBVA} \
+		-DNEO_BUILD_WITH_OCL=FALSE \
 		-DL0_INSTALL_UDEV_RULES=1 \
 		-DUDEV_RULES_DIR=/etc/udev/rules.d/ \
 		-Wno-dev

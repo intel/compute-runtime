@@ -52,7 +52,7 @@ Summary:        ocloc package for opencl
 %cmake .. \
    -DCMAKE_BUILD_TYPE=%{build_type} \
    -DNEO_VERSION_BUILD=%{ver} \
-   -DBUILD_WITH_L0=0 \
+   -DBUILD_WITH_L0=FALSE \
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DRELEASE_WITH_REGKEYS=1 \
