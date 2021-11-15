@@ -804,8 +804,6 @@ struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public Command
         using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
         uint64_t gpuAddressTagAllocation = commandStreamReceiver.getTagAllocation()->getGpuAddress();
-        uint32_t gpuAddressLow = static_cast<uint32_t>(gpuAddressTagAllocation & 0x0000FFFFFFFFULL);
-        uint32_t gpuAddressHigh = static_cast<uint32_t>(gpuAddressTagAllocation >> 32);
 
         bool pipeControlTagUpdate = false;
         bool pipeControlWorkloadPartition = false;
@@ -818,8 +816,7 @@ struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public Command
                 if (pipeControl->getWorkloadPartitionIdOffsetEnable()) {
                     pipeControlWorkloadPartition = true;
                 }
-                EXPECT_EQ(gpuAddressLow, pipeControl->getAddress());
-                EXPECT_EQ(gpuAddressHigh, pipeControl->getAddressHigh());
+                EXPECT_EQ(gpuAddressTagAllocation, NEO::UnitTestHelper<GfxFamily>::getPipeControlPostSyncAddress(*pipeControl));
                 EXPECT_EQ(expectedTaskCount, pipeControl->getImmediateData());
                 break;
             }

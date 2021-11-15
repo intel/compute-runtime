@@ -8,6 +8,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
@@ -344,10 +345,7 @@ HWTEST2_F(DeviceQueueSlb, WhenBuildingSlbThenCleanupSectionIsCorrect, DeviceEnqu
     bool tagWriteFound = false;
     while (auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*(++pipeControlItor))) {
         if (pipeControlCmd->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            auto expectedAddressLow = static_cast<uint32_t>(tagAddress & 0x0000FFFFFFFFULL);
-            auto expectedAddressHigh = static_cast<uint32_t>(tagAddress >> 32);
-
-            if ((expectedAddressLow == pipeControlCmd->getAddress()) && (expectedAddressHigh == pipeControlCmd->getAddressHigh())) {
+            if (tagAddress == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd)) {
                 tagWriteFound = true;
                 break;
             }

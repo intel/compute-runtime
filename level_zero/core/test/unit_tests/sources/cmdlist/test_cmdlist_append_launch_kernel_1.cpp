@@ -10,6 +10,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "test.h"
 
@@ -314,8 +315,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_FALSE(cmd->getDcFlushEnable());
             auto gpuAddress = event->getGpuAddress(device);
-            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
-            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             postSyncFound = true;
         }
     }

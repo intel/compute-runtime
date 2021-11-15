@@ -465,8 +465,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
             EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
             EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
             EXPECT_EQ(0u, pipeControl->getImmediateData());
-            EXPECT_EQ(static_cast<uint32_t>(expectedAddress), pipeControl->getAddress());
-            EXPECT_EQ(static_cast<uint32_t>(expectedAddress >> 32), pipeControl->getAddressHigh());
+            EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 
             walkersFound++;
         }

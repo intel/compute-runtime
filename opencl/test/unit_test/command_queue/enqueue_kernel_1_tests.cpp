@@ -1536,8 +1536,7 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*iterator);
 
         if ((static_cast<uint32_t>(requiredDebugPauseState) == pipeControlCmd->getImmediateData()) &&
-            (static_cast<uint32_t>(debugPauseStateAddress & 0x0000FFFFFFFFULL) == pipeControlCmd->getAddress()) &&
-            (static_cast<uint32_t>(debugPauseStateAddress >> 32) == pipeControlCmd->getAddressHigh())) {
+            (debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd))) {
 
             EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
 

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "test.h"
 
@@ -47,8 +48,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenPost
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_INITIAL);
             auto gpuAddress = event->getGpuAddress(device);
-            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
-            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             postSyncFound = true;
         }
     }
@@ -175,8 +175,7 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_CLEARED);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
-            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_FALSE(cmd->getDcFlushEnable());
             postSyncFound++;
             gpuAddress += event->getSinglePacketSize();
@@ -218,8 +217,7 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_CLEARED);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
-            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
             postSyncFound = true;
         }

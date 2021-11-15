@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "test.h"
@@ -212,10 +213,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeCon
     ASSERT_LE(1u, pipeControls.size());
     PIPE_CONTROL *fenceUpdate = genCmdCast<PIPE_CONTROL *>(*pipeControls[pipeControls.size() - 3]);
 
-    uint64_t low = fenceUpdate->getAddress();
-    uint64_t high = fenceUpdate->getAddressHigh();
-    uint64_t fenceGpuAddress = (high << 32) | low;
-    EXPECT_EQ(fence->getGpuAddress(), fenceGpuAddress);
+    EXPECT_EQ(fence->getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*fenceUpdate));
 
     EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, fenceUpdate->getPostSyncOperation());
 

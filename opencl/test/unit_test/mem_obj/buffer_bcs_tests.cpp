@@ -583,9 +583,7 @@ void BcsBufferTests::waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType>
 
     for (auto &pipeControl : gpgpuPipeControls) {
         auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
-        uint64_t addressHigh = static_cast<uint64_t>(pipeControlCmd->getAddressHigh()) << 32;
-        uint64_t addressLow = pipeControlCmd->getAddress();
-        cacheFlushWriteAddress = addressHigh | addressLow;
+        cacheFlushWriteAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
         if (cacheFlushWriteAddress != 0) {
             EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControlCmd->getDcFlushEnable());
             EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
@@ -650,9 +648,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
             }
 
             EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-            auto addressLow = static_cast<uint64_t>(pipeControlCmd->getAddress());
-            auto addressHigh = static_cast<uint64_t>(pipeControlCmd->getAddressHigh());
-            pipeControlWriteAddress = (addressHigh << 32) | addressLow;
+            pipeControlWriteAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
             break;
         }
     }

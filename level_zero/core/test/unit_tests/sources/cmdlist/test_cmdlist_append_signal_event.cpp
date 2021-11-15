@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "test.h"
 
@@ -107,8 +108,6 @@ HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTim
     auto &commandContainer = commandList->commandContainer;
 
     uint64_t timestampAddress = 0x12345678555500;
-    uint32_t timestampAddressLow = (uint32_t)(timestampAddress & 0xFFFFFFFF);
-    uint32_t timestampAddressHigh = (uint32_t)(timestampAddress >> 32);
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
     commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
@@ -128,8 +127,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTim
     }
     EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
     EXPECT_FALSE(cmd->getDcFlushEnable());
-    EXPECT_EQ(cmd->getAddressHigh(), timestampAddressHigh);
-    EXPECT_EQ(cmd->getAddress(), timestampAddressLow);
+    EXPECT_EQ(timestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
 
     itorPC++;
     itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
@@ -180,8 +178,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
-            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_FALSE(cmd->getDcFlushEnable());
             postSyncFound = true;
         }

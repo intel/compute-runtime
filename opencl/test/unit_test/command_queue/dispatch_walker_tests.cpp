@@ -1492,7 +1492,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
     ASSERT_NE(nullptr, pipeControl);
 
-    gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+    gpuAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
     expectedAddress = hwTimeStamp1->getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
     EXPECT_EQ(expectedAddress, gpuAddress);
 
@@ -1508,7 +1508,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
     pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
     ASSERT_NE(nullptr, pipeControl);
 
-    gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32;
+    gpuAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
     expectedAddress = hwTimeStamp2->getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
     EXPECT_EQ(expectedAddress, gpuAddress);
 }

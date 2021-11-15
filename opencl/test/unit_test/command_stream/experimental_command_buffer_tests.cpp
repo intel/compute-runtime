@@ -107,15 +107,12 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
 
     //2nd PIPE_CONTROL with ts addr
     uint64_t timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress();
-    uint32_t expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
-    uint32_t expectedTsAddressHigh = static_cast<uint32_t>(timeStampAddress >> 32);
     ASSERT_NE(end, it);
     pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pipeControl->getPostSyncOperation());
-    EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
-    EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
+    EXPECT_EQ(timeStampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 
     if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
@@ -144,16 +141,13 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
 
     //4th PIPE_CONTROL with ts addr
     timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + sizeof(uint64_t);
-    expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
-    expectedTsAddressHigh = static_cast<uint32_t>(timeStampAddress >> 32);
     it++;
     ASSERT_NE(end, it);
     pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pipeControl->getPostSyncOperation());
-    EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
-    EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
+    EXPECT_EQ(timeStampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 
     if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
@@ -244,15 +238,12 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
 
     //2nd PIPE_CONTROL
     uint64_t timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + 2 * sizeof(uint64_t);
-    uint32_t expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
-    uint32_t expectedTsAddressHigh = static_cast<uint32_t>(timeStampAddress >> 32);
     ASSERT_NE(end, it);
     pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pipeControl->getPostSyncOperation());
-    EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
-    EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
+    EXPECT_EQ(timeStampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     //omit SEMAPHORE_WAIT and 3rd PIPE_CONTROL
     if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         it++;
@@ -264,8 +255,6 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     it++;
     //get 4th PIPE_CONTROL
     timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + 3 * sizeof(uint64_t);
-    expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
-    expectedTsAddressHigh = static_cast<uint32_t>(timeStampAddress >> 32);
     it++;
     if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
@@ -275,8 +264,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pipeControl->getPostSyncOperation());
-    EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
-    EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
+    EXPECT_EQ(timeStampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 }
 
 HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenMemoryManagerAlreadyStoresAllocationThenUseItForLinearSteam) {

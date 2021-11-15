@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "test.h"
 
@@ -67,8 +68,6 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     auto &commandContainer = commandList->commandContainer;
 
     uint64_t timestampAddress = 0x123456785500;
-    uint32_t timestampAddressLow = (uint32_t)(timestampAddress & 0xFFFFFFFF);
-    uint32_t timestampAddressHigh = (uint32_t)(timestampAddress >> 32);
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
     const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
@@ -84,8 +83,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     auto cmd = genCmdCast<PIPE_CONTROL *>(*iterator);
     EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
     EXPECT_FALSE(cmd->getDcFlushEnable());
-    EXPECT_EQ(cmd->getAddressHigh(), timestampAddressHigh);
-    EXPECT_EQ(cmd->getAddress(), timestampAddressLow);
+    EXPECT_EQ(timestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
     EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP, cmd->getPostSyncOperation());
 }
 

@@ -408,9 +408,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     auto pipeControl = expectPipeControl<FamilyType>(cmdListCsr.begin(), cmdListCsr.end());
     auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
 
-    uint64_t low = pipeControlCmd->getAddress();
-    uint64_t high = pipeControlCmd->getAddressHigh();
-    uint64_t barrierGpuAddress = (high << 32) | low;
+    uint64_t barrierGpuAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
 
     auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
     auto semaphore = expectCommand<MI_SEMAPHORE_WAIT>(cmdList.begin(), cmdList.end());
@@ -546,9 +544,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
 
         EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
         EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-        uint64_t low = pipeControlCmd->getAddress();
-        uint64_t high = pipeControlCmd->getAddressHigh();
-        cacheFlushWriteAddress = (high << 32) | low;
+        cacheFlushWriteAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
         EXPECT_NE(0u, cacheFlushWriteAddress);
     }
 
@@ -721,9 +717,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     auto pipeControl = expectPipeControl<FamilyType>(cmdListCsr.begin(), cmdListCsr.end());
     auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
 
-    uint64_t low = pipeControlCmd->getAddress();
-    uint64_t high = pipeControlCmd->getAddressHigh();
-    uint64_t barrierGpuAddress = (high << 32) | low;
+    uint64_t barrierGpuAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
 
     auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
     auto semaphore = expectCommand<MI_SEMAPHORE_WAIT>(cmdList.begin(), cmdList.end());
@@ -1701,9 +1695,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushR
 
         EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
         EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-        uint64_t low = pipeControlCmd->getAddress();
-        uint64_t high = pipeControlCmd->getAddressHigh();
-        cacheFlushWriteAddress = (high << 32) | low;
+        cacheFlushWriteAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
         EXPECT_NE(0u, cacheFlushWriteAddress);
     }
 

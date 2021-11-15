@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_direct_submission_diagnostic_collector.h"
@@ -338,11 +339,8 @@ HWTEST_F(DirectSubmissionTest,
     bool foundFenceUpdate = false;
     for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        uint32_t addressHigh = pipeControl->getAddressHigh();
-        uint32_t address = pipeControl->getAddress();
-        uint64_t actualAddress = (static_cast<uint64_t>(addressHigh) << 32ull) | address;
         uint64_t data = pipeControl->getImmediateData();
-        if ((directSubmission.tagAddressSetValue == actualAddress) &&
+        if ((directSubmission.tagAddressSetValue == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl)) &&
             (directSubmission.tagValueSetValue == data)) {
             foundFenceUpdate = true;
             break;
@@ -392,11 +390,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     bool foundFenceUpdate = false;
     for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        uint32_t addressHigh = pipeControl->getAddressHigh();
-        uint32_t address = pipeControl->getAddress();
-        uint64_t actualAddress = (static_cast<uint64_t>(addressHigh) << 32ull) | address;
         uint64_t data = pipeControl->getImmediateData();
-        if ((directSubmission.tagAddressSetValue == actualAddress) &&
+        if ((directSubmission.tagAddressSetValue == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl)) &&
             (directSubmission.tagValueSetValue == data)) {
             foundFenceUpdate = true;
             break;

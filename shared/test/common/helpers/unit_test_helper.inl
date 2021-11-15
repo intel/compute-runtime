@@ -106,7 +106,7 @@ template <typename GfxFamily>
 const bool UnitTestHelper<GfxFamily>::additionalMiFlushDwRequired = false;
 
 template <typename GfxFamily>
-uint64_t UnitTestHelper<GfxFamily>::getPipeControlPostSyncAddress(const typename GfxFamily::PIPE_CONTROL &pipeControl) {
+inline uint64_t UnitTestHelper<GfxFamily>::getPipeControlPostSyncAddress(const typename GfxFamily::PIPE_CONTROL &pipeControl) {
     uint64_t gpuAddress = pipeControl.getAddress();
     uint64_t gpuAddressHigh = pipeControl.getAddressHigh();
 
