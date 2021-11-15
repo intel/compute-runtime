@@ -72,5 +72,11 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_DG2_AND_LATER)
+  list(APPEND NEO_CORE_COMMAND_STREAM
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_dg2_and_later.inl
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_STREAM ${NEO_CORE_COMMAND_STREAM})
 add_subdirectories()

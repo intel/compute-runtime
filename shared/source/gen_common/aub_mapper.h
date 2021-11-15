@@ -21,3 +21,6 @@
 #ifdef SUPPORT_XE_HP_CORE
 #include "shared/source/xe_hp_core/aub_mapper.h"
 #endif
+#ifdef SUPPORT_XE_HPG_CORE
+#include "shared/source/xe_hpg_core/aub_mapper.h"
+#endif

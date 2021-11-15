@@ -1,0 +1,144 @@
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+template <>
+void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
+    using SAMPLER_STATE = typename XE_HPG_COREFamily::SAMPLER_STATE;
+    auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
+    if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
+        samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
+    }
+
+    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto isMirrorAddressMode = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR == samplerState->getTcxAddressControlMode();
+    auto isNearestFilter = SAMPLER_STATE::MIN_MODE_FILTER_NEAREST == samplerState->getMinModeFilter();
+    if (isNearestFilter && isMirrorAddressMode && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo)) {
+        samplerState->setRAddressMinFilterRoundingEnable(true);
+        samplerState->setRAddressMagFilterRoundingEnable(true);
+    }
+}
+
+template <>
+uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+    switch (stepping) {
+    case REVISION_A0:
+        return 0x0;
+    case REVISION_A1:
+        return 0x1;
+    case REVISION_B:
+        return 0x4;
+    case REVISION_C:
+        return 0x8;
+    }
+    return CommonConstants::invalidStepping;
+}
+
+template <>
+uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    switch (hwInfo.platform.usRevId) {
+    case 0x0:
+        return REVISION_A0;
+    case 0x1:
+        return REVISION_A1;
+    case 0x4:
+        return REVISION_B;
+    case 0x8:
+        return REVISION_C;
+    }
+    return CommonConstants::invalidStepping;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
+    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
+    if (stepping <= REVISION_B) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
+    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
+    return REVISION_A0 == stepping;
+}
+
+template <>
+void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const StateComputeModeProperties &properties) {
+    using STATE_COMPUTE_MODE = typename XE_HPG_COREFamily::STATE_COMPUTE_MODE;
+    using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
+
+    if (properties.isCoherencyRequired.isDirty) {
+        STATE_COMPUTE_MODE &stateComputeMode = *static_cast<STATE_COMPUTE_MODE *>(statePtr);
+        FORCE_NON_COHERENT coherencyValue = !properties.isCoherencyRequired.value ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
+                                                                                  : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED;
+        stateComputeMode.setForceNonCoherent(coherencyValue);
+
+        auto mask = stateComputeMode.getMaskBits();
+        mask |= XE_HPG_COREFamily::stateComputeModeForceNonCoherentMask;
+        stateComputeMode.setMaskBits(mask);
+    }
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::allowRenderCompression(const HardwareInfo &hwInfo) const {
+    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo) &&
+        (hwInfo.gtSystemInfo.EUCount != 128)) {
+        return false;
+    }
+    return true;
+}
+
+template <>
+LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
+        return LocalMemoryAccessMode::CpuAccessDisallowed;
+    }
+    return LocalMemoryAccessMode::Default;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
+    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    bool required = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 && !isRcs;
+
+    if (DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        required = DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get();
+    }
+
+    return required;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
+    return true;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_C;
+}

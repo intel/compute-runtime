@@ -30,6 +30,12 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_DG2_AND_LATER)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xe_hpg_core_and_later.inl
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_CONTAINER ${NEO_CORE_COMMAND_CONTAINER})
 
 add_subdirectories()
