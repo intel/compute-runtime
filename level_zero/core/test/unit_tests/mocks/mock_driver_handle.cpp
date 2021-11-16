@@ -15,9 +15,6 @@ namespace L0 {
 namespace ult {
 
 using MockDriverHandle = Mock<L0::ult::DriverHandle>;
-using namespace testing;
-using ::testing::Invoke;
-using ::testing::Return;
 
 Mock<DriverHandle>::Mock() = default;
 

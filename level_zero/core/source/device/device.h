@@ -97,8 +97,8 @@ struct Device : _ze_device_handle_t {
     virtual DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) = 0;
     virtual void removeDebugSession() = 0;
 
-    virtual ze_result_t activateMetricGroups(uint32_t count,
-                                             zet_metric_group_handle_t *phMetricGroups) = 0;
+    virtual ze_result_t activateMetricGroupsDeferred(uint32_t count,
+                                                     zet_metric_group_handle_t *phMetricGroups) = 0;
     virtual void activateMetricGroups() = 0;
 
     virtual DriverHandle *getDriverHandle() = 0;

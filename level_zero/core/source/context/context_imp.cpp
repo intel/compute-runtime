@@ -605,7 +605,7 @@ ze_result_t ContextImp::createCommandListImmediate(ze_device_handle_t hDevice,
 ze_result_t ContextImp::activateMetricGroups(zet_device_handle_t hDevice,
                                              uint32_t count,
                                              zet_metric_group_handle_t *phMetricGroups) {
-    return L0::Device::fromHandle(hDevice)->activateMetricGroups(count, phMetricGroups);
+    return L0::Device::fromHandle(hDevice)->activateMetricGroupsDeferred(count, phMetricGroups);
 }
 
 ze_result_t ContextImp::reserveVirtualMem(const void *pStart,

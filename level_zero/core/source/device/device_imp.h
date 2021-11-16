@@ -76,8 +76,8 @@ struct DeviceImp : public Device {
     void removeDebugSession() override { debugSession.release(); }
 
     uint32_t getMaxNumHwThreads() const override;
-    ze_result_t activateMetricGroups(uint32_t count,
-                                     zet_metric_group_handle_t *phMetricGroups) override;
+    ze_result_t activateMetricGroupsDeferred(uint32_t count,
+                                             zet_metric_group_handle_t *phMetricGroups) override;
 
     DriverHandle *getDriverHandle() override;
     void setDriverHandle(DriverHandle *driverHandle) override;

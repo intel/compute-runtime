@@ -6,19 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device.h"
-#include "shared/source/device/device_info.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
-#include "level_zero/tools/source/metrics/metric.h"
-
-#include "gmock/gmock.h"
 
 namespace L0 {
 namespace ult {
@@ -58,40 +51,21 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, ());
     // Runtime internal methods
     ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());
-    MOCK_METHOD(NEO::HwHelper &,
-                getHwHelper,
-                (),
-                (override));
+    ADDMETHOD_NOBASE_REFRETURN(getHwHelper, NEO::HwHelper &, ());
     ADDMETHOD_CONST_NOBASE(isMultiDeviceCapable, bool, false, ());
     ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltinFunctionsLib *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(getMaxNumHwThreads, uint32_t, 16u, ());
-
-    ADDMETHOD_NOBASE(activateMetricGroups, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));
-    MOCK_METHOD(NEO::OSInterface &,
-                getOsInterface,
-                (),
-                (override));
+    ADDMETHOD_NOBASE(activateMetricGroupsDeferred, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));
+    ADDMETHOD_NOBASE_REFRETURN(getOsInterface, NEO::OSInterface &, ());
     ADDMETHOD_CONST_NOBASE(getPlatformInfo, uint32_t, 0u, ());
-    MOCK_METHOD(MetricContext &,
-                getMetricContext,
-                (),
-                (override));
-    MOCK_METHOD(const NEO::HardwareInfo &,
-                getHwInfo,
-                (),
-                (const, override));
+    ADDMETHOD_NOBASE_REFRETURN(getMetricContext, MetricContext &, ());
+    ADDMETHOD_CONST_NOBASE_REFRETURN(getHwInfo, const NEO::HardwareInfo &, ());
     ADDMETHOD_NOBASE(getDriverHandle, L0::DriverHandle *, nullptr, ());
     ADDMETHOD_NOBASE_VOIDRETURN(setDriverHandle, (L0::DriverHandle *));
     ADDMETHOD_CONST_NOBASE(getDevicePreemptionMode, NEO::PreemptionMode, NEO::PreemptionMode::Initial, ());
-    MOCK_METHOD(const NEO::DeviceInfo &,
-                getDeviceInfo,
-                (),
-                (const, override));
+    ADDMETHOD_CONST_NOBASE_REFRETURN(getDeviceInfo, const NEO::DeviceInfo &, ());
     ADDMETHOD_NOBASE(getNEODevice, NEO::Device *, nullptr, ());
-    MOCK_METHOD(void,
-                activateMetricGroups,
-                (),
-                (override));
+    ADDMETHOD_NOBASE_VOIDRETURN(activateMetricGroups, ());
     ADDMETHOD_CONST_NOBASE(getDebugSurface, NEO::GraphicsAllocation *, nullptr, ());
     ADDMETHOD_NOBASE(allocateManagedMemoryFromHostPtr, NEO::GraphicsAllocation *, nullptr, (void *buffer, size_t size, struct L0::CommandList *commandList));
     ADDMETHOD_NOBASE(allocateMemoryFromHostPtr, NEO::GraphicsAllocation *, nullptr, (const void *buffer, size_t size, bool hostCopyAllowed));

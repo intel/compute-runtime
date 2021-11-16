@@ -6,6 +6,9 @@
  */
 
 #pragma once
+#include "shared/source/helpers/debug_helpers.h"
+
+#include <type_traits>
 
 #define ADDMETHOD_NOBASE(funcName, retType, defaultReturn, funcParams) \
     retType funcName##Result = defaultReturn;                          \
@@ -25,6 +28,22 @@
     uint32_t funcName##Called = 0u;                       \
     void funcName funcParams override {                   \
         funcName##Called++;                               \
+    }
+
+#define ADDMETHOD_NOBASE_REFRETURN(funcName, retType, funcParams)        \
+    std::remove_reference<retType>::type *funcName##ResultPtr = nullptr; \
+    uint32_t funcName##Called = 0u;                                      \
+    retType funcName funcParams override {                               \
+        UNRECOVERABLE_IF(!funcName##ResultPtr);                          \
+        funcName##Called++;                                              \
+        return *funcName##ResultPtr;                                     \
+    }
+
+#define ADDMETHOD_CONST_NOBASE_REFRETURN(funcName, retType, funcParams)  \
+    std::remove_reference<retType>::type *funcName##ResultPtr = nullptr; \
+    retType funcName funcParams const override {                         \
+        UNRECOVERABLE_IF(!funcName##ResultPtr);                          \
+        return *funcName##ResultPtr;                                     \
     }
 
 #define ADDMETHOD(funcName, retType, callBase, defaultReturn, funcParams, invokeParams) \

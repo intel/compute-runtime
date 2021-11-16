@@ -699,8 +699,8 @@ ze_result_t DeviceImp::getDebugProperties(zet_device_debug_properties_t *pDebugP
 
 ze_result_t DeviceImp::systemBarrier() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
 
-ze_result_t DeviceImp::activateMetricGroups(uint32_t count,
-                                            zet_metric_group_handle_t *phMetricGroups) {
+ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
+                                                    zet_metric_group_handle_t *phMetricGroups) {
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     if (!this->isSubdevice && this->isMultiDeviceCapable()) {
         for (auto subDevice : this->subDevices) {
