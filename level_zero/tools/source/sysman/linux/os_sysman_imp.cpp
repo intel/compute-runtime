@@ -42,7 +42,9 @@ ze_result_t LinuxSysmanImp::init() {
 
     DEBUG_BREAK_IF(nullptr == pPmuInterface);
 
-    createFwUtilInterface();
+    if (pFwUtilInterface == nullptr) {
+        createFwUtilInterface();
+    }
     return createPmtHandles();
 }
 
