@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 using namespace NEO;
 
 TEST(CflDeviceIdTest, GivenSupportedDeviceIdThenHardwareInfoIsCorrect) {
-    std::array<DeviceDescriptor, 41> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 42> expectedDescriptors = {{
         {0x3E90, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
         {0x3E93, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
         {0x3EA4, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
@@ -62,6 +62,7 @@ TEST(CflDeviceIdTest, GivenSupportedDeviceIdThenHardwareInfoIsCorrect) {
         // CML WORKSTATION
         {0x9BC6, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
         {0x9BE6, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x9BF6, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
