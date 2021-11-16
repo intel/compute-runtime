@@ -1295,7 +1295,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
 
     void *endingCmdPtr = nullptr;
 
-    if (isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled()) {
+    if (isAnyDirectSubmissionEnabled()) {
         endingCmdPtr = commandStreamTask.getSpace(0);
         EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStreamTask,
                                                                         0ull,
@@ -1424,7 +1424,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
 
     if (startDirect) {
         auto lock = this->obtainUniqueOwnership();
-        if (!this->isBlitterDirectSubmissionEnabled() && !this->isDirectSubmissionEnabled()) {
+        if (!this->isAnyDirectSubmissionEnabled()) {
             if (EngineHelpers::isBcs(osContext.getEngineType())) {
                 blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
                 ret = blitterDirectSubmission->initialize(submitOnInit);

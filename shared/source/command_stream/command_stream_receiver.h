@@ -240,6 +240,10 @@ class CommandStreamReceiver {
 
     void startControllingDirectSubmissions();
 
+    bool isAnyDirectSubmissionEnabled() {
+        return this->isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
+    }
+
     virtual bool initDirectSubmission(Device &device, OsContext &osContext) {
         return true;
     }
