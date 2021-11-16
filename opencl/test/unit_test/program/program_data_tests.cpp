@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -728,12 +729,13 @@ TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking
     program.getKernelInfoArray(rootDeviceIndex).clear();
 }
 
-TEST(ProgramImplicitArgsTest, whenImplicitRelocationIsPresentThenKernelRequiresImplicitArgs) {
+TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRequiresImplicitArgs) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto rootDeviceIndex = device->getRootDeviceIndex();
     MockProgram program{nullptr, false, toClDeviceVector(*device)};
     KernelInfo kernelInfo = {};
     kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
     uint8_t kernelHeapData[64] = {};
     kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
     kernelInfo.heapInfo.KernelHeapSize = 64;
@@ -749,5 +751,63 @@ TEST(ProgramImplicitArgsTest, whenImplicitRelocationIsPresentThenKernelRequiresI
     EXPECT_EQ(CL_SUCCESS, ret);
 
     EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+    program.getKernelInfoArray(rootDeviceIndex).clear();
+}
+
+TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndEnabledDebuggerThenKernelRequiresImplicitArgs) {
+    if (!defaultHwInfo->capabilityTable.debuggerSupported) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    EXPECT_NE(nullptr, device->getDebugger());
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
+    KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
+    uint8_t kernelHeapData[64] = {};
+    kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
+    kernelInfo.heapInfo.KernelHeapSize = 64;
+    MockGraphicsAllocation kernelIsa(kernelHeapData, 64);
+    kernelInfo.kernelAllocation = &kernelIsa;
+    program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
+
+    auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
+    auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {});
+    EXPECT_EQ(CL_SUCCESS, ret);
+
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+    program.getKernelInfoArray(rootDeviceIndex).clear();
+}
+
+TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisabledDebuggerThenKernelDoesntRequireImplicitArgs) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    EXPECT_EQ(nullptr, device->getDebugger());
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
+    KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
+    uint8_t kernelHeapData[64] = {};
+    kernelInfo.heapInfo.pKernelHeap = kernelHeapData;
+    kernelInfo.heapInfo.KernelHeapSize = 64;
+    MockGraphicsAllocation kernelIsa(kernelHeapData, 64);
+    kernelInfo.kernelAllocation = &kernelIsa;
+    program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
+
+    auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
+    auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {});
+    EXPECT_EQ(CL_SUCCESS, ret);
+
+    EXPECT_FALSE(kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
     program.getKernelInfoArray(rootDeviceIndex).clear();
 }

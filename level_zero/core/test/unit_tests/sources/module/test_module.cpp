@@ -1931,7 +1931,7 @@ TEST_F(ModuleTests, givenConstDataStringSectionWhenLinkingModuleThenSegmentIsPat
     EXPECT_EQ(static_cast<size_t>(stringsAddr), *reinterpret_cast<size_t *>(patchAddr));
 }
 
-TEST_F(ModuleTests, givenImplicitArgsRelocationWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired) {
+TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired) {
     auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
 
     char data[64]{};
@@ -1942,6 +1942,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationWhenLinkingModuleThenSegmentIsPat
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
 
+    kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = true;
     auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
     pModule->kernelImmDatas.push_back(std::move(kernelImmData));
     pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
@@ -1957,6 +1958,73 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationWhenLinkingModuleThenSegmentIsPat
     EXPECT_EQ(sizeof(ImplicitArgs), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
 
     EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+}
+
+TEST_F(ModuleTests, givenImplicitArgsRelocationAndDebuggerEnabledWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired) {
+    if (!defaultHwInfo->capabilityTable.debuggerSupported) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
+    auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
+    device->getNEODevice()->getRootDeviceEnvironmentRef().initDebugger();
+
+    EXPECT_NE(nullptr, neoDevice->getDebugger());
+
+    char data[64]{};
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.pKernelHeap = data;
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+
+    kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = false;
+    auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
+    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
+    pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+    auto status = pModule->linkBinary();
+    EXPECT_TRUE(status);
+
+    EXPECT_EQ(sizeof(ImplicitArgs), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
+
+    EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+}
+
+TEST_F(ModuleTests, givenImplicitArgsRelocationAndNoDebuggerOrStackCallsWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreNotRequired) {
+    auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
+    EXPECT_EQ(nullptr, neoDevice->getDebugger());
+
+    char data[64]{};
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.pKernelHeap = data;
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+
+    kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = false;
+    auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
+    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
+    pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+    auto status = pModule->linkBinary();
+    EXPECT_TRUE(status);
+
+    EXPECT_EQ(0u, *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
+
+    EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
 using ModuleWithZebinTest = Test<ModuleWithZebinFixture>;

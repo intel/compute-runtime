@@ -470,9 +470,14 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
         UNRECOVERABLE_IF(!kernelDescriptors[i]);
         KernelDescriptor &kernelDescriptor = *kernelDescriptors[i];
         auto pImplicitArgsReloc = pImplicitArgsRelocationAddresses.find(i);
-        kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = pImplicitArgsReloc != pImplicitArgsRelocationAddresses.end();
-        if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
-            *pImplicitArgsReloc->second = sizeof(ImplicitArgs);
+        if (pImplicitArgsReloc != pImplicitArgsRelocationAddresses.end()) {
+            UNRECOVERABLE_IF(!pDevice);
+            kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
+            if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
+                *pImplicitArgsReloc->second = sizeof(ImplicitArgs);
+            } else {
+                *pImplicitArgsReloc->second = 0u;
+            }
         }
     }
 }
