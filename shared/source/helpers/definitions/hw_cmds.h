@@ -24,3 +24,6 @@
 #ifdef SUPPORT_XE_HPG_CORE
 #include "shared/source/xe_hpg_core/hw_cmds.h"
 #endif
+#ifdef SUPPORT_XE_HPC_CORE
+#include "shared/source/xe_hpc_core/hw_cmds.h"
+#endif

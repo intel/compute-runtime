@@ -36,6 +36,12 @@ if(SUPPORT_DG2_AND_LATER)
   )
 endif()
 
+if(SUPPORT_PVC_AND_LATER)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/memory_fence_encoder.h
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_CONTAINER ${NEO_CORE_COMMAND_CONTAINER})
 
 add_subdirectories()

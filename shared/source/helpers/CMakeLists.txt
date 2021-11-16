@@ -150,6 +150,12 @@ if(SUPPORT_DG2_AND_LATER)
   )
 endif()
 
+if(SUPPORT_PVC_AND_LATER)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_pvc_and_later.inl
+  )
+endif()
+
 set(NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.h

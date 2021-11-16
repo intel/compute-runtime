@@ -58,6 +58,10 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_PVC_AND_LATER)
+  list(APPEND RUNTIME_SRCS_HELPERS_BASE ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_pvc_and_later.inl)
+endif()
+
 set(RUNTIME_SRCS_HELPERS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper.h
 )

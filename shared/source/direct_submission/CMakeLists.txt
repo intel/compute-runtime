@@ -26,6 +26,12 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_PVC_AND_LATER)
+  list(APPEND NEO_CORE_DIRECT_SUBMISSION
+       ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_prefetcher_pvc_and_later.inl
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_DIRECT_SUBMISSION ${NEO_CORE_DIRECT_SUBMISSION})
 
 add_subdirectories()
