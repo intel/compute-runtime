@@ -8,12 +8,9 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 
 namespace NEO {
-const uint32_t RayTracingHelper::memoryBackedFifoSizePerDss = 0;
 
-size_t RayTracingHelper::getTotalMemoryBackedFifoSize(const Device &device) {
+size_t RayTracingHelper::getRtGlobalsSize() {
     return 0;
 }
-size_t RayTracingHelper::getMemoryBackedFifoSizeToPatch() {
-    return 0;
-}
+
 } // namespace NEO
