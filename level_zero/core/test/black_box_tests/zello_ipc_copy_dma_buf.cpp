@@ -69,6 +69,9 @@ static int recvmsg_fd(int socket) {
     }
 
     struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
+    if (CMSG_DATA(controlHeader) == nullptr) {
+        return -1;
+    }
     memmove(&fd, CMSG_DATA(controlHeader), sizeof(int));
     return fd;
 }
