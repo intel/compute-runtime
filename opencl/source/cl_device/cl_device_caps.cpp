@@ -426,7 +426,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.deviceMemCapabilities = hwInfoConfig->getDeviceMemCapabilities();
     deviceInfo.singleDeviceSharedMemCapabilities = hwInfoConfig->getSingleDeviceSharedMemCapabilities();
     deviceInfo.crossDeviceSharedMemCapabilities = hwInfoConfig->getCrossDeviceSharedMemCapabilities();
-    deviceInfo.sharedSystemMemCapabilities = hwInfoConfig->getSharedSystemMemCapabilities();
+    deviceInfo.sharedSystemMemCapabilities = hwInfo.capabilityTable.sharedSystemMemCapabilities;
     if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
         if (DebugManager.flags.EnableSharedSystemUsmSupport.get() == 0) {
             deviceInfo.sharedSystemMemCapabilities = 0u;

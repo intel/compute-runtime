@@ -35,11 +35,6 @@ std::vector<uint32_t> HwInfoConfigHw<gfxProduct>::getKernelSupportedThreadArbitr
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities() {
-    return 0;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
 
 template <PRODUCT_FAMILY gfxProduct>
