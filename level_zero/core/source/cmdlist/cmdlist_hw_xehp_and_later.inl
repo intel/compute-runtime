@@ -225,6 +225,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
+    this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
     this->threadArbitrationPolicy = kernelImp->getSchedulingHintExp();
 
     uint32_t partitionCount = 0;

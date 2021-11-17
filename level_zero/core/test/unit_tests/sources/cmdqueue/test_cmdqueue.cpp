@@ -444,7 +444,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
             .Times(1); // instruction heap
     }
 
-    commandQueue->programStateBaseAddress(0u, true, child);
+    commandQueue->programStateBaseAddress(0u, true, child, true);
 
     if (isaInLocalMemory) {
         EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
@@ -460,7 +460,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
             .Times(2);
     }
 
-    commandQueue->programStateBaseAddress(0u, false, child);
+    commandQueue->programStateBaseAddress(0u, false, child, true);
 
     commandQueue->destroy();
 }
@@ -477,7 +477,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
-    commandQueue->programStateBaseAddress(0u, true, child);
+    commandQueue->programStateBaseAddress(0u, true, child, true);
     auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandQueue->commandStream->getSpace(sizeof(STATE_BASE_ADDRESS)));
     uint32_t statelessMocsIndex = pSbaCmd->getStatelessDataPortAccessMemoryObjectControlState();
 
@@ -510,7 +510,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
-    commandQueue->programStateBaseAddress(0u, true, child);
+    commandQueue->programStateBaseAddress(0u, true, child, true);
 
     auto usedSpaceAfter = commandQueue->commandStream->getUsed();
 
@@ -549,7 +549,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
-    commandQueue->programStateBaseAddress(0u, true, child);
+    commandQueue->programStateBaseAddress(0u, true, child, true);
 
     auto usedSpaceAfter = commandQueue->commandStream->getUsed();
 

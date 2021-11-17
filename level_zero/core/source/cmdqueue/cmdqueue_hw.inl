@@ -82,7 +82,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     auto anyCommandListWithCooperativeKernels = false;
     auto anyCommandListWithoutCooperativeKernels = false;
 
-    cachedMOCSAllowed = true;
+    bool cachedMOCSAllowed = true;
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
@@ -100,7 +100,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             anyCommandListWithoutCooperativeKernels = true;
         }
         // If the Command List has commands that require uncached MOCS, then any changes to the commands in the queue requires the uncached MOCS
-        if (commandList->requiresUncachedMOCS && cachedMOCSAllowed == true) {
+        if (commandList->requiresQueueUncachedMocs && cachedMOCSAllowed == true) {
             cachedMOCSAllowed = false;
         }
     }
@@ -314,7 +314,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
         if (gsbaStateDirty) {
             auto indirectHeap = CommandList::fromHandle(phCommandLists[0])->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
-            programStateBaseAddress(scratchSpaceController->calculateNewGSH(), indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(), child);
+            programStateBaseAddress(scratchSpaceController->calculateNewGSH(), indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(), child, cachedMOCSAllowed);
         }
 
         if (initialPreemptionMode) {

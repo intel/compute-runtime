@@ -74,7 +74,7 @@ struct KernelHw : public KernelImp {
         }
 
         if (l3Enabled == false) {
-            this->kernelRequiresUncachedMocsCount++;
+            this->kernelRequiresQueueUncachedMocsCount++;
         }
 
         NEO::Device *neoDevice = module->getDevice()->getNEODevice();

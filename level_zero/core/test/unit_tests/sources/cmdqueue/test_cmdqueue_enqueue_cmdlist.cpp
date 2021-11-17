@@ -91,7 +91,7 @@ struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixtu
     ze_command_list_handle_t commandLists[numCommandLists];
 };
 
-HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncachedMOCSThenCachedMOCSAllowedIsFalse) {
+HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncachedMOCSThenSuccessisReturned) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     using PARSE = typename FamilyType::PARSE;
@@ -109,12 +109,10 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncach
 
     auto commandList1 = whitebox_cast(CommandList::fromHandle(commandLists[0]));
     auto commandList2 = whitebox_cast(CommandList::fromHandle(commandLists[1]));
-    commandList1->requiresUncachedMOCS = true;
-    commandList2->requiresUncachedMOCS = true;
+    commandList1->requiresQueueUncachedMocs = true;
+    commandList2->requiresQueueUncachedMocs = true;
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_EQ(commandQueue->cachedMOCSAllowed, false);
-
     commandQueue->destroy();
 }
 

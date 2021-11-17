@@ -1529,7 +1529,7 @@ HWTEST2_F(KernelImpL3CachingTests, GivenKernelImpWhenSetSurfaceStateWithUnaligne
 
     memset(expectedSsInHeap.ssPtr, 0, size);
     mockKernel.setBufferSurfaceState(0, buffer, &mockAllocation);
-    EXPECT_EQ(mockKernel.getKernelRequiresUncachedMocs(), true);
+    EXPECT_EQ(mockKernel.getKernelRequiresQueueUncachedMocs(), true);
 }
 
 struct MyMockKernel : public Mock<Kernel> {

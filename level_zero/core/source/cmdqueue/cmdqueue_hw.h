@@ -35,7 +35,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
     void dispatchTaskCountWrite(NEO::LinearStream &commandStream, bool flushDataCache) override;
 
-    void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream);
+    void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed);
     size_t estimateStateBaseAddressCmdSize();
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream);
 

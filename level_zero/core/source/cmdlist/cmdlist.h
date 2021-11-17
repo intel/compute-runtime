@@ -250,7 +250,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool isFlushTaskSubmissionEnabled = false;
     bool isSyncModeQueue = false;
     bool commandListSLMEnabled = false;
-    bool requiresUncachedMOCS = false;
+    bool requiresQueueUncachedMocs = false;
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);

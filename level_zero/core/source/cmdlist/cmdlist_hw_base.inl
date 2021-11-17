@@ -109,7 +109,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
-    this->requiresUncachedMOCS = this->containsStatelessUncachedResource;
+    this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
     uint32_t partitionCount = 0;
 
     NEO::Device *neoDevice = device->getNEODevice();
