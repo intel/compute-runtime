@@ -31,7 +31,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
         auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
         STATE_BASE_ADDRESS sbaCmd;
-        bool multiOsContextCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true);
+        bool multiOsContextCapable = device->isMultiDeviceCapable();
         NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(&sbaCmd,
                                                                         nullptr,
                                                                         nullptr,

@@ -104,7 +104,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                        size_t size,
                                        size_t alignment, void **ptr) {
 
-    if (isDeviceDefinedForThisContext(Device::fromHandle(hDevice)) == false) {
+    auto device = Device::fromHandle(hDevice);
+    if (isDeviceDefinedForThisContext(device) == false) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
@@ -117,7 +118,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         return parseResult;
     }
 
-    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+    auto neoDevice = device->getNEODevice();
     auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
     auto deviceBitfields = this->driverHandle->deviceBitfields;
 
@@ -149,7 +150,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
 
     uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
-    if ((!(NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true))) && (numSubDevices > 1)) {
+    if ((!device->isMultiDeviceCapable()) && (numSubDevices > 1)) {
         globalMemSize = globalMemSize / numSubDevices;
     }
     if (lookupTable.relaxedSizeAllowed && (size > globalMemSize)) {
@@ -184,10 +185,11 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                        size_t alignment,
                                        void **ptr) {
 
-    auto neoDevice = this->devices.begin()->second->getNEODevice();
+    auto device = this->devices.begin()->second;
     if (hDevice != nullptr) {
-        neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+        device = Device::fromHandle(hDevice);
     }
+    auto neoDevice = device->getNEODevice();
 
     bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
     if (deviceDesc->pNext) {
@@ -211,7 +213,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
 
     uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
-    if ((!(NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true))) && (numSubDevices > 1)) {
+    if ((!device->isMultiDeviceCapable()) && (numSubDevices > 1)) {
         globalMemSize = globalMemSize / numSubDevices;
     }
     if (relaxedSizeAllowed &&
@@ -223,11 +225,12 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     auto deviceBitfields = this->deviceBitfields;
     NEO::Device *unifiedMemoryPropertiesDevice = nullptr;
     if (hDevice) {
-        if (isDeviceDefinedForThisContext(Device::fromHandle(hDevice)) == false) {
+        device = Device::fromHandle(hDevice);
+        if (isDeviceDefinedForThisContext(device) == false) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
 
-        neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+        neoDevice = device->getNEODevice();
         auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
         unifiedMemoryPropertiesDevice = neoDevice;
         deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
