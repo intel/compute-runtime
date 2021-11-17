@@ -723,13 +723,7 @@ TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking
 
     auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {constStringData, sizeof(constStringData)});
     EXPECT_EQ(CL_SUCCESS, ret);
-
-    constexpr bool is64Bit = sizeof(void *) == 8;
-    if (is64Bit) {
-        EXPECT_EQ(static_cast<uint64_t>(stringsAddr), *reinterpret_cast<uint64_t *>(patchAddr));
-    } else {
-        EXPECT_EQ(static_cast<uint32_t>(stringsAddr), *reinterpret_cast<uint32_t *>(patchAddr));
-    }
+    EXPECT_EQ(static_cast<size_t>(stringsAddr), *reinterpret_cast<size_t *>(patchAddr));
 
     program.getKernelInfoArray(rootDeviceIndex).clear();
 }

@@ -1345,12 +1345,7 @@ TEST(LinkerTests, givenValidStringSymbolsAndRelocationsWhenPatchingThenItIsPrope
     uintptr_t strAddr = stringSegment.gpuAddress + strSymbol.offset;
     uintptr_t patchAddr = reinterpret_cast<uintptr_t>(instructionSegment) + static_cast<uintptr_t>(relocation.offset);
 
-    constexpr bool is64Bit = sizeof(void *) == 8;
-    if (is64Bit) {
-        EXPECT_EQ(static_cast<uint64_t>(strAddr), *reinterpret_cast<const uint64_t *>(patchAddr));
-    } else {
-        EXPECT_EQ(static_cast<uint32_t>(strAddr), *reinterpret_cast<const uint32_t *>(patchAddr));
-    }
+    EXPECT_EQ(static_cast<size_t>(strAddr), *reinterpret_cast<const size_t *>(patchAddr));
 }
 
 TEST(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThenTheyAreProperlyPatched) {

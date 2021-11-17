@@ -1927,13 +1927,7 @@ TEST_F(ModuleTests, givenConstDataStringSectionWhenLinkingModuleThenSegmentIsPat
 
     auto status = pModule->linkBinary();
     EXPECT_TRUE(status);
-
-    constexpr bool is64Bit = sizeof(void *) == 8;
-    if (is64Bit) {
-        EXPECT_EQ(static_cast<uint64_t>(stringsAddr), *reinterpret_cast<uint64_t *>(patchAddr));
-    } else {
-        EXPECT_EQ(static_cast<uint32_t>(stringsAddr), *reinterpret_cast<uint32_t *>(patchAddr));
-    }
+    EXPECT_EQ(static_cast<size_t>(stringsAddr), *reinterpret_cast<size_t *>(patchAddr));
 }
 
 TEST_F(ModuleTests, givenImplicitArgsRelocationWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired) {
