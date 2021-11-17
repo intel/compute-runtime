@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -404,6 +405,14 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
 
 bool Device::isDebuggerActive() const {
     return deviceInfo.debuggerActive;
+}
+
+bool Device::areSharedSystemAllocationsAllowed() const {
+    auto sharedSystemAllocationsSupport = static_cast<bool>(getHardwareInfo().capabilityTable.sharedSystemMemCapabilities);
+    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
+        sharedSystemAllocationsSupport = DebugManager.flags.EnableSharedSystemUsmSupport.get();
+    }
+    return sharedSystemAllocationsSupport;
 }
 
 const std::vector<EngineControl> *Device::getNonEmptyEngineGroup(size_t index) const {

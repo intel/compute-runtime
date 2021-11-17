@@ -38,11 +38,6 @@ void Device::initializeCaps() {
         addressing32bitAllowed = false;
     }
 
-    deviceInfo.sharedSystemAllocationsSupport = hwInfoConfig->getSharedSystemMemCapabilities();
-    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
-        deviceInfo.sharedSystemAllocationsSupport = DebugManager.flags.EnableSharedSystemUsmSupport.get();
-    }
-
     deviceInfo.vendorId = 0x8086;
     deviceInfo.maxReadImageArgs = 128;
     deviceInfo.maxWriteImageArgs = 128;
@@ -72,7 +67,7 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
 
-    if (!deviceInfo.sharedSystemAllocationsSupport) {
+    if (!areSharedSystemAllocationsAllowed()) {
         deviceInfo.maxMemAllocSize = ApiSpecificConfig::getReducedMaxAllocSize(deviceInfo.maxMemAllocSize);
         deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, hwHelper.getMaxMemAllocSize());
     }

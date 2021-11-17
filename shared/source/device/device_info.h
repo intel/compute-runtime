@@ -49,7 +49,6 @@ struct DeviceInfo {
     uint32_t vmeAvcSupportsPreemption;
     bool debuggerActive;
     bool force32BitAddressess;
-    bool sharedSystemAllocationsSupport;
     std::string name;
 };
 

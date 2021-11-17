@@ -467,7 +467,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    if (device->getDeviceInfo().sharedSystemAllocationsSupport) {
+    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
@@ -492,7 +492,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndDebugFlagThenAllocationIsMade) {
-    if (device->getDeviceInfo().sharedSystemAllocationsSupport) {
+    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
@@ -607,7 +607,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    if (device->getDeviceInfo().sharedSystemAllocationsSupport) {
+    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
@@ -634,7 +634,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithLargerThanAllowedSizeAndDebugFlagThenAllocationIsMade) {
-    if (device->getDeviceInfo().sharedSystemAllocationsSupport) {
+    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;

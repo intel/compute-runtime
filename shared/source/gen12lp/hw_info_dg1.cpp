@@ -45,6 +45,7 @@ const RuntimeCapabilityTable DG1::capabilityTable{
         {aub_stream::ENGINE_CCS, {true, true}}},   // directSubmissionEngines
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
     MemoryConstants::max64BitAppAddress,           // gpuAddressSpace
+    0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationDG1,                              // isSimulation

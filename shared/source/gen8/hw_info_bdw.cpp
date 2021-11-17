@@ -44,6 +44,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
         {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
     {50000, 5000, 200000, true, true, true},       // kmdNotifyProperties
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
+    0,                                             // sharedSystemMemCapabilities
     80,                                            // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationBDW,                              // isSimulation

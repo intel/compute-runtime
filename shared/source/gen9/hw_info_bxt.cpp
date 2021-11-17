@@ -41,6 +41,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
         {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
+    0,                                             // sharedSystemMemCapabilities
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationBXT,                              // isSimulation

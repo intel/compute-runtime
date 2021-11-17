@@ -24,6 +24,7 @@ struct RuntimeCapabilityTable {
     DirectSubmissionProperyEngines directSubmissionEngines;
     KmdNotifyProperties kmdNotifyProperties;
     uint64_t gpuAddressSpace;
+    uint64_t sharedSystemMemCapabilities;
     double defaultProfilingTimerResolution;
     size_t requiredPreemptionSurfaceSize;
     bool (*isSimulation)(unsigned short);

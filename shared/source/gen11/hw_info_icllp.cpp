@@ -40,6 +40,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
         {aub_stream::ENGINE_RCS, {true, true}}},     // directSubmissionEngines
     {0, 0, 0, false, false, false},                  // kmdNotifyProperties
     MemoryConstants::max48BitAddress,                // gpuAddressSpace
+    0,                                               // sharedSystemMemCapabilities
     83.333,                                          // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                       // requiredPreemptionSurfaceSize
     &isSimulationICLLP,                              // isSimulation

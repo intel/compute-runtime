@@ -1651,7 +1651,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenSystemSharedAllocationAllowedWhenBuildi
     rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
 
     {
-        neoDevice->deviceInfo.sharedSystemAllocationsSupport = true;
+        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 1;
 
         MockModuleTranslationUnit moduleTu(device);
         auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
@@ -1661,7 +1661,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenSystemSharedAllocationAllowedWhenBuildi
     }
 
     {
-        neoDevice->deviceInfo.sharedSystemAllocationsSupport = false;
+        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
 
         MockModuleTranslationUnit moduleTu(device);
         auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);

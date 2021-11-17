@@ -181,7 +181,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_LE(sharedCaps.maxReadImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
     EXPECT_LE(sharedCaps.maxWriteImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
     EXPECT_LE(128u * MB, sharedCaps.maxMemAllocSize);
-    if (!sharedCaps.sharedSystemAllocationsSupport) {
+    if (!device->areSharedSystemAllocationsAllowed()) {
         EXPECT_GE((4 * GB) - (8 * KB), sharedCaps.maxMemAllocSize);
     }
     EXPECT_LE(65536u, sharedCaps.imageMaxBufferSize);

@@ -92,9 +92,7 @@ class Device : public ReferenceTrackedObject<Device> {
     bool isFullRangeSvm() const {
         return getRootDeviceEnvironment().isFullRangeSvm();
     }
-    bool areSharedSystemAllocationsAllowed() const {
-        return this->deviceInfo.sharedSystemAllocationsSupport;
-    }
+    bool areSharedSystemAllocationsAllowed() const;
     template <typename SpecializedDeviceT>
     void setSpecializedDevice(SpecializedDeviceT *specializedDevice) {
         this->specializedDevice = reinterpret_cast<uintptr_t>(specializedDevice);
