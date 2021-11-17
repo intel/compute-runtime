@@ -1088,7 +1088,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
-    testArgs.initializeWparidRegister = true;
+    testArgs.initializeWparidRegister = false;
     testArgs.crossTileAtomicSynchronization = true;
     testArgs.emitPipeControlStall = true;
     testArgs.partitionCount = 2u;
@@ -1145,7 +1145,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
-    testArgs.initializeWparidRegister = true;
+    testArgs.initializeWparidRegister = false;
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.emitPipeControlStall = false;
     testArgs.partitionCount = 2u;
@@ -1512,7 +1512,7 @@ struct XeHPAndLaterDispatchWalkerBasicTestDynamicPartition : public XeHPAndLater
     }
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition, givenDynamicPartitioningWhenEnqueueingKernelThenNoMultipleActivePartitionsSetInCsr) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition, givenDynamicPartitioningWhenEnqueueingKernelThenExpectNoMultipleActivePartitionsSetInCsr) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }

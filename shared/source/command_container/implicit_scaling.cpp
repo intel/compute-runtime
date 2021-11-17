@@ -82,7 +82,7 @@ bool ImplicitScalingHelper::isSelfCleanupRequired(const WalkerPartition::WalkerP
 }
 
 bool ImplicitScalingHelper::isWparidRegisterInitializationRequired() {
-    bool initWparidRegister = true;
+    bool initWparidRegister = false;
     int overrideInitWparidRegister = DebugManager.flags.WparidRegisterProgramming.get();
     if (overrideInitWparidRegister != -1) {
         initWparidRegister = !!(overrideInitWparidRegister);

@@ -128,8 +128,8 @@ TEST_F(ImplicitScalingTests, givenForceProgramSelfCleanupWhenDefaultSelfCleanupI
     EXPECT_TRUE(ImplicitScalingHelper::isSelfCleanupRequired(args, false));
 }
 
-TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingToProgramWparidRegisterThenExpectTrue) {
-    EXPECT_TRUE(ImplicitScalingHelper::isWparidRegisterInitializationRequired());
+TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingToProgramWparidRegisterThenExpectFalse) {
+    EXPECT_FALSE(ImplicitScalingHelper::isWparidRegisterInitializationRequired());
 }
 
 TEST_F(ImplicitScalingTests, givenForceNotProgramWparidRegisterWhenCheckingRegisterProgramThenExpectFalse) {
