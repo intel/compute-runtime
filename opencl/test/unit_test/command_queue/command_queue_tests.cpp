@@ -138,6 +138,37 @@ TEST(CommandQueue, WhenConstructingCommandQueueThenQueueFamilyIsNotSelected) {
     EXPECT_FALSE(cmdQ.isQueueFamilySelected());
 }
 
+TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenReturnProperValue) {
+    DebugManagerStateRestore restorer;
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
+
+    {
+        DebugManager.flags.EnableTimestampWait.set(0);
+        EXPECT_FALSE(cmdQ.isTimestampWaitEnabled());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWait.set(1);
+        EXPECT_EQ(cmdQ.isTimestampWaitEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWait.set(2);
+        EXPECT_EQ(cmdQ.isTimestampWaitEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWait.set(3);
+        EXPECT_EQ(cmdQ.isTimestampWaitEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWait.set(4);
+        EXPECT_TRUE(cmdQ.isTimestampWaitEnabled());
+    }
+}
+
 struct GetTagTest : public ClDeviceFixture,
                     public CommandQueueFixture,
                     public CommandStreamFixture,

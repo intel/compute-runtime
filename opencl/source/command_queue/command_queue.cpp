@@ -955,6 +955,58 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
     }
 }
 
+bool CommandQueue::isTimestampWaitEnabled() {
+    auto enabled = false;
+
+    switch (DebugManager.flags.EnableTimestampWait.get()) {
+    case 0:
+        enabled = false;
+        break;
+    case 1:
+        enabled = getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled();
+        break;
+    case 2:
+        enabled = getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
+        break;
+    case 3:
+        enabled = getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled();
+        break;
+    case 4:
+        enabled = true;
+        break;
+    }
+
+    return enabled;
+}
+
+void CommandQueue::waitForTimestamps(uint32_t taskCount) {
+    if (isTimestampWaitEnabled()) {
+        bool waited = false;
+
+        for (const auto &timestamp : timestampPacketContainer->peekNodes()) {
+            for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                while (timestamp->getContextEndValue(i) == 1) {
+                }
+                waited = true;
+            }
+        }
+
+        if (isOOQEnabled()) {
+            for (const auto &timestamp : deferredTimestampPackets->peekNodes()) {
+                for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                    while (timestamp->getContextEndValue(i) == 1) {
+                    }
+                    waited = true;
+                }
+            }
+        }
+
+        if (waited) {
+            getGpgpuCommandStreamReceiver().updateTagFromCpu(taskCount);
+        }
+    }
+}
+
 void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) {
     if (blockedQueue) {
         while (isQueueBlocked()) {
@@ -963,6 +1015,7 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
 
     TimestampPacketContainer nodesToRelease;
     if (deferredTimestampPackets) {
+        waitForTimestamps(taskCount);
         deferredTimestampPackets->swapNodes(nodesToRelease);
     }
 

@@ -225,6 +225,8 @@ class CommandStreamReceiver {
     virtual void updateTagFromWait() = 0;
     virtual bool isUpdateTagFromWaitEnabled() = 0;
 
+    void updateTagFromCpu(uint32_t taskCount);
+
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();
     }

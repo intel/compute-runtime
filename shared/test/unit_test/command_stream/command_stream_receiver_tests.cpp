@@ -278,7 +278,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmitiingBatchBufferThenTaskC
 
 HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenSubmitiingBatchBufferThenTaskCountIsIncrementedAndLatestsValuesSetCorrectly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
 
     MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -359,6 +359,31 @@ HWTEST_F(CommandStreamReceiverTest, whenClearColorAllocationIsCreatedThenItIsDes
 HWTEST_F(CommandStreamReceiverTest, givenNoDirectSubmissionWhenCheckTaskCountFromWaitEnabledThenReturnsFalse) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckTaskCountFromWaitEnabledThenProperValueReturned) {
+    DebugManagerStateRestore restorer;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    {
+        DebugManager.flags.UpdateTaskCountFromWait.set(0);
+        EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
+    }
+
+    {
+        DebugManager.flags.UpdateTaskCountFromWait.set(1);
+        EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), csr.isDirectSubmissionEnabled());
+    }
+
+    {
+        DebugManager.flags.UpdateTaskCountFromWait.set(2);
+        EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), csr.isAnyDirectSubmissionEnabled());
+    }
+
+    {
+        DebugManager.flags.UpdateTaskCountFromWait.set(3);
+        EXPECT_TRUE(csr.isUpdateTagFromWaitEnabled());
+    }
 }
 
 struct InitDirectSubmissionFixture {

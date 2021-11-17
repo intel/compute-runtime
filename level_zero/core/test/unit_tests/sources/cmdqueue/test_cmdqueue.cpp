@@ -249,7 +249,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitWhenDispatchTaskCountWr
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;

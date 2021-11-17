@@ -210,6 +210,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         updateTag = !isUpdateTagFromWaitEnabled();
         updateTag |= dispatchFlags.blocking;
+        updateTag |= dispatchFlags.dcFlush;
 
         if (updateTag) {
             PipeControlArgs args(dispatchFlags.dcFlush);
@@ -1310,8 +1311,19 @@ template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
     bool enabled = false;
 
-    if (DebugManager.flags.UpdateTaskCountFromWait.get() != -1) {
-        enabled = DebugManager.flags.UpdateTaskCountFromWait.get();
+    switch (DebugManager.flags.UpdateTaskCountFromWait.get()) {
+    case 0:
+        enabled = false;
+        break;
+    case 1:
+        enabled = this->isDirectSubmissionEnabled();
+        break;
+    case 2:
+        enabled = this->isAnyDirectSubmissionEnabled();
+        break;
+    case 3:
+        enabled = true;
+        break;
     }
 
     return enabled;
