@@ -12,6 +12,7 @@
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl_timestamps.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -856,6 +857,20 @@ HWTEST_F(CommandListCreate, whenCommandListIsResetThenPartitionCountIsReversedTo
     returnValue = commandList->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
+    EXPECT_EQ(1u, commandList->partitionCount);
+}
+
+using MultiTileImmediateCommandListTest = Test<MultiTileCommandListFixture<true, false>>;
+
+HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImmediateCommandListThenExpectPartitionCountMatchTileCount, IsWithinXeGfxFamily) {
+    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    EXPECT_EQ(2u, commandList->partitionCount);
+}
+
+using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixture<true, true>>;
+
+HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCreatingInternalImmediateCommandListThenExpectPartitionCountEqualOne, IsWithinXeGfxFamily) {
+    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
     EXPECT_EQ(1u, commandList->partitionCount);
 }
 

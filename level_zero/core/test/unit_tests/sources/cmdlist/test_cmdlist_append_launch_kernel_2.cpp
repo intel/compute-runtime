@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -1105,5 +1106,101 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
+
+struct MultiTileCommandListAppendLaunchFunctionXeHpCoreFixture : MultiDeviceModuleFixture {
+    void SetUp() {
+        MultiDeviceFixture::numRootDevices = 1u;
+        MultiDeviceFixture::numSubDevices = 4u;
+
+        MultiDeviceModuleFixture::SetUp();
+        createModuleFromBinary(0u);
+        createKernel(0u);
+
+        device = driverHandle->devices[0];
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc;
+        ze_result_t res = device->getDriverHandle()->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
+        ze_result_t returnValue;
+        commandList = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    }
+
+    void TearDown() {
+        commandList->destroy();
+        contextImp->destroy();
+
+        MultiDeviceModuleFixture::TearDown();
+    }
+
+    ContextImp *contextImp = nullptr;
+    WhiteBox<::L0::CommandList> *commandList = nullptr;
+    L0::Device *device = nullptr;
+    VariableBackup<bool> backup{&NEO::ImplicitScaling::apiSupport, true};
+};
+
+using MultiTileCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileCommandListAppendLaunchFunctionXeHpCoreFixture>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingEnabledWhenAppendingKernelWithEventThenAllEventPacketsAreUsed) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
+    eventDesc.index = 0;
+    auto deviceHandle = device->toHandle();
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(device->getDriverHandle(), context, 1, &deviceHandle, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::unique_ptr<L0::Event> event(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    ze_event_handle_t hEventHandle = event->toHandle();
+
+    EXPECT_EQ(4u, commandList->partitionCount);
+
+    ze_group_count_t groupCount{256, 1, 1};
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, hEventHandle, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(4u, event->getPacketsInUse());
+
+    EXPECT_EQ(4u, commandList->partitionCount);
+}
+
+HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenDoNotUseImplicitScaling, IsAtLeastXeHpCore) {
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto estimateWithNonCooperativeKernel = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        device->getNEODevice(), Vec3<size_t>{0, 0, 0}, Vec3<size_t>{1, 1, 1}, false, false, false, kernel.get());
+    auto estimateWithCooperativeKernel = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        device->getNEODevice(), Vec3<size_t>{0, 0, 0}, Vec3<size_t>{1, 1, 1}, false, true, false, kernel.get());
+    EXPECT_GT(estimateWithNonCooperativeKernel, estimateWithCooperativeKernel);
+
+    auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandListWithNonCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto sizeBefore = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed();
+    result = commandListWithNonCooperativeKernel->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto sizeUsedWithNonCooperativeKernel = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed() - sizeBefore;
+    EXPECT_LE(sizeUsedWithNonCooperativeKernel, estimateWithNonCooperativeKernel);
+
+    auto commandListWithCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    result = commandListWithCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    sizeBefore = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
+    result = commandListWithCooperativeKernel->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto sizeUsedWithCooperativeKernel = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed() - sizeBefore;
+    EXPECT_LE(sizeUsedWithCooperativeKernel, estimateWithCooperativeKernel);
+
+    EXPECT_GT(sizeUsedWithNonCooperativeKernel, sizeUsedWithCooperativeKernel);
+}
+
 } // namespace ult
 } // namespace L0

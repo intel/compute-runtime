@@ -81,7 +81,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     ASSERT_LE(sizeWithoutEvent, sizeWithEvent);
 }
 
-using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListFixture>;
+using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListFixture<false, false>>;
 
 HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsWithinXeGfxFamily) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -89,6 +89,9 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    EXPECT_EQ(2u, commandList->partitionCount);
 
     size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
                                         sizeof(PIPE_CONTROL) +

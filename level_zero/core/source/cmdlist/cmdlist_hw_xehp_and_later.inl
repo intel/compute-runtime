@@ -220,8 +220,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         }
     }
 
-    auto isMultiOsContextCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(),
-                                                                                        !isCooperative);
+    auto isMultiOsContextCapable = (this->partitionCount > 1) && !isCooperative;
     updateStreamProperties(*kernel, isMultiOsContextCapable, isCooperative);
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);

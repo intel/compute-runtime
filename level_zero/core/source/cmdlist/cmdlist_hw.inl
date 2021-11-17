@@ -148,6 +148,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         }
     }
 
+    if (device->isMultiDeviceCapable() && !this->internalUsage) {
+        this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
+    }
+
     return returnType;
 }
 

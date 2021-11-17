@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "shared/source/command_container/implicit_scaling.h"
+#include "shared/test/common/helpers/variable_backup.h"
+
 #include "test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -44,13 +47,21 @@ class CommandListFixture : public DeviceFixture {
     std::unique_ptr<Event> event;
 };
 
+template <bool createImmediate, bool createInternal>
 struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
     void SetUp() {
+        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
+        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
+
         SingleRootMultiSubDeviceFixture::SetUp();
         ze_result_t returnValue;
-        commandList.reset(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-
-        commandList->partitionCount = 2;
+        if (!createImmediate) {
+            commandList.reset(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+        } else {
+            const ze_command_queue_desc_t desc = {};
+            commandList.reset(whitebox_cast(CommandList::createImmediate(productFamily, device, &desc, createInternal, NEO::EngineGroupType::RenderCompute, returnValue)));
+        }
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -72,6 +83,8 @@ struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
     std::unique_ptr<L0::ult::CommandList> commandList;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
+    std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
+    std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
 };
 
 } // namespace ult

@@ -39,11 +39,13 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::clearCommandsToPatch;
+    using BaseClass::cmdQImmediate;
     using BaseClass::commandListPerThreadScratchSize;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::commandsToPatch;
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
+    using BaseClass::csr;
     using BaseClass::engineGroupType;
     using BaseClass::finalStreamState;
     using BaseClass::flags;
@@ -71,7 +73,9 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
     using BaseClass::clearCommandsToPatch;
+    using BaseClass::cmdQImmediate;
     using BaseClass::commandsToPatch;
+    using BaseClass::csr;
     using BaseClass::finalStreamState;
     using BaseClass::partitionCount;
     using BaseClass::requiredStreamState;
@@ -83,8 +87,10 @@ template <>
 struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass = ::L0::CommandListImp;
     using BaseClass::BaseClass;
+    using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
+    using BaseClass::csr;
     using BaseClass::initialize;
     using BaseClass::partitionCount;
 
