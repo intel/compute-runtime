@@ -159,6 +159,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::programVFEState;
     using CommandStreamReceiver::activePartitions;
+    using CommandStreamReceiver::activePartitionsConfig;
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;

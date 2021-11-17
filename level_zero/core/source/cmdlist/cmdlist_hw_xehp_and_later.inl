@@ -311,19 +311,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t partitionDataSize) {
-
-    const uint64_t workPartitionAllocationGpuVa = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
-    size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getRegisterConfigurationSize();
+    size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
     increaseCommandStreamSpace(estimatedSizeRequired);
-
-    NEO::ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(*commandContainer.getCommandStream(),
-                                                                           workPartitionAllocationGpuVa,
-                                                                           partitionDataSize);
+    NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),
+                                                                    partitionDataSize);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {
-
     const size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
     increaseCommandStreamSpace(estimatedSizeRequired);
     NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),

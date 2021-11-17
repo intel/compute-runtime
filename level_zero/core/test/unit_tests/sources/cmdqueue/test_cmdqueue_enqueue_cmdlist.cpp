@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -823,11 +824,41 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
     EXPECT_TRUE(tagFound);
 }
 
+template <typename GfxFamily>
+void findPartitionRegister(GenCmdList &cmdList, bool expectToFind) {
+    using MI_LOAD_REGISTER_MEM = typename GfxFamily::MI_LOAD_REGISTER_MEM;
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+    auto loadRegisterMemList = findAll<MI_LOAD_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    bool wparidRegisterFound = false;
+    for (size_t i = 0; i < loadRegisterMemList.size(); i++) {
+        auto loadRegMem = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(*loadRegisterMemList[i]);
+        if (NEO::PartitionRegisters<GfxFamily>::wparidCCSOffset == loadRegMem->getRegisterAddress()) {
+            wparidRegisterFound = true;
+        }
+    }
+
+    auto loadRegisterImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    bool offsetRegisterFound = false;
+    for (size_t i = 0; i < loadRegisterImmList.size(); i++) {
+        auto loadRegImm = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*loadRegisterImmList[i]);
+        if (NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset == loadRegImm->getRegisterOffset()) {
+            offsetRegisterFound = true;
+        }
+    }
+
+    if (expectToFind) {
+        EXPECT_TRUE(wparidRegisterFound);
+        EXPECT_TRUE(offsetRegisterFound);
+    } else {
+        EXPECT_FALSE(wparidRegisterFound);
+        EXPECT_FALSE(offsetRegisterFound);
+    }
+}
+
 HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCountWhenExecutingCmdListThenExpectMmioProgrammingAndCorrectEstimation, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
-    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using PARSE = typename FamilyType::PARSE;
 
     ze_command_queue_desc_t desc{};
@@ -846,6 +877,8 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
                                                            false,
                                                            returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(2u, commandQueue->partitionCount);
+    ASSERT_NE(nullptr, commandQueue->commandStream);
 
     auto &commandStreamReceiver = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
@@ -858,27 +891,33 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     EXPECT_EQ(1u, fence->partitionCount);
     ze_fence_handle_t fenceHandle = fence->toHandle();
 
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-
-    fence->partitionCount = 2;
     //1st execute call initialized pipeline
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    //1st call then initialize registers
+    GenCmdList cmdList;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore), usedSpaceAfter));
+    findPartitionRegister<FamilyType>(cmdList, true);
+
+    usedSpaceBefore = commandQueue->commandStream->getUsed();
     result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    usedSpaceAfter = commandQueue->commandStream->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
     size_t cmdBufferSizeWithoutMmioProgramming = usedSpaceAfter - usedSpaceBefore;
-    EXPECT_EQ(1u, fence->partitionCount);
-
-    auto workPartitionAddress = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
+    EXPECT_EQ(2u, fence->partitionCount);
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(commandLists[i]);
         commandList->partitionCount = 2;
     }
+
+    cmdList.clear();
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore), usedSpaceAfter));
+    findPartitionRegister<FamilyType>(cmdList, false);
 
     usedSpaceBefore = commandQueue->commandStream->getUsed();
     result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true);
@@ -888,24 +927,12 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     size_t cmdBufferSizeWithtMmioProgramming = usedSpaceAfter - usedSpaceBefore;
     EXPECT_EQ(2u, fence->partitionCount);
 
-    size_t expectedSizeWithMmioProgramming = cmdBufferSizeWithoutMmioProgramming + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_LOAD_REGISTER_MEM);
+    size_t expectedSizeWithMmioProgramming = cmdBufferSizeWithoutMmioProgramming;
     EXPECT_GE(expectedSizeWithMmioProgramming, cmdBufferSizeWithtMmioProgramming);
 
-    GenCmdList cmdList;
+    cmdList.clear();
     ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore), usedSpaceAfter));
-
-    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorLri);
-    auto itorLrm = find<MI_LOAD_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorLrm);
-
-    auto loadRegisterImm = static_cast<MI_LOAD_REGISTER_IMM *>(*itorLri);
-    EXPECT_EQ(0x23B4u, loadRegisterImm->getRegisterOffset());
-    EXPECT_EQ(8u, loadRegisterImm->getDataDword());
-
-    auto loadRegisterMem = static_cast<MI_LOAD_REGISTER_MEM *>(*itorLrm);
-    EXPECT_EQ(0x221Cu, loadRegisterMem->getRegisterAddress());
-    EXPECT_EQ(workPartitionAddress, loadRegisterMem->getMemoryAddress());
+    findPartitionRegister<FamilyType>(cmdList, false);
 
     auto pipeControlList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 

@@ -149,7 +149,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     bool directSubmissionEnabled = isCopyOnlyCommandQueue ? csr->isBlitterDirectSubmissionEnabled() : csr->isDirectSubmissionEnabled();
-    partitionCount = csr->getActivePartitions();
+    bool programActivePartitionConfig = csr->isProgramActivePartitionConfigRequired();
 
     L0::Fence *fence = nullptr;
 
@@ -215,6 +215,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_END);
     }
 
+    auto csrHw = reinterpret_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(csr);
+    if (programActivePartitionConfig) {
+        linearStreamSizeEstimate += csrHw->getCmdSizeForActivePartitionConfig();
+    }
+
     auto &hwInfo = device->getHwInfo();
     if (hFence) {
         fence = Fence::fromHandle(hFence);
@@ -269,9 +274,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
-    if (partitionCount > 1) {
-        linearStreamSizeEstimate += getPartitionProgrammingSize();
-    }
 
     size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
     size_t padding = alignedSize - linearStreamSizeEstimate;
@@ -282,6 +284,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (globalFenceAllocation) {
         csr->makeResident(*globalFenceAllocation);
     }
+
     const auto workPartitionAllocation = csr->getWorkPartitionAllocation();
     if (workPartitionAllocation) {
         csr->makeResident(*workPartitionAllocation);
@@ -352,6 +355,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
     }
 
+    if (programActivePartitionConfig) {
+        csrHw->programActivePartitionConfig(child);
+    }
+
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
@@ -418,10 +425,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     commandQueuePreemptionMode = statePreemption;
-
-    if (partitionCount > 1) {
-        programPartitionConfiguration(child);
-    }
 
     if (hFence) {
         csr->makeResident(fence->getAllocation());

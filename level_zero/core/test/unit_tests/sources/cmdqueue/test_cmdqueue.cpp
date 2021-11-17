@@ -674,7 +674,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
     commandQueue->destroy();
 }
 
-HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident) {
+HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableWalkerPartition.set(1);
 
@@ -691,6 +691,7 @@ HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutin
         bool expectedGAWasMadeResident = false;
     };
     MyCsrMock csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    EXPECT_EQ(2u, csr.activePartitions);
     csr.initializeTagAllocation();
     csr.createWorkPartitionAllocation(*neoDevice);
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
@@ -712,13 +713,14 @@ HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutin
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
 
+    EXPECT_EQ(2u, csr.activePartitionsConfig);
     ASSERT_NE(nullptr, workPartitionAllocation);
     EXPECT_TRUE(csr.expectedGAWasMadeResident);
 
     commandQueue->destroy();
 }
 
-HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerPartitionIsDisabledThenWorkPartitionAllocationIsNotCreated) {
+HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerPartitionIsDisabledThenWorkPartitionAllocationIsNotCreated, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableWalkerPartition.set(0);
 
@@ -2106,27 +2108,6 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
 
     res = context->freeMem(ptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
-    commandQueue->destroy();
-}
-
-HWTEST2_F(CommandQueueSynchronizeTest, givenBasePlatformsWhenProgrammingPartitionRegistersThenExpectNoAction, CommandQueueSBASupport) {
-    ze_result_t returnValue;
-    ze_command_queue_desc_t desc = {};
-    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-
-    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr, &desc);
-    returnValue = commandQueue->initialize(false, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    constexpr size_t expectedSize = 0;
-    EXPECT_EQ(expectedSize, commandQueue->getPartitionProgrammingSize());
-
-    size_t usedBefore = commandQueue->commandStream->getUsed();
-    commandQueue->programPartitionConfiguration(*commandQueue->commandStream);
-    size_t usedAfter = commandQueue->commandStream->getUsed();
-
-    EXPECT_EQ(expectedSize, usedAfter - usedBefore);
-
     commandQueue->destroy();
 }
 

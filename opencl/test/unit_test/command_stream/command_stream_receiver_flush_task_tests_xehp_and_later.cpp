@@ -936,48 +936,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
-            givenMultipleDynamicActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
-    commandStreamReceiver.activePartitions = 2;
-    commandStreamReceiver.taskCount = 3;
-    commandStreamReceiver.staticWorkPartitioningEnabled = false;
-    flushTask(commandStreamReceiver, true);
-    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
-
-    prepareLinearStream<FamilyType>(commandStream, 0);
-    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);
-
-    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
-    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
-            givenMultipleDynamicActivePartitionsWhenFlushingTagUpdateThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
-    commandStreamReceiver.activePartitions = 2;
-    commandStreamReceiver.taskCount = 3;
-    commandStreamReceiver.staticWorkPartitioningEnabled = false;
-    flushTask(commandStreamReceiver, true);
-    commandStreamReceiver.flushTagUpdate();
-    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
-
-    prepareLinearStream<FamilyType>(commandStream, 0);
-    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);
-
-    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
-    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenSingleStaticActivePartitionWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
@@ -1026,5 +984,67 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     verifyPipeControl<FamilyType>(commandStreamReceiver, 5, true);
 
     prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, usedBeforeCsrCmdStream);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleDynamicActivePartitionsWhenFlushingTaskTwiceThenExpectTagUpdatePipeControlWithoutPartitionFlagAndPartitionRegisters) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+
+    commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    commandStreamReceiver.staticWorkPartitioningEnabled = false;
+    flushTask(commandStreamReceiver, true);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleDynamicActivePartitionsWhenFlushingTagUpdateThenExpectTagUpdatePipeControlWithoutPartitionFlag) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    commandStreamReceiver.activePartitions = 2;
+    commandStreamReceiver.taskCount = 3;
+    commandStreamReceiver.staticWorkPartitioningEnabled = false;
+    commandStreamReceiver.flushTagUpdate();
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
+            givenMultipleStaticActivePartitionsAndDirectSubmissionActiveWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndNoActivePartitionConfig) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+
+    commandStreamReceiver.directSubmissionAvailable = true;
+
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
+    EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
+    EXPECT_TRUE(commandStreamReceiver.staticWorkPartitioningEnabled);
+
+    commandStreamReceiver.taskCount = 3;
+    flushTask(commandStreamReceiver, true);
+    EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
+
+    prepareLinearStream<FamilyType>(commandStream, 0);
+    verifyPipeControl<FamilyType>(commandStreamReceiver, 4, true);
+
+    prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
     verifyActivePartitionConfig<FamilyType>(commandStreamReceiver, false);
 }

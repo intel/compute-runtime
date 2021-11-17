@@ -237,11 +237,13 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPip
     EXPECT_FALSE(csr.stallingCommandsOnNextFlushRequired);
 
     HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
     auto secondEnqueueOffset = csr.commandStream.getUsed();
 
-    auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*hwParser.cmdList.begin());
-    EXPECT_NE(nullptr, pipeControl);
+    auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*hwParser.pipeControlList.begin());
+    ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControl->getPostSyncOperation());
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
 

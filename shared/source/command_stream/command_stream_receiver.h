@@ -290,6 +290,10 @@ class CommandStreamReceiver {
 
     bool skipResourceCleanup() const;
 
+    inline bool isProgramActivePartitionConfigRequired() const {
+        return this->isDirectSubmissionEnabled() ? false : this->activePartitionsConfig != this->activePartitions;
+    }
+
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
 
   protected:

@@ -19,7 +19,6 @@ namespace ult {
 
 using MultiPartitionPrologueTest = Test<DeviceFixture>;
 HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledThenCommandListIsUpdated, IsAtLeastXeHpCore) {
-
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -41,27 +40,22 @@ HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledTh
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
-    auto itorPc = find<MI_LOAD_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorPc);
+    auto itorLrm = find<MI_LOAD_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), itorLrm);
 
-    auto lrmCmdPc = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itorPc);
-    ASSERT_EQ(NEO::PartitionRegisters<FamilyType>::wparidCCSOffset, lrmCmdPc->getRegisterAddress());
-    ASSERT_EQ(lrmCmdPc->getMmioRemapEnable(), true);
+    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorLri);
 
-    itorPc = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorPc);
-
-    auto lriCmdPc = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorPc);
-    ASSERT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, static_cast<uint64_t>(lriCmdPc->getRegisterOffset()));
-    ASSERT_EQ(static_cast<uint32_t>(lriCmdPc->getDataDword()), dataPartitionSize);
-    ASSERT_EQ(lriCmdPc->getMmioRemapEnable(), true);
+    auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLri);
+    EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, static_cast<uint64_t>(lriCmd->getRegisterOffset()));
+    EXPECT_EQ(dataPartitionSize, static_cast<uint32_t>(lriCmd->getDataDword()));
+    EXPECT_EQ(true, lriCmd->getMmioRemapEnable());
 
     auto result = commandList->close();
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledThenCommandListIsNotUpdated, IsAtMostGen12lp) {
-
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto &commandContainer = commandList->commandContainer;
@@ -81,7 +75,6 @@ HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledTh
 }
 using MultiPartitionEpilogueTest = Test<DeviceFixture>;
 HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionEpilogueIsCalledThenCommandListIsUpdated, IsAtLeastXeHpCore) {
-
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     ze_result_t returnValue;
@@ -101,16 +94,16 @@ HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionEpilogueIsCalledTh
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
-    auto itorPc = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorPc);
+    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorLri);
 
-    auto lriCmdPc = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorPc);
-    ASSERT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, static_cast<uint64_t>(lriCmdPc->getRegisterOffset()));
-    ASSERT_EQ(static_cast<uint32_t>(lriCmdPc->getDataDword()), CommonConstants::partitionAddressOffset);
-    ASSERT_EQ(lriCmdPc->getMmioRemapEnable(), true);
+    auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLri);
+    EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, static_cast<uint64_t>(lriCmd->getRegisterOffset()));
+    EXPECT_EQ(CommonConstants::partitionAddressOffset, static_cast<uint32_t>(lriCmd->getDataDword()));
+    EXPECT_EQ(true, lriCmd->getMmioRemapEnable());
 
     auto result = commandList->close();
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionPrologueIsCalledThenCommandListIsNotUpdated, IsAtMostGen12lp) {

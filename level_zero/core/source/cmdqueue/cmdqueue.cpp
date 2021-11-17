@@ -54,6 +54,9 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         isCopyOnlyCommandQueue = copyOnly;
         preemptionCmdSyncProgramming = getPreemptionCmdProgramming();
         activeSubDevices = static_cast<uint32_t>(csr->getOsContext().getDeviceBitfield().count());
+        if (!isInternal) {
+            partitionCount = csr->getActivePartitions();
+        }
     }
     return returnValue;
 }

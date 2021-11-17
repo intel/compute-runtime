@@ -55,7 +55,11 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     }
     internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
 
-    if (deviceBitfield.count() > 1 && DebugManager.flags.EnableStaticPartitioning.get() != 0 && NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, true)) {
+    uint32_t subDeviceCount = static_cast<uint32_t>(deviceBitfield.count());
+    if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, true) &&
+        subDeviceCount > 1 &&
+        DebugManager.flags.EnableStaticPartitioning.get() != 0) {
+        this->activePartitions = subDeviceCount;
         this->staticWorkPartitioningEnabled = true;
     }
 }

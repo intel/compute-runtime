@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/linear_stream.h"
@@ -267,8 +268,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.numGrfRequiredChanged = this->lastSentNumGrfRequired != dispatchFlags.numGrfRequired;
     lastSentNumGrfRequired = dispatchFlags.numGrfRequired;
 
-    csrSizeRequestFlags.activePartitionsChanged = this->activePartitionsConfig != this->activePartitions;
-    this->activePartitionsConfig = this->activePartitions;
+    csrSizeRequestFlags.activePartitionsChanged = isProgramActivePartitionConfigRequired();
 
     if (dispatchFlags.threadArbitrationPolicy != ThreadArbitrationPolicy::NotPresent) {
         this->requiredThreadArbitrationPolicy = dispatchFlags.threadArbitrationPolicy;
@@ -807,7 +807,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
     size += getCmdSizeForEpilogue(dispatchFlags);
     size += getCmdsSizeForHardwareContext();
-    size += getCmdSizeForActivePartitionConfig();
+    if (csrSizeRequestFlags.activePartitionsChanged) {
+        size += getCmdSizeForActivePartitionConfig();
+    }
 
     if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {

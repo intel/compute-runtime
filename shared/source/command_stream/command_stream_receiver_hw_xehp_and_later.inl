@@ -157,6 +157,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(Lin
         uint64_t workPartitionAddress = getWorkPartitionAllocationGpuAddress();
         ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(csr, workPartitionAddress, CommonConstants::partitionAddressOffset);
     }
+    this->activePartitionsConfig = this->activePartitions;
 }
 
 template <typename GfxFamily>
