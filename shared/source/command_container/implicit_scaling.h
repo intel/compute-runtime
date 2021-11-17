@@ -67,6 +67,15 @@ struct ImplicitScalingDispatch {
                                         bool apiSelfCleanup,
                                         bool useSecondaryBatchBuffer);
 
+    static size_t getRegisterConfigurationSize();
+    static void dispatchRegisterConfiguration(LinearStream &commandStream,
+                                              uint64_t workPartitionSurfaceAddress,
+                                              uint32_t addressOffset);
+
+    static size_t getOffsetRegisterSize();
+    static void dispatchOffsetRegister(LinearStream &commandStream,
+                                       uint32_t addressOffset);
+
   private:
     static bool pipeControlStallRequired;
 };

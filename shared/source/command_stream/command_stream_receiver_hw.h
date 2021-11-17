@@ -132,6 +132,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     TagAllocatorBase *getTimestampPacketAllocator() override;
 
     void postInitFlagsSetup() override;
+    void programActivePartitionConfig(LinearStream &csr);
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
@@ -150,7 +151,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream);
     void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
-    void programActivePartitionConfig();
+    void programActivePartitionConfigFlushTask(LinearStream &csr);
 
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;

@@ -123,4 +123,13 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     UNRECOVERABLE_IF(!commandsToPatch.empty());
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::getPartitionProgrammingSize() {
+    return 0;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programPartitionConfiguration(NEO::LinearStream &stream) {
+}
+
 } // namespace L0

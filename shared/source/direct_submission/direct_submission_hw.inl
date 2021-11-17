@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -148,16 +147,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit) {
 
         Dispatcher::dispatchPreemption(ringCommandStream);
         if (this->partitionedMode) {
-            startBufferSize += (EncodeSetMMIO<GfxFamily>::sizeMEM +
-                                EncodeSetMMIO<GfxFamily>::sizeIMM);
+            startBufferSize += getSizePartitionRegisterConfigurationSection();
+            dispatchPartitionRegisterConfiguration();
 
-            EncodeSetMMIO<GfxFamily>::encodeMEM(ringCommandStream,
-                                                PartitionRegisters<GfxFamily>::wparidCCSOffset,
-                                                this->workPartitionAllocation->getGpuAddress());
-            EncodeSetMMIO<GfxFamily>::encodeIMM(ringCommandStream,
-                                                PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                                CommonConstants::partitionAddressOffset,
-                                                true);
             this->partitionConfigSet = true;
         }
         if (workloadMode == 1) {
@@ -181,8 +173,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
 
     size_t startSize = getSizeSemaphoreSection();
     if (!this->partitionConfigSet) {
-        startSize += (EncodeSetMMIO<GfxFamily>::sizeMEM +
-                      EncodeSetMMIO<GfxFamily>::sizeIMM);
+        startSize += getSizePartitionRegisterConfigurationSection();
     }
     size_t requiredSize = startSize + getSizeDispatch() + getSizeEnd();
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
@@ -191,13 +182,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
     uint64_t gpuStartVa = getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
 
     if (!this->partitionConfigSet) {
-        EncodeSetMMIO<GfxFamily>::encodeMEM(ringCommandStream,
-                                            PartitionRegisters<GfxFamily>::wparidCCSOffset,
-                                            this->workPartitionAllocation->getGpuAddress());
-        EncodeSetMMIO<GfxFamily>::encodeIMM(ringCommandStream,
-                                            PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                            CommonConstants::partitionAddressOffset,
-                                            true);
+        dispatchPartitionRegisterConfiguration();
         this->partitionConfigSet = true;
     }
 

@@ -105,26 +105,27 @@ void programEventL3Flush(ze_event_handle_t hEvent,
         event->setPacketsInUse(event->getPacketsInUse() + 1);
     }
 
+    auto &cmdListStream = *commandContainer.getCommandStream();
     NEO::PipeControlArgs args;
     args.dcFlushEnable = true;
+
     if (partitionCount > 1) {
         args.workloadPartitionOffset = true;
-        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(),
-                                                 NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                                 static_cast<uint32_t>(event->getSinglePacketSize()),
-                                                 true);
+        NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(cmdListStream,
+                                                                        static_cast<uint32_t>(event->getSinglePacketSize()));
     }
+
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-        *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-        eventAddress, Event::STATE_SIGNALED,
+        cmdListStream,
+        POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        eventAddress,
+        Event::STATE_SIGNALED,
         commandContainer.getDevice()->getHardwareInfo(),
         args);
 
     if (partitionCount > 1) {
-        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(),
-                                                 NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                                 CommonConstants::partitionAddressOffset,
-                                                 true);
+        NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(cmdListStream,
+                                                                        CommonConstants::partitionAddressOffset);
     }
 }
 
@@ -219,7 +220,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         }
     }
 
-    auto isMultiOsContextCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(device->getNEODevice()->getDeviceBitfield(),
+    auto isMultiOsContextCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(),
                                                                                         !isCooperative);
     updateStreamProperties(*kernel, isMultiOsContextCapable, isCooperative);
 
@@ -251,6 +252,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
             event->setPacketsInUse(partitionCount);
         }
         if (L3FlushEnable) {
+            size_t estimatedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(neoDevice->getHardwareInfo());
+            if (partitionCount > 1) {
+                estimatedSize += 2 * NEO::ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
+            }
+            increaseCommandStreamSpace(estimatedSize);
             programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);
         }
     }
@@ -307,27 +313,21 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t partitionDataSize) {
 
     const uint64_t workPartitionAllocationGpuVa = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
-    size_t estimatedSizeRequired = sizeof(typename GfxFamily::MI_LOAD_REGISTER_MEM) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getRegisterConfigurationSize();
     increaseCommandStreamSpace(estimatedSizeRequired);
 
-    NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer,
-                                             NEO::PartitionRegisters<GfxFamily>::wparidCCSOffset,
-                                             workPartitionAllocationGpuVa);
-    NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(commandContainer,
-                                             NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                             partitionDataSize,
-                                             true);
+    NEO::ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(*commandContainer.getCommandStream(),
+                                                                           workPartitionAllocationGpuVa,
+                                                                           partitionDataSize);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {
 
-    const size_t estimatedSizeRequired = sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    const size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
     increaseCommandStreamSpace(estimatedSizeRequired);
-    NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(commandContainer,
-                                             NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                             CommonConstants::partitionAddressOffset,
-                                             true);
+    NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),
+                                                                    CommonConstants::partitionAddressOffset);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

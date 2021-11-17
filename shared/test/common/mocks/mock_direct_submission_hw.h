@@ -29,6 +29,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::disableCpuCacheFlush;
     using BaseClass::disableMonitorFence;
     using BaseClass::dispatchDisablePrefetcher;
+    using BaseClass::dispatchPartitionRegisterConfiguration;
     using BaseClass::dispatchPrefetchMitigation;
     using BaseClass::dispatchSemaphoreSection;
     using BaseClass::dispatchStartSection;
@@ -39,6 +40,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeDisablePrefetcher;
     using BaseClass::getSizeDispatch;
     using BaseClass::getSizeEnd;
+    using BaseClass::getSizePartitionRegisterConfigurationSection;
     using BaseClass::getSizePrefetchMitigation;
     using BaseClass::getSizeSemaphoreSection;
     using BaseClass::getSizeStartSection;

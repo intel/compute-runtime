@@ -319,8 +319,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
     TimestampPacketHelper::programCsrDependenciesForForTaskCountContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
 
-    programActivePartitionConfig();
-
+    programActivePartitionConfigFlushTask(commandStreamCSR);
     if (stallingCommandsOnNextFlushRequired) {
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
     }
@@ -1455,6 +1454,13 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingCommands(const D
         return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
     } else {
         return getCmdSizeForStallingNoPostSyncCommands();
+    }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfigFlushTask(LinearStream &csr) {
+    if (csrSizeRequestFlags.activePartitionsChanged) {
+        programActivePartitionConfig(csr);
     }
 }
 

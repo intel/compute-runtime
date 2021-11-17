@@ -113,6 +113,9 @@ class DirectSubmissionHw {
 
     uint64_t getCommandBufferPositionGpuAddress(void *position);
 
+    void dispatchPartitionRegisterConfiguration();
+    size_t getSizePartitionRegisterConfigurationSection();
+
     void createDiagnostic();
     void initDiagnostic(bool &submitOnInit);
     MOCKABLE_VIRTUAL void performDiagnosticMode();

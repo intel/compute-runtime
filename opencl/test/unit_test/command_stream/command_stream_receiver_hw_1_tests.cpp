@@ -1420,7 +1420,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActiveP
     size_t expectedCmdSize = 0;
     EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getCmdSizeForActivePartitionConfig());
     size_t usedBefore = commandStreamReceiver.commandStream.getUsed();
-    commandStreamReceiver.programActivePartitionConfig();
+    commandStreamReceiver.programActivePartitionConfig(commandStreamReceiver.commandStream);
     size_t usedAfter = commandStreamReceiver.commandStream.getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }

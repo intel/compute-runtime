@@ -2108,5 +2108,27 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     commandQueue->destroy();
 }
+
+HWTEST2_F(CommandQueueSynchronizeTest, givenBasePlatformsWhenProgrammingPartitionRegistersThenExpectNoAction, CommandQueueSBASupport) {
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr, &desc);
+    returnValue = commandQueue->initialize(false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    constexpr size_t expectedSize = 0;
+    EXPECT_EQ(expectedSize, commandQueue->getPartitionProgrammingSize());
+
+    size_t usedBefore = commandQueue->commandStream->getUsed();
+    commandQueue->programPartitionConfiguration(*commandQueue->commandStream);
+    size_t usedAfter = commandQueue->commandStream->getUsed();
+
+    EXPECT_EQ(expectedSize, usedAfter - usedBefore);
+
+    commandQueue->destroy();
+}
+
 } // namespace ult
 } // namespace L0

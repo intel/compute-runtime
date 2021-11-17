@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
@@ -170,6 +171,36 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                               flushArgs,
                                                               hwInfo);
     commandStream.getSpace(totalProgrammedSize);
+}
+
+template <typename GfxFamily>
+inline size_t ImplicitScalingDispatch<GfxFamily>::getRegisterConfigurationSize() {
+    return EncodeSetMMIO<GfxFamily>::sizeMEM +
+           getOffsetRegisterSize();
+}
+
+template <typename GfxFamily>
+inline void ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(LinearStream &commandStream,
+                                                                              uint64_t workPartitionSurfaceAddress,
+                                                                              uint32_t addressOffset) {
+    EncodeSetMMIO<GfxFamily>::encodeMEM(commandStream,
+                                        PartitionRegisters<GfxFamily>::wparidCCSOffset,
+                                        workPartitionSurfaceAddress);
+    dispatchOffsetRegister(commandStream, addressOffset);
+}
+
+template <typename GfxFamily>
+inline size_t ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize() {
+    return EncodeSetMMIO<GfxFamily>::sizeIMM;
+}
+
+template <typename GfxFamily>
+inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStream &commandStream,
+                                                                       uint32_t addressOffset) {
+    EncodeSetMMIO<GfxFamily>::encodeIMM(commandStream,
+                                        PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
+                                        addressOffset,
+                                        true);
 }
 
 } // namespace NEO

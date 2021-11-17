@@ -151,7 +151,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForActivePartitionConfig() 
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
+inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(LinearStream &csr) {
 }
 
 template <typename GfxFamily>

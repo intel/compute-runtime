@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/direct_submission/direct_submission_bdw_and_later.inl"
 #include "shared/source/direct_submission/direct_submission_hw.inl"
 #include "shared/source/direct_submission/direct_submission_prefetch_mitigation_base.inl"
 #include "shared/source/direct_submission/direct_submission_prefetcher_base.inl"

@@ -153,4 +153,20 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     }
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::getPartitionProgrammingSize() {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    return NEO::ImplicitScalingDispatch<GfxFamily>::getRegisterConfigurationSize();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programPartitionConfiguration(NEO::LinearStream &stream) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    uint64_t workPartitionAddress = csr->getWorkPartitionAllocationGpuAddress();
+    NEO::ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(stream,
+                                                                           workPartitionAddress,
+                                                                           CommonConstants::partitionAddressOffset);
+}
+
 } // namespace L0

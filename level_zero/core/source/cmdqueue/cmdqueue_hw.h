@@ -52,6 +52,9 @@ struct CommandQueueHw : public CommandQueueImp {
 
     bool getPreemptionCmdProgramming() override;
     void patchCommands(CommandList &commandList, uint64_t scratchAddress);
+
+    size_t getPartitionProgrammingSize();
+    void programPartitionConfiguration(NEO::LinearStream &stream);
 };
 
 } // namespace L0

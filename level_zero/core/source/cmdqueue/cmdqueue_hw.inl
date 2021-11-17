@@ -270,7 +270,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
     if (partitionCount > 1) {
-        linearStreamSizeEstimate += sizeof(MI_LOAD_REGISTER_MEM) + sizeof(MI_LOAD_REGISTER_IMM);
+        linearStreamSizeEstimate += getPartitionProgrammingSize();
     }
 
     size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
@@ -420,14 +420,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     commandQueuePreemptionMode = statePreemption;
 
     if (partitionCount > 1) {
-        uint64_t workPartitionAddress = csr->getWorkPartitionAllocationGpuAddress();
-        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(child,
-                                                 NEO::PartitionRegisters<GfxFamily>::wparidCCSOffset,
-                                                 workPartitionAddress);
-        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(child,
-                                                 NEO::PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                                 CommonConstants::partitionAddressOffset,
-                                                 true);
+        programPartitionConfiguration(child);
     }
 
     if (hFence) {

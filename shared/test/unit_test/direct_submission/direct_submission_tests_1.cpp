@@ -1265,3 +1265,23 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(expectedVfprintfCall, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(2u, NEO::IoFunctions::mockFcloseCalled);
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, DirectSubmissionTest,
+            givenLegacyPlatformsWhenProgrammingPartitionRegisterThenExpectNoAction) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+
+    bool ret = directSubmission.initialize(true);
+    EXPECT_TRUE(ret);
+    size_t usedSize = directSubmission.ringCommandStream.getUsed();
+
+    constexpr size_t expectedSize = 0;
+    size_t estimatedSize = directSubmission.getSizePartitionRegisterConfigurationSection();
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    directSubmission.dispatchPartitionRegisterConfiguration();
+    size_t usedSizeAfter = directSubmission.ringCommandStream.getUsed();
+    EXPECT_EQ(expectedSize, usedSizeAfter - usedSize);
+}

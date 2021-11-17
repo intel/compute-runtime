@@ -144,25 +144,18 @@ void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresIohPatchInfo(uint
 }
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForActivePartitionConfig() const {
-    if (this->staticWorkPartitioningEnabled && csrSizeRequestFlags.activePartitionsChanged) {
-        return EncodeSetMMIO<GfxFamily>::sizeMEM +
-               EncodeSetMMIO<GfxFamily>::sizeIMM;
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForActivePartitionConfig() const {
+    if (this->staticWorkPartitioningEnabled) {
+        return ImplicitScalingDispatch<GfxFamily>::getRegisterConfigurationSize();
     }
     return 0;
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig() {
-    if (this->staticWorkPartitioningEnabled && csrSizeRequestFlags.activePartitionsChanged) {
+inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(LinearStream &csr) {
+    if (this->staticWorkPartitioningEnabled) {
         uint64_t workPartitionAddress = getWorkPartitionAllocationGpuAddress();
-        EncodeSetMMIO<GfxFamily>::encodeMEM(commandStream,
-                                            PartitionRegisters<GfxFamily>::wparidCCSOffset,
-                                            workPartitionAddress);
-        EncodeSetMMIO<GfxFamily>::encodeIMM(commandStream,
-                                            PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
-                                            CommonConstants::partitionAddressOffset,
-                                            true);
+        ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(csr, workPartitionAddress, CommonConstants::partitionAddressOffset);
     }
 }
 
