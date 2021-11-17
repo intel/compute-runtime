@@ -1044,6 +1044,15 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(0b11);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0,
+                                                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})));
+    csr.setupContext(*osContext);
+
+    auto hostPtr = reinterpret_cast<void *>(0x1234);
+    size_t size = 100;
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    temporaryAllocation->updateTaskCount(0u, 0u);
+    csr.getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(temporaryAllocation), TEMPORARY_ALLOCATION, 2u);
 
     csr.mockTagAddress[0] = 0u;
     csr.mockTagAddress[2] = 0u;
@@ -1061,6 +1070,30 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
     CpuIntrinsicsTests::pauseCounter = 0;
     csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
     EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
+
+    CpuIntrinsicsTests::pauseAddress = nullptr;
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenEmptyTemporaryAllocationListWhenWaitingForTaskCountForCleaningTemporaryAllocationsThenDoNotWait) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+
+    csr.mockTagAddress[0] = 0u;
+    csr.taskCount = 3u;
+
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
+
+    CpuIntrinsicsTests::pauseAddress = &csr.mockTagAddress[0];
+    CpuIntrinsicsTests::pauseValue = 3u;
+
+    CpuIntrinsicsTests::pauseCounter = 0;
+    csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
+    EXPECT_EQ(0u, CpuIntrinsicsTests::pauseCounter);
 
     CpuIntrinsicsTests::pauseAddress = nullptr;
 }

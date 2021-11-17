@@ -151,7 +151,10 @@ void CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
 }
 
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
-    this->CommandStreamReceiver::waitForTaskCount(requiredTaskCount);
+    auto &list = allocationUsage == TEMPORARY_ALLOCATION ? internalAllocationStorage->getTemporaryAllocations() : internalAllocationStorage->getAllocationsForReuse();
+    if (!list.peekIsEmpty()) {
+        this->CommandStreamReceiver::waitForTaskCount(requiredTaskCount);
+    }
     internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
 }
 
