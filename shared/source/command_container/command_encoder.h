@@ -385,4 +385,10 @@ struct EncodeEnableRayTracing {
     static void programEnableRayTracing(LinearStream &commandStream, GraphicsAllocation &backBuffer);
 };
 
+template <typename GfxFamily>
+struct EncodeNoop {
+    static void alignToCacheLine(LinearStream &commandStream);
+    static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
+};
+
 } // namespace NEO

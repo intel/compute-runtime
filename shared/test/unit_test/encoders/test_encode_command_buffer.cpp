@@ -94,3 +94,35 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenGpuAddressWhenEncodeBBStartThenAd
         EXPECT_EQ(gpuAddress, cmd->getBatchBufferStartAddressGraphicsaddress472());
     }
 }
+
+using EncodeNoopTest = Test<DeviceFixture>;
+
+HWTEST_F(EncodeNoopTest, WhenAligningLinearStreamToCacheLineSizeThenItIsAlignedCorrectly) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+    auto commandStream = cmdContainer.getCommandStream();
+
+    EncodeNoop<FamilyType>::alignToCacheLine(*commandStream);
+    EXPECT_EQ(0u, commandStream->getUsed() % MemoryConstants::cacheLineSize);
+
+    commandStream->getSpace(4);
+    EncodeNoop<FamilyType>::alignToCacheLine(*commandStream);
+    EXPECT_EQ(0u, commandStream->getUsed() % MemoryConstants::cacheLineSize);
+}
+
+HWTEST_F(EncodeNoopTest, WhenEmittingNoopsThenExpectCorrectNumberOfBytesNooped) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+    auto commandStream = cmdContainer.getCommandStream();
+
+    size_t usedBefore = commandStream->getUsed();
+
+    EncodeNoop<FamilyType>::emitNoop(*commandStream, 0);
+    size_t usedAfter = commandStream->getUsed();
+    EXPECT_EQ(usedBefore, usedAfter);
+
+    size_t noopingSize = 4;
+    EncodeNoop<FamilyType>::emitNoop(*commandStream, noopingSize);
+    usedAfter = commandStream->getUsed();
+    EXPECT_EQ(noopingSize, (usedAfter - usedBefore));
+}

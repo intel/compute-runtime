@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -58,7 +59,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
         *pCmd++ = noop;
 
         CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
-        CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
+        EncodeNoop<FamilyType>::alignToCacheLine(*pCS);
         BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr, false};
         ResidencyContainer allocationsForResidency;
         pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
@@ -73,7 +74,7 @@ typedef Test<AUBFixture> AUBcommandstreamTests;
 
 HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
+    EncodeNoop<FamilyType>::alignToCacheLine(*pCS);
     BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr, false};
     ResidencyContainer allocationsForResidency;
 

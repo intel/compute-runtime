@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/helpers/constants.h"
@@ -486,14 +487,6 @@ HWTEST_F(CommandStreamReceiverFlushTests, WhenAddingBatchBufferEndThenBatchBuffe
         ptrOffset(commandStream.getCpuBase(), usedPrevious));
     EXPECT_NE(nullptr, batchBufferEnd);
 }
-
-HWTEST_F(CommandStreamReceiverFlushTests, WhenAligningCommandStreamReceiverToCacheLineSizeThenItIsAlignedCorrectly) {
-    commandStream.getSpace(sizeof(uint32_t));
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(commandStream);
-
-    EXPECT_EQ(0u, commandStream.getUsed() % MemoryConstants::cacheLineSize);
-}
-
 typedef Test<ClDeviceFixture> CommandStreamReceiverHwTest;
 
 HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsReturned) {

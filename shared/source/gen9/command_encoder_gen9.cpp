@@ -52,4 +52,5 @@ template struct EncodeWA<Family>;
 template struct EncodeMiArbCheck<Family>;
 template struct EncodeComputeMode<Family>;
 template struct EncodeEnableRayTracing<Family>;
+template struct EncodeNoop<Family>;
 } // namespace NEO

@@ -118,18 +118,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferStart(MI_BATCH_BUF
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &commandStream) {
-    auto used = commandStream.getUsed();
-    auto alignment = MemoryConstants::cacheLineSize;
-    auto partialCacheline = used & (alignment - 1);
-    if (partialCacheline) {
-        auto amountToPad = alignment - partialCacheline;
-        auto pCmd = commandStream.getSpace(amountToPad);
-        memset(pCmd, 0, amountToPad);
-    }
-}
-
-template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(Device &device) const {
     size_t size = 0;
 
@@ -544,8 +532,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool directSubmissionEnabled = isDirectSubmissionEnabled();
     if (submitTask) {
         programEndingCmd(commandStreamTask, device, &bbEndLocation, directSubmissionEnabled);
-        this->emitNoop(commandStreamTask, bbEndPaddingSize);
-        this->alignToCacheLine(commandStreamTask);
+        EncodeNoop<GfxFamily>::emitNoop(commandStreamTask, bbEndPaddingSize);
+        EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
 
         if (submitCSR) {
             chainedBatchBufferStartOffset = commandStreamCSR.getUsed();
@@ -566,7 +554,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             DEBUG_BREAK_IF(commandStreamAllocation == nullptr);
 
             this->makeResident(*commandStreamAllocation);
-            this->alignToCacheLine(commandStreamCSR);
+            EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
             submitCommandStreamFromCsr = true;
         } else if (dispatchFlags.epilogueRequired) {
             this->makeResident(*commandStreamCSR.getGraphicsAllocation());
@@ -575,8 +563,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     } else if (submitCSR) {
         programEndingCmd(commandStreamCSR, device, &bbEndLocation, directSubmissionEnabled);
-        this->emitNoop(commandStreamCSR, bbEndPaddingSize);
-        this->alignToCacheLine(commandStreamCSR);
+        EncodeNoop<GfxFamily>::emitNoop(commandStreamCSR, bbEndPaddingSize);
+        EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
         DEBUG_BREAK_IF(commandStreamCSR.getUsed() > commandStreamCSR.getMaxAvailableSpace());
         submitCommandStreamFromCsr = true;
     }
@@ -862,14 +850,6 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() 
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandStream, size_t bytesToUpdate) {
-    if (bytesToUpdate) {
-        auto ptr = commandStream.getSpace(bytesToUpdate);
-        memset(ptr, 0, bytesToUpdate);
-    }
-}
-
-template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
     int64_t waitTimeout = 0;
     bool enableTimeout = false;
@@ -1104,7 +1084,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    alignToCacheLine(commandStream);
+    EncodeNoop<GfxFamily>::alignToCacheLine(commandStream);
 
     makeResident(*tagAllocation);
     if (globalFenceAllocation) {
@@ -1305,7 +1285,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
         *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    alignToCacheLine(commandStreamTask);
+    EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
 
     if (globalFenceAllocation) {
         makeResident(*globalFenceAllocation);
@@ -1381,7 +1361,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEpilogue(LinearStream &cs
         addBatchBufferStart(reinterpret_cast<typename GfxFamily::MI_BATCH_BUFFER_START *>(*batchBufferEndLocation), gpuAddress, false);
         this->programEpliogueCommands(csr, dispatchFlags);
         programEndingCmd(csr, device, batchBufferEndLocation, isDirectSubmissionEnabled());
-        this->alignToCacheLine(csr);
+        EncodeNoop<GfxFamily>::alignToCacheLine(csr);
     }
 }
 

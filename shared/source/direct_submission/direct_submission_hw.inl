@@ -7,7 +7,6 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -226,8 +225,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
 
     auto bytesToPad = Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer();
-    CommandStreamReceiverHw<GfxFamily>::emitNoop(ringCommandStream, bytesToPad);
-    CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(ringCommandStream);
+    EncodeNoop<GfxFamily>::emitNoop(ringCommandStream, bytesToPad);
+    EncodeNoop<GfxFamily>::alignToCacheLine(ringCommandStream);
 
     cpuCachelineFlush(flushPtr, getSizeEnd());
 

@@ -821,4 +821,24 @@ void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {
 template <typename Family>
 inline size_t EncodeMiArbCheck<Family>::getCommandSize() { return sizeof(MI_ARB_CHECK); }
 
+template <typename Family>
+inline void EncodeNoop<Family>::alignToCacheLine(LinearStream &commandStream) {
+    auto used = commandStream.getUsed();
+    auto alignment = MemoryConstants::cacheLineSize;
+    auto partialCacheline = used & (alignment - 1);
+    if (partialCacheline) {
+        auto amountToPad = alignment - partialCacheline;
+        auto pCmd = commandStream.getSpace(amountToPad);
+        memset(pCmd, 0, amountToPad);
+    }
+}
+
+template <typename Family>
+inline void EncodeNoop<Family>::emitNoop(LinearStream &commandStream, size_t bytesToUpdate) {
+    if (bytesToUpdate) {
+        auto ptr = commandStream.getSpace(bytesToUpdate);
+        memset(ptr, 0, bytesToUpdate);
+    }
+}
+
 } // namespace NEO

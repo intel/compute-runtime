@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -52,7 +53,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenCommandStreamWhenItIsFlush
     LinearStream cs(commandBuffer);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     auto storedBase = cs.getCpuBase();
     auto storedGraphicsAllocation = cs.getGraphicsAllocation();
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
@@ -86,7 +87,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenTaskThatRequiresLargeResou
     LinearStream cs(commandBuffer);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
@@ -156,7 +157,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenCommandStreamWithDuplicate
     csr->makeResident(*dummyAllocation);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     auto storedBase = cs.getCpuBase();
     auto storedGraphicsAllocation = cs.getGraphicsAllocation();
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
@@ -469,7 +470,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenFlushingThenSucceeds) {
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_NE(cs.getCpuBase(), nullptr);
@@ -556,14 +557,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenFlushMultipleTimesThenSucc
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     cs.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
     cs.replaceGraphicsAllocation(commandBuffer);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer2{cs.getGraphicsAllocation(), 8, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer2, csr->getResidencyAllocations());
 
@@ -582,7 +583,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenFlushMultipleTimesThenSucc
     cs.replaceBuffer(commandBuffer2->getUnderlyingBuffer(), commandBuffer2->getUnderlyingBufferSize());
     cs.replaceGraphicsAllocation(commandBuffer2);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer3{cs.getGraphicsAllocation(), 16, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer3, csr->getResidencyAllocations());
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
@@ -595,7 +596,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenFlushMultipleTimesThenSucc
     cs.replaceBuffer(commandBuffer2->getUnderlyingBuffer(), commandBuffer2->getUnderlyingBufferSize());
     cs.replaceGraphicsAllocation(commandBuffer2);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer4{cs.getGraphicsAllocation(), 24, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer4, csr->getResidencyAllocations());
 }
@@ -608,7 +609,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenNotEmptyBbWhenFlushingThen
     cs.getSpace(bbUsed);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
@@ -621,7 +622,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenNotEmptyNotPaddedBbWhenFlu
     cs.getSpace(bbUsed);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
@@ -634,7 +635,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedWithFailingExec, GivenFailingExecThen
     cs.getSpace(bbUsed);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     bool ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(ret, false);
@@ -649,7 +650,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenNotAlignedWhenFlushingThen
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
@@ -666,7 +667,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenCheckDrmFreeWhenFlushingTh
 
     csr->makeResident(*allocation);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     csr->makeNonResident(*allocation);
@@ -822,7 +823,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     LinearStream cs(commandBuffer);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     testedCsr->latestSentTaskCount = 160u;
@@ -853,7 +854,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     LinearStream cs(commandBuffer);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     DrmAllocation *alloc = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
@@ -887,7 +888,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     LinearStream cs(commandBuffer);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     DrmAllocation *alloc = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
@@ -1220,7 +1221,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenNoAllocsInMemoryOperationH
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     LinearStream cs(commandBuffer);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
@@ -1254,7 +1255,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocsInMemoryOperationHan
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     LinearStream cs(commandBuffer);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
@@ -1269,7 +1270,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocInMemoryOperationsInt
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     LinearStream cs(commandBuffer);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
