@@ -45,7 +45,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenXeHPMultiConfigWhenConfigureHardwareCustomIsCa
 
     hwInfo.gtSystemInfo.EUCount = 512u;
     hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_TRUE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_TRUE(hwInfo.capabilityTable.ftrRenderCompressedImages);
 }
 
