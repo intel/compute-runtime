@@ -90,6 +90,8 @@ ze_result_t WddmEventsImp::eventRegister(zes_event_type_flags_t events) {
         registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH, KmdSysman::Events::ExitTDR);
     }
 
+    ResetEvent(exitHandle);
+
     return (eventList.size() == 0) ? ZE_RESULT_ERROR_UNSUPPORTED_FEATURE : ZE_RESULT_SUCCESS;
 }
 
@@ -137,6 +139,7 @@ WddmEventsImp::WddmEventsImp(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
     exitHandle = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ResetEvent(exitHandle);
 }
 
 OsEvents *OsEvents::create(OsSysman *pOsSysman) {
