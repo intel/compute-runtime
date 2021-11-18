@@ -382,8 +382,8 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIs
     DriverImp driverImp;
     auto oldFclDllName = Os::frontEndDllName;
     auto oldIgcDllName = Os::igcDllName;
-    Os::frontEndDllName = "invalidFCL";
-    Os::igcDllName = "invalidIGC";
+    Os::frontEndDllName = "_invalidFCL";
+    Os::igcDllName = "_invalidIGC";
     driverImp.initialize(&result);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 

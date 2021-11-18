@@ -16,13 +16,10 @@ namespace Os {
 // the runtime unit tests
 ///////////////////////////////////////////////////////////////////////////////
 #if defined(__linux__)
-const char *frontEndDllName = "libmock_igdfcl.so";
-const char *igcDllName = "libmock_igc.so";
+const char *frontEndDllName = "_invalidFCL";
+const char *igcDllName = "_invalidIGC";
 const char *libvaDllName = nullptr;
 const char *testDllName = "libtest_dynamic_lib.so";
-const char *gmmDllName = "libmock_gmm.so";
-const char *gmmInitFuncName = "initMockGmm";
-const char *gmmDestroyFuncName = "destroyMockGmm";
 const char *metricsLibraryDllName = "";
 const char *gdiDllName = "";
 const char *dxcoreDllName = "";

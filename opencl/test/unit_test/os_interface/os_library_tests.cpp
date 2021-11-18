@@ -20,8 +20,6 @@
 #include <memory>
 
 namespace Os {
-extern const char *frontEndDllName;
-extern const char *igcDllName;
 extern const char *testDllName;
 } // namespace Os
 const std::string fakeLibName = "_fake_library_name_";

@@ -187,7 +187,7 @@ TEST(L0DeviceTest, givenDeviceWithoutFCLCompilerLibraryThenInvalidDependencyRetu
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
     auto oldFclDllName = Os::frontEndDllName;
-    Os::frontEndDllName = "invalidFCL";
+    Os::frontEndDllName = "_invalidFCL";
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
@@ -205,7 +205,7 @@ TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryThenInvalidDependencyRetu
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
     auto oldIgcDllName = Os::igcDllName;
-    Os::igcDllName = "invalidIGC";
+    Os::igcDllName = "_invalidIGC";
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
@@ -224,8 +224,8 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyRetu
 
     auto oldFclDllName = Os::frontEndDllName;
     auto oldIgcDllName = Os::igcDllName;
-    Os::frontEndDllName = "invalidFCL";
-    Os::igcDllName = "invalidIGC";
+    Os::frontEndDllName = "_invalidFCL";
+    Os::igcDllName = "_invalidIGC";
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);

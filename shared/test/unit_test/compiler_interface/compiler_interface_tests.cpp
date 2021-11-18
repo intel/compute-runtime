@@ -633,7 +633,7 @@ TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
     MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
-    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("falseName.notRealLib", retLib, retMain);
+    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("_falseName.notRealLib", retLib, retMain);
     EXPECT_FALSE(retVal);
     EXPECT_EQ(nullptr, retLib.get());
     EXPECT_EQ(nullptr, retMain.get());
