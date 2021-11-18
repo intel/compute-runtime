@@ -161,7 +161,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGettingProper
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(properties.type, ZES_MEM_TYPE_DDR5);
+        EXPECT_EQ(properties.type, ZES_MEM_TYPE_GDDR6);
         EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);

@@ -24,7 +24,7 @@ class MemoryKmdSysManager : public Mock<MockKmdSysManager> {};
 template <>
 struct Mock<MemoryKmdSysManager> : public MemoryKmdSysManager {
 
-    uint32_t mockMemoryType = KmdSysman::MemoryType::DDR5;
+    uint32_t mockMemoryType = KmdSysman::MemoryType::GDDR6;
     uint32_t mockMemoryLocation = KmdSysman::MemoryLocationsType::DeviceMemory;
     uint64_t mockMemoryPhysicalSize = 4294967296;
     uint64_t mockMemoryStolen = 0;

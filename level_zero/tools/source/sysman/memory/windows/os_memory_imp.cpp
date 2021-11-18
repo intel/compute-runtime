@@ -110,6 +110,24 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
         case KmdSysman::MemoryType::LPDDR3: {
             pProperties->type = ZES_MEM_TYPE_LPDDR3;
         } break;
+        case KmdSysman::MemoryType::GDDR4: {
+            pProperties->type = ZES_MEM_TYPE_GDDR4;
+        } break;
+        case KmdSysman::MemoryType::GDDR5: {
+            pProperties->type = ZES_MEM_TYPE_GDDR5;
+        } break;
+        case KmdSysman::MemoryType::GDDR5X: {
+            pProperties->type = ZES_MEM_TYPE_GDDR5X;
+        } break;
+        case KmdSysman::MemoryType::GDDR6: {
+            pProperties->type = ZES_MEM_TYPE_GDDR6;
+        } break;
+        case KmdSysman::MemoryType::GDDR6X: {
+            pProperties->type = ZES_MEM_TYPE_GDDR6X;
+        } break;
+        case KmdSysman::MemoryType::GDDR7: {
+            pProperties->type = ZES_MEM_TYPE_GDDR7;
+        } break;
         default: {
             pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
         } break;
