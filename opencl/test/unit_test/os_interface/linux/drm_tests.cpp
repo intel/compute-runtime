@@ -691,6 +691,32 @@ TEST(DrmTest, givenProgramDebuggingWhenCreatingContextThenUnrecoverableContextIs
     EXPECT_EQ(2u, drm.receivedContextParamRequestCount);
 }
 
+TEST(DrmTest, whenPageFaultIsSupportedThenUseVmBindImmediate) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (auto hasPageFaultSupport : {false, true}) {
+        drm.pageFaultSupported = hasPageFaultSupport;
+        EXPECT_EQ(hasPageFaultSupport, drm.useVMBindImmediate());
+    }
+}
+
+TEST(DrmTest, whenImmediateVmBindExtIsEnabledThenUseVmBindImmediate) {
+    DebugManagerStateRestore restorer;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (auto enableImmediateBind : {false, true}) {
+        DebugManager.flags.EnableImmediateVmBindExt.set(enableImmediateBind);
+        EXPECT_EQ(enableImmediateBind, drm.useVMBindImmediate());
+    }
+}
+
 TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSystemInfoArePreserved) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

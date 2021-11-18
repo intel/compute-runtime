@@ -876,4 +876,14 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     return getMaxGpuFrequencyOfDevice(*this, sysFsPciPath, maxGpuFrequency);
 }
 
+bool Drm::useVMBindImmediate() const {
+    bool useBindImmediate = isDirectSubmissionActive() || hasPageFaultSupport();
+
+    if (DebugManager.flags.EnableImmediateVmBindExt.get() != -1) {
+        useBindImmediate = DebugManager.flags.EnableImmediateVmBindExt.get();
+    }
+
+    return useBindImmediate;
+}
+
 } // namespace NEO

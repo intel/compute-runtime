@@ -167,7 +167,9 @@ class Drm : public DriverModel {
     void setUnrecoverableContext(uint32_t drmContextId);
 
     void setDirectSubmissionActive(bool value) { this->directSubmissionActive = value; }
-    bool isDirectSubmissionActive() { return this->directSubmissionActive; }
+    bool isDirectSubmissionActive() const { return this->directSubmissionActive; }
+
+    bool useVMBindImmediate() const;
 
     MOCKABLE_VIRTUAL bool isVmBindAvailable();
     MOCKABLE_VIRTUAL bool registerResourceClasses();

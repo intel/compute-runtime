@@ -13,13 +13,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 int DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
-    auto useImmediateExt = this->drm->isDirectSubmissionActive();
-
-    if (DebugManager.flags.EnableImmediateVmBindExt.get() != -1) {
-        useImmediateExt = DebugManager.flags.EnableImmediateVmBindExt.get();
-    }
-
-    if (useImmediateExt) {
+    if (drm->useVMBindImmediate()) {
         auto osContextLinux = static_cast<OsContextLinux *>(this->osContext);
         osContextLinux->waitForPagingFence();
     }
