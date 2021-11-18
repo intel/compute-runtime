@@ -141,7 +141,7 @@ void Drm::queryPageFaultSupport() {
 }
 
 bool Drm::hasPageFaultSupport() const {
-    return pageFaultSupported;
+    return false;
 }
 
 } // namespace NEO

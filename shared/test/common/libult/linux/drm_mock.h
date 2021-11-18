@@ -112,6 +112,10 @@ class DrmMock : public Drm {
         queryPageFaultSupportCalled = true;
     }
 
+    bool hasPageFaultSupport() const override {
+        return pageFaultSupported;
+    }
+
     static const int mockFd = 33;
 
     bool failRetTopology = false;
