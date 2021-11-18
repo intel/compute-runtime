@@ -51,6 +51,7 @@ struct MetricContext {
     virtual ze_result_t activateMetricGroupsDeferred(const uint32_t count,
                                                      zet_metric_group_handle_t *phMetricGroups) = 0;
     virtual bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) = 0;
+    virtual bool isMetricGroupActivated() = 0;
 
     virtual void setUseCompute(const bool useCompute) = 0;
     virtual bool isComputeUsed() = 0;

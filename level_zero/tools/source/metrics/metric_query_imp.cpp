@@ -540,6 +540,13 @@ ze_result_t MetricQueryPoolImp::destroy() {
         break;
     }
 
+    // Check open queries.
+    if (metricContext.getMetricsLibrary().getMetricQueryCount() == 0) {
+        if (!metricContext.isMetricGroupActivated()) {
+            metricContext.getMetricsLibrary().release();
+        }
+    }
+
     delete this;
 
     return ZE_RESULT_SUCCESS;

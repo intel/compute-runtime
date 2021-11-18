@@ -29,6 +29,7 @@ struct MetricGroupDomains {
     ze_result_t activate();
     ze_result_t deactivate();
     bool isActivated(const zet_metric_group_handle_t hMetricGroup);
+    uint32_t getActivatedCount();
 
   protected:
     bool activateMetricGroupDeferred(const zet_metric_group_handle_t hMetricGroup);
@@ -62,6 +63,7 @@ struct MetricContextImp : public MetricContext {
     ze_result_t activateMetricGroupsDeferred(const uint32_t count,
                                              zet_metric_group_handle_t *phMetricGroups) override;
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) override;
+    bool isMetricGroupActivated() override;
 
     void setUseCompute(const bool useCompute) override;
     bool isComputeUsed() override;
@@ -183,6 +185,10 @@ MetricContextImp::activateMetricGroupsDeferred(const uint32_t count,
 
 bool MetricContextImp::isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) {
     return metricGroupDomains.isActivated(hMetricGroup);
+}
+
+bool MetricContextImp::isMetricGroupActivated() {
+    return metricGroupDomains.getActivatedCount() > 0;
 }
 
 ze_result_t MetricContextImp::activateMetricGroups() { return metricGroupDomains.activate(); }
@@ -355,23 +361,24 @@ ze_result_t MetricGroupDomains::deactivate() {
     for (auto &domain : domains) {
 
         auto hMetricGroup = domain.second.first;
-        auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
-        bool metricGroupActivated = domain.second.second;
-        auto metricGroupEventBased = (metricGroup != nullptr)
-                                         ? MetricGroup::getProperties(hMetricGroup).samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED
-                                         : false;
-        auto hConfigurationEmpty = ConfigurationHandle_1_0{};
-        auto hConfiguration = metricGroupEventBased
-                                  ? metricContext.getMetricsLibrary().getConfiguration(hMetricGroup)
-                                  : hConfigurationEmpty;
+        bool metricGroupActivatedOnGpu = domain.second.second;
 
-        // Deactivate metric group configuration using metrics library.
-        if (hConfiguration.IsValid() && metricGroupActivated) {
+        if (metricGroupActivatedOnGpu) {
+            // Only event based metric groups are activated on Gpu.
+            DEBUG_BREAK_IF(MetricGroup::getProperties(hMetricGroup).samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
+            auto hConfiguration = metricContext.getMetricsLibrary().getConfiguration(hMetricGroup);
+            // Deactivate metric group configuration using metrics library.
             metricContext.getMetricsLibrary().deactivateConfiguration(hConfiguration);
         }
-
         // Mark domain as free.
         domain.second = {};
+    }
+
+    // Check any open queries.
+    if (metricContext.getMetricsLibrary().getMetricQueryCount() == 0) {
+        if (metricContext.getMetricsLibrary().getInitializationState() != ZE_RESULT_ERROR_UNINITIALIZED) {
+            metricContext.getMetricsLibrary().release();
+        }
     }
 
     return ZE_RESULT_SUCCESS;
@@ -388,6 +395,14 @@ bool MetricGroupDomains::isActivated(const zet_metric_group_handle_t hMetricGrou
 
     // 2. Check whether the specific MetricGroup is activated.
     return domain->second.first == hMetricGroup;
+}
+
+uint32_t MetricGroupDomains::getActivatedCount() {
+    uint32_t count = 0;
+    for (const auto &domain : domains) {
+        count += domain.second.second ? 1 : 0;
+    }
+    return count;
 }
 
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) {
