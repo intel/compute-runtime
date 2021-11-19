@@ -105,6 +105,7 @@ struct FeatureTableBase {
             bool ftrMultiTileArch : 1;
             bool ftrCCSMultiInstance : 1;
             bool ftrPpgtt64KBWalkOptimization : 1;
+            bool ftrUnified3DMediaCompressionFormats : 1;
         };
         uint64_t packed[2];
     };
@@ -137,5 +138,6 @@ struct WorkaroundTableBase {
     bool waAuxTable16KGranular = false;
     bool waDisableFusedThreadScheduling = false;
     bool waDefaultTile4 = false;
+    bool waAuxTable64KGranular = false;
 };
 } // namespace NEO
