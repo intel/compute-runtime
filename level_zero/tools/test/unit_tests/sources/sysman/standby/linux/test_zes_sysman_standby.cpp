@@ -27,6 +27,7 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
     std::unique_ptr<Mock<StandbySysfsAccess>> ptestSysfsAccess;
     zes_standby_handle_t hSysmanStandby = {};
     SysfsAccess *pOriginalSysfsAccess = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
 
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -48,7 +49,6 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
         }
         pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
-        std::vector<ze_device_handle_t> deviceHandles;
         // We received a device handle. Check for subdevices in this device
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
         if (subDeviceCount == 0) {
@@ -257,6 +257,52 @@ TEST_F(ZesStandbyFixture, GivenOnSubdeviceNotSetWhenValidatingosStandbyGetProper
     EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
     EXPECT_EQ(properties.onSubdevice, isSubDevice);
     delete pLinuxStandbyImp;
+}
+
+TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeDefaultWithLegacyPathThenVerifySysmanzesySetModeCallSucceeds) {
+    for (auto handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
+    ptestSysfsAccess->directoryExistsResult = false;
+    pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
+
+    auto handles = get_standby_handles(mockHandleCount);
+
+    for (auto hSysmanStandby : handles) {
+        zes_standby_promo_mode_t mode;
+        ptestSysfsAccess->setVal(standbyModeFile, standbyModeNever);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_NEVER, mode);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_DEFAULT));
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_DEFAULT, mode);
+    }
+}
+
+TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeNeverWithLegacyPathThenVerifySysmanzesySetModeCallSucceeds) {
+    for (auto handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
+    ptestSysfsAccess->directoryExistsResult = false;
+    pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
+
+    auto handles = get_standby_handles(mockHandleCount);
+
+    for (auto hSysmanStandby : handles) {
+        zes_standby_promo_mode_t mode;
+        ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_DEFAULT, mode);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_NEVER, mode);
+    }
 }
 
 class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,12 @@ class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
     SysfsAccess *pSysfsAccess = nullptr;
 
   private:
-    static const std::string standbyModeFile;
+    std::string standbyModeFile;
     static const int standbyModeDefault = 1;
     static const int standbyModeNever = 0;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
+    void init();
 };
 
 } // namespace L0

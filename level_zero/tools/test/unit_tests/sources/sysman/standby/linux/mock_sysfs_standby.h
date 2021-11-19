@@ -7,12 +7,16 @@
 
 #pragma once
 
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/tools/source/sysman/standby/linux/os_standby_imp.h"
 
 namespace L0 {
 namespace ult {
 
-const std::string standbyModeFile("power/rc6_enable");
+const std::string standbyModeFile("gt/gt0/rc6_enable");
+const std::string standbyModeFile1("gt/gt1/rc6_enable");
+const std::string standbyModeFileLegacy("power/rc6_enable");
 
 class StandbySysfsAccess : public SysfsAccess {};
 
@@ -24,6 +28,7 @@ struct Mock<StandbySysfsAccess> : public StandbySysfsAccess {
     MOCK_METHOD(ze_result_t, read, (const std::string file, int &val), (override));
     MOCK_METHOD(ze_result_t, write, (const std::string file, int val), (override));
     MOCK_METHOD(ze_result_t, canRead, (const std::string file), (override));
+    ADDMETHOD_NOBASE(directoryExists, bool, true, (const std::string path));
 
     ze_result_t getCanReadStatus(const std::string file) {
         if (isFileAccessible(file) == true) {
@@ -80,7 +85,7 @@ struct Mock<StandbySysfsAccess> : public StandbySysfsAccess {
 
   private:
     bool isFileAccessible(const std::string file) {
-        if ((file.compare(standbyModeFile) == 0) && (isStandbyModeFileAvailable == true)) {
+        if (((file.compare(standbyModeFile) == 0) || (file.compare(standbyModeFile1) == 0) || (file.compare(standbyModeFileLegacy) == 0)) && (isStandbyModeFileAvailable == true)) {
             return true;
         }
         return false;

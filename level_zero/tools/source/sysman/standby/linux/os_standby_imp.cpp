@@ -9,8 +9,6 @@
 
 namespace L0 {
 
-const std::string LinuxStandbyImp::standbyModeFile("power/rc6_enable");
-
 ze_result_t LinuxStandbyImp::osStandbyGetProperties(zes_standby_properties_t &properties) {
     properties.pNext = nullptr;
     properties.type = ZES_STANDBY_TYPE_GLOBAL;
@@ -60,10 +58,20 @@ ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
     return result;
 }
 
+void LinuxStandbyImp::init() {
+    const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
+    if (pSysfsAccess->directoryExists(baseDir)) {
+        standbyModeFile = baseDir + "rc6_enable";
+    } else {
+        standbyModeFile = "power/rc6_enable";
+    }
+}
+
 LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    init();
 }
 
 OsStandby *OsStandby::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
