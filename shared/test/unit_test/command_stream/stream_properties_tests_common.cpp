@@ -42,13 +42,28 @@ TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
 }
 
 TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
+    DebugManagerStateRestore restorer;
     StreamProperties properties;
     for (auto requiresCoherency : ::testing::Bool()) {
         for (auto largeGrf : ::testing::Bool()) {
             properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, 0u);
             EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
             EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
+            EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
+            EXPECT_EQ(-1, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
         }
+    }
+
+    for (auto forceZPassAsyncComputeThreadLimit : ::testing::Bool()) {
+        DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(forceZPassAsyncComputeThreadLimit);
+        properties.stateComputeMode.setProperties(false, 0u, 0u);
+        EXPECT_EQ(forceZPassAsyncComputeThreadLimit, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
+    }
+
+    for (auto forcePixelAsyncComputeThreadLimit : ::testing::Bool()) {
+        DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
+        properties.stateComputeMode.setProperties(false, 0u, 0u);
+        EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
     }
 }
 

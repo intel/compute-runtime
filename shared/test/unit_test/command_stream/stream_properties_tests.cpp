@@ -17,6 +17,8 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
     std::vector<StreamProperty *> allProperties;
     allProperties.push_back(&properties.isCoherencyRequired);
     allProperties.push_back(&properties.largeGrfMode);
+    allProperties.push_back(&properties.zPassAsyncComputeThreadLimit);
+    allProperties.push_back(&properties.pixelAsyncComputeThreadLimit);
     return allProperties;
 }
 

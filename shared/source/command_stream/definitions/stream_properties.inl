@@ -12,6 +12,8 @@ namespace NEO {
 struct StateComputeModeProperties {
     StreamProperty isCoherencyRequired{};
     StreamProperty largeGrfMode{};
+    StreamProperty zPassAsyncComputeThreadLimit{};
+    StreamProperty pixelAsyncComputeThreadLimit{};
 
     void setProperties(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy);
     void setProperties(const StateComputeModeProperties &properties);
