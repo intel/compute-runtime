@@ -11,7 +11,7 @@ const uint64_t DG2::defaultHardwareInfoConfig = 0;
 void setupDG2HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x0) {
         // Default config
-        DG2_2x4x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        DG2_CONFIG::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

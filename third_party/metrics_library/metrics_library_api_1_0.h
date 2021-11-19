@@ -70,6 +70,7 @@ enum class ClientGen : uint32_t
     Gen11LP = 5,
     Gen12   = 6,
     XeHP    = 9,
+    XeHPG   = 10,
     // ...
     Last
 };
