@@ -155,6 +155,12 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableStatelessCompression, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiTileCompression, -1, "-1: default, 0: disable, 1: enable, Enables compression in multi tile scenarios.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmResourceUsageField, -1, "-1: default, >=0: gmm.resourceParams.Usage is set to this value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideBufferSuitableForRenderCompression, -1, "-1: default, 0: Disable, 1: Enable")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CacheControlInSurfaceState, -1, "-1: feature inactive, >=0 : following L1 cache control value will be programmed in render surface state")
+DECLARE_DEBUG_VARIABLE(int32_t, OverridePreferredSlmAllocationSizePerDss, -1, "-1: default, >=0: program value for preferred SLM allocation size per dss")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceL3PrefetchForComputeWalker, -1, "-1: default, 0: disable, 1: enable")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceZPassAsyncComputeThreadLimit, -1, "-1: default, >0: Limit value in STATE_COMPUTE_MODE")
+DECLARE_DEBUG_VARIABLE(int32_t, ForcePixelAsyncComputeThreadLimit, -1, "-1: default, >0: Limit value in STATE_COMPUTE_MODE")
+DECLARE_DEBUG_VARIABLE(int32_t, DecompressInL3ForImage2dFromBuffer, -1, "-1: default, 0: WA Disabled, 1: WA enabled - Enable DecompressInL3 for image 2d from compressed buffer")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
