@@ -9,7 +9,7 @@
 
 template <typename KernelT>
 void NEO::SyncBufferHandler::prepareForEnqueue(size_t workGroupsCount, KernelT &kernel) {
-    auto requiredSize = workGroupsCount;
+    auto requiredSize = alignUp(workGroupsCount, CommonConstants::maximalSizeOfAtomicType);
     std::lock_guard<std::mutex> guard(this->mutex);
 
     bool isCurrentBufferFull = (usedBufferSize + requiredSize > bufferSize);

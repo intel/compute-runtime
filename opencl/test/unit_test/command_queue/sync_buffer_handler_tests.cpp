@@ -104,10 +104,9 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
 
     const cl_uint workDim = 1;
     const size_t gwOffset[3] = {0, 0, 0};
-    const size_t lws[3] = {10, 1, 1};
-    size_t workgroupCount[3] = {10, 1, 1};
-    size_t globalWorkSize[3] = {100, 1, 1};
-    size_t workItemsCount = 10;
+    const size_t workItemsCount = 16;
+    const size_t lws[3] = {workItemsCount, 1, 1};
+    size_t workgroupCount[3] = {workItemsCount, 1, 1};
     std::unique_ptr<MockKernelWithInternals> kernelInternals;
     MockKernel *kernel;
     MockCommandQueue *commandQueue;
@@ -126,6 +125,19 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurr
     auto pCsr = commandQueue->getGpgpuEngine().commandStreamReceiver;
     EXPECT_EQ(syncBufferHandler->graphicsAllocation->getTaskCount(pCsr->getOsContext().getContextId()),
               static_cast<UltCommandStreamReceiver<FamilyType> *>(pCsr)->latestSentTaskCount);
+}
+
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferOffsetIsProperlyAligned) {
+    patchAllocateSyncBuffer();
+
+    workgroupCount[0] = 1;
+    enqueueNDCount();
+
+    auto syncBufferHandler = getSyncBufferHandler();
+    EXPECT_EQ(CommonConstants::maximalSizeOfAtomicType, syncBufferHandler->usedBufferSize);
+
+    enqueueNDCount();
+    EXPECT_EQ(2u * CommonConstants::maximalSizeOfAtomicType, syncBufferHandler->usedBufferSize);
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsNotCreated) {
@@ -153,7 +165,6 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncB
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingConcurrentKernelThenSuccessIsReturned) {
     auto maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue);
     workgroupCount[0] = maxWorkGroupCount;
-    globalWorkSize[0] = maxWorkGroupCount * lws[0];
 
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -162,7 +173,6 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingCon
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenTooHighWorkgroupCountWhenEnqueuingConcurrentKernelThenErrorIsReturned) {
     size_t maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue);
     workgroupCount[0] = maxWorkGroupCount + 1;
-    globalWorkSize[0] = maxWorkGroupCount * lws[0];
 
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
