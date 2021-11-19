@@ -44,6 +44,12 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+if(TESTS_DG2_AND_LATER)
+  list(APPEND NEO_CORE_HELPERS_TESTS
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2_and_later.cpp
+  )
+endif()
+
 add_subdirectories()
 
 target_sources(${TARGET_NAME} PRIVATE
