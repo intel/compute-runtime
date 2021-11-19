@@ -23,6 +23,7 @@ struct PipeControlArgsBase {
     bool notifyEnable = false;
     bool workloadPartitionOffset = false;
     bool amfsFlushEnable = false;
+    bool unTypedDataPortCacheFlush = false;
 
   protected:
     PipeControlArgsBase() = default;
