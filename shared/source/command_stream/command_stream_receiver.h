@@ -288,6 +288,8 @@ class CommandStreamReceiver {
         return activePartitions;
     }
 
+    bool skipResourceCleanup() const;
+
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
 
   protected:

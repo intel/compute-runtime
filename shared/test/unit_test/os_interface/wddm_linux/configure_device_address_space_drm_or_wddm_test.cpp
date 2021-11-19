@@ -118,6 +118,9 @@ struct GdiMockConfig {
     D3DKMT_LOCK2 receivedLock2Args = {};
     D3DKMT_DESTROYALLOCATION2 receivedDestroyAllocation2Args = {};
     uint32_t mockAllocationHandle = 7U;
+
+    D3DKMT_GETDEVICESTATE receivedGetDeviceStateArgs = {};
+    GdiMockCallbackWithReturn getDeviceStateClb = {};
 } gdiMockConfig;
 
 NTSTATUS __stdcall reserveDeviceAddressSpaceMock(D3DDDI_RESERVEGPUVIRTUALADDRESS *arg) {
@@ -185,6 +188,15 @@ NTSTATUS __stdcall escapeMock(const D3DKMT_ESCAPE *arg) {
     return gdiMockConfig.escapeClb.returnValue;
 }
 
+NTSTATUS __stdcall getDeviceStateMock(D3DKMT_GETDEVICESTATE *arg) {
+    gdiMockConfig.receivedGetDeviceStateArgs = *arg;
+    gdiMockConfig.getDeviceStateClb.callCount += 1;
+    if (gdiMockConfig.getDeviceStateClb.callback) {
+        gdiMockConfig.getDeviceStateClb.callback();
+    }
+    return gdiMockConfig.getDeviceStateClb.returnValue;
+}
+
 struct WddmLinuxTest : public ::testing::Test {
     void SetUp() override {
         mockRootDeviceEnvironment = std::make_unique<NEO::MockRootDeviceEnvironment>(mockExecEnv);
@@ -248,9 +260,16 @@ TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpace
     }
 
     this->osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
-    gdiMockConfig.reserveGpuVaClb.returnValue = -2;
-    gdiMockConfig.reserveGpuVaClb.callback = []() { gdiMockConfig.reserveGpuVaClb.returnValue += 1; };
+    auto cantReserveWholeGpuVAButCanReservePortion = []() {
+        gdiMockConfig.reserveGpuVaClb.returnValue = (gdiMockConfig.reserveGpuVaClb.callCount == 1) ? -1 : 0;
+    };
+    gdiMockConfig.reserveGpuVaClb.callback = cantReserveWholeGpuVAButCanReservePortion;
     bool success = this->wddm->configureDeviceAddressSpace();
+    EXPECT_FALSE(success);
+
+    auto cantReserveWholeGpuVAAndCantReservePortion = []() { gdiMockConfig.reserveGpuVaClb.returnValue = -1; };
+    gdiMockConfig.reserveGpuVaClb.callback = cantReserveWholeGpuVAAndCantReservePortion;
+    success = this->wddm->configureDeviceAddressSpace();
     EXPECT_TRUE(success);
 
     auto svmSize = this->getMaxSvmSize();
@@ -259,19 +278,6 @@ TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpace
     EXPECT_EQ(svmSize, gdiMockConfig.receivedReserveGpuVaArgs.MaximumAddress);
     EXPECT_EQ(MemoryConstants::pageSize64k, gdiMockConfig.receivedReserveGpuVaArgs.Size);
     EXPECT_EQ(wddm->getAdapter(), gdiMockConfig.receivedReserveGpuVaArgs.hAdapter);
-}
-
-TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenSvmAddressSpaceWhenCouldNotReserveGpuVAForSvmThenFail) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress) {
-        GTEST_SKIP();
-    }
-
-    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
-    this->osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
-
-    gdiMockConfig.reserveGpuVaClb.returnValue = -1;
-    bool success = this->wddm->configureDeviceAddressSpace();
-    EXPECT_FALSE(success);
 }
 
 TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenNonSvmAddressSpaceThenReserveGpuVAForUSMIsNotCalled) {
@@ -531,10 +537,13 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
     }
 
     this->wddm->featureTable->ftrCCSRing = 1;
-    gdiMockConfig.reserveGpuVaClb.returnValue = -1;
 
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    auto cantReserveWholeGpuVAButCanReservePortion = []() {
+        gdiMockConfig.reserveGpuVaClb.returnValue = (gdiMockConfig.reserveGpuVaClb.callCount == 1) ? -1 : 0;
+    };
+    gdiMockConfig.reserveGpuVaClb.callback = cantReserveWholeGpuVAButCanReservePortion;
     bool success = this->wddm->configureDeviceAddressSpace();
     EXPECT_FALSE(success);
     EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
@@ -549,14 +558,12 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
     }
 
     this->wddm->featureTable->ftrCCSRing = 1;
-    gdiMockConfig.reserveGpuVaClb.callback = []() {
-        if (gdiMockConfig.reserveGpuVaClb.callCount > 1) {
-            gdiMockConfig.reserveGpuVaClb.returnValue = -1;
-        };
-    };
-
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    auto cantReserveWholeGpuVAOfSecondButCanReservePortionOfSecont = []() {
+        gdiMockConfig.reserveGpuVaClb.returnValue = (gdiMockConfig.reserveGpuVaClb.callCount == 2) ? -1 : 0;
+    };
+    gdiMockConfig.reserveGpuVaClb.callback = cantReserveWholeGpuVAOfSecondButCanReservePortionOfSecont;
     bool success = this->wddm->configureDeviceAddressSpace();
     EXPECT_FALSE(success);
     EXPECT_EQ(1U, this->wddm->validAddressRangeReservations.size());
@@ -603,6 +610,20 @@ TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhe
     ASSERT_NE(nullptr, alloc);
     EXPECT_TRUE(isAligned<MemoryConstants::allocationAlignment>(alloc->getUnderlyingBufferSize()));
     memoryManager.freeGraphicsMemoryImpl(alloc);
+}
+
+TEST_F(WddmLinuxTest, whenCheckedIfResourcesCleanupCanBeSkippedAndDeviceIsAliveThenReturnsFalse) {
+    osEnvironment->gdi->getDeviceState = getDeviceStateMock;
+    gdiMockConfig.getDeviceStateClb.returnValue = STATUS_SUCCESS;
+    EXPECT_FALSE(this->wddm->skipResourceCleanup());
+    EXPECT_EQ(1, gdiMockConfig.getDeviceStateClb.callCount);
+}
+
+TEST_F(WddmLinuxTest, whenCheckedIfResourcesCleanupCanBeSkippedAndDeviceIsLostThenReturnsTrue) {
+    osEnvironment->gdi->getDeviceState = getDeviceStateMock;
+    gdiMockConfig.getDeviceStateClb.returnValue = -1;
+    EXPECT_TRUE(this->wddm->skipResourceCleanup());
+    EXPECT_EQ(1, gdiMockConfig.getDeviceStateClb.callCount);
 }
 
 class MockOsTimeLinux : public NEO::OSTimeLinux {

@@ -83,6 +83,10 @@ class DriverModel : public NonCopyableClass {
         return std::numeric_limits<size_t>::max();
     }
 
+    virtual bool skipResourceCleanup() const {
+        return false;
+    }
+
   protected:
     DriverModelType driverModelType;
 };

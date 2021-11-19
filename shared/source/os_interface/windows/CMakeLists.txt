@@ -87,6 +87,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/set_gmm_input_args_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/max_mem_alloc_size_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/helper_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/skip_resource_cleanup_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_defs.h

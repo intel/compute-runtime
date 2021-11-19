@@ -70,4 +70,9 @@ TEST_F(WddmTests, givenWddmWhenPassesIncorrectHandleToVerifyNTHandleThenReturnFa
     EXPECT_FALSE(wddm->verifyNTHandle(handle));
 }
 
+TEST_F(WddmTests, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
+    init();
+    EXPECT_FALSE(wddm->skipResourceCleanup());
+}
+
 } // namespace NEO

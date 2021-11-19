@@ -36,10 +36,15 @@ Device::Device(ExecutionEnvironment *executionEnvironment)
 }
 
 Device::~Device() {
-    getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
-    rtMemoryBackedBuffer = nullptr;
+    if (false == commandStreamReceivers.empty()) {
+        if (commandStreamReceivers[0]->skipResourceCleanup()) {
+            return;
+        }
+    }
 
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
+    getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
+    rtMemoryBackedBuffer = nullptr;
 
     if (performanceCounters) {
         performanceCounters->shutdown();

@@ -211,7 +211,15 @@ bool CommandStreamReceiver::isRcs() const {
     return this->osContext->getEngineType() == aub_stream::ENGINE_RCS;
 }
 
+bool CommandStreamReceiver::skipResourceCleanup() const {
+    return this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->skipResourceCleanup();
+}
+
 void CommandStreamReceiver::cleanupResources() {
+    if (this->skipResourceCleanup()) {
+        return;
+    }
+
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);
 

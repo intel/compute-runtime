@@ -39,7 +39,7 @@ void OsContextWin::initializeContext() {
 };
 
 OsContextWin::~OsContextWin() {
-    if (contextInitialized) {
+    if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
         wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
         wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence());
         wddm.destroyContext(wddmContextHandle);
