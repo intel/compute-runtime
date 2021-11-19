@@ -13,7 +13,7 @@ list(GET unit_test_config 4 revision_id)
 
 add_custom_target(run_${product}_${revision_id}_unit_tests ALL DEPENDS unit_tests)
 set_target_properties(run_${product}_${revision_id}_unit_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
-if(NOT NEO_SKIP_OCL_UNIT_TESTS)
+if(NOT NEO_SKIP_SHARED_UNIT_TESTS)
   add_custom_command(
                      TARGET run_${product}_${revision_id}_unit_tests
                      POST_BUILD
@@ -22,6 +22,8 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
                      COMMAND ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:neo_shared_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id}
   )
 
+endif()
+if(NOT NEO_SKIP_OCL_UNIT_TESTS)
   add_custom_command(
                      TARGET run_${product}_${revision_id}_unit_tests
                      POST_BUILD
