@@ -508,6 +508,10 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     } else {
         this->createBuildOptions(desc->pBuildFlags, buildOptions, internalBuildOptions);
 
+        if (type == ModuleType::User && NEO::DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
+            NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
+        }
+
         if (desc->format == ZE_MODULE_FORMAT_NATIVE) {
             success = this->translationUnit->createFromNativeBinary(
                 reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);

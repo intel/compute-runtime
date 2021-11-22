@@ -44,6 +44,7 @@ class MockProgram : public Program {
     using Program::internalOptionsToExtract;
     using Program::irBinary;
     using Program::irBinarySize;
+    using Program::isBuiltIn;
     using Program::isSpirV;
     using Program::kernelDebugEnabled;
     using Program::linkBinary;

@@ -89,14 +89,27 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
                                             const NEO::TranslationInput &input,
                                             NEO::TranslationOutput &output) override {
 
+        receivedApiOptions = input.apiOptions.begin();
+        inputInternalOptions = input.internalOptions.begin();
+
+        if (failBuild) {
+            return NEO::TranslationOutput::ErrorCode::BuildFailure;
+        }
         return NEO::TranslationOutput::ErrorCode::Success;
     }
     NEO::TranslationOutput::ErrorCode link(const NEO::Device &device,
                                            const NEO::TranslationInput &input,
                                            NEO::TranslationOutput &output) override {
 
+        receivedApiOptions = input.apiOptions.begin();
+        inputInternalOptions = input.internalOptions.begin();
+
         return NEO::TranslationOutput::ErrorCode::Success;
     }
+
+    std::string receivedApiOptions;
+    std::string inputInternalOptions;
+    bool failBuild = false;
 };
 template <typename T1, typename T2>
 struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
