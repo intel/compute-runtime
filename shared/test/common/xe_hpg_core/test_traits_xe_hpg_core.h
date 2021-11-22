@@ -22,4 +22,5 @@ struct TestTraits<IGFX_XE_HPG_CORE> {
     static constexpr bool iohInSbaSupported = false;
     static constexpr bool auxTranslationSupported = true;
     static constexpr bool deviceEnqueueSupport = false;
+    static constexpr bool isUsingNonDefaultIoctls = true;
 };
