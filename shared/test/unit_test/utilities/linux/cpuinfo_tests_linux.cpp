@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/utilities/cpu_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"
 
@@ -16,7 +18,8 @@
 using namespace NEO;
 
 TEST(CpuInfo, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidValueIsReturned) {
-    std::string cpuinfoFile = "test_files/linux/proc/cpuinfo";
+    VariableBackup<const char *> pathPrefixBackup(&Os::sysFsProcPathPrefix, "./test_files");
+    std::string cpuinfoFile = "./test_files/cpuinfo";
     EXPECT_FALSE(fileExists(cpuinfoFile));
 
     {
