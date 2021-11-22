@@ -79,6 +79,7 @@ struct DebugVariables {
         constexpr static int32_t LOG_INFO{1};
         constexpr static int32_t LOG_ERROR{1 << 1};
         constexpr static int32_t LOG_THREADS{1 << 2};
+        constexpr static int32_t LOG_MEM{1 << 3};
         constexpr static int32_t DUMP_ELF{1 << 10};
     };
 
@@ -157,6 +158,11 @@ extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
 #define PRINT_DEBUGGER_ERROR_LOG(STR, ...)                                                                         \
     if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR) { \
         PRINT_DEBUGGER_LOG(stderr, "\nERROR: " STR, __VA_ARGS__)                                                   \
+    }
+
+#define PRINT_DEBUGGER_MEM_ACCESS_LOG(STR, ...)                                                                  \
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM) { \
+        PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                  \
     }
 
 template <DebugFunctionalityLevel DebugLevel>
