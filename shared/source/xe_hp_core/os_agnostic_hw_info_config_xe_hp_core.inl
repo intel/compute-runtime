@@ -55,6 +55,14 @@ std::string HwInfoConfigHw<gfxProduct>::getDeviceMemoryName() const {
 }
 
 template <>
+bool HwInfoConfigHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    if (hwInfo.platform.usRevId < HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo)) {
+        return false;
+    }
+    return true;
+}
+
+template <>
 bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }

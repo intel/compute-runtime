@@ -52,6 +52,26 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenRevisionIsAtLeastBThenAllo
     }
 }
 
+XEHPTEST_F(TestXeHPHwInfoConfig, givenXeHpCoreHwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    {
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        EXPECT_FALSE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
+    }
+
+    {
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hwInfo);
+        EXPECT_FALSE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
+    }
+
+    {
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
+    }
+}
+
 XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenCreateMultipleSubDevicesThenDontAllowStatelessCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.CreateMultipleSubDevices.set(2);

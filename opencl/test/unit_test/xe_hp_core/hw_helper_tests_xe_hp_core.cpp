@@ -286,27 +286,6 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenGettingThreadsPerEUCo
     EXPECT_EQ(8U, configs[1]);
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHpCoreHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(helper.isDirectSubmissionSupported(hwInfo));
-    }
-
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hwInfo);
-        EXPECT_FALSE(helper.isDirectSubmissionSupported(hwInfo));
-    }
-
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EXPECT_TRUE(helper.isDirectSubmissionSupported(hwInfo));
-    }
-}
-
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
     EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 5, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
 }

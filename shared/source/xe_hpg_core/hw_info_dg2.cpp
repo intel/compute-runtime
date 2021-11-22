@@ -34,7 +34,7 @@ const PLATFORM DG2::platform = {
 
 const RuntimeCapabilityTable DG2::capabilityTable{
     EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_RCS, {true, false, false, true}},
+        {aub_stream::ENGINE_RCS, {false, false, false, false}},
         {aub_stream::ENGINE_CCS, {true, false, false, true}},
         {aub_stream::ENGINE_CCS1, {true, false, true, true}},
         {aub_stream::ENGINE_CCS2, {true, false, true, true}},

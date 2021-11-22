@@ -11,8 +11,8 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -80,8 +80,8 @@ void OsContextLinux::initializeContext() {
 }
 
 bool OsContextLinux::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    return this->getDrm().isVmBindAvailable() && hwHelper.isDirectSubmissionSupported(hwInfo);
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    return this->getDrm().isVmBindAvailable() && hwInfoConfig->isDirectSubmissionSupported(hwInfo);
 }
 
 Drm &OsContextLinux::getDrm() const {
