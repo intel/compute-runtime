@@ -135,3 +135,11 @@ TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledThenReturn
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::MemoryNull);
     EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
 }
+
+TEST(DrmQueryTest, givenDrmWhenGettingMemoryRegionsThenReturnNull) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    EXPECT_EQ(drm.getMemoryRegions(), nullptr);
+}

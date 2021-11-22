@@ -248,6 +248,7 @@ class Drm : public DriverModel {
     uint32_t getPciDomain() {
         return pciDomain;
     }
+    MOCKABLE_VIRTUAL std::unique_ptr<uint8_t[]> getMemoryRegions();
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);

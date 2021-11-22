@@ -43,6 +43,10 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     return false;
 }
 
+std::unique_ptr<uint8_t[]> Drm::getMemoryRegions() {
+    return nullptr;
+}
+
 bool Drm::queryMemoryInfo() {
     auto pHwInfo = getRootDeviceEnvironment().getHardwareInfo();
     auto isLocalMemSupported = HwHelper::get(pHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*pHwInfo);
