@@ -53,6 +53,7 @@ struct KernelDescriptor {
         uint32_t perThreadSystemThreadSurfaceSize = 0U;
         uint16_t requiredWorkgroupSize[3] = {0U, 0U, 0U};
         uint16_t crossThreadDataSize = 0U;
+        uint16_t inlineDataPayloadSize = 0U;
         uint16_t perThreadDataSize = 0U;
         uint16_t numArgsToPatch = 0U;
         uint16_t numGrfRequired = 0U;

@@ -956,6 +956,7 @@ kernels:
         has_no_stateless_write : true
         has_stack_calls : true
         hw_preemption_mode : 2
+        inline_data_payload_size : 32
         offset_to_skip_per_thread_data_load : 23
         offset_to_skip_set_ffid_gp : 29
         required_sub_group_size : 16
@@ -999,6 +1000,7 @@ kernels:
     EXPECT_TRUE(execEnv.hasNoStatelessWrite);
     EXPECT_TRUE(execEnv.hasStackCalls);
     EXPECT_EQ(2, execEnv.hwPreemptionMode);
+    EXPECT_EQ(32, execEnv.inlineDataPayloadSize);
     EXPECT_EQ(23, execEnv.offsetToSkipPerThreadDataLoad);
     EXPECT_EQ(29, execEnv.offsetToSkipSetFfidGp);
     EXPECT_EQ(16, execEnv.requiredSubGroupSize);
@@ -2629,6 +2631,7 @@ TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescrip
     const auto &kernelDescriptor = programInfo.kernelInfos[0]->kernelDescriptor;
     EXPECT_EQ(kernelDescriptor.entryPoints.skipPerThreadDataLoad, static_cast<NEO::InstructionsSegmentOffset>(Defaults::offsetToSkipPerThreadDataLoad));
     EXPECT_EQ(kernelDescriptor.entryPoints.skipSetFFIDGP, static_cast<NEO::InstructionsSegmentOffset>(Defaults::offsetToSkipSetFfidGp));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.passInlineData, (Defaults::inlineDataPayloadSize != 0));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption, Defaults::disableMidThreadPreemption);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress, Defaults::subgroupIndependentForwardProgress);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, Defaults::hasGlobalAtomics);
@@ -2639,6 +2642,7 @@ TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescrip
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites, (false == Defaults::hasNoStatelessWrite));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.barrierCount, static_cast<uint8_t>(Defaults::barrierCount));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.bufferAddressingMode, (Defaults::has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.inlineDataPayloadSize, static_cast<uint16_t>(Defaults::inlineDataPayloadSize));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0], static_cast<uint16_t>(Defaults::requiredWorkGroupSize[0]));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1], static_cast<uint16_t>(Defaults::requiredWorkGroupSize[1]));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2], static_cast<uint16_t>(Defaults::requiredWorkGroupSize[2]));
@@ -3513,7 +3517,7 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateKernelDescriptor, GivenValidExeuctionEnvironmentThenPopulatedKernelDescriptorProperly) {
+TEST(PopulateKernelDescriptor, GivenValidExecutionEnvironmentThenPopulateKernelDescriptorProperly) {
     NEO::ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
@@ -3529,6 +3533,7 @@ kernels:
         has_multi_scratch_spaces : true
         has_no_stateless_write : true
         hw_preemption_mode : 2
+        inline_data_payload_size : 32
         offset_to_skip_per_thread_data_load : 23
         offset_to_skip_set_ffid_gp : 29
         required_sub_group_size : 16
@@ -3576,6 +3581,8 @@ kernels:
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites);
+    EXPECT_EQ(32, kernelDescriptor.kernelAttributes.inlineDataPayloadSize);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.passInlineData);
     EXPECT_EQ(23U, kernelDescriptor.entryPoints.skipPerThreadDataLoad);
     EXPECT_EQ(29U, kernelDescriptor.entryPoints.skipSetFFIDGP);
     EXPECT_EQ(16U, kernelDescriptor.kernelMetadata.requiredSubGroupSize);
