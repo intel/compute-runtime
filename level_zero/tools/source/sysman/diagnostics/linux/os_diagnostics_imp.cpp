@@ -10,6 +10,7 @@
 #include "shared/source/helpers/string.h"
 
 namespace L0 {
+const std::string LinuxDiagnosticsImp::deviceDir("device");
 
 void OsDiagnostics::getSupportedDiagTests(std::vector<std::string> &supportedDiagTests, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
@@ -20,7 +21,8 @@ void OsDiagnostics::getSupportedDiagTests(std::vector<std::string> &supportedDia
 }
 
 void LinuxDiagnosticsImp::osGetDiagProperties(zes_diag_properties_t *pProperties) {
-    pProperties->onSubdevice = false;
+    pProperties->onSubdevice = isSubdevice;
+    pProperties->subdeviceId = subdeviceId;
     pProperties->haveTests = 0; // osGetDiagTests is Unsupported
     strncpy_s(pProperties->name, ZES_STRING_PROPERTY_SIZE, osDiagType.c_str(), osDiagType.size());
     return;
@@ -38,6 +40,8 @@ LinuxDiagnosticsImp::LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string 
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
 }
 
 std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const std::string &diagTests, ze_bool_t onSubdevice, uint32_t subdeviceId) {

@@ -17,6 +17,13 @@ constexpr uint32_t mockDiagHandleCount = 2;
 const std::string mockQuiescentGpuFile("quiesce_gpu");
 const std::string mockinvalidateLmemFile("invalidate_lmem_mmaps");
 const std::vector<std::string> mockSupportedDiagTypes = {"MOCKSUITE1", "MOCKSUITE2"};
+const std::string deviceDirDiag("device");
+const std::string mockdeviceDirDiag("/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0");
+const std::string mockRemove("remove");
+const std::string mockRescan("rescan");
+const std::string mockRealPathConfig("/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/config");
+const std::string mockDeviceName("/MOCK_DEVICE_NAME");
+
 class DiagnosticsInterface : public FirmwareUtil {};
 
 template <>
@@ -56,6 +63,14 @@ struct Mock<DiagnosticsInterface> : public FirmwareUtil {
 class DiagSysfsAccess : public SysfsAccess {};
 template <>
 struct Mock<DiagSysfsAccess> : public DiagSysfsAccess {
+    ze_result_t getRealPathVal(const std::string file, std::string &val) {
+        if (file.compare(deviceDirDiag) == 0) {
+            val = mockdeviceDirDiag;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
 
     ze_result_t mockwrite(const std::string file, const int val) {
         if (std::string::npos != file.find(mockQuiescentGpuFile)) {
@@ -70,14 +85,125 @@ struct Mock<DiagSysfsAccess> : public DiagSysfsAccess {
     ze_result_t mockwriteFails(const std::string file, const int val) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+
+    bool mockIsMyDeviceFile(const std::string dev) {
+        if (dev.compare(mockDeviceName) == 0) {
+            return true;
+        }
+        return false;
+    }
+
     Mock<DiagSysfsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, write, (const std::string file, const int val), (override));
+    MOCK_METHOD(ze_result_t, getRealPath, (const std::string path, std::string &val), (override));
+    MOCK_METHOD(bool, isMyDeviceFile, (const std::string dev), (override));
+};
+
+class DiagFsAccess : public FsAccess {};
+template <>
+struct Mock<DiagFsAccess> : public DiagFsAccess {
+    ze_result_t mockFsWrite(const std::string file, std::string val) {
+        if (std::string::npos != file.find(mockRemove)) {
+            return ZE_RESULT_SUCCESS;
+        } else if (std::string::npos != file.find(mockRescan)) {
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+    }
+    Mock<DiagFsAccess>() = default;
+
+    MOCK_METHOD(ze_result_t, write, (const std::string file, const std::string val), (override));
+};
+
+class DiagProcfsAccess : public ProcfsAccess {};
+
+template <>
+struct Mock<DiagProcfsAccess> : public DiagProcfsAccess {
+
+    const ::pid_t extraPid = 4;
+    const int extraFd = 5;
+    std::vector<::pid_t> pidList = {1, 2, 3};
+    std::vector<int> fdList = {0, 1, 2};
+    ::pid_t ourDevicePid = 0;
+    int ourDeviceFd = 0;
+
+    ze_result_t mockProcessListDeviceUnused(std::vector<::pid_t> &list) {
+        list = pidList;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t mockProcessListDeviceInUse(std::vector<::pid_t> &list) {
+        list = pidList;
+        if (ourDevicePid) {
+            list.push_back(ourDevicePid);
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ::pid_t getMockMyProcessId() {
+        return ::getpid();
+    }
+
+    ze_result_t getMockFileDescriptors(const ::pid_t pid, std::vector<int> &list) {
+        // Give every process 3 file descriptors
+        // Except the device that MOCK has the device open. Give it one extra.
+        list.clear();
+        list = fdList;
+        if (ourDevicePid == pid) {
+            list.push_back(ourDeviceFd);
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getMockFileDescriptorsFailure(const ::pid_t pid, std::vector<int> &list) {
+        //return failure to verify the error condition check
+        list.clear();
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    ze_result_t getMockFileName(const ::pid_t pid, const int fd, std::string &val) {
+        if (pid == ourDevicePid && fd == ourDeviceFd) {
+            val = mockDeviceName;
+        } else {
+            // return fake filenames for other file descriptors
+            val = std::string("/FILENAME") + std::to_string(fd);
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    bool mockIsAlive(const ::pid_t pid) {
+        if (pid == ourDevicePid) {
+            return true;
+        }
+        return false;
+    }
+
+    void mockKill(const ::pid_t pid) {
+        ourDevicePid = 0;
+    }
+
+    Mock<DiagProcfsAccess>() = default;
+
+    MOCK_METHOD(ze_result_t, listProcesses, (std::vector<::pid_t> & list), (override));
+    MOCK_METHOD(::pid_t, myProcessId, (), (override));
+    MOCK_METHOD(ze_result_t, getFileDescriptors, (const ::pid_t pid, std::vector<int> &list), (override));
+    MOCK_METHOD(ze_result_t, getFileName, (const ::pid_t pid, const int fd, std::string &val), (override));
+    MOCK_METHOD(bool, isAlive, (const ::pid_t pid), (override));
+    MOCK_METHOD(void, kill, (const ::pid_t pid), (override));
 };
 
 class PublicLinuxDiagnosticsImp : public L0::LinuxDiagnosticsImp {
   public:
+    using LinuxDiagnosticsImp::closeFunction;
+    using LinuxDiagnosticsImp::openFunction;
+    using LinuxDiagnosticsImp::pFsAccess;
     using LinuxDiagnosticsImp::pFwInterface;
+    using LinuxDiagnosticsImp::pProcfsAccess;
+    using LinuxDiagnosticsImp::preadFunction;
+    using LinuxDiagnosticsImp::pSysfsAccess;
+    using LinuxDiagnosticsImp::pwriteFunction;
 };
 } // namespace ult
 } // namespace L0
