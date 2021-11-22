@@ -1,0 +1,18 @@
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "test.h"
+
+HWTEST_EXCLUDE_PRODUCT(HwHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedForDefaultEngineTypeAdjustmentThenFalseIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfAllocationSizeAdjustmentIsRequiredThenFalseIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPrefetchDisablingIsRequiredThenFalseIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTestXeHpAndLater, givenXeHPAndLaterPlatformWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenFalseIsReturned, IGFX_DG2);

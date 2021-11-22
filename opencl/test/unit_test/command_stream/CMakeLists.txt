@@ -52,5 +52,18 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+if(TESTS_DG2)
+  list(APPEND IGDRCL_SRCS_tests_command_stream
+       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_dg2.cpp
+  )
+endif()
+
+if(TESTS_DG2_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_command_stream
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_tests_dg2_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_dg2_and_later.cpp
+  )
+endif()
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_command_stream})
 add_subdirectories()

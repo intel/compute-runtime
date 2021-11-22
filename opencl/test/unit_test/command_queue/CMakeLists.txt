@@ -105,5 +105,12 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+if(TESTS_DG2_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_command_queue
+       ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_dg2_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_command_without_kernel_tests_dg2_and_later.cpp
+  )
+endif()
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_command_queue})
 add_subdirectories()
