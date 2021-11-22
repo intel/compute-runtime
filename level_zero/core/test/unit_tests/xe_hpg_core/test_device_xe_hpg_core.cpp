@@ -122,5 +122,19 @@ HWTEST2_F(DeviceCopyQueueGroupTest,
     }
 }
 
+using TestDeviceXeHpgCore = Test<DeviceFixture>;
+HWTEST2_F(TestDeviceXeHpgCore, givenReturnedDevicePropertiesThenExpectedPropertyFlagsSet, IsXeHpgCore) {
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+
+    device->getProperties(&deviceProps);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ECC);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_INTEGRATED, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+    } else {
+        EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+    }
+}
 } // namespace ult
 } // namespace L0

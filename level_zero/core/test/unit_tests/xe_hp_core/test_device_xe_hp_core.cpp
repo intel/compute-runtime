@@ -22,6 +22,16 @@ HWTEST2_F(DeviceFixtureXeHpCore, GivenTargetXeHpCoreaWhenGettingMemoryProperties
     EXPECT_EQ(0, strcmp(memProperties.name, "HBM"));
 }
 
+HWTEST2_F(DeviceFixtureXeHpCore, givenReturnedDevicePropertiesThenExpectedPropertyFlagsSet, IsXeHpCore) {
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+
+    device->getProperties(&deviceProps);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ECC);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+}
+
 using DeviceQueueGroupTest = Test<DeviceFixture>;
 
 HWTEST2_F(DeviceQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsXeHpCore) {
