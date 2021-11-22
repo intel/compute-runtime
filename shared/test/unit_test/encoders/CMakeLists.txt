@@ -38,4 +38,23 @@ if(TESTS_XE_HP_CORE)
   )
 endif()
 
+if(TESTS_DG2_AND_LATER)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_dg2_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_dg2_and_later.h
+  )
+endif()
+
+if(TESTS_DG2)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_dg2.cpp
+  )
+endif()
+
+if(TESTS_XE_HPG_CORE)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hpg.cpp
+  )
+endif()
+
 add_subdirectories()
