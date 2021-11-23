@@ -489,7 +489,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBu
     EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.transferAllocation);
 }
 
-HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWithGpgpuSubmissionWhenProgrammingCommandStreamThenDoNotAddSemaphoreWaitOnGpgpu) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
@@ -503,7 +503,6 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
     cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ->peekCommandStream());
@@ -515,15 +514,13 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
                 continue;
             }
             semaphoresCount++;
-            auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
-            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
         }
     }
-    EXPECT_EQ(1u, semaphoresCount);
+    EXPECT_EQ(0u, semaphoresCount);
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 
-HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWithGpgpuSubmissionWhenProgrammingCommandStreamThenDoNotAddSemaphoreWaitOnGpgpu) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
@@ -537,7 +534,6 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
     cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ->peekCommandStream());
@@ -549,11 +545,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
                 continue;
             }
             semaphoresCount++;
-            auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
-            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
         }
     }
-    EXPECT_EQ(1u, semaphoresCount);
+    EXPECT_EQ(0u, semaphoresCount);
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 

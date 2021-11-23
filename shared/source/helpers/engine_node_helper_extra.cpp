@@ -31,5 +31,10 @@ uint32_t getBcsIndex(aub_stream::EngineType engineType) {
     return 0;
 }
 
+aub_stream::EngineType mapBcsIndexToEngineType(uint32_t index, bool includeMainCopyEngine) {
+    DEBUG_BREAK_IF(index != 0);
+    return aub_stream::ENGINE_BCS;
+}
+
 } // namespace EngineHelpers
 } // namespace NEO

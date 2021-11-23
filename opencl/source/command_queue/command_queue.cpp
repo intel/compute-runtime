@@ -681,7 +681,6 @@ void CommandQueue::updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint
 
 uint32_t CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const {
     const CopyEngineState &state = bcsStates[EngineHelpers::getBcsIndex(bcsEngineType)];
-    DEBUG_BREAK_IF(!state.isValid());
     return state.taskCount;
 }
 
@@ -705,10 +704,6 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
     TagAllocatorBase *allocator = csr.getTimestampPacketAllocator();
 
     previousNodes.swapNodes(*timestampPacketContainer);
-
-    if ((previousNodes.peekNodes().size() > 0) && (previousNodes.peekNodes()[0]->getAllocator() != allocator)) {
-        clearAllDependencies = false;
-    }
 
     if (clearAllDependencies) {
         previousNodes.moveNodesToNewContainer(*deferredTimestampPackets);
@@ -1004,6 +999,63 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();
+    }
+}
+
+void CommandQueue::setupBarrierTimestampForBcsEngines(aub_stream::EngineType engineType, TimestampPacketDependencies &timestampPacketDependencies) {
+    if (!getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired()) {
+        return;
+    }
+
+    // Ensure we have exactly 1 barrier node.
+    if (timestampPacketDependencies.barrierNodes.peekNodes().empty()) {
+        timestampPacketDependencies.barrierNodes.add(getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+    }
+
+    if (isOOQEnabled()) {
+        // Barrier node will be signalled on gpgpuCsr. Save it for later use on blitters.
+        for (auto currentBcsIndex = 0u; currentBcsIndex < bcsTimestampPacketContainers.size(); currentBcsIndex++) {
+            const auto currentBcsEngineType = EngineHelpers::mapBcsIndexToEngineType(currentBcsIndex, true);
+            if (currentBcsEngineType == engineType) {
+                // Node is already added to barrierNodes for this engine, no need to save it.
+                continue;
+            }
+
+            // Save latest timestamp (override previous, if any).
+            TimestampPacketContainer newContainer{};
+            newContainer.assignAndIncrementNodesRefCounts(timestampPacketDependencies.barrierNodes);
+            bcsTimestampPacketContainers[currentBcsIndex].lastBarrierToWaitFor.swapNodes(newContainer);
+        }
+    }
+}
+
+void CommandQueue::processBarrierTimestampForBcsEngine(aub_stream::EngineType bcsEngineType, TimestampPacketDependencies &blitDependencies) {
+    BcsTimestampPacketContainers &bcsContainers = bcsTimestampPacketContainers[EngineHelpers::getBcsIndex(bcsEngineType)];
+    bcsContainers.lastBarrierToWaitFor.moveNodesToNewContainer(blitDependencies.barrierNodes);
+}
+
+void CommandQueue::setLastBcsPacket(aub_stream::EngineType bcsEngineType) {
+    if (isOOQEnabled()) {
+        TimestampPacketContainer dummyContainer{};
+        dummyContainer.assignAndIncrementNodesRefCounts(*this->timestampPacketContainer);
+
+        BcsTimestampPacketContainers &bcsContainers = bcsTimestampPacketContainers[EngineHelpers::getBcsIndex(bcsEngineType)];
+        bcsContainers.lastSignalledPacket.swapNodes(dummyContainer);
+    }
+}
+
+void CommandQueue::fillCsrDependenciesWithLastBcsPackets(CsrDependencies &csrDeps) {
+    for (BcsTimestampPacketContainers &bcsContainers : bcsTimestampPacketContainers) {
+        if (bcsContainers.lastSignalledPacket.peekNodes().empty()) {
+            continue;
+        }
+        csrDeps.timestampPacketContainer.push_back(&bcsContainers.lastSignalledPacket);
+    }
+}
+
+void CommandQueue::clearLastBcsPackets() {
+    for (BcsTimestampPacketContainers &bcsContainers : bcsTimestampPacketContainers) {
+        bcsContainers.lastSignalledPacket.moveNodesToNewContainer(*deferredTimestampPackets);
     }
 }
 

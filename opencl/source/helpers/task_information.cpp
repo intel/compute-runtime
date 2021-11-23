@@ -215,6 +215,10 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                            commandQueue.getGpgpuCommandStreamReceiver(), *bcsCsrForAuxTranslation);
     }
 
+    if (timestampPacketDependencies && commandQueue.isOOQEnabled()) {
+        commandQueue.setupBarrierTimestampForBcsEngines(commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getEngineType(), *timestampPacketDependencies);
+    }
+
     const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
 
     auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired(), commandQueue.getDevice().getHardwareInfo());
@@ -254,8 +258,13 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
     }
 
+    const bool isHandlingBarrier = commandQueue.getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
+
     if (timestampPacketDependencies) {
         eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
+        if (isHandlingBarrier) {
+            commandQueue.fillCsrDependenciesWithLastBcsPackets(dispatchFlags.csrDependencies);
+        }
         dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies->barrierNodes;
     }
     dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
@@ -288,6 +297,10 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
+
+    if (isHandlingBarrier) {
+        commandQueue.clearLastBcsPackets();
+    }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
         const auto newTaskCount = bcsCsrForAuxTranslation->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
@@ -330,6 +343,7 @@ void CommandWithoutKernel::dispatchBlitOperation() {
 
     const auto newTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
     commandQueue.updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
+    commandQueue.setLastBcsPacket(bcsCsr->getOsContext().getEngineType());
 }
 
 CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {
@@ -359,6 +373,10 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         if (commandStreamReceiver.isStallingCommandsOnNextFlushRequired()) {
             barrierNodes->add(commandStreamReceiver.getTimestampPacketAllocator()->getTag());
         }
+    }
+
+    if (timestampPacketDependencies && commandQueue.isOOQEnabled()) {
+        commandQueue.setupBarrierTimestampForBcsEngines(commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getEngineType(), *timestampPacketDependencies);
     }
 
     auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
@@ -397,8 +415,13 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
     }
 
+    const bool isHandlingBarrier = commandQueue.getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
+
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
+        if (isHandlingBarrier) {
+            commandQueue.fillCsrDependenciesWithLastBcsPackets(dispatchFlags.csrDependencies);
+        }
         makeTimestampPacketsResident(commandStreamReceiver);
     }
 
@@ -412,6 +435,10 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
+
+    if (isHandlingBarrier) {
+        commandQueue.clearLastBcsPackets();
+    }
 
     if (kernelOperation->blitEnqueue) {
         dispatchBlitOperation();
