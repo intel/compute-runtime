@@ -10,7 +10,6 @@ if(TESTS_XE_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/enable_l0_mocks_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdqueue_enqueuecommandlist_xe_hpg_core.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdqueue_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_image_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_module_xe_hpg_core.cpp
