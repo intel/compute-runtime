@@ -86,6 +86,22 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
         allocations.push_back(workPartitionAllocation);
     }
 
+    if (DebugManager.flags.DirectSubmissionPrintBuffers.get()) {
+        printf("Ring buffer 1 - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
+               ringBuffer->getGpuAddress(),
+               ptrOffset(ringBuffer->getGpuAddress(), ringBuffer->getUnderlyingBufferSize()),
+               ringBuffer->getUnderlyingBuffer(),
+               ptrOffset(ringBuffer->getUnderlyingBuffer(), ringBuffer->getUnderlyingBufferSize()),
+               ringBuffer->getUnderlyingBufferSize());
+
+        printf("Ring buffer 2 - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
+               ringBuffer2->getGpuAddress(),
+               ptrOffset(ringBuffer2->getGpuAddress(), ringBuffer2->getUnderlyingBufferSize()),
+               ringBuffer2->getUnderlyingBuffer(),
+               ptrOffset(ringBuffer2->getUnderlyingBuffer(), ringBuffer2->getUnderlyingBufferSize()),
+               ringBuffer2->getUnderlyingBufferSize());
+    }
+
     handleResidency();
     ringCommandStream.replaceBuffer(ringBuffer->getUnderlyingBuffer(), minimumRequiredSize);
     ringCommandStream.replaceGraphicsAllocation(ringBuffer);
@@ -319,6 +335,23 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch() {
 template <typename GfxFamily, typename Dispatcher>
 void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBuffer &batchBuffer) {
     void *currentPosition = ringCommandStream.getSpace(0);
+
+    if (DebugManager.flags.DirectSubmissionPrintBuffers.get()) {
+        printf("Client buffer:\n");
+        printf("Command buffer allocation - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
+               batchBuffer.commandBufferAllocation->getGpuAddress(),
+               ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.commandBufferAllocation->getUnderlyingBufferSize()),
+               batchBuffer.commandBufferAllocation->getUnderlyingBuffer(),
+               ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.commandBufferAllocation->getUnderlyingBufferSize()),
+               batchBuffer.commandBufferAllocation->getUnderlyingBufferSize());
+        printf("Command buffer - start gpu address: %" PRIx64 " - %" PRIx64 ", start cpu address: %p - %p, start offset: %zu, used size: %zu \n",
+               ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset),
+               ptrOffset(ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset), batchBuffer.usedSize),
+               ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset),
+               ptrOffset(ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset), batchBuffer.usedSize),
+               batchBuffer.startOffset,
+               batchBuffer.usedSize);
+    }
 
     if (workloadMode == 0) {
         auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);

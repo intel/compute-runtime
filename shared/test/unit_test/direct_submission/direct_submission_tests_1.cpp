@@ -892,6 +892,31 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_TRUE(directSubmission.ringStart);
 }
 
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWhenInitializeAndDispatchBufferThenCommandBufferArePrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionPrintBuffers.set(true);
+
+    FlushStampTracker flushStamp(true);
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
+
+    testing::internal::CaptureStdout();
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    auto pos = output.find("Ring buffer 1");
+    EXPECT_TRUE(pos != std::string::npos);
+    pos = output.find("Ring buffer 2");
+    EXPECT_TRUE(pos != std::string::npos);
+    pos = output.find("Client buffer");
+    EXPECT_TRUE(pos != std::string::npos);
+}
+
 HWTEST_F(DirectSubmissionTest, givenSuperBaseCsrWhenCheckingDirectSubmissionAvailableThenReturnFalse) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrSuperBaseCallDirectSubmissionAvailable = true;

@@ -224,6 +224,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideKernelSizeLimitForSmallDispatch, -1, "-1
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideUseKmdWaitFunction, -1, "-1: default (L0: disabled), 0: disabled, 1: enabled. It uses only busy loop to wait or busy loop with KMD wait function, when KMD fallback is enabled")
 
 /*DIRECT SUBMISSION FLAGS*/
+DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferPlacement, -1, "-1: do not override, 0: non-system, 1: system")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphorePlacement, -1, "-1: do not override, 0: non-system, 1: system")
