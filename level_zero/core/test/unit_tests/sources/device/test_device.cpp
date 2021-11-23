@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/preamble.h"
@@ -2442,6 +2443,51 @@ TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtFailsTo
 
         EXPECT_EQ(ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_RESERVE_REGION, mockCacheReservation->receivedCacheRegion);
     }
+}
+
+struct MultiSubDeviceFixture : public DeviceFixture {
+    void SetUp() {
+        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
+        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
+
+        DeviceFixture::SetUp();
+
+        deviceImp = reinterpret_cast<L0::DeviceImp *>(device);
+        subDevice = neoDevice->getSubDevice(0);
+    }
+
+    L0::DeviceImp *deviceImp = nullptr;
+    NEO::Device *subDevice = nullptr;
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
+    std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
+};
+
+using MultiSubDeviceTest = Test<MultiSubDeviceFixture>;
+
+TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsMultiDeviceCapable) {
+    EXPECT_TRUE(device->isMultiDeviceCapable());
+    EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
+}
+
+TEST_F(MultiSubDeviceTest, GivenNoApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsNotMultiDeviceCapable) {
+    NEO::ImplicitScaling::apiSupport = false;
+    EXPECT_FALSE(device->isMultiDeviceCapable());
+    EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
+}
+
+TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryDisabledWhenDeviceContainsSubDevicesThenItIsNotMultiDeviceCapable) {
+    NEO::OSInterface::osEnableLocalMemory = false;
+    EXPECT_FALSE(device->isMultiDeviceCapable());
+    EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
+}
+
+TEST_F(MultiSubDeviceTest, GivenNoApiSupportAndLocalMemoryEnabledWhenForcedImplicitScalingThenItIsMultiDeviceCapable) {
+    NEO::ImplicitScaling::apiSupport = false;
+    DebugManager.flags.EnableWalkerPartition.set(1);
+    EXPECT_TRUE(device->isMultiDeviceCapable());
+    EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
 }
 
 } // namespace ult

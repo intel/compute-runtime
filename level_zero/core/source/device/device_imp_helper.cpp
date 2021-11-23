@@ -11,17 +11,6 @@
 
 namespace L0 {
 
-NEO::Device *DeviceImp::getActiveDevice() const {
-    if (isMultiDeviceCapable()) {
-        return this->neoDevice->getNearestGenericSubDevice(0);
-    }
-    return this->neoDevice;
-}
-
-bool DeviceImp::isMultiDeviceCapable() const {
-    return neoDevice->getNumGenericSubDevices() > 1u;
-}
-
 void DeviceImp::processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties) {
 }
 } // namespace L0

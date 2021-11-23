@@ -1139,4 +1139,18 @@ bool DeviceImp::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slic
     return false;
 }
 
+NEO::Device *DeviceImp::getActiveDevice() const {
+    if (neoDevice->getNumGenericSubDevices() > 1u) {
+        if (isMultiDeviceCapable()) {
+            return this->neoDevice;
+        }
+        return this->neoDevice->getSubDevice(0);
+    }
+    return this->neoDevice;
+}
+
+bool DeviceImp::isMultiDeviceCapable() const {
+    return NEO::ImplicitScalingHelper::isImplicitScalingEnabled(this->neoDevice->getDeviceBitfield(), true);
+}
+
 } // namespace L0
