@@ -246,3 +246,12 @@ typedef struct _cl_device_pci_bus_info_khr {
     cl_uint pci_device;
     cl_uint pci_function;
 } cl_device_pci_bus_info_khr;
+
+/************************************************
+*   cl_intel_mem_compression_hints extension    *
+*************************************************/
+#define CL_MEM_COMPRESSED_HINT_INTEL (1u << 21)
+#define CL_MEM_UNCOMPRESSED_HINT_INTEL (1u << 22)
+
+// New query for clGetDeviceInfo:
+#define CL_MEM_COMPRESSED_INTEL 0x417D
