@@ -23,4 +23,11 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_fill.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_multipartition_prologue.cpp
 )
+
+if(TESTS_XEHP_AND_LATER)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_xehp_and_later.cpp
+  )
+endif()
+
 add_subdirectories()
