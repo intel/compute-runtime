@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/preamble/preamble_fixture.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -355,4 +356,42 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
     }
 
     clReleaseMemObject(imageDesc.mem_object);
+}
+
+using PreambleCfeState = PreambleFixture;
+
+HWTEST2_F(PreambleCfeState, givenXehpAndDisabledFusedEuWhenCfeStateProgrammedThenFusedEuDispatchSetToTrue, IsXeHpgCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.fusedEuEnabled = false;
+
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
+    StreamProperties streamProperties{};
+    streamProperties.frontEndState.setProperties(false, false, false, hwInfo);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
+    parseCommands<FamilyType>(linearStream);
+    auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), cfeStateIt);
+    auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
+
+    EXPECT_TRUE(cfeState->getFusedEuDispatch());
+}
+
+HWTEST2_F(PreambleCfeState, givenXehpAndEnabledFusedEuWhenCfeStateProgrammedThenFusedEuDispatchSetToFalse, IsXeHpgCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.fusedEuEnabled = true;
+
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
+    StreamProperties streamProperties{};
+    streamProperties.frontEndState.setProperties(false, false, false, hwInfo);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
+    parseCommands<FamilyType>(linearStream);
+    auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), cfeStateIt);
+    auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
+
+    EXPECT_FALSE(cfeState->getFusedEuDispatch());
 }

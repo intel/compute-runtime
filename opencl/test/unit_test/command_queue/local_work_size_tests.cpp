@@ -719,7 +719,27 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorre
 
 using LocalWorkSizeTest = ::testing::Test;
 
-HWTEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtr) {
+HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenWorkgroupSizeIsCorrect, IsAtMostGen11) {
+    MockClDevice device{new MockDevice};
+    MockKernelWithInternals kernel(device);
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
+    DispatchInfo dispatchInfo;
+    dispatchInfo.setClDevice(&device);
+    dispatchInfo.setKernel(kernel.mockKernel);
+
+    const uint32_t maxBarriersPerHSlice = (defaultHwInfo->platform.eRenderCoreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
+    const uint32_t nonFusedMinWorkGroupSize = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
+                                              device.getSharedDeviceInfo().numThreadsPerEU *
+                                              static_cast<uint32_t>(kernel.mockKernel->getKernelInfo().getMaxSimdSize()) /
+                                              maxBarriersPerHSlice;
+    WorkSizeInfo workSizeInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
+
+    EXPECT_EQ(nonFusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
+}
+
+using IsCoreWithFusedEu = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HP_CORE>;
+
+HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtr, IsCoreWithFusedEu) {
     MockClDevice device{new MockDevice};
     MockKernelWithInternals kernel(device);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
@@ -735,11 +755,8 @@ HWTEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEu
     const uint32_t fusedMinWorkGroupSize = 2 * nonFusedMinWorkGroupSize;
     WorkSizeInfo workSizeInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
 
-    if (defaultHwInfo->platform.eRenderCoreFamily < IGFX_GEN12_CORE) {
-        EXPECT_EQ(nonFusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
-    } else {
-        EXPECT_EQ(fusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
-    }
+    EXPECT_NE(nonFusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
+    EXPECT_EQ(fusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
 }
 
 HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtrForcedByDebugManager, IsAtLeastGen12lp) {

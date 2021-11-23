@@ -27,6 +27,11 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     if (DebugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
         command->setSingleSliceDispatchCcsMode(DebugManager.flags.CFESingleSliceDispatchCCSMode.get());
     }
+
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
+        command->setFusedEuDispatch(true);
+    }
 }
 
 template <>

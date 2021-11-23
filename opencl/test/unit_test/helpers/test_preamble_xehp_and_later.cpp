@@ -208,7 +208,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhen
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
 
-    EXPECT_EQ(expectedValue1, cfeState->getFusedEuDispatch());
     EXPECT_EQ(expectedValue1, static_cast<uint32_t>(cfeState->getOverDispatchControl()));
     EXPECT_EQ(expectedValue1, cfeState->getLargeGRFThreadAdjustDisable());
     EXPECT_EQ(expectedValue2, cfeState->getNumberOfWalkers());

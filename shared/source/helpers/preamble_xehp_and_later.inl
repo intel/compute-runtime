@@ -108,13 +108,13 @@ void *PreambleHelper<Family>::getSpaceForVfeState(LinearStream *pCommandStream,
     return pCommandStream->getSpace(sizeof(CFE_STATE));
 }
 
-template <>
-void PreambleHelper<Family>::programVfeState(void *pVfeState,
-                                             const HardwareInfo &hwInfo,
-                                             uint32_t scratchSize,
-                                             uint64_t scratchAddress,
-                                             uint32_t maxFrontEndThreads,
-                                             const StreamProperties &streamProperties) {
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
+                                                const HardwareInfo &hwInfo,
+                                                uint32_t scratchSize,
+                                                uint64_t scratchAddress,
+                                                uint32_t maxFrontEndThreads,
+                                                const StreamProperties &streamProperties) {
     using CFE_STATE = typename Family::CFE_STATE;
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(pVfeState);
@@ -135,9 +135,6 @@ void PreambleHelper<Family>::programVfeState(void *pVfeState,
     }
     if (DebugManager.flags.CFEOverDispatchControl.get() != -1) {
         cmd.setOverDispatchControl(static_cast<typename CFE_STATE::OVER_DISPATCH_CONTROL>(DebugManager.flags.CFEOverDispatchControl.get()));
-    }
-    if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {
-        cmd.setFusedEuDispatch(DebugManager.flags.CFEFusedEUDispatch.get());
     }
     if (DebugManager.flags.CFELargeGRFThreadAdjustDisable.get() != -1) {
         cmd.setLargeGRFThreadAdjustDisable(DebugManager.flags.CFELargeGRFThreadAdjustDisable.get());
