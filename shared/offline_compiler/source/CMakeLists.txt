@@ -107,16 +107,16 @@ set(CLOC_LIB_LIB_FLAGS_DEFINITIONS
     -DALL_SUPPORTED_PRODUCT_FAMILIES=${ALL_SUPPORTED_PRODUCT_FAMILIES}
 )
 
-set(NEO_SHARED_GENX_CPP_FILES
+set(NEO_SHARED_COREX_CPP_FILES
     hw_info
 )
 
 macro(macro_for_each_platform)
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     foreach(BRANCH ${BRANCH_DIR_LIST})
-      foreach(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
-                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
-                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}/compiler_hw_info_config_${PLATFORM_IT_LOWER}.inl
+      foreach(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
+                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
+                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}/compiler_hw_info_config_${PLATFORM_IT_LOWER}.inl
         )
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
@@ -124,12 +124,12 @@ macro(macro_for_each_platform)
       endforeach()
 
       if(WIN32)
-        set(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}windows/hw_info_extra_${PLATFORM_IT_LOWER}.cpp)
+        set(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}windows/hw_info_extra_${PLATFORM_IT_LOWER}.cpp)
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
         endif()
       else()
-        set(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}linux/hw_info_extra_${PLATFORM_IT_LOWER}.cpp)
+        set(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}linux/hw_info_extra_${PLATFORM_IT_LOWER}.cpp)
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
         endif()
@@ -139,15 +139,15 @@ macro(macro_for_each_platform)
   endforeach()
 endmacro()
 
-macro(macro_for_each_gen)
-  foreach(SRC_IT ${NEO_SHARED_GENX_CPP_FILES})
+macro(macro_for_each_core_type)
+  foreach(SRC_IT ${NEO_SHARED_COREX_CPP_FILES})
     foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
       foreach(BRANCH ${BRANCH_DIR_LIST})
-        set(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}${SRC_IT})
-        if(EXISTS ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
-          list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
+        set(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}${SRC_IT})
+        if(EXISTS ${SRC_FILE}_${CORE_TYPE_LOWER}.cpp)
+          list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE}_${CORE_TYPE_LOWER}.cpp)
         endif()
-        set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}enable_${GEN_TYPE_LOWER}.cpp)
+        set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}enable_${CORE_TYPE_LOWER}.cpp)
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
         endif()
@@ -157,7 +157,7 @@ macro(macro_for_each_gen)
   apply_macro_for_each_platform()
 endmacro()
 
-apply_macro_for_each_gen("SUPPORTED")
+apply_macro_for_each_core_type("SUPPORTED")
 
 set(CLOC_LIB_SRCS
     ${CLOC_LIB_SRCS_LIB}
@@ -182,7 +182,7 @@ set(CLOC_LIB_INCLUDES
 target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${CLOC_LIB_INCLUDES})
 target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${IGA_INCLUDE_DIR})
 
-target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM}
+target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_CORE_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM}
                            IGA_LIBRARY_NAME=${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
 target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${NEO__IGC_COMPILE_DEFINITIONS})

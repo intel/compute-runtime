@@ -77,7 +77,7 @@ set_target_properties(prepare_test_kernels_for_shared PROPERTIES FOLDER "${SHARE
 
 macro(macro_for_each_platform)
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-    foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
+    foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
       if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
         neo_shared_copy_test_files(copy_test_kernel_${PLATFORM_IT_LOWER}_${REVISION_ID} ${PLATFORM_IT} ${REVISION_ID})
         add_dependencies(prepare_test_kernels_for_shared copy_test_kernel_${PLATFORM_IT_LOWER}_${REVISION_ID})
@@ -86,22 +86,22 @@ macro(macro_for_each_platform)
   endforeach()
 endmacro()
 
-macro(macro_for_each_gen)
+macro(macro_for_each_core_type)
   apply_macro_for_each_platform("TESTED")
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
 
-    if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
+    if(${CORE_TYPE}_HAS_${PLATFORM_TYPE})
 
       set(KERNELS_TO_COMPILE ${TEST_KERNELS})
       set(IMAGE_SUPPORT FALSE)
-      GEN_CONTAINS_PLATFORMS("SUPPORTED_IMAGES" ${GEN_TYPE} IMAGE_SUPPORT)
+      CORE_CONTAINS_PLATFORMS("SUPPORTED_IMAGES" ${CORE_TYPE} IMAGE_SUPPORT)
       if(NOT IMAGE_SUPPORT)
         list(REMOVE_ITEM KERNELS_TO_COMPILE ${TEST_KERNELS_IMAGES})
       endif()
 
-      get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
-      set(PLATFORM_LOWER ${DEFAULT_SUPPORTED_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
-      foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
+      get_family_name_with_type(${CORE_TYPE} ${PLATFORM_TYPE})
+      set(PLATFORM_LOWER ${DEFAULT_SUPPORTED_${CORE_TYPE}_${PLATFORM_TYPE}_PLATFORM})
+      foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
         compile_kernels_gen(${family_name_with_type} ${REVISION_ID} ${PLATFORM_LOWER} ${family_name_with_type} ${KERNELS_TO_COMPILE})
 
         add_custom_target(prepare_test_kernels_for_shared_${family_name_with_type}_${REVISION_ID} DEPENDS ${compiled_kernels_${family_name_with_type}_${REVISION_ID}})
@@ -112,4 +112,4 @@ macro(macro_for_each_gen)
   endforeach()
 endmacro()
 
-apply_macro_for_each_gen("TESTED")
+apply_macro_for_each_core_type("TESTED")

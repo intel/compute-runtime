@@ -20,12 +20,12 @@ endif()
 
 set(SCHEDULER_INCLUDE_DIR ${TargetDir})
 
-function(compile_kernel target gen_type platform_type kernel)
-  get_family_name_with_type(${gen_type} ${platform_type})
-  string(TOLOWER ${gen_type} gen_type_lower)
+function(compile_kernel target core_type platform_type kernel)
+  get_family_name_with_type(${core_type} ${platform_type})
+  string(TOLOWER ${core_type} core_type_lower)
   # get filename
-  set(OUTPUTDIR "${SCHEDULER_OUTDIR_WITH_ARCH}/${gen_type_lower}")
-  list(APPEND __ocloc__options__ "-I ../${gen_type_lower}")
+  set(OUTPUTDIR "${SCHEDULER_OUTDIR_WITH_ARCH}/${core_type_lower}")
+  list(APPEND __ocloc__options__ "-I ../${core_type_lower}")
 
   get_filename_component(BASENAME ${kernel} NAME_WE)
 
@@ -39,15 +39,15 @@ function(compile_kernel target gen_type platform_type kernel)
   if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
     add_custom_command(
                        OUTPUT ${OUTPUTPATH}
-                       COMMAND ${ocloc_cmd_prefix} -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__ocloc__options__}, >" -internal_options "-cl-intel-no-spill"
+                       COMMAND ${ocloc_cmd_prefix} -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__ocloc__options__}, >" -internal_options "-cl-intel-no-spill"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        DEPENDS ${kernel} ocloc copy_compiler_files
     )
     set(SCHEDULER_CPP ${SCHEDULER_CPP} PARENT_SCOPE)
     add_custom_target(${target} DEPENDS ${OUTPUTPATH})
-    set_target_properties(${target} PROPERTIES FOLDER "${OPENCL_RUNTIME_PROJECTS_FOLDER}/${OPENCL_SCHEDULER_PROJECTS_FOLDER}/${gen_type_lower}")
+    set_target_properties(${target} PROPERTIES FOLDER "${OPENCL_RUNTIME_PROJECTS_FOLDER}/${OPENCL_SCHEDULER_PROJECTS_FOLDER}/${core_type_lower}")
   else()
-    set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/scheduler/${NEO_ARCH}/${gen_type_lower}/${BASENAME}_${family_name_with_type}.bin")
+    set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/scheduler/${NEO_ARCH}/${core_type_lower}/${BASENAME}_${family_name_with_type}.bin")
     if(EXISTS ${_file_prebuilt})
       add_custom_command(
                          OUTPUT ${OUTPUTPATH}
@@ -55,9 +55,9 @@ function(compile_kernel target gen_type platform_type kernel)
                          COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
       )
       add_custom_target(${target} DEPENDS ${OUTPUTPATH})
-      set_target_properties(${target} PROPERTIES FOLDER "${OPENCL_RUNTIME_PROJECTS_FOLDER}/${OPENCL_SCHEDULER_PROJECTS_FOLDER}/${gen_type_lower}")
+      set_target_properties(${target} PROPERTIES FOLDER "${OPENCL_RUNTIME_PROJECTS_FOLDER}/${OPENCL_SCHEDULER_PROJECTS_FOLDER}/${core_type_lower}")
     endif()
-    set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/scheduler/${NEO_ARCH}/${gen_type_lower}/${BASENAME}_${family_name_with_type}.cpp")
+    set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/scheduler/${NEO_ARCH}/${core_type_lower}/${BASENAME}_${family_name_with_type}.cpp")
     if(EXISTS ${_file_prebuilt})
       add_custom_command(
                          OUTPUT ${SCHEDULER_CPP}
@@ -69,13 +69,13 @@ function(compile_kernel target gen_type platform_type kernel)
   endif()
 endfunction()
 
-macro(macro_for_each_gen)
+macro(macro_for_each_core_type)
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-    if(${GEN_TYPE}_HAS_${PLATFORM_TYPE} AND SUPPORT_DEVICE_ENQUEUE_${GEN_TYPE})
-      get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
-      set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
+    if(${CORE_TYPE}_HAS_${PLATFORM_TYPE} AND SUPPORT_DEVICE_ENQUEUE_${CORE_TYPE})
+      get_family_name_with_type(${CORE_TYPE} ${PLATFORM_TYPE})
+      set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${CORE_TYPE}_${PLATFORM_TYPE}_PLATFORM})
       if(COMPILE_BUILT_INS AND PLATFORM_2_0_LOWER)
-        compile_kernel(scheduler_${family_name_with_type} ${GEN_TYPE} ${PLATFORM_TYPE} ${SCHEDULER_KERNEL})
+        compile_kernel(scheduler_${family_name_with_type} ${CORE_TYPE} ${PLATFORM_TYPE} ${SCHEDULER_KERNEL})
         if(TARGET scheduler_${family_name_with_type})
           add_dependencies(scheduler scheduler_${family_name_with_type})
           list(APPEND SCHEDULER_TARGETS scheduler_${family_name_with_type})
@@ -85,11 +85,11 @@ macro(macro_for_each_gen)
     endif()
   endforeach()
   if(NOT "${GENERATED_SCHEDULER_CPPS}" STREQUAL "")
-    source_group("generated files\\${GEN_TYPE_LOWER}" FILES ${GENERATED_SCHEDULER_CPPS})
+    source_group("generated files\\${CORE_TYPE_LOWER}" FILES ${GENERATED_SCHEDULER_CPPS})
   endif()
 endmacro()
 
-apply_macro_for_each_gen("SUPPORTED")
+apply_macro_for_each_core_type("SUPPORTED")
 
 add_library(${SCHEDULER_BINARY_LIB_NAME} OBJECT EXCLUDE_FROM_ALL CMakeLists.txt)
 

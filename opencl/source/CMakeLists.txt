@@ -26,12 +26,12 @@ hide_subdir(dll)
 
 add_library(${NEO_STATIC_LIB_NAME} STATIC EXCLUDE_FROM_ALL
             ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-            ${CMAKE_CURRENT_SOURCE_DIR}/enable_gens.cmake
+            ${CMAKE_CURRENT_SOURCE_DIR}/enable_cores.cmake
             $<TARGET_OBJECTS:${BIKSIM_LIB_NAME}>
 )
 
 add_subdirectories()
-include(enable_gens.cmake)
+include(enable_cores.cmake)
 
 if(WIN32)
   if("${IGDRCL_OPTION__BITS}" STREQUAL "32")
@@ -81,7 +81,7 @@ endif()
 
 target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC GMM_LIB_DLL DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
 
-list(APPEND LIB_FLAGS_DEFINITIONS -DCIF_HEADERS_ONLY_BUILD ${SUPPORTED_GEN_FLAGS_DEFINITONS})
+list(APPEND LIB_FLAGS_DEFINITIONS -DCIF_HEADERS_ONLY_BUILD ${SUPPORTED_CORE_FLAGS_DEFINITONS})
 
 target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC ${LIB_FLAGS_DEFINITIONS})
 
@@ -157,14 +157,14 @@ if(${GENERATE_EXECUTABLE})
   endif()
 
   if(NOT DISABLED_GTPIN_SUPPORT)
-    macro(macro_for_each_gen)
+    macro(macro_for_each_core_type)
       foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
-        if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
-          target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
+        if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}/gtpin_setup_${CORE_TYPE_LOWER}.cpp)
+          target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}/gtpin_setup_${CORE_TYPE_LOWER}.cpp)
         endif()
       endforeach()
     endmacro()
-    apply_macro_for_each_gen("SUPPORTED")
+    apply_macro_for_each_core_type("SUPPORTED")
   endif()
 
   add_subdirectory(dll)

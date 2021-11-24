@@ -40,9 +40,9 @@ endif()
 set(BUILTINS_INCLUDE_DIR ${TargetDir} PARENT_SCOPE)
 set(BUILTIN_CPP "")
 
-function(get_bits_for_stateless gen_type platform_type)
+function(get_bits_for_stateless core_type platform_type)
   # Force 32bits compiling on gen9lp for stateless builtins
-  if((${gen_type} STREQUAL "GEN9") AND (${platform_type} STREQUAL "LP"))
+  if((${core_type} STREQUAL "GEN9") AND (${platform_type} STREQUAL "LP"))
     set(BITS "32" PARENT_SCOPE)
   else()
     set(BITS ${NEO_BITS} PARENT_SCOPE)
@@ -50,10 +50,10 @@ function(get_bits_for_stateless gen_type platform_type)
 endfunction()
 
 # Define function for compiling built-ins (with ocloc)
-function(compile_builtin gen_type platform_type builtin bits builtin_options mode)
-  string(TOLOWER ${gen_type} gen_type_lower)
-  get_family_name_with_type(${gen_type} ${platform_type})
-  set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/${gen_type_lower}")
+function(compile_builtin core_type platform_type builtin bits builtin_options mode)
+  string(TOLOWER ${core_type} core_type_lower)
+  get_family_name_with_type(${core_type} ${platform_type})
+  set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/${core_type_lower}")
   # get filename
   set(FILENAME ${builtin})
   # get name of the file w/o extension
@@ -67,11 +67,11 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options mod
   set(INTERNAL_OPTIONS "${${mode}_OPTIONS}")
   add_custom_command(
                      OUTPUT ${OUTPUT_FILE_SPV}
-                     COMMAND ${ocloc_cmd_prefix} -q -file ${FILENAME} -spv_only -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                     COMMAND ${ocloc_cmd_prefix} -q -file ${FILENAME} -spv_only -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${builtin} ocloc copy_compiler_files
   )
-  foreach(REVISION_ID ${${platform_type}_${gen_type}_REVISIONS})
+  foreach(REVISION_ID ${${platform_type}_${core_type}_REVISIONS})
     set(OUTPUT_FILE_CPP
         ${OUTPUTDIR}/${mode}_${BASENAME}_${family_name_with_type}_${REVISION_ID}.cpp
     )
@@ -83,7 +83,7 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options mod
       )
       add_custom_command(
                          OUTPUT ${OUTPUT_FILES_BINARIES}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${OUTPUT_FILE_SPV} -spirv_input -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${OUTPUT_FILE_SPV} -spirv_input -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
       )
@@ -96,7 +96,7 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options mod
       list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
     else()
       foreach(_file_name "gen" "bin")
-        set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/built_ins/${NEO_ARCH}/${gen_type_lower}/${mode}_${BASENAME}_${REVISION_ID}_${family_name_with_type}.${_file_name}")
+        set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${REVISION_ID}_${family_name_with_type}.${_file_name}")
         if(EXISTS ${_file_prebuilt})
           add_custom_command(
                              OUTPUT ${BINARY_OUTPUT}.${_file_name}
@@ -105,7 +105,7 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options mod
           )
         endif()
       endforeach()
-      set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/built_ins/${NEO_ARCH}/${gen_type_lower}/${mode}_${BASENAME}_${family_name_with_type}_${REVISION_ID}.cpp")
+      set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${family_name_with_type}_${REVISION_ID}.cpp")
       if(EXISTS ${_file_prebuilt})
         add_custom_command(
                            OUTPUT ${OUTPUT_FILE_CPP}
@@ -167,16 +167,16 @@ function(generate_cpp_spirv builtin)
   endif()
 endfunction()
 
-macro(macro_for_each_gen)
+macro(macro_for_each_core_type)
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-    if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
+    if(${CORE_TYPE}_HAS_${PLATFORM_TYPE})
       unset(IMAGE_SUPPORT)
       unset(AUX_TRANSLATION_SUPPORT)
-      GEN_CONTAINS_PLATFORMS("SUPPORTED_IMAGES" ${GEN_TYPE} IMAGE_SUPPORT)
-      GEN_CONTAINS_PLATFORMS("SUPPORTED_AUX_TRANSLATION" ${GEN_TYPE} AUX_TRANSLATION_SUPPORT)
-      get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
+      CORE_CONTAINS_PLATFORMS("SUPPORTED_IMAGES" ${CORE_TYPE} IMAGE_SUPPORT)
+      CORE_CONTAINS_PLATFORMS("SUPPORTED_AUX_TRANSLATION" ${CORE_TYPE} AUX_TRANSLATION_SUPPORT)
+      get_family_name_with_type(${CORE_TYPE} ${PLATFORM_TYPE})
       string(TOLOWER ${PLATFORM_TYPE} PLATFORM_TYPE_LOWER)
-      get_bits_for_stateless(${GEN_TYPE} ${PLATFORM_TYPE})
+      get_bits_for_stateless(${CORE_TYPE} ${PLATFORM_TYPE})
       set(target_name builtins_${family_name_with_type})
       add_custom_target(${target_name})
       add_dependencies(builtins ${target_name})
@@ -184,22 +184,22 @@ macro(macro_for_each_gen)
       foreach(MODE ${BIND_MODES})
         unset(BUILTINS_COMMANDS)
         foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
-          compile_builtin(${GEN_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
+          compile_builtin(${CORE_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
         endforeach()
         foreach(GENERATED_BUILTIN_STATELESS ${GENERATED_BUILTINS_STATELESS})
-          compile_builtin(${GEN_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN_STATELESS}.builtin_kernel ${BITS} "${BUILTIN_OPTIONS_STATELESS}" ${MODE})
+          compile_builtin(${CORE_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN_STATELESS}.builtin_kernel ${BITS} "${BUILTIN_OPTIONS_STATELESS}" ${MODE})
         endforeach()
         if(${IMAGE_SUPPORT})
           foreach(GENERATED_BUILTINS_IMAGES ${GENERATED_BUILTINS_IMAGES})
-            compile_builtin(${GEN_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTINS_IMAGES}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
+            compile_builtin(${CORE_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTINS_IMAGES}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
           endforeach()
           foreach(GENERATED_BUILTIN_IMAGES_STATELESS ${GENERATED_BUILTINS_IMAGES_STATELESS})
-            compile_builtin(${GEN_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN_IMAGES_STATELESS}.builtin_kernel ${BITS} "${BUILTIN_OPTIONS_STATELESS}" ${MODE})
+            compile_builtin(${CORE_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN_IMAGES_STATELESS}.builtin_kernel ${BITS} "${BUILTIN_OPTIONS_STATELESS}" ${MODE})
           endforeach()
         endif()
         if(${AUX_TRANSLATION_SUPPORT})
           foreach(GENERATED_BUILTIN_AUX_TRANSLATION ${GENERATED_BUILTINS_AUX_TRANSLATION})
-            compile_builtin(${GEN_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN_AUX_TRANSLATION}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
+            compile_builtin(${CORE_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN_AUX_TRANSLATION}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
           endforeach()
         endif()
         get_property(GENERATED_BUILTINS_CPPS_${MODE} GLOBAL PROPERTY GENERATED_BUILTINS_CPPS_${MODE})
@@ -241,4 +241,4 @@ if(NOT "${OUTPUT_LIST_CPP_FILES}" STREQUAL "")
   )
 endif()
 
-apply_macro_for_each_gen("SUPPORTED")
+apply_macro_for_each_core_type("SUPPORTED")

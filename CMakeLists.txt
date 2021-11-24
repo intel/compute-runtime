@@ -719,14 +719,14 @@ else()
   include_directories(${NEO_SHARED_DIRECTORY}/os_interface/linux/flags${BRANCH_DIR_SUFFIX})
 endif()
 
-macro(macro_for_each_gen)
-  foreach(PLATFORM_DIRECTORY ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX} ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX})
+macro(macro_for_each_core_type)
+  foreach(PLATFORM_DIRECTORY ${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX} ${NEO_SOURCE_DIR}/opencl/source/${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX})
     if(EXISTS ${PLATFORM_DIRECTORY})
       include_directories(${PLATFORM_DIRECTORY})
     endif()
   endforeach()
 endmacro()
-apply_macro_for_each_gen("SUPPORTED")
+apply_macro_for_each_core_type("SUPPORTED")
 
 # Define where to put binaries
 set(TargetDir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

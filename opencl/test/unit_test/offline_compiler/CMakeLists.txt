@@ -95,7 +95,7 @@ target_include_directories(ocloc_tests PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            $<TARGET_PROPERTY:ocloc_lib,INCLUDE_DIRECTORIES>
 )
-target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS> ${TESTED_GEN_FLAGS_DEFINITONS})
+target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS> ${TESTED_CORE_FLAGS_DEFINITONS})
 
 target_link_libraries(ocloc_tests gmock-gtest)
 
@@ -126,8 +126,8 @@ macro(macro_for_each_platform)
   if("${PLATFORM_IT_LOWER}" STREQUAL "${CLOC_LIB_DEFAULT_DEVICE}")
     foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
       if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
-        list(GET ${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS 0 REVISION_ID)
-        get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
+        list(GET ${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS 0 REVISION_ID)
+        get_family_name_with_type(${CORE_TYPE} ${PLATFORM_TYPE})
         add_dependencies(run_ocloc_tests prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
         add_dependencies(unit_tests prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
         neo_copy_test_files(copy_test_files_${family_name_with_type}_${REVISION_ID} ${family_name_with_type})
@@ -138,10 +138,10 @@ macro(macro_for_each_platform)
     endforeach()
   endif()
 endmacro()
-macro(macro_for_each_gen)
+macro(macro_for_each_core_type)
   apply_macro_for_each_platform()
 endmacro()
-apply_macro_for_each_gen("TESTED")
+apply_macro_for_each_core_type("TESTED")
 
 set_property(TARGET run_ocloc_tests PROPERTY FOLDER ${CLOC_LIB_FOLDER})
 

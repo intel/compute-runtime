@@ -57,7 +57,7 @@ endif()
 
 foreach(MODE ${BIND_MODES})
   get_property(GENERATED_BUILTINS_CPPS_${MODE} GLOBAL PROPERTY GENERATED_BUILTINS_CPPS_${MODE})
-  source_group("generated files\\${GEN_TYPE_LOWER}" FILES GENERATED_BUILTINS_CPPS_${MODE})
+  source_group("generated files\\${CORE_TYPE_LOWER}" FILES GENERATED_BUILTINS_CPPS_${MODE})
 endforeach()
 
 if(COMPILE_BUILT_INS)

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-function(level_zero_gen_kernels target_list platform_name suffix options)
+function(level_zero_generate_kernels target_list platform_name suffix options)
 
   list(APPEND results copy_compiler_files)
 

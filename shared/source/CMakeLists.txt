@@ -9,21 +9,21 @@ if(NOT DEFINED NEO_SHARED_RELEASE_LIB_NAME)
   MESSAGE(FATAL_ERROR "NEO Shared library name undefined!")
 endif()
 
-include(enable_gens.cmake)
+include(enable_cores.cmake)
 
 function(generate_shared_lib LIB_NAME MOCKABLE)
   add_library(${LIB_NAME} STATIC
               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-              ${CMAKE_CURRENT_SOURCE_DIR}/enable_gens.cmake
+              ${CMAKE_CURRENT_SOURCE_DIR}/enable_cores.cmake
               ${CORE_SOURCES}
   )
   if(${MOCKABLE})
-    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} DEFAULT_TEST_FAMILY_NAME=${DEFAULT_TESTED_FAMILY_NAME} ${TESTED_GEN_FLAGS_DEFINITONS})
+    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} DEFAULT_TEST_FAMILY_NAME=${DEFAULT_TESTED_FAMILY_NAME} ${TESTED_CORE_FLAGS_DEFINITONS})
   else()
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
   endif()
 
-  list(APPEND LIB_FLAGS_DEFINITIONS ${SUPPORTED_GEN_FLAGS_DEFINITONS})
+  list(APPEND LIB_FLAGS_DEFINITIONS ${SUPPORTED_CORE_FLAGS_DEFINITONS})
 
   set_property(TARGET ${LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
   set_target_properties(${LIB_NAME} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}")
@@ -80,29 +80,29 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
 endfunction()
 
 set(NEO_CORE_COMPILE_DEFS "")
-set(CORE_SOURCES ${CORE_SRCS_GENX_ALL_BASE})
+set(CORE_SOURCES ${CORE_SRCS_COREX_ALL_BASE})
 
 add_subdirectories()
 
 if(WIN32)
-  list(APPEND CORE_SOURCES ${CORE_SRCS_GENX_ALL_WINDOWS})
+  list(APPEND CORE_SOURCES ${CORE_SRCS_COREX_ALL_WINDOWS})
 endif()
 
 if(WIN32 OR NOT DISABLE_WDDM_LINUX)
-  list(APPEND CORE_SOURCES ${CORE_SRCS_GENX_ALL_WDDM})
+  list(APPEND CORE_SOURCES ${CORE_SRCS_COREX_ALL_WDDM})
 endif()
 
 if(NOT WIN32)
-  list(APPEND CORE_SOURCES ${CORE_SRCS_GENX_ALL_LINUX})
+  list(APPEND CORE_SOURCES ${CORE_SRCS_COREX_ALL_LINUX})
 endif()
 
-macro(macro_for_each_gen)
+macro(macro_for_each_core_type)
   append_sources_from_properties(CORE_SOURCES
-                                 SHARED_SRCS_ADDITIONAL_FILES_${GEN_TYPE}
+                                 SHARED_SRCS_ADDITIONAL_FILES_${CORE_TYPE}
   )
 endmacro()
 
-apply_macro_for_each_gen("SUPPORTED")
+apply_macro_for_each_core_type("SUPPORTED")
 
 append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_AIL
