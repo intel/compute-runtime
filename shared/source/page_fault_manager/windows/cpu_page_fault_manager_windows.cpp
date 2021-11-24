@@ -20,7 +20,7 @@ std::unique_ptr<PageFaultManager> PageFaultManager::create() {
 std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> PageFaultManagerWindows::pageFaultHandler;
 
 PageFaultManagerWindows::PageFaultManagerWindows() {
-    pageFaultHandler = [&](struct _EXCEPTION_POINTERS *exceptionInfo) {
+    pageFaultHandler = [this](struct _EXCEPTION_POINTERS *exceptionInfo) {
         if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
             if (this->verifyPageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]))) {
                 //this is our fault that we serviced, continue app execution
