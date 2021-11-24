@@ -36,9 +36,9 @@ class Diagnostics : _zes_diag_handle_t {
 struct DiagnosticsHandleContext {
     DiagnosticsHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     void releaseDiagnosticsHandles();
-    ~DiagnosticsHandleContext();
+    MOCKABLE_VIRTUAL ~DiagnosticsHandleContext();
 
-    void init(std::vector<ze_device_handle_t> &deviceHandles);
+    MOCKABLE_VIRTUAL void init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics);
     std::vector<std::string> supportedDiagTests = {};

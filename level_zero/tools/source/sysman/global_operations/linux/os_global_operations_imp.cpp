@@ -143,7 +143,6 @@ void LinuxGlobalOperationsImp::releaseDeviceResources() {
 void LinuxGlobalOperationsImp::reInitSysmanDeviceResources() {
     pLinuxSysmanImp->getSysmanDeviceImp()->updateSubDeviceHandlesLocally();
     pLinuxSysmanImp->createPmtHandles();
-    pLinuxSysmanImp->createFwUtilInterface();
     pLinuxSysmanImp->getSysmanDeviceImp()->pRasHandleContext->init(pLinuxSysmanImp->getSysmanDeviceImp()->deviceHandles);
     pLinuxSysmanImp->getSysmanDeviceImp()->pEngineHandleContext->init();
     pLinuxSysmanImp->getSysmanDeviceImp()->pDiagnosticsHandleContext->init(pLinuxSysmanImp->getSysmanDeviceImp()->deviceHandles);

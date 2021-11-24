@@ -62,6 +62,26 @@ struct Mock<GlobalOperationsEngineHandleContext> : public GlobalOperationsEngine
     MOCK_METHOD(void, init, (), (override));
 };
 
+struct GlobalOperationsDiagnosticsHandleContext : public DiagnosticsHandleContext {
+    GlobalOperationsDiagnosticsHandleContext(OsSysman *pOsSysman) : DiagnosticsHandleContext(pOsSysman) {}
+};
+template <>
+struct Mock<GlobalOperationsDiagnosticsHandleContext> : public GlobalOperationsDiagnosticsHandleContext {
+    void initMock(std::vector<ze_device_handle_t> &deviceHandles) {}
+    Mock<GlobalOperationsDiagnosticsHandleContext>(OsSysman *pOsSysman) : GlobalOperationsDiagnosticsHandleContext(pOsSysman) {}
+    MOCK_METHOD(void, init, (std::vector<ze_device_handle_t> & deviceHandles), (override));
+};
+
+struct GlobalOperationsFirmwareHandleContext : public FirmwareHandleContext {
+    GlobalOperationsFirmwareHandleContext(OsSysman *pOsSysman) : FirmwareHandleContext(pOsSysman) {}
+};
+template <>
+struct Mock<GlobalOperationsFirmwareHandleContext> : public GlobalOperationsFirmwareHandleContext {
+    void initMock() {}
+    Mock<GlobalOperationsFirmwareHandleContext>(OsSysman *pOsSysman) : GlobalOperationsFirmwareHandleContext(pOsSysman) {}
+    MOCK_METHOD(void, init, (), (override));
+};
+
 class GlobalOperationsSysfsAccess : public SysfsAccess {};
 
 template <>

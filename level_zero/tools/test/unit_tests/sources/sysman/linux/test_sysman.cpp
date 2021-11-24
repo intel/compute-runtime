@@ -288,17 +288,6 @@ TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThe
     EXPECT_EQ(pLinuxSysmanImp->getPmuInterface(), pLinuxSysmanImp->pPmuInterface);
 }
 
-TEST_F(SysmanDeviceFixture, GivenFwUtilInterfaceHandleWhenCallinggetFwUtilInterfaceThenCreatedFwUtilInterfaceHandleWillBeRetrieved) {
-    if (pLinuxSysmanImp->pFwUtilInterface != nullptr) {
-        //delete previously allocated FwUtilInterface
-        delete pLinuxSysmanImp->pFwUtilInterface;
-        pLinuxSysmanImp->pFwUtilInterface = nullptr;
-    }
-    const std::string mockBdf = "0000:00:02.0";
-    pLinuxSysmanImp->pFwUtilInterface = FirmwareUtil::create(mockBdf);
-    EXPECT_EQ(pLinuxSysmanImp->getFwUtilInterface(), pLinuxSysmanImp->pFwUtilInterface);
-}
-
 TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturnedPathIs2LevelUpThenTheCurrentPath) {
     const std::string mockBdf = "0000:00:02.0";
     const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;

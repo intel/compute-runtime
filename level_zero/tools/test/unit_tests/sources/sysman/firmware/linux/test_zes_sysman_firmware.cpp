@@ -237,14 +237,6 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleFirmwareLibraryCallFailureWhe
     EXPECT_STREQ("unknown", properties.version);
 }
 
-TEST_F(ZesFirmwareFixture, GivenFwUtilInterfaceNullWhenCreatingFirmwareImpThenIsFirmwareSupportedShouldFail) {
-    pLinuxSysmanImp->pFwUtilInterface = nullptr;
-    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[0]);
-    EXPECT_EQ(nullptr, pLinuxSysmanImp->pFwUtilInterface);
-    delete ptestFirmwareImp;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface.get();
-}
-
 class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {
 
   protected:
@@ -277,15 +269,6 @@ class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }
 };
-
-TEST_F(ZesFirmwareUninitializedFixture, GivenFirmwareLibraryMissingThenCreateHandleMustFail) {
-    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
-    pSysmanDeviceImp->pFirmwareHandleContext->init();
-    EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
-}
 
 } // namespace ult
 } // namespace L0

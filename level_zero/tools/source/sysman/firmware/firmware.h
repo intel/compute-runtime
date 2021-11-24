@@ -35,10 +35,10 @@ class Firmware : _zes_firmware_handle_t {
 
 struct FirmwareHandleContext {
     FirmwareHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
-    ~FirmwareHandleContext();
+    MOCKABLE_VIRTUAL ~FirmwareHandleContext();
     void releaseFwHandles();
 
-    void init();
+    MOCKABLE_VIRTUAL void init();
 
     ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware);
 
