@@ -320,7 +320,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         return false;
     }
 
-    bool internalUsage = (engineTypeUsage.second == EngineUsage::Internal);
+    bool internalUsage = (engineUsage == EngineUsage::Internal);
     if (internalUsage) {
         commandStreamReceiver->initializeDefaultsForInternalEngine();
     }
@@ -328,8 +328,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     if (commandStreamReceiver->needsPageTableManager()) {
         commandStreamReceiver->createPageTableManager();
     }
-
-    bool lowPriority = (engineTypeUsage.second == EngineUsage::LowPriority);
 
     EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, createAsEngineInstanced);
 
@@ -357,7 +355,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
     engines.push_back(engine);
-    if (!lowPriority && !internalUsage) {
+    if (engineUsage == EngineUsage::Regular) {
         addEngineToEngineGroup(engine);
     }
 
