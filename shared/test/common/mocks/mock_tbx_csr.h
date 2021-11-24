@@ -75,6 +75,7 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::tagsMultiAllocation;
     using TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw;
+    using TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations;
     void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
         *reinterpret_cast<uint32_t *>(CommandStreamReceiver::getTagAllocation()->getUnderlyingBuffer()) = this->latestFlushedTaskCount;
         downloadedAllocations.insert(&gfxAllocation);
@@ -83,7 +84,11 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
         flushBatchedSubmissionsCalled = true;
         return true;
     }
+    void flushTagUpdate() override {
+        flushTagCalled = true;
+    }
     std::set<GraphicsAllocation *> downloadedAllocations;
     bool flushBatchedSubmissionsCalled = false;
+    bool flushTagCalled = false;
 };
 } // namespace NEO

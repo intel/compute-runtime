@@ -401,6 +401,21 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForCompletionWithT
     EXPECT_TRUE(tbxCsr.flushBatchedSubmissionsCalled);
 }
 
+HWTEST_F(TbxCommandSteamSimpleTest, givenLatestFlushedTaskCountLowerThanTagWhenFlushSubmissionsAndDownloadAllocationsThenFlushTagUpdate) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+
+    tbxCsr.setupContext(osContext);
+    tbxCsr.initializeTagAllocation();
+    *tbxCsr.getTagAddress() = 1u;
+    tbxCsr.latestFlushedTaskCount = 0u;
+    EXPECT_FALSE(tbxCsr.flushTagCalled);
+
+    tbxCsr.flushSubmissionsAndDownloadAllocations(1u);
+
+    EXPECT_TRUE(tbxCsr.flushTagCalled);
+}
+
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenDownloadAllocatoinsCalledThenTagAndScheduledAllocationsAreDownloadedAndRemovedFromContainer) {
     MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));

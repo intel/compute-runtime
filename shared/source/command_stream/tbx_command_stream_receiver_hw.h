@@ -31,7 +31,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     uint32_t getMaskAndValueForPollForCompletion() const;
     bool getpollNotEqualValueForPollForCompletion() const;
-    void flushSubmissionsAndDownloadAllocations();
+    void flushSubmissionsAndDownloadAllocations(uint32_t taskCount);
     MOCKABLE_VIRTUAL void downloadAllocation(GraphicsAllocation &gfxAllocation);
 
   public:
