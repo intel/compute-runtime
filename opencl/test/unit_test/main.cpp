@@ -362,6 +362,10 @@ int main(int argc, char **argv) {
     gtSystemInfo.IsDynamicallyPopulated = false;
     // clang-format on
 
+    for (uint32_t slice = 0; slice < gtSystemInfo.MaxSlicesSupported; slice++) {
+        gtSystemInfo.SliceInfo[slice].Enabled = true;
+    }
+
     binaryNameSuffix.append(familyName[hwInfoForTests.platform.eRenderCoreFamily]);
     binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
 

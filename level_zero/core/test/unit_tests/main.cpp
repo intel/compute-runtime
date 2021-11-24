@@ -312,6 +312,10 @@ int main(int argc, char **argv) {
     gtSystemInfo.IsDynamicallyPopulated = false;
     // clang-format on
 
+    for (uint32_t slice = 0; slice < gtSystemInfo.MaxSlicesSupported; slice++) {
+        gtSystemInfo.SliceInfo[slice].Enabled = true;
+    }
+
     // Platforms with uninitialized factory are not supported
     if (L0::commandListFactory[productFamily] == nullptr) {
         std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
