@@ -134,8 +134,10 @@ if(NOT DEFINED NEO_BUILD_WITH_OCL)
 endif()
 
 if(NOT DEFINED BUILD_WITH_L0)
-  if("${NEO_BITS}" STREQUAL "64")
-    set(BUILD_WITH_L0 TRUE)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/level_zero/CMakeLists.txt)
+    if("${NEO_BITS}" STREQUAL "64")
+      set(BUILD_WITH_L0 TRUE)
+    endif()
   endif()
 endif()
 
