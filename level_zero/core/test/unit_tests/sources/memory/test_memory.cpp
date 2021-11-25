@@ -3055,9 +3055,11 @@ TEST_F(SharedAllocMultiDeviceTests, whenAllocatinSharedMemoryWithNonNullDeviceIn
     EXPECT_EQ(currSvmAllocsManager->createHostUnifiedMemoryAllocationTimes, 0u);
 }
 
+template <int32_t enableWalkerPartition>
 struct MemAllocMultiSubDeviceTests : public ::testing::Test {
     void SetUp() override {
         NEO::MockCompilerEnableGuard mock(true);
+        DebugManager.flags.EnableWalkerPartition.set(enableWalkerPartition);
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
@@ -3094,7 +3096,10 @@ struct MemAllocMultiSubDeviceTests : public ::testing::Test {
     const uint32_t numRootDevices = 1u;
 };
 
-TEST_F(MemAllocMultiSubDeviceTests, whenAllocatingDeviceMemorySubDeviceMemorySizeUsedWhenImplicitScalingDisabled) {
+using MemAllocMultiSubDeviceTestsDisabledImplicitScaling = MemAllocMultiSubDeviceTests<0>;
+using MemAllocMultiSubDeviceTestsEnabledImplicitScaling = MemAllocMultiSubDeviceTests<1>;
+
+TEST_F(MemAllocMultiSubDeviceTestsDisabledImplicitScaling, GivenImplicitScalingDisabledWhenAllocatingDeviceMemorySubDeviceMemorySizeUsedThenExpectCorrectErrorReturned) {
     ze_device_mem_alloc_desc_t deviceDesc = {};
     void *ptr = nullptr;
     size_t size = driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize;
@@ -3104,18 +3109,25 @@ TEST_F(MemAllocMultiSubDeviceTests, whenAllocatingDeviceMemorySubDeviceMemorySiz
     relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
     deviceDesc.pNext = &relaxedSizeDesc;
 
-    DebugManager.flags.EnableWalkerPartition.set(0);
-
     ze_result_t res = context->allocDeviceMem(driverHandle->devices[0]->toHandle(), &deviceDesc, size, 0u, &ptr);
     EXPECT_EQ(res, ZE_RESULT_ERROR_UNSUPPORTED_SIZE);
+}
 
-    DebugManager.flags.EnableWalkerPartition.set(1);
+TEST_F(MemAllocMultiSubDeviceTestsEnabledImplicitScaling, GivenImplicitScalingEnabledWhenAllocatingDeviceMemorySubDeviceMemorySizeUsedThenExpectCorrectErrorReturned) {
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = nullptr;
+    size_t size = driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize;
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
+    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
+    relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
+    deviceDesc.pNext = &relaxedSizeDesc;
 
-    res = context->allocDeviceMem(driverHandle->devices[0]->toHandle(), &deviceDesc, size, 0u, &ptr);
+    ze_result_t res = context->allocDeviceMem(driverHandle->devices[0]->toHandle(), &deviceDesc, size, 0u, &ptr);
     EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
 
-TEST_F(MemAllocMultiSubDeviceTests, whenAllocatingSharedMemorySubDeviceMemorySizeUsedWhenImplicitScalingDisabled) {
+TEST_F(MemAllocMultiSubDeviceTestsDisabledImplicitScaling, GivenImplicitScalingDisabledWhenAllocatingSharedMemorySubDeviceMemorySizeUsedThenExpectCorrectErrorReturned) {
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
     void *ptr = nullptr;
@@ -3126,14 +3138,22 @@ TEST_F(MemAllocMultiSubDeviceTests, whenAllocatingSharedMemorySubDeviceMemorySiz
     relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
     deviceDesc.pNext = &relaxedSizeDesc;
 
-    DebugManager.flags.EnableWalkerPartition.set(0);
-
     ze_result_t res = context->allocSharedMem(driverHandle->devices[0]->toHandle(), &deviceDesc, &hostDesc, size, 0u, &ptr);
     EXPECT_EQ(res, ZE_RESULT_ERROR_UNSUPPORTED_SIZE);
+}
 
-    DebugManager.flags.EnableWalkerPartition.set(1);
+TEST_F(MemAllocMultiSubDeviceTestsEnabledImplicitScaling, GivenImplicitScalingDisabledWhenAllocatingSharedMemorySubDeviceMemorySizeUsedThenExpectCorrectErrorReturned) {
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *ptr = nullptr;
+    size_t size = driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize;
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
+    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
+    relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
+    deviceDesc.pNext = &relaxedSizeDesc;
 
-    res = context->allocSharedMem(driverHandle->devices[0]->toHandle(), &deviceDesc, &hostDesc, size, 0u, &ptr);
+    ze_result_t res = context->allocSharedMem(driverHandle->devices[0]->toHandle(), &deviceDesc, &hostDesc, size, 0u, &ptr);
     EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
 

@@ -779,6 +779,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     neoDevice->incRefInternal();
 
     device->execEnvironment = (void *)neoDevice->getExecutionEnvironment();
+    device->multiDeviceCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true);
     device->metricContext = MetricContext::create(*device);
     device->builtins = BuiltinFunctionsLib::create(
         device, neoDevice->getBuiltIns());
@@ -861,7 +862,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device->getSourceLevelDebugger()
             ->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
     }
-
     device->createSysmanHandle(isSubDevice);
     device->resourcesReleased = false;
     return device;
@@ -1147,10 +1147,6 @@ NEO::Device *DeviceImp::getActiveDevice() const {
         return this->neoDevice->getSubDevice(0);
     }
     return this->neoDevice;
-}
-
-bool DeviceImp::isMultiDeviceCapable() const {
-    return NEO::ImplicitScalingHelper::isImplicitScalingEnabled(this->neoDevice->getDeviceBitfield(), true);
 }
 
 } // namespace L0

@@ -17,7 +17,10 @@ namespace L0 {
 namespace ult {
 
 template <>
-struct WhiteBox<::L0::Device> : public ::L0::Device {};
+struct WhiteBox<::L0::Device> : public ::L0::Device {
+    using Base = L0::Device;
+    using Base::multiDeviceCapable;
+};
 
 using Device = WhiteBox<::L0::Device>;
 
@@ -52,7 +55,6 @@ struct Mock<Device> : public Device {
     // Runtime internal methods
     ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());
     ADDMETHOD_NOBASE_REFRETURN(getHwHelper, NEO::HwHelper &, ());
-    ADDMETHOD_CONST_NOBASE(isMultiDeviceCapable, bool, false, ());
     ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltinFunctionsLib *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(getMaxNumHwThreads, uint32_t, 16u, ());
     ADDMETHOD_NOBASE(activateMetricGroupsDeferred, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));
@@ -97,6 +99,7 @@ template <>
 struct Mock<L0::DeviceImp> : public L0::DeviceImp {
     using Base = L0::DeviceImp;
     using Base::debugSession;
+    using Base::multiDeviceCapable;
 
     explicit Mock(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
         device->incRefInternal();

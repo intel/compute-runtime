@@ -1387,9 +1387,11 @@ struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
     MockMemoryManagerMultiDevice(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
 
-struct MultipleDevicesTest : public ::testing::Test {
+template <int32_t enablePartitionWalker>
+struct MultipleDevicesFixture : public ::testing::Test {
     void SetUp() override {
         NEO::MockCompilerEnableGuard mock(true);
+        DebugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
@@ -1431,25 +1433,33 @@ struct MultipleDevicesTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
-TEST_F(MultipleDevicesTest, whenCallingGetMemoryPropertiesWithSubDevicesThenCorrectSizeReturned) {
+using MultipleDevicesTest = MultipleDevicesFixture<-1>;
+using MultipleDevicesDisabledImplicitScalingTest = MultipleDevicesFixture<0>;
+using MultipleDevicesEnabledImplicitScalingTest = MultipleDevicesFixture<1>;
+
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, whenCallingGetMemoryPropertiesWithSubDevicesThenCorrectSizeReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     uint32_t count = 1;
 
-    DebugManager.flags.EnableWalkerPartition.set(0);
     ze_device_memory_properties_t memProperties = {};
     ze_result_t res = device0->getMemoryProperties(&count, &memProperties);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
     EXPECT_EQ(memProperties.totalSize, device0->getNEODevice()->getDeviceInfo().globalMemSize / numSubDevices);
+}
 
-    DebugManager.flags.EnableWalkerPartition.set(1);
-    res = device0->getMemoryProperties(&count, &memProperties);
+TEST_F(MultipleDevicesEnabledImplicitScalingTest, whenCallingGetMemoryPropertiesWithSubDevicesThenCorrectSizeReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    uint32_t count = 1;
+
+    ze_device_memory_properties_t memProperties = {};
+    ze_result_t res = device0->getMemoryProperties(&count, &memProperties);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
     EXPECT_EQ(memProperties.totalSize, device0->getNEODevice()->getDeviceInfo().globalMemSize);
 }
 
-TEST_F(MultipleDevicesTest, WhenGettingDevicePropertiesGetSubslicesPerSliceWhenImplicitScalingDisabledandEnabled) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, GivenImplicitScalingDisabledWhenGettingDevicePropertiesGetSubslicesPerSliceThenCorrectValuesReturned) {
     L0::Device *device = driverHandle->devices[0];
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.type = ZE_DEVICE_TYPE_GPU;
@@ -1459,11 +1469,20 @@ TEST_F(MultipleDevicesTest, WhenGettingDevicePropertiesGetSubslicesPerSliceWhenI
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = 8;
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 1;
 
-    DebugManager.flags.EnableWalkerPartition.set(0);
     device->getProperties(&deviceProperties);
     EXPECT_EQ(((device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount * device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount) / numSubDevices), deviceProperties.numSubslicesPerSlice);
+}
 
-    DebugManager.flags.EnableWalkerPartition.set(1);
+TEST_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledWhenGettingDevicePropertiesGetSubslicesPerSliceThenCorrectValuesReturned) {
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.type = ZE_DEVICE_TYPE_GPU;
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSubSlicesSupported = 48;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSlicesSupported = 3;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = 8;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 1;
+
     device->getProperties(&deviceProperties);
     EXPECT_EQ((device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount * device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount), deviceProperties.numSubslicesPerSlice);
 }
@@ -2445,11 +2464,13 @@ TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtFailsTo
     }
 }
 
+template <bool osLocalMemory, bool apiSupport, int32_t enablePartitionWalker>
 struct MultiSubDeviceFixture : public DeviceFixture {
     void SetUp() {
         DebugManager.flags.CreateMultipleSubDevices.set(2);
-        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
-        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
+        DebugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
+        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, osLocalMemory);
+        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, apiSupport);
 
         DeviceFixture::SetUp();
 
@@ -2464,28 +2485,26 @@ struct MultiSubDeviceFixture : public DeviceFixture {
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };
 
-using MultiSubDeviceTest = Test<MultiSubDeviceFixture>;
-
+using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1>>;
 TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsMultiDeviceCapable) {
     EXPECT_TRUE(device->isMultiDeviceCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
 }
 
-TEST_F(MultiSubDeviceTest, GivenNoApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsNotMultiDeviceCapable) {
-    NEO::ImplicitScaling::apiSupport = false;
+using MultiSubDeviceTestNoApi = Test<MultiSubDeviceFixture<true, false, -1>>;
+TEST_F(MultiSubDeviceTestNoApi, GivenNoApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsNotMultiDeviceCapable) {
     EXPECT_FALSE(device->isMultiDeviceCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
-TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryDisabledWhenDeviceContainsSubDevicesThenItIsNotMultiDeviceCapable) {
-    NEO::OSInterface::osEnableLocalMemory = false;
+using MultiSubDeviceTestNoLocalMemory = Test<MultiSubDeviceFixture<false, true, -1>>;
+TEST_F(MultiSubDeviceTestNoLocalMemory, GivenApiSupportAndLocalMemoryDisabledWhenDeviceContainsSubDevicesThenItIsNotMultiDeviceCapable) {
     EXPECT_FALSE(device->isMultiDeviceCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
-TEST_F(MultiSubDeviceTest, GivenNoApiSupportAndLocalMemoryEnabledWhenForcedImplicitScalingThenItIsMultiDeviceCapable) {
-    NEO::ImplicitScaling::apiSupport = false;
-    DebugManager.flags.EnableWalkerPartition.set(1);
+using MultiSubDeviceTestNoApiForceOn = Test<MultiSubDeviceFixture<true, false, 1>>;
+TEST_F(MultiSubDeviceTestNoApiForceOn, GivenNoApiSupportAndLocalMemoryEnabledWhenForcedImplicitScalingThenItIsMultiDeviceCapable) {
     EXPECT_TRUE(device->isMultiDeviceCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
 }

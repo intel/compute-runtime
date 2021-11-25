@@ -88,7 +88,9 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getMaxNumHwThreads() const = 0;
 
     virtual NEO::HwHelper &getHwHelper() = 0;
-    virtual bool isMultiDeviceCapable() const = 0;
+    bool isMultiDeviceCapable() const {
+        return multiDeviceCapable;
+    }
     virtual const NEO::HardwareInfo &getHwInfo() const = 0;
     virtual NEO::OSInterface &getOsInterface() = 0;
     virtual uint32_t getPlatformInfo() const = 0;
@@ -137,6 +139,9 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) = 0;
     virtual NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::GraphicsAllocation::AllocationType type) = 0;
     virtual void storeReusableAllocation(NEO::GraphicsAllocation &alloc) = 0;
+
+  protected:
+    bool multiDeviceCapable = false;
 };
 
 } // namespace L0
