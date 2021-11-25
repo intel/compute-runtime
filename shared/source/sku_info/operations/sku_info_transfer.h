@@ -50,6 +50,8 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(MultiTileArch);
         TRANSFER_FTR_TO_GMM(CCSMultiInstance);
         TRANSFER_FTR_TO_GMM(Ppgtt64KBWalkOptimization);
+        TRANSFER_FTR_TO_GMM(Unified3DMediaCompressionFormats);
+        TRANSFER_FTR_TO_GMM(57bGPUAddressing);
 
 #undef TRANSFER_FTR_TO_GMM
     }
@@ -65,6 +67,7 @@ class SkuInfoTransfer {
         TRANSFER_WA_TO_GMM(Limit128BMediaCompr);
         TRANSFER_WA_TO_GMM(UntypedBufferCompression);
         TRANSFER_WA_TO_GMM(DefaultTile4);
+        TRANSFER_WA_TO_GMM(AuxTable64KGranular);
 
 #undef TRANSFER_WA_TO_GMM
     }

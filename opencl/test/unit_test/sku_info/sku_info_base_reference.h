@@ -48,6 +48,8 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrMultiTileArch = 1;
         refFtrTable.FtrCCSMultiInstance = 1;
         refFtrTable.FtrPpgtt64KBWalkOptimization = 1;
+        refFtrTable.FtrUnified3DMediaCompressionFormats = 1;
+        refFtrTable.Ftr57bGPUAddressing = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
@@ -61,6 +63,7 @@ struct SkuInfoBaseReference {
         refWaTable.WaUntypedBufferCompression = 1;
         refWaTable.WaAuxTable16KGranular = 1;
         refWaTable.WaDefaultTile4 = 1;
+        refWaTable.WaAuxTable64KGranular = 1;
     }
 
     static void fillReferenceFtrToReceive(FeatureTable &refFtrTable) {
@@ -153,6 +156,8 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrMultiTileArch = true;
         refFtrTable.flags.ftrCCSMultiInstance = true;
         refFtrTable.flags.ftrPpgtt64KBWalkOptimization = true;
+        refFtrTable.flags.ftrUnified3DMediaCompressionFormats = true;
+        refFtrTable.flags.ftr57bGPUAddressing = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {
@@ -183,6 +188,7 @@ struct SkuInfoBaseReference {
         refWaTable.flags.waAuxTable16KGranular = true;
         refWaTable.flags.waDisableFusedThreadScheduling = true;
         refWaTable.flags.waDefaultTile4 = true;
+        refWaTable.flags.waAuxTable64KGranular = true;
     }
 }; // namespace SkuInfoBaseReference
 } // namespace NEO

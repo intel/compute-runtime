@@ -106,6 +106,8 @@ class SkuInfoReceiver {
         RECEIVE_FTR(MultiTileArch);
         RECEIVE_FTR(CCSMultiInstance);
         RECEIVE_FTR(Ppgtt64KBWalkOptimization);
+        RECEIVE_FTR(Unified3DMediaCompressionFormats);
+        RECEIVE_FTR(57bGPUAddressing);
 
 #undef RECEIVE_FTR
     }
@@ -138,6 +140,7 @@ class SkuInfoReceiver {
         RECEIVE_WA(UntypedBufferCompression);
         RECEIVE_WA(DisableFusedThreadScheduling);
         RECEIVE_WA(DefaultTile4);
+        RECEIVE_WA(AuxTable64KGranular);
 
 #undef RECEIVE_WA
     }
