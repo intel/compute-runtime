@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/api_specific_config.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
@@ -35,5 +36,8 @@ TEST(ApiSpecificConfigL0Tests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeTh
 
 TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturned) {
     EXPECT_STREQ(L0::registryPath, ApiSpecificConfig::getRegistryPath());
+}
+TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportDisabled) {
+    EXPECT_FALSE(ImplicitScaling::apiSupport);
 }
 } // namespace NEO
