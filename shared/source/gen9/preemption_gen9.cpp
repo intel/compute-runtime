@@ -23,7 +23,7 @@ size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device) 
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
+        if (device.getHardwareInfo().workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption) {
             size += 2 * sizeof(MI_LOAD_REGISTER_IMM);
         }
     }
@@ -36,7 +36,7 @@ void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pComm
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
+        if (device.getHardwareInfo().workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption) {
             LriHelper<GfxFamily>::program(pCommandStream,
                                           CS_GPR_R0,
                                           GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER,
@@ -51,7 +51,7 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pComman
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
+        if (device.getHardwareInfo().workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption) {
             LriHelper<GfxFamily>::program(pCommandStream,
                                           CS_GPR_R0,
                                           GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER,

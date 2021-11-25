@@ -30,7 +30,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
 
     for (auto ftrLocalMemory : ::testing::Bool()) {
         LinearStream stream(buffer, 128);
-        hardwareInfo.featureTable.ftrLocalMemory = ftrLocalMemory;
+        hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
         MemorySynchronizationCommands<FamilyType>::addPipeControlWA(stream, address, hardwareInfo);
 
@@ -72,7 +72,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenSettingExtraPipeControlProperti
 
     for (auto ftrLocalMemory : ::testing::Bool()) {
         HardwareInfo hardwareInfo = *defaultHwInfo;
-        hardwareInfo.featureTable.ftrLocalMemory = ftrLocalMemory;
+        hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
         PipeControlArgs args{};
         MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args, hardwareInfo);

@@ -12,7 +12,7 @@ using HwHelperTestRkl = HwHelperTest;
 
 RKLTEST_F(HwHelperTestRkl, givenRklA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -22,7 +22,7 @@ RKLTEST_F(HwHelperTestRkl, givenRklA0WhenAdjustDefaultEngineTypeCalledThenRcsIsR
 
 RKLTEST_F(HwHelperTestRkl, givenRklBWhenAdjustDefaultEngineTypeCalledThenCcsIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
 
     auto &helper = HwHelper::get(renderCoreFamily);

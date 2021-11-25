@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 using namespace NEO;
 
 inline bool operator==(const FeatureTable &lhs, const FeatureTable &rhs) {
-    return lhs.ftrBcsInfo == rhs.ftrBcsInfo && lhs.packed[0] == rhs.packed[0] && lhs.packed[1] == rhs.packed[1];
+    return lhs.ftrBcsInfo == rhs.ftrBcsInfo && lhs.packed == rhs.packed;
 }
 
 TEST(SkuInfoReceiverTest, givenAdapterInfoWhenReceivingThenUpdateFtrTable) {
@@ -29,8 +29,8 @@ TEST(SkuInfoReceiverTest, givenAdapterInfoWhenReceivingThenUpdateFtrTable) {
 
     EXPECT_TRUE(refFeatureTable == requestedFeatureTable);
 
-    refFeatureTable.ftr3dMidBatchPreempt = false;
-    requestedFeatureTable.ftr3dMidBatchPreempt = true;
+    refFeatureTable.flags.ftr3dMidBatchPreempt = false;
+    requestedFeatureTable.flags.ftr3dMidBatchPreempt = true;
 
     EXPECT_FALSE(refFeatureTable == requestedFeatureTable);
 }

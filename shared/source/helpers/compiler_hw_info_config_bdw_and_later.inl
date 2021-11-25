@@ -13,7 +13,7 @@
 namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
 bool CompilerHwInfoConfigHw<gfxProduct>::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const {
-    return hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt;
+    return hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt;
 }
 
 } // namespace NEO

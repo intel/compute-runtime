@@ -91,7 +91,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenLoc
     setUpImpl<FamilyType>();
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableLocalMemory.set(1);
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
     auto tbxCsr = std::make_unique<MockTbxCommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
@@ -106,7 +106,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenLoc
     setUpImpl<FamilyType>();
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableLocalMemory.set(1);
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
     auto tbxCsr = std::make_unique<MockTbxCommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());

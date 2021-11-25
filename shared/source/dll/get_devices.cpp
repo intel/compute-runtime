@@ -29,7 +29,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
             bool unsupportedDeviceDetected = false;
 
             auto &featureTable = executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->featureTable;
-            if (!featureTable.ftrRcsNode && !featureTable.ftrCCSNode) {
+            if (!featureTable.flags.ftrRcsNode && !featureTable.flags.ftrCCSNode) {
                 unsupportedDeviceDetected = true;
             }
 

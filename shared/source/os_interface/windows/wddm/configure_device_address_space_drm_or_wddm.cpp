@@ -83,7 +83,7 @@ bool tryWritePartitionLayoutWithinProcess(Wddm &wddm, GMM_GFX_PARTITIONING &part
 }
 
 bool adjustGfxPartitionLayout(GMM_GFX_PARTITIONING &partitionLayout, uint64_t gpuAddressSpace, uintptr_t minAllowedAddress, Wddm &wddm) {
-    bool requiresRepartitioning = (gpuAddressSpace == maxNBitValue(47)) && wddm.getFeatureTable().ftrCCSRing;
+    bool requiresRepartitioning = (gpuAddressSpace == maxNBitValue(47)) && wddm.getFeatureTable().flags.ftrCCSRing;
     if (false == requiresRepartitioning) {
         return true;
     }
@@ -221,7 +221,7 @@ bool Wddm::configureDeviceAddressSpace() {
     }
 
     uintptr_t addr = 0;
-    auto ret = gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, maxUsmSize, featureTable->ftrL3IACoherency, addr, false);
+    auto ret = gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, maxUsmSize, featureTable->flags.ftrL3IACoherency, addr, false);
     return ret;
 }
 

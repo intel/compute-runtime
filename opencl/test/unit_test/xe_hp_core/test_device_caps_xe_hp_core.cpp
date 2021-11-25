@@ -69,7 +69,7 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenEnabledFtrPooledEuAndA0SteppingWhen
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
-    mySkuTable.ftrPooledEuEnabled = 1;
+    mySkuTable.flags.ftrPooledEuEnabled = 1;
     myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
@@ -106,7 +106,7 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenEnabledFtrPooledEuAndNotA0SteppingW
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
-    mySkuTable.ftrPooledEuEnabled = 1;
+    mySkuTable.flags.ftrPooledEuEnabled = 1;
     myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, myHwInfo);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));

@@ -29,7 +29,7 @@ uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
 
 template <>
 void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
-    if (!pHwInfo->featureTable.ftrCCSNode) {
+    if (!pHwInfo->featureTable.flags.ftrCCSNode) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     }
     if (HwInfoConfig::get(pHwInfo->platform.eProductFamily)->isDefaultEngineTypeAdjustmentRequired(*pHwInfo)) {
@@ -48,7 +48,7 @@ inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInf
 
 template <>
 bool HwHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const {
-    return !hwInfo.workaroundTable.waAuxTable64KGranular && isCompressionEnabled;
+    return !hwInfo.workaroundTable.flags.waAuxTable64KGranular && isCompressionEnabled;
 }
 
 template <>

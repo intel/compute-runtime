@@ -165,7 +165,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {
     }
 
     bool compressionFormatSupported = false;
-    if (clientContext->getHardwareInfo()->featureTable.ftrFlatPhysCCS) {
+    if (clientContext->getHardwareInfo()->featureTable.flags.ftrFlatPhysCCS) {
         compressionFormatSupported = compressionFormat != GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID;
     } else {
         compressionFormatSupported = compressionFormat != GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID;
@@ -186,7 +186,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {
                                   !isPackedYuv;
 
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    if (imgInfo.useLocalMemory || !hwInfo->featureTable.ftrLocalMemory) {
+    if (imgInfo.useLocalMemory || !hwInfo->featureTable.flags.ftrLocalMemory) {
         if (allowRenderCompression) {
             hwHelper.applyRenderCompressionFlag(*this, 1);
             this->resourceParams.Flags.Gpu.CCS = 1;
@@ -341,7 +341,7 @@ void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) {
     this->useSystemMemoryPool = systemMemoryPool;
     auto hardwareInfo = clientContext->getHardwareInfo();
 
-    if (hardwareInfo->featureTable.ftrLocalMemory) {
+    if (hardwareInfo->featureTable.flags.ftrLocalMemory) {
         if (systemMemoryPool) {
             resourceParams.Flags.Info.NonLocalOnly = 1;
         } else {
@@ -356,7 +356,7 @@ void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) {
         }
     }
 
-    if (hardwareInfo->featureTable.ftrMultiTileArch) {
+    if (hardwareInfo->featureTable.flags.ftrMultiTileArch) {
         resourceParams.MultiTileArch.Enable = 1;
         if (systemMemoryPool) {
             resourceParams.MultiTileArch.GpuVaMappingSet = hardwareInfo->gtSystemInfo.MultiTileArchInfo.TileMask;

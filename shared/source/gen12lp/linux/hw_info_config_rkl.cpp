@@ -20,7 +20,7 @@ template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
-    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = false;
+    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = false;
 
     enableBlitterOperationsSupport(hwInfo);
 

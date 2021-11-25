@@ -62,7 +62,7 @@ void PreambleHelper<TGLLPFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComm
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
     PIPE_CONTROL cmd = TGLLPFamily::cmdInitPipeControl;
     cmd.setCommandStreamerStallEnable(true);
-    if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
+    if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
         if (engineGroupType != EngineGroupType::Compute) {
             cmd.setRenderTargetCacheFlushEnable(true);
             cmd.setDepthCacheFlushEnable(true);

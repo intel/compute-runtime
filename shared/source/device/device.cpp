@@ -390,7 +390,7 @@ bool Device::isSimulation() const {
         }
     }
 
-    if (hwInfo.featureTable.ftrSimulationMode) {
+    if (hwInfo.featureTable.flags.ftrSimulationMode) {
         simulation = true;
     }
     return simulation;

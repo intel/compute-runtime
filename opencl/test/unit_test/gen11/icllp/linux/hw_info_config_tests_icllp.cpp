@@ -31,15 +31,15 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
-    EXPECT_TRUE(outHwInfo.featureTable.ftrGT1);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGT2);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGT3);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGT4);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGTA);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGTC);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGTX);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
+    EXPECT_TRUE(outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTX);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
 ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNegativeOneReturned) {

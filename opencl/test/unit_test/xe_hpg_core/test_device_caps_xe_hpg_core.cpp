@@ -58,7 +58,7 @@ XE_HPG_CORETEST_F(XeHpgCoreDeviceCaps, givenEnabledFtrPooledEuAndNotA0SteppingWh
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
-    mySkuTable.ftrPooledEuEnabled = 1;
+    mySkuTable.flags.ftrPooledEuEnabled = 1;
     myPlatform.usRevId = 0x4;
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));

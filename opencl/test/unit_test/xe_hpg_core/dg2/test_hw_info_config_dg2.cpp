@@ -48,7 +48,7 @@ HWTEST_EXCLUDE_PRODUCT(HwHelperTestXeHPAndLater, GiveCcsNodeThenDefaultEngineTyp
 
 DG2TEST_F(Dg2HwInfoConfig, whenAdjustingDefaultEngineTypeThenSelectEngineTypeBasedOnRevisionId) {
     auto hardwareInfo = *defaultHwInfo;
-    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.featureTable.flags.ftrCCSNode = true;
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
 

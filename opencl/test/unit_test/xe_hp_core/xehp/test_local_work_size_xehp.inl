@@ -74,13 +74,13 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, givenXeHPAndForceWorkgroupSize1x1x1Flag
     }
     {
         hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
-        hwInfo->featureTable.ftrSimulationMode = true;
+        hwInfo->featureTable.flags.ftrSimulationMode = true;
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_NE(1u, expectedLws.x * expectedLws.y * expectedLws.z);
         EXPECT_TRUE(pDevice->isSimulation());
     }
     {
-        hwInfo->featureTable.ftrSimulationMode = false;
+        hwInfo->featureTable.flags.ftrSimulationMode = false;
         kernel.setAuxTranslationDirection(AuxTranslationDirection::NonAuxToAux);
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_NE(1u, expectedLws.x * expectedLws.y * expectedLws.z);

@@ -35,7 +35,7 @@ using Gen9ThreadGroupPreemptionEnqueueKernelTest = ThreadGroupPreemptionEnqueueK
 GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupNoWa) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
 
-    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption = false;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.setMediaVFEStateDirty(false);
@@ -67,7 +67,7 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
 GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupWa) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
 
-    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption = true;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.setMediaVFEStateDirty(false);
@@ -198,7 +198,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
 
-    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption = false;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
@@ -275,7 +275,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
 
-    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption = true;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);

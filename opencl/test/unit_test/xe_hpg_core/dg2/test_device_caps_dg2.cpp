@@ -52,7 +52,7 @@ DG2TEST_F(Dg2UsDeviceIdTest, givenEnabledFtrPooledEuAndA0SteppingWhenCalculating
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
-    mySkuTable.ftrPooledEuEnabled = 1;
+    mySkuTable.flags.ftrPooledEuEnabled = 1;
     myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));

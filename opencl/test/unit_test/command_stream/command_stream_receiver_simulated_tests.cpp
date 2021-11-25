@@ -32,7 +32,7 @@ using CommandStreamSimulatedTests = HwHelperTest;
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageInfoNonZeroWhenMemoryBankIsQueriedThenBankForAllocationDeviceIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -51,7 +51,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocationWithStorageInfoNonZeroWhenMemoryBankIsQueriedThenMainBankIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
 
@@ -67,7 +67,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageInfoZeroWhenMemoryBankIsQueriedThenBankForCsrIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -86,7 +86,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocationWithStorageInfoNonZeroWhenMemoryBanksBitfieldIsQueriedThenBanksBitfieldForSystemMemoryIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -105,7 +105,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWithManyBanksWhenMemoryBanksBitfieldIsQueriedThenSingleMemoryBankIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -129,7 +129,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryCloneableAllocationWithManyBanksWhenMemoryBanksBitfieldIsQueriedThenAllMemoryBanksAreReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -153,7 +153,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryCloneableAllocationWithMan
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWithManyBanksWhenMemoryBanksBitfieldIsQueriedOnSpecialCsrThenAllMemoryBanksAreReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -178,7 +178,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageInfoZeroWhenMemoryBanksBitfieldIsQueriedThenBanksBitfieldForCsrDeviceIndexIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -200,7 +200,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenCorrectSpaceIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -228,7 +228,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryWhenSimulatedCsrGetAddress
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryDisabledWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenCorrectSpaceIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
@@ -252,7 +252,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenAUBDumpForceAllToLocalMemoryWhenSimul
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);

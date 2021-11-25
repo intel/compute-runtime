@@ -303,7 +303,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, whenFailedToReadPro
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     osEnvironment->gdi->escape = escapeMock;
     gdiMockConfig.escapeClb.returnValue = -1;
@@ -329,7 +329,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, whenFailedToTransla
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     bool translatorWasCalled = false;
     this->hwDeviceId->umKmDataTranslator.reset(new MockTranslator(translatorWasCalled));
@@ -347,7 +347,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenPreconfiguredA
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
@@ -367,7 +367,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
@@ -384,7 +384,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
@@ -404,7 +404,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     struct MockTranslator : NEO::UmKmDataTranslator {
         bool &wasCalled;
@@ -433,7 +433,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
@@ -455,7 +455,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
@@ -494,7 +494,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     std::vector<D3DDDI_RESERVEGPUVIRTUALADDRESS> allReserveGpuVaArgs;
     gdiMockConfig.reserveGpuVaClb.context = &allReserveGpuVaArgs;
@@ -536,7 +536,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
 
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
@@ -557,7 +557,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
         GTEST_SKIP();
     }
 
-    this->wddm->featureTable->ftrCCSRing = 1;
+    this->wddm->featureTable->flags.ftrCCSRing = 1;
     osEnvironment->gdi->escape = escapeMock;
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
     auto cantReserveWholeGpuVAOfSecondButCanReservePortionOfSecont = []() {

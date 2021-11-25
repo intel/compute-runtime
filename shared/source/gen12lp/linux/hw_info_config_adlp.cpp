@@ -22,7 +22,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo));
+    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo));
 
     enableBlitterOperationsSupport(hwInfo);
 

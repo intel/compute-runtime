@@ -1067,21 +1067,21 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForIsaSystemMemoryPlacementThenRet
     DebugManagerStateRestore restorer;
     HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     auto localMemoryEnabled = hwHelper.getEnableLocalMemory(hardwareInfo);
     EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     localMemoryEnabled = hwHelper.getEnableLocalMemory(hardwareInfo);
     EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 
     DebugManager.flags.EnableLocalMemory.set(true);
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     localMemoryEnabled = hwHelper.getEnableLocalMemory(hardwareInfo);
     EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 
     DebugManager.flags.EnableLocalMemory.set(false);
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     localMemoryEnabled = hwHelper.getEnableLocalMemory(hardwareInfo);
     EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 }
@@ -1216,7 +1216,7 @@ TEST_F(HwHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsReturned) 
 TEST_F(HwHelperTest, whenFtrGpGpuMidThreadLevelPreemptFeatureDisabledThenFalseIsReturned) {
     HwHelper &hwHelper = HwHelper::get(renderCoreFamily);
     FeatureTable featureTable = {};
-    featureTable.ftrGpGpuMidThreadLevelPreempt = false;
+    featureTable.flags.ftrGpGpuMidThreadLevelPreempt = false;
     bool result = hwHelper.isAdditionalFeatureFlagRequired(&featureTable);
     EXPECT_FALSE(result);
 }

@@ -92,39 +92,39 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    featureTable->ftrL3IACoherency = true;
-    featureTable->ftrFlatPhysCCS = true;
-    featureTable->ftrPPGTT = true;
-    featureTable->ftrSVM = true;
-    featureTable->ftrIA32eGfxPTEs = true;
-    featureTable->ftrStandardMipTailFormat = true;
-    featureTable->ftrTranslationTable = true;
-    featureTable->ftrUserModeTranslationTable = true;
-    featureTable->ftrTileMappedResource = true;
-    featureTable->ftrEnableGuC = true;
-    featureTable->ftrFbc = true;
-    featureTable->ftrFbc2AddressTranslation = true;
-    featureTable->ftrFbcBlitterTracking = true;
-    featureTable->ftrAstcHdr2D = true;
-    featureTable->ftrAstcLdr2D = true;
+    featureTable->flags.ftrL3IACoherency = true;
+    featureTable->flags.ftrFlatPhysCCS = true;
+    featureTable->flags.ftrPPGTT = true;
+    featureTable->flags.ftrSVM = true;
+    featureTable->flags.ftrIA32eGfxPTEs = true;
+    featureTable->flags.ftrStandardMipTailFormat = true;
+    featureTable->flags.ftrTranslationTable = true;
+    featureTable->flags.ftrUserModeTranslationTable = true;
+    featureTable->flags.ftrTileMappedResource = true;
+    featureTable->flags.ftrEnableGuC = true;
+    featureTable->flags.ftrFbc = true;
+    featureTable->flags.ftrFbc2AddressTranslation = true;
+    featureTable->flags.ftrFbcBlitterTracking = true;
+    featureTable->flags.ftrAstcHdr2D = true;
+    featureTable->flags.ftrAstcLdr2D = true;
 
-    featureTable->ftr3dMidBatchPreempt = true;
-    featureTable->ftrGpGpuMidBatchPreempt = true;
-    featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    featureTable->ftrPerCtxtPreemptionGranularityControl = true;
+    featureTable->flags.ftr3dMidBatchPreempt = true;
+    featureTable->flags.ftrGpGpuMidBatchPreempt = true;
+    featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
 
-    featureTable->ftrTileY = false;
-    featureTable->ftrLocalMemory = true;
-    featureTable->ftrLinearCCS = true;
-    featureTable->ftrE2ECompression = true;
-    featureTable->ftrCCSNode = true;
-    featureTable->ftrCCSRing = true;
-    featureTable->ftrCCSMultiInstance = true;
+    featureTable->flags.ftrTileY = false;
+    featureTable->flags.ftrLocalMemory = true;
+    featureTable->flags.ftrLinearCCS = true;
+    featureTable->flags.ftrE2ECompression = true;
+    featureTable->flags.ftrCCSNode = true;
+    featureTable->flags.ftrCCSRing = true;
+    featureTable->flags.ftrCCSMultiInstance = true;
 
-    featureTable->ftrUnified3DMediaCompressionFormats = true;
+    featureTable->flags.ftrUnified3DMediaCompressionFormats = true;
 
-    workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->waEnablePreemptionGranularityControlByUMD = true;
+    workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
 };
 
 const HardwareInfo DG2_CONFIG::hwInfo = {

@@ -50,21 +50,21 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
             workaroundTable = {};
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
-            EXPECT_EQ(setParamBool, featureTable.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, featureTable.ftrPPGTT);
-            EXPECT_EQ(setParamBool, featureTable.ftrSVM);
-            EXPECT_EQ(setParamBool, featureTable.ftrIA32eGfxPTEs);
-            EXPECT_EQ(setParamBool, featureTable.ftrFbc);
-            EXPECT_EQ(setParamBool, featureTable.ftrFbc2AddressTranslation);
-            EXPECT_EQ(setParamBool, featureTable.ftrFbcBlitterTracking);
-            EXPECT_EQ(setParamBool, featureTable.ftrFbcCpuTracking);
-            EXPECT_EQ(setParamBool, featureTable.ftrTileY);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc2AddressTranslation);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcBlitterTracking);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcCpuTracking);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
 
-            EXPECT_EQ(setParamBool, workaroundTable.waDisableLSQCROPERFforOCL);
-            EXPECT_EQ(setParamBool, workaroundTable.waReportPerfCountUseGlobalContextID);
-            EXPECT_EQ(setParamBool, workaroundTable.waUseVAlign16OnTileXYBpp816);
-            EXPECT_EQ(setParamBool, workaroundTable.waModifyVFEStateAfterGPGPUPreemption);
-            EXPECT_EQ(setParamBool, workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.waDisableLSQCROPERFforOCL);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.waReportPerfCountUseGlobalContextID);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.waUseVAlign16OnTileXYBpp816);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
         }
     }
 }

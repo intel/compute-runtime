@@ -19,7 +19,7 @@ class SkuInfoReceiver {
 
   protected:
     static void receiveFtrTableFromAdapterInfoBase(FeatureTable *ftrTable, ADAPTER_INFO_KMD *adapterInfo) {
-#define RECEIVE_FTR(VAL_NAME) ftrTable->ftr##VAL_NAME = adapterInfo->SkuTable.Ftr##VAL_NAME
+#define RECEIVE_FTR(VAL_NAME) ftrTable->flags.ftr##VAL_NAME = adapterInfo->SkuTable.Ftr##VAL_NAME
         RECEIVE_FTR(Desktop);
         RECEIVE_FTR(ChannelSwizzlingXOREnabled);
 
@@ -111,7 +111,7 @@ class SkuInfoReceiver {
     }
 
     static void receiveWaTableFromAdapterInfoBase(WorkaroundTable *workaroundTable, ADAPTER_INFO_KMD *adapterInfo) {
-#define RECEIVE_WA(VAL_NAME) workaroundTable->wa##VAL_NAME = adapterInfo->WaTable.Wa##VAL_NAME
+#define RECEIVE_WA(VAL_NAME) workaroundTable->flags.wa##VAL_NAME = adapterInfo->WaTable.Wa##VAL_NAME
         RECEIVE_WA(DoNotUseMIReportPerfCount);
 
         RECEIVE_WA(EnablePreemptionGranularityControlByUMD);

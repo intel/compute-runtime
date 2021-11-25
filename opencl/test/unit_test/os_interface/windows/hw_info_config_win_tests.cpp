@@ -52,7 +52,7 @@ TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenR
 }
 
 TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenSetFtrSvmCorrectly) {
-    auto ftrSvm = outHwInfo.featureTable.ftrSVM;
+    auto ftrSvm = outHwInfo.featureTable.flags.ftrSVM;
 
     int ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
     ASSERT_EQ(0, ret);
@@ -81,11 +81,11 @@ HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoTh
     bool initialCoherencyStatus = false;
     hwInfoConfig->setCapabilityCoherencyFlag(outHwInfo, initialCoherencyStatus);
 
-    initialHwInfo.featureTable.ftrL3IACoherency = false;
+    initialHwInfo.featureTable.flags.ftrL3IACoherency = false;
     hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 
-    initialHwInfo.featureTable.ftrL3IACoherency = true;
+    initialHwInfo.featureTable.flags.ftrL3IACoherency = true;
     hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }

@@ -118,7 +118,7 @@ SKLTEST_F(ThreadArbitration, whenGetSupportedThreadArbitrationPoliciesIsCalledTh
 
 GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    testWaTable->waSendMIFLUSHBeforeVFE = 0;
+    testWaTable->flags.waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
@@ -138,7 +138,7 @@ GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsC
 
 GEN9TEST_F(PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    testWaTable->waSendMIFLUSHBeforeVFE = 1;
+    testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};

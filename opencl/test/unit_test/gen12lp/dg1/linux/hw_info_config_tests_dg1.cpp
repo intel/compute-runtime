@@ -20,7 +20,7 @@ DG1TEST_F(HwHelperTestGen12Lp, GivenDG1WhenConfigureHardwareCustomThenMTPIsNotSe
     PreemptionHelper::adjustDefaultPreemptionMode(hardwareInfo.capabilityTable, true, true, true);
 
     hwInfoConfig->configureHardwareCustom(&hardwareInfo, &osIface);
-    EXPECT_FALSE(hardwareInfo.featureTable.ftrGpGpuMidThreadLevelPreempt);
+    EXPECT_FALSE(hardwareInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
 }
 
 DG1TEST_F(HwHelperTestGen12Lp, GivenDG1WhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {

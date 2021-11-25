@@ -37,7 +37,7 @@ bool HwHelperHw<Family>::isWaDisableRccRhwoOptimizationRequired() const {
 
 template <>
 bool HwHelperHw<Family>::isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const {
-    return featureTable->ftrGpGpuMidThreadLevelPreempt;
+    return featureTable->flags.ftrGpGpuMidThreadLevelPreempt;
 }
 
 template <>
@@ -50,7 +50,7 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
 
 template <>
 bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
-    return hwInfo.featureTable.ftrLocalMemory;
+    return hwInfo.featureTable.flags.ftrLocalMemory;
 }
 
 template <>
@@ -92,7 +92,7 @@ const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const
         {defaultEngine, EngineUsage::Internal},             // internal usage
     };
 
-    if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.ftrCCSNode && !hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt) {
+    if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.flags.ftrCCSNode && !hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt) {
         engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
     }
 

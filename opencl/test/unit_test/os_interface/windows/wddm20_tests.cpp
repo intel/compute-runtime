@@ -550,7 +550,7 @@ HWTEST_F(Wddm20InstrumentationTest, WhenConfiguringDeviceAddressSpaceThenTrueIsR
     D3DKMT_HANDLE adapterHandle = ADAPTER_HANDLE;
     D3DKMT_HANDLE deviceHandle = DEVICE_HANDLE;
     const HardwareInfo hwInfo = *defaultHwInfo;
-    BOOLEAN FtrL3IACoherency = hwInfo.featureTable.ftrL3IACoherency ? 1 : 0;
+    BOOLEAN FtrL3IACoherency = hwInfo.featureTable.flags.ftrL3IACoherency ? 1 : 0;
     uintptr_t maxAddr = hwInfo.capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
                             ? reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1
                             : 0;
@@ -1213,12 +1213,12 @@ TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndForceDeviceIdIsTheSameAsTheEx
 }
 
 TEST_F(WddmTest, WhenFeatureFlagHwQueueIsDisabledThenReturnWddm20Version) {
-    wddm->featureTable->ftrWddmHwQueues = 0;
+    wddm->featureTable->flags.ftrWddmHwQueues = 0;
     EXPECT_EQ(WddmVersion::WDDM_2_0, wddm->getWddmVersion());
 }
 
 TEST_F(WddmTest, WhenFeatureFlagHwQueueIsEnabledThenReturnWddm23Version) {
-    wddm->featureTable->ftrWddmHwQueues = 1;
+    wddm->featureTable->flags.ftrWddmHwQueues = 1;
     EXPECT_EQ(WddmVersion::WDDM_2_3, wddm->getWddmVersion());
 }
 

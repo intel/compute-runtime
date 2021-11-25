@@ -49,9 +49,9 @@ XEHPTEST_F(HwHelperTestsXeHP, givenXEHPWhenIsBankOverrideRequiredIsCalledThenCor
 
 XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.ftrRcsNode = false;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -74,9 +74,9 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontS
 
 XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEnginesCalledThenSetRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.ftrRcsNode = false;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;

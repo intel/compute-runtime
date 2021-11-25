@@ -92,34 +92,34 @@ void TGLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    featureTable->ftrL3IACoherency = true;
-    featureTable->ftrPPGTT = true;
-    featureTable->ftrSVM = true;
-    featureTable->ftrIA32eGfxPTEs = true;
-    featureTable->ftrStandardMipTailFormat = true;
+    featureTable->flags.ftrL3IACoherency = true;
+    featureTable->flags.ftrPPGTT = true;
+    featureTable->flags.ftrSVM = true;
+    featureTable->flags.ftrIA32eGfxPTEs = true;
+    featureTable->flags.ftrStandardMipTailFormat = true;
 
-    featureTable->ftrTranslationTable = true;
-    featureTable->ftrUserModeTranslationTable = true;
-    featureTable->ftrTileMappedResource = true;
-    featureTable->ftrEnableGuC = true;
+    featureTable->flags.ftrTranslationTable = true;
+    featureTable->flags.ftrUserModeTranslationTable = true;
+    featureTable->flags.ftrTileMappedResource = true;
+    featureTable->flags.ftrEnableGuC = true;
 
-    featureTable->ftrFbc = true;
-    featureTable->ftrFbc2AddressTranslation = true;
-    featureTable->ftrFbcBlitterTracking = true;
-    featureTable->ftrFbcCpuTracking = true;
-    featureTable->ftrTileY = true;
+    featureTable->flags.ftrFbc = true;
+    featureTable->flags.ftrFbc2AddressTranslation = true;
+    featureTable->flags.ftrFbcBlitterTracking = true;
+    featureTable->flags.ftrFbcCpuTracking = true;
+    featureTable->flags.ftrTileY = true;
 
-    featureTable->ftrAstcHdr2D = true;
-    featureTable->ftrAstcLdr2D = true;
+    featureTable->flags.ftrAstcHdr2D = true;
+    featureTable->flags.ftrAstcLdr2D = true;
 
-    featureTable->ftr3dMidBatchPreempt = true;
-    featureTable->ftrGpGpuMidBatchPreempt = true;
-    featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    featureTable->ftrPerCtxtPreemptionGranularityControl = true;
+    featureTable->flags.ftr3dMidBatchPreempt = true;
+    featureTable->flags.ftrGpGpuMidBatchPreempt = true;
+    featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
 
-    workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->waEnablePreemptionGranularityControlByUMD = true;
-    workaroundTable->waUntypedBufferCompression = true;
+    workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
+    workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
 const HardwareInfo TGLLP_1x6x16::hwInfo = {

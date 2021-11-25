@@ -101,7 +101,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenC
 
 HWTEST2_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsTGLLP) {
     auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
     SetUpImpl<FamilyType>(&hwInfo);

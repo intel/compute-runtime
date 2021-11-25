@@ -1200,7 +1200,7 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
-        hwInfo->featureTable.ftrCCSNode = (numCcs > 0);
+        hwInfo->featureTable.flags.ftrCCSNode = (numCcs > 0);
         HwHelper::get(hwInfo->platform.eRenderCoreFamily).adjustDefaultEngineType(hwInfo);
 
         if (!multiCcsDevice(*hwInfo, numCcs)) {

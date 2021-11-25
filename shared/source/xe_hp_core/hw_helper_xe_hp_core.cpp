@@ -134,7 +134,7 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(PIPE_C
 
 template <>
 void MemorySynchronizationCommands<Family>::setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo) {
-    if (hwInfo.featureTable.ftrLocalMemory) {
+    if (hwInfo.featureTable.flags.ftrLocalMemory) {
         args.hdcPipelineFlush = true;
     }
 }

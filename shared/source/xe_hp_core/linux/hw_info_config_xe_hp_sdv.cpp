@@ -23,9 +23,9 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
         enableRenderCompression(hwInfo);
     }
 
-    hwInfo->featureTable.ftrRcsNode = false;
+    hwInfo->featureTable.flags.ftrRcsNode = false;
     if (DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) {
-        hwInfo->featureTable.ftrRcsNode = true;
+        hwInfo->featureTable.flags.ftrRcsNode = true;
     }
 
     enableBlitterOperationsSupport(hwInfo);

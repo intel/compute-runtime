@@ -1585,7 +1585,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
             givenPostSyncBarrierProgrammingWhenEmitsSelfCleanupUsingAtomicThenExpectPostSyncCommandsAndMiAtomicCommandCleanupSection) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    testHardwareInfo.featureTable.ftrLocalMemory = true;
+    testHardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     testArgs.tileCount = 4u;
     testArgs.emitSelfCleanup = true;

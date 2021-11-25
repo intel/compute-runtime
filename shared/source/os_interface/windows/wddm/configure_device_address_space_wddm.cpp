@@ -65,7 +65,7 @@ bool Wddm::configureDeviceAddressSpace() {
                        : 0u;
 
     bool obtainMinAddress = rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
-    return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->ftrL3IACoherency, minAddress, obtainMinAddress);
+    return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->flags.ftrL3IACoherency, minAddress, obtainMinAddress);
 }
 
 } // namespace NEO

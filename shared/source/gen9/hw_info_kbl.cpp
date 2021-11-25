@@ -88,42 +88,42 @@ void KBL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    featureTable->ftrGpGpuMidBatchPreempt = true;
-    featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    featureTable->ftrL3IACoherency = true;
-    featureTable->ftrVEBOX = true;
-    featureTable->ftrGpGpuMidThreadLevelPreempt = true;
-    featureTable->ftr3dMidBatchPreempt = true;
-    featureTable->ftr3dObjectLevelPreempt = true;
-    featureTable->ftrPerCtxtPreemptionGranularityControl = true;
-    featureTable->ftrPPGTT = true;
-    featureTable->ftrSVM = true;
-    featureTable->ftrIA32eGfxPTEs = true;
-    featureTable->ftrDisplayYTiling = true;
-    featureTable->ftrTranslationTable = true;
-    featureTable->ftrUserModeTranslationTable = true;
-    featureTable->ftrEnableGuC = true;
-    featureTable->ftrFbc = true;
-    featureTable->ftrFbc2AddressTranslation = true;
-    featureTable->ftrFbcBlitterTracking = true;
-    featureTable->ftrFbcCpuTracking = true;
-    featureTable->ftrTileY = true;
+    featureTable->flags.ftrGpGpuMidBatchPreempt = true;
+    featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->flags.ftrL3IACoherency = true;
+    featureTable->flags.ftrVEBOX = true;
+    featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
+    featureTable->flags.ftr3dMidBatchPreempt = true;
+    featureTable->flags.ftr3dObjectLevelPreempt = true;
+    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
+    featureTable->flags.ftrPPGTT = true;
+    featureTable->flags.ftrSVM = true;
+    featureTable->flags.ftrIA32eGfxPTEs = true;
+    featureTable->flags.ftrDisplayYTiling = true;
+    featureTable->flags.ftrTranslationTable = true;
+    featureTable->flags.ftrUserModeTranslationTable = true;
+    featureTable->flags.ftrEnableGuC = true;
+    featureTable->flags.ftrFbc = true;
+    featureTable->flags.ftrFbc2AddressTranslation = true;
+    featureTable->flags.ftrFbcBlitterTracking = true;
+    featureTable->flags.ftrFbcCpuTracking = true;
+    featureTable->flags.ftrTileY = true;
 
-    workaroundTable->waEnablePreemptionGranularityControlByUMD = true;
-    workaroundTable->waSendMIFLUSHBeforeVFE = true;
-    workaroundTable->waReportPerfCountUseGlobalContextID = true;
-    workaroundTable->waMsaa8xTileYDepthPitchAlignment = true;
-    workaroundTable->waLosslessCompressionSurfaceStride = true;
-    workaroundTable->waFbcLinearSurfaceStride = true;
-    workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
+    workaroundTable->flags.waSendMIFLUSHBeforeVFE = true;
+    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
+    workaroundTable->flags.waMsaa8xTileYDepthPitchAlignment = true;
+    workaroundTable->flags.waLosslessCompressionSurfaceStride = true;
+    workaroundTable->flags.waFbcLinearSurfaceStride = true;
+    workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+    workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     if (platform->usRevId <= 0x6) {
-        workaroundTable->waDisableLSQCROPERFforOCL = true;
-        workaroundTable->waEncryptedEdramOnlyPartials = true;
+        workaroundTable->flags.waDisableLSQCROPERFforOCL = true;
+        workaroundTable->flags.waEncryptedEdramOnlyPartials = true;
     }
     if (platform->usRevId <= 0x8) {
-        workaroundTable->waForcePcBbFullCfgRestore = true;
+        workaroundTable->flags.waForcePcBbFullCfgRestore = true;
     }
 }
 

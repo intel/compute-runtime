@@ -42,7 +42,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGetGpuTi
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, GivenNoCcsNodeThenDefaultEngineTypeIsRcs) {
-    hardwareInfo.featureTable.ftrCCSNode = false;
+    hardwareInfo.featureTable.flags.ftrCCSNode = false;
 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
@@ -53,7 +53,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, GivenNoCcsNodeThenDefault
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, GiveCcsNodeThenDefaultEngineTypeIsCcs) {
-    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.featureTable.flags.ftrCCSNode = true;
 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
@@ -61,14 +61,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, GiveCcsNodeThenDefaultEng
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWithLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
     EXPECT_TRUE(helper.isLocalMemoryEnabled(hardwareInfo));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWithoutLocalMemoryFeatureWhenIsLocalMemoryEnabledIsCalledThenFalseIsReturned) {
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
 
     auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
     EXPECT_FALSE(helper.isLocalMemoryEnabled(hardwareInfo));
@@ -91,9 +91,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatform
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenAllFlagsSetWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEnginesAndOneBcsEngine) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.ftrRcsNode = true;
+    hwInfo.featureTable.flags.ftrRcsNode = true;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -119,7 +119,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenAllFlagsSetWhenGetGp
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenBcsDisabledWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEngines) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 0;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -141,7 +141,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenBcsDisabledWhenGetGp
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenCcsDisabledWhenGetGpgpuEnginesThenReturnRcsAndOneBcsEngine) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrCCSNode = false;
+    hwInfo.featureTable.flags.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
@@ -162,7 +162,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenCcsDisabledWhenGetGp
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenCcsDisabledAndNumberOfCcsEnabledWhenGetGpgpuEnginesThenReturnRcsAndOneBcsEngine) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrCCSNode = false;
+    hwInfo.featureTable.flags.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -233,7 +233,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, WhenAddingPipeC
 
     for (auto ftrLocalMemory : ::testing::Bool()) {
         LinearStream stream(buffer, 128);
-        hardwareInfo.featureTable.ftrLocalMemory = ftrLocalMemory;
+        hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
         MemorySynchronizationCommands<FamilyType>::addPipeControlWA(stream, address, hardwareInfo);
 
@@ -280,7 +280,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, WhenSettingExtr
 
     for (auto ftrLocalMemory : ::testing::Bool()) {
         HardwareInfo hardwareInfo = *defaultHwInfo;
-        hardwareInfo.featureTable.ftrLocalMemory = ftrLocalMemory;
+        hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
         PipeControlArgs args{};
         MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args, hardwareInfo);
@@ -363,7 +363,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGettingP
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenIsPipeControlWArequiredIsCalledThenCorrectValueIsReturned) {
     auto hwInfo = pDevice->getHardwareInfo();
     for (auto ftrLocalMemory : ::testing::Bool()) {
-        hwInfo.featureTable.ftrLocalMemory = ftrLocalMemory;
+        hwInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
         EXPECT_EQ(UnitTestHelper<FamilyType>::isPipeControlWArequired(hwInfo),
                   MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo));

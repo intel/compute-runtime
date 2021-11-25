@@ -135,7 +135,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumThenProperMaxThreadsF
 }
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsDefaultWhenLocalMemoryIsEnabledThenReturnFalseAndDoNotProgramPipeControl) {
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
 
@@ -150,7 +150,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsDisabledW
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(0);
 
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
@@ -165,7 +165,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnabledWh
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
@@ -179,7 +179,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnabledWh
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
@@ -307,7 +307,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
     LinearStream cmdStream(buffer, bufferSize);
 
     HardwareInfo hardwareInfo = *defaultHwInfo;
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
 
     PipeControlArgs args;
     uint64_t gpuAddress = 0xABC0;
@@ -345,7 +345,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
     LinearStream cmdStream(buffer, bufferSize);
 
     HardwareInfo hardwareInfo = *defaultHwInfo;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     PipeControlArgs args;
     uint64_t gpuAddress = 0xABC0;

@@ -35,7 +35,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         osInterface = std::make_unique<OSInterface>();
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
 
-        wddm->featureTable->ftrWddmHwQueues = true;
+        wddm->featureTable->flags.ftrWddmHwQueues = true;
         wddmMockInterface = new WddmMockInterface23(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
     }

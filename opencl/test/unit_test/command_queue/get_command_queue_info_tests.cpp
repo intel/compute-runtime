@@ -186,7 +186,7 @@ TEST_F(GetCommandQueueFamilyInfoTests, givenQueueFamilySelectedWhenGettingFamily
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenGettingCommandQueueInfoThenCorrectValueIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo.get();
-    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
     MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0)};
 
     const cl_device_id deviceId = &mockClDevice;
@@ -245,7 +245,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenLimitedNumberOfCcsWhe
     localHwInfo.gtSystemInfo.CCSInfo.IsValid = true;
     localHwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
     localHwInfo.gtSystemInfo.CCSInfo.Instances.CCSEnableMask = 0b1111;
-    localHwInfo.featureTable.ftrCCSNode = true;
+    localHwInfo.featureTable.flags.ftrCCSNode = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
     MockContext context(device.get());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;

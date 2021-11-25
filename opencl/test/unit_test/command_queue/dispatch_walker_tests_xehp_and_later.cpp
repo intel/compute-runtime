@@ -1202,7 +1202,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeControlPrecedingPostSyncCommandIsDisabledAndLocalMemoryIsEnabledThenSizeIsProperlyEstimated) {
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo.featureTable.ftrLocalMemory = true;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo) ? 2 : 1;

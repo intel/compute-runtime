@@ -61,7 +61,7 @@ HWTEST2_F(Gen12LpUrbEntryAllocationSize, WhenPreambleIsCreatedThenUrbEntryAlloca
 typedef PreambleVfeState Gen12LpPreambleVfeState;
 HWTEST2_F(Gen12LpPreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsCorrect, IsTGLLP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    testWaTable->waSendMIFLUSHBeforeVFE = 0;
+    testWaTable->flags.waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
@@ -82,7 +82,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
 
 HWTEST2_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePipeControlFlushesAreSet, IsTGLLP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    testWaTable->waSendMIFLUSHBeforeVFE = 1;
+    testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::Compute);
@@ -103,7 +103,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePipeC
 
 HWTEST2_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePipeControlFlushesAreSet, IsTGLLP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    testWaTable->waSendMIFLUSHBeforeVFE = 1;
+    testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
@@ -150,7 +150,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditi
         {true, true, 1}};
 
     for (auto &[expectedValue, waDisableFusedThreadScheduling, debugKeyValue] : testParams) {
-        waTable.waDisableFusedThreadScheduling = waDisableFusedThreadScheduling;
+        waTable.flags.waDisableFusedThreadScheduling = waDisableFusedThreadScheduling;
         ::DebugManager.flags.CFEFusedEUDispatch.set(debugKeyValue);
         PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState, *pHwInfo);
         EXPECT_EQ(expectedValue, pMediaVfeState->getDisableSlice0Subslice2());

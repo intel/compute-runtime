@@ -2516,7 +2516,7 @@ TEST(WddmMemoryManagerCopyMemoryToAllocationBanksTest, givenAllocationWithMultiT
     size_t offset = 3;
     size_t sourceAllocationSize = sizeof(sourceData);
     auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrLocalMemory = true;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.initGmm();

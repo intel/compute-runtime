@@ -78,7 +78,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenWddmCsrWhenWriteL3CalledThenWriteTw
 GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsEnabledhenWriteL3CalledThenSetRemapBit) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     HardwareInfo localHwInfo = *defaultHwInfo;
-    localHwInfo.featureTable.ftrCCSNode = true;
+    localHwInfo.featureTable.flags.ftrCCSNode = true;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1u);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
@@ -106,7 +106,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsEnabledhenWriteL3CalledThenSetRe
 GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsDisabledhenWriteL3CalledThenSetRemapBitToTrue) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     HardwareInfo localHwInfo = *defaultHwInfo;
-    localHwInfo.featureTable.ftrCCSNode = false;
+    localHwInfo.featureTable.flags.ftrCCSNode = false;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1u);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);

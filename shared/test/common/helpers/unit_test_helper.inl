@@ -82,7 +82,7 @@ inline bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory(Ha
 
 template <typename GfxFamily>
 void UnitTestHelper<GfxFamily>::setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value) {
-    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = value;
+    hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt = value;
 }
 
 template <typename GfxFamily>

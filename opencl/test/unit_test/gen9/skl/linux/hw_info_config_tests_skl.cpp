@@ -29,14 +29,14 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT2, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     //constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
@@ -57,14 +57,14 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     drm->storedDeviceID = 0x1917;
     drm->setGtType(GTTYPE_GT1_5);
@@ -77,14 +77,14 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT1_5, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     drm->storedDeviceID = 0x0903;
     drm->setGtType(GTTYPE_GT3);
@@ -97,14 +97,14 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT3, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     drm->storedDeviceID = 0x0904;
     drm->setGtType(GTTYPE_GT4);
@@ -119,14 +119,14 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT4, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
     EXPECT_TRUE(outKmdNotifyProperties.enableKmdNotify);
@@ -184,22 +184,22 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, GivenWaFlagsWhenConfiguringHwInfoThenInforma
     drm->storedDeviceRevID = 0;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.waCompressedResourceRequiresConstVA21);
+    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waCompressedResourceRequiresConstVA21);
 
     drm->storedDeviceRevID = 5;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.waCompressedResourceRequiresConstVA21);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.waModifyVFEStateAfterGPGPUPreemption);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.waDisablePerCtxtPreemptionGranularityControl);
+    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waCompressedResourceRequiresConstVA21);
+    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption);
+    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl);
 
     drm->storedDeviceRevID = 6;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.waCompressedResourceRequiresConstVA21);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.waModifyVFEStateAfterGPGPUPreemption);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.waDisablePerCtxtPreemptionGranularityControl);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.waCSRUncachable);
+    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waCompressedResourceRequiresConstVA21);
+    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption);
+    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl);
+    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waCSRUncachable);
 }
 
 SKLTEST_F(HwInfoConfigTestLinuxSkl, WhenConfiguringHwInfoThenEdramInformationIsCorrect) {
@@ -208,39 +208,39 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, WhenConfiguringHwInfoThenEdramInformationIsC
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x1926;
     drm->setGtType(GTTYPE_GT3);
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x1927;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x192D;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x193B;
     drm->setGtType(GTTYPE_GT4);
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x193D;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 }
 
 template <typename T>

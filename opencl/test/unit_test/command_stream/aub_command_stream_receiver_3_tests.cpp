@@ -26,7 +26,7 @@ HWTEST_F(AubCsrTest, givenLocalMemoryEnabledWhenGettingAddressSpaceForRingDataTy
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
     auto hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.ftrLocalMemory = true;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
 
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     DeviceBitfield deviceBitfield(1);

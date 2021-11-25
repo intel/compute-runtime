@@ -281,7 +281,7 @@ TEST(SchedulerKernelTest, givenForcedSchedulerGwsByDebugVariableWhenSchedulerKer
 
 TEST(SchedulerKernelTest, givenSimulationModeWhenSchedulerKernelIsCreatedThenGwsIsSetToOneWorkgroup) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrSimulationMode = true;
+    hwInfo.featureTable.flags.ftrSimulationMode = true;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     MockProgram program(toClDeviceVector(*device));
@@ -297,7 +297,7 @@ TEST(SchedulerKernelTest, givenForcedSchedulerGwsByDebugVariableAndSimulationMod
     DebugManager.flags.SchedulerGWS.set(48);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrSimulationMode = true;
+    hwInfo.featureTable.flags.ftrSimulationMode = true;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     MockProgram program(toClDeviceVector(*device));

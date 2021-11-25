@@ -22,9 +22,9 @@ TYPED_TEST(Dg1HwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     HardwareInfo hwInfo = *defaultHwInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
 
-    EXPECT_FALSE(featureTable.ftrLocalMemory);
+    EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     TypeParam::setupHardwareInfo(&hwInfo, false);
-    EXPECT_FALSE(featureTable.ftrLocalMemory);
+    EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     TypeParam::setupHardwareInfo(&hwInfo, true);
-    EXPECT_TRUE(featureTable.ftrLocalMemory);
+    EXPECT_TRUE(featureTable.flags.ftrLocalMemory);
 }

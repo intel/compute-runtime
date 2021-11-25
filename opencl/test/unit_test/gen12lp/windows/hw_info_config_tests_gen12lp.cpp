@@ -20,12 +20,12 @@ GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenE2ECSetByKmdWhenConfiguringHw
 
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
-    localFeatureTable.ftrE2ECompression = true;
+    localFeatureTable.flags.ftrE2ECompression = true;
     hwInfoConfig->configureHardwareCustom(&outHwInfo, nullptr);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 
-    localFeatureTable.ftrE2ECompression = false;
+    localFeatureTable.flags.ftrE2ECompression = false;
     hwInfoConfig->configureHardwareCustom(&outHwInfo, nullptr);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);

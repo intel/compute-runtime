@@ -752,11 +752,11 @@ HWTEST_F(GetAllocationDataTestHw, givenKernelIsaTypeWhenGetAllocationDataIsCalle
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::KERNEL_ISA, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_NE(defaultHwInfo->featureTable.ftrLocalMemory, allocData.flags.useSystemMemory);
+    EXPECT_NE(defaultHwInfo->featureTable.flags.ftrLocalMemory, allocData.flags.useSystemMemory);
 
     AllocationProperties properties2{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties2, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_NE(defaultHwInfo->featureTable.ftrLocalMemory, allocData.flags.useSystemMemory);
+    EXPECT_NE(defaultHwInfo->featureTable.flags.ftrLocalMemory, allocData.flags.useSystemMemory);
 }
 
 HWTEST_F(GetAllocationDataTestHw, givenLinearStreamWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
@@ -1054,7 +1054,7 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyT
     HardwareInfo localPlatformDevice = {};
 
     localPlatformDevice = *defaultHwInfo;
-    localPlatformDevice.featureTable.ftrLocalMemory = true;
+    localPlatformDevice.featureTable.flags.ftrLocalMemory = true;
 
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(&localPlatformDevice, 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

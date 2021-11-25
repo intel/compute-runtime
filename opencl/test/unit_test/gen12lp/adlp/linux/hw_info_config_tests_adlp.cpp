@@ -37,15 +37,15 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, WhenConfiguringHwInfoThenInfoIsSetCorrectl
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
 
     EXPECT_EQ(GTTYPE_GT2, outHwInfo.platform.eGTType);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGT1);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_TRUE(outHwInfo.featureTable.ftrGT2);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGT3);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGT4);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGTA);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGTC);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrGTX);
-    EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_TRUE(outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTX);
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
 ADLPTEST_F(HwInfoConfigTestLinuxAdlp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
@@ -94,30 +94,30 @@ TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSyst
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
 
-    EXPECT_FALSE(featureTable.ftrL3IACoherency);
-    EXPECT_FALSE(featureTable.ftrPPGTT);
-    EXPECT_FALSE(featureTable.ftrSVM);
-    EXPECT_FALSE(featureTable.ftrIA32eGfxPTEs);
-    EXPECT_FALSE(featureTable.ftrStandardMipTailFormat);
-    EXPECT_FALSE(featureTable.ftrTranslationTable);
-    EXPECT_FALSE(featureTable.ftrUserModeTranslationTable);
-    EXPECT_FALSE(featureTable.ftrTileMappedResource);
-    EXPECT_FALSE(featureTable.ftrEnableGuC);
-    EXPECT_FALSE(featureTable.ftrFbc);
-    EXPECT_FALSE(featureTable.ftrFbc2AddressTranslation);
-    EXPECT_FALSE(featureTable.ftrFbcBlitterTracking);
-    EXPECT_FALSE(featureTable.ftrFbcCpuTracking);
-    EXPECT_FALSE(featureTable.ftrTileY);
-    EXPECT_FALSE(featureTable.ftrAstcHdr2D);
-    EXPECT_FALSE(featureTable.ftrAstcLdr2D);
-    EXPECT_FALSE(featureTable.ftr3dMidBatchPreempt);
-    EXPECT_FALSE(featureTable.ftrGpGpuMidBatchPreempt);
-    EXPECT_FALSE(featureTable.ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_FALSE(featureTable.ftrPerCtxtPreemptionGranularityControl);
+    EXPECT_FALSE(featureTable.flags.ftrL3IACoherency);
+    EXPECT_FALSE(featureTable.flags.ftrPPGTT);
+    EXPECT_FALSE(featureTable.flags.ftrSVM);
+    EXPECT_FALSE(featureTable.flags.ftrIA32eGfxPTEs);
+    EXPECT_FALSE(featureTable.flags.ftrStandardMipTailFormat);
+    EXPECT_FALSE(featureTable.flags.ftrTranslationTable);
+    EXPECT_FALSE(featureTable.flags.ftrUserModeTranslationTable);
+    EXPECT_FALSE(featureTable.flags.ftrTileMappedResource);
+    EXPECT_FALSE(featureTable.flags.ftrEnableGuC);
+    EXPECT_FALSE(featureTable.flags.ftrFbc);
+    EXPECT_FALSE(featureTable.flags.ftrFbc2AddressTranslation);
+    EXPECT_FALSE(featureTable.flags.ftrFbcBlitterTracking);
+    EXPECT_FALSE(featureTable.flags.ftrFbcCpuTracking);
+    EXPECT_FALSE(featureTable.flags.ftrTileY);
+    EXPECT_FALSE(featureTable.flags.ftrAstcHdr2D);
+    EXPECT_FALSE(featureTable.flags.ftrAstcLdr2D);
+    EXPECT_FALSE(featureTable.flags.ftr3dMidBatchPreempt);
+    EXPECT_FALSE(featureTable.flags.ftrGpGpuMidBatchPreempt);
+    EXPECT_FALSE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+    EXPECT_FALSE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
-    EXPECT_FALSE(workaroundTable.wa4kAlignUVOffsetNV12LinearSurface);
-    EXPECT_FALSE(workaroundTable.waEnablePreemptionGranularityControlByUMD);
-    EXPECT_FALSE(workaroundTable.waUntypedBufferCompression);
+    EXPECT_FALSE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
+    EXPECT_FALSE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
+    EXPECT_FALSE(workaroundTable.flags.waUntypedBufferCompression);
 
     ret = drm.setupHardwareInfo(&device, true);
 
@@ -126,30 +126,30 @@ TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSyst
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
 
-    EXPECT_TRUE(featureTable.ftrL3IACoherency);
-    EXPECT_TRUE(featureTable.ftrPPGTT);
-    EXPECT_TRUE(featureTable.ftrSVM);
-    EXPECT_TRUE(featureTable.ftrIA32eGfxPTEs);
-    EXPECT_TRUE(featureTable.ftrStandardMipTailFormat);
-    EXPECT_TRUE(featureTable.ftrTranslationTable);
-    EXPECT_TRUE(featureTable.ftrUserModeTranslationTable);
-    EXPECT_TRUE(featureTable.ftrTileMappedResource);
-    EXPECT_TRUE(featureTable.ftrEnableGuC);
-    EXPECT_TRUE(featureTable.ftrFbc);
-    EXPECT_TRUE(featureTable.ftrFbc2AddressTranslation);
-    EXPECT_TRUE(featureTable.ftrFbcBlitterTracking);
-    EXPECT_TRUE(featureTable.ftrFbcCpuTracking);
-    EXPECT_FALSE(featureTable.ftrTileY);
-    EXPECT_TRUE(featureTable.ftrAstcHdr2D);
-    EXPECT_TRUE(featureTable.ftrAstcLdr2D);
-    EXPECT_TRUE(featureTable.ftr3dMidBatchPreempt);
-    EXPECT_TRUE(featureTable.ftrGpGpuMidBatchPreempt);
-    EXPECT_TRUE(featureTable.ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_TRUE(featureTable.ftrPerCtxtPreemptionGranularityControl);
+    EXPECT_TRUE(featureTable.flags.ftrL3IACoherency);
+    EXPECT_TRUE(featureTable.flags.ftrPPGTT);
+    EXPECT_TRUE(featureTable.flags.ftrSVM);
+    EXPECT_TRUE(featureTable.flags.ftrIA32eGfxPTEs);
+    EXPECT_TRUE(featureTable.flags.ftrStandardMipTailFormat);
+    EXPECT_TRUE(featureTable.flags.ftrTranslationTable);
+    EXPECT_TRUE(featureTable.flags.ftrUserModeTranslationTable);
+    EXPECT_TRUE(featureTable.flags.ftrTileMappedResource);
+    EXPECT_TRUE(featureTable.flags.ftrEnableGuC);
+    EXPECT_TRUE(featureTable.flags.ftrFbc);
+    EXPECT_TRUE(featureTable.flags.ftrFbc2AddressTranslation);
+    EXPECT_TRUE(featureTable.flags.ftrFbcBlitterTracking);
+    EXPECT_TRUE(featureTable.flags.ftrFbcCpuTracking);
+    EXPECT_FALSE(featureTable.flags.ftrTileY);
+    EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
+    EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
+    EXPECT_TRUE(featureTable.flags.ftr3dMidBatchPreempt);
+    EXPECT_TRUE(featureTable.flags.ftrGpGpuMidBatchPreempt);
+    EXPECT_TRUE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+    EXPECT_TRUE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
-    EXPECT_TRUE(workaroundTable.wa4kAlignUVOffsetNV12LinearSurface);
-    EXPECT_TRUE(workaroundTable.waEnablePreemptionGranularityControlByUMD);
-    EXPECT_TRUE(workaroundTable.waUntypedBufferCompression);
+    EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
+    EXPECT_TRUE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
+    EXPECT_TRUE(workaroundTable.flags.waUntypedBufferCompression);
 }
 
 TYPED_TEST(AdlpConfigHwInfoTests, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {

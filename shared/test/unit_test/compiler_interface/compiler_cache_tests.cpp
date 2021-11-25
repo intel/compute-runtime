@@ -154,13 +154,13 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     const PLATFORM *platforms[] = {&p1, &p2};
     FeatureTable s1;
     FeatureTable s2;
-    s1.ftrSVM = true;
-    s2.ftrSVM = false;
+    s1.flags.ftrSVM = true;
+    s2.flags.ftrSVM = false;
     const FeatureTable *skus[] = {&s1, &s2};
     WorkaroundTable w1;
     WorkaroundTable w2;
-    w1.waDoNotUseMIReportPerfCount = true;
-    w2.waDoNotUseMIReportPerfCount = false;
+    w1.flags.waDoNotUseMIReportPerfCount = true;
+    w2.flags.waDoNotUseMIReportPerfCount = false;
     const WorkaroundTable *was[] = {&w1, &w2};
 
     std::array<std::string, 4> inputArray = {{std::string(""),

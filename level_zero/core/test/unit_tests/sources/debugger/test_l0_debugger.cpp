@@ -86,7 +86,7 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     }
     auto hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.ftrLocalMemory = true;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
     executionEnvironment->initializeMemoryManager();
 
@@ -121,7 +121,7 @@ TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUs
     executionEnvironment->setDebuggingEnabled();
 
     auto hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.ftrLocalMemory = true;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
     executionEnvironment->initializeMemoryManager();
 

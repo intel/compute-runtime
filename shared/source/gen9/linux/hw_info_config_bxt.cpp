@@ -32,7 +32,7 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     int enabled = 0;
     int retVal = drm->getEnabledPooledEu(enabled);
     if (retVal == 0) {
-        featureTable->ftrPooledEuEnabled = (enabled != 0);
+        featureTable->flags.ftrPooledEuEnabled = (enabled != 0);
     }
     if (enabled) {
         int num = 0;

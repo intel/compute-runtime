@@ -34,14 +34,14 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GTA, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     //constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
@@ -56,20 +56,20 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ((unsigned int)drm->storedHasPooledEU, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ((unsigned int)drm->storedHasPooledEU, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ((uint32_t)drm->storedMinEUinPool, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GTC, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     drm->storedDeviceID = 0x3185;
     drm->setGtType(GTTYPE_GTX); //0x3185 is GTA, but for test make it GTX
@@ -80,20 +80,20 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ((unsigned int)drm->storedHasPooledEU, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ((unsigned int)drm->storedHasPooledEU, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ((uint32_t)drm->storedMinEUinPool, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GTX, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGTX);
 
     auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
     EXPECT_TRUE(outKmdNotifyProperties.enableKmdNotify);
@@ -134,7 +134,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingEnabledPoolWhenConfiguringHwInfo
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
@@ -145,7 +145,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenDisabledEnabledPoolWhenConfiguringHwInf
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
@@ -158,7 +158,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingMinEuInPoolWhenConfiguringHwInfo
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ(9u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 
@@ -166,7 +166,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingMinEuInPoolWhenConfiguringHwInfo
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ(3u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
@@ -179,7 +179,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenInvalidMinEuInPoolWhenConfiguringHwInfo
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ(9u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 
@@ -187,7 +187,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenInvalidMinEuInPoolWhenConfiguringHwInfo
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ(3u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }

@@ -713,7 +713,7 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
 
         HardwareInfo hwInfo = *hardwareInfo;
         if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
-            hwInfo.featureTable.ftrCCSNode = true;
+            hwInfo.featureTable.flags.ftrCCSNode = true;
         }
 
         pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);

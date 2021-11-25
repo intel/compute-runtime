@@ -28,7 +28,7 @@ class ImageInLocalMemoryTest : public testing::Test {
   protected:
     void SetUp() override {
         HardwareInfo inputPlatformDevice = *defaultHwInfo;
-        inputPlatformDevice.featureTable.ftrLocalMemory = true;
+        inputPlatformDevice.featureTable.flags.ftrLocalMemory = true;
 
         platformsImpl->clear();
         auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();

@@ -549,7 +549,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocatio
 
     imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
 
-    if (hwInfo->featureTable.ftrFlatPhysCCS) {
+    if (hwInfo->featureTable.flags.ftrFlatPhysCCS) {
         EXPECT_NE(surfaceState.getCompressionFormat(), GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
     } else {
         EXPECT_NE(surfaceState.getCompressionFormat(), GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
@@ -587,7 +587,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenRenderCompressionWhenAppendingNewAllocati
 
     imageHw->setImageArg(&surfaceState, false, 0, rootDeviceIndex, false);
 
-    if (hwInfo->featureTable.ftrFlatPhysCCS) {
+    if (hwInfo->featureTable.flags.ftrFlatPhysCCS) {
         EXPECT_NE(surfaceState.getCompressionFormat(), GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
     } else {
         EXPECT_NE(surfaceState.getCompressionFormat(), GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);

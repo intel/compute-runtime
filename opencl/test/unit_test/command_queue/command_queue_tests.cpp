@@ -2151,7 +2151,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
     initPlatform();
     HardwareInfo localHwInfo = *defaultHwInfo;
 
-    localHwInfo.featureTable.ftrCCSNode = true;
+    localHwInfo.featureTable.flags.ftrCCSNode = true;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
     MockContext context(device.get());

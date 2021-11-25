@@ -95,21 +95,21 @@ void BDW::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    featureTable->ftrL3IACoherency = true;
-    featureTable->ftrPPGTT = true;
-    featureTable->ftrSVM = true;
-    featureTable->ftrIA32eGfxPTEs = true;
-    featureTable->ftrFbc = true;
-    featureTable->ftrFbc2AddressTranslation = true;
-    featureTable->ftrFbcBlitterTracking = true;
-    featureTable->ftrFbcCpuTracking = true;
-    featureTable->ftrTileY = true;
+    featureTable->flags.ftrL3IACoherency = true;
+    featureTable->flags.ftrPPGTT = true;
+    featureTable->flags.ftrSVM = true;
+    featureTable->flags.ftrIA32eGfxPTEs = true;
+    featureTable->flags.ftrFbc = true;
+    featureTable->flags.ftrFbc2AddressTranslation = true;
+    featureTable->flags.ftrFbcBlitterTracking = true;
+    featureTable->flags.ftrFbcCpuTracking = true;
+    featureTable->flags.ftrTileY = true;
 
-    workaroundTable->waDisableLSQCROPERFforOCL = true;
-    workaroundTable->waReportPerfCountUseGlobalContextID = true;
-    workaroundTable->waUseVAlign16OnTileXYBpp816 = true;
-    workaroundTable->waModifyVFEStateAfterGPGPUPreemption = true;
-    workaroundTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    workaroundTable->flags.waDisableLSQCROPERFforOCL = true;
+    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
+    workaroundTable->flags.waUseVAlign16OnTileXYBpp816 = true;
+    workaroundTable->flags.waModifyVFEStateAfterGPGPUPreemption = true;
+    workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
 const HardwareInfo BDW_1x2x6::hwInfo = {

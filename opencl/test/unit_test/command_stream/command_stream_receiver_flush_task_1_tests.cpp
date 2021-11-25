@@ -429,7 +429,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, whenSamplerCach
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired);
     configureCSRtoNonDirtyState<FamilyType>(false);
     commandStreamReceiver.taskLevel = taskLevel;
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    waTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(commandStreamReceiver.commandStream.getUsed(), 0u);
@@ -449,7 +449,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSen
     commandStreamReceiver.taskLevel = taskLevel;
     NEO::WorkaroundTable *waTable = &pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable;
 
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    waTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     flushTask(commandStreamReceiver);
 
@@ -472,7 +472,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, whenSamplerCach
     commandStreamReceiver.taskLevel = taskLevel;
     NEO::WorkaroundTable *waTable = &pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable;
 
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
+    waTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
 
     flushTask(commandStreamReceiver);
 
@@ -493,7 +493,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSend
     commandStreamReceiver.taskLevel = taskLevel;
     NEO::WorkaroundTable *waTable = &pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable;
 
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    waTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     flushTask(commandStreamReceiver);
 

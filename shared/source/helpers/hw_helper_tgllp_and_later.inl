@@ -12,7 +12,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const {
-    auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.waDisableFusedThreadScheduling;
+    auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
     fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
 
     if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {

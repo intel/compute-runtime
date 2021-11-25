@@ -191,7 +191,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhe
 
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
@@ -207,7 +207,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhe
 
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
@@ -235,7 +235,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     LinearStream cmdStream(buffer, bufferSize);
 
     HardwareInfo hardwareInfo = *defaultHwInfo;
-    hardwareInfo.featureTable.ftrLocalMemory = false;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
 
     PipeControlArgs args;
     uint64_t gpuAddress = 0xABC0;
@@ -273,7 +273,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     LinearStream cmdStream(buffer, bufferSize);
 
     HardwareInfo hardwareInfo = *defaultHwInfo;
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     PipeControlArgs args;
     uint64_t gpuAddress = 0xABC0;

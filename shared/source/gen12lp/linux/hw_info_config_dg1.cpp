@@ -23,7 +23,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
 
     enableBlitterOperationsSupport(hwInfo);
 
-    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = false;
+    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = false;
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
     kmdNotifyProperties.enableKmdNotify = true;
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 300;

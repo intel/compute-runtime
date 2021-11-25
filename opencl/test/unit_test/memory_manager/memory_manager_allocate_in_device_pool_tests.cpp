@@ -492,7 +492,7 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingKernelIsaThenL
     auto hwInfo = *defaultHwInfo;
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(true);
-    hwInfo.featureTable.ftrLocalMemory = true;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     MockMemoryManager memoryManager(false, true, executionEnvironment);

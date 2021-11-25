@@ -369,7 +369,7 @@ using XeHPAndLaterAubCommandStreamReceiverTests2 = HwHelperTest;
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests2, givenLocalMemoryEnabledInCSRWhenGetGTTDataIsCalledThenLocalMemoryIsSet) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableLocalMemory.set(1);
-    hardwareInfo.featureTable.ftrLocalMemory = true;
+    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
     std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(std::make_unique<MockAubCsrXeHPAndLater<FamilyType>>("", true, *device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield()));

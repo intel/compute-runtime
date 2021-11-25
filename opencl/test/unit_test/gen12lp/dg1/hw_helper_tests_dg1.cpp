@@ -16,7 +16,7 @@ using HwHelperTestDg1 = HwHelperTest;
 DG1TEST_F(HwHelperTestDg1, givenDg1A0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
     helper.adjustDefaultEngineType(&hardwareInfo);
@@ -26,7 +26,7 @@ DG1TEST_F(HwHelperTestDg1, givenDg1A0WhenAdjustDefaultEngineTypeCalledThenRcsIsR
 DG1TEST_F(HwHelperTestDg1, givenDg1BWhenAdjustDefaultEngineTypeCalledThenCcsIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
 
     helper.adjustDefaultEngineType(&hardwareInfo);

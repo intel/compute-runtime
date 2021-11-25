@@ -34,7 +34,7 @@ class MidThreadPreemptionTests : public DevicePreemptionTests {
 };
 
 TEST_F(ThreadGroupPreemptionTests, GivenDisallowedByKmdThenThreadGroupPreemptionIsDisabled) {
-    waTable->waDisablePerCtxtPreemptionGranularityControl = 1;
+    waTable->flags.waDisablePerCtxtPreemptionGranularityControl = 1;
     PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device->getDevice(), &kernel->getDescriptor(), kernel->isSchedulerKernel);
     EXPECT_FALSE(PreemptionHelper::allowThreadGroupPreemption(flags));
     EXPECT_EQ(PreemptionMode::MidBatch, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
@@ -49,7 +49,7 @@ TEST_F(ThreadGroupPreemptionTests, GivenDisallowByDeviceThenThreadGroupPreemptio
 
 TEST_F(ThreadGroupPreemptionTests, GivenDisallowByReadWriteFencesWaThenThreadGroupPreemptionIsDisabled) {
     kernelInfo->kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = true;
-    waTable->waDisableLSQCROPERFforOCL = 1;
+    waTable->flags.waDisableLSQCROPERFforOCL = 1;
     PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device->getDevice(), &kernel->getDescriptor(), kernel->isSchedulerKernel);
     EXPECT_FALSE(PreemptionHelper::allowThreadGroupPreemption(flags));
     EXPECT_EQ(PreemptionMode::MidBatch, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
@@ -83,7 +83,7 @@ TEST_F(ThreadGroupPreemptionTests, GivenDefaultModeForNonKernelRequestThenThread
 
 TEST_F(ThreadGroupPreemptionTests, givenKernelWithEnvironmentPatchSetWhenLSQCWaIsTurnedOnThenThreadGroupPreemptionIsBeingSelected) {
     kernelInfo->kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = false;
-    waTable->waDisableLSQCROPERFforOCL = 1;
+    waTable->flags.waDisableLSQCROPERFforOCL = 1;
     PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device->getDevice(), &kernel->getDescriptor(), kernel->isSchedulerKernel);
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
     EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
@@ -91,7 +91,7 @@ TEST_F(ThreadGroupPreemptionTests, givenKernelWithEnvironmentPatchSetWhenLSQCWaI
 
 TEST_F(ThreadGroupPreemptionTests, givenKernelWithEnvironmentPatchSetWhenLSQCWaIsTurnedOffThenThreadGroupPreemptionIsBeingSelected) {
     kernelInfo->kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = true;
-    waTable->waDisableLSQCROPERFforOCL = 0;
+    waTable->flags.waDisableLSQCROPERFforOCL = 0;
     PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device->getDevice(), &kernel->getDescriptor(), kernel->isSchedulerKernel);
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
     EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));

@@ -55,7 +55,7 @@ void PreambleHelper<ICLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
     PIPE_CONTROL cmd = ICLFamily::cmdInitPipeControl;
     cmd.setCommandStreamerStallEnable(true);
 
-    if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
+    if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
         cmd.setRenderTargetCacheFlushEnable(true);
         cmd.setDepthCacheFlushEnable(true);
         cmd.setDcFlushEnable(true);

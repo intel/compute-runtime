@@ -19,7 +19,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 void HwHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
-    if (!pHwInfo->featureTable.ftrCCSNode) {
+    if (!pHwInfo->featureTable.flags.ftrCCSNode) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     }
 }
@@ -41,7 +41,7 @@ inline uint32_t HwHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
 
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
-    return hwInfo.featureTable.ftrLocalMemory;
+    return hwInfo.featureTable.flags.ftrLocalMemory;
 }
 
 template <typename GfxFamily>
@@ -61,14 +61,14 @@ const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(co
     EngineInstancesContainer engines;
 
     if ((DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) ||
-        hwInfo.featureTable.ftrRcsNode) {
+        hwInfo.featureTable.flags.ftrRcsNode) {
         engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
     }
 
     engines.push_back({defaultEngine, EngineUsage::LowPriority});
     engines.push_back({defaultEngine, EngineUsage::Internal});
 
-    if (hwInfo.featureTable.ftrCCSNode) {
+    if (hwInfo.featureTable.flags.ftrCCSNode) {
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
             engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Regular});
         }
@@ -161,7 +161,7 @@ aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo 
 template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
-        return hwInfo.featureTable.ftrLocalMemory;
+        return hwInfo.featureTable.flags.ftrLocalMemory;
     }
     return false;
 }

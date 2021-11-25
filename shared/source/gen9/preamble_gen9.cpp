@@ -55,7 +55,7 @@ void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
     PIPE_CONTROL cmd = SKLFamily::cmdInitPipeControl;
     cmd.setCommandStreamerStallEnable(true);
-    if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
+    if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
         cmd.setRenderTargetCacheFlushEnable(true);
         cmd.setDepthCacheFlushEnable(true);
         cmd.setDcFlushEnable(true);

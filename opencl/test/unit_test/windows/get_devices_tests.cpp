@@ -52,7 +52,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializ
     hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
 
     bool expectedValue = false;
-    if (hwInfo.featureTable.ftrRcsNode || hwInfo.featureTable.ftrCCSNode) {
+    if (hwInfo.featureTable.flags.ftrRcsNode || hwInfo.featureTable.flags.ftrCCSNode) {
         expectedValue = true;
     }
 

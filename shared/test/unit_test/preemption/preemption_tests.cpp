@@ -240,7 +240,7 @@ INSTANTIATE_TEST_CASE_P(
 
 HWTEST_F(MidThreadPreemptionTests, GivenNoWaWhenCreatingCsrSurfaceThenSurfaceIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.workaroundTable.waCSRUncachable = false;
+    hwInfo.workaroundTable.flags.waCSRUncachable = false;
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     ASSERT_NE(nullptr, mockDevice.get());
@@ -282,7 +282,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
 
 HWTEST2_F(MidThreadPreemptionTests, GivenWaWhenCreatingCsrSurfaceThenSurfaceIsCorrect, IsAtMostGen12lp) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.workaroundTable.waCSRUncachable = true;
+    hwInfo.workaroundTable.flags.waCSRUncachable = true;
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     ASSERT_NE(nullptr, mockDevice.get());

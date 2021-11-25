@@ -36,7 +36,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenConfigStringWhenSettingUpHardwareThenThrow) {
 XEHPTEST_F(XeHPHwInfoConfig, givenXeHPMultiConfigWhenConfigureHardwareCustomIsCalledThenCapabilityTableIsSetProperly) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrE2ECompression = true;
+    hwInfo.featureTable.flags.ftrE2ECompression = true;
 
     hwInfo.gtSystemInfo.EUCount = 256u;
     hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
@@ -54,7 +54,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenXeHPWhenConfiguringThenDisableRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
 
     hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_FALSE(hwInfo.featureTable.ftrRcsNode);
+    EXPECT_FALSE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableRcs) {
@@ -65,7 +65,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableRcs) 
     HardwareInfo hwInfo = *defaultHwInfo;
 
     hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_TRUE(hwInfo.featureTable.ftrRcsNode);
+    EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenXeHpWhenCallingGetDeviceMemoryNameThenHbmIsReturned) {

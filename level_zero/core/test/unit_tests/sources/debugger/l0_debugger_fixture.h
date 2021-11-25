@@ -30,7 +30,7 @@ struct L0DebuggerFixture {
         executionEnvironment->setDebuggingEnabled();
 
         hwInfo = *NEO::defaultHwInfo.get();
-        hwInfo.featureTable.ftrLocalMemory = true;
+        hwInfo.featureTable.flags.ftrLocalMemory = true;
 
         auto isHexadecimalArrayPrefered = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
         if (isHexadecimalArrayPrefered) {

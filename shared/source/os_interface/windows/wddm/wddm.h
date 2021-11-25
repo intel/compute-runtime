@@ -86,7 +86,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size);
     MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle);
     MOCKABLE_VIRTUAL void kmDafLock(D3DKMT_HANDLE handle);
-    MOCKABLE_VIRTUAL bool isKmDafEnabled() const { return featureTable->ftrKmdDaf; }
+    MOCKABLE_VIRTUAL bool isKmDafEnabled() const { return featureTable->flags.ftrKmdDaf; }
 
     MOCKABLE_VIRTUAL bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority);
 

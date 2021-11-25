@@ -31,14 +31,14 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT2, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     drm->storedDeviceID = 0x1602;
     drm->setGtType(GTTYPE_GT1);
@@ -51,14 +51,14 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     drm->storedDeviceID = 0x1626;
     drm->setGtType(GTTYPE_GT3);
@@ -73,14 +73,14 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT3, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 }
 
 BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenUnknownDevIdWhenConfiguringHwInfoThenErrorIsReturned) {
@@ -134,20 +134,20 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenEdramInformationIsC
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x1622;
     drm->setGtType(GTTYPE_GT3);
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x162A;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 }
 
 template <typename T>

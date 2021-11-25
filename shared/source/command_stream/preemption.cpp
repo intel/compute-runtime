@@ -86,8 +86,8 @@ PreemptionFlags PreemptionHelper::createPreemptionLevelFlags(Device &device, con
         flags.flags.schedulerKernel = schedulerKernel;
     }
     flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
-    flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.waDisablePerCtxtPreemptionGranularityControl;
-    flags.flags.disableLSQCROPERFforOCL = device.getHardwareInfo().workaroundTable.waDisableLSQCROPERFforOCL;
+    flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl;
+    flags.flags.disableLSQCROPERFforOCL = device.getHardwareInfo().workaroundTable.flags.waDisableLSQCROPERFforOCL;
     return flags;
 }
 

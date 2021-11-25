@@ -18,7 +18,7 @@ int HwInfoConfigHw<IGFX_ALDERLAKE_S>::configureHardwareCustom(HardwareInfo *hwIn
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= hwHelper.getHwRevIdFromStepping(REVISION_C, *hwInfo));
+    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= hwHelper.getHwRevIdFromStepping(REVISION_C, *hwInfo));
     return 0;
 }
 

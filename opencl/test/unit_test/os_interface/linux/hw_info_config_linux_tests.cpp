@@ -26,22 +26,22 @@ constexpr uint32_t hwConfigTestMidBatchBit = 1 << 10;
 template <>
 int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     FeatureTable *featureTable = &hwInfo->featureTable;
-    featureTable->ftrGpGpuMidThreadLevelPreempt = 0;
-    featureTable->ftrGpGpuThreadGroupLevelPreempt = 0;
-    featureTable->ftrGpGpuMidBatchPreempt = 0;
+    featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 0;
+    featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 0;
+    featureTable->flags.ftrGpGpuMidBatchPreempt = 0;
 
     if (hwInfo->platform.usDeviceID == 30) {
         GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
         gtSystemInfo->EdramSizeInKb = 128 * 1000;
     }
     if (hwInfo->platform.usDeviceID & hwConfigTestMidThreadBit) {
-        featureTable->ftrGpGpuMidThreadLevelPreempt = 1;
+        featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 1;
     }
     if (hwInfo->platform.usDeviceID & hwConfigTestThreadGroupBit) {
-        featureTable->ftrGpGpuThreadGroupLevelPreempt = 1;
+        featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 1;
     }
     if (hwInfo->platform.usDeviceID & hwConfigTestMidBatchBit) {
-        featureTable->ftrGpGpuMidBatchPreempt = 1;
+        featureTable->flags.ftrGpGpuMidBatchPreempt = 1;
     }
     return (hwInfo->platform.usDeviceID == 10) ? -1 : 0;
 }
@@ -135,15 +135,15 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigGtTypesThenFtrIsSetCorrectly)
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(GTTYPE_GT0, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     size_t arrSize = sizeof(GtTypes) / sizeof(GTTYPE);
     uint32_t FtrSum = 0;
@@ -152,25 +152,25 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigGtTypesThenFtrIsSetCorrectly)
         ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(GtTypes[i], outHwInfo.platform.eGTType);
-        bool FtrPresent = (outHwInfo.featureTable.ftrGT1 ||
-                           outHwInfo.featureTable.ftrGT1_5 ||
-                           outHwInfo.featureTable.ftrGT2 ||
-                           outHwInfo.featureTable.ftrGT2_5 ||
-                           outHwInfo.featureTable.ftrGT3 ||
-                           outHwInfo.featureTable.ftrGT4 ||
-                           outHwInfo.featureTable.ftrGTA ||
-                           outHwInfo.featureTable.ftrGTC ||
-                           outHwInfo.featureTable.ftrGTX);
+        bool FtrPresent = (outHwInfo.featureTable.flags.ftrGT1 ||
+                           outHwInfo.featureTable.flags.ftrGT1_5 ||
+                           outHwInfo.featureTable.flags.ftrGT2 ||
+                           outHwInfo.featureTable.flags.ftrGT2_5 ||
+                           outHwInfo.featureTable.flags.ftrGT3 ||
+                           outHwInfo.featureTable.flags.ftrGT4 ||
+                           outHwInfo.featureTable.flags.ftrGTA ||
+                           outHwInfo.featureTable.flags.ftrGTC ||
+                           outHwInfo.featureTable.flags.ftrGTX);
         EXPECT_TRUE(FtrPresent);
-        FtrSum += (outHwInfo.featureTable.ftrGT1 +
-                   outHwInfo.featureTable.ftrGT1_5 +
-                   outHwInfo.featureTable.ftrGT2 +
-                   outHwInfo.featureTable.ftrGT2_5 +
-                   outHwInfo.featureTable.ftrGT3 +
-                   outHwInfo.featureTable.ftrGT4 +
-                   outHwInfo.featureTable.ftrGTA +
-                   outHwInfo.featureTable.ftrGTC +
-                   outHwInfo.featureTable.ftrGTX);
+        FtrSum += (outHwInfo.featureTable.flags.ftrGT1 +
+                   outHwInfo.featureTable.flags.ftrGT1_5 +
+                   outHwInfo.featureTable.flags.ftrGT2 +
+                   outHwInfo.featureTable.flags.ftrGT2_5 +
+                   outHwInfo.featureTable.flags.ftrGT3 +
+                   outHwInfo.featureTable.flags.ftrGT4 +
+                   outHwInfo.featureTable.flags.ftrGTA +
+                   outHwInfo.featureTable.flags.ftrGTC +
+                   outHwInfo.featureTable.flags.ftrGTX);
     }
     EXPECT_EQ(arrSize, FtrSum);
 }
@@ -179,7 +179,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigThenEdramIsDetected) {
     drm->storedDeviceID = 30;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenEnabledPlatformCoherencyWhenConfiguringHwInfoThenIgnoreAndSetAsDisabled) {

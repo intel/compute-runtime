@@ -18,7 +18,7 @@ class SkuInfoTransfer {
 
   protected:
     static void transferFtrTableForGmmBase(_SKU_FEATURE_TABLE *dstFtrTable, const NEO::FeatureTable *srcFtrTable) {
-#define TRANSFER_FTR_TO_GMM(VAL_NAME) dstFtrTable->Ftr##VAL_NAME = srcFtrTable->ftr##VAL_NAME
+#define TRANSFER_FTR_TO_GMM(VAL_NAME) dstFtrTable->Ftr##VAL_NAME = srcFtrTable->flags.ftr##VAL_NAME
         TRANSFER_FTR_TO_GMM(StandardMipTailFormat);
         TRANSFER_FTR_TO_GMM(ULT);
         TRANSFER_FTR_TO_GMM(EDram);
@@ -55,7 +55,7 @@ class SkuInfoTransfer {
     }
 
     static void transferWaTableForGmmBase(_WA_TABLE *dstWaTable, const NEO::WorkaroundTable *srcWaTable) {
-#define TRANSFER_WA_TO_GMM(VAL_NAME) dstWaTable->Wa##VAL_NAME = srcWaTable->wa##VAL_NAME
+#define TRANSFER_WA_TO_GMM(VAL_NAME) dstWaTable->Wa##VAL_NAME = srcWaTable->flags.wa##VAL_NAME
         TRANSFER_WA_TO_GMM(FbcLinearSurfaceStride);
         TRANSFER_WA_TO_GMM(DisableEdramForDisplayRT);
         TRANSFER_WA_TO_GMM(EncryptedEdramOnlyPartials);

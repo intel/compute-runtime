@@ -34,7 +34,7 @@ inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraPropert
 
 template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo) {
-    if (hwInfo.featureTable.ftrLocalMemory) {
+    if (hwInfo.featureTable.flags.ftrLocalMemory) {
         args.hdcPipelineFlush = true;
         args.unTypedDataPortCacheFlush = true;
     }

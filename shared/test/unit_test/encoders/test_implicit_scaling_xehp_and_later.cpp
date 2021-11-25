@@ -1054,7 +1054,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     DebugManager.flags.UseAtomicsForSelfCleanupSection.set(1);
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    testHardwareInfo.featureTable.ftrLocalMemory = true;
+    testHardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     size_t expectedSize = sizeof(MI_ATOMIC) +
                           MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +

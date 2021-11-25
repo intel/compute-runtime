@@ -151,7 +151,7 @@ TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdC
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->featureTable.ftrLocalMemory = true;
+    hwInfo->featureTable.flags.ftrLocalMemory = true;
 
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 

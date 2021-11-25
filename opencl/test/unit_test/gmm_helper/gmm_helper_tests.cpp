@@ -877,7 +877,7 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
 
         localPlatformDevice->capabilityTable.ftrRenderCompressedImages = true;
         localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
-        localPlatformDevice->featureTable.ftrLocalMemory = true;
+        localPlatformDevice->featureTable.flags.ftrLocalMemory = true;
 
         setupImgInfo();
     }
@@ -1024,7 +1024,7 @@ TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrSetWhenQue
     auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
     imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
 
-    localPlatformDevice->featureTable.ftrFlatPhysCCS = true;
+    localPlatformDevice->featureTable.flags.ftrFlatPhysCCS = true;
     uint8_t validFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
     uint8_t invalidFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
 
@@ -1044,7 +1044,7 @@ TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrNotSetWhen
     auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
     imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
 
-    localPlatformDevice->featureTable.ftrFlatPhysCCS = false;
+    localPlatformDevice->featureTable.flags.ftrFlatPhysCCS = false;
     uint8_t invalidFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
     uint8_t validFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
     mockGmmClient->compressionFormatToReturn = invalidFormat;
@@ -1152,7 +1152,7 @@ HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingFo
 struct GmmLocalMemoryTests : public ::testing::Test, MockExecutionEnvironmentGmmFixture {
     GmmLocalMemoryTests() {
         localPlatformDevice = *defaultHwInfo;
-        localPlatformDevice.featureTable.ftrLocalMemory = true;
+        localPlatformDevice.featureTable.flags.ftrLocalMemory = true;
     }
     void SetUp() override {
         MockExecutionEnvironmentGmmFixture::SetUp();
@@ -1164,7 +1164,7 @@ struct GmmLocalMemoryTests : public ::testing::Test, MockExecutionEnvironmentGmm
 
 struct MultiTileGmmTests : GmmLocalMemoryTests {
     MultiTileGmmTests() {
-        localPlatformDevice.featureTable.ftrMultiTileArch = true;
+        localPlatformDevice.featureTable.flags.ftrMultiTileArch = true;
         localPlatformDevice.gtSystemInfo.MultiTileArchInfo.TileMask = customTileMask;
     }
     uint8_t customTileMask = 0xD;

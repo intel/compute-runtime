@@ -1312,7 +1312,7 @@ TEST(OsAgnosticMemoryManager, givenDebugModuleAreaTypeWhenCreatingAllocationThen
 
 TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreatingAllocationThen32BitAllocationWithFrontWindowGpuVaIsReturned) {
     auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.ftrLocalMemory = true;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableLocalMemory.set(true);
 
@@ -1350,7 +1350,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreating
 TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocatingGraphicsMemoryForIsaInSystemMemoryThenBaseAddressIsEqualToInternalHeapBaseAddress) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->featureTable.ftrLocalMemory = true;
+    hwInfo->featureTable.flags.ftrLocalMemory = true;
 
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
 
@@ -1375,7 +1375,7 @@ TEST(OsAgnosticMemoryManager, givenForcedSystemMemoryForIsaAndEnabledLocalMemory
 
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->featureTable.ftrLocalMemory = true;
+    hwInfo->featureTable.flags.ftrLocalMemory = true;
 
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
 
