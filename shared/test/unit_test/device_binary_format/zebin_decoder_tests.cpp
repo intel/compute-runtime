@@ -1789,10 +1789,10 @@ kernels:
     std::string errors;
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
-    uint32_t maxArgIndex = 0U;
+    int32_t maxArgIndex = -1;
     int32_t maxSmpIndex = -1;
     auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
-    EXPECT_EQ(2U, maxArgIndex);
+    EXPECT_EQ(2, maxArgIndex);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
@@ -1833,7 +1833,7 @@ kernels:
     std::string errors;
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
-    uint32_t maxArgIndex = 0U;
+    int32_t maxArgIndex = -1;
     int32_t maxSmpIndex = -1;
     auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
@@ -1868,7 +1868,7 @@ kernels:
     std::string errors;
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
-    uint32_t maxArgIndex = 0U;
+    int32_t maxArgIndex = -1;
     int32_t maxSmpIndex = -1;
     auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
@@ -4253,7 +4253,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeLocalSizeWhenArgSizeVa
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
             EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
@@ -4327,7 +4327,7 @@ TEST(PopulateArgDescriptorCrossThreadPayload, GivenArgTypePrivateBaseStatelessWh
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+    ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
     ASSERT_EQ(16U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.stateless);
     ASSERT_EQ(8U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
 }
@@ -4368,7 +4368,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobaIdOffsetWhenArgSi
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
             EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
@@ -4445,7 +4445,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupCountWhenArgSizeV
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
             EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
@@ -4522,7 +4522,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenA
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
             EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
@@ -4599,7 +4599,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobalSizeWhenArgSizeV
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
             EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;

@@ -543,7 +543,7 @@ DecodeError readZeInfoPerThreadPayloadArguments(const NEO::Yaml::YamlParser &par
 
 DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                        ZeInfoPayloadArguments &ouPayloadArguments,
-                                       uint32_t &outMaxPayloadArgumentIndex,
+                                       int32_t &outMaxPayloadArgumentIndex,
                                        int32_t &outMaxSamplerIndex,
                                        ConstStringRef context,
                                        std::string &outErrReason, std::string &outWarning) {
@@ -558,7 +558,7 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
                 validPayload &= readEnumChecked(argTypeToken, payloadArgMetadata.argType, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::argIndex == key) {
                 validPayload &= parser.readValueChecked(payloadArgumentMemberNd, payloadArgMetadata.argIndex);
-                outMaxPayloadArgumentIndex = std::max<uint32_t>(outMaxPayloadArgumentIndex, payloadArgMetadata.argIndex);
+                outMaxPayloadArgumentIndex = std::max<int32_t>(outMaxPayloadArgumentIndex, payloadArgMetadata.argIndex);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::offset == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.offset, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::size == key) {
@@ -971,7 +971,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
         }
     }
 
-    uint32_t maxArgumentIndex = 0U;
+    int32_t maxArgumentIndex = -1;
     int32_t maxSamplerIndex = -1;
     ZeInfoPayloadArguments payloadArguments;
     if (false == zeInfokernelSections.payloadArgumentsNd.empty()) {

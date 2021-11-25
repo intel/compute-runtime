@@ -84,7 +84,7 @@ DecodeError readZeInfoPerThreadPayloadArguments(const NEO::Yaml::YamlParser &par
 using ZeInfoPayloadArguments = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT, 32>;
 DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                        ZeInfoPayloadArguments &ouPayloadArguments,
-                                       uint32_t &outMaxPayloadArgumentIndex,
+                                       int32_t &outMaxPayloadArgumentIndex,
                                        int32_t &outMaxSamplerIndex,
                                        ConstStringRef context,
                                        std::string &outErrReason, std::string &outWarning);
