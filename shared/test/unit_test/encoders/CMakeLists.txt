@@ -29,6 +29,10 @@ if(TESTS_XEHP_AND_LATER)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_media_interface_descriptor_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_mi_flush_dw_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_fixture_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_fixture_xehp_and_later.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_and_later_1.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_and_later_2.cpp
   )
 endif()
 

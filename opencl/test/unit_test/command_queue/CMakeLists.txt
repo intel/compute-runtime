@@ -98,10 +98,6 @@ if(TESTS_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_resource_barier_tests_xehp_and_later.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_fixture_xehp_and_later.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_fixture_xehp_and_later.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_and_later_1.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_xehp_and_later_2.cpp
   )
 endif()
 

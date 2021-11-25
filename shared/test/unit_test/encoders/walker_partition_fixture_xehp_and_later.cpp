@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/command_queue/walker_partition_fixture_xehp_and_later.h"
+#include "shared/test/unit_test/encoders/walker_partition_fixture_xehp_and_later.h"
 
 #include "shared/test/common/helpers/default_hw_info.h"
 
