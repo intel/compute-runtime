@@ -12,7 +12,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mem_obj/image_compression_fixture.h"
 
-DG2TEST_F(ImageCompressionTests, GivenDifferentImageFormatsWhenCreatingImageThenCompressionIsCorrectlySet) {
+XE_HPG_CORETEST_F(ImageCompressionTests, GivenDifferentImageFormatsWhenCreatingImageThenCompressionIsCorrectlySet) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 5;
     imageDesc.image_height = 5;

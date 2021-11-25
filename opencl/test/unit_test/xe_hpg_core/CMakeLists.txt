@@ -20,6 +20,7 @@ if(TESTS_XE_HPG_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_local_work_size_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe_hpg_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_xe_hpg_core.cpp
   )
 
   if(DEFINED AUB_STREAM_PROJECT_NAME)

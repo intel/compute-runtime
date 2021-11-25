@@ -16,6 +16,7 @@
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using HwHelperTestXeHpgCore = HwHelperTest;
 
@@ -304,4 +305,50 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
+}
+
+XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDifferentCLImageFormatsWhenCallingAllowImageCompressionThenCorrectValueReturned) {
+    struct ImageFormatCompression {
+        cl_image_format imageFormat;
+        bool isCompressable;
+    };
+    const std::vector<ImageFormatCompression> imageFormats = {
+        {{CL_LUMINANCE, CL_UNORM_INT8}, false},
+        {{CL_LUMINANCE, CL_UNORM_INT16}, false},
+        {{CL_LUMINANCE, CL_HALF_FLOAT}, false},
+        {{CL_LUMINANCE, CL_FLOAT}, false},
+        {{CL_INTENSITY, CL_UNORM_INT8}, false},
+        {{CL_INTENSITY, CL_UNORM_INT16}, false},
+        {{CL_INTENSITY, CL_HALF_FLOAT}, false},
+        {{CL_INTENSITY, CL_FLOAT}, false},
+        {{CL_A, CL_UNORM_INT16}, false},
+        {{CL_A, CL_HALF_FLOAT}, false},
+        {{CL_A, CL_FLOAT}, false},
+        {{CL_R, CL_UNSIGNED_INT8}, true},
+        {{CL_R, CL_UNSIGNED_INT16}, true},
+        {{CL_R, CL_UNSIGNED_INT32}, true},
+        {{CL_RG, CL_UNSIGNED_INT32}, true},
+        {{CL_RGBA, CL_UNSIGNED_INT32}, true},
+        {{CL_RGBA, CL_UNORM_INT8}, true},
+        {{CL_RGBA, CL_UNORM_INT16}, true},
+        {{CL_RGBA, CL_SIGNED_INT8}, true},
+        {{CL_RGBA, CL_SIGNED_INT16}, true},
+        {{CL_RGBA, CL_SIGNED_INT32}, true},
+        {{CL_RGBA, CL_UNSIGNED_INT8}, true},
+        {{CL_RGBA, CL_UNSIGNED_INT16}, true},
+        {{CL_RGBA, CL_UNSIGNED_INT32}, true},
+        {{CL_RGBA, CL_HALF_FLOAT}, true},
+        {{CL_RGBA, CL_FLOAT}, true},
+        {{CL_BGRA, CL_UNORM_INT8}, true},
+        {{CL_R, CL_FLOAT}, true},
+        {{CL_R, CL_UNORM_INT8}, true},
+        {{CL_R, CL_UNORM_INT16}, true},
+    };
+    MockContext context;
+    auto &clHwHelper = ClHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+
+    for (const auto &format : imageFormats) {
+        bool result = clHwHelper.allowImageCompression(format.imageFormat);
+        EXPECT_EQ(format.isCompressable, result);
+    }
 }
