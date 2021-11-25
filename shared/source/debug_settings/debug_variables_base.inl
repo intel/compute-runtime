@@ -246,6 +246,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerTimeout, -1, "Set dire
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitScaling, -1, "-1: default for API, 0: disable implicit scaling support on a given API, 1: enable implicit scaling support on a given API.")
 DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWalkerInWparidMode, -1, "-1: default, 0: do not synchronize 1: synchronize all tiles prior to doing work distrubution")
 DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWithSemaphores, -1, "-1: default (disabled),  1: Emit Semaphores waiting after Walker completion in WPARID mode 0: do not emit semaphores after Walker")
 DECLARE_DEBUG_VARIABLE(int32_t, UseCrossAtomicSynchronization, -1, "-1: default (enabled), 1: Cross Tile Atomic Synchronization present 0: Cross tile atomic synchronization disabled")

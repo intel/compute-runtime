@@ -187,3 +187,15 @@ TEST_F(ImplicitScalingTests, givenForceEnableWhenCheckingCrossTileAtomicSyncThen
     DebugManager.flags.UseCrossAtomicSynchronization.set(1);
     EXPECT_TRUE(ImplicitScalingHelper::isCrossTileAtomicRequired(false));
 }
+
+TEST_F(ImplicitScalingTests, givenMultiTileAndApiSupportOffWhenForcedApiSupportOnThenFeatureEnabled) {
+    DebugManager.flags.EnableImplicitScaling.set(1);
+    ImplicitScaling::apiSupport = false;
+    EXPECT_TRUE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
+}
+
+TEST_F(ImplicitScalingTests, givenMultiTileAndApiSupportOnWhenForcedApiSupportOffThenFeatureDisabled) {
+    DebugManager.flags.EnableImplicitScaling.set(0);
+    ImplicitScaling::apiSupport = true;
+    EXPECT_FALSE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
+}

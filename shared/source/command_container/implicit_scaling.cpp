@@ -14,9 +14,14 @@
 namespace NEO {
 
 bool ImplicitScalingHelper::isImplicitScalingEnabled(const DeviceBitfield &devices, bool preCondition) {
+    bool apiSupport = ImplicitScaling::apiSupport;
+    if (DebugManager.flags.EnableImplicitScaling.get() != -1) {
+        apiSupport = !!DebugManager.flags.EnableImplicitScaling.get();
+    }
+
     bool partitionWalker = (devices.count() > 1u) &&
                            preCondition &&
-                           ImplicitScaling::apiSupport;
+                           apiSupport;
 
     if (DebugManager.flags.EnableWalkerPartition.get() != -1) {
         partitionWalker = !!DebugManager.flags.EnableWalkerPartition.get();
