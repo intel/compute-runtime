@@ -80,9 +80,8 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/settings_reader_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
     ${CMAKE_CURRENT_SOURCE_DIR}/system_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/system_info_impl.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/system_info_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/system_info_impl_extended.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/system_info.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/system_info_extended.cpp
 )
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX

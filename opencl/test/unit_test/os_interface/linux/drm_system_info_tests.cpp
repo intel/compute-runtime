@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/linux/system_info_impl.h"
+#include "shared/source/os_interface/linux/system_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -29,7 +29,7 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsNotCreatedAndIoctl
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThenReturnZero) {
-    SystemInfoImpl systemInfo(nullptr, 0);
+    SystemInfo systemInfo(nullptr, 0);
 
     EXPECT_EQ(0u, systemInfo.getL3CacheSizeInKb());
     EXPECT_EQ(0u, systemInfo.getL3BankCount());
@@ -105,7 +105,7 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsN
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecificAtrributesThenReturnCorrectValues) {
-    SystemInfoImpl systemInfo(dummyDeviceBlobData, sizeof(dummyDeviceBlobData));
+    SystemInfo systemInfo(dummyDeviceBlobData, sizeof(dummyDeviceBlobData));
 
     EXPECT_EQ(0x0Au, systemInfo.getMaxMemoryChannels());
     EXPECT_EQ(0x0Bu, systemInfo.getMemoryType());

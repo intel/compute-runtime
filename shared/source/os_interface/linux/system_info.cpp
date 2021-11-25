@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/linux/system_info_impl.h"
+#include "shared/source/os_interface/linux/system_info.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -15,11 +15,11 @@
 
 namespace NEO {
 
-SystemInfoImpl::SystemInfoImpl(const uint32_t *blobData, int32_t blobSize) {
+SystemInfo::SystemInfo(const uint32_t *blobData, int32_t blobSize) {
     this->parseDeviceBlob(blobData, blobSize);
 }
 
-void SystemInfoImpl::parseDeviceBlob(const uint32_t *data, int32_t size) {
+void SystemInfo::parseDeviceBlob(const uint32_t *data, int32_t size) {
 
     uint32_t i = 0;
     while (i < (size / sizeof(uint32_t))) {

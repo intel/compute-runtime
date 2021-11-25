@@ -13,7 +13,7 @@
 #include "shared/source/os_interface/linux/local_memory_helper.h"
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
-#include "shared/source/os_interface/linux/system_info_impl.h"
+#include "shared/source/os_interface/linux/system_info.h"
 
 #include "drm_neo.h"
 #include "drm_query_flags.h"
@@ -111,7 +111,7 @@ bool Drm::querySystemInfo() {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
         return false;
     }
-    this->systemInfo.reset(new SystemInfoImpl(deviceBlob, length));
+    this->systemInfo.reset(new SystemInfo(deviceBlob, length));
 
     return true;
 }
