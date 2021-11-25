@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,8 @@ struct MemoryFlags {
     uint32_t forceHostMemory : 1;
     uint32_t shareable : 1;
     uint32_t resource48Bit : 1;
+    uint32_t compressedHint : 1;
+    uint32_t uncompressedHint : 1;
 };
 
 struct MemoryAllocFlags {

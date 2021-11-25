@@ -12,9 +12,6 @@
 
 namespace NEO {
 
-void ClMemoryPropertiesHelper::addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
-}
-
 bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                                      cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
                                                      cl_mem_alloc_flags_intel &allocflags, MemoryPropertiesHelper::ObjType objectType, Context &context) {

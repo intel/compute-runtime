@@ -138,6 +138,58 @@ TEST(MemoryProperties, givenClAllowUnrestrictedSizeFlagWhenCreateMemoryPropertie
     EXPECT_FALSE(memoryProperties.flags.allowUnrestrictedSize);
 }
 
+TEST(MemoryProperties, givenClCompressedHintFlagWhenCreateMemoryPropertiesThenReturnProperValue) {
+    MemoryProperties memoryProperties;
+    UltDeviceFactory deviceFactory{1, 0};
+    auto pDevice = deviceFactory.rootDevices[0];
+
+    cl_mem_flags flags = CL_MEM_COMPRESSED_HINT_INTEL;
+    cl_mem_flags_intel flagsIntel = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(memoryProperties.flags.compressedHint);
+
+    flags = 0;
+    flagsIntel |= CL_MEM_COMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(memoryProperties.flags.compressedHint);
+
+    flags |= CL_MEM_COMPRESSED_HINT_INTEL;
+    flagsIntel |= CL_MEM_COMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(memoryProperties.flags.compressedHint);
+
+    flags = 0;
+    flagsIntel = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_FALSE(memoryProperties.flags.compressedHint);
+}
+
+TEST(MemoryProperties, givenClUncompressedHintFlagWhenCreateMemoryPropertiesThenReturnProperValue) {
+    MemoryProperties memoryProperties;
+    UltDeviceFactory deviceFactory{1, 0};
+    auto pDevice = deviceFactory.rootDevices[0];
+
+    cl_mem_flags flags = CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    cl_mem_flags_intel flagsIntel = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(memoryProperties.flags.uncompressedHint);
+
+    flags = 0;
+    flagsIntel |= CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(memoryProperties.flags.uncompressedHint);
+
+    flags |= CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    flagsIntel |= CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(memoryProperties.flags.uncompressedHint);
+
+    flags = 0;
+    flagsIntel = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_FALSE(memoryProperties.flags.uncompressedHint);
+}
+
 struct MemoryPropertiesHelperTests : ::testing::Test {
     MockContext context;
     MemoryProperties memoryProperties;

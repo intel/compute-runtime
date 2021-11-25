@@ -85,9 +85,16 @@ MemoryProperties ClMemoryPropertiesHelper::createMemoryProperties(cl_mem_flags f
         memoryProperties.flags.resource48Bit = true;
     }
 
-    memoryProperties.pDevice = pDevice;
+    if (isValueSet(flags, CL_MEM_COMPRESSED_HINT_INTEL) ||
+        isValueSet(flagsIntel, CL_MEM_COMPRESSED_HINT_INTEL)) {
+        memoryProperties.flags.compressedHint = true;
+    }
+    if (isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
+        isValueSet(flagsIntel, CL_MEM_UNCOMPRESSED_HINT_INTEL)) {
+        memoryProperties.flags.uncompressedHint = true;
+    }
 
-    addExtraMemoryProperties(memoryProperties, flags, flagsIntel);
+    memoryProperties.pDevice = pDevice;
 
     return memoryProperties;
 }
