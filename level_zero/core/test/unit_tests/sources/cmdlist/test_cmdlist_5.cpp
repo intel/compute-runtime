@@ -874,5 +874,53 @@ HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCre
     EXPECT_EQ(1u, commandList->partitionCount);
 }
 
+HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    auto commandStream = commandList->commandContainer.getCommandStream();
+
+    auto usedSpaceBefore = commandStream->getUsed();
+
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+    MI_NOOP cmd = FamilyType::cmdInitNoop;
+    uint32_t uniqueIDforTest = 0x12345u;
+    cmd.setIdentificationNumber(uniqueIDforTest);
+
+    size_t sizeToReserveForCommand = sizeof(cmd);
+    void *ptrToReservedMemory = nullptr;
+    returnValue = commandList->reserveSpace(sizeToReserveForCommand, &ptrToReservedMemory);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    if (ptrToReservedMemory != nullptr) {
+        *reinterpret_cast<MI_NOOP *>(ptrToReservedMemory) = cmd;
+    }
+
+    auto usedSpaceAfter = commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, commandStream->getCpuBase(), usedSpaceAfter));
+
+    auto itor = cmdList.begin();
+    while (itor != cmdList.end()) {
+        using MI_NOOP = typename FamilyType::MI_NOOP;
+        itor = find<MI_NOOP *>(itor, cmdList.end());
+        if (itor == cmdList.end())
+            break;
+
+        auto cmd = genCmdCast<MI_NOOP *>(*itor);
+        if (uniqueIDforTest == cmd->getIdentificationNumber()) {
+            break;
+        }
+
+        itor++;
+    }
+    ASSERT_NE(itor, cmdList.end());
+}
+
 } // namespace ult
 } // namespace L0
