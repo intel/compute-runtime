@@ -52,3 +52,27 @@ XE_HPG_CORETEST_F(ImageCompressionTests, GivenDifferentImageFormatsWhenCreatingI
         EXPECT_EQ(format.isCompressable, myMemoryManager->capturedImgInfo.preferRenderCompression);
     }
 }
+
+XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAllocationThenDoNotPreferRenderCompression) {
+    MockContext context{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 5;
+    imageDesc.image_height = 5;
+
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = std::unique_ptr<Image>(Image::create(
+        mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedImgInfo.preferRenderCompression);
+
+    imageFormat.image_channel_order = CL_RG;
+    surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    image = std::unique_ptr<Image>(Image::create(
+        mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_TRUE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+}

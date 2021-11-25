@@ -162,6 +162,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceL3PrefetchForComputeWalker, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, ForceZPassAsyncComputeThreadLimit, -1, "-1: default, >0: Limit value in STATE_COMPUTE_MODE")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePixelAsyncComputeThreadLimit, -1, "-1: default, >0: Limit value in STATE_COMPUTE_MODE")
 DECLARE_DEBUG_VARIABLE(int32_t, DecompressInL3ForImage2dFromBuffer, -1, "-1: default, 0: WA Disabled, 1: WA enabled - Enable DecompressInL3 for image 2d from compressed buffer")
+DECLARE_DEBUG_VARIABLE(int32_t, ToggleHintKernelDisableCompression, -1, "-1: default - use kernel as source of hint, 0: provide hint to disable compression, 1: provide hint to enable compression")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

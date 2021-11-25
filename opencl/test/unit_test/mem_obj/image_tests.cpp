@@ -1174,6 +1174,63 @@ TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPr
     EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
 }
 
+HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAllocationThenCorrectlySetPreferRenderCompression) {
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 5;
+    imageDesc.image_height = 5;
+
+    auto newFlags = flags | CL_MEM_COMPRESSED_HINT_INTEL;
+    MockContext context;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        newFlags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = std::unique_ptr<Image>(Image::create(
+        mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(newFlags, 0, 0, &context.getDevice(0)->getDevice()),
+        newFlags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
+    EXPECT_TRUE(myMemoryManager->mockMethodCalled);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedImgInfo.preferRenderCompression);
+
+    newFlags = flags | CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    surfaceFormat = Image::getSurfaceFormatFromTable(
+        newFlags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    image = std::unique_ptr<Image>(Image::create(
+        mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(newFlags, 0, 0, &context.getDevice(0)->getDevice()),
+        newFlags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
+    EXPECT_TRUE(myMemoryManager->mockMethodCalled);
+    EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+}
+
+TEST_F(ImageCompressionTests, givenNonTiledImageAndVariousFlagsWhenCreatingAllocationThenDontPreferRenderCompression) {
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 5;
+
+    auto newFlags = flags | CL_MEM_COMPRESSED_HINT_INTEL;
+    MockContext context;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        newFlags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = std::unique_ptr<Image>(Image::create(
+        mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(newFlags, 0, 0, &context.getDevice(0)->getDevice()),
+        newFlags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_FALSE(image->isTiledAllocation());
+    EXPECT_TRUE(myMemoryManager->mockMethodCalled);
+    EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+
+    newFlags = flags | CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    surfaceFormat = Image::getSurfaceFormatFromTable(
+        newFlags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    image = std::unique_ptr<Image>(Image::create(
+        mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(newFlags, 0, 0, &context.getDevice(0)->getDevice()),
+        newFlags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_FALSE(image->isTiledAllocation());
+    EXPECT_TRUE(myMemoryManager->mockMethodCalled);
+    EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+}
+
 TEST(ImageTest, givenImageWhenGettingCompressionOfImageThenCorrectValueIsReturned) {
     MockContext context;
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&context));

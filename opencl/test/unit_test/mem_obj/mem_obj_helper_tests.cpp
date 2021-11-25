@@ -5,12 +5,16 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -161,4 +165,268 @@ TEST(MemObjHelper, givenContextWithMultipleRootDevicesWhenIsSuitableForRenderCom
 
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.pRootDevice0->getDevice());
     EXPECT_FALSE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}
+
+TEST(MemObjHelper, givenCompressionEnabledButNotPreferredWhenCompressionHintIsPassedThenCompressionIsUsed) {
+    cl_mem_flags_intel flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
+    cl_mem_flags flags = CL_MEM_COMPRESSED_HINT_INTEL;
+    MockContext context;
+    MemoryProperties memoryProperties =
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, false));
+    flags = CL_MEM_COMPRESSED_HINT_INTEL;
+    flagsIntel = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, false));
+    flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
+    flags = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, false));
+}
+
+TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenCompressionHintIsPassedThenCompressionIsUsed) {
+    cl_mem_flags_intel flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
+    cl_mem_flags flags = CL_MEM_COMPRESSED_HINT_INTEL;
+    MockContext context;
+    MemoryProperties memoryProperties =
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+    flags = CL_MEM_COMPRESSED_HINT_INTEL;
+    flagsIntel = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+    flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
+    flags = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}
+
+TEST(MemObjHelper, givenRenderCompressionWhenCL_MEM_COMPRESSEDIsNotSetThenFalseReturned) {
+    cl_mem_flags_intel flagsIntel = 0;
+    cl_mem_flags flags = 0;
+    MockContext context;
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+    EXPECT_FALSE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, false));
+}
+
+TEST(MemObjHelper, givenRenderCompressionWhenCL_MEM_COMPRESSEDThenTrueIsReturned) {
+    cl_mem_flags_intel flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
+    cl_mem_flags flags = CL_MEM_COMPRESSED_HINT_INTEL;
+    MockContext context;
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}
+
+TEST(MemObjHelperMultiTile, givenValidExtraPropertiesWhenValidatingExtraPropertiesThenTrueIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 4};
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
+                              deviceFactory.subDevices[2], deviceFactory.subDevices[3]};
+    MockContext context(ClDeviceVector{devices, 5});
+
+    auto pDevice = &deviceFactory.rootDevices[0]->getDevice();
+
+    cl_mem_flags flags = CL_MEM_COMPRESSED_HINT_INTEL;
+    cl_mem_flags_intel flagsIntel = 0;
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
+
+    flags = CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    flagsIntel = 0;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
+
+    flags = 0;
+    flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
+
+    flags = 0;
+    flagsIntel = CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
+    EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
+}
+
+TEST(MemObjHelper, givenInvalidFlagsWhenValidatingExtraPropertiesThenFalseIsReturned) {
+    MemoryProperties memoryProperties;
+    cl_mem_flags flags = CL_MEM_COMPRESSED_HINT_INTEL | CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    cl_mem_flags_intel flagsIntel = 0;
+    MockContext context;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
+
+    flags = 0;
+    flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL | CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
+
+    flags = CL_MEM_COMPRESSED_HINT_INTEL;
+    flagsIntel = CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
+
+    flags = CL_MEM_UNCOMPRESSED_HINT_INTEL;
+    flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
+    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
+}
+
+TEST(MemObjHelper, givenMultipleSubDevicesWhenDefaultContextIsUsedThenResourcesAreNotSuitableForCompression) {
+    DebugManagerStateRestore debugRestore;
+    DebugManager.flags.CreateMultipleSubDevices.set(4u);
+    initPlatform();
+    MockContext context(platform()->getClDevice(0));
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_ONLY, 0u, 0, &context.getDevice(0)->getDevice());
+
+    EXPECT_FALSE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+    memoryProperties.flags.hostNoAccess = true;
+    EXPECT_FALSE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}
+
+TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextRequiresResolveThenResourceNotSuitableForCompression) {
+    MemoryProperties memoryProperties;
+    MockContext context;
+
+    context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
+    context.resolvesRequiredInKernels = true;
+
+    EXPECT_FALSE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}
+
+TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresResolveThenResourceSuitableForCompression) {
+    MemoryProperties memoryProperties;
+    MockContext context;
+
+    context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
+    context.resolvesRequiredInKernels = false;
+
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}
+
+TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresResolveAndForceHintDisableCompressionThenResourceNotSuitableForCompression) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ToggleHintKernelDisableCompression.set(0);
+
+    MemoryProperties memoryProperties;
+    MockContext context;
+
+    context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
+    context.resolvesRequiredInKernels = false;
+
+    EXPECT_FALSE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}
+
+TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextRequiresResolveAndForceHintEnableCompressionThenResourceSuitableForCompression) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ToggleHintKernelDisableCompression.set(1);
+
+    MemoryProperties memoryProperties;
+    MockContext context;
+
+    context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
+    context.resolvesRequiredInKernels = true;
+
+    EXPECT_TRUE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}
+
+TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferCompressionSupportThenCorrectValueIsReturned) {
+    DebugManagerStateRestore debugRestore;
+    VariableBackup<bool> renderCompressedBuffersCapability{&defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers};
+    int32_t enableMultiTileCompressionValues[] = {-1, 0, 1};
+    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+
+    for (auto ftrRenderCompressedBuffers : ::testing::Bool()) {
+        renderCompressedBuffersCapability = ftrRenderCompressedBuffers;
+        for (auto enableMultiTileCompressionValue : enableMultiTileCompressionValues) {
+            DebugManager.flags.EnableMultiTileCompression.set(enableMultiTileCompressionValue);
+
+            MockSpecializedContext context;
+            auto &device = context.getDevice(0)->getDevice();
+            MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &device);
+            auto allocationType = MockPublicAccessBuffer::getGraphicsAllocationType(
+                memoryProperties, context, HwHelper::renderCompressedBuffersSupported(*defaultHwInfo), false, true);
+
+            bool expectBufferCompressed = ftrRenderCompressedBuffers && (enableMultiTileCompressionValue == 1);
+            if (expectBufferCompressed && clHwHelper.allowRenderCompressionForContext(*context.getDevice(0), context)) {
+                EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, allocationType);
+            } else {
+                EXPECT_NE(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, allocationType);
+            }
+        }
+    }
+}
+
+TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenCorrectValueIsReturned) {
+    DebugManagerStateRestore debugRestore;
+    VariableBackup<bool> renderCompressedBuffersCapability{&defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers, true};
+    VariableBackup<unsigned short> hardwareStepping{&defaultHwInfo->platform.usRevId};
+    DebugManager.flags.EnableMultiTileCompression.set(1);
+
+    uint32_t numsSubDevices[] = {0, 2};
+    cl_mem_flags flagsValues[] = {0, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS, CL_MEM_COMPRESSED_HINT_INTEL,
+                                  CL_MEM_UNCOMPRESSED_HINT_INTEL};
+    cl_mem_flags_intel flagsIntelValues[] = {0, CL_MEM_COMPRESSED_HINT_INTEL, CL_MEM_UNCOMPRESSED_HINT_INTEL};
+    uint32_t contextTypes[] = {ContextType::CONTEXT_TYPE_DEFAULT, ContextType::CONTEXT_TYPE_SPECIALIZED,
+                               ContextType::CONTEXT_TYPE_UNRESTRICTIVE};
+    __REVID steppingValues[] = {REVISION_A0, REVISION_B};
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+
+    for (auto stepping : steppingValues) {
+        hardwareStepping = hwInfoConfig.getHwRevIdFromStepping(stepping, *defaultHwInfo);
+        if (hardwareStepping == CommonConstants::invalidStepping) {
+            continue;
+        }
+
+        for (auto numSubDevices : numsSubDevices) {
+            UltClDeviceFactory clDeviceFactory{1, numSubDevices};
+
+            for (auto contextType : contextTypes) {
+                if ((numSubDevices == 0) && (contextType != ContextType::CONTEXT_TYPE_DEFAULT)) {
+                    continue;
+                }
+
+                ClDeviceVector contextDevices;
+                if (contextType != ContextType::CONTEXT_TYPE_SPECIALIZED) {
+                    contextDevices.push_back(clDeviceFactory.rootDevices[0]);
+                }
+                if (contextType != ContextType::CONTEXT_TYPE_DEFAULT) {
+                    contextDevices.push_back(clDeviceFactory.subDevices[0]);
+                    contextDevices.push_back(clDeviceFactory.subDevices[1]);
+                }
+                MockContext context{contextDevices};
+
+                for (auto flags : flagsValues) {
+                    for (auto flagsIntel : flagsIntelValues) {
+
+                        auto &device = context.getDevice(0)->getDevice();
+                        MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel,
+                                                                                                             0, &device);
+                        auto allocationType = MockPublicAccessBuffer::getGraphicsAllocationType(
+                            memoryProperties, context, HwHelper::renderCompressedBuffersSupported(*defaultHwInfo), false, true);
+
+                        bool isCompressionDisabled = isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
+                                                     isValueSet(flagsIntel, CL_MEM_UNCOMPRESSED_HINT_INTEL);
+                        bool expectBufferCompressed = !isCompressionDisabled;
+
+                        bool isMultiTile = (numSubDevices > 1);
+                        if (expectBufferCompressed && isMultiTile) {
+                            bool isBufferReadOnly = isValueSet(flags, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
+                            expectBufferCompressed = clHwHelper.allowRenderCompressionForContext(*context.getDevice(0), context) &&
+                                                     ((contextType == ContextType::CONTEXT_TYPE_SPECIALIZED) || isBufferReadOnly);
+                        }
+
+                        if (expectBufferCompressed) {
+                            EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, allocationType);
+                        } else {
+                            EXPECT_NE(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, allocationType);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
