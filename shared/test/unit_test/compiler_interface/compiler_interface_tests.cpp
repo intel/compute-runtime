@@ -997,6 +997,15 @@ TEST_F(CompilerInterfaceTest, whenIgcReturnsErrorThenGetSipKernelBinaryFailsGrac
     gEnvironment->igcPopDebugVars();
 }
 
+TEST_F(CompilerInterfaceTest, whenGetIgcDeviceCtxReturnsNullptrThenGetSipKernelBinaryFailsGracefully) {
+    pCompilerInterface->failGetIgcDeviceCtx = true;
+
+    std::vector<char> sipBinary;
+    std::vector<char> stateAreaHeader;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary, stateAreaHeader);
+    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+}
+
 TEST_F(CompilerInterfaceTest, whenEverythingIsOkThenGetSipKernelReturnsIgcsOutputAsSipBinary) {
     MockCompilerDebugVars igcDebugVars;
     retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd32_", ".bc");

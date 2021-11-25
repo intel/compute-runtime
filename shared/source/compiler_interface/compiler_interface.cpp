@@ -328,6 +328,11 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
     }
 
     auto deviceCtx = getIgcDeviceCtx(device);
+
+    if (deviceCtx == nullptr) {
+        return TranslationOutput::ErrorCode::UnknownError;
+    }
+
     auto systemRoutineBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();
     auto stateSaveAreaBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();
 

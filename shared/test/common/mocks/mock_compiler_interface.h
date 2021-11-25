@@ -88,6 +88,14 @@ class MockCompilerInterface : public CompilerInterface {
         this->fclMain.reset(main);
     }
 
+    IGC::IgcOclDeviceCtxTagOCL *getIgcDeviceCtx(const Device &device) override {
+        if (failGetIgcDeviceCtx) {
+            return nullptr;
+        }
+
+        return CompilerInterface::getIgcDeviceCtx(device);
+    }
+
     CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> createFclTranslationCtx(const Device &device,
                                                                                IGC::CodeType::CodeType_t inType,
                                                                                IGC::CodeType::CodeType_t outType) override {
@@ -134,6 +142,7 @@ class MockCompilerInterface : public CompilerInterface {
     bool failCreateIgcTranslationCtx = false;
     bool failLoadFcl = false;
     bool failLoadIgc = false;
+    bool failGetIgcDeviceCtx = false;
 
     using TranslationOpT = std::pair<IGC::CodeType::CodeType_t, IGC::CodeType::CodeType_t>;
     std::vector<TranslationOpT> requestedTranslationCtxs;
