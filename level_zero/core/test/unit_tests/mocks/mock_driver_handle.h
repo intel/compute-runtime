@@ -11,7 +11,6 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
 namespace L0 {

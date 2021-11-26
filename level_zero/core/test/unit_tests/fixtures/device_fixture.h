@@ -7,26 +7,22 @@
 
 #pragma once
 
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 
-#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
+class MockPageFaultManager;
 namespace NEO {
 struct UltDeviceFactory;
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 } // namespace NEO
 
 namespace L0 {
 struct Context;
 struct Device;
+struct ContextImp;
 
 namespace ult {
 class MockBuiltins;
@@ -81,24 +77,6 @@ struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {
 struct ContextFixture : DeviceFixture {
     void SetUp();
     void TearDown();
-};
-
-struct AubCsrFixture : public ContextFixture {
-    template <typename T>
-    void SetUpT() {
-        auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + NEO::defaultHwInfo->platform.eRenderCoreFamily];
-        variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
-        *csrCreateFcn = UltAubCommandStreamReceiver<T>::create;
-        ContextFixture::SetUp();
-    }
-    template <typename T>
-    void TearDownT() {
-        ContextFixture::TearDown();
-    }
-
-    void SetUp() {}
-    void TearDown() {}
-    std::unique_ptr<VariableBackup<CommandStreamReceiverCreateFunc>> variableBackup;
 };
 
 struct MultipleDevicesWithCustomHwInfo {

@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "test.h"
 

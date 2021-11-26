@@ -27,6 +27,7 @@
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/test/unit_tests/fixtures/aub_csr_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"

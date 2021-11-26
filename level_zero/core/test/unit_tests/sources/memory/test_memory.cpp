@@ -8,6 +8,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
