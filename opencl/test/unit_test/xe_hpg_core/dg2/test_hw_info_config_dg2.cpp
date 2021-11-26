@@ -29,12 +29,6 @@ DG2TEST_F(Dg2HwInfoConfig, givenHwInfoErrorneousConfigStringThenThrow) {
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-DG2TEST_F(Dg2HwInfoConfig, givenDg2HwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = *defaultHwInfo;
-    EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
-}
-
 DG2TEST_F(Dg2HwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     auto hwInfo = *defaultHwInfo;
