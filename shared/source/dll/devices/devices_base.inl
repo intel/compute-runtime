@@ -6,6 +6,13 @@
  */
 
 // clang-format off
+#ifdef SUPPORT_XE_HP_CORE
+#ifdef SUPPORT_XE_HP_SDV
+DEVICE(0x0201, XE_HP_SDV_CONFIG, GTTYPE_GT4)
+#endif
+#endif
+
+
 #ifdef SUPPORT_GEN12LP
 #ifdef SUPPORT_TGLLP
 DEVICE( 0xFF20, TGLLP_1x6x16, GTTYPE_GT2 )
