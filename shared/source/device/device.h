@@ -16,6 +16,7 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/program/sync_buffer_handler.h"
 
@@ -129,6 +130,7 @@ class Device : public ReferenceTrackedObject<Device> {
 
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
+    bool getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
 
   protected:
     Device() = delete;
@@ -190,6 +192,10 @@ class Device : public ReferenceTrackedObject<Device> {
 
     GraphicsAllocation *rtMemoryBackedBuffer = nullptr;
     std::vector<GraphicsAllocation *> rtDispatchGlobals;
+    struct {
+        bool isValid = false;
+        std::array<uint8_t, HwInfoConfig::uuidSize> id;
+    } uuid;
 };
 
 inline EngineControl &Device::getDefaultEngine() {

@@ -25,6 +25,26 @@ std::vector<std::string> Directory::getFiles(const std::string &path) {
         files.push_back("./test_files/linux/devices/device/drm/card1");
         return files;
     }
+    if (path == "/sys/class/intel_pmt") {
+        return {
+            "/sys/class/intel_pmt/crashlog1",
+            "/sys/class/intel_pmt/crashlog2",
+            "/sys/class/intel_pmt/crashlog3",
+            "/sys/class/intel_pmt/crashlog4",
+            "/sys/class/intel_pmt/telem2",
+            "/sys/class/intel_pmt/telem1",
+            "/sys/class/intel_pmt/telem10",
+            "/sys/class/intel_pmt/telem11",
+            "/sys/class/intel_pmt/telem12",
+            "/sys/class/intel_pmt/telem3",
+            "/sys/class/intel_pmt/telem5",
+            "/sys/class/intel_pmt/telem4",
+            "/sys/class/intel_pmt/telem6",
+            "/sys/class/intel_pmt/telem8",
+            "/sys/class/intel_pmt/telem7",
+            "/sys/class/intel_pmt/telem9",
+        };
+    }
     return files;
 }
 }; // namespace NEO

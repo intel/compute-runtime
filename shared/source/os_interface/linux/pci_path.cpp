@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 namespace NEO {
-std::optional<std::string> getPciPath(int deviceFd) {
+std::optional<std::string> getPciLinkPath(int deviceFd) {
     char path[256] = {0};
     size_t pathlen = 256;
 
@@ -33,9 +33,17 @@ std::optional<std::string> getPciPath(int deviceFd) {
         return std::nullopt;
     }
 
-    std::string_view devicePathView(devicePath, static_cast<size_t>(readLinkSize));
-    devicePathView = devicePathView.substr(devicePathView.find("/drm/render") - 12u, 12u);
+    return std::string(devicePath, static_cast<size_t>(readLinkSize));
+}
 
-    return std::string(devicePathView);
+std::optional<std::string> getPciPath(int deviceFd) {
+
+    auto deviceLinkPath = NEO::getPciLinkPath(deviceFd);
+
+    if (deviceLinkPath == std::nullopt) {
+        return std::nullopt;
+    }
+
+    return deviceLinkPath->substr(deviceLinkPath->find("/drm/render") - 12u, 12u);
 }
 } // namespace NEO

@@ -266,4 +266,9 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const Hardw
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+    return false;
+}
+
 } //namespace NEO

@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -465,12 +466,18 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->flags = 0u;
 
-    uint32_t rootDeviceIndex = this->neoDevice->getRootDeviceIndex();
+    std::array<uint8_t, NEO::HwInfoConfig::uuidSize> deviceUuid;
+    if (this->neoDevice->getUuid(deviceUuid)) {
+        std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pDeviceProperties->uuid.id));
+    } else {
 
-    memset(pDeviceProperties->uuid.id, 0, ZE_MAX_DEVICE_UUID_SIZE);
-    memcpy_s(pDeviceProperties->uuid.id, sizeof(uint32_t), &pDeviceProperties->vendorId, sizeof(pDeviceProperties->vendorId));
-    memcpy_s(pDeviceProperties->uuid.id + sizeof(uint32_t), sizeof(uint32_t), &pDeviceProperties->deviceId, sizeof(pDeviceProperties->deviceId));
-    memcpy_s(pDeviceProperties->uuid.id + (2 * sizeof(uint32_t)), sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+        uint32_t rootDeviceIndex = this->neoDevice->getRootDeviceIndex();
+
+        memset(pDeviceProperties->uuid.id, 0, ZE_MAX_DEVICE_UUID_SIZE);
+        memcpy_s(pDeviceProperties->uuid.id, sizeof(uint32_t), &deviceInfo.vendorId, sizeof(deviceInfo.vendorId));
+        memcpy_s(pDeviceProperties->uuid.id + sizeof(uint32_t), sizeof(uint32_t), &hardwareInfo.platform.usDeviceID, sizeof(hardwareInfo.platform.usDeviceID));
+        memcpy_s(pDeviceProperties->uuid.id + (2 * sizeof(uint32_t)), sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+    }
 
     pDeviceProperties->subdeviceId = isSubdevice ? static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex() : 0;
 

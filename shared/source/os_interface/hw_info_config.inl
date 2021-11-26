@@ -276,4 +276,9 @@ template <PRODUCT_FAMILY gfxProduct>
 uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+    return false;
+}
 } // namespace NEO

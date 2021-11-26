@@ -82,11 +82,14 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
     ${CMAKE_CURRENT_SOURCE_DIR}/system_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/system_info.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pmt_util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pmt_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/system_info_extended.cpp
 )
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_uuid_xehp_and_later.inl
   )
 endif()
 

@@ -44,6 +44,10 @@ uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 bool isInvalidAILTest = false;
 
+int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
+ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
+int (*sysCallsReadlink)(const char *path, char *buf, size_t bufsize) = nullptr;
+
 int close(int fileDescriptor) {
     closeFuncCalled++;
     closeFuncArgPassed = fileDescriptor;
@@ -51,6 +55,11 @@ int close(int fileDescriptor) {
 }
 
 int open(const char *file, int flags) {
+
+    if (sysCallsOpen != nullptr) {
+        return sysCallsOpen(file, flags);
+    }
+
     if (strcmp(file, "/dev/dri/by-path/pci-0000:invalid-render") == 0) {
         return 0;
     }
@@ -110,6 +119,11 @@ int access(const char *pathName, int mode) {
 }
 
 int readlink(const char *path, char *buf, size_t bufsize) {
+
+    if (sysCallsReadlink != nullptr) {
+        return sysCallsReadlink(path, buf, bufsize);
+    }
+
     if (isInvalidAILTest) {
         return -1;
     }
@@ -150,6 +164,9 @@ int fstat(int fd, struct stat *buf) {
 }
 
 ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+    if (sysCallsPread != nullptr) {
+        return sysCallsPread(fd, buf, count, offset);
+    }
     preadFuncCalled++;
     return 0;
 }

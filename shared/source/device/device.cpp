@@ -267,6 +267,10 @@ bool Device::createDeviceImpl() {
     }
 
     createBindlessHeapsHelper();
+    if (!isEngineInstanced()) {
+        auto hardwareInfo = getRootDeviceEnvironment().getMutableHardwareInfo();
+        uuid.isValid = HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
+    }
 
     return true;
 }
@@ -637,4 +641,12 @@ void Device::finalizeRayTracing() {
 }
 
 OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get(); };
+
+bool Device::getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+    if (this->uuid.isValid) {
+        uuid = this->uuid.id;
+    }
+    return this->uuid.isValid;
+}
+
 } // namespace NEO

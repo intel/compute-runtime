@@ -28,6 +28,7 @@ class HwInfoConfig {
     static HwInfoConfig *get(PRODUCT_FAMILY product) {
         return hwInfoConfigFactory[product];
     }
+    static constexpr uint32_t uuidSize = 16u;
     int configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
     int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) = 0;
@@ -80,6 +81,7 @@ class HwInfoConfig {
     virtual bool isBlitterForImagesSupported() const = 0;
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
+    virtual bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const = 0;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -145,6 +147,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isBlitterForImagesSupported() const override;
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
     uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const override;
+    bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override;
 
   protected:
     HwInfoConfigHw() = default;
