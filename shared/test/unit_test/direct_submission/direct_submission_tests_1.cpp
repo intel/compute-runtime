@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/direct_submission_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -41,6 +42,10 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledSetThenExpectNoCpuCach
 }
 
 HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledNotSetThenExpectCpuCacheFlush) {
+    if (!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush)) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.set(0);
 
