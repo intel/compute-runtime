@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/memory_info_impl.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
@@ -50,7 +50,7 @@ struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
         regionInfo[1].probed_size = probedSizeRegionOne;
         regionInfo[1].unallocated_size = unallocatedSizeRegionOne;
 
-        this->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+        this->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
         return true;
     }
 

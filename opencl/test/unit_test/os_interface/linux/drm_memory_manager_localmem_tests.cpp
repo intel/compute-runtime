@@ -137,7 +137,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->ioctlCallsCount = 0;
 
     auto gpuAddress = 0x1234u;
@@ -177,7 +177,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
         regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-        mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+        mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
         mock->ioctlCallsCount = 0;
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
@@ -222,7 +222,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
         regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-        mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+        mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
         mock->ioctlCallsCount = 0;
         mock->fdToHandleRetVal = -1;
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
@@ -281,7 +281,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->ioctlCallsCount = 0;
     mock->fdToHandleRetVal = -1;
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
@@ -348,7 +348,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoWhenAllocateWithAlignm
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->ioctlCallsCount = 0;
 
     AllocationData allocationData;
@@ -373,7 +373,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndNotUseObjectMmapProper
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->mmapOffsetRetVal = -1;
 
     AllocationData allocationData;
@@ -396,7 +396,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndFailedMmapOffsetWhenAl
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->mmapOffsetRetVal = -1;
 
     AllocationData allocationData;
@@ -416,7 +416,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndDisabledMmapBOCreation
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->mmapOffsetRetVal = -1;
 
     AllocationData allocationData;
@@ -438,7 +438,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndFailedGemCreateExtWhen
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->gemCreateExtRetVal = -1;
 
     AllocationData allocationData;
@@ -903,7 +903,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCa
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     TestedDrmMemoryManager memoryManager(executionEnvironment);
 
-    auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
+    auto memoryInfo = drm->getMemoryInfo();
     ASSERT_NE(nullptr, memoryInfo);
     EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0)), memoryManager.getLocalMemorySize(0u, 0xF));
 }
@@ -927,7 +927,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCa
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     TestedDrmMemoryManager memoryManager(executionEnvironment);
 
-    auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
+    auto memoryInfo = drm->getMemoryInfo();
     ASSERT_NE(nullptr, memoryInfo);
     EXPECT_EQ(0u, memoryManager.getLocalMemorySize(0u, 0u));
 }
@@ -994,7 +994,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsU
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->ioctlCallsCount = 0;
 
     AllocationData allocationData;
@@ -1031,7 +1031,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsA
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
     mock->ioctlCallsCount = 0;
 
     AllocationData allocationData;

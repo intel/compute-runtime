@@ -7,7 +7,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/linux/local_memory_helper.h"
-#include "shared/source/os_interface/linux/memory_info_impl.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
@@ -101,7 +101,7 @@ DG1TEST_F(LocalMemoryHelperTestsDg1, givenDg1AndMemoryRegionQuerySupportedWhenQu
     drm->queryMemoryInfo();
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 
-    auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
+    auto memoryInfo = drm->getMemoryInfo();
 
     ASSERT_NE(nullptr, memoryInfo);
     EXPECT_EQ(2u, memoryInfo->getDrmRegionInfos().size());

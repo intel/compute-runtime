@@ -5,13 +5,14 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/engine_info_impl.h"
 #include "shared/source/os_interface/linux/local_memory_helper.h"
-#include "shared/source/os_interface/linux/memory_info_impl.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
@@ -60,7 +61,7 @@ bool Drm::queryMemoryInfo() {
         auto localMemHelper = LocalMemoryHelper::get(pHwInfo->platform.eProductFamily);
         auto data = localMemHelper->translateIfRequired(dataQuery.release(), length);
         auto memRegions = reinterpret_cast<drm_i915_query_memory_regions *>(data.get());
-        this->memoryInfo.reset(new MemoryInfoImpl(memRegions->regions, memRegions->num_regions));
+        this->memoryInfo.reset(new MemoryInfo(memRegions->regions, memRegions->num_regions));
         return true;
     }
     return false;

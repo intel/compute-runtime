@@ -7,7 +7,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/linux/local_memory_helper.h"
-#include "shared/source/os_interface/linux/memory_info_impl.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "test.h"

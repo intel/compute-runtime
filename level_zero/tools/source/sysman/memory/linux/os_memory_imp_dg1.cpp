@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/linux/memory_info_impl.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 
@@ -45,7 +45,7 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    auto memoryInfo = static_cast<NEO::MemoryInfoImpl *>(pDrm->getMemoryInfo());
+    auto memoryInfo = pDrm->getMemoryInfo();
     if (!memoryInfo) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
