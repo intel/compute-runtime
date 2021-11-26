@@ -125,9 +125,9 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetWhenGetGpgpuEnginesThenRetu
     EXPECT_EQ(4u, device->engines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(4u, engines.size());
-    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2].first);
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3].first);
 }
 
@@ -158,9 +158,9 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetFtrGpGpuMidThreadLevelPreem
     EXPECT_EQ(4u, device->engines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(4u, engines.size());
-    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2].first);
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3].first);
 }
 

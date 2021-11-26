@@ -86,15 +86,15 @@ template <>
 const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
 
-    EngineInstancesContainer engines = {
-        {aub_stream::ENGINE_RCS, EngineUsage::Regular},
-        {aub_stream::ENGINE_RCS, EngineUsage::LowPriority}, // low priority
-        {defaultEngine, EngineUsage::Internal},             // internal usage
-    };
+    EngineInstancesContainer engines;
 
     if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.flags.ftrCCSNode && !hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt) {
         engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
     }
+
+    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
+    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}); // low priority
+    engines.push_back({defaultEngine, EngineUsage::Internal});             // internal usage
 
     if (hwInfo.capabilityTable.blitterOperationsSupported) {
         if (hwInfo.featureTable.ftrBcsInfo.test(0)) {

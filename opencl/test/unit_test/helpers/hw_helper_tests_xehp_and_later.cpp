@@ -104,15 +104,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenAllFlagsSetWhenGetGp
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(9u, engines.size());
 
-    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
-    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[1].first); // low priority
-    EXPECT_EQ(EngineUsage::LowPriority, engines[1].second);
-    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[2].first); // internal
-    EXPECT_EQ(EngineUsage::Internal, engines[2].second);
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[4].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[5].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[6].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[3].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[4].first);
+    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[5].first); // low priority
+    EXPECT_EQ(EngineUsage::LowPriority, engines[5].second);
+    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[6].first); // internal
+    EXPECT_EQ(EngineUsage::Internal, engines[6].second);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[8].first);
 }
@@ -130,13 +130,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenBcsDisabledWhenGetGp
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(7u, engines.size());
 
-    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
-    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[1].first); // low priority
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[2].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[4].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[5].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[6].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[3].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[4].first);
+    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[5].first); // low priority
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[6].first);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenCcsDisabledWhenGetGpgpuEnginesThenReturnRcsAndOneBcsEngine) {

@@ -62,12 +62,12 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontS
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(8u, engines.size());
 
-    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[0].first); // low priority
-    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[1].first); // internal
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[2].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[3].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[4].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[5].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[3].first);
+    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[4].first); // low priority
+    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[5].first); // internal
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[6].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
 }
@@ -90,13 +90,13 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEng
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(9u, engines.size());
 
-    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1].first); // low priority
-    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2].first); // internal
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[4].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[5].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[6].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[3].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[4].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[5].first); // low priority
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[6].first); // internal
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[8].first);
 }
