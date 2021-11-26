@@ -1467,10 +1467,13 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, GivenImplicitScalingDisabledW
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSubSlicesSupported = 48;
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSlicesSupported = 3;
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = 8;
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 1;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 2;
+
+    auto &gtSysInfo = device->getNEODevice()->getHardwareInfo().gtSystemInfo;
 
     device->getProperties(&deviceProperties);
-    EXPECT_EQ(((device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount * device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount) / numSubDevices), deviceProperties.numSubslicesPerSlice);
+    EXPECT_EQ(((gtSysInfo.SubSliceCount / gtSysInfo.SliceCount)), deviceProperties.numSubslicesPerSlice);
+    EXPECT_EQ(gtSysInfo.SliceCount, deviceProperties.numSlices);
 }
 
 TEST_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledWhenGettingDevicePropertiesGetSubslicesPerSliceThenCorrectValuesReturned) {
@@ -1481,10 +1484,13 @@ TEST_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledWhe
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSubSlicesSupported = 48;
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSlicesSupported = 3;
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = 8;
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 1;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 2;
+
+    auto &gtSysInfo = device->getNEODevice()->getHardwareInfo().gtSystemInfo;
 
     device->getProperties(&deviceProperties);
-    EXPECT_EQ((device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount * device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount), deviceProperties.numSubslicesPerSlice);
+    EXPECT_EQ((gtSysInfo.SubSliceCount / gtSysInfo.SliceCount), deviceProperties.numSubslicesPerSlice);
+    EXPECT_EQ((gtSysInfo.SliceCount * numSubDevices), deviceProperties.numSlices);
 }
 
 TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsReturned) {
@@ -1731,7 +1737,7 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWi
     NEO::TopologyMap map;
     TopologyMapping mapping;
 
-    EXPECT_EQ(numSubDevices * hwInfo.gtSystemInfo.SliceCount, deviceProperties.numSlices);
+    EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount, deviceProperties.numSlices);
 
     mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
@@ -1768,7 +1774,7 @@ TEST_F(MultipleDevicesTest, givenTopologyForSingleSubdeviceWhenGettingApiSliceId
     NEO::TopologyMap map;
     TopologyMapping mapping;
 
-    EXPECT_EQ(numSubDevices * hwInfo.gtSystemInfo.SliceCount, deviceProperties.numSlices);
+    EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount, deviceProperties.numSlices);
 
     mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {

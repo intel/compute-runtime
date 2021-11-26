@@ -491,14 +491,14 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     if (NEO::DebugManager.flags.DebugApiUsed.get() == 1) {
         pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.MaxSubSlicesSupported / hardwareInfo.gtSystemInfo.MaxSlicesSupported;
     } else {
-        if (this->isMultiDeviceCapable() || (this->numSubDevices == 0)) {
-            pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount;
-        } else {
-            pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount / this->numSubDevices;
-        }
+        pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount;
     }
 
-    pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount * std::max(this->neoDevice->getNumGenericSubDevices(), 1u);
+    pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount;
+
+    if (isMultiDeviceCapable()) {
+        pDeviceProperties->numSlices *= neoDevice->getNumGenericSubDevices();
+    }
 
     if ((NEO::DebugManager.flags.UseCyclesPerSecondTimer.get() == 1) ||
         (pDeviceProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2)) {
