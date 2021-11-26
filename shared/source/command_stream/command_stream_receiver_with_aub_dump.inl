@@ -95,4 +95,14 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::pollForCompletion() {
     }
     BaseCSR::pollForCompletion();
 }
+
+template <typename BaseCSR>
+bool CommandStreamReceiverWithAUBDump<BaseCSR>::expectMemory(const void *gfxAddress, const void *srcAddress,
+                                                             size_t length, uint32_t compareOperation) {
+    if (aubCSR) {
+        [[maybe_unused]] auto result = aubCSR->expectMemory(gfxAddress, srcAddress, length, compareOperation);
+        DEBUG_BREAK_IF(!result);
+    }
+    return BaseCSR::expectMemory(gfxAddress, srcAddress, length, compareOperation);
+}
 } // namespace NEO

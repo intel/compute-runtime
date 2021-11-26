@@ -48,6 +48,9 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
 
     void pollForCompletion() override;
 
+    bool expectMemory(const void *gfxAddress, const void *srcAddress,
+                      size_t length, uint32_t compareOperation) override;
+
     std::unique_ptr<CommandStreamReceiver> aubCSR;
 };
 

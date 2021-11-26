@@ -14,6 +14,7 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -76,6 +77,16 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         return {false, false};
     }
 
+    bool expectMemory(const void *gfxAddress, const void *srcAddress,
+                      size_t length, uint32_t compareOperation) override {
+        expectMemoryParameterization.wasCalled = true;
+        expectMemoryParameterization.gfxAddress = gfxAddress;
+        expectMemoryParameterization.srcAddress = srcAddress;
+        expectMemoryParameterization.length = length;
+        expectMemoryParameterization.compareOperation = compareOperation;
+        return true;
+    }
+
     struct FlushParameterization {
         bool wasCalled = false;
         FlushStamp flushStampToReturn = 1;
@@ -103,6 +114,14 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         bool wasCalled = false;
         const std::string *kernelName = nullptr;
     } checkAndActivateAubSubCaptureParameterization;
+
+    struct ExpectMemoryParameterization {
+        bool wasCalled = false;
+        const void *gfxAddress = nullptr;
+        const void *srcAddress = nullptr;
+        size_t length = 0;
+        uint32_t compareOperation = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    } expectMemoryParameterization;
 };
 
 template <typename BaseCSR>
@@ -259,6 +278,34 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenPoll
     EXPECT_FALSE(mockAubCsr->pollForCompletionCalled);
     csrWithAubDump.pollForCompletion();
     EXPECT_TRUE(mockAubCsr->pollForCompletionCalled);
+}
+
+HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenExpectMemoryIsCalledThenBothCommandStreamReceiversAreCalled) {
+    uint32_t compareOperation = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    uint8_t buffer[0x10000]{};
+    size_t length = sizeof(buffer);
+
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csrWithAubDump->getRootDeviceIndex(), false, length}, buffer);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    csrWithAubDump->makeResidentHostPtrAllocation(gfxAllocation);
+    csrWithAubDump->expectMemory(reinterpret_cast<void *>(gfxAllocation->getGpuAddress()), buffer, length, compareOperation);
+
+    EXPECT_TRUE(csrWithAubDump->expectMemoryParameterization.wasCalled);
+    EXPECT_EQ(reinterpret_cast<void *>(gfxAllocation->getGpuAddress()), csrWithAubDump->expectMemoryParameterization.gfxAddress);
+    EXPECT_EQ(buffer, csrWithAubDump->expectMemoryParameterization.srcAddress);
+    EXPECT_EQ(length, csrWithAubDump->expectMemoryParameterization.length);
+    EXPECT_EQ(compareOperation, csrWithAubDump->expectMemoryParameterization.compareOperation);
+
+    if (createAubCSR) {
+        EXPECT_TRUE(csrWithAubDump->getAubMockCsr().expectMemoryParameterization.wasCalled);
+        EXPECT_EQ(reinterpret_cast<void *>(gfxAllocation->getGpuAddress()), csrWithAubDump->getAubMockCsr().expectMemoryParameterization.gfxAddress);
+        EXPECT_EQ(buffer, csrWithAubDump->getAubMockCsr().expectMemoryParameterization.srcAddress);
+        EXPECT_EQ(length, csrWithAubDump->getAubMockCsr().expectMemoryParameterization.length);
+        EXPECT_EQ(compareOperation, csrWithAubDump->getAubMockCsr().expectMemoryParameterization.compareOperation);
+    }
+
+    memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
 }
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenCreatingAubCsrThenInitializeTagAllocation) {
