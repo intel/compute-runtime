@@ -1348,7 +1348,7 @@ struct CsrSelectionCommandQueueTests : ::testing::Test {
         cl_command_queue_properties queueProperties[5] = {};
         if (selectBlitterWithQueueFamilies) {
             queueProperties[0] = CL_QUEUE_FAMILY_INTEL;
-            queueProperties[1] = device->getIndexOfNonEmptyEngineGroup(EngineGroupType::Copy);
+            queueProperties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Copy);
             queueProperties[2] = CL_QUEUE_INDEX_INTEL;
             queueProperties[3] = 0;
         }
@@ -2032,7 +2032,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenC
     OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular).osContext;
     EXPECT_FALSE(osContext.isInitialized());
 
-    const auto ccsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getIndexOfNonEmptyEngineGroup(EngineGroupType::Compute));
+    const auto ccsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute));
     fillProperties(properties, ccsFamilyIndex, 0);
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
     ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
@@ -2053,7 +2053,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_RCS, EngineUsage::Regular).osContext;
     EXPECT_FALSE(osContext.isInitialized());
 
-    const auto rcsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getIndexOfNonEmptyEngineGroup(EngineGroupType::RenderCompute));
+    const auto rcsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::RenderCompute));
     fillProperties(properties, rcsFamilyIndex, 0);
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
     ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
@@ -2107,12 +2107,13 @@ struct CopyOnlyQueueTests : ::testing::Test {
         typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, *defaultHwInfo);
 
         auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
-        if (device->engineGroups[static_cast<uint32_t>(EngineGroupType::Copy)].empty()) {
+        auto copyEngineGroup = std::find_if(device->engineGroups.begin(), device->engineGroups.end(), [](const auto &engineGroup) {
+            return engineGroup.engineGroupType == EngineGroupType::Copy;
+        });
+        if (copyEngineGroup == device->engineGroups.end()) {
             GTEST_SKIP();
         }
-        for (auto &engineGroup : device->engineGroups) {
-            engineGroup.clear();
-        }
+        device->engineGroups.clear();
         device->engines.clear();
 
         device->createEngine(0, typeUsageRcs);
@@ -2123,7 +2124,7 @@ struct CopyOnlyQueueTests : ::testing::Test {
 
         context = std::make_unique<MockContext>(clDevice.get());
 
-        properties[1] = device->getIndexOfNonEmptyEngineGroup(EngineGroupType::Copy);
+        properties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Copy);
     }
 
     EngineTypeUsage typeUsageBcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular};
@@ -2211,7 +2212,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
     };
     auto addTestValueIfAvailable = [&](std::vector<CommandQueueTestValues> &vec, EngineGroupType engineGroup, cl_queue_properties queueIndex, aub_stream::EngineType engineType, bool csEnabled) {
         if (csEnabled) {
-            const auto familyIndex = device->getDevice().getIndexOfNonEmptyEngineGroup(engineGroup);
+            const auto familyIndex = device->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroup);
             vec.push_back(CommandQueueTestValues(static_cast<cl_queue_properties>(familyIndex), queueIndex, engineType));
         }
     };

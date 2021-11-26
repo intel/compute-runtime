@@ -32,8 +32,12 @@ struct SelectorCopyEngine : NonCopyableOrMovableClass {
 
 class Device : public ReferenceTrackedObject<Device> {
   public:
-    using EngineGroupT = std::vector<EngineControl>;
-    using EngineGroupsT = EngineGroupT[CommonConstants::engineGroupCount];
+    using EnginesT = std::vector<EngineControl>;
+    struct EngineGroupT {
+        EngineGroupType engineGroupType;
+        EnginesT engines;
+    };
+    using EngineGroupsT = std::vector<EngineGroupT>;
 
     Device &operator=(const Device &) = delete;
     Device(const Device &) = delete;
@@ -61,8 +65,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineGroupsT &getEngineGroups() {
         return this->engineGroups;
     }
-    const std::vector<EngineControl> *getNonEmptyEngineGroup(size_t index) const;
-    size_t getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) const;
+    size_t getEngineGroupIndexFromEngineGroupType(EngineGroupType engineGroupType) const;
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getNextEngineForCommandQueue();
@@ -83,7 +86,7 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL bool isDebuggerActive() const;
     Debugger *getDebugger() const { return getRootDeviceEnvironment().debugger.get(); }
     NEO::SourceLevelDebugger *getSourceLevelDebugger();
-    const std::vector<EngineControl> &getEngines() const;
+    const EnginesT &getEngines() const;
     const std::string getDeviceName(const HardwareInfo &hwInfo) const;
 
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
@@ -162,7 +165,7 @@ class Device : public ReferenceTrackedObject<Device> {
 
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
-    std::vector<EngineControl> engines;
+    EnginesT engines;
     EngineGroupsT engineGroups;
     std::vector<SubDevice *> subdevices;
 

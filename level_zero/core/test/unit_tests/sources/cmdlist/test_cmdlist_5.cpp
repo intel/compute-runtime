@@ -923,14 +923,7 @@ HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
 }
 
 TEST_F(CommandListCreate, givenOrdinalBiggerThanAvailableEnginesWhenCreatingCommandListThenInvalidArgumentErrorIsReturned) {
-    auto &engineGroups = neoDevice->getEngineGroups();
-    uint32_t numAvailableEngineGroups = 0;
-    for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {
-        if (engineGroups[ordinal].size()) {
-            numAvailableEngineGroups++;
-        }
-    }
-
+    auto numAvailableEngineGroups = static_cast<uint32_t>(neoDevice->getEngineGroups().size());
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     desc.commandQueueGroupOrdinal = numAvailableEngineGroups;

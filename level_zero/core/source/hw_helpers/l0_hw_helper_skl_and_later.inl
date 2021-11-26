@@ -10,7 +10,7 @@
 namespace L0 {
 
 template <typename Family>
-void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, uint32_t groupType) const {
+void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupType groupType) const {
 }
 
 } // namespace L0
