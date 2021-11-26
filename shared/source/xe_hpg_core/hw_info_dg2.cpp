@@ -145,6 +145,23 @@ void DG2_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeat
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
+    // non-zero values for unit tests
+    if (gtSysInfo->SliceCount == 0) {
+        gtSysInfo->SliceCount = 2;
+        gtSysInfo->SubSliceCount = 8;
+        gtSysInfo->EUCount = 40;
+        gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
+        gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
+        gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
+
+        gtSysInfo->L3BankCount = 1;
+
+        gtSysInfo->CCSInfo.IsValid = true;
+        gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
+
+        hwInfo->featureTable.ftrBcsInfo = 1;
+    }
+
     if (setupFeatureTableAndWorkaroundTable) {
         DG2::setupFeatureAndWorkaroundTable(hwInfo);
     }
