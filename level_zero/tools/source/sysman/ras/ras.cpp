@@ -29,7 +29,7 @@ void RasHandleContext::createHandle(zes_ras_error_type_t type, ze_device_handle_
 
 void RasHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
     for (const auto &deviceHandle : deviceHandles) {
-        std::vector<zes_ras_error_type_t> errorType = {};
+        std::set<zes_ras_error_type_t> errorType = {};
         OsRas::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
         for (const auto &type : errorType) {
             createHandle(type, deviceHandle);

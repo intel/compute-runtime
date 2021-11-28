@@ -18,4 +18,5 @@ endif()
 
 # Make our source files visible to parent
 set_property(GLOBAL PROPERTY L0_SRCS_TOOLS_SYSMAN_RAS_LINUX ${L0_SRCS_TOOLS_SYSMAN_RAS_LINUX})
+add_subdirectories()
 

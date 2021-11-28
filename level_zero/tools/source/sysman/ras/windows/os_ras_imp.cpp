@@ -16,9 +16,7 @@ class WddmRasImp : public OsRas {
     ze_result_t osRasSetConfig(const zes_ras_config_t *config) override;
 };
 
-ze_result_t OsRas::getSupportedRasErrorTypes(std::vector<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
+void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {}
 
 ze_result_t WddmRasImp::osRasGetProperties(zes_ras_properties_t &properties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

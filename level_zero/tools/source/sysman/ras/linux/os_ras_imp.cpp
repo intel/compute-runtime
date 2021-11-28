@@ -11,9 +11,7 @@
 
 namespace L0 {
 
-ze_result_t OsRas::getSupportedRasErrorTypes(std::vector<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
+void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {}
 
 ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
