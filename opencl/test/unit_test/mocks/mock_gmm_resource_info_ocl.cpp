@@ -9,6 +9,8 @@
 
 #include "opencl/source/helpers/surface_formats.h"
 
+#include "gtest/gtest.h"
+
 namespace NEO {
 
 void MockGmmResourceInfo::setSurfaceFormat() {

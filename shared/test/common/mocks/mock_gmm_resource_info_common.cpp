@@ -8,18 +8,16 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
-using namespace ::testing;
-
 namespace NEO {
 GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams) {
     if (resourceCreateParams->Type == GMM_RESOURCE_TYPE::RESOURCE_INVALID) {
         return nullptr;
     }
-    return new ::testing::NiceMock<MockGmmResourceInfo>(resourceCreateParams);
+    return new MockGmmResourceInfo(resourceCreateParams);
 }
 
 GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) {
-    return new ::testing::NiceMock<MockGmmResourceInfo>(inputGmmResourceInfo);
+    return new MockGmmResourceInfo(inputGmmResourceInfo);
 }
 
 MockGmmResourceInfo::MockGmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) {

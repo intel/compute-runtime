@@ -75,7 +75,7 @@ class GlSharingTextureTests : public ::testing::Test {
 
     void setUnifiedAuxSurf() {
         tempMM->useForcedGmm = true;
-        auto mockGmmResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(tempMM->forceGmm->gmmResourceInfo.get());
+        auto mockGmmResInfo = static_cast<MockGmmResourceInfo *>(tempMM->forceGmm->gmmResourceInfo.get());
         mockGmmResInfo->setUnifiedAuxTranslationCapable();
     }
 

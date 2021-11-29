@@ -8,8 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/surface_format_info.h"
-
-#include "gmock/gmock.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
 struct SurfaceFormatInfo;
@@ -68,11 +67,17 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) override;
 
-    MOCK_METHOD(uint8_t, cpuBlt, (GMM_RES_COPY_BLT * resCopyBlt), (override));
+    uint8_t cpuBlt(GMM_RES_COPY_BLT *resCopyBlt) override {
+        cpuBltCalled++;
+        if (resCopyBlt) {
+            requestedResCopyBlt = *resCopyBlt;
+        }
+        return cpuBltResult;
+    };
 
     void *getSystemMemPointer() override { return (void *)mockResourceCreateParams.pExistingSysMem; }
 
-    MOCK_METHOD(uint64_t, getUnifiedAuxSurfaceOffset, (GMM_UNIFIED_AUX_TYPE auxType), (override));
+    ADDMETHOD_NOBASE(getUnifiedAuxSurfaceOffset, uint64_t, 0u, (GMM_UNIFIED_AUX_TYPE auxType));
 
     bool is64KBPageSuitable() const override { return is64KBPageSuitableValue; }
 
@@ -103,6 +108,9 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint32_t arrayIndexPassedToGetOffset = 0;
     SurfaceFormatInfo tempSurface{};
     bool is64KBPageSuitableValue = true;
+    GMM_RES_COPY_BLT requestedResCopyBlt = {};
+    uint32_t cpuBltCalled = 0u;
+    uint8_t cpuBltResult = 1u;
 
   protected:
     MockGmmResourceInfo();

@@ -684,7 +684,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
 
-    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
+    auto mockMcsGmmResInfo = static_cast<MockGmmResourceInfo *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
@@ -716,7 +716,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
 
-    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
+    auto mockMcsGmmResInfo = static_cast<MockGmmResourceInfo *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     mockMcsGmmResInfo->setMultisampleControlSurface();
     EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
@@ -745,7 +745,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
 
-    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
+    auto mockMcsGmmResInfo = static_cast<MockGmmResourceInfo *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     mockMcsGmmResInfo->setMultisampleControlSurface();
 
@@ -896,10 +896,9 @@ HWTEST_F(ImageSetArgTest, givenNonRenderCompressedResourceWhenSettingImgArgThenD
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
     auto gmm = srcAllocation->getDefaultGmm();
-    auto mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
+    auto mockGmmResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     gmm->isCompressionEnabled = false;
-
-    EXPECT_CALL(*mockGmmResInfo, getUnifiedAuxSurfaceOffset(_)).Times(0);
+    mockGmmResInfo->getUnifiedAuxSurfaceOffsetCalled = 0u;
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceQpitch());
     EXPECT_EQ(1u, surfaceState.getAuxiliarySurfacePitch());
@@ -910,6 +909,7 @@ HWTEST_F(ImageSetArgTest, givenNonRenderCompressedResourceWhenSettingImgArgThenD
     EXPECT_EQ(1u, surfaceState.getAuxiliarySurfacePitch());
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceQpitch());
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
+    EXPECT_EQ(0u, mockGmmResInfo->getUnifiedAuxSurfaceOffsetCalled);
 }
 
 /* cl_intel_media_block_io */

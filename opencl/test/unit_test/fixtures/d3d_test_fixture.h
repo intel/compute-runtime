@@ -87,7 +87,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         imgDesc.imageType = ImageType::Image2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
         gmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), imgInfo).release();
-        mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
+        mockGmmResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
         mockMM->forceGmm = gmm;
     }
@@ -201,7 +201,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     char dummyD3DTexture;
     char dummyD3DTextureStaging;
     Gmm *gmm = nullptr;
-    NiceMock<MockGmmResourceInfo> *mockGmmResInfo = nullptr;
+    MockGmmResourceInfo *mockGmmResInfo = nullptr;
 
     DebugManagerStateRestore dbgRestore;
     std::unique_ptr<MockMM> mockMM;

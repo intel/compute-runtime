@@ -255,7 +255,7 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenZeroRowPitchFromGmmWhenCreatingT
 
     updateImgInfoAndForceGmm();
 
-    auto mockResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
+    auto mockResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockResInfo->overrideReturnedRenderPitch(0u);
 
     auto alignedWidth = alignUp(imgDesc.imageWidth, gmm->gmmResourceInfo->getHAlign());

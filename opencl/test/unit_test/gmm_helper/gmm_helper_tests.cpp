@@ -546,7 +546,7 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
 
-    auto mockResInfo = new NiceMock<MyMockGmmResourceInfo>(&queryGmm->resourceParams);
+    auto mockResInfo = new MyMockGmmResourceInfo(&queryGmm->resourceParams);
     queryGmm->gmmResourceInfo.reset(mockResInfo);
 
     queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex);
@@ -633,9 +633,10 @@ TEST_F(GmmTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorrectly) 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     auto gmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
-    auto mockResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
+    auto mockResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
-    GMM_RES_COPY_BLT requestedCpuBlt = {};
+    GMM_RES_COPY_BLT &requestedCpuBlt = mockResInfo->requestedResCopyBlt;
+    mockResInfo->cpuBltCalled = 0u;
     GMM_RES_COPY_BLT expectedCpuBlt = {};
     char sys(0), gpu(0);
     uint32_t pitch = 300;
@@ -648,47 +649,42 @@ TEST_F(GmmTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorrectly) 
     expectedCpuBlt.Blt.Upload = upload;
     expectedCpuBlt.Sys.BufferSize = pitch * height;
 
-    auto invokeParamsCopy = [&](GMM_RES_COPY_BLT *resCopyBlt) {
-        requestedCpuBlt = *resCopyBlt;
-        return 1;
-    };
-
     // plane Y
-    EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
     auto retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::PLANE_Y);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(1u, mockResInfo->cpuBltCalled);
 
     // no-plane
-    EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
     retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::NO_PLANE);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(2u, mockResInfo->cpuBltCalled);
 
     //plane UV
     expectedCpuBlt.Sys.pData = ptrOffset(&sys, height * pitch * 2u);
-    EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
     retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::PLANE_UV);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(3u, mockResInfo->cpuBltCalled);
 
     //plane V
     expectedCpuBlt.Sys.pData = ptrOffset(&sys, height * pitch * 2u);
     expectedCpuBlt.Sys.RowPitch = pitch / 2;
     expectedCpuBlt.Sys.BufferSize = expectedCpuBlt.Sys.RowPitch * height;
-    EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
     retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::PLANE_V);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(4u, mockResInfo->cpuBltCalled);
 
     //plane U
     expectedCpuBlt.Sys.pData = ptrOffset(&sys, height * pitch * 2u + height * pitch / 2u);
     expectedCpuBlt.Sys.RowPitch = pitch / 2;
     expectedCpuBlt.Sys.BufferSize = expectedCpuBlt.Sys.RowPitch * height;
-    EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
     retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::PLANE_U);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(5u, mockResInfo->cpuBltCalled);
 }
 
 TEST_F(GmmTests, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenReturnTrue) {

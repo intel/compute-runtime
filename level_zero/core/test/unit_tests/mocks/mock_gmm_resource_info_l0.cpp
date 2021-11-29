@@ -9,6 +9,8 @@
 
 #include "level_zero/core/source/image/image_formats.h"
 
+#include "gtest/gtest.h"
+
 using namespace ::testing;
 
 namespace NEO {
