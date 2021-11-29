@@ -1440,6 +1440,28 @@ TEST(OfflineCompilerTest, givenHexadecimalRevisionIdWhenCompilerIsInitializedThe
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, 17);
 }
 
+TEST(OfflineCompilerTest, givenDebugVariableSetWhenInitializingThenOverrideRevision) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.OverrideRevision.set(123);
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-revision_id",
+        "0x11"};
+
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, 123);
+}
+
 TEST(OfflineCompilerTest, givenDecimalRevisionIdWhenCompilerIsInitializedThenPassItToHwInfo) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);

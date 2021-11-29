@@ -674,6 +674,10 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         }
     }
 
+    if (DebugManager.flags.OverrideRevision.get() != -1) {
+        revisionId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+    }
+
     if (retVal == SUCCESS) {
         if (compile32 && compile64) {
             argHelper->printf("Error: Cannot compile for 32-bit and 64-bit, please choose one.\n");
