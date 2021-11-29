@@ -272,7 +272,7 @@ HWTEST2_F(DeviceQueueGroupTest,
         desc.commandQueueGroupOrdinal = i;
         ze_command_list_handle_t hCommandList = {};
 
-        res = context->createCommandList(device, &desc, &hCommandList);
+        res = context->createCommandList(&deviceImp, &desc, &hCommandList);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         CommandList *commandList = CommandList::fromHandle(hCommandList);

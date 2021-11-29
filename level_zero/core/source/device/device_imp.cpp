@@ -152,8 +152,10 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
                                          ze_command_list_handle_t *commandList) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     uint32_t engineGroupIndex = desc->commandQueueGroupOrdinal;
-    mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_result_t returnValue = mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+    if (returnValue != ZE_RESULT_SUCCESS) {
+        return returnValue;
+    }
     *commandList = CommandList::create(productFamily, this, static_cast<NEO::EngineGroupType>(engineGroupIndex), desc->flags, returnValue);
 
     return returnValue;
@@ -163,8 +165,10 @@ ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t 
                                                   ze_command_list_handle_t *phCommandList) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     uint32_t engineGroupIndex = desc->ordinal;
-    mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_result_t returnValue = mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+    if (returnValue != ZE_RESULT_SUCCESS) {
+        return returnValue;
+    }
     *phCommandList = CommandList::createImmediate(productFamily, this, desc, false, static_cast<NEO::EngineGroupType>(engineGroupIndex), returnValue);
 
     return returnValue;
@@ -176,7 +180,10 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     NEO::CommandStreamReceiver *csr = nullptr;
     uint32_t engineGroupIndex = desc->ordinal;
-    mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+    ze_result_t returnValue = mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+    if (returnValue != ZE_RESULT_SUCCESS) {
+        return returnValue;
+    }
     if (desc->priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW) {
         getCsrForLowPriority(&csr);
     } else {
@@ -187,8 +194,6 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     }
 
     UNRECOVERABLE_IF(csr == nullptr);
-
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
     auto &hwHelper = NEO::HwHelper::get(platform.eRenderCoreFamily);
     bool isCopyOnly = hwHelper.isCopyOnlyEngineType(static_cast<NEO::EngineGroupType>(engineGroupIndex));

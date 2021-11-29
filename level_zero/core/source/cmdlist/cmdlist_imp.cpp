@@ -101,7 +101,10 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineType = NEO::EngineGroupType::RenderCompute;
             }
         } else {
-            device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
+            returnValue = device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
+            if (returnValue != ZE_RESULT_SUCCESS) {
+                return commandList;
+            }
         }
 
         UNRECOVERABLE_IF(nullptr == csr);

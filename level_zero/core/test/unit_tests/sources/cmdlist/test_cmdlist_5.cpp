@@ -922,5 +922,35 @@ HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
     ASSERT_NE(itor, cmdList.end());
 }
 
+TEST_F(CommandListCreate, givenOrdinalBiggerThanAvailableEnginesWhenCreatingCommandListThenInvalidArgumentErrorIsReturned) {
+    auto &engineGroups = neoDevice->getEngineGroups();
+    uint32_t numAvailableEngineGroups = 0;
+    for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {
+        if (engineGroups[ordinal].size()) {
+            numAvailableEngineGroups++;
+        }
+    }
+
+    ze_command_list_handle_t commandList = nullptr;
+    ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    desc.commandQueueGroupOrdinal = numAvailableEngineGroups;
+    auto returnValue = device->createCommandList(&desc, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+
+    ze_command_queue_desc_t desc2 = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    desc2.ordinal = numAvailableEngineGroups;
+    desc2.index = 0;
+    returnValue = device->createCommandListImmediate(&desc2, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+
+    desc2.ordinal = 0;
+    desc2.index = 0x1000;
+    returnValue = device->createCommandListImmediate(&desc2, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+}
+
 } // namespace ult
 } // namespace L0

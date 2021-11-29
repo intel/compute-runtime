@@ -998,10 +998,16 @@ HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBigerThanAvailableEnginesWhe
             numaAvailableEngineGroups++;
         }
     }
-    ze_command_queue_desc_t desc = {};
+    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     desc.ordinal = numaAvailableEngineGroups;
     desc.index = 0;
     ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(nullptr, commandQueue);
+
+    desc.ordinal = 0;
+    desc.index = 0x1000;
+    res = context->createCommandQueue(device, &desc, &commandQueue);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
     EXPECT_EQ(nullptr, commandQueue);
 }
