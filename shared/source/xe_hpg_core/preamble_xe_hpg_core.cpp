@@ -32,6 +32,11 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     if (!hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
         command->setFusedEuDispatch(true);
     }
+
+    command->setNumberOfWalkers(1);
+    if (DebugManager.flags.CFENumberOfWalkers.get() != -1) {
+        command->setNumberOfWalkers(DebugManager.flags.CFENumberOfWalkers.get());
+    }
 }
 
 template <>

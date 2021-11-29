@@ -159,14 +159,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenScratchEnabledWh
     EXPECT_EQ(expectedAddress, address);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue) {
+HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue, IsAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(linearStream.getSpace(sizeof(CFE_STATE)));
     *cfeState = FamilyType::cmdInitCfeState;
 
-    uint32_t numberOfWalkers = cfeState->getNumberOfWalkers();
-    uint32_t fusedEuDispach = cfeState->getFusedEuDispatch();
+    [[maybe_unused]] uint32_t numberOfWalkers = 0u;
+    [[maybe_unused]] uint32_t fusedEuDispach = 0u;
+    if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+        numberOfWalkers = cfeState->getNumberOfWalkers();
+    }
+    if constexpr (TestTraits<gfxCoreFamily>::fusedEuDispatchSupported) {
+        fusedEuDispach = cfeState->getFusedEuDispatch();
+    }
     uint32_t overDispatchControl = static_cast<uint32_t>(cfeState->getOverDispatchControl());
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
@@ -176,13 +182,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagW
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, expectedAddress, expectedMaxThreads, emptyProperties);
     uint32_t maximumNumberOfThreads = cfeState->getMaximumNumberOfThreads();
 
-    EXPECT_EQ(numberOfWalkers, cfeState->getNumberOfWalkers());
-    EXPECT_EQ(fusedEuDispach, cfeState->getFusedEuDispatch());
+    if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+        EXPECT_EQ(numberOfWalkers, cfeState->getNumberOfWalkers());
+    }
+    if constexpr (TestTraits<gfxCoreFamily>::fusedEuDispatchSupported) {
+        EXPECT_EQ(fusedEuDispach, cfeState->getFusedEuDispatch());
+    }
     EXPECT_NE(expectedMaxThreads, maximumNumberOfThreads);
     EXPECT_EQ(overDispatchControl, static_cast<uint32_t>(cfeState->getOverDispatchControl()));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue) {
+HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     uint32_t expectedValue1 = 1u;
@@ -210,7 +220,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhen
 
     EXPECT_EQ(expectedValue1, static_cast<uint32_t>(cfeState->getOverDispatchControl()));
     EXPECT_EQ(expectedValue1, cfeState->getLargeGRFThreadAdjustDisable());
-    EXPECT_EQ(expectedValue2, cfeState->getNumberOfWalkers());
+    if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+        EXPECT_EQ(expectedValue2, cfeState->getNumberOfWalkers());
+    }
     EXPECT_EQ(expectedValue2, cfeState->getMaximumNumberOfThreads());
 }
 

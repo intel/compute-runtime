@@ -120,16 +120,11 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     auto cfeState = reinterpret_cast<CFE_STATE *>(pVfeState);
     CFE_STATE cmd = Family::cmdInitCfeState;
 
-    cmd.setNumberOfWalkers(1);
-
     uint32_t lowAddress = uint32_t(0xFFFFFFFF & scratchAddress);
     cmd.setScratchSpaceBuffer(lowAddress);
     cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
     appendProgramVFEState(hwInfo, streamProperties, &cmd);
 
-    if (DebugManager.flags.CFENumberOfWalkers.get() != -1) {
-        cmd.setNumberOfWalkers(DebugManager.flags.CFENumberOfWalkers.get());
-    }
     if (DebugManager.flags.CFEMaximumNumberOfThreads.get() != -1) {
         cmd.setMaximumNumberOfThreads(DebugManager.flags.CFEMaximumNumberOfThreads.get());
     }
