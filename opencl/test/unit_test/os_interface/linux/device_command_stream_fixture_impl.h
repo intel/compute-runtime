@@ -39,14 +39,6 @@ class DrmMockCustomImpl : public DrmMockCustom {
     __u32 createExtHandle = 0;
     __u64 createExtExtensions = 0;
 
-    //DRM_IOCTL_I915_GEM_MMAP_OFFSET
-    __u32 mmapOffsetHandle = 0;
-    __u32 mmapOffsetPad = 0;
-    __u64 mmapOffsetOffset = 0;
-    __u64 mmapOffsetFlags = 0;
-
-    bool failOnMmapOffset = false;
-
     int ioctlExtra(unsigned long request, void *arg) override {
         switch (request) {
         case DRM_IOCTL_I915_GEM_CREATE_EXT: {
@@ -55,17 +47,6 @@ class DrmMockCustomImpl : public DrmMockCustom {
             createExtHandle = createExtParams->handle;
             createExtExtensions = createExtParams->extensions;
             ioctlImpl_cnt.gemCreateExt++;
-        } break;
-        case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
-            auto mmapOffsetParams = reinterpret_cast<drm_i915_gem_mmap_offset *>(arg);
-            mmapOffsetHandle = mmapOffsetParams->handle;
-            mmapOffsetPad = mmapOffsetParams->pad;
-            mmapOffsetOffset = mmapOffsetParams->offset;
-            mmapOffsetFlags = mmapOffsetParams->flags;
-            ioctlImpl_cnt.gemMmapOffset++;
-            if (failOnMmapOffset == true) {
-                return -1;
-            }
         } break;
         default: {
             std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;

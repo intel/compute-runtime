@@ -88,48 +88,6 @@ class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager;
 };
 
-extern bool retrieveMmapOffsetForBufferObject(Drm &drm, BufferObject &bo, uint64_t flags, uint64_t &offset);
-
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectSucceedsThenReturnTrueAndCorrectOffset) {
-    BufferObject bo(mock, 1, 1024, 0);
-    mock->offset = 21;
-
-    uint64_t offset = 0;
-    auto ret = retrieveMmapOffsetForBufferObject(*mock, bo, 0, offset);
-
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(21u, offset);
-}
-
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectFailsThenReturnFalse) {
-    BufferObject bo(mock, 1, 1024, 0);
-    mock->mmapOffsetRetVal = -1;
-
-    uint64_t offset = 0;
-    auto ret = retrieveMmapOffsetForBufferObject(*mock, bo, 0, offset);
-
-    EXPECT_FALSE(ret);
-}
-
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledThenApplyCorrectFlags) {
-    BufferObject bo(mock, 1, 1024, 0);
-
-    uint64_t offset = 0;
-    auto ret = retrieveMmapOffsetForBufferObject(*mock, bo, 0, offset);
-
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(4u, mock->mmapOffsetFlagsReceived);
-
-    mock->mmapOffsetRetVal = -1;
-
-    for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
-        ret = retrieveMmapOffsetForBufferObject(*mock, bo, flags, offset);
-
-        EXPECT_FALSE(ret);
-        EXPECT_EQ(flags, mock->mmapOffsetFlagsReceived);
-    }
-}
-
 HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObjectInMemoryRegionIsCalledThenBufferObjectWithAGivenGpuAddressAndSizeIsCreatedAndAllocatedInASpecifiedMemoryRegion, NonDefaultIoctlsSupported) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
@@ -822,7 +780,7 @@ HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledO
     mockExp->ioctlImpl_expected.gemCreateExt = 1;
     mockExp->ioctl_expected.gemWait = 1;
     mockExp->ioctl_expected.gemClose = 1;
-    mockExp->ioctlImpl_expected.gemMmapOffset = 1;
+    mockExp->ioctl_expected.gemMmapOffset = 1;
     mockExp->memoryInfo.reset(new MockMemoryInfo());
 
     AllocationData allocData;
@@ -845,7 +803,7 @@ HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledO
 
     EXPECT_EQ(static_cast<uint32_t>(drmAllocation->getBO()->peekHandle()), mockExp->mmapOffsetHandle);
     EXPECT_EQ(0u, mockExp->mmapOffsetPad);
-    EXPECT_EQ(0u, mockExp->mmapOffsetOffset);
+    EXPECT_EQ(0u, mockExp->mmapOffsetExpected);
     EXPECT_EQ(4u, mockExp->mmapOffsetFlags);
 
     memoryManager->unlockResource(allocation);
@@ -855,7 +813,7 @@ HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledO
 }
 
 TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapThenReturnNullPtr) {
-    mockExp->ioctlImpl_expected.gemMmapOffset = 2;
+    mockExp->ioctl_expected.gemMmapOffset = 2;
     this->ioctlResExt = {mockExp->ioctl_cnt.total, -1};
     mockExp->ioctl_res_ext = &ioctlResExt;
 
@@ -871,7 +829,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
 }
 
 TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapFunctionOffsetThenReturnNullPtr) {
-    mockExp->ioctlImpl_expected.gemMmapOffset = 2;
+    mockExp->ioctl_expected.gemMmapOffset = 2;
     mockExp->returnIoctlExtraErrorValue = true;
     mockExp->failOnMmapOffset = true;
 

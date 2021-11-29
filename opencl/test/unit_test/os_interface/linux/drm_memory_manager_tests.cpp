@@ -5543,4 +5543,72 @@ TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenC
         delete mockAllocation.bufferObjects[index];
     }
 }
+
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectSucceedsThenReturnTrueAndCorrectOffset) {
+    mock->ioctl_expected.gemMmapOffset = 1;
+    BufferObject bo(mock, 1, 1024, 0);
+    mock->mmapOffsetExpected = 21;
+
+    uint64_t offset = 0;
+    auto ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, 0, offset);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(21u, offset);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectFailsThenReturnFalse) {
+    mock->ioctl_expected.gemMmapOffset = 2;
+    BufferObject bo(mock, 1, 1024, 0);
+    mock->failOnMmapOffset = true;
+
+    uint64_t offset = 0;
+    auto ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, 0, offset);
+
+    EXPECT_FALSE(ret);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForLocalMemoryThenApplyCorrectFlags) {
+    mock->ioctl_expected.gemMmapOffset = 5;
+    BufferObject bo(mock, 1, 1024, 0);
+
+    uint64_t offset = 0;
+    auto ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, 0, offset);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(4u, mock->mmapOffsetFlags);
+
+    mock->failOnMmapOffset = true;
+
+    for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
+        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+
+        EXPECT_FALSE(ret);
+        EXPECT_EQ(flags, mock->mmapOffsetFlags);
+    }
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForSystemMemoryThenApplyCorrectFlags) {
+    mock->ioctl_expected.gemMmapOffset = 4;
+    BufferObject bo(mock, 1, 1024, 0);
+
+    uint64_t offset = 0;
+    bool ret = false;
+
+    for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
+        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+
+        EXPECT_TRUE(ret);
+        EXPECT_EQ(flags, mock->mmapOffsetFlags);
+    }
+
+    mock->failOnMmapOffset = true;
+
+    for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
+        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+
+        EXPECT_FALSE(ret);
+        EXPECT_EQ(flags, mock->mmapOffsetFlags);
+    }
+}
+
 } // namespace NEO

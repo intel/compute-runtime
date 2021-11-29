@@ -90,6 +90,7 @@ class DrmMockCustom : public Drm {
         std::atomic<int32_t> primeFdToHandle;
         std::atomic<int32_t> handleToPrimeFd;
         std::atomic<int32_t> gemMmap;
+        std::atomic<int32_t> gemMmapOffset;
         std::atomic<int32_t> gemSetDomain;
         std::atomic<int32_t> gemWait;
         std::atomic<int32_t> gemClose;
@@ -197,6 +198,12 @@ class DrmMockCustom : public Drm {
     __u64 getContextParamRetValue = 0;
     //DRM_IOCTL_I915_GEM_WAIT
     int64_t gemWaitTimeout = 0;
+    //DRM_IOCTL_I915_GEM_MMAP_OFFSET
+    __u32 mmapOffsetHandle = 0;
+    __u32 mmapOffsetPad = 0;
+    __u64 mmapOffsetExpected = 0;
+    __u64 mmapOffsetFlags = 0;
+    bool failOnMmapOffset = false;
 
     int errnoValue = 0;
 

@@ -1424,4 +1424,27 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     return true;
 }
 
+bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceIndex, BufferObject &bo, uint64_t flags, uint64_t &offset) {
+    constexpr uint64_t mmapOffsetFixed = 4;
+
+    drm_i915_gem_mmap_offset mmapOffset = {};
+    mmapOffset.handle = bo.peekHandle();
+    mmapOffset.flags = isLocalMemorySupported(rootDeviceIndex) ? mmapOffsetFixed : flags;
+    auto &drm = getDrm(rootDeviceIndex);
+    auto ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
+    if (ret != 0 && isLocalMemorySupported(rootDeviceIndex)) {
+        mmapOffset.flags = flags;
+        ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
+    }
+    if (ret != 0) {
+        int err = drm.getErrno();
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF(ret != 0);
+        return false;
+    }
+
+    offset = mmapOffset.offset;
+    return true;
+}
+
 } // namespace NEO

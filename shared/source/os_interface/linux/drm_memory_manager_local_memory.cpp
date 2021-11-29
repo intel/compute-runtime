@@ -10,27 +10,6 @@
 
 namespace NEO {
 
-bool retrieveMmapOffsetForBufferObject(Drm &drm, BufferObject &bo, uint64_t flags, uint64_t &offset) {
-    drm_i915_gem_mmap_offset mmapOffset = {};
-    mmapOffset.handle = bo.peekHandle();
-    mmapOffset.flags = I915_MMAP_OFFSET_FIXED;
-
-    auto ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
-    if (ret != 0) {
-        mmapOffset.flags = flags;
-        ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
-        if (ret != 0) {
-            int err = drm.getErrno();
-            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-            DEBUG_BREAK_IF(ret != 0);
-            return false;
-        }
-    }
-
-    offset = mmapOffset.offset;
-    return true;
-}
-
 DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr) {
     drm_prime_handle openFd = {0, 0, 0};
     openFd.fd = handle;
@@ -74,7 +53,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         }
 
         uint64_t offset = 0;
-        if (!retrieveMmapOffsetForBufferObject(this->getDrm(allocationData.rootDeviceIndex), *bo, I915_MMAP_OFFSET_WB, offset)) {
+        if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, I915_MMAP_OFFSET_WB, offset)) {
             this->munmapFunction(cpuPointer, size);
             return nullptr;
         }
@@ -116,7 +95,7 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     auto rootDeviceIndex = this->getRootDeviceIndex(bo->peekDrm());
 
     uint64_t offset = 0;
-    if (!retrieveMmapOffsetForBufferObject(this->getDrm(rootDeviceIndex), *bo, I915_MMAP_OFFSET_WC, offset)) {
+    if (!retrieveMmapOffsetForBufferObject(rootDeviceIndex, *bo, I915_MMAP_OFFSET_WC, offset)) {
         return nullptr;
     }
 

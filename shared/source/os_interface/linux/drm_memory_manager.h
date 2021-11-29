@@ -123,6 +123,7 @@ class DrmMemoryManager : public MemoryManager {
     uint32_t getRootDeviceIndex(const Drm *drm);
     BufferObject *createRootDeviceBufferObject(uint32_t rootDeviceIndex);
     void releaseBufferObject(uint32_t rootDeviceIndex);
+    bool retrieveMmapOffsetForBufferObject(uint32_t rootDeviceIndex, BufferObject &bo, uint64_t flags, uint64_t &offset);
 
     std::vector<BufferObject *> pinBBs;
     std::vector<void *> memoryForPinBBs;

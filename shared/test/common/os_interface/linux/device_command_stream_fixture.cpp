@@ -20,6 +20,7 @@ void DrmMockCustom::Ioctls::reset() {
     primeFdToHandle = 0;
     handleToPrimeFd = 0;
     gemMmap = 0;
+    gemMmapOffset = 0;
     gemSetDomain = 0;
     gemWait = 0;
     gemClose = 0;
@@ -46,6 +47,7 @@ void DrmMockCustom::testIoctls() {
     NEO_IOCTL_EXPECT_EQ(primeFdToHandle);
     NEO_IOCTL_EXPECT_EQ(handleToPrimeFd);
     NEO_IOCTL_EXPECT_EQ(gemMmap);
+    NEO_IOCTL_EXPECT_EQ(gemMmapOffset);
     NEO_IOCTL_EXPECT_EQ(gemSetDomain);
     NEO_IOCTL_EXPECT_EQ(gemWait);
     NEO_IOCTL_EXPECT_EQ(gemClose);
@@ -167,7 +169,16 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
     case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY: {
         ioctl_cnt.contextDestroy++;
     } break;
-
+    case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
+        auto mmapOffsetParams = reinterpret_cast<drm_i915_gem_mmap_offset *>(arg);
+        mmapOffsetParams->handle = mmapOffsetHandle;
+        mmapOffsetParams->offset = mmapOffsetExpected;
+        mmapOffsetFlags = mmapOffsetParams->flags;
+        ioctl_cnt.gemMmapOffset++;
+        if (failOnMmapOffset == true) {
+            return -1;
+        }
+    } break;
     default:
         int res = ioctlExtra(request, arg);
         if (returnIoctlExtraErrorValue) {

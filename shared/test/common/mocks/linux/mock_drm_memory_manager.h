@@ -89,6 +89,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::pushSharedBufferObject;
     using DrmMemoryManager::registerAllocationInOs;
     using DrmMemoryManager::releaseGpuRange;
+    using DrmMemoryManager::retrieveMmapOffsetForBufferObject;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;
     using DrmMemoryManager::supportsMultiStorageResources;
