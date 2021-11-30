@@ -2546,3 +2546,137 @@ TEST(WddmMemoryManagerCopyMemoryToAllocationBanksTest, givenAllocationWithMultiT
     EXPECT_EQ(0, memcmp(ptrOffset(wddm->storages[1], offset), dataToCopy.data(), dataToCopy.size()));
     EXPECT_EQ(0, memcmp(ptrOffset(wddm->storages[3], offset), dataToCopy.data(), dataToCopy.size()));
 }
+
+class WddmMemoryManagerMock : public MockWddmMemoryManagerFixture, public ::testing::Test {
+  public:
+    void SetUp() override {
+        MockWddmMemoryManagerFixture::SetUp();
+    }
+    void TearDown() override {
+        MockWddmMemoryManagerFixture::TearDown();
+    }
+};
+
+TEST_F(WddmMemoryManagerMock, givenAllocationWithReservedGpuVirtualAddressWhenMapCallFailsDuringCreateWddmAllocationThenReleasePreferredAddress) {
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext(), 4);
+    allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
+    uint64_t gpuAddress = 0x123;
+    uint64_t sizeForFree = 0x1234;
+    allocation.reservedGpuVirtualAddress = gpuAddress;
+    allocation.reservedSizeForGpuVirtualAddress = sizeForFree;
+
+    wddm->callBaseMapGpuVa = false;
+    wddm->mapGpuVaStatus = false;
+
+    memoryManager->createWddmAllocation(&allocation, nullptr);
+    EXPECT_EQ(1u, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(gpuAddress, wddm->freeGpuVirtualAddressResult.uint64ParamPassed);
+    EXPECT_EQ(sizeForFree, wddm->freeGpuVirtualAddressResult.sizePassed);
+}
+
+struct PlatformWithFourDevicesTest : public ::testing::Test {
+    PlatformWithFourDevicesTest() {
+        ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    }
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(4);
+        initPlatform();
+    }
+
+    DebugManagerStateRestore restorer;
+
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+};
+
+TEST_F(PlatformWithFourDevicesTest, whenCreateColoredAllocationAndWddmReturnsCanonizedAddressDuringMapingVAThenAddressIsBeingDecanonizedAndAbortIsNotThrownFromUnrecoverableIfStatement) {
+    struct CanonizeAddressMockWddm : public WddmMock {
+        using WddmMock::WddmMock;
+
+        bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) override {
+            gpuPtr = GmmHelper::canonize(preferredAddress);
+            return mapGpuVaStatus;
+        }
+    };
+
+    auto wddm = new CanonizeAddressMockWddm(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
+    wddm->init();
+    auto osInterfaceMock = new OSInterface();
+    auto callBaseDestroyBackup = wddm->callBaseDestroyAllocations;
+    wddm->callBaseDestroyAllocations = false;
+    wddm->mapGpuVaStatus = true;
+    osInterfaceMock->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+    auto osInterfaceBackUp = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.release();
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterfaceMock);
+
+    MockWddmMemoryManager memoryManager(true, true, *platform()->peekExecutionEnvironment());
+    memoryManager.supportsMultiStorageResources = true;
+
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrMultiTileArch = true;
+
+    GraphicsAllocation *allocation = nullptr;
+    EXPECT_NO_THROW(allocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, 4 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER, true, mockDeviceBitfield}));
+    EXPECT_NE(nullptr, allocation);
+
+    memoryManager.freeGraphicsMemory(allocation);
+    wddm->callBaseDestroyAllocations = callBaseDestroyBackup;
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterfaceBackUp);
+}
+
+TEST_F(PlatformWithFourDevicesTest, givenDifferentAllocationSizesWhenColourAllocationThenResourceIsSpreadProperly) {
+    auto wddm = reinterpret_cast<WddmMock *>(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
+    wddm->mapGpuVaStatus = true;
+    VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
+
+    MockWddmMemoryManager memoryManager(true, true, *platform()->peekExecutionEnvironment());
+    memoryManager.supportsMultiStorageResources = true;
+
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrMultiTileArch = true;
+
+    // We are allocating memory from 4 to 12 pages and want to check if remainders (1, 2 or 3 pages in case of 4 devices) are spread equally.
+    for (int additionalSize = 0; additionalSize <= 8; additionalSize++) {
+        auto allocation = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, (4 + additionalSize) * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER, true, 0b1111}));
+        auto handles = allocation->getNumGmms();
+
+        EXPECT_EQ(4u, handles);
+        auto size = allocation->getAlignedSize() / MemoryConstants::pageSize64k;
+        switch (size % handles) {
+        case 0:
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(0)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(1)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(2)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(3)->gmmResourceInfo->getSizeAllocation());
+            break;
+        case 1:
+            EXPECT_EQ((size / handles + 1) * MemoryConstants::pageSize64k, allocation->getGmm(0)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(1)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(2)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(3)->gmmResourceInfo->getSizeAllocation());
+            break;
+        case 2:
+            EXPECT_EQ((size / handles + 1) * MemoryConstants::pageSize64k, allocation->getGmm(0)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ((size / handles + 1) * MemoryConstants::pageSize64k, allocation->getGmm(1)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(2)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(3)->gmmResourceInfo->getSizeAllocation());
+            break;
+        case 3:
+            EXPECT_EQ((size / handles + 1) * MemoryConstants::pageSize64k, allocation->getGmm(0)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ((size / handles + 1) * MemoryConstants::pageSize64k, allocation->getGmm(1)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ((size / handles + 1) * MemoryConstants::pageSize64k, allocation->getGmm(2)->gmmResourceInfo->getSizeAllocation());
+            EXPECT_EQ(size / handles * MemoryConstants::pageSize64k, allocation->getGmm(3)->gmmResourceInfo->getSizeAllocation());
+        default:
+            break;
+        }
+        memoryManager.freeGraphicsMemory(allocation);
+    }
+}
+
+TEST_F(PlatformWithFourDevicesTest, whenCreateScratchSpaceInSingleTileQueueThenTheAllocationHasOneHandle) {
+    MemoryManagerCreate<WddmMemoryManager> memoryManager(true, true, *platform()->peekExecutionEnvironment());
+
+    AllocationProperties properties{mockRootDeviceIndex, true, 1u, GraphicsAllocation::AllocationType::SCRATCH_SURFACE, false, false, mockDeviceBitfield};
+    auto allocation = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(properties));
+    EXPECT_EQ(1u, allocation->getNumGmms());
+    memoryManager.freeGraphicsMemory(allocation);
+}
