@@ -492,7 +492,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
 using BindlessCommandQueueSBASupport = IsAtLeastProduct<IGFX_SKYLAKE>;
 
 HWTEST2_F(CommandQueueProgramSBATest,
-          givenBindlessModeEnabledWhenProgrammingStateBaseAddressThenBindlessBaseAddressIsPassed, BindlessCommandQueueSBASupport) {
+          givenBindlessModeEnabledWhenProgrammingStateBaseAddressThenBindlessBaseAddressAndSizeAreSet, BindlessCommandQueueSBASupport) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
@@ -525,7 +525,9 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
     EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddressModifyEnable(), true);
     EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase());
-    EXPECT_EQ(cmdSba->getBindlessSurfaceStateSize(), MemoryConstants::sizeOf4GBinPageEntities);
+
+    auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
+    EXPECT_EQ(surfaceStateCount, cmdSba->getBindlessSurfaceStateSize());
 
     commandQueue->destroy();
 }

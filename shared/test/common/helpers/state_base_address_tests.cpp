@@ -107,7 +107,9 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
         1u);
     EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
-    EXPECT_EQ(cmd->getBindlessSurfaceStateSize(), MemoryConstants::sizeOf4GBinPageEntities);
+
+    auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
+    EXPECT_EQ(surfaceStateCount, cmd->getBindlessSurfaceStateSize());
 }
 
 using IohSupported = IsWithinGfxCore<GFXCORE_FAMILY::IGFX_GEN9_CORE, GFXCORE_FAMILY::IGFX_GEN12LP_CORE>;

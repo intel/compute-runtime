@@ -113,9 +113,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                                     kernelDescriptor.payloadMappings.samplerTable.borderColor,
                                                                     dispatchInterface->getDynamicStateHeapData(),
                                                                     device->getBindlessHeapsHelper(), device->getHardwareInfo());
-        if (ApiSpecificConfig::getBindlessConfiguration()) {
-            container.getResidencyContainer().push_back(device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
-        }
     }
 
     idd.setSamplerStatePointer(samplerStateOffset);
@@ -219,6 +216,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                    dispatchInterface->getRequiredWorkgroupOrder());
 
     cmd.setPredicateEnable(isPredicate);
+
+    if (ApiSpecificConfig::getBindlessConfiguration()) {
+        container.getResidencyContainer().push_back(device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
+    }
 
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, hwInfo);
 

@@ -57,5 +57,7 @@ struct StateBaseAddressHelper {
     static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper);
 
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper);
+
+    static uint32_t getMaxBindlessSurfaceStates();
 };
 } // namespace NEO

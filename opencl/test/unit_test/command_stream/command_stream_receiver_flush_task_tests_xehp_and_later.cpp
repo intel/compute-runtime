@@ -234,7 +234,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
     EXPECT_NE(nullptr, bindingTablePoolAlloc);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenSbaProgrammingWhenHeapsAreNotProvidedThenDontProgram) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenNoHeapsProvidedWhenSBAIsProgrammedThenBaseAddressesAreNotSetAndBindlessSurfaceStateSizeSetToMax) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
@@ -284,7 +284,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     EXPECT_EQ(0u, sbaCmd.getBindlessSurfaceStateBaseAddress());
     EXPECT_FALSE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
-    EXPECT_EQ(0u, sbaCmd.getBindlessSurfaceStateSize());
+
+    auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
+    EXPECT_EQ(surfaceStateCount, sbaCmd.getBindlessSurfaceStateSize());
 }
 
 using isXeHPOrAbove = IsAtLeastProduct<IGFX_XE_HP_SDV>;

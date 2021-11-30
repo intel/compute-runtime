@@ -37,6 +37,10 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
     bool overrideBindlessSurfaceStateBase = true;
+
+    const auto surfaceStateCount = getMaxBindlessSurfaceStates();
+    stateBaseAddress->setBindlessSurfaceStateSize(surfaceStateCount);
+
     if (useGlobalHeapsBaseAddress) {
         stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
         stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
@@ -48,7 +52,6 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
         stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         stateBaseAddress->setBindlessSurfaceStateBaseAddress(globalHeapsBaseAddress);
-        stateBaseAddress->setBindlessSurfaceStateSize(MemoryConstants::sizeOf4GBinPageEntities);
 
         overrideBindlessSurfaceStateBase = false;
     } else {

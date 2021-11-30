@@ -432,7 +432,7 @@ set(TEST_KERNEL_SIP_DEBUG_LOCAL_options
 )
 
 set(TEST_KERNEL_BINDLESS_internal_options
-    "-cl-intel-use-bindless-mode"
+    "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode"
 )
 
 set(TEST_KERNEL_BINDLESS

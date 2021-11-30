@@ -26,7 +26,7 @@ set(BUILTIN_OPTIONS_STATELESS
 )
 
 set(bindless_OPTIONS
-    -internal_options "-cl-intel-use-bindless-mode"
+    -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode"
 )
 
 set(bindful_OPTIONS

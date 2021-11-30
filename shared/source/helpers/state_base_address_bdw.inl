@@ -24,4 +24,9 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     appendExtraCacheSettings(stateBaseAddress, gmmHelper);
 }
 
+template <typename GfxFamily>
+uint32_t StateBaseAddressHelper<GfxFamily>::getMaxBindlessSurfaceStates() {
+    return 0;
+}
+
 } // namespace NEO

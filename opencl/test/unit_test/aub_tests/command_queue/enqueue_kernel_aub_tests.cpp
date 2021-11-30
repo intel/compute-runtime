@@ -868,11 +868,27 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     expectMemory<FamilyType>(remainderBufferGpuAddress, this->expectedRemainderMemory, sizeRemainderMemory);
 }
 
-using AUBBindlessKernel = Test<KernelAUBFixture<BindlessKernelFixture>>;
 using IsSklAndLater = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
+                           public ::testing::Test {
+
+    void SetUp() override {
+        DebugManager.flags.UseBindlessMode.set(1);
+        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+        KernelAUBFixture<BindlessKernelFixture>::SetUp();
+    }
+
+    void TearDown() override {
+        KernelAUBFixture<BindlessKernelFixture>::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
 
 HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsSklAndLater) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
+    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+    simulatedCsr->initializeEngine();
 
     createKernel(std::string("bindless_stateful_copy_buffer"), std::string("StatefulCopyBuffer"));
 
@@ -903,8 +919,6 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenRes
                                                              nullptr,
                                                              retVal));
     ASSERT_NE(nullptr, pBufferDst);
-
-    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
 
     memcpy(pBufferSrc->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), bufferDataSrc, bufferSize);
     memcpy(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), bufferDataDst, bufferSize);
@@ -953,6 +967,8 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
     constexpr unsigned int testWidth = 5;
     constexpr unsigned int testHeight = 1;
     constexpr unsigned int testDepth = 1;
+    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+    simulatedCsr->initializeEngine();
 
     createKernel(std::string("bindless_copy_buffer_to_image"), std::string("CopyBufferToImage3d"));
 
@@ -1011,8 +1027,6 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
 
     memcpy(image->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), imageDataDst, imageSize);
     memcpy(bufferSrc->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), imageDataSrc, imageSize);
-
-    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
 
     simulatedCsr->writeMemory(*bufferSrc->getGraphicsAllocation(device->getRootDeviceIndex()));
     simulatedCsr->writeMemory(*image->getGraphicsAllocation(device->getRootDeviceIndex()));

@@ -49,3 +49,54 @@ function(level_zero_generate_kernels target_list platform_name suffix options)
 
   set(${target_list} ${${target_list}} PARENT_SCOPE)
 endfunction()
+
+function(level_zero_generate_kernels_with_internal_options target_list platform_name suffix prefix options internal_options)
+
+  list(APPEND results copy_compiler_files)
+
+  set(outputdir "${TargetDir}/level_zero/${suffix}/test_files/${NEO_ARCH}/")
+
+  foreach(filepath ${ARGN})
+    get_filename_component(filename ${filepath} NAME)
+    get_filename_component(basename ${filepath} NAME_WE)
+    get_filename_component(workdir ${filepath} DIRECTORY)
+
+    set(outputpath_base "${outputdir}${prefix}_${basename}_${suffix}")
+
+    if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+      set(output_files
+          ${outputpath_base}.bin
+          ${outputpath_base}.gen
+          ${outputpath_base}.spv
+          ${outputpath_base}.dbg
+      )
+
+      set(output_name "-output" "${prefix}_${basename}")
+      string(CONCAT options \" ${options} \" )
+             string(CONCAT internal_options \" ${internal_options} \" )
+
+             add_custom_command(
+                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options} , workdir is ${workdir}
+                         OUTPUT ${output_files}
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options}
+                         WORKING_DIRECTORY ${workdir}
+                         DEPENDS ${filepath} ocloc
+      )
+
+      list(APPEND ${target_list} ${output_files})
+    else()
+      foreach(_file_name "bin" "gen" "spv" "dbg")
+        set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/level_zero/${suffix}/test_files/${NEO_ARCH}/${prefix}_${basename}_${suffix}.${_file_name}")
+        add_custom_command(
+                           OUTPUT ${outputpath_base}.${_file_name}
+                           COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+        )
+
+        list(APPEND ${target_list} ${outputpath_base}.${_file_name})
+      endforeach()
+    endif()
+  endforeach()
+
+  set(${target_list} ${${target_list}} PARENT_SCOPE)
+endfunction()

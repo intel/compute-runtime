@@ -1146,7 +1146,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhen
 using BindlessCommandEncodeStatesTest = Test<MemManagerFixture>;
 using BindlessCommandEncodeStatesTesttt = Test<DeviceFixture>;
 
-HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessKernelWhenBindlessModeEnabledThenCmdContainerDoesNotHaveSsh) {
+HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessKernelAndBindlessModeEnabledWhenEncodingKernelThenCmdContainerHasNullptrSSH) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER = typename FamilyType::WALKER_TYPE;
@@ -1182,6 +1182,47 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessKernelWhenBindlessModeE
                                              false, false);
 
     EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
+}
+
+HWTEST2_F(BindlessCommandEncodeStatesTesttt, givenBindlessKernelAndBindlessModeEnabledWhenEncodingKernelThenCmdContainerResidencyContainsGlobalDSH, IsAtMostGen12lp) {
+    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WALKER = typename FamilyType::WALKER_TYPE;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    auto commandContainer = std::make_unique<CommandContainer>();
+    commandContainer->initialize(pDevice);
+    commandContainer->setDirtyStateForAllHeaps(false);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
+                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
+                                                                                                                         pDevice->getRootDeviceIndex(),
+                                                                                                                         pDevice->getDeviceBitfield());
+    uint32_t numBindingTable = 1;
+    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
+    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(sshData));
+    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
+
+    bool requiresUncachedMocs = false;
+    EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
+    uint32_t partitionCount = 0;
+
+    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
+
+    auto globalDSHIterator = std::find(commandContainer->getResidencyContainer().begin(), commandContainer->getResidencyContainer().end(),
+                                       pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation());
+
+    EXPECT_NE(commandContainer->getResidencyContainer().end(), globalDSHIterator);
 }
 
 HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindfulKernelWhenBindlessModeEnabledThenCmdContainerHaveSsh) {

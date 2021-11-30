@@ -114,4 +114,8 @@ template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendIohParameters(STATE_BASE_ADDRESS *stateBaseAddress, const IndirectHeap *ioh, bool useGlobalHeapsBaseAddress, uint64_t indirectObjectHeapBaseAddress) {
 }
 
+template <typename GfxFamily>
+uint32_t StateBaseAddressHelper<GfxFamily>::getMaxBindlessSurfaceStates() {
+    return std::numeric_limits<uint32_t>::max();
+}
 } // namespace NEO
