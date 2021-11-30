@@ -48,7 +48,7 @@ void OsContextLinux::initializeContext() {
     for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmVmId = drm.getVirtualMemoryAddressSpace(deviceIndex);
-            auto drmContextId = drm.createDrmContext(drmVmId, drm.isVmBindAvailable());
+            auto drmContextId = drm.createDrmContext(drmVmId, drm.isVmBindAvailable(), isCooperativeEngine());
             if (drm.areNonPersistentContextsSupported()) {
                 drm.setNonPersistentContext(drmContextId);
             }

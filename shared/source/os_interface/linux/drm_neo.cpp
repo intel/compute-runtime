@@ -391,12 +391,12 @@ void Drm::setUnrecoverableContext(uint32_t drmContextId) {
     ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
 }
 
-uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested) {
+uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested, bool isCooperativeContextRequested) {
     drm_i915_gem_context_create_ext gcc = {};
 
     this->appendDrmContextFlags(gcc, isSpecialContextRequested);
 
-    auto retVal = this->createDrmContextExt(gcc, drmVmId, isSpecialContextRequested);
+    auto retVal = this->createDrmContextExt(gcc, drmVmId, isSpecialContextRequested, isCooperativeContextRequested);
     UNRECOVERABLE_IF(retVal != 0);
 
     if (drmVmId > 0) {

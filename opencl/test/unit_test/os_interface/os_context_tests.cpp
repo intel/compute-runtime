@@ -54,6 +54,17 @@ TEST(OSContext, givenOsContextCreatedDefaultIsFalseWhenSettingTrueThenFlagTrueRe
     delete osContext;
 }
 
+TEST(OSContext, givenCooperativeEngineWhenIsCooperativeEngineIsCalledThenReturnTrue) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    engineDescriptor.engineTypeUsage.second = EngineUsage::Cooperative;
+    auto pOsContext = OsContext::create(nullptr, 0, engineDescriptor);
+    EXPECT_FALSE(pOsContext->isRegular());
+    EXPECT_FALSE(pOsContext->isLowPriority());
+    EXPECT_FALSE(pOsContext->isInternalEngine());
+    EXPECT_TRUE(pOsContext->isCooperativeEngine());
+    delete pOsContext;
+}
+
 struct DeferredOsContextCreationTests : ::testing::Test {
     void SetUp() override {
         device = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};

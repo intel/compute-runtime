@@ -181,7 +181,7 @@ TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     pDrm->storedRetVal = -1;
-    EXPECT_THROW(pDrm->createDrmContext(1, false), std::exception);
+    EXPECT_THROW(pDrm->createDrmContext(1, false, false), std::exception);
     pDrm->storedRetVal = 0;
     delete pDrm;
 }

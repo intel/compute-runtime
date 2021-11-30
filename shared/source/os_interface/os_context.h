@@ -40,6 +40,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isRegular() const { return engineUsage == EngineUsage::Regular; }
     bool isLowPriority() const { return engineUsage == EngineUsage::LowPriority; }
     bool isInternalEngine() const { return engineUsage == EngineUsage::Internal; }
+    bool isCooperativeEngine() const { return engineUsage == EngineUsage::Cooperative; }
     bool isRootDevice() const { return rootDevice; }
     bool isEngineInstanced() const { return engineInstancedDevice; }
     virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const { return false; }

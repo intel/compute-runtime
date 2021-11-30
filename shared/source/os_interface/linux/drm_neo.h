@@ -119,7 +119,7 @@ class Drm : public DriverModel {
     int queryAdapterBDF();
     int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
-    uint32_t createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested);
+    uint32_t createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested, bool isCooperativeContextRequested);
     void appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpecialContextRequested);
     void destroyDrmContext(uint32_t drmContextId);
     int queryVmId(uint32_t drmContextId, uint32_t &vmId);
@@ -253,7 +253,8 @@ class Drm : public DriverModel {
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
-    uint32_t createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isSpecialContextRequested);
+    uint32_t createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isSpecialContextRequested,
+                                 bool isCooperativeContextRequested);
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
     bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
     std::string generateUUID();
