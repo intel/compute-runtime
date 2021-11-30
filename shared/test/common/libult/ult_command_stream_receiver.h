@@ -99,6 +99,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::newResources;
     using BaseClass::CommandStreamReceiver::osContext;
     using BaseClass::CommandStreamReceiver::perfCounterAllocator;
+    using BaseClass::CommandStreamReceiver::postSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
     using BaseClass::CommandStreamReceiver::requiredPrivateScratchSize;
     using BaseClass::CommandStreamReceiver::requiredScratchSize;

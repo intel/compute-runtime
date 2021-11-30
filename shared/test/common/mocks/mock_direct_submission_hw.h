@@ -50,6 +50,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
     using BaseClass::performDiagnosticMode;
+    using BaseClass::postSyncOffset;
     using BaseClass::ringBuffer;
     using BaseClass::ringBuffer2;
     using BaseClass::ringCommandStream;

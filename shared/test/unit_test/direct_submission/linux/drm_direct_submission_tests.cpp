@@ -69,6 +69,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::isNewResourceHandleNeeded;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
+    using BaseClass::postSyncOffset;
     using BaseClass::ringStart;
     using BaseClass::submit;
     using BaseClass::switchRingBuffers;
@@ -295,19 +296,21 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlusZeroAnd
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenMultipleActiveTilesWhenWaitingForTagUpdateThenQueryAllActiveTiles) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, DrmDirectSubmissionTest, givenMultipleActiveTilesWhenWaitingForTagUpdateThenQueryAllActiveTiles) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
                                                                      *osContext.get());
 
+    uint32_t offset = directSubmission.postSyncOffset;
+    EXPECT_NE(0u, offset);
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
     directSubmission.activeTiles = 2;
 
     auto pollAddress = directSubmission.tagAddress;
     *pollAddress = 10;
-    pollAddress = ptrOffset(pollAddress, 8);
+    pollAddress = ptrOffset(pollAddress, offset);
     *pollAddress = 10;
 
     CpuIntrinsicsTests::pauseCounter = 0;

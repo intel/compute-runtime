@@ -482,7 +482,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocatio
         while (*pollAddress < this->latestFlushedTaskCount) {
             downloadAllocation(*this->getTagAllocation());
         }
-        pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+        pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
     }
 
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
@@ -553,7 +553,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations() {
         while (*pollAddress < this->latestFlushedTaskCount) {
             downloadAllocation(*this->getTagAllocation());
         }
-        pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+        pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
     }
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
         downloadAllocation(*graphicsAllocation);

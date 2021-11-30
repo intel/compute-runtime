@@ -48,6 +48,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
 
     hwInfo = &device.getHardwareInfo();
     createDiagnostic();
+    setPostSyncOffset();
 }
 
 template <typename GfxFamily, typename Dispatcher>

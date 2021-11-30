@@ -18,6 +18,7 @@ struct ReusableAllocationRequirements {
     GraphicsAllocation::AllocationType allocationType;
     uint32_t contextId;
     uint32_t activeTileCount;
+    uint32_t tagOffset;
 };
 
 AllocationsList::AllocationsList(AllocationUsage allocationUsage)
@@ -34,6 +35,7 @@ std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t req
     req.contextId = (commandStreamReceiver == nullptr) ? UINT32_MAX : commandStreamReceiver->getOsContext().getContextId();
     req.requiredPtr = requiredPtr;
     req.activeTileCount = (commandStreamReceiver == nullptr) ? 1u : commandStreamReceiver->getActivePartitions();
+    req.tagOffset = (commandStreamReceiver == nullptr) ? 0u : commandStreamReceiver->getPostSyncWriteOffset();
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
     return std::unique_ptr<GraphicsAllocation>(retAlloc);
@@ -79,7 +81,7 @@ bool AllocationsList::checkTagAddressReady(ReusableAllocationRequirements *requi
         if (*tagAddress < taskCount) {
             return false;
         }
-        tagAddress = ptrOffset(tagAddress, CommonConstants::partitionAddressOffset);
+        tagAddress = ptrOffset(tagAddress, requirements->tagOffset);
     }
 
     return true;

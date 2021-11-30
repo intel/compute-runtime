@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
@@ -495,6 +496,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
     EXPECT_EQ(4u, directSubmission.makeResourcesResidentVectorSize);
 
+    uint32_t expectedOffset = NEO::ImplicitScalingDispatch<FamilyType>::getPostSyncOffset();
+    EXPECT_EQ(expectedOffset, directSubmission.postSyncOffset);
+
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     hwParse.findHardwareCommands<FamilyType>();
@@ -504,8 +508,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     for (auto &it : hwParse.lriList) {
         auto loadRegisterImm = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(it);
         if (loadRegisterImm->getRegisterOffset() == 0x23B4u) {
-
-            EXPECT_EQ(8u, loadRegisterImm->getDataDword());
+            EXPECT_EQ(expectedOffset, loadRegisterImm->getDataDword());
             partitionRegisterFound = true;
         }
     }
@@ -556,13 +559,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     hwParse.findHardwareCommands<FamilyType>();
 
+    uint32_t expectedOffset = NEO::ImplicitScalingDispatch<FamilyType>::getPostSyncOffset();
+
     ASSERT_NE(hwParse.lriList.end(), hwParse.lriList.begin());
     bool partitionRegisterFound = false;
     for (auto &it : hwParse.lriList) {
         auto loadRegisterImm = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(it);
         if (loadRegisterImm->getRegisterOffset() == 0x23B4u) {
-
-            EXPECT_EQ(8u, loadRegisterImm->getDataDword());
+            EXPECT_EQ(expectedOffset, loadRegisterImm->getDataDword());
             partitionRegisterFound = true;
         }
     }

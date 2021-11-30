@@ -435,7 +435,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenPostSyncPi
     for (size_t i = 0; i < pipeControls.size(); i++) {
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
         if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            EXPECT_EQ(static_cast<uint32_t>(gpuAddress), pipeControl->getAddress());
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
             EXPECT_EQ(data, pipeControl->getImmediateData());
             EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
             foundPostSyncPipeControl = true;

@@ -1613,7 +1613,7 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
     }
 
-    static constexpr size_t tagSize = 64;
+    static constexpr size_t tagSize = 128;
     static volatile uint32_t tagAddressData[tagSize];
     uint32_t waitForComplitionCalledTimes = 0;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
@@ -1697,16 +1697,21 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSynchronizeThenExpectTheSameNumberCsrSynchronizeCalls, IsWithinXeGfxFamily) {
+HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSynchronizeThenExpectTheSameNumberCsrSynchronizeCalls, IsAtLeastXeHpCore) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+        csr->createPreemptionAllocation();
+    }
+    EXPECT_NE(0u, csr->getPostSyncWriteOffset());
     volatile uint32_t *tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
         *tagAddress = 0xFF;
-        tagAddress = ptrOffset(tagAddress, 8);
+        tagAddress = ptrOffset(tagAddress, csr->getPostSyncWriteOffset());
     }
+    csr->activePartitions = 2u;
     auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
                                                            device,
                                                            neoDevice->getDefaultEngine().commandStreamReceiver,
@@ -1729,20 +1734,22 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     uint64_t timeout = std::numeric_limits<uint64_t>::max();
     commandQueue->synchronize(timeout);
 
-    EXPECT_EQ(2u, csr->activePartitions);
-
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartitionWhenExecutingCmdListOnNewCmdQueueThenExpectCmdPartitionCountMatchCsrActivePartitions, IsWithinXeGfxFamily) {
+HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartitionWhenExecutingCmdListOnNewCmdQueueThenExpectCmdPartitionCountMatchCsrActivePartitions, IsAtLeastXeHpCore) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+        csr->createPreemptionAllocation();
+    }
+    EXPECT_NE(0u, csr->getPostSyncWriteOffset());
     volatile uint32_t *tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
         *tagAddress = 0xFF;
-        tagAddress = ptrOffset(tagAddress, 8);
+        tagAddress = ptrOffset(tagAddress, csr->getPostSyncWriteOffset());
     }
     csr->activePartitions = 2u;
     auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,

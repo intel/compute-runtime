@@ -121,6 +121,7 @@ class DirectSubmissionHw {
     MOCKABLE_VIRTUAL void performDiagnosticMode();
     void dispatchDiagnosticModeSection();
     size_t getDiagnosticModeSection();
+    void setPostSyncOffset();
 
     enum RingBufferUse : uint32_t {
         FirstBuffer,
@@ -151,6 +152,7 @@ class DirectSubmissionHw {
     uint32_t workloadMode = 0;
     uint32_t workloadModeOneExpectedValue = 0u;
     uint32_t activeTiles = 1u;
+    uint32_t postSyncOffset = 0u;
 
     bool ringStart = false;
     bool disableCpuCacheFlush = true;

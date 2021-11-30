@@ -171,9 +171,11 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByUnregisteredEngine
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }
 
-TEST_F(DeferrableAllocationDeletionTest, givenMultiTileWhenTaskCompletedOnSingleTileThenDoNotFreeGraphicsAllocation) {
-    device->getDefaultEngine().commandStreamReceiver->setActivePartitions(2u);
-    auto hwTagNextTile = ptrOffset(hwTag, 8);
+HWTEST_F(DeferrableAllocationDeletionTest, givenMultiTileWhenTaskCompletedOnSingleTileThenDoNotFreeGraphicsAllocation) {
+    auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
+    csr->setActivePartitions(2u);
+    csr->postSyncWriteOffset = 32;
+    auto hwTagNextTile = ptrOffset(hwTag, 32);
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     allocation->updateTaskCount(1u, defaultOsContextId);

@@ -71,6 +71,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
     createScratchSpaceController();
+    configurePostSyncWriteOffset();
 }
 
 template <typename GfxFamily>

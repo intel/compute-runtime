@@ -307,7 +307,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
                 volatile uint32_t *pollAddress = this->tagAddress;
                 for (uint32_t i = 0; i < this->activePartitions; i++) {
                     *pollAddress = this->peekLatestSentTaskCount();
-                    pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+                    pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
                 }
             }
             return true;
@@ -348,7 +348,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
         volatile uint32_t *pollAddress = this->tagAddress;
         for (uint32_t i = 0; i < this->activePartitions; i++) {
             *pollAddress = this->peekLatestSentTaskCount();
-            pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+            pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
         }
     }
 

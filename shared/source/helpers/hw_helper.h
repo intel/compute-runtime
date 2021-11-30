@@ -355,6 +355,7 @@ class HwHelperHw : public HwHelper {
     size_t getTimestampPacketAllocatorAlignment() const override;
 
     size_t getSingleTimestampPacketSize() const override;
+    static size_t getSingleTimestampPacketSizeHw();
 
     void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const override;
 

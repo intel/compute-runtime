@@ -182,7 +182,7 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(uint32_t taskCountToWait) 
     for (uint32_t i = 0; i < this->activeTiles; i++) {
         while (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
         }
-        pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+        pollAddress = ptrOffset(pollAddress, this->postSyncOffset);
     }
 }
 

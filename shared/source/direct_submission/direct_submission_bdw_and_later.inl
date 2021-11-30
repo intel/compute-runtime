@@ -18,4 +18,8 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizePartitionRegiste
     return 0;
 }
 
+template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setPostSyncOffset() {
+}
+
 } // namespace NEO

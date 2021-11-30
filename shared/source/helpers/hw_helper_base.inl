@@ -518,6 +518,11 @@ size_t HwHelperHw<GfxFamily>::getTimestampPacketAllocatorAlignment() const {
 
 template <typename GfxFamily>
 size_t HwHelperHw<GfxFamily>::getSingleTimestampPacketSize() const {
+    return HwHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw();
+}
+
+template <typename GfxFamily>
+size_t HwHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw() {
     if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
         if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
             return TimestampPackets<uint32_t>::getSinglePacketSize();

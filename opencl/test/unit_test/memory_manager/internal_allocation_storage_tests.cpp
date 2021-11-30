@@ -8,6 +8,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/utilities/containers_tests_helpers.h"
@@ -271,11 +272,14 @@ TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConc
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
 
-TEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachingReusableAllocationThenCheckTaskCountFinishedOnAllTiles) {
+HWTEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachingReusableAllocationThenCheckTaskCountFinishedOnAllTiles) {
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
     csr->setActivePartitions(2u);
+    ultCsr->postSyncWriteOffset = 32;
+
     auto tagAddress = csr->getTagAddress();
     *tagAddress = 0xFF;
-    tagAddress = ptrOffset(tagAddress, 8);
+    tagAddress = ptrOffset(tagAddress, 32);
     *tagAddress = 0x0;
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});

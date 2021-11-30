@@ -43,7 +43,8 @@ TEST_F(FenceTest, whenQueryingStatusThenCsrAllocationsAreDownloaded) {
 }
 
 TEST_F(FenceTest, whenQueryingStatusWithoutCsrAndFenceUnsignaledThenReturnsNotReady) {
-    Mock<CommandQueue> cmdQueue(device, nullptr);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    Mock<CommandQueue> cmdQueue(device, csr.get());
     auto fence = Fence::create(&cmdQueue, nullptr);
 
     EXPECT_NE(nullptr, fence);
@@ -126,7 +127,7 @@ TEST_F(FenceSynchronizeTest, givenCallToFenceHostSynchronizeWithTimeoutNonZeroAn
 TEST_F(FenceSynchronizeTest, givenMultiplePartitionsWhenFenceIsResetThenAllPartitionFenceStatesAreReset) {
     std::unique_ptr<MockCommandStreamReceiver> csr = nullptr;
     csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-
+    csr->postSyncWriteOffset = 16;
     Mock<CommandQueue> cmdQueue(device, csr.get());
 
     auto fence = whitebox_cast(Fence::create(&cmdQueue, nullptr));
@@ -136,13 +137,13 @@ TEST_F(FenceSynchronizeTest, givenMultiplePartitionsWhenFenceIsResetThenAllParti
 
     for (uint32_t i = 0; i < 16; i++) {
         EXPECT_EQ(Fence::STATE_CLEARED, *hostAddr);
-        hostAddr = ptrOffset(hostAddr, 8);
+        hostAddr = ptrOffset(hostAddr, 16);
     }
 
     hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
     fence->partitionCount = 2;
     *hostAddr = Fence::STATE_SIGNALED;
-    hostAddr = ptrOffset(hostAddr, 8);
+    hostAddr = ptrOffset(hostAddr, 16);
     *hostAddr = Fence::STATE_SIGNALED;
 
     ze_result_t result = fence->reset();
@@ -151,7 +152,7 @@ TEST_F(FenceSynchronizeTest, givenMultiplePartitionsWhenFenceIsResetThenAllParti
     hostAddr = static_cast<uint32_t *>(alloc->getUnderlyingBuffer());
     for (uint32_t i = 0; i < 16; i++) {
         EXPECT_EQ(Fence::STATE_CLEARED, *hostAddr);
-        hostAddr = ptrOffset(hostAddr, 8);
+        hostAddr = ptrOffset(hostAddr, 16);
     }
     EXPECT_EQ(1u, fence->partitionCount);
 

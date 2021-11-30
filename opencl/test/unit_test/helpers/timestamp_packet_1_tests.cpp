@@ -197,13 +197,20 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenUseCorr
     }
 
     {
-        DebugManager.flags.OverrideTimestampPacketSize.set(12);
-
+        DebugManager.flags.OverrideTimestampPacketSize.set(-1);
         CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
         csr.setupContext(osContext);
 
+        DebugManager.flags.OverrideTimestampPacketSize.set(12);
         EXPECT_ANY_THROW(csr.getTimestampPacketAllocator());
     }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, TimestampPacketTests, givenInvalidDebugFlagSetWhenCreatingCsrThenExceptionIsThrown) {
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
+    DebugManager.flags.OverrideTimestampPacketSize.set(12);
+
+    EXPECT_ANY_THROW(CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield()));
 }
 
 HWTEST_F(TimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenGpuAddressIsAligned) {

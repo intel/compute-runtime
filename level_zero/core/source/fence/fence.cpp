@@ -31,9 +31,7 @@ FenceImp::~FenceImp() {
 
 ze_result_t FenceImp::queryStatus() {
     auto csr = cmdQueue->getCsr();
-    if (csr) {
-        csr->downloadAllocations();
-    }
+    csr->downloadAllocations();
 
     volatile uint32_t *hostAddr = static_cast<uint32_t *>(allocation->getUnderlyingBuffer());
     uint32_t queryVal = Fence::STATE_CLEARED;
@@ -42,7 +40,7 @@ ze_result_t FenceImp::queryStatus() {
         if (queryVal == Fence::STATE_CLEARED) {
             break;
         }
-        hostAddr = ptrOffset(hostAddr, CommonConstants::partitionAddressOffset);
+        hostAddr = ptrOffset(hostAddr, csr->getPostSyncWriteOffset());
     }
     return queryVal == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
 }
@@ -63,7 +61,7 @@ ze_result_t FenceImp::reset() {
     for (uint32_t i = 0; i < maxPartitionCount; i++) {
         *hostAddress = Fence::STATE_CLEARED;
         NEO::CpuIntrinsics::clFlush(const_cast<uint32_t *>(hostAddress));
-        hostAddress = ptrOffset(hostAddress, CommonConstants::partitionAddressOffset);
+        hostAddress = ptrOffset(hostAddress, cmdQueue->getCsr()->getPostSyncWriteOffset());
     }
     partitionCount = 1;
     return ZE_RESULT_SUCCESS;

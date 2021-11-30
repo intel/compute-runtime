@@ -90,6 +90,4 @@ constexpr uint32_t invalidStepping = std::numeric_limits<uint32_t>::max();
 constexpr uint32_t maximalSimdSize = 32;
 constexpr uint32_t maximalSizeOfAtomicType = 8;
 constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups);
-constexpr uint32_t partitionAddressOffsetDwords = 2u;
-constexpr uint32_t partitionAddressOffset = sizeof(uint32_t) * partitionAddressOffsetDwords;
 } // namespace CommonConstants

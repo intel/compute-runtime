@@ -313,7 +313,7 @@ bool CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, boo
             }
         }
 
-        partitionAddress = ptrOffset(partitionAddress, CommonConstants::partitionAddressOffset);
+        partitionAddress = ptrOffset(partitionAddress, this->postSyncWriteOffset);
     }
 
     return testTaskCountReady(pollAddress, taskCountToWait);
@@ -560,7 +560,7 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
     for (uint32_t i = 0; i < subDevices; i++) {
         *tagAddress = initValue;
-        tagAddress = ptrOffset(tagAddress, CommonConstants::partitionAddressOffset);
+        tagAddress = ptrOffset(tagAddress, this->postSyncWriteOffset);
     }
     *this->debugPauseStateAddress = DebugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 
@@ -675,7 +675,7 @@ void CommandStreamReceiver::updateTagFromCpu(uint32_t taskCount) {
     auto partitionAddress = getTagAddress();
     for (uint32_t i = 0; i < activePartitions; i++) {
         *partitionAddress = taskCount;
-        partitionAddress = ptrOffset(partitionAddress, CommonConstants::partitionAddressOffset);
+        partitionAddress = ptrOffset(partitionAddress, this->postSyncWriteOffset);
     }
 }
 
@@ -759,7 +759,7 @@ bool CommandStreamReceiver::testTaskCountReady(volatile uint32_t *pollAddress, u
             return false;
         }
 
-        pollAddress = ptrOffset(pollAddress, CommonConstants::partitionAddressOffset);
+        pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
     }
     return true;
 }

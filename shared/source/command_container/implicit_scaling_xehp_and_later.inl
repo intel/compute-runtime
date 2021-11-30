@@ -9,6 +9,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 
@@ -201,6 +202,11 @@ inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStr
                                         PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
                                         addressOffset,
                                         true);
+}
+
+template <typename GfxFamily>
+inline uint32_t ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset() {
+    return static_cast<uint32_t>(HwHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw());
 }
 
 } // namespace NEO

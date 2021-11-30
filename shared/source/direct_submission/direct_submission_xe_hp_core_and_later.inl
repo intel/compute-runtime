@@ -14,12 +14,17 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchPartitionRegisterConfiguration() {
     ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(ringCommandStream,
                                                                       this->workPartitionAllocation->getGpuAddress(),
-                                                                      CommonConstants::partitionAddressOffset);
+                                                                      this->postSyncOffset);
 }
 
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizePartitionRegisterConfigurationSection() {
     return ImplicitScalingDispatch<GfxFamily>::getRegisterConfigurationSize();
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setPostSyncOffset() {
+    this->postSyncOffset = ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset();
 }
 
 } // namespace NEO

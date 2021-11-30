@@ -36,6 +36,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::newResources;
     using CommandStreamReceiver::osContext;
+    using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::preemptionAllocation;
     using CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using CommandStreamReceiver::tagAddress;
@@ -125,7 +126,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     void postInitFlagsSetup() override {}
 
-    static constexpr size_t tagSize = 64;
+    static constexpr size_t tagSize = 256;
     static volatile uint32_t mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
@@ -170,6 +171,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::mediaVfeStateDirty;
     using CommandStreamReceiver::nTo1SubmissionModelEnabled;
     using CommandStreamReceiver::pageTableManagerInitialized;
+    using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::requiredScratchSize;
     using CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using CommandStreamReceiver::tagAddress;

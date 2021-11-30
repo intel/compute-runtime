@@ -172,6 +172,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const;
     bool checkPlatformSupportsNewResourceImplicitFlush() const;
     bool checkPlatformSupportsGpuIdleImplicitFlush() const;
+    void configurePostSyncWriteOffset();
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

@@ -165,4 +165,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
     MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
 }
 
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::configurePostSyncWriteOffset() {
+}
+
 } // namespace NEO

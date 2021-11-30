@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -862,8 +863,11 @@ HWTEST_F(CommandQueueHwTest, GivenMultiTileQueueWhenEventNotCompletedAndFinishIs
 
     auto &csr = this->pCmdQ->getGpgpuCommandStreamReceiver();
     csr.setActivePartitions(2u);
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(&csr);
+    ultCsr->postSyncWriteOffset = 32;
+
     auto tagAddress = csr.getTagAddress();
-    *ptrOffset(tagAddress, 8) = *tagAddress;
+    *ptrOffset(tagAddress, 32) = *tagAddress;
 
     struct ClbFuncTempStruct {
         static void CL_CALLBACK ClbFuncT(cl_event e, cl_int execStatus, void *valueForUpdate) {
@@ -877,7 +881,7 @@ HWTEST_F(CommandQueueHwTest, GivenMultiTileQueueWhenEventNotCompletedAndFinishIs
     EXPECT_GT(3u, csr.peekTaskCount());
 
     *tagAddress = CompletionStamp::notReady + 1;
-    tagAddress = ptrOffset(tagAddress, 8);
+    tagAddress = ptrOffset(tagAddress, 32);
     *tagAddress = CompletionStamp::notReady + 1;
 
     cl_int ret = clFinish(this->pCmdQ);

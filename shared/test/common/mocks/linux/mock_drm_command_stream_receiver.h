@@ -23,6 +23,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::makeResident;
+    using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;

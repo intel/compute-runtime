@@ -125,7 +125,7 @@ void programEventL3Flush(ze_event_handle_t hEvent,
 
     if (partitionCount > 1) {
         NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(cmdListStream,
-                                                                        CommonConstants::partitionAddressOffset);
+                                                                        NEO::ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset());
     }
 }
 
@@ -321,7 +321,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {
     const size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
     increaseCommandStreamSpace(estimatedSizeRequired);
     NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),
-                                                                    CommonConstants::partitionAddressOffset);
+                                                                    NEO::ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

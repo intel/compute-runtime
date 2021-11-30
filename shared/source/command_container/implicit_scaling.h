@@ -76,6 +76,8 @@ struct ImplicitScalingDispatch {
     static void dispatchOffsetRegister(LinearStream &commandStream,
                                        uint32_t addressOffset);
 
+    static uint32_t getPostSyncOffset();
+
   private:
     static bool pipeControlStallRequired;
 };

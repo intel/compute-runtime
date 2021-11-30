@@ -298,6 +298,10 @@ class CommandStreamReceiver {
 
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
 
+    inline uint32_t getPostSyncWriteOffset() const {
+        return postSyncWriteOffset;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -326,8 +330,8 @@ class CommandStreamReceiver {
     LinearStream commandStream;
     StreamProperties streamProperties{};
 
-    // offset for debug state must be 64 bytes, tag writes can use multiple dwords for multiple partitions
-    const uint64_t debugPauseStateAddressOffset = MemoryConstants::cacheLineSize;
+    // offset for debug state is 1kbyte, tag writes can use multiple offsets for multiple partitions and each offset can vary per platform
+    const uint64_t debugPauseStateAddressOffset = MemoryConstants::kiloByte;
     uint64_t totalMemoryUsed = 0u;
 
     volatile uint32_t *tagAddress = nullptr;
@@ -374,6 +378,7 @@ class CommandStreamReceiver {
     MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::NotApplicable;
     uint32_t activePartitions = 1;
     uint32_t activePartitionsConfig = 1;
+    uint32_t postSyncWriteOffset = 0;
 
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;
