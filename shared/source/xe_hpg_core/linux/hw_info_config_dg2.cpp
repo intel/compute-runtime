@@ -34,6 +34,5 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
 
     return 0;
 }
-
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

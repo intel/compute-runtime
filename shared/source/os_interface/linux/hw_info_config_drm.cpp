@@ -126,6 +126,10 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
     gtSystemInfo->MaxSlicesSupported = topologyData.maxSliceCount;
 
+    for (uint32_t slice = 0; slice < gtSystemInfo->SliceCount; slice++) {
+        gtSystemInfo->SliceInfo[slice].Enabled = true;
+    }
+
     uint64_t gttSizeQuery = 0;
     featureTable->flags.ftrSVM = true;
 

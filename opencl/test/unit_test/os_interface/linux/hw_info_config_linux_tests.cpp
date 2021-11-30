@@ -555,3 +555,29 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
     EXPECT_EQ(0, ret);
     EXPECT_EQ(8u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
 }
+
+HWTEST2_F(HwConfigLinux, givenSliceCountWhenConfigureHwInfoDrmThenProperInitializationInSliceInfoEnabled, MatchAny) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->setGtType(GTTYPE_GT1);
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    HardwareInfo outHwInfo;
+    auto hwConfig = HwInfoConfigHw<productFamily>::get();
+    uint32_t sliceCount = 4;
+    drm->storedSVal = sliceCount;
+    hwInfo.gtSystemInfo.SliceCount = sliceCount;
+
+    int ret = hwConfig->configureHwInfoDrm(&hwInfo, &outHwInfo, osInterface.get());
+    EXPECT_EQ(0, ret);
+
+    for (uint32_t i = 0; i < sliceCount; i++) {
+        EXPECT_TRUE(outHwInfo.gtSystemInfo.SliceInfo[i].Enabled);
+    }
+}

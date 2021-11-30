@@ -260,4 +260,9 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
+    return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
+}
 } // namespace NEO

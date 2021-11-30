@@ -29,9 +29,9 @@ uint32_t HwHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const HardwareInfo
     if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
-
+    auto maxSubSlice = HwInfoConfig::get(pHwInfo->platform.eProductFamily)->computeMaxNeededSubSliceSpace(*pHwInfo);
     // XeHP and later products return physical threads
-    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * (pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount);
+    return maxSubSlice * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * (pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount);
 }
 
 template <typename GfxFamily>
