@@ -62,6 +62,11 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::getKernelExtendedProperties(uint32_t *fp16, u
 }
 
 template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::overrideGfxPartitionLayoutForWsl() const {
+    return false;
+}
+
+template <>
 uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
     return 0;
 }

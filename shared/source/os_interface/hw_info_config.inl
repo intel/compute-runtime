@@ -108,6 +108,11 @@ bool HwInfoConfigHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }

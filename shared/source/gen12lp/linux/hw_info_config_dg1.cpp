@@ -30,5 +30,10 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     return 0;
 }
 
+template <>
+bool HwInfoConfigHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
+    return true;
+}
+
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO
