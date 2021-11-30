@@ -488,9 +488,8 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     drm_i915_gem_create create = {0, 0, 0};
     create.size = bufferSize;
 
-    auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
+    [[maybe_unused]] auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
     DEBUG_BREAK_IF(ret != 0);
-    ((void)(ret));
 
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, bufferSize, maxOsContextCount));
     bo->setAddress(gpuRange);
@@ -919,9 +918,8 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
 
     auto cpuPtr = graphicsAllocation.getUnderlyingBuffer();
     if (cpuPtr != nullptr) {
-        auto success = setDomainCpu(graphicsAllocation, false);
+        [[maybe_unused]] auto success = setDomainCpu(graphicsAllocation, false);
         DEBUG_BREAK_IF(!success);
-        (void)success;
         return cpuPtr;
     }
 
@@ -938,9 +936,8 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
 
     bo->setLockedAddress(reinterpret_cast<void *>(mmap_arg.addr_ptr));
 
-    auto success = setDomainCpu(graphicsAllocation, false);
+    [[maybe_unused]] auto success = setDomainCpu(graphicsAllocation, false);
     DEBUG_BREAK_IF(!success);
-    (void)success;
 
     return bo->peekLockedAddress();
 }
