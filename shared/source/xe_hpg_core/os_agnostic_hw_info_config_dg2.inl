@@ -142,22 +142,3 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_C;
 }
-
-template <>
-uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
-    auto highestEnabledSlice = 0;
-    for (int highestSlice = GT_MAX_SLICE - 1; highestSlice >= 0; highestSlice--) {
-        if (hwInfo.gtSystemInfo.SliceInfo[highestSlice].Enabled) {
-            highestEnabledSlice = highestSlice + 1;
-            break;
-        }
-    }
-
-    auto subSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
-    auto maxSubSlice = highestEnabledSlice * subSlicesPerSlice;
-
-    if (highestEnabledSlice == 0) {
-        UNRECOVERABLE_IF(true);
-    }
-    return maxSubSlice;
-}
