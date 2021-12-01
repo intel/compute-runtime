@@ -905,6 +905,10 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                 const auto &engine = getDevice().getEngineGroups()[selectedQueueFamilyIndex].engines[selectedQueueIndex];
                 auto engineType = engine.getEngineType();
                 auto engineUsage = engine.getEngineUsage();
+                if ((DebugManager.flags.EngineUsageHint.get() != -1) &&
+                    (getDevice().tryGetEngine(engineType, static_cast<EngineUsage>(DebugManager.flags.EngineUsageHint.get())) != nullptr)) {
+                    engineUsage = static_cast<EngineUsage>(DebugManager.flags.EngineUsageHint.get());
+                }
                 this->overrideEngine(engineType, engineUsage);
                 this->queueCapabilities = getClDevice().getDeviceInfo().queueFamilyProperties[selectedQueueFamilyIndex].capabilities;
                 this->queueFamilyIndex = selectedQueueFamilyIndex;
@@ -929,7 +933,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
     } else {
-        gpgpuEngine = &device->getEngine(engineType, EngineUsage::Regular);
+        gpgpuEngine = &device->getEngine(engineType, engineUsage);
     }
 }
 

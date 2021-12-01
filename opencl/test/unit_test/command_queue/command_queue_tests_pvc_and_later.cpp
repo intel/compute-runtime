@@ -112,6 +112,39 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQu
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, queue2->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS2)->getOsContext().getEngineType());
 }
 
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhenCreatingCommandQueueThenCreateQueueWithCooperativeEngine, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::Cooperative));
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    uint32_t revisions[] = {REVISION_A0, REVISION_B};
+    for (auto &revision : revisions) {
+        auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = hwRevId;
+        if (hwRevId == CommonConstants::invalidStepping ||
+            !hwHelper.isCooperativeEngineSupported(hwInfo)) {
+            continue;
+        }
+
+        auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        MockContext context(pDevice.get());
+        cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0, 0};
+        propertiesCooperativeQueue[1] = pDevice->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+
+        for (size_t i = 0; i < 4; i++) {
+            propertiesCooperativeQueue[3] = i;
+            auto pCommandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, pDevice.get(), propertiesCooperativeQueue);
+            EXPECT_EQ(aub_stream::ENGINE_CCS + i, pCommandQueue->gpgpuEngine->osContext->getEngineType());
+            EXPECT_EQ(EngineUsage::Cooperative, pCommandQueue->gpgpuEngine->osContext->getEngineUsage());
+        }
+    }
+}
+
 struct BcsCsrSelectionCommandQueueTests : ::testing::Test {
     void SetUp() override {
         HardwareInfo hwInfo = *::defaultHwInfo;

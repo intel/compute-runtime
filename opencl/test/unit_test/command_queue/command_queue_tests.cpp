@@ -858,6 +858,28 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
     EXPECT_EQ(commandStreamGraphicsAllocation, commandStreamGraphicsAllocation2);
 }
 
+HWTEST_F(CommandQueueTests, givenEngineUsageHintSetWithInvalidValueWhenCreatingCommandQueueThenReturnSuccess) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::EngineUsageCount));
+
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(pDevice.get());
+
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0, 0};
+
+    auto pCmdQ = CommandQueue::create(
+        &context,
+        pDevice.get(),
+        propertiesCooperativeQueue,
+        false,
+        retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, pCmdQ);
+    EXPECT_EQ(EngineUsage::Regular, pCmdQ->getGpgpuEngine().getEngineUsage());
+    delete pCmdQ;
+}
+
 struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
