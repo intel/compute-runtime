@@ -493,7 +493,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     auto defaultGmm = gfxAllocation->getDefaultGmm();
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHardwareInfo();
-    if (defaultGmm && defaultGmm->isCompressionEnabled && HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo)) {
+    if (gfxAllocation->isCompressionEnabled() && HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo)) {
         for (auto engine : registeredEngines) {
             if (engine.commandStreamReceiver->pageTableManager.get()) {
                 [[maybe_unused]] auto status = engine.commandStreamReceiver->pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);

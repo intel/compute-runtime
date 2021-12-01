@@ -387,9 +387,8 @@ Buffer *Buffer::create(Context *context,
         pBuffer->setHostPtrMinSize(size);
 
         if (allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr && !copyExecuted) {
-            auto gmm = allocationInfo[rootDeviceIndex].memory->getDefaultGmm();
             auto isLocalMemory = !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
-            bool gpuCopyRequired = (gmm && gmm->isCompressionEnabled) || isLocalMemory;
+            bool gpuCopyRequired = (allocationInfo[rootDeviceIndex].memory->isCompressionEnabled()) || isLocalMemory;
 
             if (gpuCopyRequired) {
                 auto &device = pBuffer->getContext()->getDevice(0u)->getDevice();

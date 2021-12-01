@@ -107,9 +107,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, size, this->getMemoryBank(&graphicsAllocation),
                                                       hint, graphicsAllocation.getUsedPageSize());
 
-        auto gmm = graphicsAllocation.getDefaultGmm();
-
-        allocationParams.additionalParams.compressionEnabled = gmm ? gmm->isCompressionEnabled : false;
+        allocationParams.additionalParams.compressionEnabled = graphicsAllocation.isCompressionEnabled();
 
         if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool()) {
             aubManager->writeMemory2(allocationParams);

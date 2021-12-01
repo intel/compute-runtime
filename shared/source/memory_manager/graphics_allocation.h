@@ -285,6 +285,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     const AubInfo &getAubInfo() const { return aubInfo; }
 
+    bool isCompressionEnabled() const;
+
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
 

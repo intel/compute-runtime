@@ -387,12 +387,10 @@ Image *Image::create(Context *context,
             auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
             if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedImagesSupported(hwInfo)) {
-                if (allocationInfo[rootDeviceIndex].memory->getDefaultGmm()) {
-                    if (allocationInfo[rootDeviceIndex].memory->getDefaultGmm()->isCompressionEnabled) {
-                        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_COMPRESSED, image);
-                    } else {
-                        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_NOT_COMPRESSED, image);
-                    }
+                if (allocationInfo[rootDeviceIndex].memory->isCompressionEnabled()) {
+                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_COMPRESSED, image);
+                } else {
+                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_NOT_COMPRESSED, image);
                 }
             }
 

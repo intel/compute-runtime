@@ -94,6 +94,10 @@ void GraphicsAllocation::setTbxWritable(bool writable, uint32_t banks) {
     aubInfo.tbxWritable = static_cast<uint32_t>(setBits(aubInfo.tbxWritable, writable, banks));
 }
 
+bool GraphicsAllocation::isCompressionEnabled() const {
+    return (getDefaultGmm() && getDefaultGmm()->isCompressionEnabled);
+}
+
 bool GraphicsAllocation::isTbxWritable(uint32_t banks) const {
     return isAnyBitSet(aubInfo.tbxWritable, banks);
 }

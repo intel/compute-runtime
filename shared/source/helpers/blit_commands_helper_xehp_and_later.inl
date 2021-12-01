@@ -37,10 +37,6 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeightOverride(const RootDevic
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
-    auto dstAllocation = blitProperties.dstAllocation;
-    auto srcAllocation = blitProperties.srcAllocation;
-    bool dstAllocationisCompressionEnabled = dstAllocation->getDefaultGmm() && dstAllocation->getDefaultGmm()->isCompressionEnabled;
-    bool srcAllocationisCompressionEnabled = srcAllocation->getDefaultGmm() && srcAllocation->getDefaultGmm()->isCompressionEnabled;
 
     appendClearColor(blitProperties, blitCmd);
 
@@ -54,21 +50,21 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProper
         compressionEnabledField = static_cast<typename XY_COPY_BLT::COMPRESSION_ENABLE>(DebugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get());
     }
 
-    if (dstAllocationisCompressionEnabled) {
+    if (blitProperties.dstAllocation->isCompressionEnabled()) {
         blitCmd.setDestinationCompressionEnable(compressionEnabledField);
         blitCmd.setDestinationAuxiliarysurfacemode(XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         blitCmd.setDestinationCompressionFormat(compressionFormat);
     }
-    if (srcAllocationisCompressionEnabled) {
+    if (blitProperties.srcAllocation->isCompressionEnabled()) {
         blitCmd.setSourceCompressionEnable(compressionEnabledField);
         blitCmd.setSourceAuxiliarysurfacemode(XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         blitCmd.setSourceCompressionFormat(compressionFormat);
     }
 
-    if (MemoryPool::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
+    if (MemoryPool::isSystemMemoryPool(blitProperties.dstAllocation->getMemoryPool())) {
         blitCmd.setDestinationTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
-    if (MemoryPool::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
+    if (MemoryPool::isSystemMemoryPool(blitProperties.srcAllocation->getMemoryPool())) {
         blitCmd.setSourceTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
 
@@ -95,7 +91,7 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProper
     }
 
     DEBUG_BREAK_IF((AuxTranslationDirection::None != blitProperties.auxTranslationDirection) &&
-                   (dstAllocation != srcAllocation || !dstAllocationisCompressionEnabled));
+                   (blitProperties.dstAllocation != blitProperties.srcAllocation || !blitProperties.dstAllocation->isCompressionEnabled()));
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     blitCmd.setDestinationMOCS(mocs);
@@ -127,14 +123,13 @@ void setCompressionParamsForFillOperation(typename GfxFamily::XY_COLOR_BLT &xyCo
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::GraphicsAllocation *dstAlloc, typename GfxFamily::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
-    bool dstAllocationisCompressionEnabled = dstAlloc->getDefaultGmm() && dstAlloc->getDefaultGmm()->isCompressionEnabled;
 
     uint32_t compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
     if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
         compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
     }
 
-    if (dstAllocationisCompressionEnabled) {
+    if (dstAlloc->isCompressionEnabled()) {
         setCompressionParamsForFillOperation<GfxFamily>(blitCmd);
         blitCmd.setDestinationCompressionFormat(compressionFormat);
     }

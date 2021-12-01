@@ -774,63 +774,6 @@ TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerforma
     }
 }
 
-TEST_F(PerformanceHintTest, givenImageWithNoGmmWhenItsCreatedThenNoPerformanceHintIsProvided) {
-    HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
-    hwInfo.capabilityTable.ftrRenderCompressedImages = true;
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id deviceId = device.get();
-
-    cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
-
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    cl_int retVal = CL_SUCCESS;
-    auto const elementSize = 4;
-    char *hostPtr = static_cast<char *>(alignedMalloc(width * height * depth * elementSize * 2, 64));
-
-    cl_image_format imageFormat;
-    cl_image_desc imageDesc;
-
-    auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
-    cl_mem mem = mockBuffer.get();
-
-    imageFormat.image_channel_data_type = CL_UNORM_INT8;
-    imageFormat.image_channel_order = CL_RGBA;
-    imageDesc.num_mip_levels = 0;
-    imageDesc.num_samples = 0;
-    imageDesc.mem_object = mem;
-    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-    imageDesc.image_width = width;
-    imageDesc.image_height = 0;
-    imageDesc.image_depth = 0;
-    imageDesc.image_array_size = 0;
-    imageDesc.image_row_pitch = 0;
-    imageDesc.image_slice_pitch = 0;
-
-    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-
-    auto image = std::unique_ptr<Image>(Image::create(
-        context.get(),
-        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-        flags,
-        0,
-        surfaceFormat,
-        &imageDesc,
-        hostPtr,
-        retVal));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[IMAGE_IS_COMPRESSED], image.get());
-    EXPECT_FALSE(containsHint(expectedHint, userData));
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[IMAGE_IS_NOT_COMPRESSED], image.get());
-    EXPECT_FALSE(containsHint(expectedHint, userData));
-
-    alignedFree(hostPtr);
-}
-
 TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerformanceHintIsProvided) {
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedImages = true;
