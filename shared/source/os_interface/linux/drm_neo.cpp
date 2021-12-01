@@ -399,15 +399,6 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested,
     auto retVal = this->createDrmContextExt(gcc, drmVmId, isSpecialContextRequested, isCooperativeContextRequested);
     UNRECOVERABLE_IF(retVal != 0);
 
-    if (drmVmId > 0) {
-        drm_i915_gem_context_param param{};
-        param.ctx_id = gcc.ctx_id;
-        param.value = drmVmId;
-        param.param = I915_CONTEXT_PARAM_VM;
-        retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &param);
-        UNRECOVERABLE_IF(retVal != 0);
-    }
-
     return gcc.ctx_id;
 }
 

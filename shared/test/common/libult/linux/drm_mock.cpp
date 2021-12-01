@@ -81,6 +81,13 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
             return this->storedRetVal;
         }
         receivedContextCreateSetParam = *reinterpret_cast<drm_i915_gem_context_create_ext_setparam *>(create->extensions);
+        if (receivedContextCreateSetParam.base.name == I915_CONTEXT_CREATE_EXT_SETPARAM) {
+            receivedContextParamRequestCount++;
+            receivedContextParamRequest = receivedContextCreateSetParam.param;
+            if (receivedContextCreateSetParam.param.param == I915_CONTEXT_PARAM_VM) {
+                return this->storedRetVal;
+            }
+        }
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_DESTROY) && (arg != nullptr)) {
