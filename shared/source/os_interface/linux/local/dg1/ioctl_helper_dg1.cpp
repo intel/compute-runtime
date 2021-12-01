@@ -7,7 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/os_interface/linux/local_memory_helper.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "third_party/uapi/dg1/drm/i915_drm.h"
 
@@ -19,7 +19,7 @@ extern bool isQueryDrmTip(uint8_t *dataQuery, int32_t length);
 extern std::unique_ptr<uint8_t[]> translateToDrmTip(uint8_t *dataQuery, int32_t &length);
 
 template <>
-uint32_t LocalMemoryHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
+uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu", allocSize);
 
     if (DebugManager.flags.PrintBOCreateDestroyResult.get()) {
@@ -50,7 +50,7 @@ uint32_t LocalMemoryHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, u
     createExt.size = allocSize;
     createExt.extensions = reinterpret_cast<uintptr_t>(&setparamRegion);
 
-    auto ret = LocalMemoryHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
+    auto ret = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
 
     handle = createExt.handle;
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_SETPARAM has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
@@ -58,7 +58,7 @@ uint32_t LocalMemoryHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, u
 }
 
 template <>
-std::unique_ptr<uint8_t[]> LocalMemoryHelperImpl<gfxProduct>::translateIfRequired(uint8_t *dataQuery, int32_t length) {
+std::unique_ptr<uint8_t[]> IoctlHelperImpl<gfxProduct>::translateIfRequired(uint8_t *dataQuery, int32_t length) {
     if (isQueryDrmTip(dataQuery, length)) {
         DEBUG_BREAK_IF(true);
         return std::unique_ptr<uint8_t[]>(dataQuery);
@@ -67,5 +67,5 @@ std::unique_ptr<uint8_t[]> LocalMemoryHelperImpl<gfxProduct>::translateIfRequire
     return translateToDrmTip(data.get(), length);
 }
 
-template class LocalMemoryHelperImpl<gfxProduct>;
+template class IoctlHelperImpl<gfxProduct>;
 } // namespace NEO

@@ -36,7 +36,7 @@
 
 namespace NEO {
 
-namespace IoctlHelper {
+namespace IoctlToStringHelper {
 std::string getIoctlParamString(int param) {
     switch (param) {
     case I915_PARAM_CHIPSET_ID:
@@ -189,7 +189,7 @@ std::string getIoctlString(unsigned long request) {
     }
 }
 
-} // namespace IoctlHelper
+} // namespace IoctlToStringHelper
 
 Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
     : DriverModel(DriverModelType::DRM),
@@ -210,7 +210,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
         auto printIoctl = DebugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
-            printf("IOCTL %s called\n", IoctlHelper::getIoctlString(request).c_str());
+            printf("IOCTL %s called\n", IoctlToStringHelper::getIoctlString(request).c_str());
         }
 
         if (measureTime) {
@@ -239,7 +239,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
         }
 
         if (printIoctl) {
-            printf("IOCTL %s returns %d, errno %d(%s)\n", IoctlHelper::getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+            printf("IOCTL %s returns %d, errno %d(%s)\n", IoctlToStringHelper::getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
         }
 
     } while (ret == -1 && (returnedErrno == EINTR || returnedErrno == EAGAIN || returnedErrno == EBUSY));
@@ -255,7 +255,7 @@ int Drm::getParamIoctl(int param, int *dstValue) {
     int retVal = ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
     if (DebugManager.flags.PrintIoctlEntries.get()) {
         printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
-               IoctlHelper::getIoctlParamString(param).c_str(),
+               IoctlToStringHelper::getIoctlParamString(param).c_str(),
                *getParam.value,
                retVal);
     }
@@ -645,7 +645,7 @@ void Drm::printIoctlStatistics() {
     printf("%41s %15s %10s %20s %20s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl", "Min", "Max\n");
     for (const auto &ioctlData : this->ioctlStatistics) {
         printf("%41s %15llu %10lu %20f %20lld %20lld\n",
-               IoctlHelper::getIoctlString(ioctlData.first).c_str(),
+               IoctlToStringHelper::getIoctlString(ioctlData.first).c_str(),
                ioctlData.second.totalTime,
                static_cast<unsigned long>(ioctlData.second.count),
                ioctlData.second.totalTime / static_cast<double>(ioctlData.second.count),

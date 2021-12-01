@@ -48,9 +48,9 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_inc.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}local_memory_helper_default.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}ioctl_helper_default.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}engine_info_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/flags${BRANCH_DIR_SUFFIX}drm_query_flags.h

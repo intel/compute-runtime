@@ -57,12 +57,12 @@ struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
 
 extern const DeviceDescriptor deviceDescriptorTable[];
 
-namespace IoctlHelper {
+namespace IoctlToStringHelper {
 std::string getIoctlParamString(int param);
 std::string getIoctlParamStringRemaining(int param);
 std::string getIoctlString(unsigned long request);
 std::string getIoctlStringRemaining(unsigned long request);
-} // namespace IoctlHelper
+} // namespace IoctlToStringHelper
 
 class Drm : public DriverModel {
     friend DeviceFactory;

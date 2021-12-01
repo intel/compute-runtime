@@ -14,13 +14,13 @@
 
 namespace NEO {
 class Drm;
-class LocalMemoryHelper;
+class IoctlHelper;
 
-extern LocalMemoryHelper *localMemoryHelperFactory[IGFX_MAX_PRODUCT];
+extern IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT];
 
-class LocalMemoryHelper {
+class IoctlHelper {
   public:
-    static LocalMemoryHelper *get(PRODUCT_FAMILY product);
+    static IoctlHelper *get(PRODUCT_FAMILY product);
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
 
     virtual uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) = 0;
@@ -28,20 +28,20 @@ class LocalMemoryHelper {
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-class LocalMemoryHelperImpl : public LocalMemoryHelper {
+class IoctlHelperImpl : public IoctlHelper {
   public:
-    static LocalMemoryHelper *get() {
-        static LocalMemoryHelperImpl<gfxProduct> instance;
+    static IoctlHelper *get() {
+        static IoctlHelperImpl<gfxProduct> instance;
         return &instance;
     }
     uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
     std::unique_ptr<uint8_t[]> translateIfRequired(uint8_t *dataQuery, int32_t length) override;
 };
 
-class LocalMemoryHelperDefault : public LocalMemoryHelper {
+class IoctlHelperDefault : public IoctlHelper {
   public:
-    static LocalMemoryHelper *get() {
-        static LocalMemoryHelperDefault instance;
+    static IoctlHelper *get() {
+        static IoctlHelperDefault instance;
         return &instance;
     }
     uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;

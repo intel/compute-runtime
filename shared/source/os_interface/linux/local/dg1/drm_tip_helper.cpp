@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/linux/local_memory_helper.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "third_party/uapi/drm/i915_drm.h"
 
@@ -23,7 +23,7 @@ uint32_t createGemExtMemoryRegions(Drm *drm, void *data, uint32_t dataSize, size
     createExt.size = allocSize;
     createExt.extensions = reinterpret_cast<uintptr_t>(&extRegions);
 
-    auto ret = LocalMemoryHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
+    auto ret = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
 
     handle = createExt.handle;
     return ret;

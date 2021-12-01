@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/engine_info_impl.h"
-#include "shared/source/os_interface/linux/local_memory_helper.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/system_info.h"
@@ -23,7 +23,7 @@
 
 namespace NEO {
 
-namespace IoctlHelper {
+namespace IoctlToStringHelper {
 std::string getIoctlStringRemaining(unsigned long request) {
     return std::to_string(request);
 }
@@ -31,7 +31,7 @@ std::string getIoctlStringRemaining(unsigned long request) {
 std::string getIoctlParamStringRemaining(int param) {
     return std::to_string(param);
 }
-} // namespace IoctlHelper
+} // namespace IoctlToStringHelper
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     auto length = 0;
@@ -58,8 +58,8 @@ bool Drm::queryMemoryInfo() {
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty, length);
     if (dataQuery) {
-        auto localMemHelper = LocalMemoryHelper::get(pHwInfo->platform.eProductFamily);
-        auto data = localMemHelper->translateIfRequired(dataQuery.release(), length);
+        auto ioctlHelper = IoctlHelper::get(pHwInfo->platform.eProductFamily);
+        auto data = ioctlHelper->translateIfRequired(dataQuery.release(), length);
         auto memRegions = reinterpret_cast<drm_i915_query_memory_regions *>(data.get());
         this->memoryInfo.reset(new MemoryInfo(memRegions->regions, memRegions->num_regions));
         return true;
