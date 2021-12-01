@@ -79,6 +79,17 @@ uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) {
+    bool supported = false;
+
+    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
+        supported = !!DebugManager.flags.EnableSharedSystemUsmSupport.get();
+    }
+
+    return (supported ? (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS) : 0);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
     return 0u;
 }

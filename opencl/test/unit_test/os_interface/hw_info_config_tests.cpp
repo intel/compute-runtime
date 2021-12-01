@@ -50,6 +50,24 @@ HWTEST_F(HwInfoConfigTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenR
     EXPECT_NE(0u, hwInfoConfig->getHostMemCapabilities(&pInHwInfo));
 }
 
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingSharedSystemMemCapabilitiesThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restore;
+
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_EQ(0u, hwInfoConfig->getSharedSystemMemCapabilities(&pInHwInfo));
+
+    for (auto enable : {-1, 0, 1}) {
+        DebugManager.flags.EnableSharedSystemUsmSupport.set(enable);
+
+        if (enable > 0) {
+            auto caps = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS;
+            EXPECT_EQ(caps, hwInfoConfig->getSharedSystemMemCapabilities(&pInHwInfo));
+        } else {
+            EXPECT_EQ(0u, hwInfoConfig->getSharedSystemMemCapabilities(&pInHwInfo));
+        }
+    }
+}
+
 TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     uint64_t hwInfoConfig = 0x0;
 

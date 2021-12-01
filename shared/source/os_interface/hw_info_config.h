@@ -37,6 +37,7 @@ class HwInfoConfig {
     virtual uint64_t getDeviceMemCapabilities() = 0;
     virtual uint64_t getSingleDeviceSharedMemCapabilities() = 0;
     virtual uint64_t getCrossDeviceSharedMemCapabilities() = 0;
+    virtual uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) = 0;
     virtual void getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) = 0;
     virtual std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() = 0;
     virtual void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) = 0;
@@ -101,6 +102,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint64_t getDeviceMemCapabilities() override;
     uint64_t getSingleDeviceSharedMemCapabilities() override;
     uint64_t getCrossDeviceSharedMemCapabilities() override;
+    uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) override;
     void getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) override;
     std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() override;
     void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) override;
