@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 
 namespace CpuIntrinsicsTests {
 //std::atomic is used for sake of sanitation in MT tests
@@ -20,6 +21,8 @@ std::atomic<uint32_t> pauseCounter(0u);
 volatile uint32_t *pauseAddress = nullptr;
 uint32_t pauseValue = 0u;
 uint32_t pauseOffset = 0u;
+
+std::function<void()> setupPauseAddress;
 } // namespace CpuIntrinsicsTests
 
 namespace NEO {
@@ -33,7 +36,11 @@ void pause() {
     CpuIntrinsicsTests::pauseCounter++;
     if (CpuIntrinsicsTests::pauseAddress != nullptr) {
         *CpuIntrinsicsTests::pauseAddress = CpuIntrinsicsTests::pauseValue;
-        CpuIntrinsicsTests::pauseAddress = ptrOffset(CpuIntrinsicsTests::pauseAddress, CpuIntrinsicsTests::pauseOffset);
+        if (CpuIntrinsicsTests::setupPauseAddress) {
+            CpuIntrinsicsTests::setupPauseAddress();
+        } else {
+            CpuIntrinsicsTests::pauseAddress = ptrOffset(CpuIntrinsicsTests::pauseAddress, CpuIntrinsicsTests::pauseOffset);
+        }
     }
 }
 

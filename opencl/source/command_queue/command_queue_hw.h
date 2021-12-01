@@ -450,6 +450,8 @@ class CommandQueueHw : public CommandQueue {
 
     bool isCacheFlushCommand(uint32_t commandType) const override;
 
+    void waitForTimestamps(uint32_t taskCount) override;
+
     MOCKABLE_VIRTUAL bool isCacheFlushForBcsRequired() const;
 
   protected:

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/command_queue/enqueue_barrier.h"
@@ -132,6 +133,39 @@ bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
         return !!DebugManager.flags.ForceCacheFlushForBcs.get();
     }
     return true;
+}
+
+template <typename TSPacketType>
+inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container) {
+    bool waited = false;
+
+    for (const auto &timestamp : container->peekNodes()) {
+        for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+            while (timestamp->getContextEndValue(i) == 1) {
+                WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>());
+            }
+            waited = true;
+        }
+    }
+
+    return waited;
+}
+
+template <typename Family>
+void CommandQueueHw<Family>::waitForTimestamps(uint32_t taskCount) {
+    using TSPacketType = typename Family::TimestampPacketType;
+
+    if (isTimestampWaitEnabled()) {
+        bool waited = waitForTimestampsWithinContainer<TSPacketType>(timestampPacketContainer.get());
+
+        if (isOOQEnabled()) {
+            waited |= waitForTimestampsWithinContainer<TSPacketType>(deferredTimestampPackets.get());
+        }
+
+        if (waited) {
+            getGpgpuCommandStreamReceiver().updateTagFromCpu(taskCount);
+        }
+    }
 }
 
 template <typename Family>

@@ -203,6 +203,8 @@ class MockCommandQueue : public CommandQueue {
 
     bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override { return isCacheFlushRequired; }
 
+    void waitForTimestamps(uint32_t taskCount) override{};
+
     bool releaseIndirectHeapCalled = false;
 
     cl_int writeBufferRetValue = CL_SUCCESS;

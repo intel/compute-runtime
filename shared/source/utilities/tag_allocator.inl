@@ -201,6 +201,15 @@ uint64_t TagNode<TagType>::getGlobalEndValue([[maybe_unused]] uint32_t packetInd
 }
 
 template <typename TagType>
+void const *TagNode<TagType>::getContextEndAddress([[maybe_unused]] uint32_t packetIndex) const {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+        return tagForCpuAccess->getContextEndAddress(packetIndex);
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
+}
+
+template <typename TagType>
 uint64_t &TagNode<TagType>::getContextCompleteRef() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::HwTimeStamps) {
         return tagForCpuAccess->ContextCompleteTS;

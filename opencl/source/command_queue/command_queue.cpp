@@ -978,34 +978,6 @@ bool CommandQueue::isTimestampWaitEnabled() {
     return enabled;
 }
 
-void CommandQueue::waitForTimestamps(uint32_t taskCount) {
-    if (isTimestampWaitEnabled()) {
-        bool waited = false;
-
-        for (const auto &timestamp : timestampPacketContainer->peekNodes()) {
-            for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
-                while (timestamp->getContextEndValue(i) == 1) {
-                }
-                waited = true;
-            }
-        }
-
-        if (isOOQEnabled()) {
-            for (const auto &timestamp : deferredTimestampPackets->peekNodes()) {
-                for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
-                    while (timestamp->getContextEndValue(i) == 1) {
-                    }
-                    waited = true;
-                }
-            }
-        }
-
-        if (waited) {
-            getGpgpuCommandStreamReceiver().updateTagFromCpu(taskCount);
-        }
-    }
-}
-
 void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) {
     if (blockedQueue) {
         while (isQueueBlocked()) {

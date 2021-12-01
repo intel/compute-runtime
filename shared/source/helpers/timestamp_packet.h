@@ -71,6 +71,8 @@ class TimestampPackets : public TagTypeBase {
     uint64_t getContextEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].contextEnd); }
     uint64_t getGlobalEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalEnd); }
 
+    void const *getContextEndAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextEnd); }
+
   protected:
     Packet packets[TimestampPacketSizeControl::preferredPacketCount];
 };

@@ -69,6 +69,8 @@ class TagNodeBase : public NonCopyableOrMovableClass {
     virtual uint64_t getContextEndValue(uint32_t packetIndex) const = 0;
     virtual uint64_t getGlobalEndValue(uint32_t packetIndex) const = 0;
 
+    virtual void const *getContextEndAddress(uint32_t packetIndex) const = 0;
+
     virtual uint64_t &getGlobalEndRef() const = 0;
     virtual uint64_t &getContextCompleteRef() const = 0;
 
@@ -122,6 +124,8 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
     uint64_t getGlobalStartValue(uint32_t packetIndex) const override;
     uint64_t getContextEndValue(uint32_t packetIndex) const override;
     uint64_t getGlobalEndValue(uint32_t packetIndex) const override;
+
+    void const *getContextEndAddress(uint32_t packetIndex) const override;
 
     uint64_t &getGlobalEndRef() const override;
     uint64_t &getContextCompleteRef() const override;

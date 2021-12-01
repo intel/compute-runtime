@@ -76,6 +76,8 @@ struct TimeStamps {
         return end;
     }
 
+    void const *getContextEndAddress(uint32_t packetIndex) const { return &end; }
+
     uint64_t start;
     uint64_t end;
 
@@ -550,6 +552,7 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(perfCounterNode.getGlobalStartValue(0));
         EXPECT_ANY_THROW(perfCounterNode.getContextEndValue(0));
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndValue(0));
+        EXPECT_ANY_THROW(perfCounterNode.getContextEndAddress(0));
         EXPECT_ANY_THROW(perfCounterNode.getContextCompleteRef());
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndRef());
         EXPECT_ANY_THROW(perfCounterNode.getSinglePacketSize());
