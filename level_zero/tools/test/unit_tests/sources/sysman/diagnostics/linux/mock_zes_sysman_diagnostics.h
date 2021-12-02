@@ -47,11 +47,11 @@ struct Mock<DiagnosticsFwInterface> : public FirmwareUtil {
         supportedDiagTests.push_back(mockSupportedDiagTypes[1]);
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t mockFwRunDiagTestsReturnSuccess(std::string &osDiagType, zes_diag_result_t *pResult, uint32_t subDeviceId) {
+    ze_result_t mockFwRunDiagTestsReturnSuccess(std::string &osDiagType, zes_diag_result_t *pResult) {
         *pResult = ZES_DIAG_RESULT_NO_ERRORS;
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t mockFwRunDiagTestsReturnSuccessWithResultRepair(std::string &osDiagType, zes_diag_result_t *pResult, uint32_t subDeviceId) {
+    ze_result_t mockFwRunDiagTestsReturnSuccessWithResultRepair(std::string &osDiagType, zes_diag_result_t *pResult) {
         *pResult = ZES_DIAG_RESULT_REBOOT_FOR_REPAIR;
         return ZE_RESULT_SUCCESS;
     }
@@ -64,7 +64,7 @@ struct Mock<DiagnosticsFwInterface> : public FirmwareUtil {
     ADDMETHOD_NOBASE(flashFirmware, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, void *pImage, uint32_t size));
     ADDMETHOD_NOBASE(fwIfrApplied, ze_result_t, ZE_RESULT_SUCCESS, (bool &ifrStatus));
     MOCK_METHOD(ze_result_t, fwSupportedDiagTests, (std::vector<std::string> & supportedDiagTests), (override));
-    MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult, uint32_t subDeviceId), (override));
+    MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult), (override));
     ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 };

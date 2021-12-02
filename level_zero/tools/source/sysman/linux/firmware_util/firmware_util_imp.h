@@ -71,7 +71,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) override;
     ze_result_t fwIfrApplied(bool &ifrStatus) override;
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override;
-    ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) override;
+    ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) override;
     virtual ze_result_t fwGetMemoryErrorCount(zes_ras_error_type_t type, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count) override;
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
 
@@ -81,15 +81,20 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwFlashGSC(void *pImage, uint32_t size);
     ze_result_t fwFlashOprom(void *pImage, uint32_t size);
     ze_result_t fwFlashIafPsc(void *pImage, uint32_t size);
-
-    template <class T>
-    bool getSymbolAddr(const std::string name, T &proc);
+    ze_result_t fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset);
 
     std::string fwDevicePath{};
     struct igsc_device_handle fwDeviceHandle = {};
     bool loadEntryPoints();
+    bool loadEntryPointsExt();
 
     NEO::OsLibrary *libraryHandle = nullptr;
+    template <class T>
+    bool getSymbolAddr(const std::string name, T &proc) {
+        void *addr = libraryHandle->getProcAddress(name);
+        proc = reinterpret_cast<T>(addr);
+        return nullptr != proc;
+    }
 
   private:
     uint16_t domain = 0;

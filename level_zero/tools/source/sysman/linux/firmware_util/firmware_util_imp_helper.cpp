@@ -25,7 +25,7 @@ ze_result_t FirmwareUtilImp::fwSupportedDiagTests(std::vector<std::string> &supp
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) {
+ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -53,4 +53,7 @@ ze_result_t FirmwareUtilImp::flashFirmware(std::string fwType, void *pImage, uin
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+bool FirmwareUtilImp::loadEntryPointsExt() {
+    return true;
+}
 } // namespace L0

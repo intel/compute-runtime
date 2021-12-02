@@ -30,7 +30,7 @@ class FirmwareUtil {
     virtual ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) = 0;
     virtual ze_result_t fwIfrApplied(bool &ifrStatus) = 0;
     virtual ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) = 0;
-    virtual ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) = 0;
+    virtual ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) = 0;
     virtual ze_result_t fwGetMemoryErrorCount(zes_ras_error_type_t type, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count) = 0;
     virtual void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) = 0;
     virtual ~FirmwareUtil() = default;

@@ -35,13 +35,6 @@ pIgscDeviceOpromUpdate deviceOpromUpdate;
 pIgscDeviceOpromVersion deviceOpromVersion;
 pIgscDeviceClose deviceClose;
 
-template <class T>
-bool FirmwareUtilImp::getSymbolAddr(const std::string name, T &proc) {
-    void *addr = libraryHandle->getProcAddress(name);
-    proc = reinterpret_cast<T>(addr);
-    return nullptr != proc;
-}
-
 bool FirmwareUtilImp::loadEntryPoints() {
     bool ok = getSymbolAddr(fwDeviceInitByDevice, deviceInitByDevice);
     ok = ok && getSymbolAddr(fwDeviceGetDeviceInfo, deviceGetDeviceInfo);
@@ -55,6 +48,8 @@ bool FirmwareUtilImp::loadEntryPoints() {
     ok = ok && getSymbolAddr(fwDeviceOpromUpdate, deviceOpromUpdate);
     ok = ok && getSymbolAddr(fwDeviceOpromVersion, deviceOpromVersion);
     ok = ok && getSymbolAddr(fwDeviceClose, deviceClose);
+    ok = ok && loadEntryPointsExt();
+
     return ok;
 }
 
