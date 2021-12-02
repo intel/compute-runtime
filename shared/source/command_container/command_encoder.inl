@@ -841,4 +841,20 @@ inline void EncodeNoop<Family>::emitNoop(LinearStream &commandStream, size_t byt
     }
 }
 
+template <typename Family>
+inline void EncodeStoreMemory<Family>::programStoreDataImm(LinearStream &commandStream,
+                                                           uint64_t gpuAddress,
+                                                           uint32_t dataDword0,
+                                                           uint32_t dataDword1,
+                                                           bool storeQword,
+                                                           bool workloadPartitionOffset) {
+    auto miStoreDataImmBuffer = commandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
+    EncodeStoreMemory<Family>::programStoreDataImm(miStoreDataImmBuffer,
+                                                   gpuAddress,
+                                                   dataDword0,
+                                                   dataDword1,
+                                                   storeQword,
+                                                   workloadPartitionOffset);
+}
+
 } // namespace NEO

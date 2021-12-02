@@ -391,4 +391,26 @@ struct EncodeNoop {
     static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 };
 
+template <typename GfxFamily>
+struct EncodeStoreMemory {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+    static void programStoreDataImm(LinearStream &commandStream,
+                                    uint64_t gpuAddress,
+                                    uint32_t dataDword0,
+                                    uint32_t dataDword1,
+                                    bool storeQword,
+                                    bool workloadPartitionOffset);
+
+    static void programStoreDataImm(MI_STORE_DATA_IMM *cmdBuffer,
+                                    uint64_t gpuAddress,
+                                    uint32_t dataDword0,
+                                    uint32_t dataDword1,
+                                    bool storeQword,
+                                    bool workloadPartitionOffset);
+
+    static size_t getStoreDataImmSize() {
+        return sizeof(MI_STORE_DATA_IMM);
+    }
+};
+
 } // namespace NEO

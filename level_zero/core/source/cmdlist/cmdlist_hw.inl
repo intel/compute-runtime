@@ -1829,14 +1829,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
                 commandContainer.getDevice()->getHardwareInfo(),
                 args);
         } else {
-            using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-            MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
-            storeDataImmediate.setAddress(ptrOffset(baseAddr, eventSignalOffset));
-            storeDataImmediate.setStoreQword(false);
-            storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_DWORD);
-            storeDataImmediate.setDataDword0(Event::STATE_SIGNALED);
-            auto buffer = commandContainer.getCommandStream()->template getSpaceForCmd<MI_STORE_DATA_IMM>();
-            *buffer = storeDataImmediate;
+            NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(*commandContainer.getCommandStream(),
+                                                                   ptrOffset(baseAddr, eventSignalOffset),
+                                                                   Event::STATE_SIGNALED,
+                                                                   0u,
+                                                                   false,
+                                                                   false);
         }
     }
 

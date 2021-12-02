@@ -484,4 +484,24 @@ template <typename GfxFamily>
 void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &commandStream, GraphicsAllocation &backBuffer) {
 }
 
+template <typename Family>
+inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cmdBuffer,
+                                                           uint64_t gpuAddress,
+                                                           uint32_t dataDword0,
+                                                           uint32_t dataDword1,
+                                                           bool storeQword,
+                                                           bool workloadPartitionOffset) {
+    MI_STORE_DATA_IMM storeDataImmediate = Family::cmdInitStoreDataImm;
+    storeDataImmediate.setAddress(gpuAddress);
+    storeDataImmediate.setStoreQword(storeQword);
+    storeDataImmediate.setDataDword0(dataDword0);
+    if (storeQword) {
+        storeDataImmediate.setDataDword1(dataDword1);
+        storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD);
+    } else {
+        storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_DWORD);
+    }
+    *cmdBuffer = storeDataImmediate;
+}
+
 } // namespace NEO

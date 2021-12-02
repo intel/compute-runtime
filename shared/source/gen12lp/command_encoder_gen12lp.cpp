@@ -116,4 +116,5 @@ template struct EncodeMiArbCheck<Family>;
 template struct EncodeComputeMode<Family>;
 template struct EncodeEnableRayTracing<Family>;
 template struct EncodeNoop<Family>;
+template struct EncodeStoreMemory<Family>;
 } // namespace NEO

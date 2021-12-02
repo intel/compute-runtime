@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -48,4 +49,50 @@ HWTEST2_F(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhen
     container.setHeapDirty(HeapType::SURFACE_STATE);
     size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
     EXPECT_EQ(size, 104ul);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenPartitionArgumentFalseWhenAddingStoreDataImmThenExpectCommandFlagFalse) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    uint64_t gpuAddress = 0xFF0000;
+    uint32_t dword0 = 0x123;
+    uint32_t dword1 = 0x456;
+
+    constexpr size_t bufferSize = 64;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+
+    EncodeStoreMemory<FamilyType>::programStoreDataImm(cmdStream,
+                                                       gpuAddress,
+                                                       dword0,
+                                                       dword1,
+                                                       false,
+                                                       false);
+
+    auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(buffer);
+    ASSERT_NE(nullptr, storeDataImm);
+    EXPECT_FALSE(storeDataImm->getWorkloadPartitionIdOffsetEnable());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenPartitionArgumentTrueWhenAddingStoreDataImmThenExpectCommandFlagTrue) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    uint64_t gpuAddress = 0xFF0000;
+    uint32_t dword0 = 0x123;
+    uint32_t dword1 = 0x456;
+
+    constexpr size_t bufferSize = 64;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+
+    EncodeStoreMemory<FamilyType>::programStoreDataImm(cmdStream,
+                                                       gpuAddress,
+                                                       dword0,
+                                                       dword1,
+                                                       false,
+                                                       true);
+
+    auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(buffer);
+    ASSERT_NE(nullptr, storeDataImm);
+    EXPECT_TRUE(storeDataImm->getWorkloadPartitionIdOffsetEnable());
 }
