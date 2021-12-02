@@ -330,17 +330,20 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedW
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
     bool isInternal = false;
 
-    uint32_t previouscopyMemoryToAllocationCalledTimes =
+    size_t previouscopyMemoryToAllocationCalledTimes =
         mockMemoryManager->copyMemoryToAllocationCalledTimes;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
 
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
-    uint32_t copyForGlobalSurface = 1u;
-    uint32_t copyForIsa = 4u;
-    uint32_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
-                                                                 copyForGlobalSurface + copyForIsa;
+    size_t copyForGlobalSurface = 1u;
+    auto copyForIsa = module->getKernelImmutableDataVector().size();
+    if (module->translationUnit->programInfo.linkerInput && module->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
+        copyForIsa += module->getKernelImmutableDataVector().size();
+    }
+    size_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
+                                                               copyForGlobalSurface + copyForIsa;
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 
@@ -348,38 +351,6 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedW
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
 
     createKernel(kernel.get());
-
-    EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
-              mockMemoryManager->copyMemoryToAllocationCalledTimes);
-}
-
-TEST_F(KernelImmutableDataIsaCopyTests, whenInternalKernelIsCreatedThenIsaIsCopiedWhenCreateKernelIsCalled) {
-    MockImmutableMemoryManager *mockMemoryManager =
-        static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
-
-    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
-    bool isInternal = true;
-
-    uint32_t previouscopyMemoryToAllocationCalledTimes =
-        mockMemoryManager->copyMemoryToAllocationCalledTimes;
-
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-
-    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
-
-    uint32_t copyForGlobalSurface = 1u;
-    uint32_t copyForIsa = 0u;
-    uint32_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
-                                                                 copyForGlobalSurface + copyForIsa;
-    EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
-              mockMemoryManager->copyMemoryToAllocationCalledTimes);
-
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    createKernel(kernel.get());
-
-    expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes + 1u;
 
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
@@ -433,35 +404,7 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInterna
 
 using KernelImmutableDataWithNullHeapTests = KernelImmutableDataTests;
 
-TEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedForUserKernelWithNullKernelHeapThenIsaIsNotCopied) {
-    MockImmutableMemoryManager *mockMemoryManager =
-        static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
-
-    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
-    bool isInternal = false;
-
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
-
-    auto previousKernelHeap = mockKernelImmData->kernelInfo->heapInfo.pKernelHeap;
-    mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = nullptr;
-
-    uint32_t previouscopyMemoryToAllocationCalledTimes =
-        mockMemoryManager->copyMemoryToAllocationCalledTimes;
-
-    mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
-                                  device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module.get()->translationUnit->globalConstBuffer,
-                                  module.get()->translationUnit->globalVarBuffer,
-                                  isInternal);
-
-    EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
-              mockMemoryManager->copyMemoryToAllocationCalledTimes);
-
-    mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = previousKernelHeap;
-}
-
-TEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedForInternalKernelWithNullKernelHeapThenIsaIsNotCopied) {
+TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenSingleIsaIsCopied) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -469,59 +412,32 @@ TEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedForIn
     bool isInternal = true;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
+    mockKernelImmData->getIsaGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL);
 
-    auto previousKernelHeap = mockKernelImmData->kernelInfo->heapInfo.pKernelHeap;
-    mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = nullptr;
-
-    uint32_t previouscopyMemoryToAllocationCalledTimes =
-        mockMemoryManager->copyMemoryToAllocationCalledTimes;
-
-    mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
-                                  device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module.get()->translationUnit->globalConstBuffer,
-                                  module.get()->translationUnit->globalVarBuffer,
-                                  isInternal);
-
-    EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
-              mockMemoryManager->copyMemoryToAllocationCalledTimes);
-
-    mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = previousKernelHeap;
-}
-
-TEST_F(KernelImmutableDataWithNullHeapTests, whenInternalKernelIsCreatedWithNullKernelHeapThenIsaIsNotCopied) {
-    MockImmutableMemoryManager *mockMemoryManager =
-        static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
-
-    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
-    bool isInternal = true;
-
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-
-    uint32_t previouscopyMemoryToAllocationCalledTimes =
+    size_t previouscopyMemoryToAllocationCalledTimes =
         mockMemoryManager->copyMemoryToAllocationCalledTimes;
 
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
-    uint32_t copyForGlobalSurface = 1u;
-    uint32_t copyForIsa = 0u;
-    uint32_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
-                                                                 copyForGlobalSurface + copyForIsa;
+    size_t copyForGlobalSurface = 1u;
+    size_t copyForPatchingIsa = 0u;
+    if (module->translationUnit->programInfo.linkerInput && module->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
+        copyForPatchingIsa += module->getKernelImmutableDataVector().size();
+    }
+    size_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
+                                                               copyForGlobalSurface + copyForPatchingIsa;
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
 
-    auto previousKernelHeap = mockKernelImmData->kernelInfo->heapInfo.pKernelHeap;
-    mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = nullptr;
+    expectedPreviouscopyMemoryToAllocationCalledTimes++;
 
     createKernel(kernel.get());
 
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
-
-    mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = previousKernelHeap;
 }
 
 TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenContainerHasOneExtraSpaceForAllocation) {

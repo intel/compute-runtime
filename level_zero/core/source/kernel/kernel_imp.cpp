@@ -125,6 +125,8 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     auto memoryManager = neoDevice->getMemoryManager();
 
     auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
+    UNRECOVERABLE_IF(kernelIsaSize == 0);
+    UNRECOVERABLE_IF(!kernelInfo->heapInfo.pKernelHeap);
     const auto allocType = internalKernel ? NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL : NEO::GraphicsAllocation::AllocationType::KERNEL_ISA;
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(
@@ -143,7 +145,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (kernelInfo->heapInfo.pKernelHeap != nullptr && internalKernel == false) {
+    if (internalKernel == false) {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
                                                               *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
                                                               static_cast<size_t>(kernelIsaSize));
@@ -795,9 +797,9 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto &kernelDescriptor = kernelImmData->getDescriptor();
 
     this->schedulingHintExpFlag = hwHelper.getDefaultThreadArbitrationPolicy();
+    UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
-    if (this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap != nullptr &&
-        isaAllocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL) {
+    if (isaAllocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL) {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
                                                               *neoDevice,
                                                               isaAllocation,

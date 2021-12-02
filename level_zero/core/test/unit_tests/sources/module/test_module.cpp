@@ -920,7 +920,11 @@ HWTEST_F(ModuleLinkingTest, whenExternFunctionsAllocationIsPresentThenItsBeingAd
     MockGraphicsAllocation alloc;
     module.exportedFunctionsSurface = &alloc;
 
+    uint8_t data{};
     KernelInfo kernelInfo{};
+    kernelInfo.heapInfo.pKernelHeap = &data;
+    kernelInfo.heapInfo.KernelHeapSize = sizeof(data);
+
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
     module.kernelImmDatas.push_back(std::move(kernelImmData));
