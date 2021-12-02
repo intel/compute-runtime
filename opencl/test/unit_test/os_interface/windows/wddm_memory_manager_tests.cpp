@@ -758,7 +758,11 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     }
     rootDeviceEnvironment->executionEnvironment.initializeMemoryManager();
     memoryManager->allocateGraphicsMemoryInNonDevicePool = true;
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield}, ptr);
+
+    MockAllocationProperties properties = {mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield};
+    properties.flags.preferCompressed = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
 
     auto gfxPartition = memoryManager->getGfxPartition(mockRootDeviceIndex);
     D3DGPU_VIRTUAL_ADDRESS standard64kbRangeMinimumAddress = gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB);

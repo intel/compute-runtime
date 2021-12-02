@@ -308,6 +308,7 @@ TEST(BaseMemoryManagerTest, givenDebugVariableSetWhenCompressedBufferIsCreatedTh
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield);
     AllocationProperties allocPropertiesBufferCompressed(mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield);
+    allocPropertiesBufferCompressed.flags.preferCompressed = true;
 
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
     auto allocationBuffer = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBuffer, nullptr);

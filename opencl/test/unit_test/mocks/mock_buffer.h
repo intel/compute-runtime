@@ -138,5 +138,5 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
 
 class MockPublicAccessBuffer : public Buffer {
   public:
-    using Buffer::getGraphicsAllocationType;
+    using Buffer::getGraphicsAllocationTypeAndCompressionPreference;
 };

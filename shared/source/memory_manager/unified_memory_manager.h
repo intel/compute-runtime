@@ -154,7 +154,7 @@ class SVMAllocsManager {
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
                                       const std::set<uint32_t> &rootDeviceIndices,
                                       const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields);
-    GraphicsAllocation::AllocationType getGraphicsAllocationType(const UnifiedMemoryProperties &unifiedMemoryProperties) const;
+    GraphicsAllocation::AllocationType getGraphicsAllocationTypeAndCompressionPreference(const UnifiedMemoryProperties &unifiedMemoryProperties, bool &compressionEnabled) const;
 
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
 

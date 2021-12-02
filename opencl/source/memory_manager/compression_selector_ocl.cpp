@@ -11,8 +11,6 @@
 namespace NEO {
 bool CompressionSelector::preferRenderCompressedBuffer(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
     switch (properties.allocationType) {
-    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
-        return true;
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::SVM_GPU:

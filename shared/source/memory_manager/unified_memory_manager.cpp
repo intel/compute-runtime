@@ -127,7 +127,8 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                           const UnifiedMemoryProperties &memoryProperties) {
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
 
-    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(memoryProperties);
+    bool compressionEnabled = false;
+    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
     std::vector<uint32_t> rootDeviceIndicesVector(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end());
 
@@ -141,6 +142,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                  false,
                                                  (deviceBitfield.count() > 1) && multiOsContextSupport,
                                                  deviceBitfield};
+    unifiedMemoryProperties.flags.preferCompressed = compressionEnabled;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.isUSMHostAllocation = true;
     unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;
@@ -176,7 +178,8 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
 
-    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(memoryProperties);
+    bool compressionEnabled = false;
+    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
     bool multiStorageAllocation = (deviceBitfield.count() > 1) && multiOsContextSupport;
     if ((deviceBitfield.count() > 1) && !multiOsContextSupport) {
@@ -200,6 +203,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
     unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
+    unifiedMemoryProperties.flags.preferCompressed = compressionEnabled;
 
     if (memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
         unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
@@ -502,7 +506,9 @@ void SVMAllocsManager::removeSvmMapOperation(const void *regionSvmPtr) {
     svmMapOperations.remove(regionSvmPtr);
 }
 
-GraphicsAllocation::AllocationType SVMAllocsManager::getGraphicsAllocationType(const UnifiedMemoryProperties &unifiedMemoryProperties) const {
+GraphicsAllocation::AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreference(const UnifiedMemoryProperties &unifiedMemoryProperties, bool &compressionEnabled) const {
+    compressionEnabled = false;
+
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     if (unifiedMemoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
         if (unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined) {
@@ -511,6 +517,7 @@ GraphicsAllocation::AllocationType SVMAllocsManager::getGraphicsAllocationType(c
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
             const auto &hwInfoConfig = *HwInfoConfig::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eProductFamily);
             if (hwInfoConfig.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
+                compressionEnabled = true;
                 allocationType = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
             } else {
                 allocationType = GraphicsAllocation::AllocationType::BUFFER;

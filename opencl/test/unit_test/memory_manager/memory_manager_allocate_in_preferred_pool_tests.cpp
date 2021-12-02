@@ -247,10 +247,13 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllow
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, 10, allocType, mockDeviceBitfield);
 
+    bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    properties.flags.preferCompressed = bufferCompressedType;
+
     MockMemoryManager mockMemoryManager(true, false);
     mockMemoryManager.mockExecutionEnvironment->initGmm();
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     EXPECT_TRUE(allocData.flags.allow64kbPages);
     auto allocation = mockMemoryManager.allocateGraphicsMemory(allocData);
 

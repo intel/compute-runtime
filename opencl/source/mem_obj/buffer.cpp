@@ -187,14 +187,11 @@ Buffer *Buffer::create(Context *context,
 
         auto hwInfo = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
-        allocationInfo[rootDeviceIndex].allocationType = getGraphicsAllocationType(
-            memoryProperties,
-            *context,
-            HwHelper::renderCompressedBuffersSupported(*hwInfo),
-            memoryManager->isLocalMemorySupported(rootDeviceIndex),
-            HwHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForRenderCompression(size, *hwInfo));
+        bool compressionEnabled = MemObjHelper::isSuitableForRenderCompression(HwHelper::renderCompressedBuffersSupported(*hwInfo), memoryProperties, *context,
+                                                                               HwHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForRenderCompression(size, *hwInfo));
 
-        bool preferCompressed = (allocationInfo[rootDeviceIndex].allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+        allocationInfo[rootDeviceIndex].allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, *context, compressionEnabled,
+                                                                                                           memoryManager->isLocalMemorySupported(rootDeviceIndex));
 
         if (ptr) {
             if (!memoryProperties.flags.useHostPtr) {
@@ -212,7 +209,7 @@ Buffer *Buffer::create(Context *context,
             return nullptr;
         }
 
-        if (preferCompressed) {
+        if (compressionEnabled) {
             allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
             allocationInfo[rootDeviceIndex].allocateMemory = true;
         }
@@ -279,14 +276,14 @@ Buffer *Buffer::create(Context *context,
                                                                                                        allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                        *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
                 allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
-                allocProperties.flags.preferCompressed = preferCompressed;
+                allocProperties.flags.preferCompressed = compressionEnabled;
                 allocationInfo[rootDeviceIndex].memory = memoryManager->createGraphicsAllocationFromExistingStorage(allocProperties, ptr, multiGraphicsAllocation);
             } else {
                 AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                        allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                        *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
                 allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
-                allocProperties.flags.preferCompressed = preferCompressed;
+                allocProperties.flags.preferCompressed = compressionEnabled;
                 allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
                 if (allocationInfo[rootDeviceIndex].memory) {
                     ptr = reinterpret_cast<void *>(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer());
@@ -326,6 +323,7 @@ Buffer *Buffer::create(Context *context,
                 }
             }
         } else if (allocationInfo[rootDeviceIndex].allocationType == GraphicsAllocation::AllocationType::BUFFER) {
+            UNRECOVERABLE_IF(compressionEnabled);
             allocationInfo[rootDeviceIndex].allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         }
 
@@ -497,18 +495,19 @@ void Buffer::checkMemory(MemoryProperties memoryProperties,
     return;
 }
 
-GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const MemoryProperties &properties, Context &context,
-                                                                     bool renderCompressedBuffers, bool isLocalMemoryEnabled,
-                                                                     bool preferCompression) {
+GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties, Context &context,
+                                                                                             bool &compressionEnabled, bool isLocalMemoryEnabled) {
     if (context.isSharedContext || properties.flags.forceHostMemory) {
+        compressionEnabled = false;
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
     if (properties.flags.useHostPtr && !isLocalMemoryEnabled) {
+        compressionEnabled = false;
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
-    if (MemObjHelper::isSuitableForRenderCompression(renderCompressedBuffers, properties, context, preferCompression)) {
+    if (compressionEnabled) {
         return GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
     }
 

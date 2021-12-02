@@ -346,8 +346,11 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
             MockSpecializedContext context;
             auto &device = context.getDevice(0)->getDevice();
             MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &device);
-            auto allocationType = MockPublicAccessBuffer::getGraphicsAllocationType(
-                memoryProperties, context, HwHelper::renderCompressedBuffersSupported(*defaultHwInfo), false, true);
+
+            bool compressionEnabled = MemObjHelper::isSuitableForRenderCompression(HwHelper::renderCompressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
+
+            auto allocationType = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
+                memoryProperties, context, compressionEnabled, false);
 
             bool expectBufferCompressed = ftrRenderCompressedBuffers && (enableMultiTileCompressionValue == 1);
             if (expectBufferCompressed && clHwHelper.allowRenderCompressionForContext(*context.getDevice(0), context)) {
@@ -405,8 +408,10 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                         auto &device = context.getDevice(0)->getDevice();
                         MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel,
                                                                                                              0, &device);
-                        auto allocationType = MockPublicAccessBuffer::getGraphicsAllocationType(
-                            memoryProperties, context, HwHelper::renderCompressedBuffersSupported(*defaultHwInfo), false, true);
+
+                        bool compressionEnabled = MemObjHelper::isSuitableForRenderCompression(HwHelper::renderCompressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
+                        auto allocationType = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
+                            memoryProperties, context, compressionEnabled, false);
 
                         bool isCompressionDisabled = isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
                                                      isValueSet(flagsIntel, CL_MEM_UNCOMPRESSED_HINT_INTEL);
