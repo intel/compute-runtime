@@ -89,7 +89,7 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
     imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(imageDesc), false);
-    auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo, false);
 
     //allocate host_ptr
     auto pixelSize = 4;
@@ -168,7 +168,7 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
     imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(imageDesc), false);
-    auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo, false);
 
     //allocate host_ptr
     auto pixelSize = 4;
@@ -290,7 +290,7 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
 
-    MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo, false);
     auto lineWidth = imageDesc.image_width * elementSize;
     auto passedRowPitch = imgInfo.rowPitch * 2;
     imageDesc.image_row_pitch = passedRowPitch;
@@ -360,7 +360,7 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
-    MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo, false);
     auto passedRowPitch = imgInfo.rowPitch + 32;
     imageDesc.image_row_pitch = passedRowPitch;
     unsigned char *pUseHostPtr = new unsigned char[passedRowPitch * imageDesc.image_height * elementSize];

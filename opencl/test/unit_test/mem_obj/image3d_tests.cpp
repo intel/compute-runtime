@@ -93,7 +93,7 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
-    MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo, false);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice());
 
     auto image = Image::create(
@@ -118,7 +118,7 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
 
     // query again
     surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo, false);
 
     image = Image::create(
         context,

@@ -969,7 +969,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE ||
         allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY) {
         allocationData.imgInfo->useLocalMemory = true;
-        gmm = std::make_unique<Gmm>(gmmClientContext, *allocationData.imgInfo, allocationData.storageInfo);
+        gmm = std::make_unique<Gmm>(gmmClientContext, *allocationData.imgInfo, allocationData.storageInfo, allocationData.flags.preferRenderCompressed);
         alignment = MemoryConstants::pageSize64k;
         sizeAligned = allocationData.imgInfo->size;
     } else {

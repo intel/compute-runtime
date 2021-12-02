@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -239,7 +239,6 @@ struct ImageInfo {
     uint32_t baseMipLevel;
     uint32_t mipCount;
     bool linearStorage;
-    bool preferRenderCompression;
     bool useLocalMemory;
 };
 

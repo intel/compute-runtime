@@ -70,7 +70,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     imgInfo.linearStorage = surfaceType == RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
     imgInfo.plane = lookupTable.imageProperties.isPlanarExtension ? static_cast<GMM_YUV_PLANE>(lookupTable.imageProperties.planeIndex + 1u) : GMM_NO_PLANE;
     imgInfo.useLocalMemory = false;
-    imgInfo.preferRenderCompression = false;
 
     if (!isImageView) {
         if (lookupTable.isSharedHandle) {

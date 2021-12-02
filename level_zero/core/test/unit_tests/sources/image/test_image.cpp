@@ -69,7 +69,6 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreat
     EXPECT_EQ(imageInfo.linearStorage, false);
     EXPECT_EQ(imageInfo.mipCount, 0u);
     EXPECT_EQ(imageInfo.plane, GMM_NO_PLANE);
-    EXPECT_EQ(imageInfo.preferRenderCompression, false);
     EXPECT_EQ(imageInfo.useLocalMemory, false);
 }
 

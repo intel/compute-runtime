@@ -25,8 +25,8 @@ class MockGmm : public Gmm {
 
     MockGmm(GmmClientContext *clientContext) : Gmm(clientContext, nullptr, 1, 0, false){};
 
-    static std::unique_ptr<Gmm> queryImgParams(GmmClientContext *clientContext, ImageInfo &imgInfo) {
-        return std::unique_ptr<Gmm>(new Gmm(clientContext, imgInfo, {}));
+    static std::unique_ptr<Gmm> queryImgParams(GmmClientContext *clientContext, ImageInfo &imgInfo, bool preferCompression) {
+        return std::unique_ptr<Gmm>(new Gmm(clientContext, imgInfo, {}, preferCompression));
     }
 
     static ImageInfo initImgInfo(ImageDescriptor &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {

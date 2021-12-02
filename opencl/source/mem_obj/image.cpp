@@ -200,10 +200,10 @@ Image *Image::create(Context *context,
         auto &clHwHelper = ClHwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
         imgInfo.linearStorage = !defaultHwHelper.tilingAllowed(context->isSharedContext, Image::isImage1d(*imageDesc),
                                                                memoryProperties.flags.forceLinearStorage);
-        imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
-                                                                                       *context, true);
-        imgInfo.preferRenderCompression &= clHwHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
-        imgInfo.preferRenderCompression &= !clHwHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
+        bool preferCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
+                                                                              *context, true);
+        preferCompression &= clHwHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
+        preferCompression &= !clHwHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
 
         if (!context->getDevice(0)->getSharedDeviceInfo().imageSupport && !imgInfo.linearStorage) {
             errcodeRet = CL_INVALID_OPERATION;
@@ -274,7 +274,7 @@ Image *Image::create(Context *context,
                 if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) && (allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer() != 0)) {
                     // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                     auto queryGmmImgInfo(imgInfo);
-                    auto gmm = std::make_unique<Gmm>(clientContext, queryGmmImgInfo, StorageInfo{});
+                    auto gmm = std::make_unique<Gmm>(clientContext, queryGmmImgInfo, StorageInfo{}, preferCompression);
                     auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
                     if (gmmAllocationSize > allocationInfo[rootDeviceIndex].memory->getUnderlyingBufferSize()) {
                         allocationInfo[rootDeviceIndex].memory = memoryManager->createGraphicsAllocationWithPadding(allocationInfo[rootDeviceIndex].memory, gmmAllocationSize);
@@ -292,6 +292,7 @@ Image *Image::create(Context *context,
                                                                                                                   memoryProperties, hwInfo,
                                                                                                                   context->getDeviceBitfieldForAllocation(rootDeviceIndex),
                                                                                                                   context->isSingleDeviceContext());
+                        allocProperties.flags.preferCompressed = preferCompression;
 
                         allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
 
@@ -304,7 +305,7 @@ Image *Image::create(Context *context,
                             }
                         }
                     } else {
-                        gmm = new Gmm(clientContext, imgInfo, StorageInfo{});
+                        gmm = new Gmm(clientContext, imgInfo, StorageInfo{}, preferCompression);
                         allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
                                                                                                                       false, // allocateMemory
                                                                                                                       imgInfo.size, GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE,
@@ -322,6 +323,7 @@ Image *Image::create(Context *context,
                                                             false, // isMultiStorageAllocation
                                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
                             properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
+                            properties.flags.preferCompressed = preferCompression;
                             allocationInfo[rootDeviceIndex].mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
                         }
                     }
@@ -331,6 +333,7 @@ Image *Image::create(Context *context,
                                                                                                               memoryProperties, hwInfo,
                                                                                                               context->getDeviceBitfieldForAllocation(rootDeviceIndex),
                                                                                                               context->isSingleDeviceContext());
+                    allocProperties.flags.preferCompressed = preferCompression;
                     allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
 
                     if (allocationInfo[rootDeviceIndex].memory && MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
@@ -760,7 +763,7 @@ cl_int Image::getImageParams(Context *context,
     imgInfo.imgDesc = Image::convertDescriptor(imageDescriptor);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
 
-    auto gmm = std::make_unique<Gmm>(clientContext, imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(clientContext, imgInfo, StorageInfo{}, false);
 
     *imageRowPitch = imgInfo.rowPitch;
     *imageSlicePitch = imgInfo.slicePitch;

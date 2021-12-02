@@ -272,7 +272,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
     imageInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imageInfo.plane = GMM_NO_PLANE;
 
-    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), imageInfo);
+    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), imageInfo, false);
     allocation->setDefaultGmm(gmm.release());
 
     auto image = std::unique_ptr<Image>{Image::createSharedImage(

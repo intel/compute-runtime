@@ -73,9 +73,9 @@ Gmm::Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm) : clientC
 
 Gmm::~Gmm() = default;
 
-Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo) : clientContext(clientContext) {
+Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferRenderCompressed) : clientContext(clientContext) {
     this->resourceParams = {};
-    setupImageResourceParams(inputOutputImgInfo);
+    setupImageResourceParams(inputOutputImgInfo, preferRenderCompressed);
     applyMemoryFlags(!inputOutputImgInfo.useLocalMemory, storageInfo);
     applyAppResource(storageInfo);
     applyDebugOverrides();
@@ -86,7 +86,7 @@ Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, Storage
     queryImageParams(inputOutputImgInfo);
 }
 
-void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
+void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferRenderCompressed) {
     uint64_t imageWidth = static_cast<uint64_t>(imgInfo.imgDesc.imageWidth);
     uint32_t imageHeight = 1;
     uint32_t imageDepth = 1;
@@ -138,7 +138,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
         resourceParams.Flags.Info.AllowVirtualPadding = true;
     }
 
-    applyAuxFlagsForImage(imgInfo);
+    applyAuxFlagsForImage(imgInfo, preferRenderCompressed);
 }
 
 void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {
@@ -156,7 +156,7 @@ void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {
     hwHelper.applyAdditionalCompressionSettings(*this, !isCompressionEnabled);
 }
 
-void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {
+void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferRenderCompressed) {
     uint8_t compressionFormat;
     if (this->resourceParams.Flags.Info.MediaCompressed) {
         compressionFormat = clientContext->getMediaSurfaceStateCompressionFormat(imgInfo.surfaceFormat->GMMSurfaceFormat);
@@ -179,7 +179,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {
     auto hwInfo = clientContext->getHardwareInfo();
 
     bool allowRenderCompression = HwHelper::renderCompressedImagesSupported(*hwInfo) &&
-                                  imgInfo.preferRenderCompression &&
+                                  preferRenderCompressed &&
                                   compressionFormatSupported &&
                                   imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 &&
                                   imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE &&

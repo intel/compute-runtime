@@ -1156,7 +1156,7 @@ HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferR
     ASSERT_NE(nullptr, image);
     EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedPreferCompressed);
 }
 
 TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferRenderCompression) {
@@ -1171,7 +1171,7 @@ TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPr
     ASSERT_NE(nullptr, image);
     EXPECT_FALSE(image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
 }
 
 HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAllocationThenCorrectlySetPreferRenderCompression) {
@@ -1189,7 +1189,7 @@ HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAlloca
     ASSERT_NE(nullptr, image);
     EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedPreferCompressed);
 
     newFlags = flags | CL_MEM_UNCOMPRESSED_HINT_INTEL;
     surfaceFormat = Image::getSurfaceFormatFromTable(
@@ -1200,7 +1200,7 @@ HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAlloca
     ASSERT_NE(nullptr, image);
     EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
 }
 
 TEST_F(ImageCompressionTests, givenNonTiledImageAndVariousFlagsWhenCreatingAllocationThenDontPreferRenderCompression) {
@@ -1217,7 +1217,7 @@ TEST_F(ImageCompressionTests, givenNonTiledImageAndVariousFlagsWhenCreatingAlloc
     ASSERT_NE(nullptr, image);
     EXPECT_FALSE(image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
 
     newFlags = flags | CL_MEM_UNCOMPRESSED_HINT_INTEL;
     surfaceFormat = Image::getSurfaceFormatFromTable(
@@ -1228,7 +1228,7 @@ TEST_F(ImageCompressionTests, givenNonTiledImageAndVariousFlagsWhenCreatingAlloc
     ASSERT_NE(nullptr, image);
     EXPECT_FALSE(image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
 }
 
 TEST(ImageTest, givenImageWhenGettingCompressionOfImageThenCorrectValueIsReturned) {

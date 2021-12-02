@@ -444,7 +444,6 @@ TEST_F(WddmMemoryManagerSimpleTestWithLocalMemory, givenLocalMemoryAndImageOrSha
     imgDesc.imageHeight = 1;
     imgDesc.imageType = ImageType::Image2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    imgInfo.preferRenderCompression = true;
 
     GraphicsAllocation::AllocationType types[] = {GraphicsAllocation::AllocationType::IMAGE,
                                                   GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY};
@@ -452,6 +451,7 @@ TEST_F(WddmMemoryManagerSimpleTestWithLocalMemory, givenLocalMemoryAndImageOrSha
     AllocationData allocData;
     allocData.allFlags = 0;
     allocData.size = MemoryConstants::pageSize;
+    allocData.flags.preferRenderCompressed = true;
 
     allocData.imgInfo = &imgInfo;
 

@@ -446,7 +446,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
         imgDesc.imageHeight = 1;
         imgDesc.imageType = ImageType::Image2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
+        MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo, false);
         AllocationData allocationData;
         allocationData.imgInfo = &imgInfo;
         auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);

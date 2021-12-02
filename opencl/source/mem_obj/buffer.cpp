@@ -194,6 +194,8 @@ Buffer *Buffer::create(Context *context,
             memoryManager->isLocalMemorySupported(rootDeviceIndex),
             HwHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForRenderCompression(size, *hwInfo));
 
+        bool preferCompressed = (allocationInfo[rootDeviceIndex].allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
         if (ptr) {
             if (!memoryProperties.flags.useHostPtr) {
                 if (!memoryProperties.flags.copyHostPtr) {
@@ -210,7 +212,7 @@ Buffer *Buffer::create(Context *context,
             return nullptr;
         }
 
-        if (allocationInfo[rootDeviceIndex].allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+        if (preferCompressed) {
             allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
             allocationInfo[rootDeviceIndex].allocateMemory = true;
         }
@@ -277,12 +279,14 @@ Buffer *Buffer::create(Context *context,
                                                                                                        allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                        *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
                 allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
+                allocProperties.flags.preferCompressed = preferCompressed;
                 allocationInfo[rootDeviceIndex].memory = memoryManager->createGraphicsAllocationFromExistingStorage(allocProperties, ptr, multiGraphicsAllocation);
             } else {
                 AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                        allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                        *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
                 allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
+                allocProperties.flags.preferCompressed = preferCompressed;
                 allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
                 if (allocationInfo[rootDeviceIndex].memory) {
                     ptr = reinterpret_cast<void *>(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer());

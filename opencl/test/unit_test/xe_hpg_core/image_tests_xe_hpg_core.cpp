@@ -49,7 +49,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, GivenDifferentImageFormatsWhenCreatingI
 
         ASSERT_NE(nullptr, image);
         EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-        EXPECT_EQ(format.isCompressable, myMemoryManager->capturedImgInfo.preferRenderCompression);
+        EXPECT_EQ(format.isCompressable, myMemoryManager->capturedPreferCompressed);
     }
 }
 
@@ -65,7 +65,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedPreferCompressed);
 
     imageFormat.image_channel_order = CL_RG;
     surfaceFormat = Image::getSurfaceFormatFromTable(
@@ -74,5 +74,5 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_TRUE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_TRUE(myMemoryManager->capturedPreferCompressed);
 }

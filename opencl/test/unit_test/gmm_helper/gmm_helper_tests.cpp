@@ -153,7 +153,7 @@ TEST_F(GmmTests, GivenInvalidImageSizeWhenQueryingImgParamsThenImageInfoReturnsS
     imgDesc.imageType = ImageType::Image1D;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
 
     EXPECT_EQ(imgInfo.size, 0u);
 }
@@ -164,7 +164,7 @@ TEST_F(GmmTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIsThrown
     imgDesc.imageType = ImageType::Invalid;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    EXPECT_THROW(MockGmm::queryImgParams(getGmmClientContext(), imgInfo), std::exception);
+    EXPECT_THROW(MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false), std::exception);
 }
 
 TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
@@ -179,7 +179,7 @@ TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
 
     EXPECT_GT(imgInfo.size, minSize);
     EXPECT_GT(imgInfo.rowPitch, 0u);
@@ -239,7 +239,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedThenItH
     SurfaceFormatInfo surfaceFormat = {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
     auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
 
     size_t expectedSize = imgDesc.imageRowPitch * imgDesc.imageHeight;
@@ -260,7 +260,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitc
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
     EXPECT_EQ(imgInfo.imgDesc.imageRowPitch, imgDesc.imageRowPitch);
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
     auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
 
     size_t expectedSize = imgDesc.imageRowPitch * imgDesc.imageHeight;
@@ -280,14 +280,14 @@ TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQueried)
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormatNV12);
     imgInfo.yOffsetForUVPlane = 0;
-    MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
 
     EXPECT_NE(0u, imgInfo.yOffsetForUVPlane);
 
     imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormatP010);
     imgInfo.yOffsetForUVPlane = 0;
 
-    MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
     EXPECT_NE(0u, imgInfo.yOffsetForUVPlane);
 }
 
@@ -300,7 +300,7 @@ TEST_F(GmmTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFlagIsSet
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.linearStorage = false;
-    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{}, false);
 
     EXPECT_EQ(gmm->resourceParams.Flags.Info.Linear, 0u);
     EXPECT_EQ(gmm->resourceParams.Flags.Info.TiledY, 0u);
@@ -315,7 +315,7 @@ TEST_F(GmmTests, givenTilingModeSetToNonTiledWhenCreatingGmmThenLinearFlagIsSet)
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.linearStorage = true;
-    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{}, false);
 
     EXPECT_EQ(gmm->resourceParams.Flags.Info.Linear, 1u);
     EXPECT_EQ(gmm->resourceParams.Flags.Info.TiledY, 0u);
@@ -411,7 +411,7 @@ TEST_F(GmmTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIsReturn
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, mipLevel, nullptr);
 
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
 
     EXPECT_EQ(static_cast<int>(queryGmm->resourceParams.MaxLod), mipLevel);
 }
@@ -544,7 +544,7 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     }
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
 
     auto mockResInfo = new MyMockGmmResourceInfo(&queryGmm->resourceParams);
     queryGmm->gmmResourceInfo.reset(mockResInfo);
@@ -608,7 +608,7 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
     imgDesc.imageArraySize = 10;
 
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    std::unique_ptr<Gmm> gmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    std::unique_ptr<Gmm> gmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
     MyMockGmmResourceInfo *mockGmmResourceInfo = new MyMockGmmResourceInfo(&gmm->resourceParams);
     gmm->gmmResourceInfo.reset(mockGmmResourceInfo);
 
@@ -632,7 +632,7 @@ TEST_F(GmmTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorrectly) 
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    auto gmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto gmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
     auto mockResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     GMM_RES_COPY_BLT &requestedCpuBlt = mockResInfo->requestedResCopyBlt;
@@ -883,7 +883,6 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
         imgDesc.imageWidth = 2;
         imgDesc.imageHeight = 2;
         imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        imgInfo.preferRenderCompression = true;
         imgInfo.useLocalMemory = true;
 
         // allowed for render compression:
@@ -923,11 +922,10 @@ TEST_F(GmmCompressionTests, givenDisabledAndPreferredE2ECWhenApplyingForBuffersT
 
 HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateFlags) {
     EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
-    EXPECT_TRUE(imgInfo.preferRenderCompression);
     EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
     EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
 
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
     auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     EXPECT_GT(compressionFormat, 0u);
@@ -943,13 +941,12 @@ HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateF
 
 TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryingThenRenderCompressionFlagsAreNotSet) {
     EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
-    EXPECT_TRUE(imgInfo.preferRenderCompression);
     EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
     EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
 
     imgInfo.useLocalMemory = false;
 
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
     auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     EXPECT_GT(compressionFormat, 0u);
@@ -963,7 +960,7 @@ TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryi
 
 TEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionWhenQueryingThenSetAppropriateFlags) {
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
 
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
@@ -977,7 +974,7 @@ HWTEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionAndEnabledDebugFla
     DebugManagerStateRestore restore;
     DebugManager.flags.RenderCompressedImagesEnabled.set(1);
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
 
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
     EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
@@ -988,7 +985,7 @@ HWTEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionAndEnabledDebugFla
 
     DebugManager.flags.RenderCompressedImagesEnabled.set(0);
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = true;
-    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
 
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
@@ -998,8 +995,7 @@ HWTEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionAndEnabledDebugFla
 }
 
 TEST_F(GmmCompressionTests, givenNotPreferredCompressionFlagWhenQueryingThenDisallow) {
-    imgInfo.preferRenderCompression = false;
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
 
     EXPECT_FALSE(queryGmm->isCompressionEnabled);
 }
@@ -1007,7 +1003,7 @@ TEST_F(GmmCompressionTests, givenNotPreferredCompressionFlagWhenQueryingThenDisa
 TEST_F(GmmCompressionTests, givenNV12FormatWhenQueryingThenDisallow) {
     imgInfo.surfaceFormat = &SurfaceFormats::planarYuv()[0].surfaceFormat;
     EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
 
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
     auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
@@ -1025,14 +1021,14 @@ TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrSetWhenQue
     uint8_t invalidFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
 
     mockGmmClient->compressionFormatToReturn = invalidFormat;
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
     auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     EXPECT_EQ(compressionFormat, invalidFormat);
     EXPECT_FALSE(queryGmm->isCompressionEnabled);
 
     mockGmmClient->compressionFormatToReturn = validFormat;
-    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
     EXPECT_TRUE(queryGmm->isCompressionEnabled);
 }
 
@@ -1045,14 +1041,14 @@ TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrNotSetWhen
     uint8_t validFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
     mockGmmClient->compressionFormatToReturn = invalidFormat;
 
-    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
     auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     EXPECT_EQ(compressionFormat, invalidFormat);
     EXPECT_FALSE(queryGmm->isCompressionEnabled);
 
     mockGmmClient->compressionFormatToReturn = validFormat;
-    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
     EXPECT_TRUE(queryGmm->isCompressionEnabled);
 }
 
@@ -1062,7 +1058,7 @@ TEST_F(GmmCompressionTests, givenPlaneFormatWhenQueryingThenDisallow) {
 
     for (auto &plane : gmmPlane) {
         imgInfo.plane = plane;
-        auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+        auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
 
         EXPECT_EQ(queryGmm->isCompressionEnabled,
                   plane == GMM_YUV_PLANE::GMM_NO_PLANE);
@@ -1072,7 +1068,7 @@ TEST_F(GmmCompressionTests, givenPlaneFormatWhenQueryingThenDisallow) {
 TEST_F(GmmCompressionTests, givenPackedYuvFormatWhenQueryingThenDisallow) {
     for (auto &surfaceFormat : SurfaceFormats::packedYuv()) {
         imgInfo.surfaceFormat = &surfaceFormat.surfaceFormat;
-        auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+        auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, true);
 
         EXPECT_FALSE(queryGmm->isCompressionEnabled);
     }
@@ -1092,7 +1088,7 @@ TEST_F(GmmCompressionTests, givenMediaCompressedImageApplyAuxFlagsForImageThenSe
     MockGmm gmm(getGmmClientContext(), nullptr, 1, 0, false);
     gmm.resourceParams.Flags.Info.MediaCompressed = true;
     gmm.resourceParams.Flags.Info.RenderCompressed = false;
-    gmm.setupImageResourceParams(imgInfo);
+    gmm.setupImageResourceParams(imgInfo, true);
 
     EXPECT_TRUE(gmm.isCompressionEnabled);
 }
@@ -1101,7 +1097,7 @@ TEST_F(GmmCompressionTests, givenRenderCompressedImageApplyAuxFlagsForImageThenS
     MockGmm gmm(getGmmClientContext(), nullptr, 1, 0, false);
     gmm.resourceParams.Flags.Info.MediaCompressed = false;
     gmm.resourceParams.Flags.Info.RenderCompressed = true;
-    gmm.setupImageResourceParams(imgInfo);
+    gmm.setupImageResourceParams(imgInfo, true);
 
     EXPECT_TRUE(gmm.isCompressionEnabled);
 }
@@ -1276,7 +1272,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedTh
 
     imgInfo.useLocalMemory = true;
 
-    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{}, false);
     EXPECT_FALSE(gmm->useSystemMemoryPool);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
@@ -1299,9 +1295,8 @@ TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhen
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
 
     imgInfo.useLocalMemory = true;
-    imgInfo.preferRenderCompression = true;
 
-    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{}, true);
     EXPECT_FALSE(gmm->useSystemMemoryPool);
     EXPECT_TRUE(gmm->isCompressionEnabled);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
@@ -1324,7 +1319,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoFalseWhenGmmIsCreatedT
 
     imgInfo.useLocalMemory = false;
 
-    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{}, false);
     EXPECT_TRUE(gmm->useSystemMemoryPool);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
 }
@@ -1343,11 +1338,11 @@ TEST_F(MultiTileGmmTests, whenCreateGmmWithImageInfoThenEnableMultiTileArch) {
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
 
     imgInfo.useLocalMemory = false;
-    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{}, false);
     EXPECT_TRUE(gmm->useSystemMemoryPool);
     EXPECT_EQ(1u, gmm->resourceParams.MultiTileArch.Enable);
     imgInfo.useLocalMemory = true;
-    gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
+    gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{}, false);
     EXPECT_FALSE(gmm->useSystemMemoryPool);
     EXPECT_EQ(1u, gmm->resourceParams.MultiTileArch.Enable);
 }

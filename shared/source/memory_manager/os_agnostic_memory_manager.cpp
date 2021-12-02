@@ -229,7 +229,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedH
     graphicsAllocation->set32BitAllocation(requireSpecificBitness);
 
     if (properties.imgInfo) {
-        Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmClientContext(), *properties.imgInfo, createStorageInfoFromProperties(properties));
+        Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmClientContext(), *properties.imgInfo, createStorageInfoFromProperties(properties), false);
         graphicsAllocation->setDefaultGmm(gmm);
     }
 
@@ -468,7 +468,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE ||
             allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY) {
             allocationData.imgInfo->useLocalMemory = true;
-            gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo, allocationData.storageInfo);
+            gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo,
+                                        allocationData.storageInfo, allocationData.flags.preferRenderCompressed);
             sizeAligned64k = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
         } else {
             sizeAligned64k = alignUp(allocationData.size, MemoryConstants::pageSize64k);
