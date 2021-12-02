@@ -108,12 +108,7 @@ void programEventL3Flush(ze_event_handle_t hEvent,
     auto &cmdListStream = *commandContainer.getCommandStream();
     NEO::PipeControlArgs args;
     args.dcFlushEnable = true;
-
-    if (partitionCount > 1) {
-        args.workloadPartitionOffset = true;
-        NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(cmdListStream,
-                                                                        static_cast<uint32_t>(event->getSinglePacketSize()));
-    }
+    args.workloadPartitionOffset = partitionCount > 1;
 
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
         cmdListStream,
@@ -122,11 +117,6 @@ void programEventL3Flush(ze_event_handle_t hEvent,
         Event::STATE_SIGNALED,
         commandContainer.getDevice()->getHardwareInfo(),
         args);
-
-    if (partitionCount > 1) {
-        NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(cmdListStream,
-                                                                        NEO::ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset());
-    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -252,9 +242,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         }
         if (L3FlushEnable) {
             size_t estimatedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(neoDevice->getHardwareInfo());
-            if (partitionCount > 1) {
-                estimatedSize += 2 * NEO::ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
-            }
             increaseCommandStreamSpace(estimatedSize);
             programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);
         }

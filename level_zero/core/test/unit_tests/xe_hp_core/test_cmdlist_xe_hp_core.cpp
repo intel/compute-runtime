@@ -14,6 +14,7 @@
 
 #include "test.h"
 
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -143,8 +144,9 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomics
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
 }
 
-using CommandListAppendLaunchKernelL3Flush = Test<ModuleFixture>;
-HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEventAndWithWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
+using MultTileCommandListAppendLaunchKernelL3Flush = Test<MultiTileCommandListFixture<false, false>>;
+
+HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEventAndWithWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -181,9 +183,9 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEventAndWi
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(pCommandList->commandContainer.getCommandStream()->getCpuBase(), 0), pCommandList->commandContainer.getCommandStream()->getUsed()));
 
-    EXPECT_LT(1u, pCommandList->partitionCount);
+    EXPECT_EQ(2u, pCommandList->partitionCount);
     auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorLri);
+    EXPECT_EQ(cmdList.end(), itorLri);
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
     uint32_t postSyncCount = 0u;
@@ -196,13 +198,11 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEventAndWi
     ASSERT_LE(1u, postSyncCount);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithTimestampEventAndWithWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
+HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithTimestampEventAndWithWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(1);
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -233,9 +233,9 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithTimestampEventAnd
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(pCommandList->commandContainer.getCommandStream()->getCpuBase(), 0), pCommandList->commandContainer.getCommandStream()->getUsed()));
 
-    EXPECT_LT(1u, pCommandList->partitionCount);
+    EXPECT_EQ(2u, pCommandList->partitionCount);
     auto itorLri = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_LE(2u, itorLri.size());
+    EXPECT_EQ(0u, itorLri.size());
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
     uint32_t postSyncCount = 0u;
@@ -248,11 +248,10 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithTimestampEventAnd
     ASSERT_LE(1u, postSyncCount);
 }
 
+using CommandListAppendLaunchKernelL3Flush = Test<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventAndWithoutWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(0);
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
