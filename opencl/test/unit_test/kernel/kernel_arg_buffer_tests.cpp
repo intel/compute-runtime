@@ -656,12 +656,16 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
                                   GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
                                   GraphicsAllocation::AllocationType::SVM_GPU};
 
+    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), nullptr, 0, 0, false);
     MockGraphicsAllocation gfxAllocation;
+    gfxAllocation.setDefaultGmm(gmm.get());
 
     for (const auto type : allocationTypes) {
         gfxAllocation.setAllocationType(type);
 
         pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
+        gmm->isCompressionEnabled = ((type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
+                                     (type == GraphicsAllocation::AllocationType::SVM_GPU));
 
         KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
         pKernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
@@ -695,13 +699,20 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
                                   GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
                                   GraphicsAllocation::AllocationType::SVM_GPU};
 
+    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), nullptr, 0, 0, false);
+
     MockGraphicsAllocation gfxAllocation;
+    gfxAllocation.setDefaultGmm(gmm.get());
+
     SvmAllocationData allocData(0);
     allocData.gpuAllocations.addAllocation(&gfxAllocation);
     allocData.device = &pClDevice->getDevice();
 
     for (const auto type : allocationTypes) {
         gfxAllocation.setAllocationType(type);
+
+        gmm->isCompressionEnabled = ((type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
+                                     (type == GraphicsAllocation::AllocationType::SVM_GPU));
 
         pContext->getSVMAllocsManager()->insertSVMAlloc(allocData);
 

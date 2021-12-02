@@ -53,7 +53,7 @@ SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, DumpFormat du
         surfaceInfo->format = SURFACE_FORMAT::SURFACE_FORMAT_RAW;
         surfaceInfo->tilingType = RENDER_SURFACE_STATE::TILE_MODE_LINEAR;
         surfaceInfo->surftype = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
-        surfaceInfo->compressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == gfxAllocation.getAllocationType();
+        surfaceInfo->compressed = gfxAllocation.isCompressionEnabled();
         surfaceInfo->dumpType = (AubAllocDump::DumpFormat::BUFFER_TRE == dumpFormat) ? dumpType::tre : dumpType::bin;
     } else if (isImageDumpFormat(dumpFormat)) {
         auto gmm = gfxAllocation.getDefaultGmm();

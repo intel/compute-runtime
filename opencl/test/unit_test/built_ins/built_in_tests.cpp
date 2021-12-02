@@ -516,15 +516,23 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
     mockKernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *));
     mockKernel.mockKernel->initialize();
 
+    std::unique_ptr<Gmm> gmm;
+
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
     if (kernelObjType == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+        MockBuffer::setAllocationType(mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+
         cl_mem clMem = mockKernelObjForAuxTranslation.mockBuffer.get();
         mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
     } else {
         auto gfxAllocation = mockKernelObjForAuxTranslation.mockGraphicsAllocation.get();
-        gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+        MockBuffer::setAllocationType(gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+
         auto ptr = reinterpret_cast<void *>(gfxAllocation->getGpuAddressToPatch());
         mockKernel.mockKernel->setArgSvmAlloc(0, ptr, gfxAllocation);
+
+        gmm.reset(gfxAllocation->getDefaultGmm());
     }
 
     mockKernel.mockKernel->auxTranslationRequired = false;
@@ -678,10 +686,10 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, false));
+    auto gmm = std::make_unique<Gmm>(pDevice->getGmmClientContext(), nullptr, 1, 0, false);
     gmm->isCompressionEnabled = true;
     if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
-        mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.get());
+        mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
     } else {
         mockKernelObjForAuxTranslation.mockGraphicsAllocation->setDefaultGmm(gmm.get());
     }

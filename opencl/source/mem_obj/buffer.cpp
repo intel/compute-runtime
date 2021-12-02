@@ -79,7 +79,7 @@ bool Buffer::isSubBuffer() {
 }
 
 bool Buffer::isValidSubBufferOffset(size_t offset) {
-    if (multiGraphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+    if (multiGraphicsAllocation.getDefaultGraphicsAllocation()->isCompressionEnabled()) {
         // From spec: "origin value is aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value"
         if (!isAligned(offset, this->getContext()->getDevice(0)->getDeviceInfo().memBaseAddressAlign / 8u)) {
             return false;
@@ -377,7 +377,7 @@ Buffer *Buffer::create(Context *context,
             }
         }
 
-        Buffer::provideCompressionHint(allocationInfo[rootDeviceIndex].allocationType, context, pBuffer);
+        Buffer::provideCompressionHint(allocationInfo[rootDeviceIndex].memory->isCompressionEnabled(), context, pBuffer);
 
         if (allocationInfo[rootDeviceIndex].mapAllocation) {
             pBuffer->mapAllocations.addAllocation(allocationInfo[rootDeviceIndex].mapAllocation);
@@ -751,15 +751,7 @@ uint64_t Buffer::getBufferAddress(uint32_t rootDeviceIndex) const {
 }
 
 bool Buffer::isCompressed(uint32_t rootDeviceIndex) const {
-    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    if (graphicsAllocation->getDefaultGmm()) {
-        return graphicsAllocation->getDefaultGmm()->isCompressionEnabled;
-    }
-    if (graphicsAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
-        return true;
-    }
-
-    return false;
+    return multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->isCompressionEnabled();
 }
 
 void Buffer::setSurfaceState(const Device *device,
@@ -783,11 +775,9 @@ void Buffer::setSurfaceState(const Device *device,
     delete buffer;
 }
 
-void Buffer::provideCompressionHint(GraphicsAllocation::AllocationType allocationType,
-                                    Context *context,
-                                    Buffer *buffer) {
+void Buffer::provideCompressionHint(bool compressionEnabled, Context *context, Buffer *buffer) {
     if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo())) {
-        if (allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+        if (compressionEnabled) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, BUFFER_IS_COMPRESSED, buffer);
         } else {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, BUFFER_IS_NOT_COMPRESSED, buffer);

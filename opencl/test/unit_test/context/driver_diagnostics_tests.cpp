@@ -438,7 +438,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
-    buffer.getGraphicsAllocation(pDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(buffer.getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
 
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
@@ -469,7 +469,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -488,6 +488,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
+
+    delete gfxAllocation.getDefaultGmm();
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallFillWithKernelObjsForAuxTranslationOnUnifiedMemoryThenContextProvidesProperHint) {
@@ -501,7 +503,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
 
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
@@ -516,6 +518,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
+
+    delete gfxAllocation.getDefaultGmm();
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallFillWithKernelObjsForAuxTranslationOnAllocationInSvmAllocsManagerThenContextProvidesProperHint) {
@@ -533,7 +537,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
 
     mockKernel.mockKernel->initialize();
 
@@ -553,6 +557,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
+
+    delete gfxAllocation.getDefaultGmm();
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKernelObjectWithGraphicsAllocationAccessedStatefullyOnlyThenDontReportAnyHint) {
@@ -565,7 +571,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -582,6 +588,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
+
+    delete gfxAllocation.getDefaultGmm();
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCallFillWithKernelObjsForAuxTranslationOnGfxAllocationThenDontReportAnyHint) {
@@ -591,7 +599,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -607,6 +615,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
+
+    delete gfxAllocation.getDefaultGmm();
 }
 
 TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNullGfxAllocationThenDontReportAnyHint) {
@@ -638,7 +648,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
 
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
@@ -649,9 +659,11 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
+
+    delete gfxAllocation.getDefaultGmm();
 }
 
-TEST_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPerformanceHintIsProvided) {
+HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPerformanceHintIsProvided, IsAtLeastGen12lp) {
     cl_int retVal;
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
@@ -706,12 +718,12 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_NOT_COMPRESSED], buffer.get());
 
     if (isCompressed || is32bit) {
-        Buffer::provideCompressionHint(GraphicsAllocation::AllocationType::BUFFER, context.get(), buffer.get());
+        Buffer::provideCompressionHint(false, context.get(), buffer.get());
     }
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
-TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerformanceHintIsProvided) {
+HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerformanceHintIsProvided) {
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedImages = true;
 
@@ -733,10 +745,17 @@ TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerforma
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(device->getGmmClientContext(), static_cast<const void *>(nullptr), t, 0, false, true, true, info));
+    auto gmm = new Gmm(device->getGmmClientContext(), static_cast<const void *>(nullptr), t, 0, false, true, true, info);
     gmm->isCompressionEnabled = true;
 
-    mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm.get());
+    auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
+
+    graphicsAllocation->setDefaultGmm(gmm);
+
+    if (!HwHelperHw<FamilyType>::get().checkResourceCompatibility(*graphicsAllocation)) {
+        GTEST_SKIP();
+    }
+
     cl_mem mem = mockBuffer.get();
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_RGBA;
@@ -796,10 +815,10 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(device->getGmmClientContext(), (const void *)nullptr, t, 0, false, true, true, info));
+    auto gmm = new Gmm(device->getGmmClientContext(), (const void *)nullptr, t, 0, false, true, true, info);
     gmm->isCompressionEnabled = false;
 
-    mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm.get());
+    mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm);
     cl_mem mem = mockBuffer.get();
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_RGBA;

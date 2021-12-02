@@ -845,10 +845,10 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     cl_mem clMem1 = &buffer1;
     cl_mem clMem2 = &buffer2;
     cl_mem clMem3 = &buffer3;
-    buffer0.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    buffer1.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    buffer2.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    buffer3.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer0.setAllocationType(pClDevice->getRootDeviceIndex(), false);
+    buffer1.setAllocationType(pClDevice->getRootDeviceIndex(), false);
+    buffer2.setAllocationType(pClDevice->getRootDeviceIndex(), true);
+    buffer3.setAllocationType(pClDevice->getRootDeviceIndex(), true);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
 
@@ -906,7 +906,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
-    buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer.setAllocationType(pClDevice->getRootDeviceIndex(), true);
     mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
     mockKernel.mockKernel->initialize();
@@ -955,7 +955,7 @@ HWTEST_F(BlitAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDi
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
-    buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer.setAllocationType(pClDevice->getRootDeviceIndex(), true);
     mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
     mockKernel.mockKernel->initialize();

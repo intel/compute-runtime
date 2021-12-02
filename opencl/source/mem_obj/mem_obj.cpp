@@ -129,7 +129,6 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     cl_context ctx = nullptr;
     uint64_t internalHandle = 0llu;
     auto allocation = getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
-    Gmm *gmm;
     cl_bool usesCompression;
 
     switch (paramName) {
@@ -194,12 +193,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_USES_COMPRESSION_INTEL:
-        gmm = allocation->getDefaultGmm();
-        if (gmm != nullptr) {
-            usesCompression = gmm->isCompressionEnabled;
-        } else {
-            usesCompression = allocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
-        }
+        usesCompression = allocation->isCompressionEnabled();
         srcParam = &usesCompression;
         srcParamSize = sizeof(cl_bool);
         break;

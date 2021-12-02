@@ -14,6 +14,7 @@
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -340,7 +341,8 @@ TEST_F(GetMemObjectInfo, GivenValidBufferWhenGettingCompressionOfMemObjectThenCo
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(sizeof(cl_bool), sizeReturned);
 
-    graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+
     retVal = buffer->getMemObjectInfo(
         CL_MEM_USES_COMPRESSION_INTEL,
         sizeReturned,
@@ -349,7 +351,8 @@ TEST_F(GetMemObjectInfo, GivenValidBufferWhenGettingCompressionOfMemObjectThenCo
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(cl_bool{CL_TRUE}, usesCompression);
 
-    graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), false);
+
     retVal = buffer->getMemObjectInfo(
         CL_MEM_USES_COMPRESSION_INTEL,
         sizeReturned,

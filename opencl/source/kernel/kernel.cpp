@@ -923,8 +923,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             forceNonAuxMode = true;
         }
         disableL3 = (argIndex == 0);
-    } else if (svmAlloc && svmAlloc->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
-               clHwHelper.requiresNonAuxMode(argAsPtr, hwInfo)) {
+    } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clHwHelper.requiresNonAuxMode(argAsPtr, hwInfo)) {
         forceNonAuxMode = true;
     }
 
@@ -1430,8 +1429,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                 forceNonAuxMode = true;
             }
             disableL3 = (argIndex == 0);
-        } else if (graphicsAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
-                   clHwHelper.requiresNonAuxMode(argAsPtr, hwInfo)) {
+        } else if (graphicsAllocation->isCompressionEnabled() && clHwHelper.requiresNonAuxMode(argAsPtr, hwInfo)) {
             forceNonAuxMode = true;
         }
 
@@ -2474,7 +2472,7 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
         const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[i];
         if (BUFFER_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto buffer = castToObject<Buffer>(getKernelArg(i));
-            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+            if (buffer && buffer->getMultiGraphicsAllocation().getDefaultGraphicsAllocation()->isCompressionEnabled()) {
                 kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer});
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
@@ -2486,7 +2484,7 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
         }
         if (SVM_ALLOC_OBJ == getKernelArguments().at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto svmAlloc = reinterpret_cast<GraphicsAllocation *>(const_cast<void *>(getKernelArg(i)));
-            if (svmAlloc && svmAlloc->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+            if (svmAlloc && svmAlloc->isCompressionEnabled()) {
                 kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, svmAlloc});
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
@@ -2500,8 +2498,7 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
     const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
     if (hwInfoConfig.allowStatelessCompression(getDevice().getHardwareInfo())) {
         for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
-            if ((gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-                (gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::SVM_GPU)) {
+            if (gfxAllocation->isCompressionEnabled()) {
                 kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
@@ -2514,8 +2511,7 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
         if (getContext().getSVMAllocsManager()) {
             for (auto &allocation : getContext().getSVMAllocsManager()->getSVMAllocs()->allocations) {
                 auto gfxAllocation = allocation.second.gpuAllocations.getDefaultGraphicsAllocation();
-                if ((gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-                    (gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::SVM_GPU)) {
+                if (gfxAllocation->isCompressionEnabled()) {
                     kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
                     auto &context = this->program->getContext();
                     if (context.isProvidingPerformanceHints()) {

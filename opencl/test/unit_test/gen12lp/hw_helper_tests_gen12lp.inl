@@ -220,7 +220,7 @@ GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenCompressedBufferThenCheckResource
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
-    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(buffer->getGraphicsAllocation(rootDeviceIndex), context->getDevice(0)->getRootDeviceEnvironment().getGmmClientContext(), true);
 
     EXPECT_FALSE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
 }

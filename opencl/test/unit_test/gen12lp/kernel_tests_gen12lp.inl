@@ -36,8 +36,8 @@ GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedTh
 
     MockBuffer buffer;
     auto allocation = buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    MockGmm gmm1(pDevice->getGmmClientContext());
-    allocation->setGmm(&gmm1, 0);
+    auto gmm1 = new MockGmm(pDevice->getGmmClientContext());
+    allocation->setGmm(gmm1, 0);
 
     cl_mem clMem = &buffer;
     kernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
@@ -48,8 +48,8 @@ GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedTh
     MockBuffer bufferMediaCompressed;
     bufferMediaCompressed.setSharingHandler(new SharingHandler());
     allocation = bufferMediaCompressed.getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    MockGmm gmm2(pDevice->getGmmClientContext());
-    allocation->setGmm(&gmm2, 0);
+    auto gmm2 = new MockGmm(pDevice->getGmmClientContext());
+    allocation->setGmm(gmm2, 0);
     allocation->getGmm(0)->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = 1;
     cl_mem clMem2 = &bufferMediaCompressed;
     kernel.mockKernel->setArgBuffer(2, sizeof(cl_mem *), &clMem2);

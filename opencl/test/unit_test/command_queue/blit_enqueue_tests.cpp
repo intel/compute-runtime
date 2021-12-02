@@ -146,22 +146,34 @@ struct BlitEnqueueTests : public ::testing::Test {
 
     ReleaseableObjectPtr<Buffer> createBuffer(size_t size, bool compressed) {
         auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, size, nullptr, retVal));
-        if (compressed) {
-            buffer->getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-        } else {
-            buffer->getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-        }
+        auto graphicsAllocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
+
+        setAllocationType(graphicsAllocation, compressed);
+
         return buffer;
     }
 
-    std::unique_ptr<GraphicsAllocation> createGfxAllocation(size_t size, bool compressed) {
-        auto alloc = std::unique_ptr<GraphicsAllocation>(new MockGraphicsAllocation(nullptr, size));
-        if (compressed) {
-            alloc->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-        } else {
-            alloc->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-        }
+    MockGraphicsAllocation *createGfxAllocation(size_t size, bool compressed) {
+        auto alloc = new MockGraphicsAllocation(nullptr, size);
+        setAllocationType(alloc, compressed);
         return alloc;
+    }
+
+    void setAllocationType(GraphicsAllocation *graphicsAllocation, bool compressed) {
+        if (compressed) {
+            graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+            if (!graphicsAllocation->getDefaultGmm()) {
+                auto clientContext = device->getRootDeviceEnvironment().getGmmClientContext();
+
+                graphicsAllocation->setDefaultGmm(new Gmm(clientContext, nullptr, 0, 0, false));
+            }
+        } else {
+            graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+        }
+
+        if (graphicsAllocation->getDefaultGmm()) {
+            graphicsAllocation->getDefaultGmm()->isCompressionEnabled = compressed;
+        }
     }
 
     template <typename Family>
@@ -874,7 +886,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenEnqueueIsCal
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationOnGfxAllocationWhenEnqueueIsCalledThenDoImplicitFlushOnGpgpuCsr) {
     auto gfxAllocation = createGfxAllocation(1, true);
-    setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation.get()}});
+    setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
 
@@ -884,13 +896,15 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationOnGfxAllocationW
 
     EXPECT_EQ(1u, ultCsr->taskCount);
     EXPECT_TRUE(ultCsr->recordedDispatchFlags.implicitFlush);
+
+    device->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingDependenciesThenPutAllNodesToDeferredList) {
     DebugManager.flags.ForceCacheFlushForBcs.set(1);
 
     auto gfxAllocation = createGfxAllocation(1, true);
-    setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation.get()}});
+    setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
 
     TimestampPacketContainer *deferredTimestampPackets = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get())->deferredTimestampPackets.get();
 
@@ -898,13 +912,15 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingD
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_EQ(4u, deferredTimestampPackets->peekNodes().size()); // Barrier, CacheFlush, AuxToNonAux, NonAuxToAux
+
+    device->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingDependenciesForBlockedEnqueueThenPutAllNodesToDeferredList) {
     DebugManager.flags.ForceCacheFlushForBcs.set(1);
 
     auto gfxAllocation = createGfxAllocation(1, true);
-    setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation.get()}});
+    setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
 
     TimestampPacketContainer *deferredTimestampPackets = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get())->deferredTimestampPackets.get();
 
@@ -920,6 +936,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingD
     EXPECT_FALSE(commandQueue->isQueueBlocked());
 
     EXPECT_EQ(4u, deferredTimestampPackets->peekNodes().size()); // Barrier, CacheFlush, AuxToNonAux, NonAuxToAux
+
+    device->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
 }
 
 using BlitEnqueueWithNoTimestampPacketTests = BlitEnqueueTests<0>;

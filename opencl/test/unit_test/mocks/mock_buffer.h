@@ -24,6 +24,11 @@ class MockBufferStorage {
     MockBufferStorage(bool unaligned) : mockGfxAllocation(unaligned ? alignUp(&data, 4) : alignUp(&data, 64), sizeof(data) / 2),
                                         multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {
     }
+    ~MockBufferStorage() {
+        if (mockGfxAllocation.getDefaultGmm()) {
+            delete mockGfxAllocation.getDefaultGmm();
+        }
+    }
     char data[128];
     MockGraphicsAllocation mockGfxAllocation;
     std::unique_ptr<MockDevice> device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -39,6 +44,26 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using MemObj::isZeroCopy;
     using MemObj::memObjectType;
     using MockBufferStorage::device;
+
+    void setAllocationType(uint32_t rootDeviceIndex, bool compressed) {
+        setAllocationType(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex),
+                          device->getRootDeviceEnvironment().getGmmClientContext(), compressed);
+    }
+
+    static void setAllocationType(GraphicsAllocation *graphicsAllocation, GmmClientContext *gmmClientContext, bool compressed) {
+        if (compressed) {
+            graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+            if (!graphicsAllocation->getDefaultGmm()) {
+                graphicsAllocation->setDefaultGmm(new Gmm(gmmClientContext, nullptr, 0, 0, false));
+            }
+        } else {
+            graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+        }
+
+        if (graphicsAllocation->getDefaultGmm()) {
+            graphicsAllocation->getDefaultGmm()->isCompressionEnabled = compressed;
+        }
+    }
 
     MockBuffer(GraphicsAllocation &alloc) : MockBuffer(nullptr, alloc) {}
 
@@ -56,6 +81,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
                                    CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data,
                                    GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation), true, false, false) {
     }
+
     ~MockBuffer() override {
         if (externalAlloc != nullptr) {
             // no ownership over graphics allocation, do not release it

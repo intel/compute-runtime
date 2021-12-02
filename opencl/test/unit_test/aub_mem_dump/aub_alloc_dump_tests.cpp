@@ -17,6 +17,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"
 
 using namespace NEO;
@@ -421,7 +422,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
         auto bufferAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
         ASSERT_NE(nullptr, bufferAllocation);
 
-        bufferAllocation->setAllocationType(isCompressed ? GraphicsAllocation::AllocationType::BUFFER_COMPRESSED : GraphicsAllocation::AllocationType::BUFFER);
+        MockBuffer::setAllocationType(bufferAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), isCompressed);
 
         std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*bufferAllocation, dumpFormat));
         if (nullptr != surfaceInfo) {

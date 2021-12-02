@@ -132,9 +132,7 @@ class Buffer : public MemObj {
                                 bool useGlobalAtomics,
                                 bool areMultipleSubDevicesInContext);
 
-    static void provideCompressionHint(GraphicsAllocation::AllocationType allocationType,
-                                       Context *context,
-                                       Buffer *buffer);
+    static void provideCompressionHint(bool compressionEnabled, Context *context, Buffer *buffer);
 
     BufferCreatFunc createFunction = nullptr;
     bool isSubBuffer();

@@ -63,10 +63,7 @@ bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t s
 
 template <>
 bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) {
-    if (graphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
-        return false;
-    }
-    return true;
+    return !graphicsAllocation.isCompressionEnabled();
 }
 
 template <>
