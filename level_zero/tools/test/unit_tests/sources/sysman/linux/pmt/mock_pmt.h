@@ -132,10 +132,9 @@ class PublicPlatformMonitoringTech : public L0::PlatformMonitoringTech {
     using PlatformMonitoringTech::doInitPmtObject;
     using PlatformMonitoringTech::init;
     using PlatformMonitoringTech::keyOffsetMap;
-    using PlatformMonitoringTech::mappedMemory;
-    using PlatformMonitoringTech::mmapFunction;
-    using PlatformMonitoringTech::munmapFunction;
     using PlatformMonitoringTech::openFunction;
+    using PlatformMonitoringTech::preadFunction;
+    using PlatformMonitoringTech::telemetryDeviceEntry;
 };
 
 } // namespace ult

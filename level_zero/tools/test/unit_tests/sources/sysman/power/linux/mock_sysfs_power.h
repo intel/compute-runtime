@@ -26,7 +26,6 @@ namespace L0 {
 namespace ult {
 constexpr uint64_t setEnergyCounter = (83456u * 1048576u);
 constexpr uint64_t offset = 0x400;
-constexpr uint64_t mappedLength = 2048;
 const std::string deviceName("device");
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
 const std::string hwmonDir("device/hwmon");
@@ -259,32 +258,28 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
 class PowerPmt : public PlatformMonitoringTech {
   public:
     PowerPmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+    using PlatformMonitoringTech::closeFunction;
     using PlatformMonitoringTech::keyOffsetMap;
+    using PlatformMonitoringTech::openFunction;
+    using PlatformMonitoringTech::preadFunction;
+    using PlatformMonitoringTech::telemetryDeviceEntry;
 };
 
 template <>
 struct Mock<PowerPmt> : public PowerPmt {
     ~Mock() override {
-        if (mappedMemory != nullptr) {
-            delete mappedMemory;
-            mappedMemory = nullptr;
-        }
         rootDeviceTelemNodeIndex = 0;
     }
 
     Mock<PowerPmt>(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PowerPmt(pFsAccess, onSubdevice, subdeviceId) {}
 
     void mockedInit(FsAccess *pFsAccess) {
-        mappedMemory = new char[mappedLength];
         std::string rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
         if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDevice)) {
             return;
         }
 
-        // fill memmory with 8 bytes of data using setEnergyCoutner at offset = 0x400
-        for (uint64_t i = 0; i < sizeof(uint64_t); i++) {
-            mappedMemory[offset + i] = static_cast<char>((setEnergyCounter >> 8 * i) & 0xff);
-        }
+        telemetryDeviceEntry = "/sys/class/intel_pmt/telem2/telem";
     }
 };
 

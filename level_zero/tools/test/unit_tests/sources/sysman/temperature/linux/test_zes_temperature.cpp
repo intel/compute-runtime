@@ -12,6 +12,7 @@ extern bool sysmanUltsEnable;
 
 namespace L0 {
 namespace ult {
+const static int fakeFileDescriptor = 123;
 std::string rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
 constexpr uint32_t handleComponentCountForSubDevices = 6u;
 constexpr uint32_t handleComponentCountForNoSubDevices = 2u;
@@ -23,6 +24,61 @@ const std::map<std::string, uint64_t> deviceKeyOffsetMapTemperature = {
     {"COMPUTE_TEMPERATURES", 0x68},
     {"SOC_TEMPERATURES", 0x60},
     {"CORE_TEMPERATURES", 0x6c}};
+
+inline static int openMockTemp(const char *pathname, int flags) {
+    if (strcmp(pathname, "/sys/class/intel_pmt/telem2/telem") == 0) {
+        return fakeFileDescriptor;
+    }
+    if (strcmp(pathname, "/sys/class/intel_pmt/telem3/telem") == 0) {
+        return fakeFileDescriptor;
+    }
+    return -1;
+}
+
+inline static int closeMockTemp(int fd) {
+    if (fd == fakeFileDescriptor) {
+        return 0;
+    }
+    return -1;
+}
+
+ssize_t preadMockTemp(int fd, void *buf, size_t count, off_t offset) {
+    if (count == sizeof(uint32_t)) {
+        uint32_t *mockBuf = static_cast<uint32_t *>(buf);
+        if (offset == memory2MaxTempIndex) {
+            *mockBuf = memory2MaxTemperature;
+        } else if (offset == memory3MaxTempIndex) {
+            *mockBuf = memory3MaxTemperature;
+        } else {
+            for (uint64_t i = 0; i < sizeof(uint32_t); i++) {
+                *mockBuf |= (uint32_t)tempArrForSubDevices[(offset - offsetForSubDevices) + i] << (i * 8);
+            }
+        }
+    } else {
+        uint64_t *mockBuf = static_cast<uint64_t *>(buf);
+        *mockBuf = 0;
+        for (uint64_t i = 0; i < sizeof(uint64_t); i++) {
+            *mockBuf |= (uint64_t)tempArrForSubDevices[(offset - offsetForSubDevices) + i] << (i * 8);
+        }
+    }
+    return count;
+}
+
+ssize_t preadMockTempNoSubDevices(int fd, void *buf, size_t count, off_t offset) {
+    if (count == sizeof(uint32_t)) {
+        uint32_t *mockBuf = static_cast<uint32_t *>(buf);
+        for (uint64_t i = 0; i < sizeof(uint32_t); i++) {
+            *mockBuf |= (uint32_t)tempArrForNoSubDevices[(offset - offsetForNoSubDevices) + i] << (i * 8);
+        }
+    } else {
+        uint64_t *mockBuf = static_cast<uint64_t *>(buf);
+        *mockBuf = 0;
+        for (uint64_t i = 0; i < sizeof(uint64_t); i++) {
+            *mockBuf |= (uint64_t)tempArrForNoSubDevices[(offset - offsetForNoSubDevices) + i] << (i * 8);
+        }
+    }
+    return count;
+}
 
 class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
@@ -98,6 +154,15 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZe
 
 TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureThenValidTemperatureReadingsRetrieved) {
     auto handles = get_temp_handles(handleComponentCountForSubDevices);
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        auto pPmt = static_cast<NiceMock<Mock<TemperaturePmt>> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        pPmt->openFunction = openMockTemp;
+        pPmt->closeFunction = closeMockTemp;
+        pPmt->preadFunction = preadMockTemp;
+    }
+
     for (auto handle : handles) {
         zes_temp_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
@@ -192,6 +257,15 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndGlobalTemperatureThenValidTemperatureReadingsRetrieved) {
     auto handles = get_temp_handles(handleComponentCountForNoSubDevices);
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        auto pPmt = static_cast<NiceMock<Mock<TemperaturePmt>> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        pPmt->openFunction = openMockTemp;
+        pPmt->closeFunction = closeMockTemp;
+        pPmt->preadFunction = preadMockTempNoSubDevices;
+    }
+
     for (auto &handle : handles) {
         zes_temp_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
@@ -231,8 +305,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsW
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
         auto pPmt = new NiceMock<Mock<TemperaturePmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                        deviceProperties.subdeviceId);
-        pPmt->mockedInitWithoutMappedMemory(pFsAccess.get());
-        pPmt->keyOffsetMap = deviceKeyOffsetMapTemperature;
+        pPmt->mockedInit(pFsAccess.get());
         pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
     }
 
@@ -240,7 +313,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsW
     auto handles = get_temp_handles(handleComponentCountForNoSubDevices);
     for (auto &handle : handles) {
         double temperature;
-        ASSERT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesTemperatureGetState(handle, &temperature));
+        ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
     }
 }
 

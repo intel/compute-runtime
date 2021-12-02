@@ -31,8 +31,6 @@ constexpr uint8_t tempArrForNoSubDevices[19] = {0x12, 0x23, 0x43, 0xde, 0xa3, 0x
 constexpr uint64_t offsetForNoSubDevices = 0x60;
 constexpr uint8_t computeIndexForNoSubDevices = 9;
 constexpr uint8_t globalIndexForNoSubDevices = 3;
-
-constexpr uint64_t mappedLength = 400;
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
 std::string rootPciPathOfGpuDeviceInTemperature = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
 const std::string realPathTelem1 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
@@ -48,42 +46,25 @@ const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
 class TemperaturePmt : public PlatformMonitoringTech {
   public:
     TemperaturePmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+    using PlatformMonitoringTech::closeFunction;
     using PlatformMonitoringTech::keyOffsetMap;
-    using PlatformMonitoringTech::mappedMemory;
+    using PlatformMonitoringTech::openFunction;
+    using PlatformMonitoringTech::preadFunction;
+    using PlatformMonitoringTech::telemetryDeviceEntry;
 };
 
 template <>
 struct Mock<TemperaturePmt> : public TemperaturePmt {
     Mock<TemperaturePmt>(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : TemperaturePmt(pFsAccess, onSubdevice, subdeviceId) {}
     ~Mock() override {
-        if (mappedMemory != nullptr) {
-            delete mappedMemory;
-            mappedMemory = nullptr;
-        }
         rootDeviceTelemNodeIndex = 0;
     }
 
     void mockedInit(FsAccess *pFsAccess) {
-        mappedMemory = new char[mappedLength]();
         if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDeviceInTemperature)) {
             return;
         }
-        // Fill mappedMemory to validate cases when there are subdevices
-        for (uint64_t i = 0; i < sizeof(tempArrForSubDevices) / sizeof(uint8_t); i++) {
-            mappedMemory[offsetForSubDevices + i] = tempArrForSubDevices[i];
-        }
-        mappedMemory[memory2MaxTempIndex] = memory2MaxTemperature;
-        mappedMemory[memory3MaxTempIndex] = memory3MaxTemperature;
-        // Fill mappedMemory to validate cases when there are no subdevices
-        for (uint64_t i = 0; i < sizeof(tempArrForNoSubDevices) / sizeof(uint8_t); i++) {
-            mappedMemory[offsetForNoSubDevices + i] = tempArrForNoSubDevices[i];
-        }
-    }
-
-    void mockedInitWithoutMappedMemory(FsAccess *pFsAccess) {
-        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDeviceInTemperature)) {
-            return;
-        }
+        telemetryDeviceEntry = "/sys/class/intel_pmt/telem2/telem";
     }
 };
 

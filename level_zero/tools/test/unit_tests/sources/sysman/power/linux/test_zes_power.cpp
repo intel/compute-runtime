@@ -11,8 +11,32 @@
 namespace L0 {
 namespace ult {
 
+static int fakeFileDescriptor = 123;
 constexpr uint64_t convertJouleToMicroJoule = 1000000u;
 constexpr uint32_t powerHandleComponentCount = 1u;
+
+inline static int openMockPower(const char *pathname, int flags) {
+    if (strcmp(pathname, "/sys/class/intel_pmt/telem2/telem") == 0) {
+        return fakeFileDescriptor;
+    }
+    if (strcmp(pathname, "/sys/class/intel_pmt/telem3/telem") == 0) {
+        return fakeFileDescriptor;
+    }
+    return -1;
+}
+
+inline static int closeMockPower(int fd) {
+    if (fd == fakeFileDescriptor) {
+        return 0;
+    }
+    return -1;
+}
+
+ssize_t preadMockPower(int fd, void *buf, size_t count, off_t offset) {
+    uint64_t *mockBuf = static_cast<uint64_t *>(buf);
+    *mockBuf = setEnergyCounter;
+    return count;
+}
 
 TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainsWhenhwmonInterfaceExistsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
@@ -128,6 +152,15 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterFailedWhenHwmonInterfaceExistThenValidErrorCodeReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        auto pPmt = static_cast<NiceMock<Mock<PowerPmt>> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        pPmt->openFunction = openMockPower;
+        pPmt->closeFunction = closeMockPower;
+        pPmt->preadFunction = preadMockPower;
+    }
 
     EXPECT_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))
         .WillRepeatedly(Return(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS));
@@ -439,6 +472,15 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
 
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        auto pPmt = static_cast<NiceMock<Mock<PowerPmt>> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        pPmt->openFunction = openMockPower;
+        pPmt->closeFunction = closeMockPower;
+        pPmt->preadFunction = preadMockPower;
+    }
+
     for (auto handle : handles) {
         zes_power_energy_counter_t energyCounter;
         uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
@@ -545,6 +587,15 @@ TEST_F(SysmanDevicePowerMultiDeviceFixture, GivenValidPowerHandleWhenGettingPowe
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
     pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
     auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        auto pPmt = static_cast<NiceMock<Mock<PowerPmt>> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        pPmt->openFunction = openMockPower;
+        pPmt->closeFunction = closeMockPower;
+        pPmt->preadFunction = preadMockPower;
+    }
 
     for (auto handle : handles) {
         zes_power_energy_counter_t energyCounter;

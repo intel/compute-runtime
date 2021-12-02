@@ -19,6 +19,9 @@ namespace L0 {
 namespace ult {
 static int fakeFileDescriptor = 123;
 
+const std::map<std::string, uint64_t> dummyKeyOffsetMap = {
+    {"DUMMY_KEY", 0x0}};
+
 class ZesPmtFixtureMultiDevice : public SysmanMultiDeviceFixture {
   protected:
     std::vector<ze_device_handle_t> deviceHandles;
@@ -112,36 +115,29 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesTh
     EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringSizeRead) {
-    EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<uint64_t &>(_)))
-        .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
-    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
+TEST_F(ZesPmtFixtureMultiDevice, GivenSomeKeyWhenCallingreadValueWithUint64TypeThenCheckForErrorBranches) {
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 0, 0);
+    uint64_t val = 0;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPmt->readValue("SOMETHING", val));
+}
+
+TEST_F(ZesPmtFixtureMultiDevice, GivenSomeKeyWhenCallingreadValueWithUint32TypeThenCheckForErrorBranches) {
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 0, 0);
+    uint32_t val = 0;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPmt->readValue("SOMETHING", val));
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringbaseOffsetRead) {
     EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<uint64_t &>(_)))
-        .WillOnce(Return(ZE_RESULT_SUCCESS))
         .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
     EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
-TEST_F(ZesPmtFixtureMultiDevice, GivenSomeKeyWhenCallingreadValueWithUint64TypeThenCheckForErrorBranches) {
-    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 0, 0);
-    pPmt->mappedMemory = nullptr;
-    uint64_t val = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPmt->readValue("SOMETHING", val));
-
-    uint32_t maxIndex = 10u;
-    pPmt->mappedMemory = new char[maxIndex];
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPmt->readValue("SOMETHING", val));
-    delete pPmt->mappedMemory;
-}
-
-inline static int openMock(const char *pathname, int flags, ...) {
+inline static int openMock(const char *pathname, int flags) {
     if (strcmp(pathname, "/sys/class/intel_pmt/telem2/telem") == 0) {
         return fakeFileDescriptor;
     }
@@ -151,7 +147,7 @@ inline static int openMock(const char *pathname, int flags, ...) {
     return -1;
 }
 
-inline static int openMockReturnFailure(const char *pathname, int flags, ...) {
+inline static int openMockReturnFailure(const char *pathname, int flags) {
     return -1;
 }
 
@@ -166,62 +162,78 @@ inline static int closeMockReturnFailure(int fd) {
     return -1;
 }
 
-inline static void *mmapMockReturnFailure(void *addr, size_t length, int prot, int flags, int fd, off_t offset) noexcept {
-    return MAP_FAILED;
+ssize_t preadMockPmt(int fd, void *buf, size_t count, off_t offset) {
+    return count;
 }
 
-inline static void *mmapMock(void *addr, size_t length, int prot, int flags, int fd, off_t offset) noexcept {
-    void *ptr = nullptr;
-    if (fd == fakeFileDescriptor) {
-        ptr = alignedMalloc(length, MemoryConstants::pageSize64k);
-        return ptr;
-    }
-    return MAP_FAILED;
+ssize_t preadMockPmtFailure(int fd, void *buf, size_t count, off_t offset) {
+    return -1;
 }
 
-inline static int munmapMock(void *addr, size_t length) noexcept {
-    alignedFree(addr);
-    return 0;
-}
-
-inline static int munmapMockDoNothing(void *addr, size_t length) noexcept {
-    return 0;
-}
-
-TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTInitSucceed) {
-    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    pPmt->openFunction = openMock;
-    pPmt->mmapFunction = mmapMock;
-    pPmt->munmapFunction = munmapMock;
-    pPmt->closeFunction = closeMock;
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_SUCCESS);
-}
-
-TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndOpenSysCallFailsThenPMTInitFails) {
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint32TypeAndOpenSysCallFailsThenreadValueFails) {
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
     pPmt->openFunction = openMockReturnFailure;
-    pPmt->mmapFunction = mmapMock;
-    pPmt->munmapFunction = munmapMock;
-    pPmt->closeFunction = closeMock;
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+
+    uint32_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPmt->readValue("DUMMY_KEY", val));
 }
 
-TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndmmapSysCallFailsThenPMTInitFails) {
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint32TypeAndCloseSysCallFailsThenreadValueFails) {
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    pPmt->telemetryDeviceEntry = baseTelemSysFS + "/" + telemNodeForSubdevice0 + "/" + telem;
     pPmt->openFunction = openMock;
-    pPmt->mmapFunction = mmapMockReturnFailure;
-    pPmt->munmapFunction = munmapMockDoNothing;
-    pPmt->closeFunction = closeMock;
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-}
-
-TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndcloseSysCallFailsThenPMTInitFails) {
-    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    pPmt->openFunction = openMock;
-    pPmt->mmapFunction = mmapMock;
-    pPmt->munmapFunction = munmapMock;
+    pPmt->preadFunction = preadMockPmt;
     pPmt->closeFunction = closeMockReturnFailure;
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    uint32_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
+}
+
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint64TypeAndOpenSysCallFailsThenreadValueFails) {
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    pPmt->openFunction = openMockReturnFailure;
+
+    uint64_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPmt->readValue("DUMMY_KEY", val));
+}
+
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint64TypeAndCloseSysCallFailsThenreadValueFails) {
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    pPmt->telemetryDeviceEntry = baseTelemSysFS + "/" + telemNodeForSubdevice0 + "/" + telem;
+    pPmt->openFunction = openMock;
+    pPmt->preadFunction = preadMockPmt;
+    pPmt->closeFunction = closeMockReturnFailure;
+
+    uint64_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
+}
+
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint32TypeAndPreadSysCallFailsThenreadValueFails) {
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    pPmt->telemetryDeviceEntry = baseTelemSysFS + "/" + telemNodeForSubdevice0 + "/" + telem;
+    pPmt->openFunction = openMock;
+    pPmt->preadFunction = preadMockPmtFailure;
+    pPmt->closeFunction = closeMock;
+
+    uint32_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPmt->readValue("DUMMY_KEY", val));
+}
+
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenCallingreadValueWithUint64TypeAndPreadSysCallFailsThenreadValueFails) {
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    pPmt->telemetryDeviceEntry = baseTelemSysFS + "/" + telemNodeForSubdevice0 + "/" + telem;
+    pPmt->openFunction = openMock;
+    pPmt->preadFunction = preadMockPmtFailure;
+    pPmt->closeFunction = closeMock;
+
+    uint64_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPmt->readValue("DUMMY_KEY", val));
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfSubDeviceIdToPmtObjectWouldContainValidEntries) {
@@ -232,10 +244,6 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfS
         auto pPmt = new PublicPlatformMonitoringTech(pTestFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                      deviceProperties.subdeviceId);
         UNRECOVERABLE_IF(nullptr == pPmt);
-        pPmt->openFunction = openMock;
-        pPmt->mmapFunction = mmapMock;
-        pPmt->munmapFunction = munmapMock;
-        pPmt->closeFunction = closeMock;
         PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt,
                                                       rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
         auto subDeviceIdToPmtEntry = mapOfSubDeviceIdToPmtObject.find(deviceProperties.subdeviceId);
@@ -244,18 +252,16 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfS
     }
 }
 
-TEST_F(ZesPmtFixtureMultiDevice, GivenOpenSyscallFailWhenDoingPMTInitThenPMTmapOfSubDeviceIdToPmtObjectWouldBeEmpty) {
+TEST_F(ZesPmtFixtureMultiDevice, GivenBaseOffsetReadFailWhenDoingPMTInitThenPMTmapOfSubDeviceIdToPmtObjectWouldBeEmpty) {
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
+    EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<uint64_t &>(_)))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     for (const auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
         auto pPmt = new PublicPlatformMonitoringTech(pTestFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                      deviceProperties.subdeviceId);
         UNRECOVERABLE_IF(nullptr == pPmt);
-        pPmt->openFunction = openMockReturnFailure;
-        pPmt->mmapFunction = mmapMock;
-        pPmt->munmapFunction = munmapMock;
-        pPmt->closeFunction = closeMock;
         PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt,
                                                       rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
         EXPECT_TRUE(mapOfSubDeviceIdToPmtObject.empty());
