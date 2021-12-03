@@ -22,12 +22,12 @@ namespace ult {
 
 struct L0BindlessAub : Test<AUBFixtureL0> {
 
-    void SetUp() {
+    void SetUp() override {
         DebugManager.flags.UseBindlessMode.set(1);
         DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
         AUBFixtureL0::SetUp();
     }
-    void TearDown() {
+    void TearDown() override {
 
         module->destroy();
         AUBFixtureL0::TearDown();
