@@ -16,6 +16,7 @@
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/flush_stamp.h"
@@ -330,10 +331,14 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
 MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
     std::vector<uint32_t> rootDeviceIndices;
 
-    for (auto index = 0u; index < this->executionEnvironment.rootDeviceEnvironments.size(); index++) {
-        if (this->executionEnvironment.rootDeviceEnvironments[index].get()->getHardwareInfo()->platform.eProductFamily ==
-            this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get()->getHardwareInfo()->platform.eProductFamily) {
-            rootDeviceIndices.push_back(index);
+    if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
+        rootDeviceIndices.push_back(rootDeviceIndex);
+    } else {
+        for (auto index = 0u; index < this->executionEnvironment.rootDeviceEnvironments.size(); index++) {
+            if (this->executionEnvironment.rootDeviceEnvironments[index].get()->getHardwareInfo()->platform.eProductFamily ==
+                this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get()->getHardwareInfo()->platform.eProductFamily) {
+                rootDeviceIndices.push_back(index);
+            }
         }
     }
 

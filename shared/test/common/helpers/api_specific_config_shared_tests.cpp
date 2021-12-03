@@ -9,6 +9,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 
 namespace NEO {
+ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return ApiSpecificConfig::ApiType::OCL == ApiSpecificConfig::getApiType();
 }
@@ -22,8 +23,9 @@ bool ApiSpecificConfig::getBindlessConfiguration() {
         return false;
     }
 }
+
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
-    return ApiSpecificConfig::OCL;
+    return apiTypeForUlts;
 }
 
 uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {

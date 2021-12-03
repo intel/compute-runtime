@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -30,6 +31,9 @@
 
 #include "gmock/gmock.h"
 
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+} // namespace NEO
 using namespace NEO;
 
 struct CommandStreamReceiverTest : public DeviceFixture,
@@ -794,6 +798,37 @@ HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubComme
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.addAubComment("message");
     EXPECT_TRUE(csr.addAubCommentCalled);
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationForOpenCLThenMultiTagAllocationIsBeingAllocated) {
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+    uint32_t numRootDevices = 10u;
+    UltDeviceFactory deviceFactory{numRootDevices, 0};
+    EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
+    EXPECT_TRUE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress() != nullptr);
+    EXPECT_EQ(*deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress(), initialHardwareTag);
+    auto tagsMultiAllocation = deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagsMultiAllocation();
+    auto graphicsAllocation0 = tagsMultiAllocation->getGraphicsAllocation(0);
+    EXPECT_EQ(tagsMultiAllocation->getGraphicsAllocations().size(), numRootDevices);
+
+    for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
+        if (graphicsAllocation != graphicsAllocation0) {
+            EXPECT_EQ(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation0->getUnderlyingBuffer());
+        }
+    }
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationForLevelZeroThenSingleTagAllocationIsBeingAllocated) {
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+    uint32_t numRootDevices = 10u;
+    UltDeviceFactory deviceFactory{numRootDevices, 0};
+    EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
+    EXPECT_TRUE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress() != nullptr);
+    EXPECT_EQ(*deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress(), initialHardwareTag);
+    auto tagsMultiAllocation = deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagsMultiAllocation();
+    EXPECT_EQ(tagsMultiAllocation->getGraphicsAllocations().size(), 1u);
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroyedThenItDestroysTagAllocation) {
