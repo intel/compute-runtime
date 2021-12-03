@@ -94,15 +94,15 @@ XEHPTEST_F(XeHPHwInfoConfig, givenA0OrA1SteppingWhenAskingIfExtraParametersAreIn
 
 using XeHPHwHelperTest = HwHelperTest;
 
-XEHPTEST_F(XeHPHwHelperTest, givenXeHPMultiConfigWhenAllowRenderCompressionIsCalledThenCorrectValueIsReturned) {
+XEHPTEST_F(XeHPHwHelperTest, givenXeHPMultiConfigWhenAllowCompressionIsCalledThenCorrectValueIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     HardwareInfo hwInfo = *defaultHwInfo;
 
     hwInfo.gtSystemInfo.EUCount = 512u;
-    EXPECT_TRUE(hwInfoConfig->allowRenderCompression(hwInfo));
+    EXPECT_TRUE(hwInfoConfig->allowCompression(hwInfo));
 
     hwInfo.gtSystemInfo.EUCount = 256u;
-    EXPECT_FALSE(hwInfoConfig->allowRenderCompression(hwInfo));
+    EXPECT_FALSE(hwInfoConfig->allowCompression(hwInfo));
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {

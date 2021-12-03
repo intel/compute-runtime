@@ -65,7 +65,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenGenHelperWhenEnableStatelessCompre
     EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForRenderCompression) {
+XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
@@ -73,7 +73,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStat
 
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
     for (size_t size : sizesToCheck) {
-        EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(size, *defaultHwInfo));
+        EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
     }
 }
 
@@ -89,9 +89,9 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBufferIsSui
 
         for (size_t size : sizesToCheck) {
             if (debugFlag == 1) {
-                EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(size, *defaultHwInfo));
+                EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
             } else {
-                EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(size, *defaultHwInfo));
+                EXPECT_FALSE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
             }
         }
     }

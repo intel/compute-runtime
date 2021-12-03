@@ -9,7 +9,7 @@
 #include "shared/source/memory_manager/compression_selector.h"
 
 namespace NEO {
-bool CompressionSelector::preferRenderCompressedBuffer(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
+bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
     bool preferredCompression = false;
     int32_t compressionEnabled = DebugManager.flags.EnableUsmCompression.get();
     if (compressionEnabled == 1) {

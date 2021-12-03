@@ -242,7 +242,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, givenAllocatio
     EXPECT_EQ(allocType, allocData.type);
 }
 
-TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllowedAllocationTypeWhenAllocatingThenPreferRenderCompressionOnlyForSpecificTypes) {
+TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllowedAllocationTypeWhenAllocatingThenPreferCompressionOnlyForSpecificTypes) {
     auto allocType = GetParam();
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, 10, allocType, mockDeviceBitfield);
@@ -258,7 +258,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllow
     auto allocation = mockMemoryManager.allocateGraphicsMemory(allocData);
 
     EXPECT_TRUE(mockMemoryManager.allocation64kbPageCreated);
-    EXPECT_EQ(mockMemoryManager.preferRenderCompressedFlagPassed, bufferCompressedType);
+    EXPECT_EQ(mockMemoryManager.preferCompressedFlagPassed, bufferCompressedType);
 
     mockMemoryManager.freeGraphicsMemory(allocation);
 }

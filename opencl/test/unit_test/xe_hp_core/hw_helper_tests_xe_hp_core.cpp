@@ -64,7 +64,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXE_HP_COREWhenEnableStatelessComp
     EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForRenderCompression) {
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
@@ -72,7 +72,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableSta
 
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
     for (size_t size : sizesToCheck) {
-        EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(size, *defaultHwInfo));
+        EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
     }
 }
 

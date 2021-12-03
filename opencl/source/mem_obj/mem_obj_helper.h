@@ -38,8 +38,8 @@ class MemObjHelper {
                                                                      const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty);
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags);
     static SVMAllocsManager::SvmAllocationProperties getSvmAllocationProperties(cl_mem_flags flags);
-    static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, Context &context,
-                                               bool preferCompression);
+    static bool isSuitableForCompression(bool compressionSupported, const MemoryProperties &properties, Context &context,
+                                         bool preferCompression);
 
   protected:
     static bool validateExtraMemoryProperties(const MemoryProperties &memoryProperties, cl_mem_flags flags,

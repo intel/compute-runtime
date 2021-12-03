@@ -15,7 +15,7 @@ namespace NEO {
 namespace ImplicitScaling {
 bool apiSupport = false;
 } // namespace ImplicitScaling
-bool CompressionSelector::preferRenderCompressedBuffer(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
+bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
     return false;
 }
 void PageFaultManager::transferToCpu(void *ptr, size_t size, void *cmdQ) {

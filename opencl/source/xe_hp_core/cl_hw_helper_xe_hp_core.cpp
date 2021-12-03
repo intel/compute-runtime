@@ -45,7 +45,7 @@ bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, con
 }
 
 template <>
-inline bool ClHwHelperHw<Family>::allowRenderCompressionForContext(const ClDevice &clDevice, const Context &context) const {
+inline bool ClHwHelperHw<Family>::allowCompressionForContext(const ClDevice &clDevice, const Context &context) const {
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     auto &hwInfo = clDevice.getHardwareInfo();
     if (context.containsMultipleSubDevices(rootDeviceIndex) && HwHelperHw<Family>::get().isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo)) {

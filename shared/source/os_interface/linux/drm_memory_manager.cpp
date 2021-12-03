@@ -1245,7 +1245,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE) {
         allocationData.imgInfo->useLocalMemory = true;
         gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo,
-                                    allocationData.storageInfo, allocationData.flags.preferRenderCompressed);
+                                    allocationData.storageInfo, allocationData.flags.preferCompressed);
         sizeAligned = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
     } else {
         if (allocationData.type == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
@@ -1259,7 +1259,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
                                         sizeAligned,
                                         0u,
                                         allocationData.flags.uncacheable,
-                                        allocationData.flags.preferRenderCompressed,
+                                        allocationData.flags.preferCompressed,
                                         false,
                                         allocationData.storageInfo);
         }
@@ -1279,7 +1279,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         createColouredGmms(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
                            *allocation,
                            allocationData.storageInfo,
-                           allocationData.flags.preferRenderCompressed);
+                           allocationData.flags.preferCompressed);
     } else {
         fillGmmsInAllocation(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocation.get(), allocationData.storageInfo);
     }

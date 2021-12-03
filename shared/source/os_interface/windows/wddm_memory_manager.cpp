@@ -121,7 +121,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), nullptr,
                        sizeAligned, 0u,
                        allocationData.flags.uncacheable,
-                       allocationData.flags.preferRenderCompressed, true,
+                       allocationData.flags.preferCompressed, true,
                        allocationData.storageInfo,
                        allowLargePages);
     wddmAllocation->setDefaultGmm(gmm);
@@ -239,7 +239,8 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
                                                            maxOsContextCount);
     wddmAllocation->setDriverAllocatedCpuPtr(pSysMem);
 
-    gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), pSysMem, sizeAligned, 0u, allocationData.flags.uncacheable, allocationData.flags.preferRenderCompressed, true, allocationData.storageInfo);
+    gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), pSysMem, sizeAligned, 0u,
+                  allocationData.flags.uncacheable, allocationData.flags.preferCompressed, true, allocationData.storageInfo);
 
     wddmAllocation->setDefaultGmm(gmm);
     void *mapPtr = wddmAllocation->getAlignedCpuPtr();
@@ -969,7 +970,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE ||
         allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY) {
         allocationData.imgInfo->useLocalMemory = true;
-        gmm = std::make_unique<Gmm>(gmmClientContext, *allocationData.imgInfo, allocationData.storageInfo, allocationData.flags.preferRenderCompressed);
+        gmm = std::make_unique<Gmm>(gmmClientContext, *allocationData.imgInfo, allocationData.storageInfo, allocationData.flags.preferCompressed);
         alignment = MemoryConstants::pageSize64k;
         sizeAligned = allocationData.imgInfo->size;
     } else {
@@ -982,7 +983,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
                                         sizeAligned,
                                         alignment,
                                         allocationData.flags.uncacheable,
-                                        allocationData.flags.preferRenderCompressed,
+                                        allocationData.flags.preferCompressed,
                                         false,
                                         allocationData.storageInfo);
         }
@@ -1000,7 +1001,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
             wddmAllocation->setDefaultGmm(gmm.release());
         }
     } else if (allocationData.storageInfo.multiStorage) {
-        createColouredGmms(gmmClientContext, *wddmAllocation, allocationData.storageInfo, allocationData.flags.preferRenderCompressed);
+        createColouredGmms(gmmClientContext, *wddmAllocation, allocationData.storageInfo, allocationData.flags.preferCompressed);
     } else {
         fillGmmsInAllocation(gmmClientContext, wddmAllocation.get(), allocationData.storageInfo);
     }

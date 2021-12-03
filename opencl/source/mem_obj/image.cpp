@@ -200,8 +200,8 @@ Image *Image::create(Context *context,
         auto &clHwHelper = ClHwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
         imgInfo.linearStorage = !defaultHwHelper.tilingAllowed(context->isSharedContext, Image::isImage1d(*imageDesc),
                                                                memoryProperties.flags.forceLinearStorage);
-        bool preferCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
-                                                                              *context, true);
+        bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
+                                                                        *context, true);
         preferCompression &= clHwHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
         preferCompression &= !clHwHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
 
@@ -386,7 +386,7 @@ Image *Image::create(Context *context,
 
             auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
-            if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedImagesSupported(hwInfo)) {
+            if (context->isProvidingPerformanceHints() && HwHelper::compressedImagesSupported(hwInfo)) {
                 if (allocationInfo[rootDeviceIndex].memory->isCompressionEnabled()) {
                     context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_COMPRESSED, image);
                 } else {

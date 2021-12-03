@@ -425,8 +425,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.uncacheable = properties.flags.uncacheable;
     allocationData.flags.flushL3 =
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
-    allocationData.flags.preferRenderCompressed = properties.flags.preferCompressed;
-    allocationData.flags.preferRenderCompressed |= CompressionSelector::preferRenderCompressedBuffer(properties, *hwInfo);
+    allocationData.flags.preferCompressed = properties.flags.preferCompressed;
+    allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties, *hwInfo);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
 
     if (properties.allocationType == GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
@@ -562,7 +562,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImage(const AllocationData &allocationData) {
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo,
-                                     allocationData.storageInfo, allocationData.flags.preferRenderCompressed);
+                                     allocationData.storageInfo, allocationData.flags.preferCompressed);
 
     // AllocationData needs to be reconfigured for System Memory paths
     AllocationData allocationDataWithSize = allocationData;

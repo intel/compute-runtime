@@ -1846,7 +1846,7 @@ TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThen
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVaAndPageTableNotSupportedThenMapAuxVa) {
+TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPageTableNotSupportedThenMapAuxVa) {
     if (HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }
@@ -1879,7 +1879,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
     EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVaAndPageTableSupportedThenMapAuxVa) {
+TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPageTableSupportedThenMapAuxVa) {
     if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }
@@ -1922,7 +1922,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
     EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationAndPageTableSupportedWhenReleaseingThenUnmapAuxVa) {
+TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndPageTableSupportedWhenReleaseingThenUnmapAuxVa) {
     if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }
@@ -1962,7 +1962,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationAndPageTableSup
     EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleaseingThenDontUnmapAuxVa) {
+TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenReleaseingThenDontUnmapAuxVa) {
     wddm->init();
     WddmMemoryManager memoryManager(*executionEnvironment);
 
@@ -1987,7 +1987,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleasei
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGpuVaThenDontMapAuxVa) {
+TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenMappedGpuVaThenDontMapAuxVa) {
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, false));
     gmm->isCompressionEnabled = false;
@@ -2026,7 +2026,7 @@ TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRetur
     ASSERT_FALSE(result);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnsetThenDontUpdateAuxTable) {
+TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenDontUpdateAuxTable) {
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     wddm->init();
     WddmMemoryManager memoryManager(*executionEnvironment);
@@ -2060,7 +2060,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsSetThenUpdateAuxTable) {
+TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpdateAuxTable) {
     if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }

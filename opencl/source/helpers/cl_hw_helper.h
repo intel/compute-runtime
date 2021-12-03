@@ -30,7 +30,7 @@ class ClHwHelper {
 
     virtual bool requiresNonAuxMode(const ArgDescPointer &argAsPtr, const HardwareInfo &hwInfo) const = 0;
     virtual bool requiresAuxResolves(const KernelInfo &kernelInfo, const HardwareInfo &hwInfo) const = 0;
-    virtual bool allowRenderCompressionForContext(const ClDevice &clDevice, const Context &context) const = 0;
+    virtual bool allowCompressionForContext(const ClDevice &clDevice, const Context &context) const = 0;
     virtual cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const = 0;
     virtual bool getQueueFamilyName(std::string &name, EngineGroupType type) const = 0;
     virtual cl_ulong getKernelPrivateMemSize(const KernelInfo &kernelInfo) const = 0;
@@ -61,7 +61,7 @@ class ClHwHelperHw : public ClHwHelper {
 
     bool requiresNonAuxMode(const ArgDescPointer &argAsPtr, const HardwareInfo &hwInfo) const override;
     bool requiresAuxResolves(const KernelInfo &kernelInfo, const HardwareInfo &hwInfo) const override;
-    bool allowRenderCompressionForContext(const ClDevice &clDevice, const Context &context) const override;
+    bool allowCompressionForContext(const ClDevice &clDevice, const Context &context) const override;
     cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const override;
     bool getQueueFamilyName(std::string &name, EngineGroupType type) const override;
     cl_ulong getKernelPrivateMemSize(const KernelInfo &kernelInfo) const override;

@@ -149,7 +149,7 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isDisableOverdispatchAvailable(const Hardware
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::allowRenderCompression(const HardwareInfo &hwInfo) const {
+bool HwInfoConfigHw<IGFX_UNKNOWN>::allowCompression(const HardwareInfo &hwInfo) const {
     return false;
 }
 

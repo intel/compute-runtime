@@ -1005,7 +1005,7 @@ TEST(OsAgnosticMemoryManager, givenCompressionEnabledWhenAllocateGraphicsMemoryW
     AllocationData allocationData;
     allocationData.size = 4096u;
     allocationData.alignment = MemoryConstants::pageSize;
-    allocationData.flags.preferRenderCompressed = true;
+    allocationData.flags.preferCompressed = true;
     auto allocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
@@ -1038,7 +1038,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledAndCompressi
     AllocationData allocationData;
     allocationData.size = 4096u;
     allocationData.alignment = MemoryConstants::pageSize;
-    allocationData.flags.preferRenderCompressed = true;
+    allocationData.flags.preferCompressed = true;
     auto allocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());

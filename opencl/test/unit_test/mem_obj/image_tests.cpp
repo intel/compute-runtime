@@ -1143,7 +1143,7 @@ TEST(ImageGetSurfaceFormatInfoTest, givenNullptrFormatWhenGetSurfaceFormatInfoIs
     EXPECT_EQ(nullptr, surfaceFormat);
 }
 
-HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferRenderCompression) {
+HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferCompression) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 5;
     imageDesc.image_height = 5;
@@ -1159,7 +1159,7 @@ HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferR
     EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedPreferCompressed);
 }
 
-TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferRenderCompression) {
+TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferCompression) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 5;
     MockContext context;
@@ -1174,7 +1174,7 @@ TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPr
     EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
 }
 
-HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAllocationThenCorrectlySetPreferRenderCompression) {
+HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAllocationThenCorrectlySetPreferCompression) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 5;
     imageDesc.image_height = 5;
@@ -1203,7 +1203,7 @@ HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAlloca
     EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
 }
 
-TEST_F(ImageCompressionTests, givenNonTiledImageAndVariousFlagsWhenCreatingAllocationThenDontPreferRenderCompression) {
+TEST_F(ImageCompressionTests, givenNonTiledImageAndVariousFlagsWhenCreatingAllocationThenDontPreferCompression) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 5;
 

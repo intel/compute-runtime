@@ -204,11 +204,11 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateUnif
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPreferRenderCompression) {
+TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPreferCompression) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
     svmManager->memoryManager = &memoryManager64Kb;
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, rootDeviceIndices, deviceBitfields);
-    EXPECT_FALSE(memoryManager64Kb.preferRenderCompressedFlagPassed);
+    EXPECT_FALSE(memoryManager64Kb.preferCompressedFlagPassed);
     svmManager->freeSVMAlloc(ptr);
 }
 

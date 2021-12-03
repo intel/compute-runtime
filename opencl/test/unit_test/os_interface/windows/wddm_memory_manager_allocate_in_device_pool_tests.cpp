@@ -451,7 +451,7 @@ TEST_F(WddmMemoryManagerSimpleTestWithLocalMemory, givenLocalMemoryAndImageOrSha
     AllocationData allocData;
     allocData.allFlags = 0;
     allocData.size = MemoryConstants::pageSize;
-    allocData.flags.preferRenderCompressed = true;
+    allocData.flags.preferCompressed = true;
 
     allocData.imgInfo = &imgInfo;
 

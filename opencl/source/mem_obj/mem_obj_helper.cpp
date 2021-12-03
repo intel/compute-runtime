@@ -101,8 +101,8 @@ SVMAllocsManager::SvmAllocationProperties MemObjHelper::getSvmAllocationProperti
     return svmProperties;
 }
 
-bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressedBuffers, const MemoryProperties &properties, Context &context, bool preferCompression) {
-    if (!renderCompressedBuffers) {
+bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const MemoryProperties &properties, Context &context, bool preferCompression) {
+    if (!compressionSupported) {
         return false;
     }
     if (context.getRootDeviceIndices().size() > 1u) {
@@ -112,7 +112,7 @@ bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressedBuffers, 
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
         auto &hwInfo = pClDevice->getHardwareInfo();
         auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        if (!clHwHelper.allowRenderCompressionForContext(*pClDevice, context)) {
+        if (!clHwHelper.allowCompressionForContext(*pClDevice, context)) {
             return false;
         }
 

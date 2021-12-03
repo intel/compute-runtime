@@ -24,15 +24,15 @@ class Gmm {
   public:
     virtual ~Gmm();
     Gmm() = delete;
-    Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferRenderCompressed);
+    Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed);
     Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable);
-    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo);
-    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo, bool allowLargePages);
+    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, bool systemMemoryPool, StorageInfo storageInfo);
+    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, bool systemMemoryPool, StorageInfo storageInfo, bool allowLargePages);
     Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);
 
-    void applyAuxFlagsForBuffer(bool preferRenderCompression);
+    void applyAuxFlagsForBuffer(bool preferCompression);
     void applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo);
     void applyAppResource(StorageInfo &storageInfo);
 
@@ -54,8 +54,8 @@ class Gmm {
     bool useSystemMemoryPool = true;
 
   protected:
-    void applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferRenderCompressed);
-    void setupImageResourceParams(ImageInfo &imgInfo, bool preferRenderCompressed);
+    void applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed);
+    void setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed);
     bool extraMemoryFlagsRequired();
     void applyExtraMemoryFlags(const StorageInfo &storageInfo);
     void applyDebugOverrides();

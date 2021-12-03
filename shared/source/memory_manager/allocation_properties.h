@@ -98,7 +98,7 @@ struct AllocationData {
             uint32_t forcePin : 1;
             uint32_t uncacheable : 1;
             uint32_t flushL3 : 1;
-            uint32_t preferRenderCompressed : 1;
+            uint32_t preferCompressed : 1;
             uint32_t multiOsContextCapable : 1;
             uint32_t requiresCpuAccess : 1;
             uint32_t shareable : 1;

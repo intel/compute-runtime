@@ -179,7 +179,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failInDevicePool = false;
     bool failInDevicePoolWithError = false;
     bool failInAllocateWithSizeAndAlignment = false;
-    bool preferRenderCompressedFlagPassed = false;
+    bool preferCompressedFlagPassed = false;
     bool allocateForImageCalled = false;
     bool allocate32BitGraphicsMemoryImplCalled = false;
     bool allocateGraphicsMemoryForNonSvmHostPtrCalled = false;
@@ -189,7 +189,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failAllocate32Bit = false;
     bool failSetMemAdvise = false;
     bool cpuCopyRequired = false;
-    bool forceRenderCompressed = false;
+    bool forceCompressed = false;
     bool forceFailureInPrimaryAllocation = false;
     bool forceFailureInAllocationWithHostPointer = false;
     bool isMockHostMemoryManager = false;

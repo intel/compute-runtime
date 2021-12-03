@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
-bool CompressionSelector::preferRenderCompressedBuffer(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
+bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:

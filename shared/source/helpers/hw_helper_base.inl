@@ -31,7 +31,7 @@ template <typename Family>
 const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Builtin;
 
 template <typename Family>
-bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const {
+bool HwHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
@@ -669,8 +669,8 @@ template <typename GfxFamily>
 void HwHelperHw<GfxFamily>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {}
 
 template <typename GfxFamily>
-void HwHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const {
-    gmm.resourceParams.Flags.Info.RenderCompressed = isRenderCompressed;
+void HwHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const {
+    gmm.resourceParams.Flags.Info.RenderCompressed = isCompressed;
 }
 
 template <typename GfxFamily>

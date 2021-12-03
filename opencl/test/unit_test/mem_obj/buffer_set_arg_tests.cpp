@@ -159,7 +159,7 @@ HWTEST_F(BufferSetArgTest, givenSetArgBufferWithNullArgStatelessThenDontProgramN
     EXPECT_EQ(memcmp(sshOriginal, surfaceStateHeap, sizeof(surfaceStateHeap)), 0);
 }
 
-HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenRenderCompressedBufferIsSetThenSetNonAuxMode) {
+HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenCompressedBufferIsSetThenSetNonAuxMode) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     pKernelInfo->argAsPtr(0).bindful = 0;

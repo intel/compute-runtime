@@ -97,7 +97,7 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenCreateMultipleSubDevicesAn
     EXPECT_TRUE(hwInfoConfig.allowStatelessCompression(hwInfo));
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenRenderCompressedBuffersAreDisabledThenDontAllowStatelessCompression) {
+XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenCompressedBuffersAreDisabledThenDontAllowStatelessCompression) {
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
 

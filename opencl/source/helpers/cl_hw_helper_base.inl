@@ -34,7 +34,7 @@ inline bool ClHwHelperHw<GfxFamily>::hasStatelessAccessToBuffer(const KernelInfo
 }
 
 template <typename GfxFamily>
-inline bool ClHwHelperHw<GfxFamily>::allowRenderCompressionForContext(const ClDevice &clDevice, const Context &context) const {
+inline bool ClHwHelperHw<GfxFamily>::allowCompressionForContext(const ClDevice &clDevice, const Context &context) const {
     return true;
 }
 

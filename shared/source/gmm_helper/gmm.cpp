@@ -20,11 +20,11 @@
 namespace NEO {
 Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, false, true, {}) {}
 
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo)
-    : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, preferRenderCompressed, systemMemoryPool, storageInfo, true) {
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, bool systemMemoryPool, StorageInfo storageInfo)
+    : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, preferCompressed, systemMemoryPool, storageInfo, true) {
 }
 
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo, bool allowLargePages) : clientContext(clientContext) {
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, bool systemMemoryPool, StorageInfo storageInfo, bool allowLargePages) : clientContext(clientContext) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
@@ -58,7 +58,7 @@ Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t aligned
         resourceParams.Flags.Gpu.NoRestriction = 1;
     }
 
-    applyAuxFlagsForBuffer(preferRenderCompressed);
+    applyAuxFlagsForBuffer(preferCompressed);
     applyMemoryFlags(systemMemoryPool, storageInfo);
     applyAppResource(storageInfo);
     applyDebugOverrides();
@@ -73,9 +73,9 @@ Gmm::Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm) : clientC
 
 Gmm::~Gmm() = default;
 
-Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferRenderCompressed) : clientContext(clientContext) {
+Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed) : clientContext(clientContext) {
     this->resourceParams = {};
-    setupImageResourceParams(inputOutputImgInfo, preferRenderCompressed);
+    setupImageResourceParams(inputOutputImgInfo, preferCompressed);
     applyMemoryFlags(!inputOutputImgInfo.useLocalMemory, storageInfo);
     applyAppResource(storageInfo);
     applyDebugOverrides();
@@ -86,7 +86,7 @@ Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, Storage
     queryImageParams(inputOutputImgInfo);
 }
 
-void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferRenderCompressed) {
+void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
     uint64_t imageWidth = static_cast<uint64_t>(imgInfo.imgDesc.imageWidth);
     uint32_t imageHeight = 1;
     uint32_t imageDepth = 1;
@@ -138,16 +138,16 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferRenderCompress
         resourceParams.Flags.Info.AllowVirtualPadding = true;
     }
 
-    applyAuxFlagsForImage(imgInfo, preferRenderCompressed);
+    applyAuxFlagsForImage(imgInfo, preferCompressed);
 }
 
-void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {
+void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
     auto hardwareInfo = clientContext->getHardwareInfo();
-    bool allowRenderCompression = HwHelper::renderCompressedBuffersSupported(*hardwareInfo) &&
-                                  preferRenderCompression;
+    bool allowCompression = HwHelper::compressedBuffersSupported(*hardwareInfo) &&
+                            preferCompression;
 
     auto &hwHelper = HwHelper::get(hardwareInfo->platform.eRenderCoreFamily);
-    if (allowRenderCompression) {
+    if (allowCompression) {
         hwHelper.applyRenderCompressionFlag(*this, 1);
         resourceParams.Flags.Gpu.CCS = 1;
         resourceParams.Flags.Gpu.UnifiedAuxSurface = 1;
@@ -156,7 +156,7 @@ void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {
     hwHelper.applyAdditionalCompressionSettings(*this, !isCompressionEnabled);
 }
 
-void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferRenderCompressed) {
+void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
     uint8_t compressionFormat;
     if (this->resourceParams.Flags.Info.MediaCompressed) {
         compressionFormat = clientContext->getMediaSurfaceStateCompressionFormat(imgInfo.surfaceFormat->GMMSurfaceFormat);
@@ -178,16 +178,16 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferRenderCompressed)
 
     auto hwInfo = clientContext->getHardwareInfo();
 
-    bool allowRenderCompression = HwHelper::renderCompressedImagesSupported(*hwInfo) &&
-                                  preferRenderCompressed &&
-                                  compressionFormatSupported &&
-                                  imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 &&
-                                  imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE &&
-                                  !isPackedYuv;
+    bool allowCompression = HwHelper::compressedImagesSupported(*hwInfo) &&
+                            preferCompressed &&
+                            compressionFormatSupported &&
+                            imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 &&
+                            imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE &&
+                            !isPackedYuv;
 
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     if (imgInfo.useLocalMemory || !hwInfo->featureTable.flags.ftrLocalMemory) {
-        if (allowRenderCompression) {
+        if (allowCompression) {
             hwHelper.applyRenderCompressionFlag(*this, 1);
             this->resourceParams.Flags.Gpu.CCS = 1;
             this->resourceParams.Flags.Gpu.UnifiedAuxSurface = 1;

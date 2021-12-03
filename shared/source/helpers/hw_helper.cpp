@@ -18,14 +18,14 @@ HwHelper &HwHelper::get(GFXCORE_FAMILY gfxCore) {
     return *hwHelperFactory[gfxCore];
 }
 
-bool HwHelper::renderCompressedBuffersSupported(const HardwareInfo &hwInfo) {
+bool HwHelper::compressedBuffersSupported(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
         return !!DebugManager.flags.RenderCompressedBuffersEnabled.get();
     }
     return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
 }
 
-bool HwHelper::renderCompressedImagesSupported(const HardwareInfo &hwInfo) {
+bool HwHelper::compressedImagesSupported(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
         return !!DebugManager.flags.RenderCompressedImagesEnabled.get();
     }

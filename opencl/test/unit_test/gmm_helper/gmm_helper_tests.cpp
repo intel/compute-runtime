@@ -970,7 +970,7 @@ TEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionWhenQueryingThenSetA
     EXPECT_FALSE(queryGmm->isCompressionEnabled);
 }
 
-HWTEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionAndEnabledDebugFlagWhenQueryingThenSetAppropriateFlags) {
+HWTEST_F(GmmCompressionTests, givenNotAllowedCompressionAndEnabledDebugFlagWhenQueryingThenSetAppropriateFlags) {
     DebugManagerStateRestore restore;
     DebugManager.flags.RenderCompressedImagesEnabled.set(1);
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
@@ -1073,7 +1073,7 @@ TEST_F(GmmCompressionTests, givenPackedYuvFormatWhenQueryingThenDisallow) {
         EXPECT_FALSE(queryGmm->isCompressionEnabled);
     }
 }
-HWTEST_F(GmmCompressionTests, whenConstructedWithPreferRenderCompressionFlagThenApplyAuxFlags) {
+HWTEST_F(GmmCompressionTests, whenConstructedWithPreferCompressionFlagThenApplyAuxFlags) {
     Gmm gmm1(getGmmClientContext(), nullptr, 1, 0, false);
     EXPECT_EQ(0u, gmm1.resourceParams.Flags.Info.RenderCompressed);
 

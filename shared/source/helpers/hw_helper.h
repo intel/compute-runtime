@@ -57,11 +57,11 @@ class HwHelper {
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
     virtual bool preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const = 0;
-    virtual bool isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
-    static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
-    static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
+    static bool compressedBuffersSupported(const HardwareInfo &hwInfo);
+    static bool compressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
@@ -131,7 +131,7 @@ class HwHelper {
     virtual size_t getTimestampPacketAllocatorAlignment() const = 0;
     virtual size_t getSingleTimestampPacketSize() const = 0;
     virtual void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const = 0;
-    virtual void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const = 0;
+    virtual void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const = 0;
     virtual bool additionalPipeControlArgsRequired() const = 0;
     virtual bool isEngineTypeRemappingToHwSpecificRequired() const = 0;
 
@@ -232,7 +232,7 @@ class HwHelperHw : public HwHelper {
 
     bool hvAlign4Required() const override;
 
-    bool isBufferSizeSuitableForRenderCompression(const size_t size, const HardwareInfo &hwInfo) const override;
+    bool isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const override;
 
     bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override;
 
@@ -361,7 +361,7 @@ class HwHelperHw : public HwHelper {
 
     bool preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const override;
 
-    void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const override;
+    void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const override;
 
     bool additionalPipeControlArgsRequired() const override;
 

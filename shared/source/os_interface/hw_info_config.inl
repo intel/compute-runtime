@@ -15,7 +15,7 @@ namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    enableRenderCompression(hwInfo);
+    enableCompression(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
     return 0;
@@ -171,7 +171,7 @@ bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::allowRenderCompression(const HardwareInfo &hwInfo) const {
+bool HwInfoConfigHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
     return true;
 }
 

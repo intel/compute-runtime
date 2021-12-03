@@ -559,7 +559,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocatio
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
 
-HWTEST2_F(XeHPAndLaterImageTests, givenRenderCompressionWhenAppendingNewAllocationThenNotZeroIsSetAsCompressionType, CompressionParamsSupportedMatcher) {
+HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingNewAllocationThenNotZeroIsSetAsCompressionType, CompressionParamsSupportedMatcher) {
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto hwInfo = defaultHwInfo.get();
@@ -686,7 +686,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceSt
     EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
 }
 
-HWTEST2_F(ImageCompressionTests, givenXeHpCoreAndRedescribableFormatWhenCreatingAllocationThenDoNotPreferRenderCompression, IsXeHpCore) {
+HWTEST2_F(ImageCompressionTests, givenXeHpCoreAndRedescribableFormatWhenCreatingAllocationThenDoNotPreferCompression, IsXeHpCore) {
     MockContext context{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 5;

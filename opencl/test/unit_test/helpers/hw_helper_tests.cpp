@@ -38,35 +38,35 @@
 
 using namespace NEO;
 
-TEST(HwHelperSimpleTest, givenDebugVariableWhenAskingForRenderCompressionThenReturnCorrectValue) {
+TEST(HwHelperSimpleTest, givenDebugVariableWhenAskingForCompressionThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
     HardwareInfo localHwInfo = *defaultHwInfo;
 
     // debug variable not set
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_FALSE(HwHelper::renderCompressedBuffersSupported(localHwInfo));
-    EXPECT_FALSE(HwHelper::renderCompressedImagesSupported(localHwInfo));
+    EXPECT_FALSE(HwHelper::compressedBuffersSupported(localHwInfo));
+    EXPECT_FALSE(HwHelper::compressedImagesSupported(localHwInfo));
 
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(HwHelper::renderCompressedBuffersSupported(localHwInfo));
-    EXPECT_TRUE(HwHelper::renderCompressedImagesSupported(localHwInfo));
+    EXPECT_TRUE(HwHelper::compressedBuffersSupported(localHwInfo));
+    EXPECT_TRUE(HwHelper::compressedImagesSupported(localHwInfo));
 
     // debug variable set
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
     DebugManager.flags.RenderCompressedImagesEnabled.set(1);
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_TRUE(HwHelper::renderCompressedBuffersSupported(localHwInfo));
-    EXPECT_TRUE(HwHelper::renderCompressedImagesSupported(localHwInfo));
+    EXPECT_TRUE(HwHelper::compressedBuffersSupported(localHwInfo));
+    EXPECT_TRUE(HwHelper::compressedImagesSupported(localHwInfo));
 
     DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
     DebugManager.flags.RenderCompressedImagesEnabled.set(0);
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_FALSE(HwHelper::renderCompressedBuffersSupported(localHwInfo));
-    EXPECT_FALSE(HwHelper::renderCompressedImagesSupported(localHwInfo));
+    EXPECT_FALSE(HwHelper::compressedBuffersSupported(localHwInfo));
+    EXPECT_FALSE(HwHelper::compressedImagesSupported(localHwInfo));
 }
 
 TEST_F(HwHelperTest, WhenGettingHelperThenValidHelperReturned) {
@@ -838,20 +838,20 @@ HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenR
     EXPECT_EQ(AuxTranslationMode::Builtin, HwHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 }
 
-HWTEST_F(HwHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForRenderCompressionThenReturnCorrectValue) {
+HWTEST_F(HwHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForCompressionThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
     auto &helper = HwHelper::get(renderCoreFamily);
 
     DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(0);
-    EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(0, *defaultHwInfo));
-    EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(KB, *defaultHwInfo));
-    EXPECT_FALSE(helper.isBufferSizeSuitableForRenderCompression(KB + 1, *defaultHwInfo));
+    EXPECT_FALSE(helper.isBufferSizeSuitableForCompression(0, *defaultHwInfo));
+    EXPECT_FALSE(helper.isBufferSizeSuitableForCompression(KB, *defaultHwInfo));
+    EXPECT_FALSE(helper.isBufferSizeSuitableForCompression(KB + 1, *defaultHwInfo));
 
     DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
-    EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(0, *defaultHwInfo));
-    EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(KB, *defaultHwInfo));
-    EXPECT_TRUE(helper.isBufferSizeSuitableForRenderCompression(KB + 1, *defaultHwInfo));
+    EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(0, *defaultHwInfo));
+    EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(KB, *defaultHwInfo));
+    EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(KB + 1, *defaultHwInfo));
 }
 
 HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidValue) {
@@ -1254,7 +1254,7 @@ TEST_F(HwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequir
     }
 }
 
-HWTEST_F(HwHelperTest, whenSetRenderCompressedFlagThenProperFlagSet) {
+HWTEST_F(HwHelperTest, whenSetCompressedFlagThenProperFlagSet) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     gmm->resourceParams.Flags.Info.RenderCompressed = 0;

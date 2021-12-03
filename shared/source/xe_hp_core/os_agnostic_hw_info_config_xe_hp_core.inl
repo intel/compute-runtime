@@ -68,7 +68,7 @@ bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareIn
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::allowRenderCompression(const HardwareInfo &hwInfo) const {
+bool HwInfoConfigHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
     if (hwInfo.gtSystemInfo.EUCount == 256u) {
         return false;
     }

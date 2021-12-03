@@ -110,7 +110,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenMcsAllocationWhenSetArgIsCalledWithUn
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
 }
 
-GEN12LPTEST_F(gen12LpImageTests, givenRenderCompressionThenSurfaceStateParamsAreSetForRenderCompression) {
+GEN12LPTEST_F(gen12LpImageTests, givenCompressionThenSurfaceStateParamsAreSetForCompression) {
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;

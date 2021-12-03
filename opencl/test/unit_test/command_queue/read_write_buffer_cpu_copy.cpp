@@ -18,7 +18,7 @@ using namespace NEO;
 
 typedef EnqueueReadBufferTypeTest ReadWriteBufferCpuCopyTest;
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOperationThenDisallow) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperationThenDisallow) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
     cl_int retVal;

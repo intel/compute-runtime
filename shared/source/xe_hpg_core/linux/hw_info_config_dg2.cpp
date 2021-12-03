@@ -22,8 +22,8 @@ constexpr static auto gfxProduct = IGFX_DG2;
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    if (allowRenderCompression(*hwInfo)) {
-        enableRenderCompression(hwInfo);
+    if (allowCompression(*hwInfo)) {
+        enableCompression(hwInfo);
     }
 
     enableBlitterOperationsSupport(hwInfo);

@@ -306,7 +306,7 @@ TEST(MemObj, givenTiledObjectWhenAskedForCpuMappingThenReturnFalse) {
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
 
-TEST(MemObj, givenRenderCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
+TEST(MemObj, givenCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 

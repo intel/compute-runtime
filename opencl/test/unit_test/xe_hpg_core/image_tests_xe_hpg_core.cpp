@@ -53,7 +53,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, GivenDifferentImageFormatsWhenCreatingI
     }
 }
 
-XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAllocationThenDoNotPreferRenderCompression) {
+XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAllocationThenDoNotPreferCompression) {
     MockContext context{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 5;

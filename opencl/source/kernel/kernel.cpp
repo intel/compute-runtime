@@ -254,7 +254,7 @@ cl_int Kernel::initialize() {
 
     auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    auxTranslationRequired = !program->getIsBuiltIn() && HwHelper::renderCompressedBuffersSupported(hwInfo) && clHwHelper.requiresAuxResolves(kernelInfo, hwInfo);
+    auxTranslationRequired = !program->getIsBuiltIn() && HwHelper::compressedBuffersSupported(hwInfo) && clHwHelper.requiresAuxResolves(kernelInfo, hwInfo);
 
     if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
         auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();

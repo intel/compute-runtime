@@ -19,8 +19,8 @@ constexpr static auto gfxProduct = IGFX_XE_HP_SDV;
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    if (allowRenderCompression(*hwInfo)) {
-        enableRenderCompression(hwInfo);
+    if (allowCompression(*hwInfo)) {
+        enableCompression(hwInfo);
     }
 
     hwInfo->featureTable.flags.ftrRcsNode = false;

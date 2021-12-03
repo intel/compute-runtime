@@ -58,7 +58,7 @@ class HwInfoConfig {
     virtual bool overrideGfxPartitionLayoutForWsl() const = 0;
     virtual std::string getDeviceMemoryName() const = 0;
     virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
-    virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
+    virtual bool allowCompression(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowStatelessCompression(const HardwareInfo &hwInfo) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
@@ -123,7 +123,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     std::string getDeviceMemoryName() const override;
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
-    bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
+    bool allowCompression(const HardwareInfo &hwInfo) const override;
     bool allowStatelessCompression(const HardwareInfo &hwInfo) const override;
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
@@ -149,7 +149,7 @@ class HwInfoConfigHw : public HwInfoConfig {
   protected:
     HwInfoConfigHw() = default;
 
-    void enableRenderCompression(HardwareInfo *hwInfo);
+    void enableCompression(HardwareInfo *hwInfo);
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo);
     uint64_t getHostMemCapabilitiesValue();
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo);

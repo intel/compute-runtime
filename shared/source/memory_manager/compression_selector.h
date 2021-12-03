@@ -12,7 +12,7 @@
 namespace NEO {
 class CompressionSelector {
   public:
-    static bool preferRenderCompressedBuffer(const AllocationProperties &properties, const HardwareInfo &hwInfo);
+    static bool preferCompressedAllocation(const AllocationProperties &properties, const HardwareInfo &hwInfo);
 };
 
 } // namespace NEO

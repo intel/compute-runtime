@@ -23,7 +23,7 @@ class ImageCompressionTests : public ::testing::Test {
         using MockMemoryManager::MockMemoryManager;
         GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
             mockMethodCalled = true;
-            capturedPreferCompressed = allocationData.flags.preferRenderCompressed;
+            capturedPreferCompressed = allocationData.flags.preferCompressed;
             return OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(allocationData);
         }
         bool mockMethodCalled = false;
