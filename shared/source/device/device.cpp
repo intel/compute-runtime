@@ -297,8 +297,11 @@ void Device::addEngineToEngineGroup(EngineControl &engine) {
         return;
     }
 
-    const uint32_t engineGroupIndex = static_cast<uint32_t>(engineGroupType);
-    this->engineGroups[engineGroupIndex].push_back(engine);
+    if (this->engineGroups.empty() || this->engineGroups.back().engineGroupType != engineGroupType) {
+        this->engineGroups.push_back(EngineGroupT{});
+        this->engineGroups.back().engineGroupType = engineGroupType;
+    }
+    this->engineGroups.back().engines.push_back(engine);
 }
 
 std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() const {
@@ -418,36 +421,14 @@ bool Device::areSharedSystemAllocationsAllowed() const {
     return sharedSystemAllocationsSupport;
 }
 
-const std::vector<EngineControl> *Device::getNonEmptyEngineGroup(size_t index) const {
-    auto nonEmptyGroupIndex = 0u;
-    for (auto groupIndex = 0u; groupIndex < CommonConstants::engineGroupCount; groupIndex++) {
-        const std::vector<EngineControl> *currentGroup = &engineGroups[groupIndex];
-        if (currentGroup->empty()) {
-            continue;
-        }
-
-        if (index == nonEmptyGroupIndex) {
-            return currentGroup;
-        }
-
-        nonEmptyGroupIndex++;
-    }
-    return nullptr;
-}
-
-size_t Device::getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) const {
-    const auto groupIndex = static_cast<size_t>(engineGroupType);
-    UNRECOVERABLE_IF(groupIndex >= CommonConstants::engineGroupCount);
-    UNRECOVERABLE_IF(engineGroups[groupIndex].empty());
-
-    size_t result = 0u;
-    for (auto currentGroupIndex = 0u; currentGroupIndex < groupIndex; currentGroupIndex++) {
-        if (!engineGroups[currentGroupIndex].empty()) {
-            result++;
+size_t Device::getEngineGroupIndexFromEngineGroupType(EngineGroupType engineGroupType) const {
+    for (size_t i = 0; i < engineGroups.size(); i++) {
+        if (engineGroups[i].engineGroupType == engineGroupType) {
+            return i;
         }
     }
-
-    return result;
+    UNRECOVERABLE_IF(true);
+    return 0;
 }
 
 EngineControl *Device::tryGetEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
@@ -586,11 +567,11 @@ EngineControl &Device::getNextEngineForCommandQueue() {
     const auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
 
-    const auto defaultEngineGroupIndex = this->getIndexOfNonEmptyEngineGroup(engineGroupType);
-    const auto &engines = this->getEngineGroups()[defaultEngineGroupIndex];
+    const auto defaultEngineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
+    auto &engineGroup = this->getEngineGroups()[defaultEngineGroupIndex];
 
-    const auto engineIndex = this->regularCommandQueuesCreatedWithinDeviceCount++ % engines.size();
-    return this->getEngineGroups()[defaultEngineGroupIndex][engineIndex];
+    const auto engineIndex = this->regularCommandQueuesCreatedWithinDeviceCount++ % engineGroup.engines.size();
+    return engineGroup.engines[engineIndex];
 }
 
 EngineControl *Device::getInternalCopyEngine() {

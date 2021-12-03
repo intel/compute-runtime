@@ -75,7 +75,6 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE(getSysmanHandle, SysmanDevice *, nullptr, ());
     ADDMETHOD_NOBASE(getCsrForOrdinalAndIndex, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr, uint32_t ordinal, uint32_t index));
     ADDMETHOD_NOBASE(getCsrForLowPriority, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr));
-    ADDMETHOD_NOBASE(mapOrdinalForAvailableEngineGroup, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * ordinal));
     ADDMETHOD_NOBASE(getDebugProperties, ze_result_t, ZE_RESULT_SUCCESS, (zet_device_debug_properties_t * properties));
     ADDMETHOD_NOBASE(getDebugSession, DebugSession *, nullptr, (const zet_debug_config_t &config));
     ADDMETHOD_NOBASE_VOIDRETURN(removeDebugSession, ());

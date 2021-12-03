@@ -150,26 +150,28 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
 
 ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
                                          ze_command_list_handle_t *commandList) {
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-    uint32_t engineGroupIndex = desc->commandQueueGroupOrdinal;
-    ze_result_t returnValue = mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
-    if (returnValue != ZE_RESULT_SUCCESS) {
-        return returnValue;
+    auto &engineGroups = getActiveDevice()->getEngineGroups();
+    if (desc->commandQueueGroupOrdinal >= engineGroups.size()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    *commandList = CommandList::create(productFamily, this, static_cast<NEO::EngineGroupType>(engineGroupIndex), desc->flags, returnValue);
+    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto engineGroupType = engineGroups[desc->commandQueueGroupOrdinal].engineGroupType;
+    *commandList = CommandList::create(productFamily, this, engineGroupType, desc->flags, returnValue);
 
     return returnValue;
 }
 
 ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                                   ze_command_list_handle_t *phCommandList) {
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-    uint32_t engineGroupIndex = desc->ordinal;
-    ze_result_t returnValue = mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
-    if (returnValue != ZE_RESULT_SUCCESS) {
-        return returnValue;
+    auto &engineGroups = getActiveDevice()->getEngineGroups();
+    if (desc->ordinal >= engineGroups.size()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    *phCommandList = CommandList::createImmediate(productFamily, this, desc, false, static_cast<NEO::EngineGroupType>(engineGroupIndex), returnValue);
+    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
+    auto engineGroupType = engineGroups[desc->ordinal].engineGroupType;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    *phCommandList = CommandList::createImmediate(productFamily, this, desc, false, engineGroupType, returnValue);
 
     return returnValue;
 }
@@ -179,10 +181,9 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     auto &platform = neoDevice->getHardwareInfo().platform;
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    uint32_t engineGroupIndex = desc->ordinal;
-    ze_result_t returnValue = mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
-    if (returnValue != ZE_RESULT_SUCCESS) {
-        return returnValue;
+    auto &engineGroups = getActiveDevice()->getEngineGroups();
+    if (desc->ordinal >= engineGroups.size()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     if (desc->priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW) {
         getCsrForLowPriority(&csr);
@@ -196,8 +197,9 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     UNRECOVERABLE_IF(csr == nullptr);
 
     auto &hwHelper = NEO::HwHelper::get(platform.eRenderCoreFamily);
-    bool isCopyOnly = hwHelper.isCopyOnlyEngineType(static_cast<NEO::EngineGroupType>(engineGroupIndex));
+    bool isCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroups[desc->ordinal].engineGroupType);
 
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, desc, isCopyOnly, false, returnValue);
 
     return returnValue;
@@ -207,9 +209,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
     NEO::Device *activeDevice = getActiveDevice();
     auto &engineGroups = activeDevice->getEngineGroups();
-    auto numEngineGroups = static_cast<uint32_t>(std::count_if(std::begin(engineGroups), std::end(engineGroups), [](const auto &engines) {
-        return !engines.empty();
-    }));
+    uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
     if (*pCount == 0) {
         *pCount = numEngineGroups;
@@ -221,32 +221,26 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
     auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     *pCount = std::min(numEngineGroups, *pCount);
-    for (uint32_t i = 0, engineGroupCount = 0; engineGroupCount < *pCount; i++) {
-
-        if (engineGroups[i].empty()) {
-            continue;
+    for (uint32_t i = 0; i < *pCount; i++) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
+            pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
+                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
+                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS |
+                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS;
+            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = std::numeric_limits<size_t>::max();
         }
-
-        if (i == static_cast<uint32_t>(NEO::EngineGroupType::RenderCompute)) {
-            pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
-                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
-                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS |
-                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS;
-            pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = std::numeric_limits<size_t>::max();
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Compute) {
+            pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
+                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
+                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS;
+            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = std::numeric_limits<size_t>::max();
         }
-        if (i == static_cast<uint32_t>(NEO::EngineGroupType::Compute)) {
-            pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
-                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
-                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS;
-            pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = std::numeric_limits<size_t>::max();
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Copy) {
+            pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
+            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = hwHelper.getMaxFillPaternSizeForCopyEngine();
         }
-        if (i == static_cast<uint32_t>(NEO::EngineGroupType::Copy)) {
-            pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
-            pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = hwHelper.getMaxFillPaternSizeForCopyEngine();
-        }
-        l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[engineGroupCount], i);
-        pCommandQueueGroupProperties[engineGroupCount].numQueues = static_cast<uint32_t>(engineGroups[i].size());
-        engineGroupCount++;
+        l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i].engineGroupType);
+        pCommandQueueGroupProperties[i].numQueues = static_cast<uint32_t>(engineGroups[i].engines.size());
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1025,19 +1019,12 @@ void DeviceImp::storeReusableAllocation(NEO::GraphicsAllocation &alloc) {
 }
 
 ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) {
-    if (ordinal >= CommonConstants::engineGroupCount) {
+    auto &engineGroups = getActiveDevice()->getEngineGroups();
+    if ((ordinal >= engineGroups.size()) ||
+        (index >= engineGroups[ordinal].engines.size())) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    uint32_t engineGroupIndex = ordinal;
-    auto ret = mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
-    NEO::Device *activeDevice = getActiveDevice();
-    if (index >= activeDevice->getEngineGroups()[engineGroupIndex].size()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-    *csr = activeDevice->getEngineGroups()[engineGroupIndex][index].commandStreamReceiver;
+    *csr = engineGroups[ordinal].engines[index].commandStreamReceiver;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1053,23 +1040,6 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
     UNRECOVERABLE_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
-
-ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
-    NEO::Device *activeDevice = getActiveDevice();
-    const auto &engines = activeDevice->getEngineGroups();
-    uint32_t numNonEmptyGroups = 0;
-    uint32_t i = 0;
-    for (; i < CommonConstants::engineGroupCount && numNonEmptyGroups <= *ordinal; i++) {
-        if (!engines[i].empty()) {
-            numNonEmptyGroups++;
-        }
-    }
-    if (*ordinal + 1 > numNonEmptyGroups) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-    *ordinal = i - 1;
-    return ZE_RESULT_SUCCESS;
-};
 
 DebugSession *DeviceImp::getDebugSession(const zet_debug_config_t &config) {
     return debugSession.get();

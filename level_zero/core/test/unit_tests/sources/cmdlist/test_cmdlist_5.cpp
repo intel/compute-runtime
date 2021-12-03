@@ -7,6 +7,7 @@
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "test.h"
 
@@ -923,14 +924,7 @@ HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
 }
 
 TEST_F(CommandListCreate, givenOrdinalBiggerThanAvailableEnginesWhenCreatingCommandListThenInvalidArgumentErrorIsReturned) {
-    auto &engineGroups = neoDevice->getEngineGroups();
-    uint32_t numAvailableEngineGroups = 0;
-    for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {
-        if (engineGroups[ordinal].size()) {
-            numAvailableEngineGroups++;
-        }
-    }
-
+    auto numAvailableEngineGroups = static_cast<uint32_t>(neoDevice->getEngineGroups().size());
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     desc.commandQueueGroupOrdinal = numAvailableEngineGroups;
@@ -950,6 +944,47 @@ TEST_F(CommandListCreate, givenOrdinalBiggerThanAvailableEnginesWhenCreatingComm
     returnValue = device->createCommandListImmediate(&desc2, &commandList);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
     EXPECT_EQ(nullptr, commandList);
+}
+
+TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingCommandListThenValidateQueueOrdinalUsingSubDeviceEngines) {
+    NEO::UltDeviceFactory deviceFactory{1, 2};
+    auto &rootDevice = *deviceFactory.rootDevices[0];
+    auto &subDevice0 = *deviceFactory.subDevices[0];
+    rootDevice.engineGroups.resize(1);
+    subDevice0.getEngineGroups().push_back(NEO::Device::EngineGroupT{});
+    subDevice0.getEngineGroups().back().engineGroupType = EngineGroupType::Compute;
+    subDevice0.getEngineGroups().back().engines.resize(1);
+    subDevice0.getEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
+    auto ordinal = static_cast<uint32_t>(subDevice0.getEngineGroups().size() - 1);
+    Mock<L0::DeviceImp> l0RootDevice(&rootDevice, rootDevice.getExecutionEnvironment());
+
+    ze_command_list_handle_t commandList = nullptr;
+    ze_command_list_desc_t cmdDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    cmdDesc.commandQueueGroupOrdinal = ordinal;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = ordinal;
+    queueDesc.index = 0;
+
+    l0RootDevice.multiDeviceCapable = true;
+    auto returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+
+    returnValue = l0RootDevice.createCommandListImmediate(&queueDesc, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+
+    l0RootDevice.multiDeviceCapable = false;
+    returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_NE(nullptr, commandList);
+    L0::CommandList::fromHandle(commandList)->destroy();
+    commandList = nullptr;
+
+    returnValue = l0RootDevice.createCommandListImmediate(&queueDesc, &commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_NE(nullptr, commandList);
+    L0::CommandList::fromHandle(commandList)->destroy();
 }
 
 } // namespace ult

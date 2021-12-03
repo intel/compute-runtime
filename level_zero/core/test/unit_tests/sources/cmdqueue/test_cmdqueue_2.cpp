@@ -9,6 +9,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "test.h"
 
@@ -37,17 +38,9 @@ TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCa
 
 HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreatingCommandQueueThenCommandQueueIsCreated) {
     ze_command_queue_handle_t commandQueue = {};
-    auto &engines = neoDevice->getEngineGroups();
-    uint32_t numaAvailableEngineGroups = 0;
-    for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {
-        if (engines[ordinal].size()) {
-            numaAvailableEngineGroups++;
-        }
-    }
-    for (uint32_t ordinal = 0; ordinal < numaAvailableEngineGroups; ordinal++) {
-        uint32_t engineGroupIndex = ordinal;
-        device->mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
-        for (uint32_t index = 0; index < engines[engineGroupIndex].size(); index++) {
+    auto &engineGroups = neoDevice->getEngineGroups();
+    for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
+        for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
             ze_command_queue_desc_t desc = {};
             desc.ordinal = ordinal;
             desc.index = index;
@@ -60,17 +53,11 @@ HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreating
     }
 }
 
-HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBigerThanAvailableEnginesWhenCreatingCommandQueueThenInvalidArgReturned) {
+HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBiggerThanAvailableEnginesWhenCreatingCommandQueueThenInvalidArgumentErrorIsReturned) {
     ze_command_queue_handle_t commandQueue = {};
-    auto &engines = neoDevice->getEngineGroups();
-    uint32_t numaAvailableEngineGroups = 0;
-    for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {
-        if (engines[ordinal].size()) {
-            numaAvailableEngineGroups++;
-        }
-    }
-    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    desc.ordinal = numaAvailableEngineGroups;
+    auto &engineGroups = neoDevice->getEngineGroups();
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = static_cast<uint32_t>(engineGroups.size());
     desc.index = 0;
     ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
@@ -81,6 +68,35 @@ HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBigerThanAvailableEnginesWhe
     res = context->createCommandQueue(device, &desc, &commandQueue);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
     EXPECT_EQ(nullptr, commandQueue);
+}
+
+HWTEST_F(ContextCreateCommandQueueTest, givenRootDeviceAndImplicitScalingDisabledWhenCreatingCommandQueueThenValidateQueueOrdinalUsingSubDeviceEngines) {
+    NEO::UltDeviceFactory deviceFactory{1, 2};
+    auto &rootDevice = *deviceFactory.rootDevices[0];
+    auto &subDevice0 = *deviceFactory.subDevices[0];
+    rootDevice.engineGroups.resize(1);
+    subDevice0.getEngineGroups().push_back(NEO::Device::EngineGroupT{});
+    subDevice0.getEngineGroups().back().engineGroupType = EngineGroupType::Compute;
+    subDevice0.getEngineGroups().back().engines.resize(1);
+    subDevice0.getEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
+    auto ordinal = static_cast<uint32_t>(subDevice0.getEngineGroups().size() - 1);
+    Mock<L0::DeviceImp> l0RootDevice(&rootDevice, rootDevice.getExecutionEnvironment());
+
+    ze_command_queue_handle_t commandQueue = nullptr;
+    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    desc.ordinal = ordinal;
+    desc.index = 0;
+
+    l0RootDevice.multiDeviceCapable = true;
+    ze_result_t res = context->createCommandQueue(l0RootDevice.toHandle(), &desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(nullptr, commandQueue);
+
+    l0RootDevice.multiDeviceCapable = false;
+    res = context->createCommandQueue(l0RootDevice.toHandle(), &desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, commandQueue);
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
 using AubCsrTest = Test<AubCsrFixture>;

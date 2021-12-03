@@ -1348,7 +1348,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsQueueWhenEnqueueingCopyBufferToBuffer
 
     cl_command_queue_properties properties[] = {
         CL_QUEUE_FAMILY_INTEL,
-        device->getDevice().getIndexOfNonEmptyEngineGroup(EngineGroupType::Copy),
+        device->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Copy),
         CL_QUEUE_INDEX_INTEL,
         0,
         0,
