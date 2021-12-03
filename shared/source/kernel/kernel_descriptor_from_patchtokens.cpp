@@ -525,6 +525,10 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     }
 
     dst.kernelAttributes.gpuPointerSize = gpuPointerSizeInBytes;
+
+    if (DebugManager.flags.UpdateCrossThreadDataSize.get()) {
+        dst.updateCrossThreadDataSize();
+    }
 }
 
 } // namespace NEO

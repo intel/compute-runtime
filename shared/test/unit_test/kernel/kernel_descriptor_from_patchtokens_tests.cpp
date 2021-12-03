@@ -10,6 +10,7 @@
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 #include "test.h"
@@ -1310,4 +1311,195 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithChildBlocksMetadataImplicit
     EXPECT_EQ(childBlocks[1].ArgumentNumber, dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset[1].first);
     EXPECT_EQ(childBlocks[0].Offset, dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset[0].second);
     EXPECT_EQ(childBlocks[1].Offset, dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset[1].second);
+}
+
+TEST(KernelDescriptorFromPatchtokens, GivenDispatchTraitsImplicitArgsAndExplicitArgsWhenPopulatingKernelDescriptorThenCrossThreadDataSizeIsSetToMaxOffsetAndAligned) {
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
+    iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
+    kernelTokens.header = &kernelHeader;
+
+    DebugManagerStateRestore dbgRestorer;
+    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(true);
+
+    iOpenCL::SPatchDataParameterBuffer localWorkSize[3] = {};
+    iOpenCL::SPatchDataParameterBuffer localWorkSize2[3] = {};
+    iOpenCL::SPatchDataParameterBuffer enqueuedLocalWorkSize[3] = {};
+    iOpenCL::SPatchDataParameterBuffer numWorkGroups[3] = {};
+    iOpenCL::SPatchDataParameterBuffer globalWorkOffset[3] = {};
+    iOpenCL::SPatchDataParameterBuffer globalWorkSize[3] = {};
+    iOpenCL::SPatchDataParameterBuffer maxWorkGroupSize = {};
+    iOpenCL::SPatchDataParameterBuffer workDimensions = {};
+    iOpenCL::SPatchDataParameterBuffer simdSize = {};
+    iOpenCL::SPatchDataParameterBuffer parentEvent = {};
+    iOpenCL::SPatchDataParameterBuffer privateMemoryStatelessSize = {};
+    iOpenCL::SPatchDataParameterBuffer localMemoryStatelessWindowSize = {};
+    iOpenCL::SPatchDataParameterBuffer localMemoryStatelessWindowStartAddress = {};
+    iOpenCL::SPatchDataParameterBuffer preferredWorkgroupMultiple = {};
+
+    uint32_t expectedMaxSizes[5] = {96 + 4, 108 + 4, 128 + 2, 140 + 8, 176 + 8};
+    for (int i = 0; i < 5; i++) {
+        NEO::KernelDescriptor kernelDescriptor;
+
+        iOpenCL::SPatchExecutionEnvironment execEnv = {};
+        execEnv.UseBindlessMode = 1;
+        kernelTokens.tokens.executionEnvironment = &execEnv;
+
+        iOpenCL::SPatchDataParameterStream dataParameterStream = {};
+        dataParameterStream.DataParameterStreamSize = 32;
+        kernelTokens.tokens.dataParameterStream = &dataParameterStream;
+
+        iOpenCL::SPatchAllocateStatelessPrivateSurface privateSurface = {};
+        privateSurface.DataParamOffset = 0;
+        kernelTokens.tokens.allocateStatelessPrivateSurface = &privateSurface;
+
+        iOpenCL::SPatchAllocateStatelessConstantMemorySurfaceWithInitialization constantSurface = {};
+        constantSurface.DataParamOffset = 8;
+        kernelTokens.tokens.allocateStatelessConstantMemorySurfaceWithInitialization = &constantSurface;
+
+        iOpenCL::SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization globalsSurface = {};
+        globalsSurface.DataParamOffset = 16;
+        kernelTokens.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization = &globalsSurface;
+
+        iOpenCL::SPatchAllocateStatelessPrintfSurface printfSurface = {};
+        printfSurface.DataParamOffset = 24;
+        kernelTokens.tokens.allocateStatelessPrintfSurface = &printfSurface;
+
+        localWorkSize[0].Offset = 28;
+        localWorkSize[1].Offset = 32;
+        localWorkSize[2].Offset = 36;
+        localWorkSize2[0].Offset = 40;
+        localWorkSize2[1].Offset = 44;
+        localWorkSize2[2].Offset = 48;
+        enqueuedLocalWorkSize[0].Offset = 52;
+        enqueuedLocalWorkSize[1].Offset = 56;
+        enqueuedLocalWorkSize[2].Offset = 60;
+        numWorkGroups[0].Offset = 64;
+        numWorkGroups[1].Offset = 68;
+        numWorkGroups[2].Offset = 72;
+        globalWorkOffset[0].Offset = 76;
+        globalWorkOffset[1].Offset = 80;
+        globalWorkOffset[2].Offset = 84;
+        globalWorkSize[0].Offset = 88;
+        globalWorkSize[1].Offset = 92;
+        globalWorkSize[2].Offset = 96;
+        globalWorkSize[2].DataSize = 4;
+        maxWorkGroupSize.Offset = 100;
+        workDimensions.Offset = 104;
+        simdSize.Offset = 108;
+        parentEvent.Offset = 112;
+        privateMemoryStatelessSize.Offset = 116;
+        localMemoryStatelessWindowSize.Offset = 120;
+        localMemoryStatelessWindowStartAddress.Offset = 124;
+        preferredWorkgroupMultiple.Offset = 128;
+        preferredWorkgroupMultiple.DataSize = 2;
+
+        for (uint32_t i = 0; i < 3U; ++i) {
+            kernelTokens.tokens.crossThreadPayloadArgs.localWorkSize[i] = &localWorkSize[i];
+            kernelTokens.tokens.crossThreadPayloadArgs.localWorkSize2[i] = &localWorkSize2[i];
+            kernelTokens.tokens.crossThreadPayloadArgs.globalWorkOffset[i] = &globalWorkOffset[i];
+            kernelTokens.tokens.crossThreadPayloadArgs.enqueuedLocalWorkSize[i] = &enqueuedLocalWorkSize[i];
+            kernelTokens.tokens.crossThreadPayloadArgs.globalWorkSize[i] = &globalWorkSize[i];
+            kernelTokens.tokens.crossThreadPayloadArgs.numWorkGroups[i] = &numWorkGroups[i];
+        }
+
+        iOpenCL::SPatchSamplerKernelArgument paramArg0 = {};
+        iOpenCL::SPatchDataParameterBuffer paramArg1 = {};
+        iOpenCL::SPatchDataParameterBuffer paramArg2 = {};
+        iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
+
+        if (i > 0) {
+            kernelTokens.tokens.crossThreadPayloadArgs.workDimensions = &workDimensions;
+            kernelTokens.tokens.crossThreadPayloadArgs.maxWorkGroupSize = &maxWorkGroupSize;
+            kernelTokens.tokens.crossThreadPayloadArgs.simdSize = &simdSize;
+            if (i > 1) {
+                kernelTokens.tokens.crossThreadPayloadArgs.parentEvent = &parentEvent;
+                kernelTokens.tokens.crossThreadPayloadArgs.preferredWorkgroupMultiple = &preferredWorkgroupMultiple;
+                kernelTokens.tokens.crossThreadPayloadArgs.privateMemoryStatelessSize = &privateMemoryStatelessSize;
+
+                if (i > 2) {
+                    kernelTokens.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize = &localMemoryStatelessWindowSize;
+                    kernelTokens.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress = &localMemoryStatelessWindowStartAddress;
+
+                    kernelTokens.tokens.kernelArgs.resize(3);
+
+                    paramArg0.Token = iOpenCL::PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT;
+                    paramArg0.ArgumentNumber = 0;
+                    paramArg0.Offset = 132;
+                    paramArg0.Type = iOpenCL::SAMPLER_OBJECT_TEXTURE;
+
+                    paramArg1.Token = iOpenCL::PATCH_TOKEN_DATA_PARAMETER_BUFFER;
+                    paramArg1.ArgumentNumber = 1;
+                    paramArg1.Type = iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT;
+                    paramArg1.Offset = 136;
+                    paramArg1.DataSize = 8;
+                    paramArg1.SourceOffset = 5;
+
+                    paramArg2.Token = iOpenCL::PATCH_TOKEN_DATA_PARAMETER_BUFFER;
+                    paramArg2.ArgumentNumber = 2;
+                    paramArg2.Type = iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT;
+                    paramArg2.Offset = 140;
+                    paramArg2.DataSize = 8;
+                    paramArg2.SourceOffset = 13;
+
+                    kernelTokens.tokens.kernelArgs[0].objectArg = &paramArg0;
+                    kernelTokens.tokens.kernelArgs[1].byValMap.push_back(&paramArg1);
+                    kernelTokens.tokens.kernelArgs[2].byValMap.push_back(&paramArg2);
+
+                    if (i > 3) {
+                        globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+                        globalMemArg.ArgumentNumber = 3;
+                        globalMemArg.Offset = 176;
+                        globalMemArg.Size = 8;
+
+                        kernelTokens.tokens.kernelArgs.resize(4);
+                        kernelTokens.tokens.kernelArgs[3].objectArg = &globalMemArg;
+                    }
+                }
+            }
+        }
+
+        NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 8);
+
+        EXPECT_EQ(alignUp(expectedMaxSizes[i], 32), kernelDescriptor.kernelAttributes.crossThreadDataSize);
+    }
+}
+
+TEST(KernelDescriptorFromPatchtokens, GivenUpdateCrossThreadDataSizeAndNoCrossThreadPayloadWhenPopulatingKernelDescriptorThenCrossThreadDataSizeRemainsZero) {
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
+    iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
+    kernelTokens.header = &kernelHeader;
+
+    DebugManagerStateRestore dbgRestorer;
+    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(true);
+    NEO::KernelDescriptor kernelDescriptor;
+
+    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 8);
+
+    EXPECT_EQ(0u, kernelDescriptor.kernelAttributes.crossThreadDataSize);
+}
+
+TEST(KernelDescriptorFromPatchtokens, GivenUpdateCrossThreadDataSizeFalseWhenPopulatingKernelDescriptorThenCrossThreadDataSizeIsNotUpdated) {
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
+    iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
+    kernelTokens.header = &kernelHeader;
+
+    DebugManagerStateRestore dbgRestorer;
+    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(false);
+
+    NEO::KernelDescriptor kernelDescriptor;
+
+    iOpenCL::SPatchExecutionEnvironment execEnv = {};
+    kernelTokens.tokens.executionEnvironment = &execEnv;
+
+    iOpenCL::SPatchDataParameterStream dataParameterStream = {};
+    dataParameterStream.DataParameterStreamSize = 32;
+    kernelTokens.tokens.dataParameterStream = &dataParameterStream;
+
+    iOpenCL::SPatchAllocateStatelessPrivateSurface privateSurface = {};
+    privateSurface.DataParamOffset = 64;
+    kernelTokens.tokens.allocateStatelessPrivateSurface = &privateSurface;
+
+    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 8);
+
+    EXPECT_EQ(32u, kernelDescriptor.kernelAttributes.crossThreadDataSize);
 }

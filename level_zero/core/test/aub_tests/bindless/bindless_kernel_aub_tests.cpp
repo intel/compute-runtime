@@ -59,10 +59,12 @@ struct L0BindlessAub : Test<AUBFixtureL0> {
     ModuleImp *module = nullptr;
 };
 
-HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorrect) {
+HWTEST2_F(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect, IsAtMostXeHpgCore) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
+
+    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(true);
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
                                                                            context->rootDeviceIndices,
