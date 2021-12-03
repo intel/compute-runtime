@@ -289,5 +289,79 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTim
     ASSERT_TRUE(postSyncFound);
 }
 
+HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWaitOnEventThenAllocateNewCommandBuffer) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    auto consumeSpace = commandList->commandContainer.getCommandStream()->getAvailableSpace();
+    consumeSpace -= sizeof(MI_BATCH_BUFFER_END);
+    commandList->commandContainer.getCommandStream()->getSpace(consumeSpace);
+
+    size_t expectedConsumedSpace = sizeof(MI_SEMAPHORE_WAIT);
+    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed()) {
+        expectedConsumedSpace += sizeof(PIPE_CONTROL);
+    }
+
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        0,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    auto event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    ze_event_handle_t hEventHandle = event->toHandle();
+
+    auto oldCommandBuffer = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+    auto result = commandList->appendWaitOnEvents(1, &hEventHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto newCommandBuffer = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+
+    EXPECT_EQ(expectedConsumedSpace, usedSpaceAfter);
+    EXPECT_NE(oldCommandBuffer, newCommandBuffer);
+
+    auto gpuAddress = event->getGpuAddress(device);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      commandList->commandContainer.getCommandStream()->getCpuBase(),
+                                                      usedSpaceAfter));
+
+    auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed()) {
+        ASSERT_NE(cmdList.end(), itorPC);
+        {
+            auto cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+            ASSERT_NE(cmd, nullptr);
+
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
+        }
+    } else {
+        EXPECT_EQ(cmdList.end(), itorPC);
+    }
+
+    auto itorSW = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorSW.size());
+    uint32_t semaphoreWaitsFound = 0;
+    for (auto it : itorSW) {
+        auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
+        auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
+
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                  cmd->getCompareOperation());
+        EXPECT_EQ(cmd->getSemaphoreDataDword(), std::numeric_limits<uint32_t>::max());
+        EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, cmd->getWaitMode());
+
+        semaphoreWaitsFound++;
+        gpuAddress += event->getSinglePacketSize();
+    }
+    EXPECT_EQ(1u, semaphoreWaitsFound);
+}
+
 } // namespace ult
 } // namespace L0

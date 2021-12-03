@@ -1869,15 +1869,32 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     }
 
     uint64_t gpuAddr = 0;
-    constexpr uint32_t eventStateClear = static_cast<uint32_t>(-1);
+    constexpr uint32_t eventStateClear = Event::State::STATE_CLEARED;
     bool dcFlushRequired = false;
 
     if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
         for (uint32_t i = 0; i < numEvents; i++) {
             auto event = Event::fromHandle(phEvent[i]);
-            dcFlushRequired |= (!event->waitScope) ? false : true;
+            dcFlushRequired |= !!event->waitScope;
         }
     }
+
+    size_t estimatedBufferSize = 0;
+    if (dcFlushRequired) {
+        if (isCopyOnly()) {
+            estimatedBufferSize += NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+        } else {
+            estimatedBufferSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+        }
+    }
+    for (uint32_t i = 0; i < numEvents; i++) {
+        auto event = Event::fromHandle(phEvent[i]);
+        uint32_t packetsToWait = event->getPacketsInUse();
+        for (uint32_t i = 0u; i < packetsToWait; i++) {
+            estimatedBufferSize += NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
+        }
+    }
+    increaseCommandStreamSpace(estimatedBufferSize);
 
     if (dcFlushRequired) {
         if (isCopyOnly()) {

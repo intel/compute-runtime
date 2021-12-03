@@ -15,6 +15,8 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
+#include <limits>
+
 struct _ze_event_handle_t {};
 
 struct _ze_event_pool_handle_t {};
@@ -40,7 +42,7 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) = 0;
     enum State : uint32_t {
         STATE_SIGNALED = 0u,
-        STATE_CLEARED = static_cast<uint32_t>(-1),
+        STATE_CLEARED = std::numeric_limits<uint32_t>::max(),
         STATE_INITIAL = STATE_CLEARED
     };
 
