@@ -12,4 +12,5 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}mock_fs_ras.h
   )
 endif()
+add_subdirectories()
 
