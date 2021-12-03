@@ -133,6 +133,9 @@ DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSect
         case NEO::Elf::SHT_ZEBIN_GTPIN_INFO:
             // ignoring intentionally - gtpin internal data
             continue;
+        case NEO::Elf::SHT_ZEBIN_VISA_ASM:
+            // ignoring intentionally - visa asm
+            continue;
         case NEO::Elf::SHT_NULL:
             // ignoring intentionally, inactive section, probably UNDEF
             continue;
