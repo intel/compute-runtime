@@ -17,6 +17,10 @@ ze_result_t FirmwareUtilImp::fwIfrApplied(bool &ifrStatus) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t FirmwareUtilImp::fwGetMemoryErrorCount(zes_ras_error_type_t type, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t FirmwareUtilImp::fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

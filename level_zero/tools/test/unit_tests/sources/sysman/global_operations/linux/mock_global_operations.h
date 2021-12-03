@@ -62,6 +62,16 @@ struct Mock<GlobalOperationsEngineHandleContext> : public GlobalOperationsEngine
     MOCK_METHOD(void, init, (), (override));
 };
 
+struct GlobalOperationsRasHandleContext : public RasHandleContext {
+    GlobalOperationsRasHandleContext(OsSysman *pOsSysman) : RasHandleContext(pOsSysman) {}
+};
+template <>
+struct Mock<GlobalOperationsRasHandleContext> : public GlobalOperationsRasHandleContext {
+    void initMock(std::vector<ze_device_handle_t> &deviceHandles) {}
+    Mock<GlobalOperationsRasHandleContext>(OsSysman *pOsSysman) : GlobalOperationsRasHandleContext(pOsSysman) {}
+    MOCK_METHOD(void, init, (std::vector<ze_device_handle_t> & deviceHandles), (override));
+};
+
 struct GlobalOperationsDiagnosticsHandleContext : public DiagnosticsHandleContext {
     GlobalOperationsDiagnosticsHandleContext(OsSysman *pOsSysman) : DiagnosticsHandleContext(pOsSysman) {}
 };
@@ -434,9 +444,10 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
     MOCK_METHOD(ze_result_t, getFwVersion, (std::string fwType, std::string &firmwareVersion), (override));
     MOCK_METHOD(ze_result_t, flashFirmware, (std::string fwType, void *pImage, uint32_t size), (override));
     MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));
-    MOCK_METHOD(ze_result_t, fwSupportedDiagTests, (std::vector<std::string> & supportedDiagTests), (override));
-    MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult, uint32_t subdeviceId), (override));
-    MOCK_METHOD(void, getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes), (override));
+    ADDMETHOD_NOBASE(fwSupportedDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::vector<std::string> & supportedDiagTests));
+    ADDMETHOD_NOBASE(fwRunDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::string & osDiagType, zes_diag_result_t *pResult, uint32_t subDeviceId));
+    ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
+    ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 };
 
 class PublicLinuxGlobalOperationsImp : public L0::LinuxGlobalOperationsImp {

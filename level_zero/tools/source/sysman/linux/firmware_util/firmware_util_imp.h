@@ -72,6 +72,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwIfrApplied(bool &ifrStatus) override;
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override;
     ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) override;
+    virtual ze_result_t fwGetMemoryErrorCount(zes_ras_error_type_t type, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count) override;
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
 
     ze_result_t fwGetVersion(std::string &fwVersion);

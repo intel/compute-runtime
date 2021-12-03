@@ -60,12 +60,13 @@ struct Mock<DiagnosticsFwInterface> : public FirmwareUtil {
 
     MOCK_METHOD(ze_result_t, fwDeviceInit, (), (override));
     MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
-    MOCK_METHOD(ze_result_t, getFwVersion, (std::string fwType, std::string &firmwareVersion), (override));
-    MOCK_METHOD(ze_result_t, flashFirmware, (std::string fwType, void *pImage, uint32_t size), (override));
-    MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));
+    ADDMETHOD_NOBASE(getFwVersion, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, std::string &firmwareVersion));
+    ADDMETHOD_NOBASE(flashFirmware, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, void *pImage, uint32_t size));
+    ADDMETHOD_NOBASE(fwIfrApplied, ze_result_t, ZE_RESULT_SUCCESS, (bool &ifrStatus));
     MOCK_METHOD(ze_result_t, fwSupportedDiagTests, (std::vector<std::string> & supportedDiagTests), (override));
     MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult, uint32_t subDeviceId), (override));
-    MOCK_METHOD(void, getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes), (override));
+    ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
+    ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 };
 
 class DiagSysfsAccess : public SysfsAccess {};

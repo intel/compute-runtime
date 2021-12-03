@@ -47,12 +47,14 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     std::unique_ptr<Mock<GlobalOperationsEngineHandleContext>> pEngineHandleContext;
     std::unique_ptr<Mock<GlobalOperationsDiagnosticsHandleContext>> pDiagnosticsHandleContext;
     std::unique_ptr<Mock<GlobalOperationsFirmwareHandleContext>> pFirmwareHandleContext;
+    std::unique_ptr<Mock<GlobalOperationsRasHandleContext>> pRasHandleContext;
     std::unique_ptr<Mock<GlobalOperationsSysfsAccess>> pSysfsAccess;
     std::unique_ptr<Mock<GlobalOperationsProcfsAccess>> pProcfsAccess;
     std::unique_ptr<Mock<GlobalOperationsFsAccess>> pFsAccess;
     EngineHandleContext *pEngineHandleContextOld = nullptr;
     DiagnosticsHandleContext *pDiagnosticsHandleContextOld = nullptr;
     FirmwareHandleContext *pFirmwareHandleContextOld = nullptr;
+    RasHandleContext *pRasHandleContextOld = nullptr;
     SysfsAccess *pSysfsAccessOld = nullptr;
     ProcfsAccess *pProcfsAccessOld = nullptr;
     FsAccess *pFsAccessOld = nullptr;
@@ -69,6 +71,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pEngineHandleContextOld = pSysmanDeviceImp->pEngineHandleContext;
         pDiagnosticsHandleContextOld = pSysmanDeviceImp->pDiagnosticsHandleContext;
         pFirmwareHandleContextOld = pSysmanDeviceImp->pFirmwareHandleContext;
+        pRasHandleContextOld = pSysmanDeviceImp->pRasHandleContext;
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pProcfsAccessOld = pLinuxSysmanImp->pProcfsAccess;
         pFsAccessOld = pLinuxSysmanImp->pFsAccess;
@@ -79,6 +82,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pFsAccess = std::make_unique<NiceMock<Mock<GlobalOperationsFsAccess>>>();
         pDiagnosticsHandleContext = std::make_unique<NiceMock<Mock<GlobalOperationsDiagnosticsHandleContext>>>(pOsSysman);
         pFirmwareHandleContext = std::make_unique<NiceMock<Mock<GlobalOperationsFirmwareHandleContext>>>(pOsSysman);
+        pRasHandleContext = std::make_unique<NiceMock<Mock<GlobalOperationsRasHandleContext>>>(pOsSysman);
 
         pSysmanDeviceImp->pEngineHandleContext = pEngineHandleContext.get();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
@@ -86,7 +90,10 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pSysmanDeviceImp->pDiagnosticsHandleContext = pDiagnosticsHandleContext.get();
         pSysmanDeviceImp->pFirmwareHandleContext = pFirmwareHandleContext.get();
+        pSysmanDeviceImp->pRasHandleContext = pRasHandleContext.get();
 
+        ON_CALL(*pRasHandleContext.get(), init(_))
+            .WillByDefault(::testing::Invoke(pRasHandleContext.get(), &Mock<GlobalOperationsRasHandleContext>::initMock));
         ON_CALL(*pEngineHandleContext.get(), init())
             .WillByDefault(::testing::Invoke(pEngineHandleContext.get(), &Mock<GlobalOperationsEngineHandleContext>::initMock));
         ON_CALL(*pDiagnosticsHandleContext.get(), init(_))
@@ -140,6 +147,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pEngineHandleContext = pEngineHandleContextOld;
         pSysmanDeviceImp->pDiagnosticsHandleContext = pDiagnosticsHandleContextOld;
         pSysmanDeviceImp->pFirmwareHandleContext = pFirmwareHandleContextOld;
+        pSysmanDeviceImp->pRasHandleContext = pRasHandleContextOld;
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccessOld;

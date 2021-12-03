@@ -36,9 +36,9 @@ class Ras : _zes_ras_handle_t {
 
 struct RasHandleContext {
     RasHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
-    ~RasHandleContext();
+    MOCKABLE_VIRTUAL ~RasHandleContext();
 
-    void init(std::vector<ze_device_handle_t> &deviceHandles);
+    MOCKABLE_VIRTUAL void init(std::vector<ze_device_handle_t> &deviceHandles);
     void releaseRasHandles();
 
     ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas);
