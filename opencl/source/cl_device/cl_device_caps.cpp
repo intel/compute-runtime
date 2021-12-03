@@ -379,13 +379,18 @@ void ClDevice::initializeCaps() {
         }
     }
 
-    for (auto &engineGroup : this->getDevice().getEngineGroups()) {
-        cl_queue_family_properties_intel properties = {};
-        properties.capabilities = getQueueFamilyCapabilities(engineGroup.engineGroupType);
-        properties.count = static_cast<cl_uint>(engineGroup.engines.size());
-        properties.properties = deviceInfo.queueOnHostProperties;
-        getQueueFamilyName(properties.name, engineGroup.engineGroupType);
-        deviceInfo.queueFamilyProperties.push_back(properties);
+    const auto &queueFamilies = this->getDevice().getEngineGroups();
+    for (size_t queueFamilyIndex = 0u; queueFamilyIndex < CommonConstants::engineGroupCount; queueFamilyIndex++) {
+        const std::vector<EngineControl> &enginesInFamily = queueFamilies[queueFamilyIndex];
+        if (enginesInFamily.size() > 0) {
+            const auto engineGroupType = static_cast<EngineGroupType>(queueFamilyIndex);
+            cl_queue_family_properties_intel properties = {};
+            properties.capabilities = getQueueFamilyCapabilities(engineGroupType);
+            properties.count = static_cast<cl_uint>(enginesInFamily.size());
+            properties.properties = deviceInfo.queueOnHostProperties;
+            getQueueFamilyName(properties.name, engineGroupType);
+            deviceInfo.queueFamilyProperties.push_back(properties);
+        }
     }
     auto &clHwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const std::vector<uint32_t> &supportedThreadArbitrationPolicies = clHwHelper.getSupportedThreadArbitrationPolicies();

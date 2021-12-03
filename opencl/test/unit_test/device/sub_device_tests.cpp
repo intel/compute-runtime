@@ -981,8 +981,8 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
-    auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
-    auto engines = clRootDevice->getDevice().getEngineGroups()[defaultEngineGroupIndex].engines;
+    auto defaultEngineGroupIndex = clRootDevice->getDevice().getIndexOfNonEmptyEngineGroup(engineGroupType);
+    auto engines = clRootDevice->getDevice().getEngineGroups()[defaultEngineGroupIndex];
 
     for (size_t i = 0; i < cmdQs.size(); i++) {
         auto engineIndex = i % engines.size();

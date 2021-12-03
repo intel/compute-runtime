@@ -968,9 +968,17 @@ TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCa
 
 HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreatingCommandQueueThenCommandQueueIsCreated) {
     ze_command_queue_handle_t commandQueue = {};
-    auto &engineGroups = neoDevice->getEngineGroups();
-    for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
-        for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
+    auto &engines = neoDevice->getEngineGroups();
+    uint32_t numaAvailableEngineGroups = 0;
+    for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {
+        if (engines[ordinal].size()) {
+            numaAvailableEngineGroups++;
+        }
+    }
+    for (uint32_t ordinal = 0; ordinal < numaAvailableEngineGroups; ordinal++) {
+        uint32_t engineGroupIndex = ordinal;
+        device->mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+        for (uint32_t index = 0; index < engines[engineGroupIndex].size(); index++) {
             ze_command_queue_desc_t desc = {};
             desc.ordinal = ordinal;
             desc.index = index;
@@ -983,11 +991,17 @@ HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreating
     }
 }
 
-HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBiggerThanAvailableEnginesWhenCreatingCommandQueueThenInvalidArgumentErrorIsReturned) {
+HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBigerThanAvailableEnginesWhenCreatingCommandQueueThenInvalidArgReturned) {
     ze_command_queue_handle_t commandQueue = {};
-    auto &engineGroups = neoDevice->getEngineGroups();
-    ze_command_queue_desc_t desc = {};
-    desc.ordinal = static_cast<uint32_t>(engineGroups.size());
+    auto &engines = neoDevice->getEngineGroups();
+    uint32_t numaAvailableEngineGroups = 0;
+    for (uint32_t ordinal = 0; ordinal < CommonConstants::engineGroupCount; ordinal++) {
+        if (engines[ordinal].size()) {
+            numaAvailableEngineGroups++;
+        }
+    }
+    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    desc.ordinal = numaAvailableEngineGroups;
     desc.index = 0;
     ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);

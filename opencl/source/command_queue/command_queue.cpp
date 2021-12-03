@@ -668,7 +668,7 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
         const auto &hwInfo = device->getHardwareInfo();
         const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         const auto engineGroupType = hwHelper.getEngineGroupType(gpgpuEngine->getEngineType(), gpgpuEngine->getEngineUsage(), hwInfo);
-        const auto familyIndex = device->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
+        const auto familyIndex = device->getDevice().getIndexOfNonEmptyEngineGroup(engineGroupType);
         return static_cast<cl_uint>(familyIndex);
     }
 }
@@ -903,7 +903,8 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
         if (specificEngineSelected) {
             this->queueFamilySelected = true;
             if (!getDevice().hasRootCsr()) {
-                const auto &engine = getDevice().getEngineGroups()[selectedQueueFamilyIndex].engines[selectedQueueIndex];
+                auto queueFamily = getDevice().getNonEmptyEngineGroup(selectedQueueFamilyIndex);
+                const auto &engine = queueFamily->at(selectedQueueIndex);
                 auto engineType = engine.getEngineType();
                 auto engineUsage = engine.getEngineUsage();
                 this->overrideEngine(engineType, engineUsage);
