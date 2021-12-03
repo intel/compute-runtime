@@ -25,7 +25,8 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     command->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
 
     if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
-        if (streamProperties.frontEndState.computeDispatchAllWalkerEnable.value > 0) {
+        const auto programComputeDispatchAllWalkerEnableInCfeState = !Family::isXtTemporary(hwInfo);
+        if (programComputeDispatchAllWalkerEnableInCfeState && streamProperties.frontEndState.computeDispatchAllWalkerEnable.value > 0) {
             command->setComputeDispatchAllWalkerEnable(true);
             command->setSingleSliceDispatchCcsMode(true);
         }

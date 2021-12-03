@@ -122,7 +122,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            numWorkGroups, localWorkSizes, simd, dim,
                                                            localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
 
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd);
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd, kernel.getExecutionType());
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, !kernel.isSingleSubdevicePreferred());

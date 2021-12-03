@@ -82,14 +82,14 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, whenProgramComputeWalkerThenApplyL3WAFo
 
     {
         hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Default);
 
         EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
     }
 
     {
         hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Default);
 
         if (hwInfo.platform.eProductFamily == IGFX_DG2) {
             EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());
@@ -107,7 +107,7 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramCompute
 
     for (auto forceL3PrefetchForComputeWalker : {false, true}) {
         DebugManager.flags.ForceL3PrefetchForComputeWalker.set(forceL3PrefetchForComputeWalker);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Default);
         EXPECT_EQ(!forceL3PrefetchForComputeWalker, walkerCmd.getL3PrefetchDisable());
     }
 }

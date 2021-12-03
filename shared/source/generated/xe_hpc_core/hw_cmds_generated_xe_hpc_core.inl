@@ -5488,7 +5488,8 @@ typedef struct tagCOMPUTE_WALKER {
             uint32_t Reserved_96 : BITFIELD_RANGE(0, 5);
             uint32_t IndirectDataStartAddress : BITFIELD_RANGE(6, 31);
             // DWORD 4
-            uint32_t Reserved_128 : BITFIELD_RANGE(0, 16);
+            uint32_t ComputeDispatchAllWalkerEnable : BITFIELD_RANGE(0, 0);
+            uint32_t Reserved_129 : BITFIELD_RANGE(1, 16);
             uint32_t MessageSimd : BITFIELD_RANGE(17, 18);
             uint32_t TileLayout : BITFIELD_RANGE(19, 21);
             uint32_t WalkOrder : BITFIELD_RANGE(22, 24);
@@ -5685,6 +5686,12 @@ typedef struct tagCOMPUTE_WALKER {
     }
     inline uint32_t getIndirectDataStartAddress() const {
         return TheStructure.Common.IndirectDataStartAddress << INDIRECTDATASTARTADDRESS_BIT_SHIFT;
+    }
+    inline void setComputeDispatchAllWalkerEnable(const bool value) {
+        TheStructure.Common.ComputeDispatchAllWalkerEnable = value;
+    }
+    inline bool getComputeDispatchAllWalkerEnable() const {
+        return TheStructure.Common.ComputeDispatchAllWalkerEnable;
     }
     inline void setMessageSimd(const uint32_t value) {
         TheStructure.Common.MessageSimd = value;

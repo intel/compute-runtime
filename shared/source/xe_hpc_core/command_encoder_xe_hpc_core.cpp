@@ -173,7 +173,7 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 }
 
 template <>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd) {
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType) {
     auto programGlobalFenceAsPostSyncOperationInComputeWalker = !Family::isXlA0(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() != -1) {
         programGlobalFenceAsPostSyncOperationInComputeWalker = !!DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
@@ -185,6 +185,16 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareIn
 
     if (DebugManager.flags.ForceL3PrefetchForComputeWalker.get() != -1) {
         walkerCmd.setL3PrefetchDisable(!DebugManager.flags.ForceL3PrefetchForComputeWalker.get());
+    }
+
+    auto programComputeDispatchAllWalkerEnableInComputeWalker = Family::isXtTemporary(hwInfo);
+    if (programComputeDispatchAllWalkerEnableInComputeWalker) {
+        if (kernelExecutionType == KernelExecutionType::Concurrent) {
+            walkerCmd.setComputeDispatchAllWalkerEnable(true);
+        }
+    }
+    if (DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get() != -1) {
+        walkerCmd.setComputeDispatchAllWalkerEnable(DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get());
     }
 }
 

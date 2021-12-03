@@ -109,7 +109,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            numWorkGroups, localWorkSizes, simd, dim,
                                                            false, false, 0u);
 
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd);
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd, kernel.getExecutionType());
     *walkerCmdBuf = walkerCmd;
 }
 } // namespace NEO

@@ -267,7 +267,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                             dispatchInterface->getSlmTotalSize(),
                                                             dispatchInterface->getSlmPolicy());
 
-    EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(hwInfo, walkerCmd);
+    EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, isCooperative ? KernelExecutionType::Concurrent : KernelExecutionType::Default);
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *device);
 
@@ -292,7 +292,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 }
 
 template <typename Family>
-inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd) {
+inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType) {
 }
 
 template <typename Family>

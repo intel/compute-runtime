@@ -110,7 +110,7 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 }
 
 template <>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd) {
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType) {
     if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isPrefetchDisablingRequired(hwInfo)) {
         walkerCmd.setL3PrefetchDisable(true);
     }
