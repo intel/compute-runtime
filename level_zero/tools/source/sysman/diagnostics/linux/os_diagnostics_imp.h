@@ -33,10 +33,18 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
     SysfsAccess *pSysfsAccess = nullptr;
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
+    Device *pDevice = nullptr;
+    std::string devicePciBdf = "";
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+    uint32_t rootDeviceIndex = 0u;
     decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
     decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
     decltype(&NEO::SysCalls::pwrite) pwriteFunction = NEO::SysCalls::pwrite;
+    void releaseSysmanDeviceResources();
+    void releaseDeviceResources();
+    ze_result_t initDevice();
+    void reInitSysmanDeviceResources();
 
   private:
     static const std::string quiescentGpuFile;
@@ -44,6 +52,19 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
     uint32_t subdeviceId = 0;
     static const std::string invalidateLmemFile;
     static const std::string deviceDir;
+};
+
+class ExecutionEnvironmentRefCountRestore {
+  public:
+    ExecutionEnvironmentRefCountRestore() = delete;
+    ExecutionEnvironmentRefCountRestore(NEO::ExecutionEnvironment *executionEnvironmentRecevied) {
+        executionEnvironment = executionEnvironmentRecevied;
+        executionEnvironment->incRefInternal();
+    }
+    ~ExecutionEnvironmentRefCountRestore() {
+        executionEnvironment->decRefInternal();
+    }
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
 };
 
 } // namespace L0

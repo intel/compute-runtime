@@ -9,6 +9,8 @@
 
 #include "shared/source/helpers/string.h"
 
+#include "level_zero/core/source/device/device_imp.h"
+
 namespace L0 {
 const std::string LinuxDiagnosticsImp::deviceDir("device");
 
@@ -34,6 +36,10 @@ LinuxDiagnosticsImp::LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string 
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
     pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
+    pDevice = pLinuxSysmanImp->getDeviceHandle();
+    auto device = static_cast<DeviceImp *>(pDevice);
+    executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
+    rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
 }
 
 std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const std::string &diagTests, ze_bool_t onSubdevice, uint32_t subdeviceId) {

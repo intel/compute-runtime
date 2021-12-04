@@ -68,6 +68,15 @@ struct Mock<DiagnosticsFwInterface> : public FirmwareUtil {
     ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 };
+struct GlobalOperationsEngineHandleContext : public EngineHandleContext {
+    GlobalOperationsEngineHandleContext(OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}
+};
+template <>
+struct Mock<GlobalOperationsEngineHandleContext> : public GlobalOperationsEngineHandleContext {
+    void initMock() {}
+    Mock<GlobalOperationsEngineHandleContext>(OsSysman *pOsSysman) : GlobalOperationsEngineHandleContext(pOsSysman) {}
+    MOCK_METHOD(void, init, (), (override));
+};
 
 class DiagSysfsAccess : public SysfsAccess {};
 template <>
@@ -264,6 +273,7 @@ class PublicLinuxDiagnosticsImp : public L0::LinuxDiagnosticsImp {
   public:
     using LinuxDiagnosticsImp::closeFunction;
     using LinuxDiagnosticsImp::openFunction;
+    using LinuxDiagnosticsImp::pDevice;
     using LinuxDiagnosticsImp::pFsAccess;
     using LinuxDiagnosticsImp::pFwInterface;
     using LinuxDiagnosticsImp::pLinuxSysmanImp;
