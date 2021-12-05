@@ -61,7 +61,7 @@ class DirectSubmissionHw {
 
     bool initialize(bool submitOnInit);
 
-    bool stopRingBuffer();
+    MOCKABLE_VIRTUAL bool stopRingBuffer();
 
     bool startRingBuffer();
 
@@ -73,7 +73,7 @@ class DirectSubmissionHw {
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
     static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);
     bool allocateResources();
-    void deallocateResources();
+    MOCKABLE_VIRTUAL void deallocateResources();
     MOCKABLE_VIRTUAL bool makeResourcesResident(DirectSubmissionAllocations &allocations);
     virtual bool allocateOsResources() = 0;
     virtual bool submit(uint64_t gpuAddress, size_t size) = 0;

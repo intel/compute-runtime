@@ -34,7 +34,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     uint64_t updateTagValue() override;
     void getTagAddressValue(TagData &tagData) override;
 
-    void wait(uint32_t taskCountToWait);
+    MOCKABLE_VIRTUAL void wait(uint32_t taskCountToWait);
 
     TagData currentTagData;
     volatile uint32_t *tagAddress;

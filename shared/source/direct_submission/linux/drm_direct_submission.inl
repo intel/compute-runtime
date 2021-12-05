@@ -50,8 +50,10 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
 
 template <typename GfxFamily, typename Dispatcher>
 inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
-    this->stopRingBuffer();
-    this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+    if (this->ringStart) {
+        this->stopRingBuffer();
+        this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+    }
     this->deallocateResources();
 }
 

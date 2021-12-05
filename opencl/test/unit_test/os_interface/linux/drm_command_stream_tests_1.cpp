@@ -760,6 +760,68 @@ struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDire
     std::unique_ptr<OsContext> osContext;
 };
 
+struct DrmDirectSubmissionFunctionsCalled {
+    bool stopRingBuffer;
+    bool wait;
+    bool deallocateResources;
+};
+
+template <typename GfxFamily>
+struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
+    MockDrmDirectSubmissionToTestDtor<GfxFamily>(Device &device, OsContext &osContext, DrmDirectSubmissionFunctionsCalled &functionsCalled)
+        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext), functionsCalled(functionsCalled) {
+    }
+    ~MockDrmDirectSubmissionToTestDtor() override {
+        if (ringStart) {
+            stopRingBuffer();
+            wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+        }
+        deallocateResources();
+    }
+    using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::ringStart;
+    bool stopRingBuffer() override {
+        functionsCalled.stopRingBuffer = true;
+        return true;
+    }
+    void wait(uint32_t taskCountToWait) override {
+        functionsCalled.wait = true;
+    }
+    void deallocateResources() override {
+        functionsCalled.deallocateResources = true;
+    }
+    DrmDirectSubmissionFunctionsCalled &functionsCalled;
+};
+
+HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenDtorIsCalledButRingIsNotStartedThenDontCallStopRingBufferNorWaitForTagValue) {
+    DrmDirectSubmissionFunctionsCalled functionsCalled{};
+    auto directSubmission = std::make_unique<MockDrmDirectSubmissionToTestDtor<FamilyType>>(*device.get(), *device->getDefaultEngine().osContext, functionsCalled);
+    ASSERT_NE(nullptr, directSubmission);
+
+    EXPECT_FALSE(directSubmission->ringStart);
+
+    directSubmission.reset();
+
+    EXPECT_FALSE(functionsCalled.stopRingBuffer);
+    EXPECT_FALSE(functionsCalled.wait);
+    EXPECT_TRUE(functionsCalled.deallocateResources);
+}
+
+template <typename GfxFamily>
+struct MockDrmDirectSubmissionToTestRingStop : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
+    MockDrmDirectSubmissionToTestRingStop<GfxFamily>(Device &device, OsContext &osContext)
+        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext) {
+    }
+    using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::ringStart;
+};
+
+HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenStopRingBufferIsCalledThenClearRingStart) {
+    auto directSubmission = std::make_unique<MockDrmDirectSubmissionToTestRingStop<FamilyType>>(*device.get(), *device->getDefaultEngine().osContext);
+    ASSERT_NE(nullptr, directSubmission);
+
+    directSubmission->stopRingBuffer();
+    EXPECT_FALSE(directSubmission->ringStart);
+}
+
 template <typename GfxFamily>
 struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
     using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::currentTagData;
