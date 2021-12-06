@@ -160,15 +160,12 @@ struct BlitEnqueueTests : public ::testing::Test {
     }
 
     void setAllocationType(GraphicsAllocation *graphicsAllocation, bool compressed) {
-        if (compressed) {
-            graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-            if (!graphicsAllocation->getDefaultGmm()) {
-                auto clientContext = device->getRootDeviceEnvironment().getGmmClientContext();
+        graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
 
-                graphicsAllocation->setDefaultGmm(new Gmm(clientContext, nullptr, 0, 0, false));
-            }
-        } else {
-            graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+        if (compressed && !graphicsAllocation->getDefaultGmm()) {
+            auto clientContext = device->getRootDeviceEnvironment().getGmmClientContext();
+
+            graphicsAllocation->setDefaultGmm(new Gmm(clientContext, nullptr, 0, 0, false));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

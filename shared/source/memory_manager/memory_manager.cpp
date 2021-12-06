@@ -301,7 +301,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
-    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
@@ -329,7 +328,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
-    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::WRITE_COMBINED:
         forcePin = true;
@@ -339,7 +337,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
-    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
@@ -584,7 +581,6 @@ EngineControlContainer &MemoryManager::getRegisteredEngines() {
 
 bool MemoryManager::isExternalAllocation(GraphicsAllocation::AllocationType allocationType) {
     if (allocationType == GraphicsAllocation::AllocationType::BUFFER ||
-        allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED ||
         allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY ||
         allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR ||
         allocationType == GraphicsAllocation::AllocationType::FILL_PATTERN ||

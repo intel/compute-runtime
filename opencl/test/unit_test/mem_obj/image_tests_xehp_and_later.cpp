@@ -388,7 +388,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionWhenAppendi
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
-    buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
@@ -430,7 +429,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenImageFromBufferWhenSet
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
-    buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),

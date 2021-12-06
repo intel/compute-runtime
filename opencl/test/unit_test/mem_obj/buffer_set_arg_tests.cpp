@@ -165,7 +165,6 @@ HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenCompressedBufferIsSetThenS
     pKernelInfo->argAsPtr(0).bindful = 0;
 
     auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     graphicsAllocation->setDefaultGmm(new Gmm(pDevice->getGmmClientContext(), graphicsAllocation->getUnderlyingBuffer(), buffer->getSize(), 0, false));
     graphicsAllocation->getDefaultGmm()->isCompressionEnabled = true;
     cl_mem clMem = buffer;

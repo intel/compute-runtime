@@ -349,14 +349,14 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
 
             bool compressionEnabled = MemObjHelper::isSuitableForCompression(HwHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
 
-            auto allocationType = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
+            MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
                 memoryProperties, context, compressionEnabled, false);
 
             bool expectBufferCompressed = ftrRenderCompressedBuffers && (enableMultiTileCompressionValue == 1);
             if (expectBufferCompressed && clHwHelper.allowCompressionForContext(*context.getDevice(0), context)) {
-                EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, allocationType);
+                EXPECT_TRUE(compressionEnabled);
             } else {
-                EXPECT_NE(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, allocationType);
+                EXPECT_FALSE(compressionEnabled);
             }
         }
     }
@@ -410,7 +410,7 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                                                                                                              0, &device);
 
                         bool compressionEnabled = MemObjHelper::isSuitableForCompression(HwHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
-                        auto allocationType = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
+                        MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
                             memoryProperties, context, compressionEnabled, false);
 
                         bool isCompressionDisabled = isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
@@ -425,9 +425,9 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                         }
 
                         if (expectBufferCompressed) {
-                            EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, allocationType);
+                            EXPECT_TRUE(compressionEnabled);
                         } else {
-                            EXPECT_NE(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, allocationType);
+                            EXPECT_FALSE(compressionEnabled);
                         }
                     }
                 }

@@ -172,7 +172,6 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
-    buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto gmmResourceInfo = buffer->getMultiGraphicsAllocation().getDefaultGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo.get();
     auto bufferCompressionFormat = context.getDevice(0)->getGmmClientContext()->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
@@ -247,7 +246,6 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
-    buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
@@ -291,7 +289,6 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
-    buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
@@ -336,7 +333,6 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
-    buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),

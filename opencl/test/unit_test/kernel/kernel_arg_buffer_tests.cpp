@@ -30,7 +30,12 @@
 
 using namespace NEO;
 
-typedef Test<KernelArgBufferFixture> KernelArgBufferTest;
+struct KernelArgBufferTest : public Test<KernelArgBufferFixture> {
+    struct AllocationTypeHelper {
+        GraphicsAllocation::AllocationType allocationType;
+        bool compressed;
+    };
+};
 
 TEST_F(KernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenBufferAddressIsCorrect) {
     Buffer *buffer = new MockBuffer();
@@ -371,7 +376,7 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHost
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
-    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
 
     for (auto pureStatefulBufferAccess : {false, true}) {
         pKernelInfo->setBufferStateful(0, pureStatefulBufferAccess);
@@ -426,7 +431,6 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirec
     EXPECT_FALSE(kernelWithNoIndirectHostAllocations.hasIndirectStatelessAccessToHostMemory());
 
     const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
-                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
                                   GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY};
 
     MockKernel kernelWithIndirectUnifiedMemoryAllocation(pProgram, kernelInfo, *pClDevice);
@@ -528,7 +532,6 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithNoDirectStatelessAccess
     DebugManager.flags.EnableStatelessCompression.set(1);
 
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -573,7 +576,6 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithNoDirectStatelessAcce
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
-    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -614,7 +616,6 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     pKernelInfo->hasIndirectStatelessAccess = true;
 
     const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
-                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
                                   GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY};
 
     MockGraphicsAllocation gfxAllocation;
@@ -651,27 +652,25 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
     pKernelInfo->hasIndirectStatelessAccess = true;
 
-    const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
-                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
-                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-                                  GraphicsAllocation::AllocationType::SVM_GPU};
+    constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{GraphicsAllocation::AllocationType::BUFFER, false},
+                                                                      {GraphicsAllocation::AllocationType::BUFFER, true},
+                                                                      {GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false},
+                                                                      {GraphicsAllocation::AllocationType::SVM_GPU, true}}};
 
     auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), nullptr, 0, 0, false);
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setDefaultGmm(gmm.get());
 
     for (const auto type : allocationTypes) {
-        gfxAllocation.setAllocationType(type);
+        gfxAllocation.setAllocationType(type.allocationType);
 
         pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
-        gmm->isCompressionEnabled = ((type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-                                     (type == GraphicsAllocation::AllocationType::SVM_GPU));
+        gmm->isCompressionEnabled = type.compressed;
 
         KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
         pKernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
 
-        if ((type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-            (type == GraphicsAllocation::AllocationType::SVM_GPU)) {
+        if (type.compressed) {
             EXPECT_EQ(1u, kernelObjsForAuxTranslation.size());
             auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
@@ -694,10 +693,10 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
-                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
-                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-                                  GraphicsAllocation::AllocationType::SVM_GPU};
+    constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{GraphicsAllocation::AllocationType::BUFFER, false},
+                                                                      {GraphicsAllocation::AllocationType::BUFFER, true},
+                                                                      {GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false},
+                                                                      {GraphicsAllocation::AllocationType::SVM_GPU, true}}};
 
     auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), nullptr, 0, 0, false);
 
@@ -709,18 +708,16 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
     allocData.device = &pClDevice->getDevice();
 
     for (const auto type : allocationTypes) {
-        gfxAllocation.setAllocationType(type);
+        gfxAllocation.setAllocationType(type.allocationType);
 
-        gmm->isCompressionEnabled = ((type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-                                     (type == GraphicsAllocation::AllocationType::SVM_GPU));
+        gmm->isCompressionEnabled = type.compressed;
 
         pContext->getSVMAllocsManager()->insertSVMAlloc(allocData);
 
         KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
         pKernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
 
-        if ((gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-            (gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::SVM_GPU)) {
+        if (type.compressed) {
             EXPECT_EQ(1u, kernelObjsForAuxTranslation.size());
             auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);

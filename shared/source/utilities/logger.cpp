@@ -134,8 +134,6 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
     switch (type) {
     case GraphicsAllocation::AllocationType::BUFFER:
         return "BUFFER";
-    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
-        return "BUFFER_COMPRESSED";
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
         return "BUFFER_HOST_MEMORY";
     case GraphicsAllocation::AllocationType::COMMAND_BUFFER:

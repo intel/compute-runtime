@@ -759,7 +759,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     rootDeviceEnvironment->executionEnvironment.initializeMemoryManager();
     memoryManager->allocateGraphicsMemoryInNonDevicePool = true;
 
-    MockAllocationProperties properties = {mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield};
+    MockAllocationProperties properties = {mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield};
     properties.flags.preferCompressed = true;
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);

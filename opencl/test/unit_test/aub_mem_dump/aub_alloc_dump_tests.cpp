@@ -50,14 +50,6 @@ HWTEST_F(AubAllocDumpTests, givenBufferOrImageWhenGraphicsAllocationIsKnownThenI
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
-    EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
-
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
-    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
-
     gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
@@ -435,7 +427,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
             EXPECT_EQ(SURFACE_FORMAT::SURFACE_FORMAT_RAW, surfaceInfo->format);
             EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceInfo->surftype);
             EXPECT_EQ(RENDER_SURFACE_STATE::TILE_MODE_LINEAR, surfaceInfo->tilingType);
-            EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == bufferAllocation->getAllocationType(), surfaceInfo->compressed);
+            EXPECT_EQ(bufferAllocation->isCompressionEnabled(), surfaceInfo->compressed);
             EXPECT_EQ((AubAllocDump::DumpFormat::BUFFER_TRE == dumpFormat) ? aub_stream::dumpType::tre : aub_stream::dumpType::bin, surfaceInfo->dumpType);
         }
         memoryManager.freeGraphicsMemory(bufferAllocation);

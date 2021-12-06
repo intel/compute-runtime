@@ -61,7 +61,6 @@ struct AllocationTypeTagTestCase {
 
 AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(GraphicsAllocation::AllocationType::COUNT)] = {
     {GraphicsAllocation::AllocationType::BUFFER, "BUFFER"},
-    {GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, "BFCMPRSD"},
     {GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, "BFHSTMEM"},
     {GraphicsAllocation::AllocationType::COMMAND_BUFFER, "CMNDBUFF"},
     {GraphicsAllocation::AllocationType::CONSTANT_SURFACE, "CSNTSRFC"},

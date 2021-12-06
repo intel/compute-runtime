@@ -240,7 +240,8 @@ HWTEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenAllocatingCsrSpecific
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThenAllMemoryBanksAreOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER, true, allTilesMask};
+    properties.flags.preferCompressed = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
@@ -332,7 +333,8 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferThenLocalOnly
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThenLocalOnlyFlagIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER, false, singleTileMask};
+    properties.flags.preferCompressed = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }

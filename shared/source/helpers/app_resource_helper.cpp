@@ -26,8 +26,6 @@ const char *AppResourceHelper::getResourceTagStr(GraphicsAllocation::AllocationT
         return "UNKNOWN";
     case GraphicsAllocation::AllocationType::BUFFER:
         return "BUFFER";
-    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
-        return "BFCMPRSD";
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
         return "BFHSTMEM";
     case GraphicsAllocation::AllocationType::COMMAND_BUFFER:

@@ -546,7 +546,6 @@ TEST_F(WddmMemoryManagerSimpleTest, given32BitAllocationOfBufferWhenItIsAllocate
     }
     REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     GraphicsAllocation::AllocationType allocationTypes[] = {GraphicsAllocation::AllocationType::BUFFER,
-                                                            GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
                                                             GraphicsAllocation::AllocationType::SHARED_BUFFER,
                                                             GraphicsAllocation::AllocationType::SCRATCH_SURFACE,
                                                             GraphicsAllocation::AllocationType::PRIVATE_SURFACE};

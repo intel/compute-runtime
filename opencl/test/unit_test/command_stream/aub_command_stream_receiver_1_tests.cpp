@@ -733,7 +733,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
         GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE,
         GraphicsAllocation::AllocationType::BUFFER,
         GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-        GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
         GraphicsAllocation::AllocationType::IMAGE,
         GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
         GraphicsAllocation::AllocationType::MAP_ALLOCATION,

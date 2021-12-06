@@ -80,7 +80,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
-    buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 

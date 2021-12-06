@@ -164,7 +164,8 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenBufferHostMemoryTypeWhenAllocati
 
 TEST_F(MemoryManagerGetAlloctionDataTests, givenBufferCompressedTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, mockDeviceBitfield);
+    properties.flags.preferCompressed = true;
 
     MockMemoryManager mockMemoryManager;
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -184,7 +185,8 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenWriteCombinedTypeWhenAllocationD
 
 TEST_F(MemoryManagerGetAlloctionDataTests, givenDefaultAllocationFlagsWhenAllocationDataIsQueriedThenAllocateMemoryIsFalse) {
     AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, false, 0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, mockDeviceBitfield);
+    properties.flags.preferCompressed = true;
     char memory;
     MockMemoryManager mockMemoryManager;
     mockMemoryManager.getAllocationData(allocData, properties, &memory, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -247,7 +249,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllow
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, 10, allocType, mockDeviceBitfield);
 
-    bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER);
 
     properties.flags.preferCompressed = bufferCompressedType;
 
@@ -280,7 +282,6 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest, givenAlloca
 
 static const GraphicsAllocation::AllocationType allocationTypesWith32BitAnd64KbPagesAllowed[] = {GraphicsAllocation::AllocationType::BUFFER,
                                                                                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-                                                                                                 GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
                                                                                                  GraphicsAllocation::AllocationType::PIPE,
                                                                                                  GraphicsAllocation::AllocationType::SCRATCH_SURFACE,
                                                                                                  GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE,
@@ -1140,7 +1141,6 @@ static const GraphicsAllocation::AllocationType allocationHaveToBeForcedTo48Bit[
 
 static const GraphicsAllocation::AllocationType allocationHaveNotToBeForcedTo48Bit[] = {
     GraphicsAllocation::AllocationType::BUFFER,
-    GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
     GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
     GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
     GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,

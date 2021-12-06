@@ -1018,7 +1018,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 
     if (is32bit && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->isFullRangeSvm()) {
         if (allocationData.type == GraphicsAllocation::AllocationType::BUFFER ||
-            allocationData.type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED ||
             allocationData.type == GraphicsAllocation::AllocationType::SHARED_BUFFER ||
             allocationData.type == GraphicsAllocation::AllocationType::SCRATCH_SURFACE ||
             allocationData.type == GraphicsAllocation::AllocationType::LINEAR_STREAM ||

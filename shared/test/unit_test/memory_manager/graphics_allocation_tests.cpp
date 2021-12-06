@@ -193,10 +193,6 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsSharedResourceCopyThenAllocatio
     EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY));
 }
 
-TEST(GraphicsAllocationTest, whenAllocationTypeIsBufferCompressedThenAllocationIsNotLockable) {
-    EXPECT_FALSE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED));
-}
-
 TEST(GraphicsAllocationTest, whenAllocationTypeIsImageThenAllocationIsNotLockable) {
     EXPECT_FALSE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::IMAGE));
 }

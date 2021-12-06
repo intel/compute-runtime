@@ -518,10 +518,8 @@ GraphicsAllocation::AllocationType SVMAllocsManager::getGraphicsAllocationTypeAn
             const auto &hwInfoConfig = *HwInfoConfig::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eProductFamily);
             if (hwInfoConfig.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
                 compressionEnabled = true;
-                allocationType = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
-            } else {
-                allocationType = GraphicsAllocation::AllocationType::BUFFER;
             }
+            allocationType = GraphicsAllocation::AllocationType::BUFFER;
         }
     }
     return allocationType;

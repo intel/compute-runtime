@@ -1304,6 +1304,7 @@ HWTEST_F(UnifiedSharedMemoryHWTest, givenSharedUsmAllocationWhenReadBufferThenCp
 
 TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocationIsCreatedThenAllocationTypeIsBufferCompressed) {
     DebugManagerStateRestore restore;
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
     cl_int retVal = CL_SUCCESS;
     MockContext mockContext;
@@ -1321,11 +1322,7 @@ TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocati
         auto deviceMemAlloc = allocationsManager->getSVMAllocs()->get(deviceMemAllocPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, deviceMemAlloc);
 
-        if (enable > 0) {
-            EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, deviceMemAlloc->getAllocationType());
-        } else {
-            EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, deviceMemAlloc->getAllocationType());
-        }
+        EXPECT_EQ((enable > 0), deviceMemAlloc->isCompressionEnabled());
 
         retVal = clMemFreeINTEL(&mockContext, deviceMemAllocPtr);
         EXPECT_EQ(CL_SUCCESS, retVal);

@@ -110,7 +110,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
         break;
     case GraphicsAllocation::AllocationType::BUFFER:
-    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
     case GraphicsAllocation::AllocationType::SVM_GPU: {
         auto colouringPolicy = properties.colouringPolicy;
         auto granularity = properties.colouringGranularity;

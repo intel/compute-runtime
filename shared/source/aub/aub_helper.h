@@ -27,7 +27,6 @@ class AubHelper : public NonCopyableOrMovableClass {
         case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
         case GraphicsAllocation::AllocationType::BUFFER:
         case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
-        case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
         case GraphicsAllocation::AllocationType::IMAGE:
         case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:

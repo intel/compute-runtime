@@ -617,7 +617,11 @@ HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAligmentWhenAllocateGraphicsMemo
 
     auto osAgnosticMemoryManager = std::make_unique<MemoryManagerCreate<MockMemoryManager>>(true, false, *executionEnvironment);
     osAgnosticMemoryManager->failInDevicePool = true;
-    auto allocationWithEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield}, ptr);
+
+    MockAllocationProperties properties(mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield);
+    properties.flags.preferCompressed = true;
+
+    auto allocationWithEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
 
     ASSERT_NE(nullptr, allocationWithEnabled1MbAlignment);
     EXPECT_EQ(MemoryConstants::megaByte, osAgnosticMemoryManager->alignAllocationData.alignment);
@@ -625,7 +629,7 @@ HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAligmentWhenAllocateGraphicsMemo
     osAgnosticMemoryManager->freeGraphicsMemory(allocationWithEnabled1MbAlignment);
 
     raiiFactory.mockHwHelper.isEnable = false;
-    auto allocationWithoutEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield}, ptr);
+    auto allocationWithoutEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
 
     ASSERT_NE(nullptr, allocationWithoutEnabled1MbAlignment);
     EXPECT_NE(MemoryConstants::megaByte, osAgnosticMemoryManager->alignAllocationData.alignment);
@@ -2342,7 +2346,7 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
     properties.flags.flushL3RequiredForWrite = 1;
 
     GraphicsAllocation::AllocationType allocationTypesThatMayNeedL3Flush[] = {
-        GraphicsAllocation::AllocationType::BUFFER, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
+        GraphicsAllocation::AllocationType::BUFFER,
         GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
         GraphicsAllocation::AllocationType::GLOBAL_SURFACE, GraphicsAllocation::AllocationType::IMAGE,
         GraphicsAllocation::AllocationType::PIPE, GraphicsAllocation::AllocationType::SHARED_IMAGE,

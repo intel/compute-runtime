@@ -900,7 +900,6 @@ struct AllocationTypeTestCase {
 
 AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::BUFFER, "BUFFER"},
-    {GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, "BUFFER_COMPRESSED"},
     {GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
     {GraphicsAllocation::AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
     {GraphicsAllocation::AllocationType::CONSTANT_SURFACE, "CONSTANT_SURFACE"},

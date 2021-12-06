@@ -544,7 +544,6 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenSupportedTypeWhenAllocatingInDev
 
     bool resource48Bit[] = {true, false};
     GraphicsAllocation::AllocationType supportedTypes[] = {GraphicsAllocation::AllocationType::BUFFER,
-                                                           GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
                                                            GraphicsAllocation::AllocationType::IMAGE,
                                                            GraphicsAllocation::AllocationType::COMMAND_BUFFER,
                                                            GraphicsAllocation::AllocationType::LINEAR_STREAM,

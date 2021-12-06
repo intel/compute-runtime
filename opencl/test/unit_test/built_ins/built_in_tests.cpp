@@ -636,13 +636,11 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
         cl_int retVal = CL_SUCCESS;
         buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-        buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
 
         kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
     } else {
         gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
-        gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         gfxAllocation->setDefaultGmm(gmm.get());
 
         kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});

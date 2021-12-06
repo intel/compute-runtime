@@ -322,8 +322,7 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = true;
                 }
             }
-        } else if (allocationInfo[rootDeviceIndex].allocationType == GraphicsAllocation::AllocationType::BUFFER) {
-            UNRECOVERABLE_IF(compressionEnabled);
+        } else if (allocationInfo[rootDeviceIndex].allocationType == GraphicsAllocation::AllocationType::BUFFER && !compressionEnabled) {
             allocationInfo[rootDeviceIndex].allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         }
 
@@ -505,10 +504,6 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationTypeAndCompressi
     if (properties.flags.useHostPtr && !isLocalMemoryEnabled) {
         compressionEnabled = false;
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
-    }
-
-    if (compressionEnabled) {
-        return GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
     }
 
     return GraphicsAllocation::AllocationType::BUFFER;
