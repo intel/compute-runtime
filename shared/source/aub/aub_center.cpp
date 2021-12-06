@@ -22,7 +22,7 @@ extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
         auto devicesCount = HwHelper::getSubDevicesCount(pHwInfo);
-        auto memoryBankSize = AubHelper::getMemBankSize(pHwInfo);
+        auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(pHwInfo);
         CommandStreamReceiverType type = csrType;
         if (DebugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
             type = static_cast<CommandStreamReceiverType>(DebugManager.flags.SetCommandStreamReceiver.get());

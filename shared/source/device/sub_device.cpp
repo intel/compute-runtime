@@ -45,9 +45,4 @@ Device *SubDevice::getRootDevice() const {
     return &rootDevice;
 }
 
-uint64_t SubDevice::getGlobalMemorySize(uint32_t deviceBitfield) const {
-    auto globalMemorySize = Device::getGlobalMemorySize(static_cast<uint32_t>(maxNBitValue(rootDevice.getNumSubDevices())));
-    return globalMemorySize / std::max(rootDevice.getNumGenericSubDevices(), 1u);
-}
-
 } // namespace NEO

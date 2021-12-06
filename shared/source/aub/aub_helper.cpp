@@ -42,7 +42,7 @@ uint32_t AubHelper::getMemType(uint32_t addressSpace) {
     return mem_types::MEM_TYPE_SYSTEM;
 }
 
-uint64_t AubHelper::getMemBankSize(const HardwareInfo *pHwInfo) {
+uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo) {
     if (DebugManager.flags.HBMSizePerTileInGigabytes.get() > 0) {
         return DebugManager.flags.HBMSizePerTileInGigabytes.get() * MemoryConstants::gigaByte;
     }

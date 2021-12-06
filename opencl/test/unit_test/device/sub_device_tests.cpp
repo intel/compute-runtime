@@ -259,7 +259,12 @@ TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCr
     EXPECT_EQ(1u, device.engines.size());
 }
 
-TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenGettingGlobalMemorySizeThenSubDevicesReturnReducedAmountOfGlobalMemAllocSize) {
+TEST(SubDevicesTest, givenRootDeviceWithSubDevicesAndLocalMemoryWhenGettingGlobalMemorySizeThenSubDevicesReturnReducedAmountOfGlobalMemAllocSize) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    DebugManager.flags.HBMSizePerTileInGigabytes.set(1);
+
     const uint32_t numSubDevices = 2u;
     UltDeviceFactory deviceFactory{1, numSubDevices};
 
@@ -272,6 +277,25 @@ TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenGettingGlobalMemorySizeThe
         auto mockSubDevice = static_cast<MockSubDevice *>(subDevice);
         auto subDeviceBitfield = static_cast<uint32_t>(mockSubDevice->getDeviceBitfield().to_ulong());
         EXPECT_EQ(expectedGlobalMemorySize, mockSubDevice->getGlobalMemorySize(subDeviceBitfield));
+    }
+}
+
+TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWithoutLocalMemoryWhenGettingGlobalMemorySizeThenSubDevicesReturnReducedAmountOfGlobalMemAllocSize) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(0);
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+
+    const uint32_t numSubDevices = 2u;
+    UltDeviceFactory deviceFactory{1, numSubDevices};
+
+    auto rootDevice = deviceFactory.rootDevices[0];
+
+    auto totalGlobalMemorySize = rootDevice->getGlobalMemorySize(static_cast<uint32_t>(rootDevice->getDeviceBitfield().to_ulong()));
+
+    for (const auto &subDevice : deviceFactory.subDevices) {
+        auto mockSubDevice = static_cast<MockSubDevice *>(subDevice);
+        auto subDeviceBitfield = static_cast<uint32_t>(mockSubDevice->getDeviceBitfield().to_ulong());
+        EXPECT_EQ(totalGlobalMemorySize, mockSubDevice->getGlobalMemorySize(subDeviceBitfield));
     }
 }
 

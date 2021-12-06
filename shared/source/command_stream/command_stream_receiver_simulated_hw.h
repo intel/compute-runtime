@@ -91,7 +91,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         return AubMemDump::AddressSpaceValues::TraceNonlocal;
     }
     PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo) {
-        const auto bankSize = AubHelper::getMemBankSize(hwInfo);
+        const auto bankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
         const auto devicesCount = HwHelper::getSubDevicesCount(hwInfo);
         return new PhysicalAddressAllocatorHw<GfxFamily>(bankSize, devicesCount);
     }

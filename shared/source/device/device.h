@@ -123,7 +123,7 @@ class Device : public ReferenceTrackedObject<Device> {
     GraphicsAllocation *getRTMemoryBackedBuffer() { return rtMemoryBackedBuffer; }
     void initializeRayTracing();
 
-    virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
+    uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
 
   protected:

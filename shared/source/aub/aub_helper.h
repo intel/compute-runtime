@@ -43,7 +43,7 @@ class AubHelper : public NonCopyableOrMovableClass {
     static int getMemTrace(uint64_t pdEntryBits);
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);
     static uint32_t getMemType(uint32_t addressSpace);
-    static uint64_t getMemBankSize(const HardwareInfo *pHwInfo);
+    static uint64_t getPerTileLocalMemorySize(const HardwareInfo *pHwInfo);
     static MMIOList getAdditionalMmioList();
     static void setTbxConfiguration();
 

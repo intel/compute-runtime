@@ -34,7 +34,7 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initGlobalMMIO() {
                                     {0x0000490c, 0x0001}}; //XEHP_TILE_ADDR_RANGE
 
         const uint32_t numberOfTiles = 4;
-        const uint32_t localMemorySizeGB = static_cast<uint32_t>(AubHelper::getMemBankSize(&this->peekHwInfo()) / MemoryConstants::gigaByte);
+        const uint32_t localMemorySizeGB = static_cast<uint32_t>(AubHelper::getPerTileLocalMemorySize(&this->peekHwInfo()) / MemoryConstants::gigaByte);
 
         uint32_t localMemoryBaseAddressInGB = 0x0;
 
