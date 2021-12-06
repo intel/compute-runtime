@@ -706,10 +706,10 @@ zesDiagnosticsGetTests(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDiagnosticsRunTests(
     zes_diag_handle_t hDiagnostics,
-    uint32_t start,
-    uint32_t end,
+    uint32_t startIndex,
+    uint32_t endIndex,
     zes_diag_result_t *pResult) {
-    return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsRunTests(start, end, pResult);
+    return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsRunTests(startIndex, endIndex, pResult);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
