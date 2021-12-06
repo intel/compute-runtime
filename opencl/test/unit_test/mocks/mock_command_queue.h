@@ -26,6 +26,7 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::device;
     using CommandQueue::gpgpuEngine;
     using CommandQueue::isCopyOnly;
+    using CommandQueue::isTextureCacheFlushNeeded;
     using CommandQueue::obtainNewTimestampPacketNodes;
     using CommandQueue::overrideEngine;
     using CommandQueue::queueCapabilities;

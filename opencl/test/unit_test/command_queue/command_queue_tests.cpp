@@ -379,6 +379,29 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserE
     EXPECT_EQ(100u, cmdQ.taskLevel);
 }
 
+HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenReturnProperValue) {
+    MockContext context;
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(CL_COMMAND_COPY_BUFFER_RECT));
+
+    for (auto i = CL_COMMAND_NDRANGE_KERNEL; i < CL_COMMAND_RELEASE_GL_OBJECTS; i++) {
+        if (i == CL_COMMAND_COPY_IMAGE) {
+            commandStreamReceiver.directSubmissionAvailable = true;
+            EXPECT_TRUE(cmdQ.isTextureCacheFlushNeeded(i));
+            commandStreamReceiver.directSubmissionAvailable = false;
+            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(i));
+        } else {
+            commandStreamReceiver.directSubmissionAvailable = true;
+            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(i));
+            commandStreamReceiver.directSubmissionAvailable = false;
+            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(i));
+        }
+    }
+}
+
 TEST_F(CommandQueueCommandStreamTest, GivenValidCommandQueueWhenGettingCommandStreamThenValidObjectIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue commandQueue(context.get(), pClDevice, props, false);

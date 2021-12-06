@@ -41,7 +41,8 @@ struct DispatchFlagsHelper {
             false,                                   //useSingleSubdevice
             false,                                   //useGlobalAtomics
             false,                                   //areMultipleSubDevicesInContext
-            false                                    //memoryMigrationRequired
+            false,                                   //memoryMigrationRequired
+            false                                    //textureCacheFlush
         );
     }
 };

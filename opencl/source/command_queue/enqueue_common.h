@@ -892,8 +892,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->isSingleSubdevicePreferred(),                                                       //useSingleSubdevice
         useGlobalAtomics,                                                                           //useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                                   //areMultipleSubDevicesInContext
-        kernel->requiresMemoryMigration()                                                           //memoryMigrationRequired
-    );
+        kernel->requiresMemoryMigration(),                                                          //memoryMigrationRequired
+        isTextureCacheFlushNeeded(commandType));                                                    //textureCacheFlush
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = specialPipelineSelectMode;
@@ -1116,7 +1116,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             false,                                                               //useSingleSubdevice
             false,                                                               //useGlobalAtomics
             context->containsMultipleSubDevices(rootDeviceIndex),                //areMultipleSubDevicesInContext
-            false);                                                              //memoryMigrationRequired
+            false,                                                               //memoryMigrationRequired
+            false);                                                              //textureCacheFlush
 
         if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);

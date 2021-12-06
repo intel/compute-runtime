@@ -54,7 +54,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         false,                                                       //useSingleSubdevice
         false,                                                       //useGlobalAtomics
         this->device->getNEODevice()->getNumGenericSubDevices() > 1, //areMultipleSubDevicesInContext
-        false                                                        //memoryMigrationRequired
+        false,                                                       //memoryMigrationRequired
+        false                                                        //textureCacheFlush
     );
 
     this->commandContainer.removeDuplicatesFromResidencyContainer();

@@ -217,6 +217,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             PipeControlArgs args(dispatchFlags.dcFlush);
             args.notifyEnable = isUsedNotifyEnableForPostSync();
             args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
+            args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
             args.workloadPartitionOffset = this->activePartitions > 1 && this->staticWorkPartitioningEnabled;
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 commandStreamTask,

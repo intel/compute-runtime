@@ -45,14 +45,6 @@ enum class QueuePriority {
     HIGH
 };
 
-inline bool shouldFlushDC(uint32_t commandType, PrintfHandler *printfHandler) {
-    return (commandType == CL_COMMAND_READ_BUFFER ||
-            commandType == CL_COMMAND_READ_BUFFER_RECT ||
-            commandType == CL_COMMAND_READ_IMAGE ||
-            commandType == CL_COMMAND_SVM_MAP ||
-            printfHandler);
-}
-
 template <>
 struct OpenCLObjectMapper<_cl_command_queue> {
     typedef class CommandQueue DerivedType;
@@ -371,6 +363,17 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
     bool blitEnqueueAllowed(const CsrSelectionArgs &args) const;
+
+    bool isTextureCacheFlushNeeded(uint32_t commandType) const;
+    inline bool shouldFlushDC(uint32_t commandType, PrintfHandler *printfHandler) const {
+        return (commandType == CL_COMMAND_READ_BUFFER ||
+                commandType == CL_COMMAND_READ_BUFFER_RECT ||
+                commandType == CL_COMMAND_READ_IMAGE ||
+                commandType == CL_COMMAND_SVM_MAP ||
+                printfHandler ||
+                isTextureCacheFlushNeeded(commandType));
+    }
+
     MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;

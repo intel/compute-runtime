@@ -79,7 +79,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         false,                                                                       //useSingleSubdevice
         false,                                                                       //useGlobalAtomics
         false,                                                                       //areMultipleSubDevicesInContext
-        false);                                                                      //memoryMigrationRequired
+        false,                                                                       //memoryMigrationRequired
+        false);                                                                      //textureCacheFlush
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
@@ -246,7 +247,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->isSingleSubdevicePreferred(),                                             //useSingleSubdevice
         kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                         //areMultipleSubDevicesInContext
-        kernel->requiresMemoryMigration());                                               //memoryMigrationRequired
+        kernel->requiresMemoryMigration(),                                                //memoryMigrationRequired
+        false);                                                                           //textureCacheFlush
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
@@ -388,7 +390,8 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         false,                                                                 //useSingleSubdevice
         false,                                                                 //useGlobalAtomics
         commandQueue.getContext().containsMultipleSubDevices(rootDeviceIndex), //areMultipleSubDevicesInContext
-        false);                                                                //memoryMigrationRequired
+        false,                                                                 //memoryMigrationRequired
+        false);                                                                //textureCacheFlush
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
