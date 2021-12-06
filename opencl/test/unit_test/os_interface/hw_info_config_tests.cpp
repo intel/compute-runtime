@@ -79,15 +79,21 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 1u);
+    for (uint32_t slice = 0; slice < outHwInfo.gtSystemInfo.SliceCount; slice++) {
+        EXPECT_TRUE(outHwInfo.gtSystemInfo.SliceInfo[slice].Enabled);
+    }
 
-    success = parseHwInfoConfigString("7x1x1", hwInfoConfig);
+    success = parseHwInfoConfigString("3x1x1", hwInfoConfig);
     EXPECT_TRUE(success);
-    EXPECT_EQ(hwInfoConfig, 0x700010001u);
+    EXPECT_EQ(hwInfoConfig, 0x300010001u);
     setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
-    EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 7u);
-    EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 7u);
-    EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 7u);
-    EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 3u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 3u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 3u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 3u);
+    for (uint32_t slice = 0; slice < outHwInfo.gtSystemInfo.SliceCount; slice++) {
+        EXPECT_TRUE(outHwInfo.gtSystemInfo.SliceInfo[slice].Enabled);
+    }
 
     success = parseHwInfoConfigString("1x7x1", hwInfoConfig);
     EXPECT_TRUE(success);
@@ -97,6 +103,9 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 7u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 7u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
+    for (uint32_t slice = 0; slice < outHwInfo.gtSystemInfo.SliceCount; slice++) {
+        EXPECT_TRUE(outHwInfo.gtSystemInfo.SliceInfo[slice].Enabled);
+    }
 
     success = parseHwInfoConfigString("1x1x7", hwInfoConfig);
     EXPECT_TRUE(success);
@@ -106,6 +115,9 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
+    for (uint32_t slice = 0; slice < outHwInfo.gtSystemInfo.SliceCount; slice++) {
+        EXPECT_TRUE(outHwInfo.gtSystemInfo.SliceInfo[slice].Enabled);
+    }
 
     success = parseHwInfoConfigString("2x4x16", hwInfoConfig);
     EXPECT_TRUE(success);
@@ -115,6 +127,9 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 8u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 8u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 128u);
+    for (uint32_t slice = 0; slice < outHwInfo.gtSystemInfo.SliceCount; slice++) {
+        EXPECT_TRUE(outHwInfo.gtSystemInfo.SliceInfo[slice].Enabled);
+    }
 }
 
 TEST_F(HwInfoConfigTest, givenInvalidHwInfoWhenParsingHwInfoConfigThenErrorIsReturned) {
