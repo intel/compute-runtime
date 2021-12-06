@@ -634,7 +634,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     if (ret != 0) {
         [[maybe_unused]] int err = errno;
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-        DEBUG_BREAK_IF(ret != 0);
 
         return nullptr;
     }

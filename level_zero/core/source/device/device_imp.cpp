@@ -127,15 +127,17 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
         contextImp->allocDeviceMem(this->toHandle(), &deviceDesc, 8, 1, &memory);
         contextImp->allocDeviceMem(hPeerDevice, &peerDeviceDesc, 8, 1, &peerMemory);
 
-        L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr);
+        auto ret = L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr);
         L0::CommandList::fromHandle(commandList)->close();
 
-        auto ret = L0::CommandQueue::fromHandle(commandQueue)->executeCommandLists(1, &commandList, nullptr, true);
         if (ret == ZE_RESULT_SUCCESS) {
-            this->crossAccessEnabledDevices[peerRootDeviceIndex] = true;
-            pPeerDevice->crossAccessEnabledDevices[this->getNEODevice()->getRootDeviceIndex()] = true;
-            L0::CommandQueue::fromHandle(commandQueue)->synchronize(std::numeric_limits<uint64_t>::max());
-            *value = true;
+            ret = L0::CommandQueue::fromHandle(commandQueue)->executeCommandLists(1, &commandList, nullptr, true);
+            if (ret == ZE_RESULT_SUCCESS) {
+                this->crossAccessEnabledDevices[peerRootDeviceIndex] = true;
+                pPeerDevice->crossAccessEnabledDevices[this->getNEODevice()->getRootDeviceIndex()] = true;
+                L0::CommandQueue::fromHandle(commandQueue)->synchronize(std::numeric_limits<uint64_t>::max());
+                *value = true;
+            }
         }
 
         contextImp->freeMem(peerMemory);

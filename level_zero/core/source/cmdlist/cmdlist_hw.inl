@@ -1090,6 +1090,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     auto dstAllocationStruct = getAlignedAllocation(this->device, dstptr, size, false);
     auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, size, true);
 
+    if (dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
     }
@@ -1767,7 +1771,6 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             uint64_t offset = sourcePtr - pbase;
 
             alloc = driverHandle->getPeerAllocation(device, allocData, const_cast<void *>(buffer), &alignedPtr);
-            UNRECOVERABLE_IF(alloc == nullptr);
             alignedPtr += offset;
         } else {
             alignedPtr = sourcePtr;

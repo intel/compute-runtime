@@ -768,6 +768,7 @@ TEST_F(ContextMemoryTests, givenMultipleSubDevicesWhenAllocatingThenUseCorrectGl
 
 struct DriverHandleFailGetFdMock : public L0::DriverHandleImp {
     void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAloc) override {
+        importFdHandleCalledTimes++;
         if (mockFd == allocationMap.second) {
             return allocationMap.first;
         }
@@ -776,6 +777,7 @@ struct DriverHandleFailGetFdMock : public L0::DriverHandleImp {
 
     const int mockFd = 57;
     std::pair<void *, int> allocationMap;
+    uint32_t importFdHandleCalledTimes = 0;
 };
 
 struct ContextFailFdMock : public L0::ContextImp {
@@ -1650,6 +1652,74 @@ struct MemoryOpenIpcHandleTest : public ::testing::Test {
     std::unique_ptr<ContextIpcMock> context;
 };
 
+struct MultipleDevicePeerAllocationFailTest : public ::testing::Test {
+    void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
+
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+        }
+
+        deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, 0, *executionEnvironment);
+
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
+        }
+        driverHandle = std::make_unique<DriverHandleFailGetFdMock>();
+        driverHandle->initialize(std::move(devices));
+        driverHandle->setMemoryManager(driverHandle->getMemoryManager());
+
+        context = std::make_unique<ContextImp>(driverHandle.get());
+        EXPECT_NE(context, nullptr);
+        for (auto i = 0u; i < numRootDevices; i++) {
+            auto device = driverHandle->devices[i];
+            context->getDevices().insert(std::make_pair(device->toHandle(), device));
+            auto neoDevice = device->getNEODevice();
+            context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+        }
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<DriverHandleFailGetFdMock> driverHandle;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    std::unique_ptr<ContextImp> context;
+
+    const uint32_t numRootDevices = 2u;
+};
+
+TEST_F(MultipleDevicePeerAllocationFailTest,
+       givenImportFdHandleFailedThenPeerAllocationReturnsNullptr) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(true);
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uintptr_t peerGpuAddress = 0u;
+    auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+
+    DriverHandleFailGetFdMock *driverHandleFailGetFdMock = static_cast<DriverHandleFailGetFdMock *>(context->getDriverHandle());
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress);
+    EXPECT_GT(driverHandleFailGetFdMock->importFdHandleCalledTimes, 0u);
+    EXPECT_EQ(peerAlloc, nullptr);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     void createModuleFromBinary(L0::Device *device, ModuleType type = ModuleType::User) {
         std::string testFile;
@@ -1871,7 +1941,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 }
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToGetAllignedAllocationWithoutSettingEnableCrossDeviceAccessThenExceptionIsThrown,
+          givenDeviceAllocationPassedToGetAllignedAllocationWithoutSettingEnableCrossDeviceAccessThenPeerAllocNotFoundReturnsTrue,
           Platforms) {
     DebugManager.flags.EnableCrossDeviceAccess.set(false);
     L0::Device *device0 = driverHandle->devices[0];
@@ -1890,7 +1960,8 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
-    EXPECT_THROW(commandList->getAlignedAllocation(device1, ptr, size, false), std::exception);
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device1, ptr, size, false);
+    EXPECT_EQ(nullptr, outData.alloc);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);

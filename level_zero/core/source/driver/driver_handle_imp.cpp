@@ -469,7 +469,12 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
         UNRECOVERABLE_IF(alloc == nullptr);
         uint64_t handle = alloc->peekInternalHandle(this->getMemoryManager());
         ze_ipc_memory_flags_t flags = {};
+
         peerPtr = this->importFdHandle(device, flags, handle, &alloc);
+        if (peerPtr == nullptr) {
+            return nullptr;
+        }
+
         peerAllocData = this->getSvmAllocsManager()->getSVMAlloc(peerPtr);
         deviceImp->peerAllocations.allocations.insert(std::make_pair(ptr, *peerAllocData));
     }

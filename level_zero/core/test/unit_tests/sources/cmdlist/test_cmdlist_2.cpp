@@ -26,8 +26,13 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     MockCommandListHw(bool failOnFirst) : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>(), failOnFirstCopy(failOnFirst) {}
 
     AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
-        return {0, 0, nullptr, true};
+        getAlignedAllocationCalledTimes++;
+        if (buffer) {
+            return {0, 0, &alignedAlloc, true};
+        }
+        return {0, 0, nullptr, false};
     }
+
     ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr,
                                              NEO::GraphicsAllocation *dstPtrAlloc,
                                              uint64_t dstOffset,
@@ -123,13 +128,47 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     uint32_t appendMemoryCopyKernel3dCalledTimes = 0;
     uint32_t appendBlitFillCalledTimes = 0;
     uint32_t appendCopyImageBlitCalledTimes = 0;
+    uint32_t getAlignedAllocationCalledTimes = 0;
     Vec3<size_t> appendImageRegionCopySize = {0, 0, 0};
     Vec3<size_t> appendImageRegionSrcOrigin = {9, 9, 9};
     Vec3<size_t> appendImageRegionDstOrigin = {9, 9, 9};
     bool failOnFirstCopy = false;
+    uint8_t mockAlignedAllocData[2 * MemoryConstants::pageSize]{};
+    void *alignedDataPtr = alignUp(mockAlignedAllocData, MemoryConstants::pageSize);
+    NEO::MockGraphicsAllocation alignedAlloc{alignedDataPtr, reinterpret_cast<uint64_t>(alignedDataPtr), MemoryConstants::pageSize};
 };
 
 using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyCalledWithNullDstPtrThenAppendMemoryCopyWithappendMemoryCopyReturnsError, Platforms) {
+    MockCommandListHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = nullptr;
+    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr);
+    EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
+    EXPECT_EQ(ret, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyCalledWithNullSrcPtrThenAppendMemoryCopyWithappendMemoryCopyReturnsError, Platforms) {
+    MockCommandListHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    void *srcPtr = nullptr;
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr);
+    EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
+    EXPECT_EQ(ret, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyCalledWithNullSrcPtrAndDstPtrThenAppendMemoryCopyWithappendMemoryCopyReturnsError, Platforms) {
+    MockCommandListHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+    ze_result_t ret = cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr);
+    EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
+    EXPECT_EQ(ret, ZE_RESULT_ERROR_UNKNOWN);
+}
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyCalledThenAppendMemoryCopyWithappendMemoryCopyKernelWithGACalled, Platforms) {
     MockCommandListHw<gfxCoreFamily> cmdList;
