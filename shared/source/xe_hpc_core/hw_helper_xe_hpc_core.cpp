@@ -276,7 +276,6 @@ std::string HwHelperHw<Family>::getExtensions() const {
 
     extensions += "cl_intel_create_buffer_with_properties ";
     extensions += "cl_intel_dot_accumulate ";
-    extensions += "cl_intel_global_float_atomics ";
     extensions += "cl_intel_subgroup_local_block_io ";
     extensions += "cl_intel_subgroup_matrix_multiply_accumulate_for_PVC ";
     extensions += "cl_khr_subgroup_named_barrier ";
