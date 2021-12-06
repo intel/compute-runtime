@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
@@ -135,7 +136,7 @@ class Context : public BaseObject<_cl_context> {
         DEBUG_BREAK_IF(contextCallback == nullptr);
         DEBUG_BREAK_IF(driverDiagnostics == nullptr);
         char hint[DriverDiagnostics::maxHintStringSize];
-        snprintf(hint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[performanceHint], std::forward<Args>(args)..., 0);
+        snprintf_s(hint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[performanceHint], std::forward<Args>(args)..., 0);
         if (driverDiagnostics->validFlags(flags)) {
             if (contextCallback) {
                 contextCallback(hint, &flags, sizeof(flags), userData);

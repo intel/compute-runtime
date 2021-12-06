@@ -148,3 +148,21 @@ TEST(StringHelpers, GivenParamsWhenUsingMemcpyThenReturnIsCorrect) {
 }
 
 #endif
+
+TEST(StringHelpers, GivenParamsWhenUsingSnprintfsThenReturnIsCorrect) {
+    char buffer[15] = "";
+    const char *fmtStr = "World!";
+
+    int retVal1 = snprintf_s(buffer, sizeof(buffer), sizeof(buffer), "Hello %s", fmtStr);
+    ASSERT_EQ(12, retVal1);
+    ASSERT_EQ(0, std::strcmp("Hello World!", buffer));
+
+    int retVal2 = snprintf_s(nullptr, sizeof(buffer), sizeof(buffer), "Hello %s", fmtStr);
+    ASSERT_EQ(-EINVAL, retVal2);
+
+    int retVal3 = snprintf_s(buffer, sizeof(buffer), sizeof(buffer), nullptr, fmtStr);
+    ASSERT_EQ(-EINVAL, retVal3);
+
+    int retVal4 = snprintf_s(nullptr, sizeof(buffer), sizeof(buffer), nullptr, fmtStr);
+    ASSERT_EQ(-EINVAL, retVal4);
+}
