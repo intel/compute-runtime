@@ -59,6 +59,13 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define XEHPG_TYPED_TEST(method)
 #define XEHPG_SUPPORTED_TEST(cmdSetBase) false
 #endif
+#ifdef TESTS_XE_HPC_CORE
+#define PVC_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily>();
+#define PVC_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
+#else
+#define PVC_TYPED_TEST(method)
+#define PVC_SUPPORTED_TEST(cmdSetBase) false
+#endif
 
 #define FAMILY_SELECTOR(family, methodName)                \
     switch (family) {                                      \
@@ -79,6 +86,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
         break;                                             \
     case IGFX_XE_HPG_CORE:                                 \
         XEHPG_TYPED_TEST(methodName)                       \
+        break;                                             \
+    case IGFX_XE_HPC_CORE:                                 \
+        PVC_TYPED_TEST(methodName)                         \
         break;                                             \
     default:                                               \
         ASSERT_TRUE((false && "Unknown hardware family")); \
@@ -371,6 +381,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
             break;                                             \
         case IGFX_XE_HPG_CORE:                                 \
             supported = XEHPG_SUPPORTED_TEST(cmdSetBase);      \
+            break;                                             \
+        case IGFX_XE_HPC_CORE:                                 \
+            supported = PVC_SUPPORTED_TEST(cmdSetBase);        \
             break;                                             \
         default:                                               \
             ASSERT_TRUE((false && "Unknown hardware family")); \
@@ -813,6 +826,10 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define XE_HPG_CORETEST_F(test_fixture, test_name) GENTEST_F(IGFX_XE_HPG_CORE, test_fixture, test_name)
 #define XE_HPG_CORETEST_P(test_fixture, test_name) GENTEST_P(IGFX_XE_HPG_CORE, test_fixture, test_name)
 #endif
+#ifdef TESTS_XE_HPC_CORE
+#define XE_HPC_CORETEST_F(test_fixture, test_name) GENTEST_F(IGFX_XE_HPC_CORE, test_fixture, test_name)
+#define XE_HPC_CORETEST_P(test_fixture, test_name) GENTEST_P(IGFX_XE_HPC_CORE, test_fixture, test_name)
+#endif
 #ifdef TESTS_GEN8
 #define BDWTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
@@ -972,6 +989,16 @@ extern GFXCORE_FAMILY renderCoreFamily;
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_XE_HPG_CORE,           \
                       IGFX_DG2)
+#endif
+#ifdef TESTS_PVC
+#define PVCTEST_F(test_fixture, test_name)                           \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_XE_HPC_CORE, IGFX_PVC)
+#define PVCTEST_P(test_suite_name, test_name)     \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_XE_HPC_CORE,           \
+                      IGFX_PVC)
 #endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                                                  \
     CHECK_TEST_NAME_LENGTH(CaseName, TestName)                                                                 \
@@ -1134,6 +1161,7 @@ using IsGen11LP = IsGfxCore<IGFX_GEN11LP_CORE>;
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
 using IsXeHpCore = IsGfxCore<IGFX_XE_HP_CORE>;
 using IsXeHpgCore = IsGfxCore<IGFX_XE_HPG_CORE>;
+using IsXeHpcCore = IsGfxCore<IGFX_XE_HPC_CORE>;
 
 using IsAtMostGen11 = IsAtMostGfxCore<IGFX_GEN11LP_CORE>;
 
@@ -1147,7 +1175,9 @@ using IsAtMostXeHpCore = IsAtMostGfxCore<IGFX_XE_HP_CORE>;
 using IsAtLeastXeHpgCore = IsAtLeastGfxCore<IGFX_XE_HPG_CORE>;
 using IsAtMostXeHpgCore = IsAtMostGfxCore<IGFX_XE_HPG_CORE>;
 
-using IsWithinXeGfxFamily = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HP_CORE>;
+using IsAtLeastXeHpcCore = IsAtLeastGfxCore<IGFX_XE_HPC_CORE>;
+
+using IsWithinXeGfxFamily = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
 
 using IsADLS = IsProduct<IGFX_ALDERLAKE_S>;
 using IsBXT = IsProduct<IGFX_BROXTON>;
@@ -1164,3 +1194,4 @@ using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
 using IsXEHP = IsProduct<IGFX_XE_HP_SDV>;
 using IsADLP = IsProduct<IGFX_ALDERLAKE_P>;
 using IsDG2 = IsProduct<IGFX_DG2>;
+using IsPVC = IsProduct<IGFX_PVC>;
