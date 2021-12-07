@@ -35,11 +35,13 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::appendMemoryCopyBlit;
     using BaseClass::appendMemoryCopyBlitRegion;
+    using BaseClass::appendMultiTileBarrier;
     using BaseClass::appendSignalEventPostWalker;
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::cmdQImmediate;
+    using BaseClass::commandContainer;
     using BaseClass::commandListPerThreadScratchSize;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::commandsToPatch;
@@ -47,6 +49,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::containsCooperativeKernelsFlag;
     using BaseClass::csr;
     using BaseClass::engineGroupType;
+    using BaseClass::estimateBufferSizeMultiTileBarrier;
     using BaseClass::finalStreamState;
     using BaseClass::flags;
     using BaseClass::getAlignedAllocation;

@@ -191,9 +191,18 @@ void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() {
+inline NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() {
     NEO::PipeControlArgs args;
     return args;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &neoDevice) {
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::HardwareInfo &hwInfo) {
+    return 0;
 }
 
 } // namespace L0

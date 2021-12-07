@@ -668,5 +668,26 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPoin
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+using SingleTileOnlyPlatforms = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
+HWTEST2_F(CommandListCreate, givenSingleTileOnlyPlatformsWhenProgrammingMultiTileBarrierThenNoProgrammingIsExpected, SingleTileOnlyPlatforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto neoDevice = device->getNEODevice();
+    auto &hwInfo = neoDevice->getHardwareInfo();
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(0u, commandList->estimateBufferSizeMultiTileBarrier(hwInfo));
+
+    auto cmdListStream = commandList->commandContainer.getCommandStream();
+    size_t usedBefore = cmdListStream->getUsed();
+    commandList->appendMultiTileBarrier(*neoDevice);
+    size_t usedAfter = cmdListStream->getUsed();
+    EXPECT_EQ(usedBefore, usedAfter);
+}
+
 } // namespace ult
 } // namespace L0

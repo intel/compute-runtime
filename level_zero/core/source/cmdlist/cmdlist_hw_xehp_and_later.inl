@@ -313,25 +313,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
-    NEO::PipeControlArgs args = createBarrierFlags();
     if (this->partitionCount > 1) {
         auto neoDevice = device->getNEODevice();
         auto &hwInfo = neoDevice->getHardwareInfo();
 
-        size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(hwInfo,
-                                                                                               true,
-                                                                                               false);
-        increaseCommandStreamSpace(estimatedSizeRequired);
-
-        NEO::ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(*commandContainer.getCommandStream(),
-                                                                         neoDevice->getDeviceBitfield(),
-                                                                         args,
-                                                                         hwInfo,
-                                                                         0,
-                                                                         0,
-                                                                         true,
-                                                                         true);
+        increaseCommandStreamSpace(estimateBufferSizeMultiTileBarrier(hwInfo));
+        appendMultiTileBarrier(*neoDevice);
     } else {
+        NEO::PipeControlArgs args = createBarrierFlags();
         size_t estimatedSizeRequired = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
         increaseCommandStreamSpace(estimatedSizeRequired);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
@@ -343,6 +332,27 @@ NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() 
     NEO::PipeControlArgs args;
     args.hdcPipelineFlush = true;
     return args;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &neoDevice) {
+    NEO::PipeControlArgs args = createBarrierFlags();
+    auto &hwInfo = neoDevice.getHardwareInfo();
+    NEO::ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(*commandContainer.getCommandStream(),
+                                                                     neoDevice.getDeviceBitfield(),
+                                                                     args,
+                                                                     hwInfo,
+                                                                     0,
+                                                                     0,
+                                                                     true,
+                                                                     true);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::HardwareInfo &hwInfo) {
+    return NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(hwInfo,
+                                                                   true,
+                                                                   false);
 }
 
 } // namespace L0

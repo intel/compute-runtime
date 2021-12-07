@@ -295,8 +295,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     auto event = Event::fromHandle(hEvent);
 
     uint64_t baseAddr = event->getGpuAddress(this->device);
-
-    uint32_t packetsToReset = 1;
+    uint32_t packetsToReset = event->getPacketsInUse();
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
@@ -312,8 +311,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     if (event->isEventTimestampFlagSet()) {
         baseAddr += event->getContextEndOffset();
         packetsToReset = EventPacketsCount::eventPackets;
-        event->resetPackets();
     }
+    event->resetPackets();
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
@@ -324,11 +323,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     } else {
         NEO::PipeControlArgs args;
         if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
-            args.dcFlushEnable = (!event->signalScope) ? false : true;
+            args.dcFlushEnable = !!event->signalScope;
         }
 
-        auto &hwInfo = device->getNEODevice()->getHardwareInfo();
-        increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packetsToReset);
+        auto &hwInfo = neoDevice->getHardwareInfo();
+        size_t estimateSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packetsToReset;
+        if (this->partitionCount > 1) {
+            estimateSize += estimateBufferSizeMultiTileBarrier(hwInfo);
+        }
+        increaseCommandStreamSpace(estimateSize);
 
         for (uint32_t i = 0u; i < packetsToReset; i++) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
@@ -339,6 +342,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
                 hwInfo,
                 args);
             baseAddr += event->getSinglePacketSize();
+        }
+        if (this->partitionCount > 1) {
+            appendMultiTileBarrier(*neoDevice);
         }
     }
 

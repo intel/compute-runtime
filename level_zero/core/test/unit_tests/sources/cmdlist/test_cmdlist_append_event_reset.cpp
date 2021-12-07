@@ -224,5 +224,81 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
     }
     ASSERT_TRUE(postSyncFound);
 }
+
+HWTEST2_F(CommandListAppendEventReset,
+          givenMultiTileCommandListWhenAppendingMultiPacketEventThenExpectSameNumberOfResetPostSyncAndMultiBarrierCommands, IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    size_t useSize = cmdStream->getAvailableSpace();
+    useSize -= sizeof(MI_BATCH_BUFFER_END);
+    cmdStream->getSpace(useSize);
+
+    constexpr uint32_t packets = 2u;
+    event->setPacketsInUse(packets);
+    event->setEventTimestampFlag(false);
+    event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    commandList->partitionCount = packets;
+    returnValue = commandList->appendEventReset(event->toHandle());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(1u, event->getPacketsInUse());
+
+    auto gpuAddress = event->getGpuAddress(device);
+    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+
+    size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packets +
+                          commandList->estimateBufferSizeMultiTileBarrier(hwInfo);
+    size_t usedSize = cmdStream->getUsed();
+    EXPECT_EQ(expectedSize, usedSize);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        cmdStream->getCpuBase(),
+        usedSize));
+
+    auto pipeControlList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControlList.size());
+    uint32_t postSyncFound = 0;
+    auto postSyncPipeControlItor = cmdList.end();
+    for (auto &it : pipeControlList) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_CLEARED);
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
+            postSyncFound++;
+            gpuAddress += event->getSinglePacketSize();
+            postSyncPipeControlItor = it;
+        }
+    }
+    EXPECT_EQ(packets, postSyncFound);
+    postSyncPipeControlItor++;
+    ASSERT_NE(cmdList.end(), postSyncPipeControlItor);
+
+    //find multi tile barrier section: pipe control + atomic/semaphore
+    auto itorPipeControl = find<PIPE_CONTROL *>(postSyncPipeControlItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorPipeControl);
+
+    auto itorAtomic = find<MI_ATOMIC *>(itorPipeControl, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAtomic);
+
+    auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorSemaphore);
+}
+
 } // namespace ult
 } // namespace L0
