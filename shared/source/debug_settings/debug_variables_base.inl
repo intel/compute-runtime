@@ -164,6 +164,15 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceZPassAsyncComputeThreadLimit, -1, "-1: defa
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePixelAsyncComputeThreadLimit, -1, "-1: default, >0: Limit value in STATE_COMPUTE_MODE")
 DECLARE_DEBUG_VARIABLE(int32_t, DecompressInL3ForImage2dFromBuffer, -1, "-1: default, 0: WA Disabled, 1: WA enabled - Enable DecompressInL3 for image 2d from compressed buffer")
 DECLARE_DEBUG_VARIABLE(int32_t, ToggleHintKernelDisableCompression, -1, "-1: default - use kernel as source of hint, 0: provide hint to disable compression, 1: provide hint to enable compression")
+DECLARE_DEBUG_VARIABLE(int32_t, CFEComputeDispatchAllWalkerEnable, -1, "Set Compute Dispatch All Walker flag in CFE_STATE on PVC+ platforms, -1: do not set")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableMemoryPrefetch, -1, "-1: default, 0: disable, 1: enable")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceCsStallForStatePrefetch, -1, "Set CSStall for STATE_PREFETCH cmd, -1:default, 0:disable, 1:enable")
+DECLARE_DEBUG_VARIABLE(int32_t, ProgramGlobalFenceAsMiMemFenceCommandInCommandStream, -1, "-1: default, 0: disable, 1: enable, System Memory Fence executed as MI_MEM_FENCE command in command stream")
+DECLARE_DEBUG_VARIABLE(int32_t, ProgramGlobalFenceAsPostSyncOperationInComputeWalker, -1, "-1: default, 0: disable, 1: enable, System Memory Fence executed as post-sync operation in COMPUTE_WALKER")
+DECLARE_DEBUG_VARIABLE(int32_t, ProgramGlobalFenceAsKernelInstructionInEUKernel, -1, "-1: default, 0: disable, 1: enable, System Memory Fence executed as kernel instruction in EU kernel")
+DECLARE_DEBUG_VARIABLE(int32_t, DoNotReportTile1BscWaActive, -1, "-1: default, 0: WA Disabled, 1: WA enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceTile0PlacementForTile1ResourcesWaActive, -1, "-1: default, 0: WA Disabled, 1: WA enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, ClosEnabled, -1, "-1: default, 0: disabled, 1: enabled. Enable CLOS based cache reservation")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
