@@ -12,11 +12,11 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "engine_group_types.h"
 #include "hw_cmds.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 

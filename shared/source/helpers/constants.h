@@ -7,8 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/common_types.h"
-
-#include "engine_group_types.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
 
 #include <cstddef>
 #include <cstdint>

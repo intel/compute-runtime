@@ -6,11 +6,10 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/engine_node_helper.h"
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
-
-#include "engine_group_types.h"
 
 #include <limits>
 

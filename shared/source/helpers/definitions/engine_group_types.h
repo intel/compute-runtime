@@ -15,6 +15,8 @@ enum class EngineGroupType : uint32_t {
     Compute = 0,
     RenderCompute,
     Copy,
+    LinkedCopy,
+    CooperativeCompute,
     MaxEngineGroups
 };
 

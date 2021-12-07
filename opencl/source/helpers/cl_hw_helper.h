@@ -7,9 +7,10 @@
 
 #pragma once
 
+#include "shared/source/helpers/definitions/engine_group_types.h"
+
 #include "opencl/extensions/public/cl_ext_private.h"
 
-#include "engine_group_types.h"
 #include "igfxfmid.h"
 
 #include <string>
