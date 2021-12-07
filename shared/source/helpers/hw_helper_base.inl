@@ -155,6 +155,10 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
     } else {
         state.setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
+    if (DebugManager.flags.OverrideMocsIndexForScratchSpace.get() != -1) {
+        auto mocsIndex = static_cast<uint32_t>(DebugManager.flags.OverrideMocsIndexForScratchSpace.get()) << 1;
+        state.setMemoryObjectControlState(mocsIndex);
+    }
 
     state.setSurfaceBaseAddress(bufferStateAddress);
 
