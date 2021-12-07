@@ -222,6 +222,11 @@ bool Device::createDeviceImpl() {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
     }
 
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (getDebugger() && hwHelper.disableL3CacheForDebug()) {
+        getGmmHelper()->disableL3CacheForDebug();
+    }
+
     if (!createEngines()) {
         return false;
     }

@@ -15,14 +15,14 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/source_level_debugger_library.h"
+#include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-
-#include <gtest/gtest.h>
+#include "test.h"
 
 #include <memory>
 #include <string>
@@ -700,7 +700,6 @@ TEST(SourceLevelDebugger, givenEnableMockSourceLevelDebuggerWhenInitializingExec
     DebuggerLibrary::setLibraryAvailable(false);
 
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
-
     auto executionEnvironment = new ExecutionEnvironment();
     MockPlatform platform(*executionEnvironment);
     platform.initializeWithNewDevices();
@@ -856,4 +855,28 @@ TEST(SourceLevelDebugger, givenDebuggerLibraryAvailableAndExperimentalEnableSour
     auto debugger = std::unique_ptr<Debugger>(Debugger::create(&hwInfo));
     ASSERT_NE(nullptr, debugger.get());
     EXPECT_TRUE(debugger->isLegacy());
+}
+
+using LegacyDebuggerTest = ::testing::Test;
+
+using NotATSOrDG2 = AreNotGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+HWTEST2_F(LegacyDebuggerTest, givenNotAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, NotATSOrDG2) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
+    auto executionEnvironment = new ExecutionEnvironment();
+    MockPlatform platform(*executionEnvironment);
+    platform.initializeWithNewDevices();
+
+    EXPECT_FALSE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->l3CacheForDebugDisabled);
+}
+
+using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+HWTEST2_F(LegacyDebuggerTest, givenAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, ATSOrDG2) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
+    auto executionEnvironment = new ExecutionEnvironment();
+    MockPlatform platform(*executionEnvironment);
+    platform.initializeWithNewDevices();
+
+    EXPECT_TRUE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->l3CacheForDebugDisabled);
 }

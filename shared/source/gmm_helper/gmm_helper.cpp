@@ -30,6 +30,10 @@ const HardwareInfo *GmmHelper::getHardwareInfo() {
 }
 
 uint32_t GmmHelper::getMOCS(uint32_t type) const {
+    if (l3CacheForDebugDisabled) {
+        type = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    }
+
     MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);

@@ -7,13 +7,13 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gen_common/reg_configs_common.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_gmm_helper.h"
 
 #include "test.h"
 
@@ -1634,5 +1634,14 @@ TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverable
     EXPECT_THROW(NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u), std::exception);
 }
 
+using NotATSOrDG2 = AreNotGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+HWTEST2_F(L0DebuggerTest, givenNotAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, NotATSOrDG2) {
+    EXPECT_FALSE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->l3CacheForDebugDisabled);
+}
+
+using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+HWTEST2_F(L0DebuggerTest, givenAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, ATSOrDG2) {
+    EXPECT_TRUE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->l3CacheForDebugDisabled);
+}
 } // namespace ult
 } // namespace L0

@@ -1397,3 +1397,15 @@ TEST(HwHelperTests, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {
         EXPECT_FALSE(EngineHelpers::isBcs(engineUsageType.first));
     }
 }
+
+using NotATSOrDG2 = AreNotGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+HWTEST2_F(HwHelperTest, givenNotAtsOrDg2WhenDisableL3ForDebugCalledThenFalseIsReturned, NotATSOrDG2) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.disableL3CacheForDebug());
+}
+
+using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+HWTEST2_F(HwHelperTest, givenAtsOrDg2WhenDisableL3ForDebugCalledThenTrueIsReturned, ATSOrDG2) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_TRUE(hwHelper.disableL3CacheForDebug());
+}

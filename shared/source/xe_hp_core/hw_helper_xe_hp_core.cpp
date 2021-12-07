@@ -154,6 +154,11 @@ uint32_t HwHelperHw<Family>::getDefaultRevisionId(const HardwareInfo &hwInfo) co
     return HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo);
 }
 
+template <>
+bool HwHelperHw<Family>::disableL3CacheForDebug() const {
+    return true;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

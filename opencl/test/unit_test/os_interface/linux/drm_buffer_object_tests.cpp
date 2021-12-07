@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 #include "test.h"
@@ -500,10 +501,6 @@ TEST_F(DrmBufferObjectTest, givenAsyncDebugFlagWhenFillingExecObjectThenFlagIsSe
 
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_ASYNC);
 }
-
-struct MockGmmHelper : GmmHelper {
-    using GmmHelper::addressWidth;
-};
 
 TEST_F(DrmBufferObjectTest, given47bitAddressWhenSetThenIsAddressNotCanonized) {
     VariableBackup<uint32_t> backup(&MockGmmHelper::addressWidth, 48);

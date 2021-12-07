@@ -78,6 +78,9 @@ void DebuggerL0::initialize() {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));
+        if (hwHelper.disableL3CacheForDebug()) {
+            device->getGmmHelper()->disableL3CacheForDebug();
+        }
     }
 }
 

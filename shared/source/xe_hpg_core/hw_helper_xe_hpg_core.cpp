@@ -113,6 +113,11 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
     return slmValue;
 }
 
+template <>
+bool HwHelperHw<Family>::disableL3CacheForDebug() const {
+    return true;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

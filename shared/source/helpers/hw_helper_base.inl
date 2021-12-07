@@ -700,4 +700,8 @@ void HwHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &arg
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::disableL3CacheForDebug() const {
+    return false;
+}
 } // namespace NEO

@@ -150,6 +150,7 @@ class HwHelper {
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual bool isStatelesToStatefullWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) = 0;
+    virtual bool disableL3CacheForDebug() const = 0;
 
   protected:
     HwHelper() = default;
@@ -381,6 +382,7 @@ class HwHelperHw : public HwHelper {
     uint64_t getMaxMemAllocSize() const override;
     bool isStatelesToStatefullWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override;
+    bool disableL3CacheForDebug() const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;
