@@ -16,115 +16,28 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = Test<DeviceFixture>;
-template <GFXCORE_FAMILY gfxCoreFamily>
-class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
-  public:
-    MockCommandListHw() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
-
-    AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
-        return {0, 0, nullptr, true};
-    }
-    ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr,
-                                             NEO::GraphicsAllocation *dstPtrAlloc,
-                                             uint64_t dstOffset,
-                                             void *srcPtr,
-                                             NEO::GraphicsAllocation *srcPtrAlloc,
-                                             uint64_t srcOffset,
-                                             uint64_t size,
-                                             uint64_t elementSize,
-                                             Builtin builtin,
-                                             ze_event_handle_t hSignalEvent,
-                                             bool isStateless) override {
-        appendMemoryCopyKernelWithGACalledTimes++;
-        if (isStateless)
-            appendMemoryCopyKernelWithGAStatelessCalledTimes++;
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
-                                     NEO::GraphicsAllocation *dstPtrAlloc,
-                                     uint64_t dstOffset, uintptr_t srcPtr,
-                                     NEO::GraphicsAllocation *srcPtrAlloc,
-                                     uint64_t srcOffset,
-                                     uint64_t size) override {
-        appendMemoryCopyBlitCalledTimes++;
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAllocation,
-                                           NEO::GraphicsAllocation *dstAllocation,
-                                           size_t srcOffset,
-                                           size_t dstOffset,
-                                           ze_copy_region_t srcRegion,
-                                           ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
-                                           size_t srcRowPitch, size_t srcSlicePitch,
-                                           size_t dstRowPitch, size_t dstSlicePitch,
-                                           const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
-        appendMemoryCopyBlitRegionCalledTimes++;
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         Builtin builtin, const ze_copy_region_t *dstRegion,
-                                         uint32_t dstPitch, size_t dstOffset,
-                                         const ze_copy_region_t *srcRegion, uint32_t srcPitch,
-                                         size_t srcOffset, ze_event_handle_t hSignalEvent,
-                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
-        appendMemoryCopyKernel2dCalledTimes++;
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         Builtin builtin, const ze_copy_region_t *dstRegion,
-                                         uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
-                                         const ze_copy_region_t *srcRegion, uint32_t srcPitch,
-                                         uint32_t srcSlicePitch, size_t srcOffset,
-                                         ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents) override {
-        appendMemoryCopyKernel3dCalledTimes++;
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t appendBlitFill(void *ptr, const void *pattern,
-                               size_t patternSize, size_t size,
-                               ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                               ze_event_handle_t *phWaitEvents) override {
-        appendBlitFillCalledTimes++;
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t appendCopyImageBlit(NEO::GraphicsAllocation *src,
-                                    NEO::GraphicsAllocation *dst,
-                                    const Vec3<size_t> &srcOffsets, const Vec3<size_t> &dstOffsets,
-                                    size_t srcRowPitch, size_t srcSlicePitch,
-                                    size_t dstRowPitch, size_t dstSlicePitch,
-                                    size_t bytesPerPixel, const Vec3<size_t> &copySize,
-                                    const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent) override {
-        appendCopyImageBlitCalledTimes++;
-        appendImageRegionCopySize = copySize;
-        appendImageRegionSrcOrigin = srcOffsets;
-        appendImageRegionDstOrigin = dstOffsets;
-        return ZE_RESULT_SUCCESS;
-    }
-    uint32_t appendMemoryCopyKernelWithGACalledTimes = 0;
-    uint32_t appendMemoryCopyKernelWithGAStatelessCalledTimes = 0;
-    uint32_t appendMemoryCopyBlitCalledTimes = 0;
-    uint32_t appendMemoryCopyBlitRegionCalledTimes = 0;
-    uint32_t appendMemoryCopyKernel2dCalledTimes = 0;
-    uint32_t appendMemoryCopyKernel3dCalledTimes = 0;
-    uint32_t appendBlitFillCalledTimes = 0;
-    uint32_t appendCopyImageBlitCalledTimes = 0;
-    Vec3<size_t> appendImageRegionCopySize = {0, 0, 0};
-    Vec3<size_t> appendImageRegionSrcOrigin = {9, 9, 9};
-    Vec3<size_t> appendImageRegionDstOrigin = {9, 9, 9};
-};
+using AppendMemoryCopy = Test<DeviceFixture>;
 
 using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-using AppendMemoryCopy = CommandListCreate;
-
 template <GFXCORE_FAMILY gfxCoreFamily>
-class MockAppendMemoryCopy : public MockCommandListHw<gfxCoreFamily> {
+class MockAppendMemoryCopy : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
   public:
+    ADDMETHOD_NOBASE(appendMemoryCopyKernelWithGA, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
+                      uint64_t dstOffset, void *srcPtr,
+                      NEO::GraphicsAllocation *srcPtrAlloc,
+                      uint64_t srcOffset, uint64_t size,
+                      uint64_t elementSize, Builtin builtin,
+                      ze_event_handle_t hSignalEvent,
+                      bool isStateless));
+    ADDMETHOD_NOBASE(appendMemoryCopyBlit, ze_result_t, ZE_RESULT_SUCCESS,
+                     (uintptr_t dstPtr,
+                      NEO::GraphicsAllocation *dstPtrAlloc,
+                      uint64_t dstOffset, uintptr_t srcPtr,
+                      NEO::GraphicsAllocation *srcPtrAlloc,
+                      uint64_t srcOffset,
+                      uint64_t size));
     AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
         return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(device, buffer, bufferSize, allowHostCopy);
     }
@@ -333,7 +246,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledT
     EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
 }
 
-HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
@@ -357,7 +270,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopy
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
-    EXPECT_GT(commandList.appendMemoryCopyBlitCalledTimes, 1u);
+    EXPECT_GT(commandList.appendMemoryCopyBlitCalled, 1u);
     EXPECT_EQ(1u, event->getPacketsInUse());
 
     GenCmdList cmdList;
@@ -388,7 +301,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopy
 }
 
 using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
-HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, SupportedPlatforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, SupportedPlatforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -411,8 +324,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThen
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
-    EXPECT_GT(commandList.appendMemoryCopyKernelWithGACalledTimes, 0u);
-    EXPECT_EQ(commandList.appendMemoryCopyBlitCalledTimes, 0u);
+    EXPECT_GT(commandList.appendMemoryCopyKernelWithGACalled, 0u);
+    EXPECT_EQ(commandList.appendMemoryCopyBlitCalled, 0u);
     EXPECT_EQ(1u, event->getPacketsInUse());
 
     GenCmdList cmdList;
