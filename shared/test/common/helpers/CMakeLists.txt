@@ -50,6 +50,13 @@ if(TESTS_DG2_AND_LATER)
   )
 endif()
 
+if(TESTS_PVC_AND_LATER)
+  list(APPEND NEO_CORE_HELPERS_TESTS
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_pvc_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_pvc_and_later.inl
+  )
+endif()
+
 add_subdirectories()
 
 target_sources(${TARGET_NAME} PRIVATE

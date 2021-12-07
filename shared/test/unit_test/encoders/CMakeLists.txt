@@ -61,4 +61,18 @@ if(TESTS_XE_HPG_CORE)
   )
 endif()
 
+if(TESTS_XE_HPC_CORE)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hpc.cpp
+  )
+endif()
+
+if(TESTS_PVC_AND_LATER)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_pvc_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_3dstate_btd_pvc_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_pvc_and_later.cpp
+  )
+endif()
+
 add_subdirectories()

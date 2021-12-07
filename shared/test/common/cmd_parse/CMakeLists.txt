@@ -28,5 +28,11 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+if(TESTS_PVC_AND_LATER)
+  list(APPEND NEO_SHARED_TESTS_CMD_PARSE
+       ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_pvc_and_later.inl
+  )
+endif()
+
 add_subdirectories()
 set_property(GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE ${NEO_SHARED_TESTS_CMD_PARSE})
