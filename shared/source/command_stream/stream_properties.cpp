@@ -31,6 +31,11 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
         pixelAsyncComputeThreadLimit = DebugManager.flags.ForcePixelAsyncComputeThreadLimit.get();
     }
     this->pixelAsyncComputeThreadLimit.set(pixelAsyncComputeThreadLimit);
+
+    if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        threadArbitrationPolicy = static_cast<uint32_t>(DebugManager.flags.OverrideThreadArbitrationPolicy.get());
+    }
+    this->threadArbitrationPolicy.set(threadArbitrationPolicy);
 }
 
 void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {
@@ -40,11 +45,12 @@ void StateComputeModeProperties::setProperties(const StateComputeModeProperties 
     largeGrfMode.set(properties.largeGrfMode.value);
     zPassAsyncComputeThreadLimit.set(properties.zPassAsyncComputeThreadLimit.value);
     pixelAsyncComputeThreadLimit.set(properties.pixelAsyncComputeThreadLimit.value);
+    threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
 }
 
 bool StateComputeModeProperties::isDirty() {
     return isCoherencyRequired.isDirty || largeGrfMode.isDirty || zPassAsyncComputeThreadLimit.isDirty ||
-           pixelAsyncComputeThreadLimit.isDirty;
+           pixelAsyncComputeThreadLimit.isDirty || threadArbitrationPolicy.isDirty;
 }
 
 void StateComputeModeProperties::clearIsDirty() {
@@ -52,12 +58,14 @@ void StateComputeModeProperties::clearIsDirty() {
     largeGrfMode.isDirty = false;
     zPassAsyncComputeThreadLimit.isDirty = false;
     pixelAsyncComputeThreadLimit.isDirty = false;
+    threadArbitrationPolicy.isDirty = false;
 }
 
 void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableOverdispatch, int32_t engineInstancedDevice,
                                        const HardwareInfo &hwInfo) {
     clearIsDirty();
 
+    this->computeDispatchAllWalkerEnable.set(isCooperativeKernel);
     this->disableOverdispatch.set(disableOverdispatch);
     this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
 }
@@ -67,13 +75,15 @@ void FrontEndProperties::setProperties(const FrontEndProperties &properties) {
 
     disableOverdispatch.set(properties.disableOverdispatch.value);
     singleSliceDispatchCcsMode.set(properties.singleSliceDispatchCcsMode.value);
+    computeDispatchAllWalkerEnable.set(properties.computeDispatchAllWalkerEnable.value);
 }
 
 bool FrontEndProperties::isDirty() {
-    return disableOverdispatch.isDirty || singleSliceDispatchCcsMode.isDirty;
+    return disableOverdispatch.isDirty || singleSliceDispatchCcsMode.isDirty || computeDispatchAllWalkerEnable.isDirty;
 }
 
 void FrontEndProperties::clearIsDirty() {
     disableOverdispatch.isDirty = false;
     singleSliceDispatchCcsMode.isDirty = false;
+    computeDispatchAllWalkerEnable.isDirty = false;
 }

@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "test.h"
 
@@ -41,16 +42,38 @@ TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
     }
 }
 
+TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectValueIsSet) {
+    StreamProperties properties;
+    for (auto isEngineInstanced : ::testing::Bool()) {
+        for (auto isCooperativeKernel : ::testing::Bool()) {
+            for (auto disableOverdispatch : ::testing::Bool()) {
+                properties.frontEndState.setProperties(isCooperativeKernel, disableOverdispatch, isEngineInstanced, *defaultHwInfo);
+                EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
+                EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
+                EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
+            }
+        }
+    }
+}
+
 TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
     DebugManagerStateRestore restorer;
+
+    uint32_t threadArbitrationPolicyValues[] = {
+        ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,
+        ThreadArbitrationPolicy::RoundRobinAfterDependency, ThreadArbitrationPolicy::NotPresent};
+
     StreamProperties properties;
     for (auto requiresCoherency : ::testing::Bool()) {
         for (auto largeGrf : ::testing::Bool()) {
-            properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, 0u);
-            EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
-            EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
-            EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
-            EXPECT_EQ(-1, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
+            for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
+                properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy);
+                EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
+                EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
+                EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
+                EXPECT_EQ(-1, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
+                EXPECT_EQ(threadArbitrationPolicy, static_cast<uint32_t>(properties.stateComputeMode.threadArbitrationPolicy.value));
+            }
         }
     }
 
@@ -64,6 +87,12 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
         DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
         properties.stateComputeMode.setProperties(false, 0u, 0u);
         EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
+    }
+
+    for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
+        DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
+        properties.stateComputeMode.setProperties(false, 0u, 0u);
+        EXPECT_EQ(threadArbitrationPolicy, static_cast<uint32_t>(properties.stateComputeMode.threadArbitrationPolicy.value));
     }
 }
 

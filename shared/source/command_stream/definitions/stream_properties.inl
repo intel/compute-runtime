@@ -14,6 +14,7 @@ struct StateComputeModeProperties {
     StreamProperty largeGrfMode{};
     StreamProperty zPassAsyncComputeThreadLimit{};
     StreamProperty pixelAsyncComputeThreadLimit{};
+    StreamProperty threadArbitrationPolicy{};
 
     void setProperties(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy);
     void setProperties(const StateComputeModeProperties &properties);
@@ -24,6 +25,7 @@ struct StateComputeModeProperties {
 struct FrontEndProperties {
     StreamProperty disableOverdispatch{};
     StreamProperty singleSliceDispatchCcsMode{};
+    StreamProperty computeDispatchAllWalkerEnable{};
 
     void setProperties(bool isCooperativeKernel, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo);
     void setProperties(const FrontEndProperties &properties);

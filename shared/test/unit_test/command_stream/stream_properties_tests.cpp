@@ -19,6 +19,7 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
     allProperties.push_back(&properties.largeGrfMode);
     allProperties.push_back(&properties.zPassAsyncComputeThreadLimit);
     allProperties.push_back(&properties.pixelAsyncComputeThreadLimit);
+    allProperties.push_back(&properties.threadArbitrationPolicy);
     return allProperties;
 }
 
@@ -26,20 +27,8 @@ std::vector<StreamProperty *> getAllFrontEndProperties(FrontEndProperties &prope
     std::vector<StreamProperty *> allProperties;
     allProperties.push_back(&properties.disableOverdispatch);
     allProperties.push_back(&properties.singleSliceDispatchCcsMode);
+    allProperties.push_back(&properties.computeDispatchAllWalkerEnable);
     return allProperties;
 }
 
 } // namespace NEO
-
-using namespace NEO;
-
-TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectValueIsSet) {
-    StreamProperties properties;
-    for (auto isEngineInstanced : ::testing::Bool()) {
-        for (auto disableOverdispatch : ::testing::Bool()) {
-            properties.frontEndState.setProperties(false, disableOverdispatch, isEngineInstanced, *defaultHwInfo);
-            EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
-            EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
-        }
-    }
-}
