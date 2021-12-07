@@ -6,11 +6,10 @@
  */
 
 #include "shared/source/aub/aub_helper.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
-
-#include "aub_mem_dump.h"
 
 using namespace NEO;
 

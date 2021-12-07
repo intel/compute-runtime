@@ -5,7 +5,7 @@
  *
  */
 
-#include "aub_mem_dump.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"

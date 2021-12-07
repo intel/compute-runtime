@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/aub/aub_helper_xehp_and_later.inl"
-
-#include "aub_mem_dump.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 
 namespace NEO {
 struct XeHpFamily;

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/definitions/aub_mem_dump.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/hw_info_config.h"
 

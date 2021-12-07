@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hardware_context_controller.h"
@@ -21,8 +22,6 @@
 #include "opencl/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "test.h"
-
-#include "aub_mem_dump.h"
 
 #include <array>
 #include <memory>

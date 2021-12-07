@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/aub/aub_helper.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hardware_context_controller.h"
@@ -17,7 +18,6 @@
 #include "shared/source/memory_manager/physical_address_allocator.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include "aub_mem_dump.h"
 #include "third_party/aub_stream/headers/allocation_params.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/hardware_context.h"

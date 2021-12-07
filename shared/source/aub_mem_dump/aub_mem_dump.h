@@ -5,9 +5,25 @@
  *
  */
 
+#pragma once
+#include "shared/source/aub_mem_dump/aub_data.h"
+
+#include <fstream>
+#include <mutex>
+#include <string>
+
+namespace NEO {
+class AubHelper;
+}
+
+namespace AubMemDump {
 #include "aub_services.h"
 
 constexpr uint32_t rcsRegisterBase = 0x2000;
+
+#ifndef BIT
+#define BIT(x) (((uint64_t)1) << (x))
+#endif
 
 inline uint32_t computeRegisterOffset(uint32_t mmioBase, uint32_t rcsRegisterOffset) {
     return mmioBase + rcsRegisterOffset - rcsRegisterBase;
@@ -382,5 +398,19 @@ struct LrcaHelperCcs : public LrcaHelper {
     }
 };
 
+struct LrcaHelperLinkBcs : public LrcaHelperBcs {
+    LrcaHelperLinkBcs(uint32_t base, uint32_t engineId) : LrcaHelperBcs(base) {
+        std::string nameStr("BCS" + std::to_string(engineId));
+        name = nameStr.c_str();
+    }
+};
+
+struct LrcaHelperCccs : public LrcaHelper {
+    LrcaHelperCccs(uint32_t base) : LrcaHelper(base) {
+        name = "CCCS";
+    }
+};
+
 extern const uint64_t g_pageMask;
 extern const size_t g_dwordCountMax;
+} // namespace AubMemDump

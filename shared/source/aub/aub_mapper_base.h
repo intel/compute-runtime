@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/completion_stamp.h"
-
-#include "aub_mem_dump.h"
 
 #include <vector>
 

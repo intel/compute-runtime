@@ -7,6 +7,7 @@
 
 #include "shared/source/aub/aub_helper.h"
 
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
@@ -14,7 +15,6 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/tbx/tbx_proto.h"
 
-#include "aub_mem_dump.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 
 namespace NEO {

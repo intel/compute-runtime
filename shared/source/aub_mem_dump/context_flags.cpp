@@ -5,7 +5,7 @@
  *
  */
 
-#include "aub_mem_dump.h"
+#include "shared/source/aub_mem_dump//aub_mem_dump.h"
 
 namespace AubMemDump {
 void LrcaHelper::setContextSaveRestoreFlags(uint32_t &ctxSrCtlValue) const {

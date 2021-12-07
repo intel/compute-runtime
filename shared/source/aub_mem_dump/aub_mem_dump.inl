@@ -6,11 +6,10 @@
  */
 
 #include "shared/source/aub/aub_helper.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
-
-#include "aub_mem_dump.h"
 
 #include <algorithm>
 #include <cstring>
