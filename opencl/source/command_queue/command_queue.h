@@ -350,6 +350,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     uint64_t dispatchHints = 0;
 
+    bool isTextureCacheFlushNeeded(uint32_t commandType) const;
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
@@ -370,7 +372,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool queueDependenciesClearRequired() const;
     bool blitEnqueueAllowed(const CsrSelectionArgs &args) const;
 
-    bool isTextureCacheFlushNeeded(uint32_t commandType) const;
     inline bool shouldFlushDC(uint32_t commandType, PrintfHandler *printfHandler) const {
         return (commandType == CL_COMMAND_READ_BUFFER ||
                 commandType == CL_COMMAND_READ_BUFFER_RECT ||

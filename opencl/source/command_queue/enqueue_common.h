@@ -1032,7 +1032,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
                                                          allSurfaces,
                                                          shouldFlushDC(commandType, printfHandler.get()),
                                                          slmUsed,
-                                                         commandType == CL_COMMAND_NDRANGE_KERNEL,
+                                                         commandType,
                                                          std::move(printfHandler),
                                                          preemptionMode,
                                                          multiDispatchInfo.peekMainKernel(),

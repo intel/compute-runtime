@@ -113,10 +113,10 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
 }
 
 CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces,
-                                           bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> &&printfHandler,
+                                           bool flushDC, bool usesSLM, uint32_t commandType, std::unique_ptr<PrintfHandler> &&printfHandler,
                                            PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount)
     : Command(commandQueue, kernelOperation), flushDC(flushDC), slmUsed(usesSLM),
-      NDRangeKernel(ndRangeKernel), printfHandler(std::move(printfHandler)), kernel(kernel),
+      commandType(commandType), printfHandler(std::move(printfHandler)), kernel(kernel),
       kernelCount(kernelCount), preemptionMode(preemptionMode) {
     for (auto surface : surfaces) {
         this->surfaces.push_back(surface);
@@ -241,7 +241,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         flushDC,                                                                          //dcFlush
         slmUsed,                                                                          //useSLM
         true,                                                                             //guardCommandBufferWithPipeControl
-        NDRangeKernel,                                                                    //GSBA32BitRequired
+        commandType == CL_COMMAND_NDRANGE_KERNEL,                                         //GSBA32BitRequired
         requiresCoherency,                                                                //requiresCoherency
         commandQueue.getPriority() == QueuePriority::LOW,                                 //lowPriority
         false,                                                                            //implicitFlush
@@ -252,7 +252,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                         //areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                //memoryMigrationRequired
-        false);                                                                           //textureCacheFlush
+        commandQueue.isTextureCacheFlushNeeded(this->commandType));                       //textureCacheFlush
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
