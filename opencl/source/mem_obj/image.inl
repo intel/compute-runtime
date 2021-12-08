@@ -201,4 +201,26 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
     surfaceState->setSurfaceArray(true);
 }
 
+template <typename GfxFamily>
+inline void ImageHw<GfxFamily>::setMediaSurfaceRotation(void *memory) {
+    using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
+    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
+
+    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
+
+    surfaceState->setRotation(MEDIA_SURFACE_STATE::ROTATION_NO_ROTATION_OR_0_DEGREE);
+    surfaceState->setXOffset(0);
+    surfaceState->setYOffset(0);
+}
+
+template <typename GfxFamily>
+inline void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) {
+    using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
+    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
+
+    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
+
+    surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
+}
+
 } // namespace NEO

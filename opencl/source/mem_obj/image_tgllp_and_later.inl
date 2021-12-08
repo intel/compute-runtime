@@ -5,6 +5,12 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
+
+#include "opencl/source/mem_obj/image.h"
+
+namespace NEO {
 template <>
 void ImageHw<Family>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
     if (gmm) {
@@ -12,3 +18,4 @@ void ImageHw<Family>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfac
         surfaceState->setDepthStencilResource(isDepthResource);
     }
 }
+} // namespace NEO

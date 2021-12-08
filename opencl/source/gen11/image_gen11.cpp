@@ -7,37 +7,15 @@
 
 #include "shared/source/gen11/hw_cmds_base.h"
 
-#include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/image.inl"
 
 #include <map>
 
 namespace NEO {
 
-typedef ICLFamily Family;
+using Family = ICLFamily;
 static auto gfxCore = IGFX_GEN11_CORE;
 
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setMediaSurfaceRotation(void *memory) {
-    using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
-    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
-
-    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
-
-    surfaceState->setRotation(MEDIA_SURFACE_STATE::ROTATION_NO_ROTATION_OR_0_DEGREE);
-    surfaceState->setXOffset(0);
-    surfaceState->setYOffset(0);
-}
-
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) {
-    using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
-    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
-
-    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
-
-    surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
-}
 template <>
 void ImageHw<Family>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex, bool useGlobalAtomics) {
     if (hasAlphaChannel(&imageFormat)) {
@@ -45,5 +23,7 @@ void ImageHw<Family>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceStat
     }
 }
 
-#include "opencl/source/mem_obj/image_factory_init.inl"
 } // namespace NEO
+
+// factory initializer
+#include "opencl/source/mem_obj/image_factory_init.inl"

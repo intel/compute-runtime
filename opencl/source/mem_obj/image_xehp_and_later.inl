@@ -5,30 +5,10 @@
  *
  */
 
+#include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/image.h"
+
 namespace NEO {
-
-template <>
-void ImageHw<Family>::setMediaSurfaceRotation(void *memory) {
-    using MEDIA_SURFACE_STATE = typename Family::MEDIA_SURFACE_STATE;
-    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
-
-    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
-
-    surfaceState->setRotation(MEDIA_SURFACE_STATE::ROTATION_NO_ROTATION_OR_0_DEGREE);
-    surfaceState->setXOffset(0);
-    surfaceState->setYOffset(0);
-}
-
-template <>
-void ImageHw<Family>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) {
-    using MEDIA_SURFACE_STATE = typename Family::MEDIA_SURFACE_STATE;
-    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
-
-    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
-
-    surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
-}
-
 template <>
 void ImageHw<Family>::appendSurfaceStateParams(Family::RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex, bool useGlobalAtomics) {
     auto imageCtxType = this->context->peekContextType();
@@ -51,5 +31,4 @@ void ImageHw<Family>::appendSurfaceStateParams(Family::RENDER_SURFACE_STATE *sur
         surfaceState->setDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
     }
 }
-
 } // namespace NEO

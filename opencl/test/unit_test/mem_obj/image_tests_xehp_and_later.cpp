@@ -29,8 +29,9 @@
 using namespace NEO;
 
 using XeHPAndLaterImageTests = ::testing::Test;
+using isXePlatform = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue) {
+HWTEST2_F(XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue, isXePlatform) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(1);
     initPlatform();
@@ -69,7 +70,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhen
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsWritableThenFlipPartialFlagsToFalse) {
+HWTEST2_F(XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsWritableThenFlipPartialFlagsToFalse, isXePlatform) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     initPlatform();
@@ -106,7 +107,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhen
     EXPECT_FALSE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenDebugFlagForMultiTileSupportWhenSurfaceStateIsProgrammedThenItHasDesiredValues) {
+HWTEST2_F(XeHPAndLaterImageTests, givenDebugFlagForMultiTileSupportWhenSurfaceStateIsProgrammedThenItHasDesiredValues, isXePlatform) {
     DebugManagerStateRestore restorer;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
@@ -149,7 +150,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenDebugFlagForMultiTileS
     EXPECT_EQ(1u, surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeUnrestrictiveWhenImageIsWritableThenFlipPartialFlagsToFalse) {
+HWTEST2_F(XeHPAndLaterImageTests, givenContextTypeUnrestrictiveWhenImageIsWritableThenFlipPartialFlagsToFalse, isXePlatform) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     initPlatform();
@@ -186,7 +187,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeUnrestricti
     EXPECT_FALSE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsNotWritableThenRemainPartialFlagsToTrue) {
+HWTEST2_F(XeHPAndLaterImageTests, givenContextTypeDefaultWhenImageIsNotWritableThenRemainPartialFlagsToTrue, isXePlatform) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
@@ -221,7 +222,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeDefaultWhen
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenContextTypeSpecializedWhenImageIsWritableThenRemainPartialFlagsToTrue) {
+HWTEST2_F(XeHPAndLaterImageTests, givenContextTypeSpecializedWhenImageIsWritableThenRemainPartialFlagsToTrue, isXePlatform) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
     context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
@@ -260,7 +261,7 @@ struct MultiGpuGlobalAtomicsImageTest : public XeHPAndLaterImageTests,
                                         public ::testing::WithParamInterface<std::tuple<unsigned int, unsigned int, ContextType, bool, bool>> {
 };
 
-HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsImageTest, givenAppendSurfaceStateParamCalledThenDisableSupportForMultiGpuAtomicsIsSetCorrectly) {
+HWTEST2_P(MultiGpuGlobalAtomicsImageTest, givenAppendSurfaceStateParamCalledThenDisableSupportForMultiGpuAtomicsIsSetCorrectly, isXePlatform) {
     unsigned int numAvailableDevices, memFlags;
     ContextType contextType;
     bool useGlobalAtomics, enableMultiGpuAtomicsOptimization;

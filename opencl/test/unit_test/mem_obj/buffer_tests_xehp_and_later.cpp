@@ -29,9 +29,11 @@
 
 using namespace NEO;
 
-typedef ::testing::Test XeHPAndLaterBufferTests;
+using XeHPAndLaterBufferTests = ::testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue) {
+using isXePlatform = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+
+HWTEST2_F(XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue, isXePlatform) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(1);
     initPlatform();
@@ -95,7 +97,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsWritableThenFlipPartialFlagsToFalse) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsWritableThenFlipPartialFlagsToFalse, isXePlatform) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     initPlatform();
@@ -125,7 +127,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhe
     EXPECT_FALSE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeUnrestrictiveWhenBufferIsWritableThenFlipPartialFlagsToFalse) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenContextTypeUnrestrictiveWhenBufferIsWritableThenFlipPartialFlagsToFalse, isXePlatform) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     initPlatform();
@@ -155,7 +157,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeUnrestrict
     EXPECT_FALSE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsNotWritableThenRemainPartialFlagsToTrue) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenContextTypeDefaultWhenBufferIsNotWritableThenRemainPartialFlagsToTrue, isXePlatform) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
@@ -183,7 +185,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeDefaultWhe
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeSpecializedWhenBufferIsWritableThenRemainPartialFlagsToTrue) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenContextTypeSpecializedWhenBufferIsWritableThenRemainPartialFlagsToTrue, isXePlatform) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
     context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
@@ -211,7 +213,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenContextTypeSpecialize
     EXPECT_TRUE(surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagForMultiTileSupportWhenSurfaceStateIsSetThenValuesMatch) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenDebugFlagForMultiTileSupportWhenSurfaceStateIsSetThenValuesMatch, isXePlatform) {
     DebugManagerStateRestore restore;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockContext context;
@@ -247,7 +249,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagForMultiTile
     EXPECT_EQ(1u, surfaceState.getDisableSupportForMultiGpuPartialWrites());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenNullContextWhenBufferAllocationIsNullThenRemainPartialFlagsToTrue) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenNullContextWhenBufferAllocationIsNullThenRemainPartialFlagsToTrue, isXePlatform) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
@@ -270,7 +272,7 @@ struct MultiGpuGlobalAtomicsBufferTest : public XeHPAndLaterBufferTests,
                                          public ::testing::WithParamInterface<std::tuple<unsigned int, unsigned int, bool, bool, bool>> {
 };
 
-HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsBufferTest, givenSetArgStatefulCalledThenDisableSupportForMultiGpuAtomicsIsSetCorrectly) {
+HWTEST2_P(MultiGpuGlobalAtomicsBufferTest, givenSetArgStatefulCalledThenDisableSupportForMultiGpuAtomicsIsSetCorrectly, isXePlatform) {
     unsigned int numAvailableDevices, bufferFlags;
     bool useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization;
     std::tie(numAvailableDevices, bufferFlags, useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization) = GetParam();
@@ -317,7 +319,7 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsBufferTest, givenSetArgStatefu
     EXPECT_EQ(!enabled, surfaceState.getDisableSupportForMultiGpuAtomics());
 }
 
-HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsBufferTest, givenSetSurfaceStateCalledThenDisableSupportForMultiGpuAtomicsIsSetCorrectly) {
+HWTEST2_P(MultiGpuGlobalAtomicsBufferTest, givenSetSurfaceStateCalledThenDisableSupportForMultiGpuAtomicsIsSetCorrectly, isXePlatform) {
     unsigned int numAvailableDevices, bufferFlags;
     bool useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization;
     std::tie(numAvailableDevices, bufferFlags, useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization) = GetParam();
