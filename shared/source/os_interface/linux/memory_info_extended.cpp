@@ -11,6 +11,7 @@
 #include "drm/i915_drm.h"
 
 #include <algorithm>
+#include <iterator>
 
 namespace NEO {
 
