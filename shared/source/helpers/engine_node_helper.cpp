@@ -7,6 +7,9 @@
 
 #include "shared/source/helpers/engine_node_helper.h"
 
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_helper.h"
+
 namespace NEO::EngineHelpers {
 
 std::string engineUsageToString(EngineUsage usage) {
@@ -42,13 +45,126 @@ std::string engineTypeToString(aub_stream::EngineType engineType) {
         return "CCS2";
     case aub_stream::EngineType::ENGINE_CCS3:
         return "CCS3";
+    case aub_stream::EngineType::ENGINE_CCCS:
+        return "CCCS";
+    case aub_stream::EngineType::ENGINE_BCS1:
+        return "BCS1";
+    case aub_stream::EngineType::ENGINE_BCS2:
+        return "BCS2";
+    case aub_stream::EngineType::ENGINE_BCS3:
+        return "BCS3";
+    case aub_stream::EngineType::ENGINE_BCS4:
+        return "BCS4";
+    case aub_stream::EngineType::ENGINE_BCS5:
+        return "BCS5";
+    case aub_stream::EngineType::ENGINE_BCS6:
+        return "BCS6";
+    case aub_stream::EngineType::ENGINE_BCS7:
+        return "BCS7";
+    case aub_stream::EngineType::ENGINE_BCS8:
+        return "BCS8";
     default:
-        return engineTypeToStringAdditional(engineType);
+        return "Unknown";
     }
 }
 
 bool isCcs(aub_stream::EngineType engineType) {
     return engineType >= aub_stream::ENGINE_CCS && engineType <= aub_stream::ENGINE_CCS3;
+}
+
+bool isBcs(aub_stream::EngineType engineType) {
+    return engineType == aub_stream::ENGINE_BCS || (engineType >= aub_stream::ENGINE_BCS1 && engineType <= aub_stream::ENGINE_BCS8);
+}
+
+aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, SelectorCopyEngine &selectorCopyEngine, bool internalUsage) {
+    if (DebugManager.flags.ForceBcsEngineIndex.get() != -1) {
+        auto index = DebugManager.flags.ForceBcsEngineIndex.get();
+        UNRECOVERABLE_IF(index > 8);
+
+        return (index == 0) ? aub_stream::EngineType::ENGINE_BCS
+                            : static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + index - 1);
+    }
+
+    if (!linkCopyEnginesSupported(hwInfo, deviceBitfield)) {
+        return aub_stream::ENGINE_BCS;
+    }
+
+    if (internalUsage) {
+        return selectLinkCopyEngine(hwInfo, deviceBitfield, selectorCopyEngine.selector);
+    }
+
+    const bool isMainCopyEngineAlreadyUsed = selectorCopyEngine.isMainUsed.exchange(true);
+    if (isMainCopyEngineAlreadyUsed) {
+        return selectLinkCopyEngine(hwInfo, deviceBitfield, selectorCopyEngine.selector);
+    }
+
+    return aub_stream::ENGINE_BCS;
+}
+
+void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine) {
+    if (engineType == aub_stream::EngineType::ENGINE_BCS) {
+        selectorCopyEngine.isMainUsed.store(false);
+    }
+}
+
+aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputType, const HardwareInfo &hwInfo) {
+    bool isExpectedProduct = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isEngineTypeRemappingToHwSpecificRequired();
+
+    if (isExpectedProduct && inputType == aub_stream::EngineType::ENGINE_RCS) {
+        return aub_stream::EngineType::ENGINE_CCCS;
+    }
+
+    return inputType;
+}
+
+uint32_t getBcsIndex(aub_stream::EngineType engineType) {
+    UNRECOVERABLE_IF(!isBcs(engineType));
+    if (engineType == aub_stream::ENGINE_BCS) {
+        return 0;
+    } else {
+        return 1 + engineType - aub_stream::ENGINE_BCS1;
+    }
+}
+
+aub_stream::EngineType mapBcsIndexToEngineType(uint32_t index, bool includeMainCopyEngine) {
+    if (index == 0 && includeMainCopyEngine) {
+        return aub_stream::ENGINE_BCS;
+    } else {
+        auto offset = index;
+        if (includeMainCopyEngine) {
+            offset -= 1;
+        }
+
+        return static_cast<aub_stream::EngineType>(offset + static_cast<uint32_t>(aub_stream::ENGINE_BCS1));
+    }
+}
+
+bool isBcsEnabled(const HardwareInfo &hwInfo, aub_stream::EngineType engineType) {
+    return hwInfo.featureTable.ftrBcsInfo.test(getBcsIndex(engineType));
+}
+
+bool linkCopyEnginesSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield) {
+    const aub_stream::EngineType engine1 = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, aub_stream::ENGINE_BCS1)
+                                               ? aub_stream::ENGINE_BCS1
+                                               : aub_stream::ENGINE_BCS4;
+    const aub_stream::EngineType engine2 = aub_stream::ENGINE_BCS2;
+
+    return isBcsEnabled(hwInfo, engine1) || isBcsEnabled(hwInfo, engine2);
+}
+
+aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, std::atomic<uint32_t> &selectorCopyEngine) {
+    const aub_stream::EngineType engine1 = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, aub_stream::ENGINE_BCS1)
+                                               ? aub_stream::ENGINE_BCS1
+                                               : aub_stream::ENGINE_BCS4;
+    const aub_stream::EngineType engine2 = aub_stream::ENGINE_BCS2;
+
+    if (isBcsEnabled(hwInfo, engine1) && isBcsEnabled(hwInfo, engine2)) {
+        // both BCS enabled, round robin
+        return selectorCopyEngine.fetch_xor(1u) ? engine1 : engine2;
+    } else {
+        // one BCS enabled
+        return isBcsEnabled(hwInfo, engine1) ? engine1 : engine2;
+    }
 }
 
 } // namespace NEO::EngineHelpers

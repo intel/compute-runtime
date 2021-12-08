@@ -176,6 +176,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ProgramGlobalFenceAsKernelInstructionInEUKernel,
 DECLARE_DEBUG_VARIABLE(int32_t, DoNotReportTile1BscWaActive, -1, "-1: default, 0: WA Disabled, 1: WA enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTile0PlacementForTile1ResourcesWaActive, -1, "-1: default, 0: WA Disabled, 1: WA enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ClosEnabled, -1, "-1: default, 0: disabled, 1: enabled. Enable CLOS based cache reservation")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceBcsEngineIndex, -1, "-1: default, >=0 Copy Engine index")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

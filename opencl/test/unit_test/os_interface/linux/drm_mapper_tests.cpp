@@ -13,14 +13,29 @@
 
 using namespace NEO;
 
-TEST(DrmMapperTests, GivenRcsWhenGettingEngineNodeMapThenExecRenderIsReturned) {
-    unsigned int expected = I915_EXEC_RENDER;
-    EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS), expected);
+TEST(DrmMapperTests, GivenEngineWhenMappingNodeThenCorrectEngineReturned) {
+    unsigned int flagBcs = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS);
+    unsigned int flagRcs = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS);
+    unsigned int flagCcs = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS);
+    unsigned int flagCccs = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCCS);
+    unsigned int expectedBcs = I915_EXEC_BLT;
+    unsigned int expectedRcs = I915_EXEC_RENDER;
+    unsigned int expectedCcs = I915_EXEC_DEFAULT;
+    unsigned int expectedCccs = I915_EXEC_RENDER;
+    EXPECT_EQ(expectedBcs, flagBcs);
+    EXPECT_EQ(expectedRcs, flagRcs);
+    EXPECT_EQ(expectedCcs, flagCcs);
+    EXPECT_EQ(expectedCccs, flagCccs);
 }
 
-TEST(DrmMapperTests, GivenBcsWhenGettingEngineNodeMapThenExecBltIsReturned) {
-    unsigned int expected = I915_EXEC_BLT;
-    EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS), expected);
+TEST(DrmMapperTests, givenLinkCopyEngineWhenMapperCalledThenReturnDefaultBltEngine) {
+    const std::array<aub_stream::EngineType, 8> bcsLinkEngines = {{aub_stream::ENGINE_BCS1, aub_stream::ENGINE_BCS2, aub_stream::ENGINE_BCS3,
+                                                                   aub_stream::ENGINE_BCS4, aub_stream::ENGINE_BCS5, aub_stream::ENGINE_BCS6,
+                                                                   aub_stream::ENGINE_BCS7, aub_stream::ENGINE_BCS8}};
+
+    for (auto engine : bcsLinkEngines) {
+        EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_BLT), DrmEngineMapper::engineNodeMap(engine));
+    }
 }
 
 TEST(DrmMapperTests, GivenCcsWhenGettingEngineNodeMapThenReturnDefault) {

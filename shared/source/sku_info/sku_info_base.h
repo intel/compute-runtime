@@ -8,9 +8,13 @@
 #pragma once
 
 #include <array>
+#include <bitset>
 #include <cstdint>
 
 namespace NEO {
+constexpr size_t bcsInfoMaskSize = 9u;
+using BcsInfoMask = std::bitset<bcsInfoMaskSize>;
+
 struct FeatureTableBase {
   public:
     FeatureTableBase() {

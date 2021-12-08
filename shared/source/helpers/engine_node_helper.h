@@ -55,10 +55,18 @@ aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputT
 uint32_t getBcsIndex(aub_stream::EngineType engineType);
 aub_stream::EngineType mapBcsIndexToEngineType(uint32_t index, bool includeMainCopyEngine);
 aub_stream::EngineType mapCcsIndexToEngineType(uint32_t index);
-
 std::string engineTypeToString(aub_stream::EngineType engineType);
-std::string engineTypeToStringAdditional(aub_stream::EngineType engineType);
 std::string engineUsageToString(EngineUsage usage);
+
+bool isBcsEnabled(const HardwareInfo &hwInfo, aub_stream::EngineType engineType);
+
+constexpr bool isLinkBcs(aub_stream::EngineType engineType) {
+    return engineType >= aub_stream::ENGINE_BCS1 && engineType <= aub_stream::ENGINE_BCS8;
+}
+
+bool linkCopyEnginesSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield);
+
+aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, std::atomic<uint32_t> &selectorCopyEngine);
 
 }; // namespace EngineHelpers
 } // namespace NEO
