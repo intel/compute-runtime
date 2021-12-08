@@ -362,7 +362,7 @@ HWTEST2_F(CommandEncodeStatesTest, whenAdjustStateComputeModeIsCalledThenNothing
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     auto initialUsed = cmdContainer->getCommandStream()->getUsed();
     StreamProperties emptyProperties{};
-    NEO::EncodeComputeMode<FamilyType>::adjustComputeMode(*cmdContainer->getCommandStream(), nullptr,
-                                                          emptyProperties.stateComputeMode, *defaultHwInfo);
+    NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
+                                                                  emptyProperties.stateComputeMode, *defaultHwInfo);
     EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
 }

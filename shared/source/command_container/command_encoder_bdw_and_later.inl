@@ -366,7 +366,7 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
 }
 
 template <typename Family>
-inline void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo) {
+inline void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo) {
 }
 
 template <typename Family>

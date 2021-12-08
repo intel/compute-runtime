@@ -26,7 +26,7 @@ XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, whenProgrammingStateComputeModeThen
 
     StateComputeModeProperties properties;
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(*pLinearStream, nullptr, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, *defaultHwInfo);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMaskBits());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, pScm->getForceNonCoherent());
@@ -35,7 +35,7 @@ XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, whenProgrammingStateComputeModeThen
     properties.isCoherencyRequired.value = 0;
     properties.largeGrfMode.value = 1;
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(*pLinearStream, nullptr, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, *defaultHwInfo);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMaskBits());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, pScm->getForceNonCoherent());
@@ -44,7 +44,7 @@ XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, whenProgrammingStateComputeModeThen
     properties.isCoherencyRequired.isDirty = true;
     properties.largeGrfMode.isDirty = true;
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(*pLinearStream, nullptr, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, *defaultHwInfo);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     auto expectedMask = FamilyType::stateComputeModeForceNonCoherentMask |
                         FamilyType::stateComputeModeLargeGrfModeMask;
@@ -61,12 +61,9 @@ XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, givenForceDisableMultiAtomicsWhenDe
 
     uint8_t buffer[64]{};
 
-    STATE_COMPUTE_MODE scmCommandTemplate = FamilyType::cmdInitStateComputeMode;
-    scmCommandTemplate.setForceDisableSupportForMultiGpuAtomics(true);
-
     StateComputeModeProperties properties;
     LinearStream cmdStream(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(cmdStream, &scmCommandTemplate, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(cmdStream, properties, *defaultHwInfo);
     auto scmCommand = reinterpret_cast<STATE_COMPUTE_MODE *>(cmdStream.getCpuBase());
 
     uint32_t expectedMaskBits = FamilyType::stateComputeModeForceDisableSupportMultiGpuAtomics;
@@ -82,12 +79,9 @@ XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, givenForceDisableMultiAtomicsWhenDe
 
     uint8_t buffer[64]{};
 
-    STATE_COMPUTE_MODE scmCommandTemplate = FamilyType::cmdInitStateComputeMode;
-    scmCommandTemplate.setForceDisableSupportForMultiGpuAtomics(false);
-
     StateComputeModeProperties properties;
     LinearStream cmdStream(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(cmdStream, &scmCommandTemplate, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(cmdStream, properties, *defaultHwInfo);
     auto scmCommand = reinterpret_cast<STATE_COMPUTE_MODE *>(cmdStream.getCpuBase());
 
     uint32_t expectedMaskBits = FamilyType::stateComputeModeForceDisableSupportMultiGpuAtomics;
@@ -103,12 +97,9 @@ XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, givenForceDisableMultiPartialWrites
 
     uint8_t buffer[64]{};
 
-    STATE_COMPUTE_MODE scmCommandTemplate = FamilyType::cmdInitStateComputeMode;
-    scmCommandTemplate.setForceDisableSupportForMultiGpuPartialWrites(true);
-
     StateComputeModeProperties properties;
     LinearStream cmdStream(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(cmdStream, &scmCommandTemplate, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(cmdStream, properties, *defaultHwInfo);
     auto scmCommand = reinterpret_cast<STATE_COMPUTE_MODE *>(cmdStream.getCpuBase());
 
     uint32_t expectedMaskBits = FamilyType::stateComputeModeForceDisableSupportMultiGpuPartialWrites;
@@ -124,12 +115,9 @@ XE_HP_CORE_TEST_F(CommandEncodeXeHpCoreTest, givenForceDisableMultiPartialWrites
 
     uint8_t buffer[64]{};
 
-    STATE_COMPUTE_MODE scmCommandTemplate = FamilyType::cmdInitStateComputeMode;
-    scmCommandTemplate.setForceDisableSupportForMultiGpuPartialWrites(false);
-
     StateComputeModeProperties properties;
     LinearStream cmdStream(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(cmdStream, &scmCommandTemplate, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(cmdStream, properties, *defaultHwInfo);
     auto scmCommand = reinterpret_cast<STATE_COMPUTE_MODE *>(cmdStream.getCpuBase());
 
     uint32_t expectedMaskBits = FamilyType::stateComputeModeForceDisableSupportMultiGpuPartialWrites;

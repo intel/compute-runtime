@@ -2247,7 +2247,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     if (finalStreamState.stateComputeMode.isDirty()) {
         clearComputeModePropertiesIfNeeded(false, kernelAttributes.numGrfRequired, threadArbitrationPolicy);
         NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(neoDevice, *commandContainer.getCommandStream(), true);
-        NEO::EncodeComputeMode<GfxFamily>::adjustComputeMode(*commandContainer.getCommandStream(), nullptr, finalStreamState.stateComputeMode, hwInfo);
+        NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*commandContainer.getCommandStream(), finalStreamState.stateComputeMode, hwInfo);
         NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(neoDevice, *commandContainer.getCommandStream(), false);
     }
 }

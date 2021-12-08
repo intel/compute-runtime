@@ -28,11 +28,10 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
             addPipeControlPriorToNonPipelinedStateCommand(stream, args);
         }
 
-        auto stateComputeMode = GfxFamily::cmdInitStateComputeMode;
         StreamProperties properties{};
         properties.stateComputeMode.setProperties(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
                                                   this->requiredThreadArbitrationPolicy);
-        EncodeComputeMode<GfxFamily>::adjustComputeMode(stream, &stateComputeMode, properties.stateComputeMode, hwInfo);
+        EncodeComputeMode<GfxFamily>::programComputeModeCommand(stream, properties.stateComputeMode, hwInfo);
 
         if (csrSizeRequestFlags.hasSharedHandles) {
             auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();

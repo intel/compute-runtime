@@ -38,12 +38,11 @@ size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
 }
 
 template <>
-void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo) {
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
-    STATE_COMPUTE_MODE stateComputeMode = (stateComputeModePtr) ? *(static_cast<STATE_COMPUTE_MODE *>(stateComputeModePtr))
-                                                                : Family::cmdInitStateComputeMode;
+    STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
     auto maskBits = stateComputeMode.getMaskBits();
 
     if (properties.isCoherencyRequired.isDirty) {

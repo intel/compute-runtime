@@ -280,7 +280,7 @@ struct EncodeSurfaceState {
 
 template <typename GfxFamily>
 struct EncodeComputeMode {
-    static void adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo);
+    static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
 };

@@ -25,7 +25,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
 
     StateComputeModeProperties properties;
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(*pLinearStream, nullptr, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, *defaultHwInfo);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMaskBits());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, pScm->getForceNonCoherent());
@@ -38,7 +38,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
     properties.pixelAsyncComputeThreadLimit.value = 1;
     properties.largeGrfMode.value = 1;
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(*pLinearStream, nullptr, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, *defaultHwInfo);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMaskBits());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, pScm->getForceNonCoherent());
@@ -51,7 +51,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
     properties.pixelAsyncComputeThreadLimit.isDirty = true;
     properties.largeGrfMode.isDirty = true;
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::adjustComputeMode(*pLinearStream, nullptr, properties, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, *defaultHwInfo);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     auto expectedMask = FamilyType::stateComputeModeForceNonCoherentMask |
                         FamilyType::stateComputeModeZPassAsyncComputeThreadLimitMask |

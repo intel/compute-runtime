@@ -21,11 +21,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenN
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     cmdContainer->lastSentNumGrfRequired = 0;
-    auto stateComputeMode = cmdContainer->getCommandStream()->getSpaceForCmd<STATE_COMPUTE_MODE>();
-    *stateComputeMode = FamilyType::cmdInitStateComputeMode;
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.setProperties(false, cmdContainer->lastSentNumGrfRequired + 1, 0u);
-    EncodeComputeMode<FamilyType>::adjustComputeMode(*cmdContainer->getCommandStream(), stateComputeMode, streamProperties.stateComputeMode, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -58,11 +56,10 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeProgrammedThenExpectedComman
 
     auto usedSpaceBefore = cmdContainer->getCommandStream()->getUsed();
 
-    auto stateComputeMode = FamilyType::cmdInitStateComputeMode;
     NEO::EncodeComputeMode<GfxFamily>::adjustPipelineSelect(*cmdContainer, descriptor);
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.setProperties(false, 256u, 0u);
-    NEO::EncodeComputeMode<GfxFamily>::adjustComputeMode(*cmdContainer->getCommandStream(), &stateComputeMode, streamProperties.stateComputeMode, *defaultHwInfo);
+    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
 
     auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -79,11 +76,10 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeDisabledThenExpectedCommands
 
     auto usedSpaceBefore = cmdContainer->getCommandStream()->getUsed();
 
-    auto stateComputeMode = FamilyType::cmdInitStateComputeMode;
     NEO::EncodeComputeMode<GfxFamily>::adjustPipelineSelect(*cmdContainer, descriptor);
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.largeGrfMode.set(0);
-    NEO::EncodeComputeMode<GfxFamily>::adjustComputeMode(*cmdContainer->getCommandStream(), &stateComputeMode, streamProperties.stateComputeMode, *defaultHwInfo);
+    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
 
     auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

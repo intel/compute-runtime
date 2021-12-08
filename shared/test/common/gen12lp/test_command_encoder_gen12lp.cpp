@@ -34,8 +34,8 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
     // Adjust the State Compute Mode which sets FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
     StreamProperties properties{};
     properties.stateComputeMode.setProperties(false, cmdContainer.lastSentNumGrfRequired, 0);
-    NEO::EncodeComputeMode<FamilyType>::adjustComputeMode(*cmdContainer.getCommandStream(), nullptr,
-                                                          properties.stateComputeMode, *defaultHwInfo);
+    NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer.getCommandStream(),
+                                                                  properties.stateComputeMode, *defaultHwInfo);
 
     auto usedSpaceAfter = cmdContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

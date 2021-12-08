@@ -120,14 +120,13 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareIn
 }
 
 template <>
-void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo) {
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
     using PIXEL_ASYNC_COMPUTE_THREAD_LIMIT = typename STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT;
     using Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT = typename STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT;
 
-    STATE_COMPUTE_MODE stateComputeMode = (stateComputeModePtr != nullptr) ? *(static_cast<STATE_COMPUTE_MODE *>(stateComputeModePtr))
-                                                                           : Family::cmdInitStateComputeMode;
+    STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
     auto maskBits = stateComputeMode.getMaskBits();
 
     if (properties.zPassAsyncComputeThreadLimit.isDirty) {
