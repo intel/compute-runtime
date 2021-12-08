@@ -555,21 +555,25 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     return success;
 }
 
+void ModuleImp::createDebugZebin() {
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
+    auto segments = getZebinSegments();
+    auto debugZebin = NEO::Debug::createDebugZebin(refBin, segments);
+
+    translationUnit->debugDataSize = debugZebin.size();
+    translationUnit->debugData.reset(new char[translationUnit->debugDataSize]);
+    memcpy_s(translationUnit->debugData.get(), translationUnit->debugDataSize,
+             debugZebin.data(), debugZebin.size());
+}
+
 void ModuleImp::passDebugData() {
     auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
     if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
-        auto segments = getZebinSegments();
-        auto debugZebin = NEO::Debug::createDebugZebin(refBin, segments);
-
-        translationUnit->debugDataSize = debugZebin.size();
-        translationUnit->debugData.reset(new char[translationUnit->debugDataSize]);
-        memcpy_s(translationUnit->debugData.get(), translationUnit->debugDataSize,
-                 debugZebin.data(), debugZebin.size());
-
+        createDebugZebin();
         if (device->getSourceLevelDebugger()) {
             NEO::DebugData debugData; // pass debug zebin in vIsa field
-            debugData.vIsa = reinterpret_cast<const char *>(debugZebin.data());
-            debugData.vIsaSize = static_cast<uint32_t>(debugZebin.size());
+            debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
+            debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
             device->getSourceLevelDebugger()->notifyKernelDebugData(&debugData, "debug_zebin", nullptr, 0);
         }
     } else {
@@ -656,11 +660,17 @@ ze_result_t ModuleImp::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData)
     if (translationUnit == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    if (pDebugData == nullptr) {
-        *pDebugDataSize = translationUnit->debugDataSize;
-        return ZE_RESULT_SUCCESS;
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
+    if (nullptr == translationUnit->debugData.get() && NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+        createDebugZebin();
     }
-    memcpy_s(pDebugData, *pDebugDataSize, translationUnit->debugData.get(), translationUnit->debugDataSize);
+    if (pDebugData != nullptr) {
+        if (*pDebugDataSize < translationUnit->debugDataSize) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        memcpy_s(pDebugData, *pDebugDataSize, translationUnit->debugData.get(), translationUnit->debugDataSize);
+    }
+    *pDebugDataSize = translationUnit->debugDataSize;
     return ZE_RESULT_SUCCESS;
 }
 

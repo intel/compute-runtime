@@ -2088,5 +2088,36 @@ TEST_F(ModuleWithZebinTest, givenZebinSegmentsThenSegmentsArePopulated) {
     EXPECT_EQ(module->translationUnit->programInfo.globalStrings.size, segments.stringData.data.size());
 }
 
+TEST_F(ModuleWithZebinTest, givenValidZebinWhenGettingDebugInfoThenDebugZebinIsCreatedAndReturned) {
+    module->addEmptyZebin();
+    size_t debugDataSize;
+    module->getDebugInfo(&debugDataSize, nullptr);
+    auto debugData = std::make_unique<uint8_t[]>(debugDataSize);
+    ze_result_t retCode = module->getDebugInfo(&debugDataSize, debugData.get());
+    ASSERT_NE(nullptr, module->translationUnit->debugData.get());
+    EXPECT_EQ(0, memcmp(module->translationUnit->debugData.get(), debugData.get(), debugDataSize));
+    EXPECT_EQ(retCode, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ModuleWithZebinTest, givenValidZebinAndPassedDataSmallerThanDebugDataThenErrorIsReturned) {
+    module->addEmptyZebin();
+    size_t debugDataSize;
+    module->getDebugInfo(&debugDataSize, nullptr);
+    auto debugData = std::make_unique<uint8_t[]>(debugDataSize);
+    debugDataSize = 0;
+    ze_result_t errorCode = module->getDebugInfo(&debugDataSize, debugData.get());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, errorCode);
+}
+
+TEST_F(ModuleWithZebinTest, givenNonZebinaryFormatWhenGettingDebugInfoThenDebugZebinIsNotCreated) {
+    size_t mockProgramSize = sizeof(Elf::ElfFileHeader<Elf::EI_CLASS_64>);
+    module->translationUnit->unpackedDeviceBinary = std::make_unique<char[]>(mockProgramSize);
+    module->translationUnit->unpackedDeviceBinarySize = mockProgramSize;
+    size_t debugDataSize;
+    ze_result_t retCode = module->getDebugInfo(&debugDataSize, nullptr);
+    EXPECT_EQ(debugDataSize, 0u);
+    EXPECT_EQ(retCode, ZE_RESULT_SUCCESS);
+}
+
 } // namespace ult
 } // namespace L0

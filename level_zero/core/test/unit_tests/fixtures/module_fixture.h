@@ -315,6 +315,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
     };
 
     struct MockModuleWithZebin : public L0::ModuleImp {
+        using ModuleImp::getDebugInfo;
         using ModuleImp::getZebinSegments;
         using ModuleImp::kernelImmDatas;
         using ModuleImp::passDebugData;

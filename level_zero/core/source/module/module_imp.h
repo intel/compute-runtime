@@ -139,6 +139,7 @@ struct ModuleImp : public Module {
     void checkIfPrivateMemoryPerDispatchIsNeeded() override;
     NEO::Debug::Segments getZebinSegments();
     void passDebugData();
+    void createDebugZebin();
 
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
