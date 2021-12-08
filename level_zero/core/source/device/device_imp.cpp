@@ -340,6 +340,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
         pMemProperties->totalSize = deviceInfo.globalMemSize / this->numSubDevices;
     }
 
+    pMemProperties->flags = 0;
     return ZE_RESULT_SUCCESS;
 }
 
