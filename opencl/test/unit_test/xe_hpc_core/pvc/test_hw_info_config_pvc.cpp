@@ -1,0 +1,129 @@
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+
+#include "test.h"
+
+#include "gmock/gmock.h"
+
+using namespace NEO;
+
+using PvcHwInfoConfig = ::testing::Test;
+
+PVCTEST_F(PvcHwInfoConfig, givenErrorneousConfigStringThenThrow) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+
+    uint64_t config = 0xdeadbeef;
+    gtSystemInfo = {0};
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config));
+    EXPECT_EQ(0u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
+    EXPECT_EQ(0u, gtSystemInfo.EUCount);
+    EXPECT_EQ(0u, gtSystemInfo.ThreadCount);
+}
+
+PVCTEST_F(PvcHwInfoConfig, givenPvcWhenCallingGetDeviceMemoryNameThenHbmIsReturned) {
+    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto deviceMemoryName = hwInfoConfig->getDeviceMemoryName();
+    EXPECT_THAT(deviceMemoryName, testing::HasSubstr(std::string("HBM")));
+}
+
+PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_FALSE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+}
+
+PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    auto isRcs = false;
+
+    EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+}
+
+PVCTEST_F(PvcHwInfoConfig, givenPvcHwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
+}
+
+PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramPipeControlPriorToNonPipelinedStateCommandDisabledWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(0);
+
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    auto isRcs = false;
+
+    EXPECT_FALSE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+}
+
+using PvcHwInfo = ::testing::Test;
+
+PVCTEST_F(PvcHwInfo, givenPvcWhenConfiguringThenDisableCccs) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    EXPECT_FALSE(hwInfo.featureTable.flags.ftrRcsNode);
+}
+
+PVCTEST_F(PvcHwInfo, givenDebugVariableSetWhenConfiguringThenEnableCccs) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
+
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
+}
+
+PVCTEST_F(PvcHwInfo, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConversionIsCorrect) {
+    auto hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    uint32_t deviceIds[] = {FamilyType::pvcXlDeviceId, FamilyType::pvcXtDeviceIds[0], FamilyType::pvcXtDeviceIds[1], FamilyType::pvcXtDeviceIds[2], FamilyType::pvcXtTemporaryDeviceId};
+    for (uint32_t testValue = 0; testValue < 0xFF; testValue++) {
+        for (auto deviceId : deviceIds) {
+            hwInfo.platform.usDeviceID = deviceId;
+            auto hwRevIdFromStepping = hwInfoConfig.getHwRevIdFromStepping(testValue, hwInfo);
+            if (hwRevIdFromStepping != CommonConstants::invalidStepping) {
+                hwInfo.platform.usRevId = hwRevIdFromStepping;
+                EXPECT_EQ(testValue, hwInfoConfig.getSteppingFromHwRevId(hwInfo));
+            }
+        }
+
+        hwInfo.platform.usRevId = testValue;
+        auto steppingFromHwRevId = hwInfoConfig.getSteppingFromHwRevId(hwInfo);
+        if (steppingFromHwRevId != CommonConstants::invalidStepping) {
+            bool anyMatchAfterConversionFromStepping = false;
+            for (auto deviceId : deviceIds) {
+                hwInfo.platform.usDeviceID = deviceId;
+                auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(steppingFromHwRevId, hwInfo);
+                EXPECT_NE(CommonConstants::invalidStepping, hwRevId);
+                // expect values to match. 0x1 and 0x0 translate to the same stepping so they are interpreted as a match too.
+                if (((testValue & FamilyType::pvcSteppingBits) == (hwRevId & FamilyType::pvcSteppingBits)) ||
+                    (((testValue & FamilyType::pvcSteppingBits) == 0x1) && ((hwRevId & FamilyType::pvcSteppingBits) == 0x0))) {
+                    anyMatchAfterConversionFromStepping = true;
+                }
+            }
+            EXPECT_TRUE(anyMatchAfterConversionFromStepping);
+        }
+    }
+}

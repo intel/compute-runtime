@@ -124,6 +124,11 @@ set(IGDRCL_SRCS_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_unload_compiler_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_unload_platform_compiler_tests.inl
 )
+
+if(TESTS_PVC_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_api ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_device_info_pvc_and_later_tests.cpp)
+endif()
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_api})
 
 add_subdirectories()

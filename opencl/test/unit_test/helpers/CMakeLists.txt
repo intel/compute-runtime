@@ -64,6 +64,12 @@ if(TESTS_DG2_AND_LATER)
   )
 endif()
 
+if(TESTS_PVC_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_helpers
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_pvc_and_later.cpp
+  )
+endif()
+
 get_property(NEO_CORE_PREAMBLE_TESTS GLOBAL PROPERTY NEO_CORE_PREAMBLE_TESTS)
 
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_helpers})

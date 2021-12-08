@@ -38,5 +38,11 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+if(TESTS_PVC_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_kernel
+       ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_pvc_and_later.cpp
+  )
+endif()
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_kernel})
 add_subdirectories()

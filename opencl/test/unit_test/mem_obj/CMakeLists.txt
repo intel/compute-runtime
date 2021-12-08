@@ -50,5 +50,12 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+if(TESTS_PVC_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_mem_obj
+       ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests_pvc_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_pvc_and_later.cpp
+  )
+endif()
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_mem_obj})
 add_subdirectories()
