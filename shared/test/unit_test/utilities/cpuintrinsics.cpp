@@ -16,6 +16,7 @@
 namespace CpuIntrinsicsTests {
 //std::atomic is used for sake of sanitation in MT tests
 std::atomic<uintptr_t> lastClFlushedPtr(0u);
+std::atomic<uint32_t> clFlushCounter(0u);
 std::atomic<uint32_t> pauseCounter(0u);
 
 volatile uint32_t *pauseAddress = nullptr;
@@ -29,6 +30,7 @@ namespace NEO {
 namespace CpuIntrinsics {
 
 void clFlush(void const *ptr) {
+    CpuIntrinsicsTests::clFlushCounter++;
     CpuIntrinsicsTests::lastClFlushedPtr = reinterpret_cast<uintptr_t>(ptr);
 }
 

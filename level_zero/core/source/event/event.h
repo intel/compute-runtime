@@ -87,8 +87,6 @@ struct Event : _ze_event_handle_t {
 
     bool isEventTimestampFlagSet() { return isTimestampEvent; }
 
-    virtual ze_result_t hostEventSetValue(uint32_t eventValue) = 0;
-
     uint64_t globalStartTS;
     uint64_t globalEndTS;
     uint64_t contextStartTS;
@@ -158,7 +156,6 @@ struct EventImp : public Event {
     uint64_t getPacketAddress(Device *device) override;
     uint32_t getPacketsInUse() override;
     void setPacketsInUse(uint32_t value) override;
-    ze_result_t hostEventSetValue(uint32_t eventValue) override;
 
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
 
@@ -170,6 +167,7 @@ struct EventImp : public Event {
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusKernelTimestamp();
     ze_result_t queryStatusNonTimestamp();
+    ze_result_t hostEventSetValue(TagSizeT eventValue);
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
     void assignKernelEventCompletionData(void *address);
 };

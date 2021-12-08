@@ -122,7 +122,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusNonTimestamp() {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryStatus() {
-    uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
+    TagSizeT *hostAddr = static_cast<TagSizeT *>(hostAddress);
 
     if (metricStreamer != nullptr) {
         *hostAddr = metricStreamer->getNotificationState();
@@ -138,8 +138,8 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 
-    auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
-    auto signalScopeFlag = this->signalScope;
+    auto baseAddr = castToUint64(hostAddress);
+    auto signalScopeFlag = !!this->signalScope;
 
     auto eventTsSetFunc = [&eventVal, &signalScopeFlag](auto tsAddr) {
         auto tsptr = reinterpret_cast<void *>(tsAddr);
@@ -165,16 +165,22 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::hostEventSetValue(uint32_t eventVal) {
+ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
     if (isEventTimestampFlagSet()) {
-        return hostEventSetValueTimestamps(static_cast<TagSizeT>(eventVal));
+        return hostEventSetValueTimestamps(eventVal);
     }
 
-    auto hostAddr = static_cast<uint64_t *>(hostAddress);
-    UNRECOVERABLE_IF(hostAddr == nullptr);
-    memcpy_s(static_cast<void *>(hostAddr), sizeof(uint32_t), static_cast<void *>(&eventVal), sizeof(uint32_t));
+    auto packetHostAddr = hostAddress;
+    UNRECOVERABLE_IF(packetHostAddr == nullptr);
 
-    NEO::CpuIntrinsics::clFlush(hostAddr);
+    for (uint32_t i = 0; i < kernelCount; i++) {
+        uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
+        for (uint32_t j = 0; j < packetsToSet; j++) {
+            memcpy_s(packetHostAddr, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
+            NEO::CpuIntrinsics::clFlush(packetHostAddr);
+            packetHostAddr = ptrOffset(packetHostAddr, singlePacketSize);
+        }
+    }
 
     return ZE_RESULT_SUCCESS;
 }

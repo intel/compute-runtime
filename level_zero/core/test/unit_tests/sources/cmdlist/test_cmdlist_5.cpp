@@ -49,33 +49,28 @@ class MockEvent : public ::L0::Event {
 
     ze_result_t destroy() override {
         return ZE_RESULT_SUCCESS;
-    };
+    }
     ze_result_t hostSignal() override {
         return ZE_RESULT_SUCCESS;
-    };
+    }
     ze_result_t hostSynchronize(uint64_t timeout) override {
         return ZE_RESULT_SUCCESS;
-    };
+    }
     ze_result_t queryStatus() override {
         return ZE_RESULT_SUCCESS;
-    };
+    }
     ze_result_t reset() override {
         return ZE_RESULT_SUCCESS;
-    };
+    }
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override {
         return ZE_RESULT_SUCCESS;
-    };
+    }
     ze_result_t queryTimestampsExp(L0::Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override {
         return ZE_RESULT_SUCCESS;
-    };
-
-    ze_result_t hostEventSetValue(uint32_t eventValue) override {
-        return ZE_RESULT_SUCCESS;
     }
-
     uint32_t getPacketsInUse() override { return 1; }
-    void resetPackets() override{};
-    void setPacketsInUse(uint32_t value) override{};
+    void resetPackets() override {}
+    void setPacketsInUse(uint32_t value) override {}
     uint64_t getPacketAddress(L0::Device *) override { return 0; }
 
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;

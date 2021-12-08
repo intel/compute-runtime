@@ -1675,14 +1675,23 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
         if (isCopyOnly()) {
             NEO::MiFlushArgs args;
             args.commandWithPostSync = true;
+            increaseCommandStreamSpace(NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), baseAddr, Event::STATE_SIGNALED, args);
         } else {
+            auto &hwInfo = commandContainer.getDevice()->getHardwareInfo();
+            increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo));
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = (!event->signalScope) ? false : true;
+            args.dcFlushEnable = !!event->signalScope;
+            if (this->partitionCount > 1) {
+                args.workloadPartitionOffset = true;
+                event->setPacketsInUse(this->partitionCount);
+            }
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-                *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                baseAddr, Event::STATE_SIGNALED,
-                commandContainer.getDevice()->getHardwareInfo(),
+                *commandContainer.getCommandStream(),
+                POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                baseAddr,
+                Event::STATE_SIGNALED,
+                hwInfo,
                 args);
         }
     }
@@ -1821,26 +1830,37 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
         args.commandWithPostSync = true;
+        increaseCommandStreamSpace(NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED, args);
     } else {
         NEO::PipeControlArgs args;
-        applyScope = (!event->signalScope) ? false : true;
+        applyScope = !!event->signalScope;
         if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
             args.dcFlushEnable = applyScope;
         }
+        if (this->partitionCount > 1) {
+            args.workloadPartitionOffset = true;
+            event->setPacketsInUse(this->partitionCount);
+        }
         if (applyScope || event->isEventTimestampFlagSet()) {
+            auto &hwInfo = commandContainer.getDevice()->getHardwareInfo();
+            increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo));
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-                *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED,
-                commandContainer.getDevice()->getHardwareInfo(),
+                *commandContainer.getCommandStream(),
+                POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                ptrOffset(baseAddr, eventSignalOffset),
+                Event::STATE_SIGNALED,
+                hwInfo,
                 args);
         } else {
-            NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(*commandContainer.getCommandStream(),
-                                                                   ptrOffset(baseAddr, eventSignalOffset),
-                                                                   Event::STATE_SIGNALED,
-                                                                   0u,
-                                                                   false,
-                                                                   false);
+            increaseCommandStreamSpace(NEO::EncodeStoreMemory<GfxFamily>::getStoreDataImmSize());
+            NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
+                *commandContainer.getCommandStream(),
+                ptrOffset(baseAddr, eventSignalOffset),
+                Event::STATE_SIGNALED,
+                0u,
+                false,
+                args.workloadPartitionOffset);
         }
     }
 
