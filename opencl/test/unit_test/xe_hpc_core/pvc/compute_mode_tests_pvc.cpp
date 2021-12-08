@@ -42,7 +42,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyWhe
     getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
     getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy = newEuThreadSchedulingMode;
 
-    overrideComputeModeRequest<FamilyType>(false, false, false);
+    overrideComputeModeRequest<FamilyType>(true, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
@@ -172,7 +172,10 @@ PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedH
     IndirectHeap stream(graphicAlloc);
 
     auto flushTask = [&](bool threadArbitrationPolicyChanged) {
-        getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = threadArbitrationPolicyChanged ? ThreadArbitrationPolicy::NotPresent : getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy;
+        if (threadArbitrationPolicyChanged) {
+            getCsrHw<FamilyType>()->streamProperties.stateComputeMode.threadArbitrationPolicy.value = -1;
+            getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+        }
         startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
         csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
     };
@@ -182,13 +185,12 @@ PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedH
         hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
         bool foundOne = false;
 
-        uint32_t expectedCoherentMask = FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask;
+        uint32_t expectedCoherentMask = FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask;
 
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
             auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
             if (cmd) {
-
-                EXPECT_EQ(expectedCoherentMask, cmd->getMaskBits());
+                EXPECT_EQ(expectToBeProgrammed ? expectedCoherentMask : 0u, cmd->getMaskBits());
                 EXPECT_FALSE(foundOne);
                 foundOne = true;
                 auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));
@@ -197,6 +199,9 @@ PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedH
         }
         EXPECT_EQ(expectToBeProgrammed, foundOne);
     };
+
+    getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setProperties(flags.requiresCoherency, flags.numGrfRequired,
+                                                                            getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy);
 
     flushTask(true);
     findCmd(true); // first time
@@ -225,7 +230,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComp
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
-    overrideComputeModeRequest<FamilyType>(true, false, false, true);
+    overrideComputeModeRequest<FamilyType>(true, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
@@ -234,7 +239,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComp
 
     auto startOffset = stream.getUsed() + sizeof(PIPE_CONTROL);
 
-    overrideComputeModeRequest<FamilyType>(true, true, false, true);
+    overrideComputeModeRequest<FamilyType>(true, true, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize * 2, stream.getUsed());
 
@@ -264,7 +269,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCompute
 
     auto expectedPcCmd = FamilyType::cmdInitPipeControl;
 
-    overrideComputeModeRequest<FamilyType>(true, false, true, true);
+    overrideComputeModeRequest<FamilyType>(true, false, true, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
@@ -276,7 +281,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCompute
 
     auto startOffset = stream.getUsed();
 
-    overrideComputeModeRequest<FamilyType>(true, true, true, true);
+    overrideComputeModeRequest<FamilyType>(true, true, true, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize * 2, stream.getUsed());
 
@@ -308,7 +313,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
-    overrideComputeModeRequest<FamilyType>(false, false, false, true, 256u);
+    overrideComputeModeRequest<FamilyType>(true, false, false, true, true, 256u);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
@@ -317,7 +322,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
 
     auto startOffset = stream.getUsed() + sizeof(PIPE_CONTROL);
 
-    overrideComputeModeRequest<FamilyType>(false, false, false, true, 128u);
+    overrideComputeModeRequest<FamilyType>(true, false, false, true, true, 128u);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize * 2, stream.getUsed());
 
@@ -347,7 +352,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRF
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
-    overrideComputeModeRequest<FamilyType>(false, false, false, true, 127u);
+    overrideComputeModeRequest<FamilyType>(true, false, false, true, true, 127u);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
@@ -371,7 +376,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingThenCorrectComm
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
-    overrideComputeModeRequest<FamilyType>(true, false, false, false);
+    overrideComputeModeRequest<FamilyType>(true, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
@@ -419,7 +424,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenProgramPipeControlPriorToNonPipelined
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
-    overrideComputeModeRequest<FamilyType>(true, false, false, false);
+    overrideComputeModeRequest<FamilyType>(true, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, hwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 

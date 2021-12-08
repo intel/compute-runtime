@@ -51,6 +51,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
         DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(testValue.zPassThreadLimit);
         DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(testValue.pixelThreadLimit);
 
+        pCsr->streamProperties.stateComputeMode = {};
+        pCsr->streamProperties.stateComputeMode.setProperties(false, 0u, 0u);
         LinearStream stream(buff, 1024);
         pCsr->programComputeMode(stream, flags, *defaultHwInfo);
         EXPECT_EQ(sizeof(STATE_COMPUTE_MODE), stream.getUsed());
@@ -67,6 +69,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(-1);
     DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(-1);
 
+    pCsr->streamProperties.stateComputeMode = {};
+    pCsr->streamProperties.stateComputeMode.setProperties(false, 0u, 0u);
     LinearStream stream(buff, 1024);
     pCsr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(sizeof(STATE_COMPUTE_MODE), stream.getUsed());

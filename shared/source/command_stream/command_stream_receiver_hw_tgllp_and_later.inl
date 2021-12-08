@@ -24,19 +24,16 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
             PipeControlArgs args(true);
-
             addPipeControlPriorToNonPipelinedStateCommand(stream, args);
         }
 
-        StreamProperties properties{};
-        properties.stateComputeMode.setProperties(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
-                                                  this->requiredThreadArbitrationPolicy);
-        EncodeComputeMode<GfxFamily>::programComputeModeCommand(stream, properties.stateComputeMode, hwInfo);
+        EncodeComputeMode<GfxFamily>::programComputeModeCommand(stream, this->streamProperties.stateComputeMode, hwInfo);
 
         if (csrSizeRequestFlags.hasSharedHandles) {
             auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();
             *pc = GfxFamily::cmdInitPipeControl;
         }
+
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, false);
     }
 }

@@ -24,6 +24,7 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
 
     struct myCsr : public CommandStreamReceiverHw<TGLLPFamily> {
         using CommandStreamReceiver::commandStream;
+        using CommandStreamReceiver::streamProperties;
         myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<TGLLPFamily>(executionEnvironment, 0, 1){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
@@ -36,6 +37,8 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
         csr->getCsrRequestFlags()->coherencyRequestChanged = reqestChanged;
         csr->getCsrRequestFlags()->hasSharedHandles = hasSharedHandles;
         flags.requiresCoherency = requireCoherency;
+        csr->streamProperties.stateComputeMode.isCoherencyRequired.value = requireCoherency;
+        csr->streamProperties.stateComputeMode.isCoherencyRequired.isDirty = reqestChanged;
         if (hasSharedHandles) {
             makeResidentSharedAlloc();
         }
@@ -279,7 +282,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedH
         csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
     };
 
-    auto flushTaskAndFindCmds = [&](bool expectCoherent) {
+    auto flushTaskAndFindCmds = [&](bool expectCoherent, bool valueChanged) {
         flushTask(expectCoherent);
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, startOffset);
@@ -291,8 +294,10 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedH
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
             auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
             if (cmd) {
-                EXPECT_EQ(expectedCoherentValue, cmd->getForceNonCoherent());
-                EXPECT_EQ(expectedCoherentMask, cmd->getMaskBits());
+                if (valueChanged) {
+                    EXPECT_EQ(expectedCoherentValue, cmd->getForceNonCoherent());
+                }
+                EXPECT_EQ(valueChanged ? expectedCoherentMask : 0u, cmd->getMaskBits());
                 EXPECT_FALSE(foundOne);
                 foundOne = true;
                 auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));
@@ -302,12 +307,12 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedH
         EXPECT_TRUE(foundOne);
     };
 
-    flushTaskAndFindCmds(false); // first time
-    flushTaskAndFindCmds(false); // not changed
-    flushTaskAndFindCmds(true);  // changed
-    flushTaskAndFindCmds(true);  // not changed
-    flushTaskAndFindCmds(false); // changed
-    flushTaskAndFindCmds(false); // not changed
+    flushTaskAndFindCmds(false, true);  // first time
+    flushTaskAndFindCmds(false, false); // not changed
+    flushTaskAndFindCmds(true, true);   // changed
+    flushTaskAndFindCmds(true, false);  // not changed
+    flushTaskAndFindCmds(false, true);  // changed
+    flushTaskAndFindCmds(false, false); // not changed
 
     csr->getMemoryManager()->freeGraphicsMemory(graphicsAlloc);
 }
@@ -321,6 +326,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenFlushWithoutSharedHandlesWhenPr
     EXPECT_TRUE(csr->getCsrRequestFlags()->hasSharedHandles);
     auto startOffset = csr->commandStream.getUsed();
 
+    csr->streamProperties.stateComputeMode.isCoherencyRequired.set(true);
     csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
     EXPECT_TRUE(csr->getCsrRequestFlags()->hasSharedHandles);
 

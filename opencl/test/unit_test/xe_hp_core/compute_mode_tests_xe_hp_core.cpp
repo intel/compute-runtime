@@ -29,7 +29,7 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedSta
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     auto expectedBitsMask = FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask;
 
-    overrideComputeModeRequest<FamilyType>(true, false, false, false);
+    overrideComputeModeRequest<FamilyType>(true, false, false, false, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
@@ -72,7 +72,7 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     auto expectedBitsMask = FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask;
 
-    overrideComputeModeRequest<FamilyType>(true, false, false, false);
+    overrideComputeModeRequest<FamilyType>(true, false, false, false, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, hwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 

@@ -258,24 +258,26 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                                                                             dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode,
                                                                                                             peekHwInfo());
 
+    if (dispatchFlags.threadArbitrationPolicy != ThreadArbitrationPolicy::NotPresent) {
+        this->requiredThreadArbitrationPolicy = dispatchFlags.threadArbitrationPolicy;
+    }
+    if (dispatchFlags.numGrfRequired == GrfConfig::NotApplicable) {
+        dispatchFlags.numGrfRequired = lastSentNumGrfRequired;
+    }
+
+    this->streamProperties.stateComputeMode.setProperties(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
+                                                          this->requiredThreadArbitrationPolicy);
+
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.coherencyRequestChanged = this->lastSentCoherencyRequest != static_cast<int8_t>(dispatchFlags.requiresCoherency);
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     csrSizeRequestFlags.specialPipelineSelectModeChanged = isSpecialPipelineSelectModeChanged;
 
-    if (dispatchFlags.numGrfRequired == GrfConfig::NotApplicable) {
-        dispatchFlags.numGrfRequired = lastSentNumGrfRequired;
-    }
-
     csrSizeRequestFlags.numGrfRequiredChanged = this->lastSentNumGrfRequired != dispatchFlags.numGrfRequired;
     lastSentNumGrfRequired = dispatchFlags.numGrfRequired;
 
     csrSizeRequestFlags.activePartitionsChanged = isProgramActivePartitionConfigRequired();
-
-    if (dispatchFlags.threadArbitrationPolicy != ThreadArbitrationPolicy::NotPresent) {
-        this->requiredThreadArbitrationPolicy = dispatchFlags.threadArbitrationPolicy;
-    }
 
     auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
     bool stateBaseAddressDirty = false;

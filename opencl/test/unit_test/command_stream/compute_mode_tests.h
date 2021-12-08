@@ -20,6 +20,7 @@ struct ComputeModeRequirements : public ::testing::Test {
     template <typename FamilyType>
     struct myCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiver::commandStream;
+        using CommandStreamReceiver::streamProperties;
         using CommandStreamReceiverHw<FamilyType>::lastSentThreadArbitrationPolicy;
         using CommandStreamReceiverHw<FamilyType>::requiredThreadArbitrationPolicy;
         myCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
@@ -31,10 +32,15 @@ struct ComputeModeRequirements : public ::testing::Test {
     }
 
     template <typename FamilyType>
-    void overrideComputeModeRequest(bool reqestChanged, bool requireCoherency, bool hasSharedHandles, bool modifyThreadArbitrationPolicy = false) {
-        overrideComputeModeRequest<FamilyType>(reqestChanged, requireCoherency, hasSharedHandles, false, 128u);
+    void overrideComputeModeRequest(bool reqestChanged, bool requireCoherency, bool hasSharedHandles,
+                                    bool modifyThreadArbitrationPolicy = false, bool numGrfRequiredChanged = false,
+                                    uint32_t numGrfRequired = 128u) {
+        overrideComputeModeRequest<FamilyType>(reqestChanged, requireCoherency, hasSharedHandles, numGrfRequiredChanged, numGrfRequired);
         if (modifyThreadArbitrationPolicy) {
-            getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
+            auto csrHw = getCsrHw<FamilyType>();
+            csrHw->lastSentThreadArbitrationPolicy = csrHw->requiredThreadArbitrationPolicy;
+            csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.value = csrHw->requiredThreadArbitrationPolicy;
+            csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
         }
     }
 
@@ -50,6 +56,10 @@ struct ComputeModeRequirements : public ::testing::Test {
         csrHw->getCsrRequestFlags()->numGrfRequiredChanged = numGrfRequiredChanged;
         flags.requiresCoherency = requireCoherency;
         flags.numGrfRequired = numGrfRequired;
+        csrHw->streamProperties.stateComputeMode.isCoherencyRequired.value = requireCoherency;
+        csrHw->streamProperties.stateComputeMode.isCoherencyRequired.isDirty = coherencyRequestChanged;
+        csrHw->streamProperties.stateComputeMode.largeGrfMode.value = (numGrfRequired == GrfConfig::LargeGrfNumber);
+        csrHw->streamProperties.stateComputeMode.largeGrfMode.isDirty = numGrfRequiredChanged;
         if (hasSharedHandles) {
             makeResidentSharedAlloc();
         }
