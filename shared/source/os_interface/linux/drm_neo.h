@@ -147,6 +147,7 @@ class Drm : public DriverModel {
     int setupHardwareInfo(DeviceDescriptor *, bool);
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo);
     void setupCacheInfo(const HardwareInfo &hwInfo);
+    MOCKABLE_VIRTUAL void getPrelimVersion(std::string &prelimVersion);
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
 

@@ -19,8 +19,7 @@
 namespace NEO {
 
 uint32_t MemoryInfo::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
-    auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
-    return IoctlHelper::get(pHwInfo->platform.eProductFamily)->createGemExt(drm, data, dataSize, allocSize, handle);
+    return IoctlHelper::get(drm)->createGemExt(drm, data, dataSize, allocSize, handle);
 }
 
 drm_i915_gem_memory_class_instance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {

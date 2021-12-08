@@ -58,7 +58,7 @@ bool Drm::queryMemoryInfo() {
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty, length);
     if (dataQuery) {
-        auto ioctlHelper = IoctlHelper::get(pHwInfo->platform.eProductFamily);
+        auto ioctlHelper = IoctlHelper::get(this);
         auto data = ioctlHelper->translateIfRequired(dataQuery.release(), length);
         auto memRegions = reinterpret_cast<drm_i915_query_memory_regions *>(data.get());
         this->memoryInfo.reset(new MemoryInfo(memRegions->regions, memRegions->num_regions));

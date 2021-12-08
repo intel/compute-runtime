@@ -218,6 +218,27 @@ extern "C" {
 #define DRM_MODE_CONTENT_PROTECTION_DESIRED     1
 #define DRM_MODE_CONTENT_PROTECTION_ENABLED     2
 
+/**
+ * struct drm_mode_modeinfo - Display mode information.
+ * @clock: pixel clock in kHz
+ * @hdisplay: horizontal display size
+ * @hsync_start: horizontal sync start
+ * @hsync_end: horizontal sync end
+ * @htotal: horizontal total size
+ * @hskew: horizontal skew
+ * @vdisplay: vertical display size
+ * @vsync_start: vertical sync start
+ * @vsync_end: vertical sync end
+ * @vtotal: vertical total size
+ * @vscan: vertical scan
+ * @vrefresh: approximate vertical refresh rate in Hz
+ * @flags: bitmask of misc. flags, see DRM_MODE_FLAG_* defines
+ * @type: bitmask of type flags, see DRM_MODE_TYPE_* defines
+ * @name: string describing the mode resolution
+ *
+ * This is the user-space API display mode information structure. For the
+ * kernel version see struct drm_display_mode.
+ */
 struct drm_mode_modeinfo {
 	__u32 clock;
 	__u16 hdisplay;
@@ -332,14 +353,19 @@ struct drm_mode_get_encoder {
 /* This is for connectors with multiple signal types. */
 /* Try to match DRM_MODE_CONNECTOR_X as closely as possible. */
 enum drm_mode_subconnector {
-	DRM_MODE_SUBCONNECTOR_Automatic = 0,
-	DRM_MODE_SUBCONNECTOR_Unknown = 0,
-	DRM_MODE_SUBCONNECTOR_DVID = 3,
-	DRM_MODE_SUBCONNECTOR_DVIA = 4,
-	DRM_MODE_SUBCONNECTOR_Composite = 5,
-	DRM_MODE_SUBCONNECTOR_SVIDEO = 6,
-	DRM_MODE_SUBCONNECTOR_Component = 8,
-	DRM_MODE_SUBCONNECTOR_SCART = 9,
+	DRM_MODE_SUBCONNECTOR_Automatic   = 0,  /* DVI-I, TV     */
+	DRM_MODE_SUBCONNECTOR_Unknown     = 0,  /* DVI-I, TV, DP */
+	DRM_MODE_SUBCONNECTOR_VGA	  = 1,  /*            DP */
+	DRM_MODE_SUBCONNECTOR_DVID	  = 3,  /* DVI-I      DP */
+	DRM_MODE_SUBCONNECTOR_DVIA	  = 4,  /* DVI-I         */
+	DRM_MODE_SUBCONNECTOR_Composite   = 5,  /*        TV     */
+	DRM_MODE_SUBCONNECTOR_SVIDEO	  = 6,  /*        TV     */
+	DRM_MODE_SUBCONNECTOR_Component   = 8,  /*        TV     */
+	DRM_MODE_SUBCONNECTOR_SCART	  = 9,  /*        TV     */
+	DRM_MODE_SUBCONNECTOR_DisplayPort = 10, /*            DP */
+	DRM_MODE_SUBCONNECTOR_HDMIA       = 11, /*            DP */
+	DRM_MODE_SUBCONNECTOR_Native      = 15, /*            DP */
+	DRM_MODE_SUBCONNECTOR_Wireless    = 18, /*            DP */
 };
 
 #define DRM_MODE_CONNECTOR_Unknown	0
@@ -363,27 +389,92 @@ enum drm_mode_subconnector {
 #define DRM_MODE_CONNECTOR_WRITEBACK	18
 #define DRM_MODE_CONNECTOR_SPI		19
 
+/**
+ * struct drm_mode_get_connector - Get connector metadata.
+ *
+ * User-space can perform a GETCONNECTOR ioctl to retrieve information about a
+ * connector. User-space is expected to retrieve encoders, modes and properties
+ * by performing this ioctl at least twice: the first time to retrieve the
+ * number of elements, the second time to retrieve the elements themselves.
+ *
+ * To retrieve the number of elements, set @count_props and @count_encoders to
+ * zero, set @count_modes to 1, and set @modes_ptr to a temporary struct
+ * drm_mode_modeinfo element.
+ *
+ * To retrieve the elements, allocate arrays for @encoders_ptr, @modes_ptr,
+ * @props_ptr and @prop_values_ptr, then set @count_modes, @count_props and
+ * @count_encoders to their capacity.
+ *
+ * Performing the ioctl only twice may be racy: the number of elements may have
+ * changed with a hotplug event in-between the two ioctls. User-space is
+ * expected to retry the last ioctl until the number of elements stabilizes.
+ * The kernel won't fill any array which doesn't have the expected length.
+ *
+ * **Force-probing a connector**
+ *
+ * If the @count_modes field is set to zero, the kernel will perform a forced
+ * probe on the connector to refresh the connector status, modes and EDID.
+ * A forced-probe can be slow, might cause flickering and the ioctl will block.
+ *
+ * User-space needs to force-probe connectors to ensure their metadata is
+ * up-to-date at startup and after receiving a hot-plug event. User-space
+ * may perform a forced-probe when the user explicitly requests it. User-space
+ * shouldn't perform a forced-probe in other situations.
+ */
 struct drm_mode_get_connector {
-
+	/** @encoders_ptr: Pointer to ``__u32`` array of object IDs. */
 	__u64 encoders_ptr;
+	/** @modes_ptr: Pointer to struct drm_mode_modeinfo array. */
 	__u64 modes_ptr;
+	/** @props_ptr: Pointer to ``__u32`` array of property IDs. */
 	__u64 props_ptr;
+	/** @prop_values_ptr: Pointer to ``__u64`` array of property values. */
 	__u64 prop_values_ptr;
 
+	/** @count_modes: Number of modes. */
 	__u32 count_modes;
+	/** @count_props: Number of properties. */
 	__u32 count_props;
+	/** @count_encoders: Number of encoders. */
 	__u32 count_encoders;
 
-	__u32 encoder_id; /**< Current Encoder */
-	__u32 connector_id; /**< Id */
+	/** @encoder_id: Object ID of the current encoder. */
+	__u32 encoder_id;
+	/** @connector_id: Object ID of the connector. */
+	__u32 connector_id;
+	/**
+	 * @connector_type: Type of the connector.
+	 *
+	 * See DRM_MODE_CONNECTOR_* defines.
+	 */
 	__u32 connector_type;
+	/**
+	 * @connector_type_id: Type-specific connector number.
+	 *
+	 * This is not an object ID. This is a per-type connector number. Each
+	 * (type, type_id) combination is unique across all connectors of a DRM
+	 * device.
+	 */
 	__u32 connector_type_id;
 
+	/**
+	 * @connection: Status of the connector.
+	 *
+	 * See enum drm_connector_status.
+	 */
 	__u32 connection;
-	__u32 mm_width;  /**< width in millimeters */
-	__u32 mm_height; /**< height in millimeters */
+	/** @mm_width: Width of the connected sink in millimeters. */
+	__u32 mm_width;
+	/** @mm_height: Height of the connected sink in millimeters. */
+	__u32 mm_height;
+	/**
+	 * @subpixel: Subpixel order of the connected sink.
+	 *
+	 * See enum subpixel_order.
+	 */
 	__u32 subpixel;
 
+	/** @pad: Padding, must be zero. */
 	__u32 pad;
 };
 
@@ -497,7 +588,7 @@ struct drm_mode_fb_cmd2 {
 	 * In case of planar formats, this ioctl allows up to 4
 	 * buffer objects with offsets and pitches per plane.
 	 * The pitch and offset order is dictated by the fourcc,
-	 * e.g. NV12 (http://fourcc.org/yuv.php#NV12) is described as:
+	 * e.g. NV12 (https://fourcc.org/yuv.php#NV12) is described as:
 	 *
 	 *   YUV 4:2:0 image with a plane of 8 bit Y samples
 	 *   followed by an interleaved U/V plane containing
@@ -726,6 +817,64 @@ struct hdr_output_metadata {
 	};
 };
 
+/*
+ * DRM_MODE_LUT_GAMMA|DRM_MODE_LUT_DEGAMMA is legal and means the LUT
+ * can be used for either purpose, but not simultaneously. To expose
+ * modes that support gamma and degamma simultaneously the gamma mode
+ * must declare distinct DRM_MODE_LUT_GAMMA and DRM_MODE_LUT_DEGAMMA
+ * ranges.
+ */
+/* LUT is for gamma (after CTM) */
+#define DRM_MODE_LUT_GAMMA BIT(0)
+/* LUT is for degamma (before CTM) */
+#define DRM_MODE_LUT_DEGAMMA BIT(1)
+/* linearly interpolate between the points */
+#define DRM_MODE_LUT_INTERPOLATE BIT(2)
+/*
+ * the last value of the previous range is the
+ * first value of the current range.
+ */
+#define DRM_MODE_LUT_REUSE_LAST BIT(3)
+/* the curve must be non-decreasing */
+#define DRM_MODE_LUT_NON_DECREASING BIT(4)
+/* the curve is reflected across origin for negative inputs */
+#define DRM_MODE_LUT_REFLECT_NEGATIVE BIT(5)
+/* the same curve (red) is used for blue and green channels as well */
+#define DRM_MODE_LUT_SINGLE_CHANNEL BIT(6)
+
+struct drm_color_lut_range {
+	/* DRM_MODE_LUT_* */
+	__u32 flags;
+	/* number of points on the curve */
+	__u16 count;
+	/* input/output bits per component */
+	__u8 input_bpc, output_bpc;
+	/* input start/end values */
+	__s32 start, end;
+	/* output min/max values */
+	__s32 min, max;
+};
+
+enum lut_type {
+	LUT_TYPE_DEGAMMA = 0,
+	LUT_TYPE_GAMMA = 1,
+};
+
+/*
+ * Creating 64 bit palette entries for better data
+ * precision. This will be required for HDR and
+ * similar color processing usecases.
+ */
+struct drm_color_lut_ext {
+	/*
+	 * Data is U32.32 fixed point format.
+	 */
+	__u64 red;
+	__u64 green;
+	__u64 blue;
+	__u64 reserved;
+};
+
 #define DRM_MODE_PAGE_FLIP_EVENT 0x01
 #define DRM_MODE_PAGE_FLIP_ASYNC 0x02
 #define DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE 0x4
@@ -900,25 +1049,30 @@ struct drm_format_modifier {
 
 /**
  * struct drm_mode_create_blob - Create New block property
- * @data: Pointer to data to copy.
- * @length: Length of data to copy.
- * @blob_id: new property ID.
+ *
  * Create a new 'blob' data property, copying length bytes from data pointer,
  * and returning new blob ID.
  */
 struct drm_mode_create_blob {
-	/** Pointer to data to copy. */
+	/** @data: Pointer to data to copy. */
 	__u64 data;
-	/** Length of data to copy. */
+	/** @length: Length of data to copy. */
 	__u32 length;
-	/** Return: new property ID. */
+	/** @blob_id: Return: new property ID. */
 	__u32 blob_id;
 };
 
 /**
  * struct drm_mode_destroy_blob - Destroy user blob
  * @blob_id: blob_id to destroy
+ *
  * Destroy a user-created blob property.
+ *
+ * User-space can release blobs as soon as they do not need to refer to them by
+ * their blob object ID.  For instance, if you are using a MODE_ID blob in an
+ * atomic commit and you will not make another commit re-using the same ID, you
+ * can destroy the blob as soon as the commit has been issued, without waiting
+ * for it to complete.
  */
 struct drm_mode_destroy_blob {
 	__u32 blob_id;
@@ -926,36 +1080,36 @@ struct drm_mode_destroy_blob {
 
 /**
  * struct drm_mode_create_lease - Create lease
- * @object_ids: Pointer to array of object ids.
- * @object_count: Number of object ids.
- * @flags: flags for new FD.
- * @lessee_id: unique identifier for lessee.
- * @fd: file descriptor to new drm_master file.
+ *
  * Lease mode resources, creating another drm_master.
+ *
+ * The @object_ids array must reference at least one CRTC, one connector and
+ * one plane if &DRM_CLIENT_CAP_UNIVERSAL_PLANES is enabled. Alternatively,
+ * the lease can be completely empty.
  */
 struct drm_mode_create_lease {
-	/** Pointer to array of object ids (__u32) */
+	/** @object_ids: Pointer to array of object ids (__u32) */
 	__u64 object_ids;
-	/** Number of object ids */
+	/** @object_count: Number of object ids */
 	__u32 object_count;
-	/** flags for new FD (O_CLOEXEC, etc) */
+	/** @flags: flags for new FD (O_CLOEXEC, etc) */
 	__u32 flags;
 
-	/** Return: unique identifier for lessee. */
+	/** @lessee_id: Return: unique identifier for lessee. */
 	__u32 lessee_id;
-	/** Return: file descriptor to new drm_master file */
+	/** @fd: Return: file descriptor to new drm_master file */
 	__u32 fd;
 };
 
 /**
  * struct drm_mode_list_lessees - List lessees
- * @count_lessees: Number of lessees.
- * @pad: pad.
- * @lessees_ptr: Pointer to lessess.
- * List lesses from a drm_master
+ *
+ * List lesses from a drm_master.
  */
 struct drm_mode_list_lessees {
-	/** Number of lessees.
+	/**
+	 * @count_lessees: Number of lessees.
+	 *
 	 * On input, provides length of the array.
 	 * On output, provides total number. No
 	 * more than the input number will be written
@@ -963,23 +1117,26 @@ struct drm_mode_list_lessees {
 	 * the size and then the data.
 	 */
 	__u32 count_lessees;
+	/** @pad: Padding. */
 	__u32 pad;
 
-	/** Pointer to lessees.
-	 * pointer to __u64 array of lessee ids
+	/**
+	 * @lessees_ptr: Pointer to lessees.
+	 *
+	 * Pointer to __u64 array of lessee ids
 	 */
 	__u64 lessees_ptr;
 };
 
 /**
  * struct drm_mode_get_lease - Get Lease
- * @count_objects: Number of leased objects.
- * @pad: pad.
- * @objects_ptr: Pointer to objects.
- * Get leased objects
+ *
+ * Get leased objects.
  */
 struct drm_mode_get_lease {
-	/** Number of leased objects.
+	/**
+	 * @count_objects: Number of leased objects.
+	 *
 	 * On input, provides length of the array.
 	 * On output, provides total number. No
 	 * more than the input number will be written
@@ -987,22 +1144,22 @@ struct drm_mode_get_lease {
 	 * the size and then the data.
 	 */
 	__u32 count_objects;
+	/** @pad: Padding. */
 	__u32 pad;
 
-	/** Pointer to objects.
-	 * pointer to __u32 array of object ids
+	/**
+	 * @objects_ptr: Pointer to objects.
+	 *
+	 * Pointer to __u32 array of object ids.
 	 */
 	__u64 objects_ptr;
 };
 
 /**
  * struct drm_mode_revoke_lease - Revoke lease
- * @lessee_id: Unique ID of lessee.
- * Revoke lease
  */
 struct drm_mode_revoke_lease {
-	/** Unique ID of lessee
-	 */
+	/** @lessee_id: Unique ID of lessee */
 	__u32 lessee_id;
 };
 

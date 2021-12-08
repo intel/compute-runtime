@@ -34,7 +34,8 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_create_command_queue_with_properties_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}ioctl_helper_default_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_prelim.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/prelim_helper_func.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_time_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.h
@@ -58,9 +59,9 @@ if(TESTS_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
   )
 endif()
 
-if(TESTS_XE_HP_SDV AND "${BRANCH_TYPE}" STREQUAL "")
+if("${BRANCH_TYPE}" STREQUAL "")
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_xe_hp_sdv.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_upstream.cpp
   )
 endif()
 

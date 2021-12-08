@@ -15,9 +15,7 @@
 
 using namespace NEO;
 
-using IoctlHelperTestsXeHpSdv = ::testing::Test;
-
-XEHPTEST_F(IoctlHelperTestsXeHpSdv, givenXeHpSdvWhenCreateGemExtThenReturnCorrectValue) {
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectValue) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -28,7 +26,7 @@ XEHPTEST_F(IoctlHelperTestsXeHpSdv, givenXeHpSdvWhenCreateGemExtThenReturnCorrec
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probed_size = 16 * GB;
 
-    auto ioctlHelper = IoctlHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
     auto ret = ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
 
@@ -39,7 +37,7 @@ XEHPTEST_F(IoctlHelperTestsXeHpSdv, givenXeHpSdvWhenCreateGemExtThenReturnCorrec
     EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memory_class);
 }
 
-XEHPTEST_F(IoctlHelperTestsXeHpSdv, givenXeHpSdvWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.PrintBOCreateDestroyResult.set(true);
 
@@ -52,7 +50,7 @@ XEHPTEST_F(IoctlHelperTestsXeHpSdv, givenXeHpSdvWhenCreateGemExtWithDebugFlagThe
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
     testing::internal::CaptureStdout();
-    auto ioctlHelper = IoctlHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
     ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
 

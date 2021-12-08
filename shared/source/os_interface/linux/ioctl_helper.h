@@ -20,7 +20,8 @@ extern IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT];
 
 class IoctlHelper {
   public:
-    static IoctlHelper *get(PRODUCT_FAMILY product);
+    virtual ~IoctlHelper() {}
+    static IoctlHelper *get(Drm *product);
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
 
     virtual uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) = 0;
@@ -38,12 +39,14 @@ class IoctlHelperImpl : public IoctlHelper {
     std::unique_ptr<uint8_t[]> translateIfRequired(uint8_t *dataQuery, int32_t length) override;
 };
 
-class IoctlHelperDefault : public IoctlHelper {
+class IoctlHelperUpstream : public IoctlHelper {
   public:
-    static IoctlHelper *get() {
-        static IoctlHelperDefault instance;
-        return &instance;
-    }
+    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
+    std::unique_ptr<uint8_t[]> translateIfRequired(uint8_t *dataQuery, int32_t length) override;
+};
+
+class IoctlHelperPrelim20 : public IoctlHelper {
+  public:
     uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
     std::unique_ptr<uint8_t[]> translateIfRequired(uint8_t *dataQuery, int32_t length) override;
 };

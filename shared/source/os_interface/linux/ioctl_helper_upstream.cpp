@@ -8,13 +8,11 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
-#include "third_party/uapi/xe_hp_sdv/drm/i915_drm.h"
+#include "third_party/uapi/drm/i915_drm.h"
 
 namespace NEO {
-constexpr static auto gfxProduct = IGFX_XE_HP_SDV;
 
-template <>
-uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
+uint32_t IoctlHelperUpstream::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
     drm_i915_gem_create_ext_memory_regions memRegions;
     memRegions.num_regions = dataSize;
     memRegions.regions = reinterpret_cast<uintptr_t>(data);
@@ -43,11 +41,8 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_
     return ret;
 }
 
-template <>
-std::unique_ptr<uint8_t[]> IoctlHelperImpl<gfxProduct>::translateIfRequired(uint8_t *dataQuery, int32_t length) {
+std::unique_ptr<uint8_t[]> IoctlHelperUpstream::translateIfRequired(uint8_t *dataQuery, int32_t length) {
     return std::unique_ptr<uint8_t[]>(dataQuery);
 }
-
-template class IoctlHelperImpl<gfxProduct>;
 
 } // namespace NEO

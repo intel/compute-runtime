@@ -909,3 +909,32 @@ TEST(DrmTest, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
     EXPECT_FALSE(pDrm->skipResourceCleanup());
     delete pDrm;
 }
+
+TEST(DrmQueryTest, givenUapiPrelimVersionThenReturnCorrectString) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    std::string prelimVersionFile = "test_files/linux/devices/device/drm/card1/prelim_uapi_version";
+    EXPECT_TRUE(fileExists(prelimVersionFile));
+
+    drm.setPciPath("device");
+
+    std::string prelimVersion = "";
+    drm.getPrelimVersion(prelimVersion);
+
+    EXPECT_EQ("2.0", prelimVersion);
+}
+
+TEST(DrmQueryTest, givenUapiPrelimVersionWithInvalidPathThenReturnEmptyString) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("invalidPath");
+
+    std::string prelimVersion = "2.0";
+    drm.getPrelimVersion(prelimVersion);
+
+    EXPECT_TRUE(prelimVersion.empty());
+}

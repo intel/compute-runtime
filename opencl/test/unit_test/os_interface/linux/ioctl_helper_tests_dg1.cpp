@@ -9,7 +9,6 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_impl.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_prod_dg1.h"
@@ -30,7 +29,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtThenReturnCorrectValue) {
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probed_size = 16 * GB;
 
-    auto ioctlHelper = IoctlHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
     auto ret = ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
 
@@ -53,7 +52,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WithDrmTipWhenCreateGemExtWithDebugFlagTh
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
     testing::internal::CaptureStdout();
-    auto ioctlHelper = IoctlHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
 
     auto ret = ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
@@ -77,7 +76,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPrintDeb
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
     testing::internal::CaptureStdout();
-    auto ioctlHelper = IoctlHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
 
     auto ret = ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);

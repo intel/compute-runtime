@@ -1,0 +1,38 @@
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
+
+#include <map>
+#include <memory>
+#include <string>
+
+namespace NEO {
+
+IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT] = {};
+
+std::map<std::string, std::shared_ptr<IoctlHelper>> ioctlHelperImpls{
+    {"", std::make_shared<IoctlHelperUpstream>()},
+    {"2.0", std::make_shared<IoctlHelperPrelim20>()}};
+
+IoctlHelper *IoctlHelper::get(Drm *drm) {
+    auto product = drm->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily;
+
+    auto productSpecificIoctlHelper = ioctlHelperFactory[product];
+    if (productSpecificIoctlHelper) {
+        return productSpecificIoctlHelper;
+    }
+
+    std::string prelimVersion = "";
+    drm->getPrelimVersion(prelimVersion);
+    return ioctlHelperImpls[prelimVersion].get();
+}
+
+} // namespace NEO

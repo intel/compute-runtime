@@ -895,4 +895,18 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
 }
 
+void Drm::getPrelimVersion(std::string &prelimVersion) {
+    std::string sysFsPciPath = getSysFsPciPath();
+    std::string prelimVersionPath = sysFsPciPath + "/prelim_uapi_version";
+
+    std::ifstream ifs(prelimVersionPath.c_str(), std::ifstream::in);
+
+    if (ifs.fail()) {
+        prelimVersion = "";
+    } else {
+        ifs >> prelimVersion;
+    }
+    ifs.close();
+}
+
 } // namespace NEO

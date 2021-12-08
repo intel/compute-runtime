@@ -36,7 +36,11 @@ class DrmTipMock : public DrmMock {
     __u64 offset = 0;
     int mmapOffsetRetVal = 0;
 
-    virtual int handleRemainingRequests(unsigned long request, void *arg) {
+    void getPrelimVersion(std::string &prelimVersion) override {
+        prelimVersion = "";
+    }
+
+    virtual int handleRemainingRequests(unsigned long request, void *arg) override {
         if ((request == DRM_IOCTL_I915_QUERY) && (arg != nullptr)) {
             if (i915QuerySuccessCount == 0) {
                 return EINVAL;
