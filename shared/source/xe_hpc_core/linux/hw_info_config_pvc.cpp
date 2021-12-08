@@ -22,7 +22,7 @@ template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     enableCompression(hwInfo);
 
-    hwInfo->featureTable.embargoFlags.ftr57bGPUAddressing = (hwInfo->capabilityTable.gpuAddressSpace == maxNBitValue(57));
+    hwInfo->featureTable.flags.ftr57bGPUAddressing = (hwInfo->capabilityTable.gpuAddressSpace == maxNBitValue(57));
 
     enableBlitterOperationsSupport(hwInfo);
 

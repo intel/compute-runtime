@@ -95,7 +95,8 @@ struct FeatureTableBase {
         uint32_t ftrCCSMultiInstance : 1;
         uint32_t ftrPpgtt64KBWalkOptimization : 1;
         uint32_t ftrUnified3DMediaCompressionFormats : 1;
-        uint32_t reserved : 22;
+        uint32_t ftr57bGPUAddressing : 1;
+        uint32_t reserved : 21;
     };
 
     union {
