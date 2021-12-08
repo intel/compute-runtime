@@ -63,17 +63,31 @@ struct Event : _ze_event_handle_t {
     virtual void setPacketsInUse(uint32_t value) = 0;
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
 
-    virtual size_t getContextStartOffset() const = 0;
-    virtual size_t getContextEndOffset() const = 0;
-    virtual size_t getGlobalStartOffset() const = 0;
-    virtual size_t getGlobalEndOffset() const = 0;
-    virtual size_t getSinglePacketSize() const = 0;
-    virtual size_t getTimestampSizeInDw() const = 0;
+    size_t getContextStartOffset() const {
+        return contextStartOffset;
+    }
+    size_t getContextEndOffset() const {
+        return contextEndOffset;
+    }
+    size_t getGlobalStartOffset() const {
+        return globalStartOffset;
+    }
+    size_t getGlobalEndOffset() const {
+        return globalEndOffset;
+    }
+    size_t getSinglePacketSize() const {
+        return singlePacketSize;
+    }
+    size_t getTimestampSizeInDw() const {
+        return timestampSizeInDw;
+    }
+    void setEventTimestampFlag(bool timestampFlag) {
+        isTimestampEvent = timestampFlag;
+    }
+
+    bool isEventTimestampFlagSet() { return isTimestampEvent; }
+
     virtual ze_result_t hostEventSetValue(uint32_t eventValue) = 0;
-    void *hostAddress = nullptr;
-    uint32_t kernelCount = 1u;
-    ze_event_scope_flags_t signalScope = 0u;
-    ze_event_scope_flags_t waitScope = 0u;
 
     uint64_t globalStartTS;
     uint64_t globalEndTS;
@@ -83,16 +97,20 @@ struct Event : _ze_event_handle_t {
     // Metric streamer instance associated with the event.
     MetricStreamer *metricStreamer = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
+    void *hostAddress = nullptr;
 
-    void setEventTimestampFlag(bool timestampFlag) {
-        isTimestampEvent = timestampFlag;
-    }
+    ze_event_scope_flags_t signalScope = 0u;
+    ze_event_scope_flags_t waitScope = 0u;
 
-    bool isEventTimestampFlagSet() { return isTimestampEvent; }
+    uint32_t kernelCount = 1u;
 
   protected:
-    uint64_t gpuAddress;
-    NEO::GraphicsAllocation *allocation = nullptr;
+    size_t contextStartOffset = 0u;
+    size_t contextEndOffset = 0u;
+    size_t globalStartOffset = 0u;
+    size_t globalEndOffset = 0u;
+    size_t timestampSizeInDw = 0u;
+    size_t singlePacketSize = 0u;
     bool isTimestampEvent = false;
 };
 
@@ -110,7 +128,14 @@ template <typename TagSizeT>
 struct EventImp : public Event {
 
     EventImp(EventPool *eventPool, int index, Device *device)
-        : device(device), index(index), eventPool(eventPool) {}
+        : device(device), index(index), eventPool(eventPool) {
+        contextStartOffset = NEO::TimestampPackets<TagSizeT>::getContextStartOffset();
+        contextEndOffset = NEO::TimestampPackets<TagSizeT>::getContextEndOffset();
+        globalStartOffset = NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset();
+        globalEndOffset = NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset();
+        timestampSizeInDw = (sizeof(TagSizeT) / 4);
+        singlePacketSize = NEO::TimestampPackets<TagSizeT>::getSinglePacketSize();
+    }
 
     ~EventImp() override {}
 
@@ -133,12 +158,6 @@ struct EventImp : public Event {
     uint64_t getPacketAddress(Device *device) override;
     uint32_t getPacketsInUse() override;
     void setPacketsInUse(uint32_t value) override;
-    size_t getTimestampSizeInDw() const override { return (sizeof(TagSizeT) / 4); };
-    size_t getContextStartOffset() const override { return NEO::TimestampPackets<TagSizeT>::getContextStartOffset(); }
-    size_t getContextEndOffset() const override { return NEO::TimestampPackets<TagSizeT>::getContextEndOffset(); }
-    size_t getGlobalStartOffset() const override { return NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset(); }
-    size_t getGlobalEndOffset() const override { return NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset(); }
-    size_t getSinglePacketSize() const override { return NEO::TimestampPackets<TagSizeT>::getSinglePacketSize(); };
     ze_result_t hostEventSetValue(uint32_t eventValue) override;
 
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;

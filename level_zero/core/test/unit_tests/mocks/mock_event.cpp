@@ -12,7 +12,7 @@ namespace ult {
 
 Mock<Event>::Mock() : mockAllocation(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                      &memory, reinterpret_cast<uint64_t>(&memory), 0, sizeof(memory),
-                                     MemoryPool::System4KBPages) { allocation = &mockAllocation; }
+                                     MemoryPool::System4KBPages) {}
 
 Mock<Event>::~Mock() {}
 

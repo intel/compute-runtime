@@ -32,7 +32,12 @@ class MockEvent : public ::L0::Event {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                              MemoryPool::System4KBPages));
-        gpuAddress = mockAllocation->getGpuAddress();
+        this->timestampSizeInDw = 1;
+        this->contextStartOffset = 0;
+        this->contextEndOffset = 4;
+        this->globalStartOffset = 8;
+        this->globalEndOffset = 12;
+        this->singlePacketSize = 16;
     }
     NEO::GraphicsAllocation &getAllocation(L0::Device *device) override {
         return *mockAllocation.get();
@@ -67,16 +72,6 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(uint32_t eventValue) override {
         return ZE_RESULT_SUCCESS;
     }
-
-    size_t getTimestampSizeInDw() const override {
-        return 1;
-    }
-
-    size_t getContextStartOffset() const override { return 0; }
-    size_t getContextEndOffset() const override { return 4; }
-    size_t getGlobalStartOffset() const override { return 8; }
-    size_t getGlobalEndOffset() const override { return 12; }
-    size_t getSinglePacketSize() const override { return 16; };
 
     uint32_t getPacketsInUse() override { return 1; }
     void resetPackets() override{};

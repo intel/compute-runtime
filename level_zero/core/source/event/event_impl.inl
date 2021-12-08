@@ -83,7 +83,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
         packetsToCopy = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t packetId = 0; packetId < packetsToCopy; packetId++) {
             kernelEventCompletionData[i].assignDataToAllTimestamps(packetId, address);
-            address = ptrOffset(address, NEO::TimestampPackets<TagSizeT>::getSinglePacketSize());
+            address = ptrOffset(address, singlePacketSize);
         }
     }
 }
@@ -152,11 +152,11 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++) {
-            eventTsSetFunc(baseAddr + NEO::TimestampPackets<TagSizeT>::getContextStartOffset());
-            eventTsSetFunc(baseAddr + NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset());
-            eventTsSetFunc(baseAddr + NEO::TimestampPackets<TagSizeT>::getContextEndOffset());
-            eventTsSetFunc(baseAddr + NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset());
-            baseAddr += NEO::TimestampPackets<TagSizeT>::getSinglePacketSize();
+            eventTsSetFunc(baseAddr + contextStartOffset);
+            eventTsSetFunc(baseAddr + globalStartOffset);
+            eventTsSetFunc(baseAddr + contextEndOffset);
+            eventTsSetFunc(baseAddr + globalEndOffset);
+            baseAddr += singlePacketSize;
         }
     }
     assignKernelEventCompletionData(hostAddress);
@@ -347,7 +347,7 @@ uint64_t EventImp<TagSizeT>::getPacketAddress(Device *device) {
     uint64_t address = getGpuAddress(device);
     for (uint32_t i = 0; i < kernelCount - 1; i++) {
         address += kernelEventCompletionData[i].getPacketsUsed() *
-                   NEO::TimestampPackets<TagSizeT>::getSinglePacketSize();
+                   singlePacketSize;
     }
     return address;
 }

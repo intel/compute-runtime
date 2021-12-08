@@ -18,7 +18,6 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
-    using BaseClass::allocation;
 };
 
 using Event = WhiteBox<::L0::Event>;
@@ -46,8 +45,6 @@ struct Mock<Event> : public Event {
     // Fake an allocation for event memory
     alignas(16) uint32_t memory = -1;
     NEO::GraphicsAllocation mockAllocation;
-
-    using Event::allocation;
 };
 
 template <>
