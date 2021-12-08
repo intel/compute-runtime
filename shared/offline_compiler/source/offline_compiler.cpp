@@ -667,6 +667,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (("-revision_id" == currArg) && hasMoreArgs) {
             revisionId = std::stoi(argv[argIndex + 1], nullptr, 0);
             argIndex++;
+        } else if ("-exclude_ir" == currArg) {
+            excludeIr = true;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
@@ -946,6 +948,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -revision_id <revision_id>    Target stepping. Can be decimal or hexadecimal value.
 
+  -exclude_ir                   Excludes IR from the output binary file.
+
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
@@ -997,7 +1001,7 @@ bool OfflineCompiler::generateElfBinary() {
                                  ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.buildOptions.data()), binary.buildOptions.size()));
     }
 
-    if (binary.intermediateRepresentation.empty() == false) {
+    if (!binary.intermediateRepresentation.empty() && !excludeIr) {
         if (isSpirV) {
             ElfEncoder.appendSection(SHT_OPENCL_SPIRV, SectionNamesOpenCl::spirvObject, binary.intermediateRepresentation);
         } else {

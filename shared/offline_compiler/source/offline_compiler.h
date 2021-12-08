@@ -139,6 +139,7 @@ class OfflineCompiler {
     bool forceStatelessToStatefulOptimization = false;
     bool isSpirV = false;
     bool showHelp = false;
+    bool excludeIr = false;
 
     std::vector<uint8_t> elfBinary;
     char *genBinary = nullptr;

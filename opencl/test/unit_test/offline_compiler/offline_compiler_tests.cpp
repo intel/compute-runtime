@@ -10,6 +10,8 @@
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -69,6 +71,15 @@ bool compilerOutputExists(const std::string &fileName, const std::string &type) 
 
 void compilerOutputRemove(const std::string &fileName, const std::string &type) {
     std::remove(getCompilerOutputFileName(fileName, type).c_str());
+}
+
+template <typename SectionHeaders>
+bool isAnyIrSectionDefined(const SectionHeaders &sectionHeaders) {
+    const auto isIrSection = [](const auto &section) {
+        return section.header && (section.header->type == Elf::SHT_OPENCL_SPIRV || section.header->type == Elf::SHT_OPENCL_LLVM_BINARY);
+    };
+
+    return std::any_of(sectionHeaders.begin(), sectionHeaders.end(), isIrSection);
 }
 
 TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
@@ -387,6 +398,57 @@ TEST_F(OfflineCompilerTests, givenDashGInBiggerOptionStringWhenInitializingThenI
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr("-cl-kernel-debug-enable")));
+}
+
+TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShouldBeExcluded) {
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-exclude_ir",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const auto buildResult{mockOfflineCompiler.build()};
+    EXPECT_EQ(OfflineCompiler::SUCCESS, buildResult);
+
+    std::string errorReason{};
+    std::string warning{};
+
+    const auto elf{Elf::decodeElf(mockOfflineCompiler.elfBinary, errorReason, warning)};
+    ASSERT_TRUE(errorReason.empty());
+    ASSERT_TRUE(warning.empty());
+
+    EXPECT_FALSE(isAnyIrSectionDefined(elf.sectionHeaders));
+}
+
+TEST_F(OfflineCompilerTests, givenLackOfExcludeIrArgumentWhenCompilingKernelThenIrShouldBeIncluded) {
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const auto buildResult{mockOfflineCompiler.build()};
+    EXPECT_EQ(OfflineCompiler::SUCCESS, buildResult);
+
+    std::string errorReason{};
+    std::string warning{};
+
+    const auto elf{Elf::decodeElf(mockOfflineCompiler.elfBinary, errorReason, warning)};
+    ASSERT_TRUE(errorReason.empty());
+    ASSERT_TRUE(warning.empty());
+
+    EXPECT_TRUE(isAnyIrSectionDefined(elf.sectionHeaders));
 }
 
 TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorrectExtensionsArePassed) {
