@@ -51,7 +51,6 @@ struct ComputeModeRequirements : public ::testing::Test {
                                     bool numGrfRequiredChanged,
                                     uint32_t numGrfRequired) {
         auto csrHw = getCsrHw<FamilyType>();
-        csrHw->getCsrRequestFlags()->coherencyRequestChanged = coherencyRequestChanged;
         csrHw->getCsrRequestFlags()->hasSharedHandles = hasSharedHandles;
         csrHw->getCsrRequestFlags()->numGrfRequiredChanged = numGrfRequiredChanged;
         flags.requiresCoherency = requireCoherency;

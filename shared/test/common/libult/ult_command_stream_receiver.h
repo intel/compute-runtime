@@ -55,6 +55,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::rootDeviceIndex;
     using BaseClass::sshState;
     using BaseClass::staticWorkPartitioningEnabled;
+    using BaseClass::streamProperties;
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;
     using BaseClass::CommandStreamReceiver::activePartitionsConfig;
@@ -86,7 +87,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
     using BaseClass::CommandStreamReceiver::lastMemoryCompressionState;
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
-    using BaseClass::CommandStreamReceiver::lastSentCoherencyRequest;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
     using BaseClass::CommandStreamReceiver::lastSentThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::lastSentUseGlobalAtomics;

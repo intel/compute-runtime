@@ -48,7 +48,7 @@ void StateComputeModeProperties::setProperties(const StateComputeModeProperties 
     threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
 }
 
-bool StateComputeModeProperties::isDirty() {
+bool StateComputeModeProperties::isDirty() const {
     return isCoherencyRequired.isDirty || largeGrfMode.isDirty || zPassAsyncComputeThreadLimit.isDirty ||
            pixelAsyncComputeThreadLimit.isDirty || threadArbitrationPolicy.isDirty;
 }
@@ -78,7 +78,7 @@ void FrontEndProperties::setProperties(const FrontEndProperties &properties) {
     computeDispatchAllWalkerEnable.set(properties.computeDispatchAllWalkerEnable.value);
 }
 
-bool FrontEndProperties::isDirty() {
+bool FrontEndProperties::isDirty() const {
     return disableOverdispatch.isDirty || singleSliceDispatchCcsMode.isDirty || computeDispatchAllWalkerEnable.isDirty;
 }
 

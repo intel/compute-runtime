@@ -119,7 +119,6 @@ struct DispatchFlags {
 
 struct CsrSizeRequestFlags {
     bool l3ConfigChanged = false;
-    bool coherencyRequestChanged = false;
     bool preemptionRequestChanged = false;
     bool mediaSamplerConfigChanged = false;
     bool hasSharedHandles = false;

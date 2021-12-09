@@ -379,7 +379,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.requiresCoherency = true;
 
-    mockCsr->lastSentCoherencyRequest = 1;
+    mockCsr->streamProperties.stateComputeMode.isCoherencyRequired.value = 1;
 
     commandStream.getSpace(4);
 

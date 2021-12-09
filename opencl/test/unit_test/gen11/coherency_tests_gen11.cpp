@@ -22,12 +22,14 @@ struct Gen11CoherencyRequirements : public ::testing::Test {
 
     struct myCsr : public CommandStreamReceiverHw<ICLFamily> {
         using CommandStreamReceiver::commandStream;
+        using CommandStreamReceiver::streamProperties;
         myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<ICLFamily>(executionEnvironment, 0, 1){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 
     void overrideCoherencyRequest(bool requestChanged, bool requireCoherency) {
-        csr->getCsrRequestFlags()->coherencyRequestChanged = requestChanged;
+        csr->streamProperties.stateComputeMode.isCoherencyRequired.isDirty = requestChanged;
+        csr->streamProperties.stateComputeMode.isCoherencyRequired.value = requireCoherency;
         flags.requiresCoherency = requireCoherency;
     }
 

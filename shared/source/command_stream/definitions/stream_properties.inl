@@ -18,7 +18,7 @@ struct StateComputeModeProperties {
 
     void setProperties(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy);
     void setProperties(const StateComputeModeProperties &properties);
-    bool isDirty();
+    bool isDirty() const;
     void clearIsDirty();
 };
 
@@ -29,7 +29,7 @@ struct FrontEndProperties {
 
     void setProperties(bool isCooperativeKernel, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo);
     void setProperties(const FrontEndProperties &properties);
-    bool isDirty();
+    bool isDirty() const;
     void clearIsDirty();
 };
 

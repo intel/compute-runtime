@@ -91,6 +91,8 @@ HWTEST2_F(CommandStreamReceiverFlushTasDg2AndLaterTests, givenProgramPipeControl
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
     dispatchFlags.usePerDssBackedBuffer = true;
 
+    commandStreamReceiver.streamProperties.stateComputeMode.setProperties(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
+                                                                          commandStreamReceiver.requiredThreadArbitrationPolicy);
     auto cmdSizeForAllCommands = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
     commandStreamReceiver.flushTask(commandStream,
                                     0,

@@ -18,7 +18,7 @@ static auto gfxCore = IGFX_GEN11_CORE;
 
 template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
-    if (csrSizeRequestFlags.coherencyRequestChanged) {
+    if (this->streamProperties.stateComputeMode.isDirty()) {
         return sizeof(typename Family::MI_LOAD_REGISTER_IMM);
     }
     return 0;
@@ -26,12 +26,11 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
 
 template <>
 void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
-    if (csrSizeRequestFlags.coherencyRequestChanged) {
+    if (this->streamProperties.stateComputeMode.isDirty()) {
         LriHelper<Family>::program(&stream,
                                    gen11HdcModeRegister::address,
                                    DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true, !dispatchFlags.requiresCoherency),
                                    false);
-        this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
     }
 }
 

@@ -383,7 +383,6 @@ class CommandStreamReceiver {
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;
 
-    int8_t lastSentCoherencyRequest = -1;
     int8_t lastMediaSamplerConfig = -1;
 
     bool isPreambleSent = false;

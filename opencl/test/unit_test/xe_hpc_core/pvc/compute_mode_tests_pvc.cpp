@@ -64,7 +64,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenRequiredThreadArbitrationPolicyAlread
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask);
 
-    overrideComputeModeRequest<FamilyType>(false, false, false, true);
+    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
 
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -99,8 +99,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSizeI
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     SetUpImpl<FamilyType>();
-    auto updateLastSentThreadArbitrationPolicy = true;
-    overrideComputeModeRequest<FamilyType>(false, false, false, updateLastSentThreadArbitrationPolicy);
+    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
 
     auto numGrfRequired = 128u;
     auto numGrfRequiredChanged = false;

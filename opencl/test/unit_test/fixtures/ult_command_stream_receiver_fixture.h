@@ -139,9 +139,10 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.taskLevel = taskLevel;
 
         commandStreamReceiver.lastSentThreadArbitrationPolicy = commandStreamReceiver.requiredThreadArbitrationPolicy;
-        commandStreamReceiver.lastSentCoherencyRequest = 0;
         commandStreamReceiver.lastMediaSamplerConfig = 0;
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
+        commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
+                                                                              commandStreamReceiver.requiredThreadArbitrationPolicy);
     }
 
     template <typename GfxFamily>

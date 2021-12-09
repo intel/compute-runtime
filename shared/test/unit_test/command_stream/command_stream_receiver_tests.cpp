@@ -84,7 +84,6 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     EXPECT_TRUE(csr.mediaVfeStateDirty);
     EXPECT_FALSE(csr.lastVmeSubslicesConfig);
     EXPECT_EQ(0u, csr.lastSentL3Config);
-    EXPECT_EQ(-1, csr.lastSentCoherencyRequest);
     EXPECT_EQ(-1, csr.lastMediaSamplerConfig);
     EXPECT_EQ(PreemptionMode::Initial, csr.lastPreemptionMode);
     EXPECT_EQ(0u, csr.latestSentStatelessMocsConfig);

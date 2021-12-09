@@ -34,7 +34,6 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
     }
 
     void overrideCoherencyRequest(bool reqestChanged, bool requireCoherency, bool hasSharedHandles) {
-        csr->getCsrRequestFlags()->coherencyRequestChanged = reqestChanged;
         csr->getCsrRequestFlags()->hasSharedHandles = hasSharedHandles;
         flags.requiresCoherency = requireCoherency;
         csr->streamProperties.stateComputeMode.isCoherencyRequired.value = requireCoherency;

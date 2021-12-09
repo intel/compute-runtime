@@ -939,7 +939,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
 
-    commandStreamReceiver.lastSentCoherencyRequest = 0;
+    commandStreamReceiver.streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
     auto l3Config = PreambleHelper<FamilyType>::getL3Config(pDevice->getHardwareInfo(), false);
     commandStreamReceiver.lastSentL3Config = l3Config;
 
@@ -952,6 +952,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble);
 
+    commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
+                                                                          commandStreamReceiver.requiredThreadArbitrationPolicy);
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(sizeNeeded, csrCS.getUsed());
@@ -970,7 +972,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     commandStreamReceiver.timestampPacketWriteEnabled = false;
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
-    commandStreamReceiver.lastSentCoherencyRequest = 0;
 
     auto l3Config = PreambleHelper<FamilyType>::getL3Config(mockDevice->getHardwareInfo(), false);
     commandStreamReceiver.lastSentL3Config = l3Config;
@@ -985,6 +986,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble - sizeNeededForStateBaseAddress);
 
+    commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
+                                                                          commandStreamReceiver.requiredThreadArbitrationPolicy);
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(sizeNeeded, csrCS.getUsed());
@@ -1005,7 +1008,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
 
-    commandStreamReceiver.lastSentCoherencyRequest = 0;
+    commandStreamReceiver.streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
 
     auto l3Config = PreambleHelper<FamilyType>::getL3Config(mockDevice->getHardwareInfo(), false);
     commandStreamReceiver.lastSentL3Config = l3Config;
@@ -1021,6 +1024,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 
     flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
 
+    commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
+                                                                          commandStreamReceiver.requiredThreadArbitrationPolicy);
     commandStreamReceiver.flushTask(
         commandStream,
         0,
@@ -1159,7 +1164,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenBlockingWh
     auto blocking = true;
     auto &commandStreamTask = commandQueue.getCS(1024);
     auto &commandStreamCSR = commandStreamReceiver->getCS();
-    commandStreamReceiver->lastSentCoherencyRequest = 0;
+    commandStreamReceiver->streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());

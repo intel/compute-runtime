@@ -166,7 +166,6 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::isPreambleSent;
-    using CommandStreamReceiver::lastSentCoherencyRequest;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::mediaVfeStateDirty;
     using CommandStreamReceiver::nTo1SubmissionModelEnabled;
@@ -174,6 +173,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::requiredScratchSize;
     using CommandStreamReceiver::requiredThreadArbitrationPolicy;
+    using CommandStreamReceiver::streamProperties;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;

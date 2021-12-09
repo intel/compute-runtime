@@ -19,7 +19,6 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     if (isComputeModeNeeded()) {
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
-        this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
 
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
@@ -40,7 +39,8 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 
 template <>
 inline bool CommandStreamReceiverHw<Family>::isComputeModeNeeded() const {
-    return StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy);
+    return this->streamProperties.stateComputeMode.isDirty() ||
+           StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy);
 }
 
 template <>

@@ -376,7 +376,6 @@ void CommandStreamReceiver::initProgrammingFlags() {
     lastVmeSubslicesConfig = false;
 
     lastSentL3Config = 0;
-    lastSentCoherencyRequest = -1;
     lastMediaSamplerConfig = -1;
     lastPreemptionMode = PreemptionMode::Initial;
     latestSentStatelessMocsConfig = 0;
