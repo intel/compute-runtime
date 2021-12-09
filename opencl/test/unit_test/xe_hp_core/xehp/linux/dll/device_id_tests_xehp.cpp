@@ -5,28 +5,12 @@
  *
  */
 
-#include "shared/source/os_interface/linux/drm_neo.h"
-
-#include "test.h"
+#include "shared/test/common/fixtures/linux/device_id_fixture.h"
 
 using namespace NEO;
 
-TEST(XeHPDeviceIdTest, GivenSupportedDeviceIdThenConfigIsCorrect) {
-    DeviceDescriptor expectedDescriptor = {0x0201, &XE_HP_SDV_CONFIG::hwInfo, &XE_HP_SDV_CONFIG::setupHardwareInfo, GTTYPE_GT4};
+TEST_F(DeviceIdTests, GivenXeHpSdvSupportedDeviceIdThenConfigIsCorrect) {
+    std::array<DeviceDescriptor, 1> expectedDescriptors = {{{0x0201, &XE_HP_SDV_CONFIG::hwInfo, &XE_HP_SDV_CONFIG::setupHardwareInfo, GTTYPE_GT4}}};
 
-    auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
-        return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupHardwareInfo == second->setupHardwareInfo && first->eGtType == second->eGtType;
-    };
-
-    bool found = false;
-
-    for (size_t i = 0; deviceDescriptorTable[i].deviceId != 0; i++) {
-        if (compareStructs(&expectedDescriptor, &deviceDescriptorTable[i])) {
-            found = true;
-            break;
-        }
-    };
-
-    EXPECT_TRUE(found);
+    testImpl(expectedDescriptors);
 }
