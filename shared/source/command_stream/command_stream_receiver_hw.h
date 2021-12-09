@@ -70,6 +70,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForActivePartitionConfig() const;
     size_t getCmdSizeForStallingCommands(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForStallingNoPostSyncCommands() const;
+    size_t getCmdSizeForStallingPostSyncCommands() const;
 
     bool isComputeModeNeeded() const;
     bool isPipelineSelectAlreadyProgrammed() const;
@@ -149,6 +150,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
     void programStallingCommandsForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags);
     void programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream);
+    void programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode);
     void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programActivePartitionConfigFlushTask(LinearStream &csr);

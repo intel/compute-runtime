@@ -207,6 +207,17 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 }
 
 template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
+    if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
+        return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(peekHwInfo(),
+                                                                  false,
+                                                                  true);
+    } else {
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+    }
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
     PipeControlArgs args;
     if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
@@ -220,6 +231,32 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
                                                                     false);
     } else {
         MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+    }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode) {
+    auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
+    PipeControlArgs args(true);
+    if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
+        args.workloadPartitionOffset = true;
+        ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
+                                                                    this->deviceBitfield,
+                                                                    args,
+                                                                    peekHwInfo(),
+                                                                    barrierTimestampPacketGpuAddress,
+                                                                    0,
+                                                                    false,
+                                                                    false);
+        tagNode.setPacketsUsed(this->activePartitions);
+    } else {
+        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+            cmdStream,
+            PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            barrierTimestampPacketGpuAddress,
+            0,
+            peekHwInfo(),
+            args);
     }
 }
 

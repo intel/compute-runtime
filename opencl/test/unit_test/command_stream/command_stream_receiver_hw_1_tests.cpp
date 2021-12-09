@@ -1424,3 +1424,47 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActiveP
     size_t usedAfter = commandStreamReceiver.commandStream.getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenBarrierNodeSetWhenProgrammingBarrierCommandThenExpectPostSyncPipeControl) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto commandStreamReceiver = &pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto &commandStreamCSR = commandStreamReceiver->getCS();
+
+    TagNodeBase *tagNode = commandStreamReceiver->getTimestampPacketAllocator()->getTag();
+    uint64_t gpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tagNode);
+
+    TimestampPacketDependencies timestampPacketDependencies;
+    timestampPacketDependencies.barrierNodes.add(tagNode);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies.barrierNodes;
+
+    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+    size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
+    EXPECT_EQ(expectedCmdSize, estimatedCmdSize);
+
+    commandStreamReceiver->programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
+    EXPECT_EQ(estimatedCmdSize, commandStreamCSR.getUsed());
+
+    parseCommands<FamilyType>(commandStreamCSR, 0);
+    findHardwareCommands<FamilyType>();
+    auto cmdItor = cmdList.begin();
+
+    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo)) {
+        PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+        ASSERT_NE(nullptr, pipeControl);
+        cmdItor++;
+        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hwInfo) > 0) {
+            cmdItor++;
+        }
+    }
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_EQ(0u, pipeControl->getImmediateData());
+    EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+}

@@ -950,3 +950,171 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWh
 
     EXPECT_EQ(estimatedCmdSize, offset);
 }
+
+HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWhenSinglePartitionUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &hwInfo = pDevice->getHardwareInfo();
+
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto &commandStreamCSR = commandStreamReceiver->getCS();
+
+    TagNodeBase *tagNode = commandStreamReceiver->getTimestampPacketAllocator()->getTag();
+    uint64_t gpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tagNode);
+
+    TimestampPacketDependencies timestampPacketDependencies;
+    timestampPacketDependencies.barrierNodes.add(tagNode);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies.barrierNodes;
+
+    commandStreamReceiver->staticWorkPartitioningEnabled = true;
+    commandStreamReceiver->activePartitions = 1;
+
+    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+    size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
+    EXPECT_EQ(expectedCmdSize, estimatedCmdSize);
+
+    commandStreamReceiver->programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
+    EXPECT_EQ(estimatedCmdSize, commandStreamCSR.getUsed());
+
+    parseCommands<FamilyType>(commandStreamCSR, 0);
+    findHardwareCommands<FamilyType>();
+    auto cmdItor = cmdList.begin();
+
+    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo)) {
+        PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+        ASSERT_NE(nullptr, pipeControl);
+        cmdItor++;
+        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hwInfo) > 0) {
+            cmdItor++;
+        }
+    }
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_EQ(0u, pipeControl->getImmediateData());
+    EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionDisabledWhenMultiplePartitionsUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &hwInfo = pDevice->getHardwareInfo();
+
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto &commandStreamCSR = commandStreamReceiver->getCS();
+
+    TagNodeBase *tagNode = commandStreamReceiver->getTimestampPacketAllocator()->getTag();
+    uint64_t gpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tagNode);
+
+    TimestampPacketDependencies timestampPacketDependencies;
+    timestampPacketDependencies.barrierNodes.add(tagNode);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies.barrierNodes;
+
+    commandStreamReceiver->staticWorkPartitioningEnabled = false;
+    commandStreamReceiver->activePartitions = 2;
+
+    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+    size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
+    EXPECT_EQ(expectedCmdSize, estimatedCmdSize);
+
+    commandStreamReceiver->programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
+    EXPECT_EQ(estimatedCmdSize, commandStreamCSR.getUsed());
+
+    parseCommands<FamilyType>(commandStreamCSR, 0);
+    findHardwareCommands<FamilyType>();
+    auto cmdItor = cmdList.begin();
+
+    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo)) {
+        PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+        ASSERT_NE(nullptr, pipeControl);
+        cmdItor++;
+        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hwInfo) > 0) {
+            cmdItor++;
+        }
+    }
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_EQ(0u, pipeControl->getImmediateData());
+    EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWhenMultiplePartitionsUsedThenExpectImplicitScalingPostSyncBarrierWithoutSelfCleanup, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto &hwInfo = pDevice->getHardwareInfo();
+
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto &commandStreamCSR = commandStreamReceiver->getCS();
+
+    TagNodeBase *tagNode = commandStreamReceiver->getTimestampPacketAllocator()->getTag();
+    uint64_t gpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tagNode);
+
+    TimestampPacketDependencies timestampPacketDependencies;
+    timestampPacketDependencies.barrierNodes.add(tagNode);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies.barrierNodes;
+
+    commandStreamReceiver->staticWorkPartitioningEnabled = true;
+    commandStreamReceiver->activePartitions = 2;
+
+    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hwInfo) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          2 * sizeof(uint32_t);
+    size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
+    EXPECT_EQ(expectedSize, estimatedCmdSize);
+
+    commandStreamReceiver->programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
+    EXPECT_EQ(estimatedCmdSize, commandStreamCSR.getUsed());
+    EXPECT_EQ(2u, tagNode->getPacketsUsed());
+
+    parseCommands<FamilyType>(commandStreamCSR, 0);
+    findHardwareCommands<FamilyType>();
+    auto cmdItor = cmdList.begin();
+
+    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo)) {
+        PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+        ASSERT_NE(nullptr, pipeControl);
+        cmdItor++;
+        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hwInfo) > 0) {
+            cmdItor++;
+        }
+    }
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_EQ(0u, pipeControl->getImmediateData());
+    EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
+    cmdItor++;
+
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hwInfo) > 0) {
+        cmdItor++;
+    }
+
+    MI_ATOMIC *miAtomic = genCmdCast<MI_ATOMIC *>(*cmdItor);
+    ASSERT_NE(nullptr, miAtomic);
+    cmdItor++;
+
+    MI_SEMAPHORE_WAIT *miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*cmdItor);
+    ASSERT_NE(nullptr, miSemaphore);
+    cmdItor++;
+
+    MI_BATCH_BUFFER_START *bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmdItor);
+    ASSERT_NE(nullptr, bbStart);
+}

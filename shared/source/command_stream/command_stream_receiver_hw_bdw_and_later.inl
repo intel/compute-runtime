@@ -160,9 +160,27 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 }
 
 template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
     PipeControlArgs args;
     MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode) {
+    auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
+    PipeControlArgs args(true);
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        cmdStream,
+        PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        barrierTimestampPacketGpuAddress,
+        0,
+        peekHwInfo(),
+        args);
 }
 
 template <typename GfxFamily>

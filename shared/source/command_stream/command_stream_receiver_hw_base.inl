@@ -660,17 +660,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingCommandsForBarrie
     auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
 
     if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() != 0) {
-        auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*dispatchFlags.barrierTimestampPacketNodes->peekNodes()[0]);
-
-        PipeControlArgs args(true);
-        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-            cmdStream,
-            PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            barrierTimestampPacketGpuAddress,
-            0,
-            peekHwInfo(),
-            args);
-        dispatchFlags.barrierTimestampPacketNodes->makeResident(*this);
+        programStallingPostSyncCommandsForBarrier(cmdStream, *barrierTimestampPacketNodes->peekNodes()[0]);
+        barrierTimestampPacketNodes->makeResident(*this);
     } else {
         programStallingNoPostSyncCommandsForBarrier(cmdStream);
     }
@@ -1474,7 +1465,7 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingCommands(const DispatchFlags &dispatchFlags) const {
     auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
     if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() > 0) {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+        return getCmdSizeForStallingPostSyncCommands();
     } else {
         return getCmdSizeForStallingNoPostSyncCommands();
     }

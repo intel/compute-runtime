@@ -48,7 +48,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::programEnginePrologue;
     using BaseClass::programPerDssBackedBuffer;
     using BaseClass::programPreamble;
+    using BaseClass::programStallingCommandsForBarrier;
     using BaseClass::programStallingNoPostSyncCommandsForBarrier;
+    using BaseClass::programStallingPostSyncCommandsForBarrier;
     using BaseClass::programStateSip;
     using BaseClass::programVFEState;
     using BaseClass::requiresInstructionCacheFlush;
