@@ -35,50 +35,56 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdS
                             sba.IndirectObjectBaseAddress, sba.InstructionBaseAddress, sba.BindlessSurfaceStateBaseAddress);
 
     if (sba.GeneralStateBaseAddress) {
+        auto generalStateBaseAddress = NEO::GmmHelper::decanonize(sba.GeneralStateBaseAddress);
         NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
                                                                gpuAddress + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress),
-                                                               static_cast<uint32_t>(sba.GeneralStateBaseAddress & 0x0000FFFFFFFFULL),
-                                                               static_cast<uint32_t>(sba.GeneralStateBaseAddress >> 32),
+                                                               static_cast<uint32_t>(generalStateBaseAddress & 0x0000FFFFFFFFULL),
+                                                               static_cast<uint32_t>(generalStateBaseAddress >> 32),
                                                                true,
                                                                false);
     }
     if (sba.SurfaceStateBaseAddress) {
+        auto surfaceStateBaseAddress = NEO::GmmHelper::decanonize(sba.SurfaceStateBaseAddress);
         NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
                                                                gpuAddress + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress),
-                                                               static_cast<uint32_t>(sba.SurfaceStateBaseAddress & 0x0000FFFFFFFFULL),
-                                                               static_cast<uint32_t>(sba.SurfaceStateBaseAddress >> 32),
+                                                               static_cast<uint32_t>(surfaceStateBaseAddress & 0x0000FFFFFFFFULL),
+                                                               static_cast<uint32_t>(surfaceStateBaseAddress >> 32),
                                                                true,
                                                                false);
     }
     if (sba.DynamicStateBaseAddress) {
+        auto dynamicStateBaseAddress = NEO::GmmHelper::decanonize(sba.DynamicStateBaseAddress);
         NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
                                                                gpuAddress + offsetof(SbaTrackedAddresses, DynamicStateBaseAddress),
-                                                               static_cast<uint32_t>(sba.DynamicStateBaseAddress & 0x0000FFFFFFFFULL),
-                                                               static_cast<uint32_t>(sba.DynamicStateBaseAddress >> 32),
+                                                               static_cast<uint32_t>(dynamicStateBaseAddress & 0x0000FFFFFFFFULL),
+                                                               static_cast<uint32_t>(dynamicStateBaseAddress >> 32),
                                                                true,
                                                                false);
     }
     if (sba.IndirectObjectBaseAddress) {
+        auto indirectObjectBaseAddress = NEO::GmmHelper::decanonize(sba.IndirectObjectBaseAddress);
         NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
                                                                gpuAddress + offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress),
-                                                               static_cast<uint32_t>(sba.IndirectObjectBaseAddress & 0x0000FFFFFFFFULL),
-                                                               static_cast<uint32_t>(sba.IndirectObjectBaseAddress >> 32),
+                                                               static_cast<uint32_t>(indirectObjectBaseAddress & 0x0000FFFFFFFFULL),
+                                                               static_cast<uint32_t>(indirectObjectBaseAddress >> 32),
                                                                true,
                                                                false);
     }
     if (sba.InstructionBaseAddress) {
+        auto instructionBaseAddress = NEO::GmmHelper::decanonize(sba.InstructionBaseAddress);
         NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
                                                                gpuAddress + offsetof(SbaTrackedAddresses, InstructionBaseAddress),
-                                                               static_cast<uint32_t>(sba.InstructionBaseAddress & 0x0000FFFFFFFFULL),
-                                                               static_cast<uint32_t>(sba.InstructionBaseAddress >> 32),
+                                                               static_cast<uint32_t>(instructionBaseAddress & 0x0000FFFFFFFFULL),
+                                                               static_cast<uint32_t>(instructionBaseAddress >> 32),
                                                                true,
                                                                false);
     }
     if (sba.BindlessSurfaceStateBaseAddress) {
+        auto bindlessSurfaceStateBaseAddress = NEO::GmmHelper::decanonize(sba.BindlessSurfaceStateBaseAddress);
         NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream,
                                                                gpuAddress + offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress),
-                                                               static_cast<uint32_t>(sba.BindlessSurfaceStateBaseAddress & 0x0000FFFFFFFFULL),
-                                                               static_cast<uint32_t>(sba.BindlessSurfaceStateBaseAddress >> 32),
+                                                               static_cast<uint32_t>(bindlessSurfaceStateBaseAddress & 0x0000FFFFFFFFULL),
+                                                               static_cast<uint32_t>(bindlessSurfaceStateBaseAddress >> 32),
                                                                true,
                                                                false);
     }
