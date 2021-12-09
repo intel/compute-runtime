@@ -41,6 +41,11 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isTimestampWaitSupported() const {
+    return false;
+}
+
+template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported() const {
     return false;
 }

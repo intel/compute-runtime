@@ -230,28 +230,30 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
     return false;
 }
 
-void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList) {
+void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) {
     WAIT_ENTER()
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", getHwTag());
 
-    bool forcePowerSavingMode = this->throttle == QueueThrottle::LOW;
+    if (!skipWait) {
+        bool forcePowerSavingMode = this->throttle == QueueThrottle::LOW;
 
-    getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait,
-                                                                          flushStampToWait,
-                                                                          useQuickKmdSleep,
-                                                                          forcePowerSavingMode);
-    DEBUG_BREAK_IF(getHwTag() < gpgpuTaskCountToWait);
+        getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait,
+                                                                              flushStampToWait,
+                                                                              useQuickKmdSleep,
+                                                                              forcePowerSavingMode);
+        DEBUG_BREAK_IF(getHwTag() < gpgpuTaskCountToWait);
 
-    if (gtpinIsGTPinInitialized()) {
-        gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
-    }
+        if (gtpinIsGTPinInitialized()) {
+            gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
+        }
 
-    for (const CopyEngineState &copyEngine : copyEnginesToWait) {
-        auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
-        bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
-        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
+        for (const CopyEngineState &copyEngine : copyEnginesToWait) {
+            auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
+            bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
+            bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
+        }
     }
 
     if (cleanTemporaryAllocationList) {
@@ -957,8 +959,10 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
     }
 }
 
-bool CommandQueue::isTimestampWaitEnabled() {
-    auto enabled = false;
+bool CommandQueue::isWaitForTimestampsEnabled() {
+    auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    auto enabled = CommandQueue::isTimestampWaitEnabled();
+    enabled &= hwHelper.isTimestampWaitSupported();
 
     switch (DebugManager.flags.EnableTimestampWait.get()) {
     case 0:
@@ -987,9 +991,10 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
         }
     }
 
+    auto waitedOnTimestamps = waitForTimestamps(taskCount);
+
     TimestampPacketContainer nodesToRelease;
     if (deferredTimestampPackets) {
-        waitForTimestamps(taskCount);
         deferredTimestampPackets->swapNodes(nodesToRelease);
     }
 
@@ -999,7 +1004,7 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
             activeBcsStates.push_back(state);
         }
     }
-    waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList);
+    waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();

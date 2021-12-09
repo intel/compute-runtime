@@ -775,17 +775,15 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
 }
 
-HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishWithoutEnqueueThenWaitOnTimestampAndDoNotUpdateTagFromCpu) {
+HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishWithoutEnqueueThenDoNotWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
     DebugManager.flags.EnableTimestampWait.set(1);
 
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
-
-    const auto &csr = cmdQ->getGpgpuCommandStreamReceiver();
-    auto taskCount = *csr.getTagAddress();
-    auto latestFlushedTaskCount = csr.peekLatestFlushedTaskCount();
 
     TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
     TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
@@ -795,16 +793,17 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishWithoutEnqueueT
 
     cmdQ->finish();
 
-    EXPECT_EQ(csr.peekLatestFlushedTaskCount(), latestFlushedTaskCount);
-    EXPECT_EQ(*csr.getTagAddress(), taskCount);
+    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 1u);
 }
 
-HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishThenWaitOnTimestampAndUpdateTagFromCpu) {
+HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishThenWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
     DebugManager.flags.EnableTimestampWait.set(1);
 
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
 
     TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
@@ -819,23 +818,22 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishThenWaitOnTimes
 
     typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
     for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
-        deferredTimestampPackets->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
         timestampPacketContainer->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
     }
 
     cmdQ->finish();
 
-    const auto &csr = cmdQ->getGpgpuCommandStreamReceiver();
-    EXPECT_EQ(csr.peekLatestFlushedTaskCount(), 2u);
-    EXPECT_EQ(*csr.getTagAddress(), 2u);
+    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 0u);
 }
 
-HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitWhenFinishThenWaitOnTimestampAndUpdateTagFromCpu) {
+HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitWhenFinishThenWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
     DebugManager.flags.EnableTimestampWait.set(1);
 
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
     cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), props);
 
@@ -857,9 +855,7 @@ HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitWhenFinishThenWaitO
 
     cmdQ->finish();
 
-    const auto &csr = cmdQ->getGpgpuCommandStreamReceiver();
-    EXPECT_EQ(csr.peekLatestFlushedTaskCount(), 2u);
-    EXPECT_EQ(*csr.getTagAddress(), 2u);
+    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 0u);
 
     cmdQ.reset();
 }

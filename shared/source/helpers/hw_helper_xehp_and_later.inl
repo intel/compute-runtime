@@ -55,6 +55,11 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isTimestampWaitSupported() const {
+    return false;
+}
+
+template <typename GfxFamily>
 const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
 

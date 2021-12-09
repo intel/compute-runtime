@@ -204,14 +204,14 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) const;
 
-    bool isTimestampWaitEnabled();
-    virtual void waitForTimestamps(uint32_t taskCount) = 0;
+    bool isWaitForTimestampsEnabled();
+    virtual bool waitForTimestamps(uint32_t taskCount) = 0;
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
-    MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList);
+    MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait);
     MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
-        this->waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, true);
+        this->waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, true, false);
     }
     MOCKABLE_VIRTUAL void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList);
     MOCKABLE_VIRTUAL void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) {
@@ -240,6 +240,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                             size_t minRequiredSize, IndirectHeap *&indirectHeap);
 
     static bool isAssignEngineRoundRobinEnabled();
+    static bool isTimestampWaitEnabled();
 
     MOCKABLE_VIRTUAL void releaseIndirectHeap(IndirectHeap::Type heapType);
 

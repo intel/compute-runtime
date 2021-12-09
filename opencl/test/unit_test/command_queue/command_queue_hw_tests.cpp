@@ -100,6 +100,21 @@ HWTEST_F(CommandQueueHwTest, WhenConstructingTwoCommandQueuesThenOnlyOneDebugSur
     EXPECT_EQ(dbgSurface, device->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation());
 }
 
+HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoWaitAndTagIsNotUpdated) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableTimestampPacket.set(0);
+    DebugManager.flags.EnableTimestampWait.set(4);
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+    auto taskCount = device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount();
+
+    cmdQ.waitForTimestamps(101u);
+
+    EXPECT_EQ(device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount(), taskCount);
+}
+
 HWTEST_F(CommandQueueHwTest, WhenDebugSurfaceIsAllocatedThenBufferIsZeroed) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));

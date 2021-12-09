@@ -674,16 +674,6 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     return true;
 }
 
-void CommandStreamReceiver::updateTagFromCpu(uint32_t taskCount) {
-    this->latestFlushedTaskCount.store(taskCount);
-
-    auto partitionAddress = getTagAddress();
-    for (uint32_t i = 0; i < activePartitions; i++) {
-        *partitionAddress = taskCount;
-        partitionAddress = ptrOffset(partitionAddress, this->postSyncWriteOffset);
-    }
-}
-
 TagAllocatorBase *CommandStreamReceiver::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
         std::vector<uint32_t> rootDeviceIndices = {rootDeviceIndex};

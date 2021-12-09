@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/test/common/helpers/ult_hw_config.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 
 namespace NEO {
+
 bool CommandQueue::isAssignEngineRoundRobinEnabled() {
     auto assignEngineRoundRobin = false;
 
@@ -17,4 +20,9 @@ bool CommandQueue::isAssignEngineRoundRobinEnabled() {
 
     return assignEngineRoundRobin;
 }
+
+bool CommandQueue::isTimestampWaitEnabled() {
+    return ultHwConfig.useWaitForTimestamps;
+}
+
 } // namespace NEO

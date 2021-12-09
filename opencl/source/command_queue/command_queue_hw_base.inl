@@ -139,12 +139,14 @@ template <typename TSPacketType>
 inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container) {
     bool waited = false;
 
-    for (const auto &timestamp : container->peekNodes()) {
-        for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
-            while (timestamp->getContextEndValue(i) == 1) {
-                WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>());
+    if (container) {
+        for (const auto &timestamp : container->peekNodes()) {
+            for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                while (timestamp->getContextEndValue(i) == 1) {
+                    WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>());
+                }
+                waited = true;
             }
-            waited = true;
         }
     }
 
@@ -152,20 +154,19 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
 }
 
 template <typename Family>
-void CommandQueueHw<Family>::waitForTimestamps(uint32_t taskCount) {
+bool CommandQueueHw<Family>::waitForTimestamps(uint32_t taskCount) {
     using TSPacketType = typename Family::TimestampPacketType;
+    bool waited = false;
 
-    if (isTimestampWaitEnabled()) {
-        bool waited = waitForTimestampsWithinContainer<TSPacketType>(timestampPacketContainer.get());
+    if (isWaitForTimestampsEnabled()) {
+        waited = waitForTimestampsWithinContainer<TSPacketType>(timestampPacketContainer.get());
 
         if (isOOQEnabled()) {
             waited |= waitForTimestampsWithinContainer<TSPacketType>(deferredTimestampPackets.get());
         }
-
-        if (waited) {
-            getGpgpuCommandStreamReceiver().updateTagFromCpu(taskCount);
-        }
     }
+
+    return waited;
 }
 
 template <typename Family>

@@ -140,32 +140,34 @@ TEST(CommandQueue, WhenConstructingCommandQueueThenQueueFamilyIsNotSelected) {
 
 TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenReturnProperValue) {
     DebugManagerStateRestore restorer;
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useWaitForTimestamps = true;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
 
     {
         DebugManager.flags.EnableTimestampWait.set(0);
-        EXPECT_FALSE(cmdQ.isTimestampWaitEnabled());
+        EXPECT_FALSE(cmdQ.isWaitForTimestampsEnabled());
     }
 
     {
         DebugManager.flags.EnableTimestampWait.set(1);
-        EXPECT_EQ(cmdQ.isTimestampWaitEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled());
     }
 
     {
         DebugManager.flags.EnableTimestampWait.set(2);
-        EXPECT_EQ(cmdQ.isTimestampWaitEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled());
+        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled());
     }
 
     {
         DebugManager.flags.EnableTimestampWait.set(3);
-        EXPECT_EQ(cmdQ.isTimestampWaitEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled());
+        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled());
     }
 
     {
         DebugManager.flags.EnableTimestampWait.set(4);
-        EXPECT_TRUE(cmdQ.isTimestampWaitEnabled());
+        EXPECT_TRUE(cmdQ.isWaitForTimestampsEnabled());
     }
 }
 
@@ -884,7 +886,7 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
         MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
-        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList) override {
+        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;
         }
@@ -977,7 +979,7 @@ HWTEST_F(WaitUntilCompletionTests, givenCommandQueueAndCleanTemporaryAllocationL
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
     uint32_t taskCount = 0u;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
-    cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, false);
+    cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, false, false);
 
     auto cmdStreamPtr = &device->getGpgpuCommandStreamReceiver();
 
