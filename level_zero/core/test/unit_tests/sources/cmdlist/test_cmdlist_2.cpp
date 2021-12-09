@@ -232,7 +232,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledAndErrorOnMi
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 0u);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledWithCopyEngineThenappendPageFaultCopyWithappendMemoryCopyKernelWithGACalledForMiddleAndRightSizesAreCalled, Platforms) {
+HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledWithCopyEngineThenappendPageFaultCopyWithappendMemoryCopyCalledOnlyOnce, Platforms) {
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = ((sizeof(uint32_t) * 4) + 1);
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
@@ -243,7 +243,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
-    EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 2u);
+    EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 1u);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledWithCopyEngineAndErrorOnMidOperationThenappendPageFaultCopyWithappendMemoryCopyKernelWithGACalledForMiddleIsCalled, Platforms) {

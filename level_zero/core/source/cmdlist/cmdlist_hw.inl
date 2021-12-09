@@ -1010,15 +1010,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
     ze_result_t ret = ZE_RESULT_ERROR_UNKNOWN;
     if (isCopyOnly()) {
-        ret = appendMemoryCopyBlit(dstAddress, dstAllocation, 0u,
-                                   srcAddress, srcAllocation, 0u,
-                                   size - rightSize);
-
-        if (ret == ZE_RESULT_SUCCESS && rightSize) {
-            ret = appendMemoryCopyBlit(dstAddress, dstAllocation, size - rightSize,
-                                       srcAddress, srcAllocation, size - rightSize,
-                                       rightSize);
-        }
+        return appendMemoryCopyBlit(dstAddress, dstAllocation, 0u,
+                                    srcAddress, srcAllocation, 0u,
+                                    size);
     } else {
         ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
                                            dstAllocation, 0,
