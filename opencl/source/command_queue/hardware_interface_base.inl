@@ -106,7 +106,18 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                 mainKernel->areMultipleSubDevicesInContext());
     }
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies);
+    bool programDependencies = true;
+
+    if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1) {
+        //only optimize kernel after kernel
+        if (commandQueue.peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::GpuKernel) {
+            programDependencies = false;
+        }
+    }
+
+    if (programDependencies) {
+        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies);
+    }
 
     dsh->align(EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 

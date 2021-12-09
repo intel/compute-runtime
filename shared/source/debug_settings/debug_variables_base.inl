@@ -239,6 +239,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForIdleGpu, -1, "-1: platfor
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalkerForAllQueues, -1, "Enable cache flush after walker even if queue doesn't require it")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideKernelSizeLimitForSmallDispatch, -1, "-1: default, >=0: on XEHP+ changes the threshold for treating kernel as small during NULL LWS selection")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideUseKmdWaitFunction, -1, "-1: default (L0: disabled), 0: disabled, 1: enabled. It uses only busy loop to wait or busy loop with KMD wait function, when KMD fallback is enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, ResolveDependenciesViaPipeControls, -1, "-1: default , 0: disabled, 1: enabled. If enabled, instead of programming semaphores, dependencies are resolved using task levels")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")

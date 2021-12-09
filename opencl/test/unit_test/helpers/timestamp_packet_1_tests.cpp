@@ -1318,6 +1318,106 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     EXPECT_EQ(3u, semaphoresFound); // total number of semaphores found in cmdList
 }
 
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsIfPreviousOperationIsBlitThenStillProgramSemaphores) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using WALKER = typename FamilyType::WALKER_TYPE;
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel}));
+
+    auto &cmdStream = mockCmdQ->getCS(0);
+    mockCmdQ->updateLatestSentEnqueueType(NEO::EnqueueProperties::Operation::Blit);
+    const cl_uint eventsOnWaitlist = 1;
+    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event(mockCmdQ, 0, 0, 0);
+    event.addTimestampPacketNodes(timestamp);
+
+    cl_event waitlist[] = {&event};
+
+    EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
+    CsrDependencies csrDeps;
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *mockCmdQ,
+        multiDispatchInfo,
+        csrDeps,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+
+    uint32_t semaphoresFound = 0;
+
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
+        if (semaphoreCmd) {
+            semaphoresFound++;
+        }
+    }
+    EXPECT_EQ(1u, semaphoresFound); // total number of semaphores found in cmdList
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsIfPreviousOperationIsGPUKernelThenDoNotProgramSemaphores) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using WALKER = typename FamilyType::WALKER_TYPE;
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel}));
+
+    auto &cmdStream = mockCmdQ->getCS(0);
+    mockCmdQ->updateLatestSentEnqueueType(NEO::EnqueueProperties::Operation::GpuKernel);
+    const cl_uint eventsOnWaitlist = 1;
+    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event(mockCmdQ, 0, 0, 0);
+    event.addTimestampPacketNodes(timestamp);
+
+    cl_event waitlist[] = {&event};
+
+    EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
+    CsrDependencies csrDeps;
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *mockCmdQ,
+        multiDispatchInfo,
+        csrDeps,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+
+    uint32_t semaphoresFound = 0;
+
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
+        if (semaphoreCmd) {
+            semaphoresFound++;
+        }
+    }
+    EXPECT_EQ(0u, semaphoresFound);
+}
+
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedThenMakeItResident) {
     auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
 

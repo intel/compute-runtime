@@ -324,6 +324,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     uint32_t peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const;
 
     void updateLatestSentEnqueueType(EnqueueProperties::Operation newEnqueueType) { this->latestSentEnqueueType = newEnqueueType; }
+    EnqueueProperties::Operation peekLatestSentEnqueueOperation() { return this->latestSentEnqueueType; }
 
     void setupBarrierTimestampForBcsEngines(aub_stream::EngineType engineType, TimestampPacketDependencies &timestampPacketDependencies);
     void processBarrierTimestampForBcsEngine(aub_stream::EngineType bcsEngineType, TimestampPacketDependencies &blitDependencies);
