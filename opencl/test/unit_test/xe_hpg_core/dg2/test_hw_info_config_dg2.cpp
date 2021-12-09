@@ -150,3 +150,25 @@ DG2TEST_F(Dg2HwInfoConfig, givenB0rCSteppingWhenAskingIfTile64With3DSurfaceOnBCS
         EXPECT_EQ(paramBool, hwInfoConfig->isTile64With3DSurfaceOnBCSSupported(hwInfo));
     }
 }
+
+DG2TEST_F(Dg2HwInfoConfig, givenA0SteppingAnd128EuWhenConfigureCalledThenDisableCompression) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+
+    for (uint8_t revision : {REVISION_A0, REVISION_A1}) {
+        for (uint32_t euCount : {127, 128, 129}) {
+            HardwareInfo hwInfo = *defaultHwInfo;
+            hwInfo.featureTable.flags.ftrE2ECompression = true;
+
+            hwInfo.platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, hwInfo);
+            hwInfo.gtSystemInfo.EUCount = euCount;
+
+            hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+
+            auto compressionExpected = (euCount == 128) ? true : (revision != REVISION_A0);
+
+            EXPECT_EQ(compressionExpected, hwInfo.capabilityTable.ftrRenderCompressedBuffers);
+            EXPECT_EQ(compressionExpected, hwInfo.capabilityTable.ftrRenderCompressedImages);
+            EXPECT_EQ(compressionExpected, hwInfoConfig->allowCompression(hwInfo));
+        }
+    }
+}

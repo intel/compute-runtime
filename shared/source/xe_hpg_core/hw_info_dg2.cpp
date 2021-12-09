@@ -149,6 +149,7 @@ void DG2_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeat
     if (gtSysInfo->SliceCount == 0) {
         gtSysInfo->SliceCount = 2;
         gtSysInfo->SubSliceCount = 8;
+        gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
         gtSysInfo->EUCount = 40;
         gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
@@ -160,6 +161,10 @@ void DG2_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeat
         gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
 
         hwInfo->featureTable.ftrBcsInfo = 1;
+
+        for (uint32_t slice = 0; slice < gtSysInfo->SliceCount; slice++) {
+            gtSysInfo->SliceInfo[slice].Enabled = true;
+        }
     }
 
     if (setupFeatureTableAndWorkaroundTable) {
