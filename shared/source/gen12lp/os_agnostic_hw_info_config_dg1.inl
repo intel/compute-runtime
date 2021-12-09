@@ -56,3 +56,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
     return true;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
+    return true;
+}

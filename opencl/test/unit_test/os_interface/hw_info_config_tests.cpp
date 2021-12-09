@@ -164,6 +164,11 @@ HWTEST_F(HwInfoConfigTest, whenConvertingTimestampsToCsDomainThenNothingIsChange
     EXPECT_EQ(initialData, timestampData);
 }
 
+HWTEST_F(HwInfoConfigTest, whenOverrideGfxPartitionLayoutForWslThenReturnFalse) {
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig->overrideGfxPartitionLayoutForWsl());
+}
+
 HWTEST_F(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsChanged) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
