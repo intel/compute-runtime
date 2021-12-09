@@ -17,7 +17,10 @@ AllocationProperties MemoryPropertiesHelper::getAllocationProperties(
 
     auto deviceBitfield = adjustDeviceBitfield(rootDeviceIndex, memoryProperties, subDevicesBitfieldParam);
     AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource, deviceBitfield);
+    allocationProperties.flags.resource48Bit = memoryProperties.flags.resource48Bit;
+
     fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo, deviceOnlyVisibilty);
+
     return allocationProperties;
 }
 

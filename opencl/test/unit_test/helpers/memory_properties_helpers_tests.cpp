@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -16,8 +17,25 @@
 
 #include "CL/cl_ext_intel.h"
 #include "gtest/gtest.h"
+#include "memory_properties_flags.h"
 
 using namespace NEO;
+
+TEST(MemoryProperties, givenResource48BitMemoryPropertySetWhenGetAllocationPropertiesCalledThenSetAllocationPropertyToo) {
+    UltDeviceFactory deviceFactory{1, 0};
+    MemoryProperties memoryProperties{};
+    memoryProperties.pDevice = deviceFactory.rootDevices[0];
+    memoryProperties.flags.resource48Bit = true;
+
+    DeviceBitfield deviceBitfield{0xf};
+
+    HardwareInfo hwInfo(*defaultHwInfo);
+
+    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER,
+                                                                                false, hwInfo, deviceBitfield, false);
+
+    EXPECT_EQ(1u, allocationProperties.flags.resource48Bit);
+}
 
 TEST(MemoryProperties, givenValidPropertiesWhenCreateMemoryPropertiesThenTrueIsReturned) {
     UltDeviceFactory deviceFactory{1, 0};
