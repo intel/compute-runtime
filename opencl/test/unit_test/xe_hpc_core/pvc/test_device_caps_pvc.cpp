@@ -32,11 +32,6 @@ PVCTEST_F(PvcDeviceCapsTests, givenPvcProductWhenCheckImagesSupportThenReturnFal
     EXPECT_FALSE(PVC::hwInfo.capabilityTable.supportsImages);
 }
 
-PVCTEST_F(PvcDeviceCapsTests, givenPvcProductWhenMaxWorkgroupSizeIsQueriedThenItIsEqualTo1024u) {
-    EXPECT_EQ(4096u, pDevice->getHardwareInfo().gtSystemInfo.ThreadCount);
-    EXPECT_EQ(1024u, pDevice->getDeviceInfo().maxWorkGroupSize);
-}
-
 PVCTEST_F(PvcDeviceCapsTests, givenPvcProductWhenDeviceCapsInitializedThenAddPvcExtensions) {
     const auto &dInfo = pClDevice->getDeviceInfo();
     EXPECT_THAT(dInfo.deviceExtensions, testing::HasSubstr(std::string("cl_intel_create_buffer_with_properties")));

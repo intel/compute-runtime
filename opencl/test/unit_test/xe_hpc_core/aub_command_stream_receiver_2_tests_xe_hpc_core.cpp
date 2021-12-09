@@ -16,7 +16,6 @@
 #include "test.h"
 
 using namespace NEO;
-
 using AubCommandStreamReceiverXeHpcCoreTests = ::testing::Test;
 
 XE_HPC_CORETEST_F(AubCommandStreamReceiverXeHpcCoreTests, givenLinkBcsEngineWhenDumpAllocationCalledThenIgnore) {
@@ -31,6 +30,12 @@ XE_HPC_CORETEST_F(AubCommandStreamReceiverXeHpcCoreTests, givenLinkBcsEngineWhen
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+
+    MockAubManager *mockManager = new MockAubManager();
+    auto gmmHelper = device->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+    MockAubCenter *mockAubCenter = new MockAubCenter(defaultHwInfo.get(), *gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
+    mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
+    device->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
     for (uint32_t i = aub_stream::EngineType::ENGINE_BCS1; i <= aub_stream::EngineType::ENGINE_BCS8; i++) {
         MockAubCsr<FamilyType> aubCsr("", true, *device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());

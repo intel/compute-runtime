@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
@@ -1164,10 +1165,16 @@ HWTEST_F(DeviceGetCapsTest, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThe
     mySysInfo.EuCountPerPoolMin = 99999;
     mySkuTable.flags.ftrPooledEuEnabled = 0;
 
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
+    auto &deviceInfo = device->deviceInfo;
 
-    auto expectedMaxWGS = (mySysInfo.EUCount / mySysInfo.SubSliceCount) *
-                          (mySysInfo.ThreadCount / mySysInfo.EUCount) * 8;
+    auto simdSizeUsed = HwHelperHw<FamilyType>::get().getMinimalSIMDSize();
+
+    auto hwInfoConfig = HwInfoConfig::get(myHwInfo.platform.eProductFamily);
+    auto expectedMaxWGS = hwInfoConfig->getMaxThreadsForWorkgroupInDSSOrSS(myHwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice),
+                                                                           static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) *
+                          simdSizeUsed;
+
     expectedMaxWGS = std::min(Math::prevPowerOfTwo(expectedMaxWGS), 1024u);
 
     EXPECT_EQ(expectedMaxWGS, device->getDeviceInfo().maxWorkGroupSize);

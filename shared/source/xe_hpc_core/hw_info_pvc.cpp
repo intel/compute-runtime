@@ -197,7 +197,8 @@ void PVC_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeat
         gtSysInfo->L3BankCount = 1;
 
         gtSysInfo->CCSInfo.IsValid = true;
-        gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
+        gtSysInfo->CCSInfo.NumberOfCCSEnabled = 2;
+        gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b11;
 
         hwInfo->featureTable.ftrBcsInfo = 1;
 
