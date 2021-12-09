@@ -1196,8 +1196,6 @@ HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperative
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeUsedWithCooperativeKernel = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed() - sizeBefore;
     EXPECT_LE(sizeUsedWithCooperativeKernel, estimateWithCooperativeKernel);
-
-    EXPECT_GT(sizeUsedWithNonCooperativeKernel, sizeUsedWithCooperativeKernel);
 }
 
 } // namespace ult
