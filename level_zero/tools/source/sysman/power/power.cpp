@@ -27,7 +27,12 @@ void PowerHandleContext::createHandle(ze_device_handle_t deviceHandle) {
         delete pPower;
     }
 }
-ze_result_t PowerHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+ze_result_t PowerHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles, ze_device_handle_t coreDevice) {
+    // Create Handle for device level power
+    if (deviceHandles.size() > 1) {
+        createHandle(coreDevice);
+    }
+
     for (const auto &deviceHandle : deviceHandles) {
         createHandle(deviceHandle);
     }

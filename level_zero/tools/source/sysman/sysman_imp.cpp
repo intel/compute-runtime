@@ -81,7 +81,7 @@ ze_result_t SysmanDeviceImp::init() {
         return result;
     }
     if (pPowerHandleContext) {
-        pPowerHandleContext->init(deviceHandles);
+        pPowerHandleContext->init(deviceHandles, hCoreDevice);
     }
     if (pFrequencyHandleContext) {
         pFrequencyHandleContext->init(deviceHandles);

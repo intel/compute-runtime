@@ -42,7 +42,7 @@ struct PowerHandleContext {
     PowerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~PowerHandleContext();
 
-    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
+    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles, ze_device_handle_t coreDevice);
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower);
 
     OsSysman *pOsSysman = nullptr;

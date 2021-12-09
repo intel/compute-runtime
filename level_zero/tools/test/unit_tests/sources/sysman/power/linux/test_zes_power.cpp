@@ -90,7 +90,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_properties_t properties;
@@ -114,7 +114,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_properties_t properties;
@@ -137,7 +137,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_properties_t properties;
@@ -387,7 +387,7 @@ TEST_F(SysmanDevicePowerFixture, GivenGetPowerLimitsWhenPowerLimitsAreDisabledWh
 TEST_F(SysmanDevicePowerFixture, GivenScanDiectoriesFailAndPmtIsNotNullPointerThenPowerModuleIsSupported) {
     EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
         .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(device)->getProperties(&deviceProperties);
     PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
@@ -402,7 +402,7 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, powerHandleComponentCount);
@@ -415,7 +415,7 @@ TEST_F(SysmanDevicePowerFixture, GivenInvalidComponentCountWhenEnumeratingPowerD
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, powerHandleComponentCount);
@@ -432,7 +432,7 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, powerHandleComponentCount);
@@ -451,7 +451,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -469,7 +469,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto &deviceHandle : deviceHandles) {
@@ -505,7 +505,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
         pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, nullptr);
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -521,7 +521,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyThre
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     zes_energy_threshold_t threshold;
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
@@ -536,7 +536,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerEnergyThre
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     double threshold = 0;
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
@@ -551,7 +551,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerLimitsThen
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_sustained_limit_t sustained;
@@ -568,7 +568,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsThen
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         zes_power_sustained_limit_t sustained;
@@ -585,7 +585,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixture, GivenValidPowerHandleWhenGettingPowe
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto &deviceHandle : deviceHandles) {

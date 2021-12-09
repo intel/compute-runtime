@@ -390,7 +390,7 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
         }
 
-        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -462,7 +462,7 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
         }
 
-        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles);
+        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
