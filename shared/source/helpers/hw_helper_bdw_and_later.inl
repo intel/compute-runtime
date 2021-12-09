@@ -126,7 +126,7 @@ inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlWAFlags(PIPE
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::additionalPipeControlArgsRequired() const {
+bool HwHelperHw<GfxFamily>::unTypedDataPortCacheFlushRequired() const {
     return false;
 }
 

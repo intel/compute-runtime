@@ -54,7 +54,7 @@ void MemorySynchronizationCommands<Family>::setPipeControlWAFlags(PIPE_CONTROL &
 }
 
 template <>
-bool HwHelperHw<Family>::additionalPipeControlArgsRequired() const {
+bool HwHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
     return true;
 }
 

@@ -132,7 +132,7 @@ class HwHelper {
     virtual size_t getSingleTimestampPacketSize() const = 0;
     virtual void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const = 0;
     virtual void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const = 0;
-    virtual bool additionalPipeControlArgsRequired() const = 0;
+    virtual bool unTypedDataPortCacheFlushRequired() const = 0;
     virtual bool isEngineTypeRemappingToHwSpecificRequired() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
@@ -363,7 +363,7 @@ class HwHelperHw : public HwHelper {
 
     void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const override;
 
-    bool additionalPipeControlArgsRequired() const override;
+    bool unTypedDataPortCacheFlushRequired() const override;
 
     bool isAssignEngineRoundRobinSupported() const override;
 

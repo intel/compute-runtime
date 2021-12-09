@@ -145,7 +145,7 @@ void MemorySynchronizationCommands<Family>::setCacheFlushExtraProperties(PipeCon
 }
 
 template <>
-bool HwHelperHw<Family>::additionalPipeControlArgsRequired() const {
+bool HwHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
     return false;
 }
 

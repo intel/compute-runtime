@@ -148,7 +148,7 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
     // 1. make sure previous kernel finished
     PipeControlArgs args;
     auto &hardwareInfo = commandQueue.getDevice().getHardwareInfo();
-    args.adjustArgs(hardwareInfo);
+    args.unTypedDataPortCacheFlush = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).unTypedDataPortCacheFlushRequired();
 
     MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
 

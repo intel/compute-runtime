@@ -150,9 +150,9 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugDisableCacheFlushWhenProg
     EXPECT_FALSE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
-HWTEST2_F(HwHelperTestsDg2AndLater, givenXeHPGAndLaterPlatformWhenCheckingIfUntypedDataPortCacheFlushIsRequiredThenReturnTrue, IsAtLeastXeHpgCore) {
+HWTEST2_F(HwHelperTestsDg2AndLater, givenXeHPGAndLaterPlatformWhenCheckingIfUnTypedDataPortCacheFlushRequiredThenReturnTrue, IsAtLeastXeHpgCore) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(hwHelper.additionalPipeControlArgsRequired());
+    EXPECT_TRUE(hwHelper.unTypedDataPortCacheFlushRequired());
 }
 
 using HwInfoConfigTestDg2AndLater = ::testing::Test;
