@@ -178,8 +178,18 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
                                          false,
                                          device->getNEODevice()->getDeviceBitfield()};
 
-    buffers[BUFFER_ALLOCATION::FIRST] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-    buffers[BUFFER_ALLOCATION::SECOND] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    auto firstBuffer = device->obtainReusableAllocation(alignedSize, NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER);
+    if (!firstBuffer) {
+        firstBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    }
+
+    auto secondBuffer = device->obtainReusableAllocation(alignedSize, NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER);
+    if (!secondBuffer) {
+        secondBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    }
+
+    buffers[BUFFER_ALLOCATION::FIRST] = firstBuffer;
+    buffers[BUFFER_ALLOCATION::SECOND] = secondBuffer;
 
     if (!buffers[BUFFER_ALLOCATION::FIRST] || !buffers[BUFFER_ALLOCATION::SECOND]) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -192,13 +202,13 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
     return ZE_RESULT_SUCCESS;
 }
 
-void CommandQueueImp::CommandBufferManager::destroy(NEO::MemoryManager *memoryManager) {
+void CommandQueueImp::CommandBufferManager::destroy(Device *device) {
     if (buffers[BUFFER_ALLOCATION::FIRST]) {
-        memoryManager->freeGraphicsMemory(buffers[BUFFER_ALLOCATION::FIRST]);
+        device->storeReusableAllocation(*buffers[BUFFER_ALLOCATION::FIRST]);
         buffers[BUFFER_ALLOCATION::FIRST] = nullptr;
     }
     if (buffers[BUFFER_ALLOCATION::SECOND]) {
-        memoryManager->freeGraphicsMemory(buffers[BUFFER_ALLOCATION::SECOND]);
+        device->storeReusableAllocation(*buffers[BUFFER_ALLOCATION::SECOND]);
         buffers[BUFFER_ALLOCATION::SECOND] = nullptr;
     }
 }

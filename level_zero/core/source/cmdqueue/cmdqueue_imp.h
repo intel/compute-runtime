@@ -36,7 +36,7 @@ struct CommandQueueImp : public CommandQueue {
         };
 
         ze_result_t initialize(Device *device, size_t sizeRequested);
-        void destroy(NEO::MemoryManager *memoryManager);
+        void destroy(Device *device);
         void switchBuffers(NEO::CommandStreamReceiver *csr);
 
         NEO::GraphicsAllocation *getCurrentBufferAllocation() {

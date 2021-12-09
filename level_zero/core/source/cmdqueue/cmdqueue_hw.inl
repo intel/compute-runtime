@@ -55,7 +55,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::destroy() {
         delete commandStream;
         commandStream = nullptr;
     }
-    buffers.destroy(this->getDevice()->getNEODevice()->getMemoryManager());
+    buffers.destroy(this->getDevice());
     delete this;
     return ZE_RESULT_SUCCESS;
 }

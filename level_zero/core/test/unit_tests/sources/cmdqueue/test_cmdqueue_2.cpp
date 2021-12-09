@@ -506,6 +506,22 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     commandQueue->destroy();
 }
 
+TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsReusableAllocations) {
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, returnValue);
+    EXPECT_NE(nullptr, commandQueue);
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    EXPECT_TRUE(deviceImp->allocationsForReuse.peekIsEmpty());
+
+    commandQueue->destroy();
+
+    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+}
+
 struct DeviceWithDualStorage : Test<DeviceFixture> {
     void SetUp() override {
         NEO::MockCompilerEnableGuard mock(true);
