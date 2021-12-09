@@ -435,7 +435,7 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
     const auto &deviceImp = *static_cast<DeviceImp *>(device);
     auto metricPoolImp = new MetricQueryPoolImp(device->getMetricContext(), hMetricGroup, *pDesc);
 
-    if (metricContext.isMultiDeviceCapable()) {
+    if (metricContext.isImplicitScalingCapable()) {
 
         auto emptyMetricGroups = std::vector<zet_metric_group_handle_t>();
         auto &metricGroups = hMetricGroup
@@ -557,7 +557,7 @@ bool MetricQueryPoolImp::allocateGpuMemory() {
     if (description.type == ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE) {
         // Get allocation size.
         const auto &deviceImp = *static_cast<DeviceImp *>(&metricContext.getDevice());
-        allocationSize = (metricContext.isMultiDeviceCapable())
+        allocationSize = (metricContext.isImplicitScalingCapable())
                              ? deviceImp.subDevices[0]->getMetricContext().getMetricsLibrary().getQueryReportGpuSize() * description.count * deviceImp.numSubDevices
                              : metricsLibrary.getQueryReportGpuSize() * description.count;
 
@@ -895,7 +895,7 @@ ze_result_t MetricQuery::appendMemoryBarrier(CommandList &commandList) {
 
     DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
 
-    if (pDeviceImp->metricContext->isMultiDeviceCapable()) {
+    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.
         pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
     }
@@ -921,7 +921,7 @@ ze_result_t MetricQuery::appendStreamerMarker(CommandList &commandList,
 
     DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
 
-    if (pDeviceImp->metricContext->isMultiDeviceCapable()) {
+    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.
         pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
         pDeviceImp->metricContext->getMetricsLibrary().enableWorkloadPartition();

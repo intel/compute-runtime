@@ -294,7 +294,7 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
     auto pDevice = Device::fromHandle(hDevice);
     const auto pDeviceImp = static_cast<const DeviceImp *>(pDevice);
 
-    if (pDeviceImp->metricContext->isMultiDeviceCapable()) {
+    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
         const uint32_t subDeviceCount = pDeviceImp->numSubDevices;
         auto pMetricStreamer = new MetricStreamerImp();
         UNRECOVERABLE_IF(pMetricStreamer == nullptr);

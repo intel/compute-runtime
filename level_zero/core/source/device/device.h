@@ -88,8 +88,8 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getMaxNumHwThreads() const = 0;
 
     virtual NEO::HwHelper &getHwHelper() = 0;
-    bool isMultiDeviceCapable() const {
-        return multiDeviceCapable;
+    bool isImplicitScalingCapable() const {
+        return implicitScalingCapable;
     }
     virtual const NEO::HardwareInfo &getHwInfo() const = 0;
     virtual NEO::OSInterface &getOsInterface() = 0;
@@ -140,7 +140,7 @@ struct Device : _ze_device_handle_t {
     virtual void storeReusableAllocation(NEO::GraphicsAllocation &alloc) = 0;
 
   protected:
-    bool multiDeviceCapable = false;
+    bool implicitScalingCapable = false;
 };
 
 } // namespace L0

@@ -19,7 +19,7 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Device> : public ::L0::Device {
     using Base = L0::Device;
-    using Base::multiDeviceCapable;
+    using Base::implicitScalingCapable;
 };
 
 using Device = WhiteBox<::L0::Device>;
@@ -98,7 +98,7 @@ template <>
 struct Mock<L0::DeviceImp> : public L0::DeviceImp {
     using Base = L0::DeviceImp;
     using Base::debugSession;
-    using Base::multiDeviceCapable;
+    using Base::implicitScalingCapable;
 
     explicit Mock(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
         device->incRefInternal();

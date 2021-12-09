@@ -333,7 +333,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
     strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, hwInfoConfig.getDeviceMemoryName().c_str());
     pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(&hwInfo);
     pMemProperties->maxBusWidth = deviceInfo.addressBits;
-    if (this->isMultiDeviceCapable() ||
+    if (this->isImplicitScalingCapable() ||
         this->getNEODevice()->getNumGenericSubDevices() == 0) {
         pMemProperties->totalSize = deviceInfo.globalMemSize;
     } else {
@@ -496,7 +496,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount;
 
-    if (isMultiDeviceCapable()) {
+    if (isImplicitScalingCapable()) {
         pDeviceProperties->numSlices *= neoDevice->getNumGenericSubDevices();
     }
 
@@ -702,7 +702,7 @@ ze_result_t DeviceImp::systemBarrier() { return ZE_RESULT_ERROR_UNSUPPORTED_FEAT
 ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
                                                     zet_metric_group_handle_t *phMetricGroups) {
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    if (!this->isSubdevice && this->isMultiDeviceCapable()) {
+    if (!this->isSubdevice && this->isImplicitScalingCapable()) {
         for (auto subDevice : this->subDevices) {
             result = subDevice->getMetricContext().activateMetricGroupsDeferred(count, phMetricGroups);
             if (result != ZE_RESULT_SUCCESS)
@@ -738,7 +738,7 @@ MetricContext &DeviceImp::getMetricContext() { return *metricContext; }
 
 void DeviceImp::activateMetricGroups() {
     if (metricContext != nullptr) {
-        if (metricContext->isMultiDeviceCapable()) {
+        if (metricContext->isImplicitScalingCapable()) {
             for (uint32_t i = 0; i < numSubDevices; i++) {
                 subDevices[i]->getMetricContext().activateMetricGroups();
             }
@@ -779,7 +779,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     neoDevice->incRefInternal();
 
     device->execEnvironment = (void *)neoDevice->getExecutionEnvironment();
-    device->multiDeviceCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true);
+    device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true);
     device->metricContext = MetricContext::create(*device);
     device->builtins = BuiltinFunctionsLib::create(
         device, neoDevice->getBuiltIns());
@@ -1117,7 +1117,7 @@ bool DeviceImp::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slic
 
 NEO::Device *DeviceImp::getActiveDevice() const {
     if (neoDevice->getNumGenericSubDevices() > 1u) {
-        if (isMultiDeviceCapable()) {
+        if (isImplicitScalingCapable()) {
             return this->neoDevice;
         }
         return this->neoDevice->getSubDevice(0);

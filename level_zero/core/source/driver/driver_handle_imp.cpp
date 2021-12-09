@@ -188,7 +188,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         auto device = Device::create(this, pNeoDevice, false, &returnValue);
         this->devices.push_back(device);
 
-        multiOsContextDriver |= device->isMultiDeviceCapable();
+        multiOsContextDriver |= device->isImplicitScalingCapable();
         if (returnValue != ZE_RESULT_SUCCESS) {
             return returnValue;
         }

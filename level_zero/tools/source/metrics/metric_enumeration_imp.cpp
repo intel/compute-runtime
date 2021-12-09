@@ -128,7 +128,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
 
     auto &device = metricContext.getDevice();
     const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-    if (metricContext.isMultiDeviceCapable()) {
+    if (metricContext.isImplicitScalingCapable()) {
 
         // Open metrics device for each sub device.
         for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
@@ -167,7 +167,7 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
 
         auto &device = metricContext.getDevice();
         const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-        if (metricContext.isMultiDeviceCapable()) {
+        if (metricContext.isImplicitScalingCapable()) {
 
             for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
                 deviceImp.subDevices[i]->getMetricContext().getMetricEnumeration().cleanupMetricsDiscovery();
@@ -201,7 +201,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
 
     auto &device = metricContext.getDevice();
     const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-    if (metricContext.isMultiDeviceCapable()) {
+    if (metricContext.isImplicitScalingCapable()) {
 
         ze_result_t result = ZE_RESULT_SUCCESS;
 

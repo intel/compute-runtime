@@ -960,7 +960,7 @@ TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingC
     queueDesc.ordinal = ordinal;
     queueDesc.index = 0;
 
-    l0RootDevice.multiDeviceCapable = true;
+    l0RootDevice.implicitScalingCapable = true;
     auto returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
     EXPECT_EQ(nullptr, commandList);
@@ -969,7 +969,7 @@ TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingC
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
     EXPECT_EQ(nullptr, commandList);
 
-    l0RootDevice.multiDeviceCapable = false;
+    l0RootDevice.implicitScalingCapable = false;
     returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_NE(nullptr, commandList);

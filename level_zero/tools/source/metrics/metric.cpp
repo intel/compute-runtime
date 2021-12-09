@@ -69,7 +69,7 @@ struct MetricContextImp : public MetricContext {
     bool isComputeUsed() override;
     uint32_t getSubDeviceIndex() override;
     void setSubDeviceIndex(const uint32_t index) override;
-    bool isMultiDeviceCapable() override;
+    bool isImplicitScalingCapable() override;
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -80,7 +80,7 @@ struct MetricContextImp : public MetricContext {
     MetricStreamer *pMetricStreamer = nullptr;
     uint32_t subDeviceIndex = 0;
     bool useCompute = false;
-    bool multiDeviceCapable = false;
+    bool implicitScalingCapable = false;
 };
 
 MetricContextImp::MetricContextImp(Device &deviceInput)
@@ -96,7 +96,7 @@ MetricContextImp::MetricContextImp(Device &deviceInput)
                          ? static_cast<NEO::SubDevice *>(deviceNeo)->getSubDeviceIndex()
                          : 0;
 
-    multiDeviceCapable = !isSubDevice && device.isMultiDeviceCapable();
+    implicitScalingCapable = !isSubDevice && device.isImplicitScalingCapable();
 }
 
 MetricContextImp::~MetricContextImp() {
@@ -169,8 +169,8 @@ void MetricContextImp::setSubDeviceIndex(const uint32_t index) {
     subDeviceIndex = index;
 }
 
-bool MetricContextImp::isMultiDeviceCapable() {
-    return multiDeviceCapable;
+bool MetricContextImp::isImplicitScalingCapable() {
+    return implicitScalingCapable;
 }
 
 ze_result_t

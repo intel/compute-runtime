@@ -2494,26 +2494,26 @@ struct MultiSubDeviceFixture : public DeviceFixture {
 };
 
 using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1>>;
-TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsMultiDeviceCapable) {
-    EXPECT_TRUE(device->isMultiDeviceCapable());
+TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsImplicitScalingCapable) {
+    EXPECT_TRUE(device->isImplicitScalingCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
 }
 
 using MultiSubDeviceTestNoApi = Test<MultiSubDeviceFixture<true, false, -1>>;
-TEST_F(MultiSubDeviceTestNoApi, GivenNoApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsNotMultiDeviceCapable) {
-    EXPECT_FALSE(device->isMultiDeviceCapable());
+TEST_F(MultiSubDeviceTestNoApi, GivenNoApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsNotImplicitScalingCapable) {
+    EXPECT_FALSE(device->isImplicitScalingCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
 using MultiSubDeviceTestNoLocalMemory = Test<MultiSubDeviceFixture<false, true, -1>>;
-TEST_F(MultiSubDeviceTestNoLocalMemory, GivenApiSupportAndLocalMemoryDisabledWhenDeviceContainsSubDevicesThenItIsNotMultiDeviceCapable) {
-    EXPECT_FALSE(device->isMultiDeviceCapable());
+TEST_F(MultiSubDeviceTestNoLocalMemory, GivenApiSupportAndLocalMemoryDisabledWhenDeviceContainsSubDevicesThenItIsNotImplicitScalingCapable) {
+    EXPECT_FALSE(device->isImplicitScalingCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
 using MultiSubDeviceTestNoApiForceOn = Test<MultiSubDeviceFixture<true, false, 1>>;
-TEST_F(MultiSubDeviceTestNoApiForceOn, GivenNoApiSupportAndLocalMemoryEnabledWhenForcedImplicitScalingThenItIsMultiDeviceCapable) {
-    EXPECT_TRUE(device->isMultiDeviceCapable());
+TEST_F(MultiSubDeviceTestNoApiForceOn, GivenNoApiSupportAndLocalMemoryEnabledWhenForcedImplicitScalingThenItIsImplicitScalingCapable) {
+    EXPECT_TRUE(device->isImplicitScalingCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
 }
 

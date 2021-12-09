@@ -150,7 +150,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
 
     uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
-    if ((!device->isMultiDeviceCapable()) && (numSubDevices > 1)) {
+    if ((!device->isImplicitScalingCapable()) && (numSubDevices > 1)) {
         globalMemSize = globalMemSize / numSubDevices;
     }
     if (lookupTable.relaxedSizeAllowed && (size > globalMemSize)) {
@@ -213,7 +213,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
 
     uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
-    if ((!device->isMultiDeviceCapable()) && (numSubDevices > 1)) {
+    if ((!device->isImplicitScalingCapable()) && (numSubDevices > 1)) {
         globalMemSize = globalMemSize / numSubDevices;
     }
     if (relaxedSizeAllowed &&

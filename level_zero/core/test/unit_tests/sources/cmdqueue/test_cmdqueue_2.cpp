@@ -87,12 +87,12 @@ HWTEST_F(ContextCreateCommandQueueTest, givenRootDeviceAndImplicitScalingDisable
     desc.ordinal = ordinal;
     desc.index = 0;
 
-    l0RootDevice.multiDeviceCapable = true;
+    l0RootDevice.implicitScalingCapable = true;
     ze_result_t res = context->createCommandQueue(l0RootDevice.toHandle(), &desc, &commandQueue);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
     EXPECT_EQ(nullptr, commandQueue);
 
-    l0RootDevice.multiDeviceCapable = false;
+    l0RootDevice.implicitScalingCapable = false;
     res = context->createCommandQueue(l0RootDevice.toHandle(), &desc, &commandQueue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, commandQueue);
