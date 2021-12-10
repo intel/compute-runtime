@@ -355,7 +355,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushi
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
     EXPECT_TRUE(stateBaseAddress->getBindlessSamplerStateBaseAddressModifyEnable());
-    EXPECT_EQ(0u, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlStateReserved());
     EXPECT_EQ(0u, stateBaseAddress->getBindlessSamplerStateBaseAddress());
     EXPECT_EQ(0u, stateBaseAddress->getBindlessSamplerStateBufferSize());
 }
