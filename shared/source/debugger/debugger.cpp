@@ -16,7 +16,7 @@
 namespace NEO {
 std::unique_ptr<Debugger> Debugger::create(HardwareInfo *hwInfo) {
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
-    if (hwInfo->capabilityTable.debuggerSupported) {
+    if (hwInfo->capabilityTable.debuggerSupported || DebugManager.flags.ExperimentalEnableSourceLevelDebugger.get()) {
         sourceLevelDebugger.reset(SourceLevelDebugger::create());
     }
     if (sourceLevelDebugger) {

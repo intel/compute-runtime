@@ -843,3 +843,17 @@ TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenElfFileExistsWhileNotifyingDeb
     std::remove(fileName.c_str());
     std::remove(fileName2.c_str());
 }
+
+TEST(SourceLevelDebugger, givenDebuggerLibraryAvailableAndExperimentalEnableSourceLevelDebuggerThenDebuggerIsCreated) {
+    DebugManagerStateRestore stateRestore;
+    DebuggerLibraryRestorer restorer;
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::setLibraryAvailable(true);
+
+    DebugManager.flags.ExperimentalEnableSourceLevelDebugger.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    auto debugger = std::unique_ptr<Debugger>(Debugger::create(&hwInfo));
+    ASSERT_NE(nullptr, debugger.get());
+    EXPECT_TRUE(debugger->isLegacy());
+}
