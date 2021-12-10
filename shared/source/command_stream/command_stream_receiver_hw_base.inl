@@ -218,7 +218,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             args.notifyEnable = isUsedNotifyEnableForPostSync();
             args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
             args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
-            args.workloadPartitionOffset = this->activePartitions > 1 && this->staticWorkPartitioningEnabled;
+            args.workloadPartitionOffset = isMultiTileOperationEnabled();
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 commandStreamTask,
                 PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
@@ -1192,7 +1192,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
 
     PipeControlArgs args(true);
     args.notifyEnable = isUsedNotifyEnableForPostSync();
-    args.workloadPartitionOffset = this->activePartitions > 1 && this->staticWorkPartitioningEnabled;
+    args.workloadPartitionOffset = isMultiTileOperationEnabled();
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(commandStream,
                                                                                         PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                                                                                         getTagAllocation()->getGpuAddress(),

@@ -533,6 +533,11 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     size_t getCmdsSizeForHardwareContext() const override {
         return 0;
     }
+    void programComputeBarrierCommand(LinearStream &cmdStream) override {
+    }
+    size_t getCmdsSizeForComputeBarrierCommand() const override {
+        return 0;
+    }
     GraphicsAllocation *getClearColorAllocation() override { return nullptr; }
 
     bool createPreemptionAllocation() override {

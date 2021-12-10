@@ -208,7 +208,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
         if (isMarkerWithProfiling) {
             if (!eventsInWaitlist) {
-                expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+                expectedSizeCS += commandQueue.getGpgpuCommandStreamReceiver().getCmdsSizeForComputeBarrierCommand();
             }
             expectedSizeCS += 4 * EncodeStoreMMIO<GfxFamily>::size;
         }

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
@@ -1044,6 +1045,26 @@ HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithoutW
 
     EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size + MemorySynchronizationCommands<FamilyType>::getSizeForSinglePipeControl(), extendedCommandStreamSize);
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTimestampWriteEnableOnMultiTileQueueWhenMarkerProfilingWithoutWaitListThenSizeHasFourMMIOStoresAndCrossTileBarrier) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.activePartitions = 2;
+    csr.activePartitionsConfig = 2;
+    csr.staticWorkPartitioningEnabled = true;
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+    DispatchInfo dispatchInfo;
+    MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
+    dispatchInfo.setKernel(mockKernel.mockKernel);
+    multiDispatchInfo.push(dispatchInfo);
+
+    auto baseCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false);
+    auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, true, false);
+
+    EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size + ImplicitScalingDispatch<FamilyType>::getBarrierSize(csr.peekHwInfo(), false, false), extendedCommandStreamSize);
+}
+
 HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithWaitListThenSizeHasFourMMIOStores) {
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     MockKernelWithInternals mockKernel(*pClDevice);

@@ -107,6 +107,13 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return 0;
     }
 
+    void programComputeBarrierCommand(LinearStream &cmdStream) override {
+        programComputeBarrierCommandCalled = true;
+    }
+    size_t getCmdsSizeForComputeBarrierCommand() const override {
+        return 0;
+    }
+
     bool createPreemptionAllocation() override {
         if (createPreemptionAllocationParentCall) {
             return CommandStreamReceiver::createPreemptionAllocation();
@@ -139,6 +146,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool programHardwareContextCalled = false;
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;
+    bool programComputeBarrierCommandCalled = false;
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {

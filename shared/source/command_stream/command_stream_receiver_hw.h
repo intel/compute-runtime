@@ -135,6 +135,13 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void postInitFlagsSetup() override;
     void programActivePartitionConfig(LinearStream &csr);
 
+    void programComputeBarrierCommand(LinearStream &cmdStream) override {
+        programStallingNoPostSyncCommandsForBarrier(cmdStream);
+    }
+    size_t getCmdsSizeForComputeBarrierCommand() const override {
+        return getCmdSizeForStallingNoPostSyncCommands();
+    }
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, uint32_t &newL3Config);

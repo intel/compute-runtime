@@ -197,7 +197,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyncCommands() const {
-    if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
+    if (isMultiTileOperationEnabled()) {
         return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(peekHwInfo(),
                                                                   false,
                                                                   false);
@@ -208,7 +208,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
-    if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
+    if (isMultiTileOperationEnabled()) {
         return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(peekHwInfo(),
                                                                   false,
                                                                   true);
@@ -220,7 +220,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncC
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
     PipeControlArgs args;
-    if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
+    if (isMultiTileOperationEnabled()) {
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
                                                                     this->deviceBitfield,
                                                                     args,
@@ -238,7 +238,7 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode) {
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
     PipeControlArgs args(true);
-    if (this->activePartitions > 1 && this->staticWorkPartitioningEnabled) {
+    if (isMultiTileOperationEnabled()) {
         args.workloadPartitionOffset = true;
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
                                                                     this->deviceBitfield,

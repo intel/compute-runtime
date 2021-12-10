@@ -302,6 +302,13 @@ class CommandStreamReceiver {
         return postSyncWriteOffset;
     }
 
+    inline bool isMultiTileOperationEnabled() const {
+        return (activePartitions > 1) && staticWorkPartitioningEnabled;
+    }
+
+    virtual void programComputeBarrierCommand(LinearStream &cmdStream) = 0;
+    virtual size_t getCmdsSizeForComputeBarrierCommand() const = 0;
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
