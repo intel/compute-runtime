@@ -184,12 +184,14 @@ PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedH
         hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
         bool foundOne = false;
 
-        uint32_t expectedCoherentMask = FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask;
+        uint32_t expectedCoherentMask = FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask |
+                                        FamilyType::stateComputeModeLargeGrfModeMask |
+                                        FamilyType::stateComputeModeForceNonCoherentMask;
 
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
             auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
             if (cmd) {
-                EXPECT_EQ(expectToBeProgrammed ? expectedCoherentMask : 0u, cmd->getMaskBits());
+                EXPECT_EQ(expectedCoherentMask, cmd->getMaskBits());
                 EXPECT_FALSE(foundOne);
                 foundOne = true;
                 auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));

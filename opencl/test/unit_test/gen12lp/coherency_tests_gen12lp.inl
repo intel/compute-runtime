@@ -293,10 +293,8 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedH
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
             auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
             if (cmd) {
-                if (valueChanged) {
-                    EXPECT_EQ(expectedCoherentValue, cmd->getForceNonCoherent());
-                }
-                EXPECT_EQ(valueChanged ? expectedCoherentMask : 0u, cmd->getMaskBits());
+                EXPECT_EQ(expectedCoherentValue, cmd->getForceNonCoherent());
+                EXPECT_EQ(expectedCoherentMask, cmd->getMaskBits());
                 EXPECT_FALSE(foundOne);
                 foundOne = true;
                 auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));
