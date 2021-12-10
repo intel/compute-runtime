@@ -44,6 +44,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     void createFwUtilInterface();
     void releaseFwUtilInterface();
     void releaseLocalDrmHandle();
+    PRODUCT_FAMILY getProductFamily();
 
   protected:
     FsAccess *pFsAccess = nullptr;

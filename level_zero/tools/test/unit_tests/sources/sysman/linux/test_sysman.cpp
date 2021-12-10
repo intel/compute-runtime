@@ -305,6 +305,11 @@ TEST_F(SysmanDeviceFixture, GivenNullDrmHandleWhenGettingDrmHandleThenValidDrmHa
     EXPECT_NO_THROW(pLinuxSysmanImp->getDrm());
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenProductFamilyFromDeviceThenValidCorrectProductFamilyIsReturned) {
+    auto productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+    EXPECT_EQ(productFamily, pLinuxSysmanImp->getProductFamily());
+}
+
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
     ze_device_handle_t hSysman = device->toHandle();
     auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();

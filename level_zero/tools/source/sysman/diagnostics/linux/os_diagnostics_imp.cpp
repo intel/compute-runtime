@@ -12,14 +12,6 @@
 namespace L0 {
 const std::string LinuxDiagnosticsImp::deviceDir("device");
 
-void OsDiagnostics::getSupportedDiagTests(std::vector<std::string> &supportedDiagTests, OsSysman *pOsSysman) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
-    if (pFwInterface != nullptr) {
-        getSupportedDiagTestsFromFW(pFwInterface, supportedDiagTests);
-    }
-}
-
 void LinuxDiagnosticsImp::osGetDiagProperties(zes_diag_properties_t *pProperties) {
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subdeviceId;

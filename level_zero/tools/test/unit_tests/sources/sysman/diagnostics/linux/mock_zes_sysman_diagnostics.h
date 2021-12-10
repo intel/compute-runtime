@@ -13,7 +13,7 @@
 namespace L0 {
 namespace ult {
 
-constexpr uint32_t mockDiagHandleCount = 2;
+uint32_t mockDiagHandleCount = 2;
 const std::string mockQuiescentGpuFile("quiesce_gpu");
 const std::string mockinvalidateLmemFile("invalidate_lmem_mmaps");
 const std::vector<std::string> mockSupportedDiagTypes = {"MOCKSUITE1", "MOCKSUITE2"};

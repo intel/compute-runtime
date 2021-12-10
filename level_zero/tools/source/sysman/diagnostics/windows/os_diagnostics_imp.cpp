@@ -24,9 +24,6 @@ std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const 
     return pWddmDiagnosticsImp;
 }
 
-void OsDiagnostics::getSupportedDiagTests(std::vector<std::string> &supportedDiagTests, OsSysman *pOsSysman) {
-}
-
-void OsDiagnostics::getSupportedDiagTestsFromFW(void *pFwInterface, std::vector<std::string> &supportedDiagTests) {
+void OsDiagnostics::getSupportedDiagTestsFromFW(void *pOsSysman, std::vector<std::string> &supportedDiagTests) {
 }
 } // namespace L0

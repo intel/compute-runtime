@@ -104,7 +104,6 @@ TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDia
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, 0u);
-
     uint32_t subDeviceCount = 0;
     std::vector<ze_device_handle_t> deviceHandles;
     // We received a device handle. Check for subdevices in this device
@@ -133,6 +132,26 @@ TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDia
 
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
     delete ptestDiagnosticsImp;
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenFwInterfaceAsNullWhenCallingzesDeviceEnumDiagnosticTestSuitesThenZeroCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesCallSucceeds) {
+    auto tempFwInterface = pLinuxSysmanImp->pFwUtilInterface;
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+    std::vector<zes_diag_handle_t> diagnosticsHandle{};
+    uint32_t count = 0;
+
+    ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+
+    uint32_t testCount = count + 1;
+
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &testCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testCount, count);
+    pLinuxSysmanImp->pFwUtilInterface = tempFwInterface;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenFailedFirmwareInitializationWhenInitializingDiagnosticsContextThenexpectNoHandles) {

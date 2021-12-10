@@ -11,7 +11,7 @@
 
 namespace L0 {
 
-void OsDiagnostics::getSupportedDiagTestsFromFW(void *pFwInterface, std::vector<std::string> &supportedDiagTests) {
+void OsDiagnostics::getSupportedDiagTestsFromFW(void *pOsSysman, std::vector<std::string> &supportedDiagTests) {
 }
 
 ze_result_t LinuxDiagnosticsImp::osRunDiagTestsinFW(zes_diag_result_t *pResult) {

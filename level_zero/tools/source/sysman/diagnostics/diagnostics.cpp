@@ -27,7 +27,7 @@ void DiagnosticsHandleContext::createHandle(ze_device_handle_t deviceHandle, con
 }
 
 void DiagnosticsHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
-    OsDiagnostics::getSupportedDiagTests(supportedDiagTests, pOsSysman);
+    OsDiagnostics::getSupportedDiagTestsFromFW(pOsSysman, supportedDiagTests);
     for (const auto &deviceHandle : deviceHandles) {
         for (const std::string &diagTests : supportedDiagTests) {
             createHandle(deviceHandle, diagTests);
