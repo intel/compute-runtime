@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "third_party/uapi/drm/i915_drm.h"
@@ -43,6 +44,18 @@ uint32_t IoctlHelperUpstream::createGemExt(Drm *drm, void *data, uint32_t dataSi
 
 std::unique_ptr<uint8_t[]> IoctlHelperUpstream::translateIfRequired(uint8_t *dataQuery, int32_t length) {
     return std::unique_ptr<uint8_t[]>(dataQuery);
+}
+
+CacheRegion IoctlHelperUpstream::closAlloc(Drm *drm) {
+    return CacheRegion::None;
+}
+
+uint16_t IoctlHelperUpstream::closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) {
+    return 0;
+}
+
+CacheRegion IoctlHelperUpstream::closFree(Drm *drm, CacheRegion closIndex) {
+    return CacheRegion::None;
 }
 
 } // namespace NEO

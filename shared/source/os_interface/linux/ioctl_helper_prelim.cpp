@@ -6,9 +6,14 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
+
+#include <cerrno>
+#include <cstring>
 
 namespace NEO {
 
@@ -47,6 +52,53 @@ uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, void *data, uint32_t dataSi
 
 std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::translateIfRequired(uint8_t *dataQuery, int32_t length) {
     return std::unique_ptr<uint8_t[]>(dataQuery);
+}
+
+CacheRegion IoctlHelperPrelim20::closAlloc(Drm *drm) {
+    struct prelim_drm_i915_gem_clos_reserve clos = {};
+
+    int ret = IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE, &clos);
+    if (ret != 0) {
+        int err = errno;
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF(true);
+        return CacheRegion::None;
+    }
+
+    return static_cast<CacheRegion>(clos.clos_index);
+}
+
+uint16_t IoctlHelperPrelim20::closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) {
+    struct prelim_drm_i915_gem_cache_reserve cache = {};
+
+    cache.clos_index = static_cast<uint16_t>(closIndex);
+    cache.cache_level = cacheLevel;
+    cache.num_ways = numWays;
+
+    int ret = IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE, &cache);
+    if (ret != 0) {
+        int err = errno;
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CACHE_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        return 0;
+    }
+
+    return cache.num_ways;
+}
+
+CacheRegion IoctlHelperPrelim20::closFree(Drm *drm, CacheRegion closIndex) {
+    struct prelim_drm_i915_gem_clos_free clos = {};
+
+    clos.clos_index = static_cast<uint16_t>(closIndex);
+
+    int ret = IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE, &clos);
+    if (ret != 0) {
+        int err = errno;
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_FREE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF(true);
+        return CacheRegion::None;
+    }
+
+    return closIndex;
 }
 
 } // namespace NEO

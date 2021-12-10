@@ -58,3 +58,36 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPri
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: 0 BO-1 with size: 1024\n");
     EXPECT_EQ(expectedOutput, output);
 }
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocThenReturnNoneRegion) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto cacheRegion = ioctlHelper->closAlloc(drm.get());
+
+    EXPECT_EQ(CacheRegion::None, cacheRegion);
+}
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosFreeThenReturnNoneRegion) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
+
+    EXPECT_EQ(CacheRegion::None, cacheRegion);
+}
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocWaysThenReturnZeroWays) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto cacheRegion = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
+
+    EXPECT_EQ(0, cacheRegion);
+}

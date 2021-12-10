@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-extern int handlePrelimRequests(unsigned long request, void *arg);
+extern int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal);
 
 class DrmPrelimMock : public DrmMock {
   public:
@@ -25,12 +25,14 @@ class DrmPrelimMock : public DrmMock {
         rootDeviceEnvironment.getMutableHardwareInfo()->platform.eProductFamily = IGFX_UNKNOWN;
     }
 
+    int ioctlRetVal = 0;
+
     void getPrelimVersion(std::string &prelimVersion) override {
         prelimVersion = "2.0";
     }
 
     int handleRemainingRequests(unsigned long request, void *arg) override {
-        return handlePrelimRequests(request, arg);
+        return handlePrelimRequests(request, arg, ioctlRetVal);
     }
 };
 
@@ -86,12 +88,87 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenTranslateIfRequiredThenReturnSameDa
     EXPECT_EQ(ret.get(), data);
 }
 
-TEST(IoctlHelperTestsDefault, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm_i915_gem_context_create_ext arg{};
     auto ret = IoctlHelper::ioctl(drm.get(), DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &arg);
     EXPECT_EQ(0u, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenClosAllocThenReturnCorrectRegion) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto cacheRegion = ioctlHelper->closAlloc(drm.get());
+
+    EXPECT_EQ(CacheRegion::Region1, cacheRegion);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocThenReturnNone) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlRetVal = -1;
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto cacheRegion = ioctlHelper->closAlloc(drm.get());
+
+    EXPECT_EQ(CacheRegion::None, cacheRegion);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenClosFreeThenReturnCorrectRegion) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
+
+    EXPECT_EQ(CacheRegion::Region2, cacheRegion);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsAndInvalidIoctlReturnValWhenClosFreeThenReturnNone) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlRetVal = -1;
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
+
+    EXPECT_EQ(CacheRegion::None, cacheRegion);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenClosAllocWaysThenReturnCorrectRegion) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto numWays = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
+
+    EXPECT_EQ(10u, numWays);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocWaysThenReturnNone) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlRetVal = -1;
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto numWays = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
+
+    EXPECT_EQ(0u, numWays);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }

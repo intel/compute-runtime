@@ -9,7 +9,7 @@
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
-int handlePrelimRequests(unsigned long request, void *arg) {
+int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal) {
     if (request == PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT) {
         auto createExtParams = static_cast<prelim_drm_i915_gem_create_ext *>(arg);
         if (createExtParams->size == 0) {
@@ -36,6 +36,9 @@ int handlePrelimRequests(unsigned long request, void *arg) {
         if ((data->memory_class != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (data->memory_class != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
             return EINVAL;
         }
+    } else if (request == PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE) {
+        auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
+        closReserveArg->clos_index = 1u;
     }
-    return 0;
+    return ioctlRetVal;
 }
