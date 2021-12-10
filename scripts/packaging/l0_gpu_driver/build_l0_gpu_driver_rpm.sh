@@ -19,6 +19,7 @@ fi
 
 BUILD_SRPM="${BUILD_SRPM:-1}"
 BUILD_RPM="${BUILD_RPM:-1}"
+SPEC_FILE="${SPEC_FILE:-${OS_TYPE}}"
 
 export BUILD_ID="${BUILD_ID:-1}"
 export CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
@@ -26,10 +27,10 @@ export CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
 (
 if [ "${BUILD_SRPM}" == "1" ]; then
     BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
-    PACKAGING_DIR="$REPO_DIR/scripts/packaging/l0_gpu_driver/${OS_TYPE}"
+    PACKAGING_DIR="$REPO_DIR/scripts/packaging/l0_gpu_driver/${SPEC_FILE}"
     SPEC_SRC="$PACKAGING_DIR/SPECS/l0_gpu_driver.spec"
     SPEC="$BUILD_DIR/SPECS/l0_gpu_driver.spec"
-    COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/${OS_TYPE}/copyright"
+    COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/${SPEC_FILE}/copyright"
 
     build_args=()
     if [ "${CMAKE_BUILD_TYPE}" == "Debug" ]; then
