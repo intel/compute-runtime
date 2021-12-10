@@ -130,3 +130,8 @@ DG1TEST_F(Dg1HwInfo, whenConfigureHwInfoThenBlitterSupportIsEnabled) {
 
     EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
+
+DG1TEST_F(Dg1HwInfo, whenOverrideGfxPartitionLayoutForWslThenReturnTrue) {
+    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig->overrideGfxPartitionLayoutForWsl());
+}
