@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "gmock/gmock.h"
 
@@ -148,12 +149,40 @@ template <typename GfxFamily>
 class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
   public:
     using FlatBatchBufferHelperHw<GfxFamily>::FlatBatchBufferHelperHw;
-    MOCK_METHOD(bool, setPatchInfoData, (const PatchInfoData &), (override));
-    MOCK_METHOD(bool, removePatchInfoData, (uint64_t), (override));
-    MOCK_METHOD(bool, registerCommandChunk, (CommandChunk &), (override));
-    MOCK_METHOD(bool, registerBatchBufferStartAddress, (uint64_t, uint64_t), (override));
-    MOCK_METHOD(GraphicsAllocation *,
-                flattenBatchBuffer,
-                (uint32_t rootDeviceIndex, BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode, DeviceBitfield deviceBitfield),
-                (override));
+
+    ADDMETHOD_NOBASE(removePatchInfoData, bool, true, (uint64_t targetLocation));
+    ADDMETHOD_NOBASE(registerCommandChunk, bool, true, (CommandChunk & commandChunk));
+    ADDMETHOD_NOBASE(registerBatchBufferStartAddress, bool, true, (uint64_t commandAddress, uint64_t startAddress));
+
+    GraphicsAllocation *flattenBatchBuffer(uint32_t rootDeviceIndex,
+                                           BatchBuffer &batchBuffer,
+                                           size_t &sizeBatchBuffer,
+                                           DispatchMode dispatchMode,
+                                           DeviceBitfield deviceBitfield) override {
+        flattenBatchBufferCalled++;
+        flattenBatchBufferParamsPassed.push_back({rootDeviceIndex, batchBuffer, sizeBatchBuffer, dispatchMode, deviceBitfield});
+        return flattenBatchBufferResult;
+    }
+
+    struct FlattenBatchBufferParams {
+        uint32_t rootDeviceIndex = 0u;
+        BatchBuffer batchBuffer = {};
+        size_t sizeBatchBuffer = 0u;
+        DispatchMode dispatchMode = DispatchMode::DeviceDefault;
+        DeviceBitfield deviceBitfield = {};
+    };
+
+    StackVec<FlattenBatchBufferParams, 1> flattenBatchBufferParamsPassed{};
+    uint32_t flattenBatchBufferCalled = 0u;
+    GraphicsAllocation *flattenBatchBufferResult = nullptr;
+
+    bool setPatchInfoData(const PatchInfoData &data) override {
+        setPatchInfoDataCalled++;
+        patchInfoDataVector.push_back(data);
+        return setPatchInfoDataResult;
+    }
+
+    std::vector<PatchInfoData> patchInfoDataVector{};
+    uint32_t setPatchInfoDataCalled = 0u;
+    bool setPatchInfoDataResult = true;
 };

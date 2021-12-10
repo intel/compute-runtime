@@ -264,8 +264,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefault
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     ResidencyContainer allocationsForResidency = {};
 
-    EXPECT_CALL(*mockHelper, flattenBatchBuffer(aubCsr->getRootDeviceIndex(), ::testing::_, ::testing::_, ::testing::_, aubCsr->getOsContext().getDeviceBitfield())).Times(0);
     aubCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_EQ(0u, mockHelper->flattenBatchBufferCalled);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhenGettingParametersForWriteThenLockResourceIsNotCalled) {
@@ -363,12 +364,15 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
         [&](GraphicsAllocation *ptr) { aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(ptr); });
 
     auto expectedAllocation = ptr.get();
-    EXPECT_CALL(*mockHelper, flattenBatchBuffer(aubCsr->getRootDeviceIndex(), ::testing::_, ::testing::_, ::testing::_, aubCsr->getOsContext().getDeviceBitfield())).WillOnce(::testing::Return(ptr.release()));
+    mockHelper->flattenBatchBufferResult = ptr.release();
+
     aubCsr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(batchBuffer.commandBufferAllocation, expectedAllocation);
 
     aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(chainedBatchBuffer);
+
+    EXPECT_EQ(1u, mockHelper->flattenBatchBufferCalled);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeAndThereIsNoChainedBatchBufferThenExpectFlattenBatchBufferIsCalledAnyway) {
@@ -382,12 +386,17 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*aubExecutionEnvironment->executionEnvironment);
+    mockHelper->flattenBatchBufferParamsPassed.clear();
+
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
-    EXPECT_CALL(*mockHelper, flattenBatchBuffer(aubCsr->getRootDeviceIndex(), ::testing::_, ::testing::_, ::testing::_, aubCsr->getOsContext().getDeviceBitfield())).Times(1);
     aubCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_EQ(1u, mockHelper->flattenBatchBufferCalled);
+    EXPECT_EQ(aubCsr->getRootDeviceIndex(), mockHelper->flattenBatchBufferParamsPassed[0].rootDeviceIndex);
+    EXPECT_EQ(aubCsr->getOsContext().getDeviceBitfield().to_ulong(), mockHelper->flattenBatchBufferParamsPassed[0].deviceBitfield.to_ulong());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndBatchedDispatchModeThenExpectFlattenBatchBufferIsCalledAnyway) {
@@ -400,13 +409,17 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*aubExecutionEnvironment->executionEnvironment);
+    mockHelper->flattenBatchBufferParamsPassed.clear();
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
     ResidencyContainer allocationsForResidency;
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
-    EXPECT_CALL(*mockHelper, flattenBatchBuffer(aubCsr->getRootDeviceIndex(), ::testing::_, ::testing::_, ::testing::_, aubCsr->getOsContext().getDeviceBitfield())).Times(1);
     aubCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_EQ(1u, mockHelper->flattenBatchBufferCalled);
+    EXPECT_EQ(aubCsr->getRootDeviceIndex(), mockHelper->flattenBatchBufferParamsPassed[0].rootDeviceIndex);
+    EXPECT_EQ(aubCsr->getOsContext().getDeviceBitfield().to_ulong(), mockHelper->flattenBatchBufferParamsPassed[0].deviceBitfield.to_ulong());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoCommentsIsCalled) {

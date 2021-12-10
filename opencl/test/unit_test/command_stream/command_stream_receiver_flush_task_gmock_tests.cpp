@@ -84,11 +84,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
 
     constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 10 : 9;
 
-    EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(expectedCallsCount);
     size_t removePatchInfoDataCount = 4 * UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
-    EXPECT_CALL(*mockHelper, removePatchInfoData(::testing::_)).Times(static_cast<int>(removePatchInfoDataCount));
-    EXPECT_CALL(*mockHelper, registerCommandChunk(::testing::_)).Times(4);
-    EXPECT_CALL(*mockHelper, registerBatchBufferStartAddress(::testing::_, ::testing::_)).Times(3);
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -130,6 +126,10 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_EQ(lastBatchBufferAddress, batchBufferStart->getBatchBufferStartAddressGraphicsaddress472());
     EXPECT_EQ(1, mockCsr->flushCalledCount);
+    EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);
+    EXPECT_EQ(static_cast<unsigned int>(removePatchInfoDataCount), mockHelper->removePatchInfoDataCalled);
+    EXPECT_EQ(4u, mockHelper->registerCommandChunkCalled);
+    EXPECT_EQ(3u, mockHelper->registerBatchBufferStartAddressCalled);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataIsNotCollected) {
@@ -145,8 +145,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.throttle = QueueThrottle::MEDIUM;
 
-    EXPECT_CALL(*mockHelper, setPatchInfoData(_)).Times(0);
-
     mockCsr->flushTask(commandStream,
                        0,
                        dsh,
@@ -155,6 +153,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
+    EXPECT_EQ(0u, mockHelper->setPatchInfoDataCalled);
 }
 
 HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataIsCollected, MatchAny) {
@@ -174,14 +173,6 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhen
 
     constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
 
-    std::vector<PatchInfoData> patchInfoDataVector;
-    EXPECT_CALL(*mockHelper, setPatchInfoData(_))
-        .Times(expectedCallsCount)
-        .WillRepeatedly(Invoke([&](const PatchInfoData &data) {
-            patchInfoDataVector.push_back(data);
-            return true;
-        }));
-
     mockCsr->flushTask(commandStream,
                        0,
                        dsh,
@@ -191,9 +182,9 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhen
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(expectedCallsCount, patchInfoDataVector.size());
+    EXPECT_EQ(expectedCallsCount, mockHelper->patchInfoDataVector.size());
 
-    for (auto &patchInfoData : patchInfoDataVector) {
+    for (auto &patchInfoData : mockHelper->patchInfoDataVector) {
         uint64_t expectedAddress = 0u;
         switch (patchInfoData.sourceType) {
         case PatchInfoAllocationType::DynamicStateHeap:
@@ -212,6 +203,8 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhen
         EXPECT_EQ(0u, patchInfoData.sourceAllocationOffset);
         EXPECT_EQ(PatchInfoAllocationType::Default, patchInfoData.targetType);
     }
+
+    EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);
 }
 
 HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectStateBaseAddresPatchInfoIsCalledThenAppropriateAddressesAreTaken, MatchAny) {
@@ -223,28 +216,18 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
 
     constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
 
-    std::vector<PatchInfoData> patchInfoDataVector;
-    EXPECT_CALL(*mockHelper, setPatchInfoData(_))
-        .Times(expectedCallsCount)
-        .WillRepeatedly(Invoke([&](const PatchInfoData &data) {
-            patchInfoDataVector.push_back(data);
-            return true;
-        }));
-    EXPECT_CALL(*mockHelper, registerCommandChunk(_))
-        .Times(0);
-
     uint64_t baseAddress = 0xabcdef;
     uint64_t commandOffset = 0xa;
     uint64_t generalStateBase = 0xff;
 
     mockCsr->collectStateBaseAddresPatchInfo(baseAddress, commandOffset, dsh, ioh, ssh, generalStateBase);
 
-    ASSERT_EQ(patchInfoDataVector.size(), expectedCallsCount);
-    PatchInfoData dshPatch = patchInfoDataVector[0];
-    PatchInfoData gshPatch = patchInfoDataVector[1];
-    PatchInfoData sshPatch = patchInfoDataVector[2];
+    ASSERT_EQ(mockHelper->patchInfoDataVector.size(), expectedCallsCount);
+    PatchInfoData dshPatch = mockHelper->patchInfoDataVector[0];
+    PatchInfoData gshPatch = mockHelper->patchInfoDataVector[1];
+    PatchInfoData sshPatch = mockHelper->patchInfoDataVector[2];
 
-    for (auto &patch : patchInfoDataVector) {
+    for (auto &patch : mockHelper->patchInfoDataVector) {
         EXPECT_EQ(patch.targetAllocation, baseAddress);
         EXPECT_EQ(patch.sourceAllocationOffset, 0u);
     }
@@ -255,7 +238,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
 
     if constexpr (TestTraits<gfxCoreFamily>::iohInSbaSupported) {
         //IOH
-        PatchInfoData iohPatch = patchInfoDataVector[3];
+        PatchInfoData iohPatch = mockHelper->patchInfoDataVector[3];
 
         EXPECT_EQ(iohPatch.sourceAllocation, ioh.getGraphicsAllocation()->getGpuAddress());
         EXPECT_EQ(iohPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET);
@@ -268,6 +251,9 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
     //GSH
     EXPECT_EQ(gshPatch.sourceAllocation, generalStateBase);
     EXPECT_EQ(gshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET);
+
+    EXPECT_EQ(0u, mockHelper->registerCommandChunkCalled);
+    EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionEnabledWhenScratchSpaceIsProgrammedThenPatchInfoIsCollected) {
