@@ -13,4 +13,5 @@ if(TESTS_XE_HPC_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_module_xe_hpc_core.cpp
   )
+  add_subdirectories()
 endif()
