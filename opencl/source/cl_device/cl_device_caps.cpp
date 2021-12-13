@@ -379,7 +379,7 @@ void ClDevice::initializeCaps() {
         }
     }
 
-    for (auto &engineGroup : this->getDevice().getEngineGroups()) {
+    for (auto &engineGroup : this->getDevice().getRegularEngineGroups()) {
         cl_queue_family_properties_intel properties = {};
         properties.capabilities = getQueueFamilyCapabilities(engineGroup.engineGroupType);
         properties.count = static_cast<cl_uint>(engineGroup.engines.size());

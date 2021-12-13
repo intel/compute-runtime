@@ -19,7 +19,7 @@ decltype(&createCommandStream) &MockClDevice::createCommandStreamReceiverFunc = 
 
 MockClDevice::MockClDevice(MockDevice *pMockDevice)
     : ClDevice(*pMockDevice, platform()), device(*pMockDevice), sharedDeviceInfo(device.deviceInfo),
-      executionEnvironment(pMockDevice->executionEnvironment), engines(pMockDevice->engines) {
+      executionEnvironment(pMockDevice->executionEnvironment), allEngines(pMockDevice->allEngines) {
 }
 
 bool MockClDevice::areOcl21FeaturesSupported() const {

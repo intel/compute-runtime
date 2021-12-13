@@ -153,7 +153,7 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
 
 ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
                                          ze_command_list_handle_t *commandList) {
-    auto &engineGroups = getActiveDevice()->getEngineGroups();
+    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     if (desc->commandQueueGroupOrdinal >= engineGroups.size()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -167,7 +167,7 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
 
 ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                                   ze_command_list_handle_t *phCommandList) {
-    auto &engineGroups = getActiveDevice()->getEngineGroups();
+    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     if (desc->ordinal >= engineGroups.size()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -184,7 +184,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     auto &platform = neoDevice->getHardwareInfo().platform;
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    auto &engineGroups = getActiveDevice()->getEngineGroups();
+    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     if (desc->ordinal >= engineGroups.size()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -211,7 +211,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
     NEO::Device *activeDevice = getActiveDevice();
-    auto &engineGroups = activeDevice->getEngineGroups();
+    auto &engineGroups = activeDevice->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
     if (*pCount == 0) {
@@ -1034,7 +1034,7 @@ void DeviceImp::storeReusableAllocation(NEO::GraphicsAllocation &alloc) {
 }
 
 ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) {
-    auto &engineGroups = getActiveDevice()->getEngineGroups();
+    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     if ((ordinal >= engineGroups.size()) ||
         (index >= engineGroups[ordinal].engines.size())) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1045,7 +1045,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
 
 ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
     NEO::Device *activeDevice = getActiveDevice();
-    for (auto &it : activeDevice->getEngines()) {
+    for (auto &it : activeDevice->getAllEngines()) {
         if (it.osContext->isLowPriority()) {
             *csr = it.commandStreamReceiver;
             return ZE_RESULT_SUCCESS;

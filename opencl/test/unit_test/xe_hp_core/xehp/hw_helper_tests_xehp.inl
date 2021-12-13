@@ -58,7 +58,7 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontS
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(8u, device->engines.size());
+    EXPECT_EQ(8u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(8u, engines.size());
 
@@ -86,7 +86,7 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEng
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(9u, device->engines.size());
+    EXPECT_EQ(9u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(9u, engines.size());
 

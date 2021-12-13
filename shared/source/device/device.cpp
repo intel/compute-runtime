@@ -54,10 +54,10 @@ Device::~Device() {
         performanceCounters->shutdown();
     }
 
-    for (auto &engine : engines) {
+    for (auto &engine : allEngines) {
         engine.commandStreamReceiver->flushBatchedSubmissions();
     }
-    engines.clear();
+    allEngines.clear();
 
     for (auto subdevice : subdevices) {
         if (subdevice) {
@@ -228,7 +228,7 @@ bool Device::createDeviceImpl() {
 
     getDefaultEngine().osContext->setDefaultContext(true);
 
-    for (auto &engine : engines) {
+    for (auto &engine : allEngines) {
         auto commandStreamReceiver = engine.commandStreamReceiver;
         commandStreamReceiver->postInitFlagsSetup();
     }
@@ -256,7 +256,7 @@ bool Device::createDeviceImpl() {
     executionEnvironment->memoryManager->setForce32BitAllocations(getDeviceInfo().force32BitAddressess);
 
     if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
-        for (auto &engine : engines) {
+        for (auto &engine : allEngines) {
             auto csr = engine.commandStreamReceiver;
             csr->setExperimentalCmdBuffer(std::make_unique<ExperimentalCommandBuffer>(csr, getDeviceInfo().profilingTimerResolution));
         }
@@ -305,11 +305,11 @@ void Device::addEngineToEngineGroup(EngineControl &engine) {
         return;
     }
 
-    if (this->engineGroups.empty() || this->engineGroups.back().engineGroupType != engineGroupType) {
-        this->engineGroups.push_back(EngineGroupT{});
-        this->engineGroups.back().engineGroupType = engineGroupType;
+    if (this->regularEngineGroups.empty() || this->regularEngineGroups.back().engineGroupType != engineGroupType) {
+        this->regularEngineGroups.push_back(EngineGroupT{});
+        this->regularEngineGroups.back().engineGroupType = engineGroupType;
     }
-    this->engineGroups.back().engines.push_back(engine);
+    this->regularEngineGroups.back().engines.push_back(engine);
 }
 
 std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() const {
@@ -365,7 +365,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     }
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
-    engines.push_back(engine);
+    allEngines.push_back(engine);
     if (engineUsage == EngineUsage::Regular) {
         addEngineToEngineGroup(engine);
     }
@@ -393,7 +393,7 @@ bool Device::isSimulation() const {
     auto &hwInfo = getHardwareInfo();
 
     bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.platform.usDeviceID);
-    for (const auto &engine : engines) {
+    for (const auto &engine : allEngines) {
         if (engine.commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
             simulation = true;
         }
@@ -430,8 +430,8 @@ bool Device::areSharedSystemAllocationsAllowed() const {
 }
 
 size_t Device::getEngineGroupIndexFromEngineGroupType(EngineGroupType engineGroupType) const {
-    for (size_t i = 0; i < engineGroups.size(); i++) {
-        if (engineGroups[i].engineGroupType == engineGroupType) {
+    for (size_t i = 0; i < regularEngineGroups.size(); i++) {
+        if (regularEngineGroups[i].engineGroupType == engineGroupType) {
             return i;
         }
     }
@@ -440,7 +440,7 @@ size_t Device::getEngineGroupIndexFromEngineGroupType(EngineGroupType engineGrou
 }
 
 EngineControl *Device::tryGetEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
-    for (auto &engine : engines) {
+    for (auto &engine : allEngines) {
         if ((engine.getEngineType() == engineType) &&
             (engine.getEngineUsage() == engineUsage)) {
             return &engine;
@@ -448,7 +448,7 @@ EngineControl *Device::tryGetEngine(aub_stream::EngineType engineType, EngineUsa
     }
 
     if (DebugManager.flags.OverrideInvalidEngineWithDefault.get()) {
-        return &engines[0];
+        return &allEngines[0];
     }
     return nullptr;
 }
@@ -460,8 +460,8 @@ EngineControl &Device::getEngine(aub_stream::EngineType engineType, EngineUsage 
 }
 
 EngineControl &Device::getEngine(uint32_t index) {
-    UNRECOVERABLE_IF(index >= engines.size());
-    return engines[index];
+    UNRECOVERABLE_IF(index >= allEngines.size());
+    return allEngines[index];
 }
 
 bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {
@@ -554,12 +554,12 @@ NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {
     return nullptr;
 }
 
-const std::vector<EngineControl> &Device::getEngines() const {
-    return this->engines;
+const std::vector<EngineControl> &Device::getAllEngines() const {
+    return this->allEngines;
 }
 
 EngineControl &Device::getInternalEngine() {
-    if (this->engines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
+    if (this->allEngines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
         return this->getDefaultEngine();
     }
 
@@ -576,7 +576,7 @@ EngineControl &Device::getNextEngineForCommandQueue() {
     const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
 
     const auto defaultEngineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
-    auto &engineGroup = this->getEngineGroups()[defaultEngineGroupIndex];
+    auto &engineGroup = this->getRegularEngineGroups()[defaultEngineGroupIndex];
 
     const auto engineIndex = this->regularCommandQueuesCreatedWithinDeviceCount++ % engineGroup.engines.size();
     return engineGroup.engines[engineIndex];
@@ -586,7 +586,7 @@ EngineControl *Device::getInternalCopyEngine() {
     if (!getHardwareInfo().capabilityTable.blitterOperationsSupported) {
         return nullptr;
     }
-    for (auto &engine : engines) {
+    for (auto &engine : allEngines) {
         if (engine.osContext->getEngineType() == aub_stream::ENGINE_BCS &&
             engine.osContext->isInternalEngine()) {
             return &engine;

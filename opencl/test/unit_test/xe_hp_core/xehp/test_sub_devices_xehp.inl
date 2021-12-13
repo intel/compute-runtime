@@ -25,7 +25,7 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionAWhenCreatingEngineWithSubdevicesThe
 
     auto executionEnvironment = new MockExecutionEnvironment;
     MockDevice device(executionEnvironment, 0);
-    EXPECT_EQ(0u, device.engines.size());
+    EXPECT_EQ(0u, device.allEngines.size());
     device.createSubDevices();
     device.createEngines();
     EXPECT_EQ(2u, device.getNumGenericSubDevices());
@@ -34,7 +34,7 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionAWhenCreatingEngineWithSubdevicesThe
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
     device.createEngines();
-    auto engines = device.getEngines();
+    auto engines = device.getAllEngines();
     for (auto engine : engines) {
         EXPECT_EQ(aub_stream::ENGINE_CCS, engine.osContext->getEngineType());
     }
@@ -46,7 +46,7 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionBWhenCreatingEngineWithSubdevicesThe
 
     auto executionEnvironment = new MockExecutionEnvironment;
     MockDevice device(executionEnvironment, 0);
-    EXPECT_EQ(0u, device.engines.size());
+    EXPECT_EQ(0u, device.allEngines.size());
     device.createSubDevices();
     device.createEngines();
     EXPECT_EQ(2u, device.getNumGenericSubDevices());
@@ -55,7 +55,7 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionBWhenCreatingEngineWithSubdevicesThe
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
     device.createEngines();
-    auto engines = device.getEngines();
+    auto engines = device.getAllEngines();
     for (auto engine : engines) {
         EXPECT_EQ(aub_stream::ENGINE_CCS, engine.osContext->getEngineType());
     }

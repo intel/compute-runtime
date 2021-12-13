@@ -75,7 +75,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeNotSetAndBcsInfoSetWhenGetGpgp
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    EXPECT_EQ(4u, device->engines.size());
+    EXPECT_EQ(4u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(4u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
@@ -91,7 +91,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeNotSetAndCcsDefualtEngineWhenG
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    EXPECT_EQ(3u, device->engines.size());
+    EXPECT_EQ(3u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
@@ -106,7 +106,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeNotSetWhenGetGpgpuEnginesThenR
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    EXPECT_EQ(3u, device->engines.size());
+    EXPECT_EQ(3u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
 
     EXPECT_EQ(3u, engines.size());
@@ -122,7 +122,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetWhenGetGpgpuEnginesThenRetu
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    EXPECT_EQ(4u, device->engines.size());
+    EXPECT_EQ(4u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(4u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -139,7 +139,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetFtrGpGpuMidThreadLevelPreem
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    EXPECT_EQ(3u, device->engines.size());
+    EXPECT_EQ(3u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
@@ -155,7 +155,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetFtrGpGpuMidThreadLevelPreem
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    EXPECT_EQ(4u, device->engines.size());
+    EXPECT_EQ(4u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(4u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -171,7 +171,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetAndDefaultRcsWhenGetGpgpuEn
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    EXPECT_EQ(3u, device->engines.size());
+    EXPECT_EQ(3u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);

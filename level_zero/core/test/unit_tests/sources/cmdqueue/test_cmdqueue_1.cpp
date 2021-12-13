@@ -897,9 +897,9 @@ TEST_F(DeviceCreateCommandQueueTest,
 
 TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCsrWhenCreateCommandQueueIsCalledThenAbortIsThrown) {
     // remove low priority EngineControl objects for negative testing
-    neoDevice->engines.erase(std::remove_if(
-        neoDevice->engines.begin(),
-        neoDevice->engines.end(),
+    neoDevice->allEngines.erase(std::remove_if(
+        neoDevice->allEngines.begin(),
+        neoDevice->allEngines.end(),
         [](EngineControl &p) { return p.osContext->isLowPriority(); }));
 
     ze_command_queue_desc_t desc{};

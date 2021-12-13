@@ -42,8 +42,8 @@ class AUBFixture : public CommandQueueHwFixture {
         return pCommandStreamReceiver;
     }
     static void prepareCopyEngines(MockDevice &device, const std::string &filename) {
-        for (auto i = 0u; i < device.engines.size(); i++) {
-            if (EngineHelpers::isBcs(device.engines[i].getEngineType())) {
+        for (auto i = 0u; i < device.allEngines.size(); i++) {
+            if (EngineHelpers::isBcs(device.allEngines[i].getEngineType())) {
                 CommandStreamReceiver *pBcsCommandStreamReceiver = nullptr;
                 if (testMode == TestMode::AubTestsWithTbx) {
                     pBcsCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());

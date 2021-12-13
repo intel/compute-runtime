@@ -22,8 +22,8 @@ namespace L0 {
 AUBFixtureL0::AUBFixtureL0() = default;
 AUBFixtureL0::~AUBFixtureL0() = default;
 void AUBFixtureL0::prepareCopyEngines(NEO::MockDevice &device, const std::string &filename) {
-    for (auto i = 0u; i < device.engines.size(); i++) {
-        if (NEO::EngineHelpers::isBcs(device.engines[i].getEngineType())) {
+    for (auto i = 0u; i < device.allEngines.size(); i++) {
+        if (NEO::EngineHelpers::isBcs(device.allEngines[i].getEngineType())) {
             NEO::CommandStreamReceiver *pBcsCommandStreamReceiver = nullptr;
             pBcsCommandStreamReceiver = NEO::AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
             device.resetCommandStreamReceiver(pBcsCommandStreamReceiver, i);

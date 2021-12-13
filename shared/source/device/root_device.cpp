@@ -74,7 +74,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
 
     EngineControl engine{commandStreamReceivers.back().get(), osContext};
-    engines.push_back(engine);
+    allEngines.push_back(engine);
     addEngineToEngineGroup(engine);
 }
 

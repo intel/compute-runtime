@@ -217,7 +217,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEn
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(numEngines, device->engines.size());
+    EXPECT_EQ(numEngines, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
@@ -266,7 +266,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEn
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(numEngines, device->engines.size());
+    EXPECT_EQ(numEngines, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
@@ -315,7 +315,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenGetEngines
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(numEngines, device->engines.size());
+    EXPECT_EQ(numEngines, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
@@ -364,7 +364,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneCcsEnabledWhenGetEnginesCalled
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(numEngines, device->engines.size());
+    EXPECT_EQ(numEngines, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
@@ -414,7 +414,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenSettingEngin
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(numEngines, device->engines.size());
+    EXPECT_EQ(numEngines, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
@@ -455,7 +455,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneBcsEnabledWhenGetEnginesCalled
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(numEngines, device->engines.size());
+    EXPECT_EQ(numEngines, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
@@ -495,7 +495,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBcsDisabledWhenGetEnginesCalledTh
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(numEngines, device->engines.size());
+    EXPECT_EQ(numEngines, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
@@ -531,7 +531,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCcsDisabledAndNumberOfCcsEnabledW
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(3u, device->engines.size());
+    EXPECT_EQ(3u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
 
@@ -549,7 +549,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCcsDisabledWhenGetGpgpuEnginesThe
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(3u, device->engines.size());
+    EXPECT_EQ(3u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
 
@@ -884,7 +884,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledWhenGetGpgpuEnginesCa
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(8u, device->engines.size());
+    EXPECT_EQ(8u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(8u, engines.size());
 
@@ -912,7 +912,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWh
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(9u, device->engines.size());
+    EXPECT_EQ(9u, device->allEngines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(9u, engines.size());
 

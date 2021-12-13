@@ -99,7 +99,7 @@ HWTEST2_F(DeviceCopyQueueGroupTest,
     res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    for (auto &engineGroup : neoMockDevice->getEngineGroups()) {
+    for (auto &engineGroup : neoMockDevice->getRegularEngineGroups()) {
         EXPECT_NE(NEO::EngineGroupType::Copy, engineGroup.engineGroupType);
     }
 }
@@ -125,7 +125,7 @@ HWTEST2_F(DeviceQueueGroupTest,
     res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto &engineGroups = neoMockDevice->getEngineGroups();
+    auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
         if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
@@ -171,7 +171,7 @@ HWTEST2_F(DeviceQueueGroupTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(2u, count);
 
-    auto &engineGroups = neoMockDevice->getEngineGroups();
+    auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
         if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
@@ -214,7 +214,7 @@ HWTEST2_F(DeviceQueueGroupTest,
     res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto &engineGroups = neoMockDevice->getEngineGroups();
+    auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
         if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
@@ -257,7 +257,7 @@ HWTEST2_F(DeviceQueueGroupTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     L0::Context *context = Context::fromHandle(hContext);
 
-    auto &engineGroups = neoMockDevice->getEngineGroups();
+    auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
         if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);

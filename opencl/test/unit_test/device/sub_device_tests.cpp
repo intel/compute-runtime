@@ -240,9 +240,9 @@ TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDevic
     auto executionEnvironment = new MockExecutionEnvironment;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
     MockDevice device(executionEnvironment, 0);
-    EXPECT_EQ(0u, device.engines.size());
+    EXPECT_EQ(0u, device.allEngines.size());
     device.createEngines();
-    EXPECT_EQ(gpgpuEngines.size(), device.engines.size());
+    EXPECT_EQ(gpgpuEngines.size(), device.allEngines.size());
 }
 
 TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCreatesSpecialEngine) {
@@ -252,11 +252,11 @@ TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCr
 
     auto executionEnvironment = new MockExecutionEnvironment;
     MockDevice device(executionEnvironment, 0);
-    EXPECT_EQ(0u, device.engines.size());
+    EXPECT_EQ(0u, device.allEngines.size());
     device.createSubDevices();
     device.createEngines();
     EXPECT_EQ(2u, device.getNumGenericSubDevices());
-    EXPECT_EQ(1u, device.engines.size());
+    EXPECT_EQ(1u, device.allEngines.size());
 }
 
 TEST(SubDevicesTest, givenRootDeviceWithSubDevicesAndLocalMemoryWhenGettingGlobalMemorySizeThenSubDevicesReturnReducedAmountOfGlobalMemAllocSize) {
@@ -346,19 +346,19 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
     }
 
     bool hasRootCsrOnly(MockDevice *device) {
-        return ((device->engines.size() == 1) &&
-                device->engines[0].osContext->isRootDevice());
+        return ((device->allEngines.size() == 1) &&
+                device->allEngines[0].osContext->isRootDevice());
     }
 
     bool isEngineInstanced(MockSubDevice *subDevice, aub_stream::EngineType engineType, uint32_t subDeviceIndex, DeviceBitfield deviceBitfield) {
-        bool isEngineInstanced = !subDevice->engines[0].osContext->isRootDevice();
+        bool isEngineInstanced = !subDevice->allEngines[0].osContext->isRootDevice();
         isEngineInstanced &= subDevice->engineInstanced;
         isEngineInstanced &= (subDevice->getNumGenericSubDevices() == 0);
         isEngineInstanced &= (subDevice->getNumSubDevices() == 0);
         isEngineInstanced &= (engineType == subDevice->engineInstancedType);
         isEngineInstanced &= (subDeviceIndex == subDevice->getSubDeviceIndex());
         isEngineInstanced &= (deviceBitfield == subDevice->getDeviceBitfield());
-        isEngineInstanced &= (subDevice->getEngines().size() == 1);
+        isEngineInstanced &= (subDevice->getAllEngines().size() == 1);
 
         return isEngineInstanced;
     }
@@ -369,7 +369,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
         for (size_t i = 0; i < gpgpuEngines.size(); i++) {
-            if (device->engines[i].getEngineType() != gpgpuEngines[i].first) {
+            if (device->allEngines[i].getEngineType() != gpgpuEngines[i].first) {
                 return false;
             }
         }
@@ -393,7 +393,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
 
     template <typename MockDeviceT>
     bool hasEngineInstancedEngines(MockDeviceT *device, aub_stream::EngineType engineType) {
-        if (device->getEngines().size() != 1) {
+        if (device->getAllEngines().size() != 1) {
             return false;
         }
 
@@ -402,7 +402,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         EXPECT_EQ(EngineUsage::Regular, defaultOsContext->getEngineUsage());
         EXPECT_TRUE(defaultOsContext->isDefaultContext());
 
-        auto &engine = device->getEngines()[0];
+        auto &engine = device->getAllEngines()[0];
 
         EXPECT_EQ(engine.getEngineType(), engineType);
         EXPECT_TRUE(engine.osContext->isRegular());
@@ -505,7 +505,7 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGe
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(i));
         ASSERT_NE(nullptr, subDevice);
 
-        EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
+        EXPECT_FALSE(subDevice->allEngines[0].osContext->isRootDevice());
         EXPECT_FALSE(subDevice->engineInstanced);
         EXPECT_EQ(0u, subDevice->getNumGenericSubDevices());
         EXPECT_EQ(0u, subDevice->getNumSubDevices());
@@ -529,7 +529,7 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGe
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(i));
         ASSERT_NE(nullptr, subDevice);
 
-        EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
+        EXPECT_FALSE(subDevice->allEngines[0].osContext->isRootDevice());
         EXPECT_FALSE(subDevice->engineInstanced);
         EXPECT_EQ(0u, subDevice->getNumGenericSubDevices());
         EXPECT_EQ(0u, subDevice->getNumSubDevices());
@@ -555,7 +555,7 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGe
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(i));
         ASSERT_NE(nullptr, subDevice);
 
-        EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
+        EXPECT_FALSE(subDevice->allEngines[0].osContext->isRootDevice());
         EXPECT_FALSE(subDevice->engineInstanced);
         EXPECT_EQ(0u, subDevice->getNumGenericSubDevices());
         EXPECT_EQ(ccsCount, subDevice->getNumSubDevices());
@@ -697,7 +697,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskSetWhenCreatingDevicesThenFi
 
         ASSERT_NE(nullptr, subDevice);
 
-        EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
+        EXPECT_FALSE(subDevice->allEngines[0].osContext->isRootDevice());
         EXPECT_FALSE(subDevice->engineInstanced);
         EXPECT_EQ(engineInstancedPerGeneric[i], subDevice->getNumSubDevices());
         EXPECT_EQ(0u, subDevice->getNumGenericSubDevices());
@@ -740,7 +740,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceWhenC
 
         ASSERT_NE(nullptr, subDevice);
 
-        EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
+        EXPECT_FALSE(subDevice->allEngines[0].osContext->isRootDevice());
 
         if (create2ndLevelAsEngineInstanced[i]) {
             auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + engineInstanced2ndLevelEngineIndex);
@@ -792,7 +792,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceOnlyW
 
     DeviceBitfield deviceBitfield = (1llu << genericDeviceIndex);
 
-    EXPECT_FALSE(rootDevice->engines[0].osContext->isRootDevice());
+    EXPECT_FALSE(rootDevice->allEngines[0].osContext->isRootDevice());
     EXPECT_TRUE(rootDevice->engineInstanced);
     EXPECT_TRUE(rootDevice->getNumGenericSubDevices() == 0);
     EXPECT_TRUE(rootDevice->getNumSubDevices() == 0);
@@ -821,7 +821,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle2rdLevelDeviceOnlyW
 
     DeviceBitfield deviceBitfield = (1llu << genericDeviceIndex);
 
-    EXPECT_FALSE(rootDevice->engines[0].osContext->isRootDevice());
+    EXPECT_FALSE(rootDevice->allEngines[0].osContext->isRootDevice());
     EXPECT_TRUE(rootDevice->engineInstanced);
     EXPECT_TRUE(rootDevice->getNumGenericSubDevices() == 0);
     EXPECT_TRUE(rootDevice->getNumSubDevices() == 0);
@@ -1006,7 +1006,7 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
-    auto engines = clRootDevice->getDevice().getEngineGroups()[defaultEngineGroupIndex].engines;
+    auto engines = clRootDevice->getDevice().getRegularEngineGroups()[defaultEngineGroupIndex].engines;
 
     for (size_t i = 0; i < cmdQs.size(); i++) {
         auto engineIndex = i % engines.size();

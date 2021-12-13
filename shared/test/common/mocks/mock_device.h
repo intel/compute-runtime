@@ -28,9 +28,9 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
                                                   const DeviceBitfield deviceBitfield);
 
 struct MockSubDevice : public SubDevice {
+    using Device::allEngines;
     using Device::createEngines;
     using Device::engineInstancedType;
-    using Device::engines;
     using SubDevice::engineInstanced;
     using SubDevice::getDeviceBitfield;
     using SubDevice::getGlobalMemorySize;
@@ -48,20 +48,20 @@ struct MockSubDevice : public SubDevice {
 class MockDevice : public RootDevice {
   public:
     using Device::addEngineToEngineGroup;
+    using Device::allEngines;
     using Device::commandStreamReceivers;
     using Device::createDeviceInternals;
     using Device::createEngine;
     using Device::createSubDevices;
     using Device::deviceBitfield;
     using Device::deviceInfo;
-    using Device::engineGroups;
     using Device::engineInstanced;
     using Device::engineInstancedType;
-    using Device::engines;
     using Device::executionEnvironment;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
     using Device::isDebuggerActive;
+    using Device::regularEngineGroups;
     using Device::rootCsrCreated;
     using Device::rtMemoryBackedBuffer;
     using RootDevice::createEngines;
@@ -99,14 +99,14 @@ class MockDevice : public RootDevice {
 
     template <typename T>
     UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() {
-        return reinterpret_cast<UltCommandStreamReceiver<T> &>(*engines[defaultEngineIndex].commandStreamReceiver);
+        return reinterpret_cast<UltCommandStreamReceiver<T> &>(*allEngines[defaultEngineIndex].commandStreamReceiver);
     }
 
     template <typename T>
     UltCommandStreamReceiver<T> &getUltCommandStreamReceiverFromIndex(uint32_t index) {
-        return reinterpret_cast<UltCommandStreamReceiver<T> &>(*engines[index].commandStreamReceiver);
+        return reinterpret_cast<UltCommandStreamReceiver<T> &>(*allEngines[index].commandStreamReceiver);
     }
-    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const { return *engines[defaultEngineIndex].commandStreamReceiver; }
+    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const { return *allEngines[defaultEngineIndex].commandStreamReceiver; }
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex);
 

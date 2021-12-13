@@ -36,7 +36,7 @@ GEN8TEST_F(HwHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) 
 
 GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
-    EXPECT_EQ(3u, pDevice->engines.size());
+    EXPECT_EQ(3u, pDevice->allEngines.size());
 }
 
 GEN8TEST_F(HwHelperTestGen8, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {

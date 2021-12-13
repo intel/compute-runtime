@@ -370,7 +370,7 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
         device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
         deleter = new MockDeferredDeleter();
 
-        device->engines.clear();
+        device->allEngines.clear();
         device->injectMemoryManager(memoryManager);
         device->createEngines();
         memoryManager->setDeferredDeleter(deleter);

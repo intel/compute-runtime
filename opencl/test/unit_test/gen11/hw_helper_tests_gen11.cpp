@@ -33,7 +33,7 @@ GEN11TEST_F(HwHelperTestGen11, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet
 
 GEN11TEST_F(HwHelperTestGen11, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
-    EXPECT_EQ(3u, pDevice->engines.size());
+    EXPECT_EQ(3u, pDevice->allEngines.size());
 }
 
 GEN11TEST_F(HwHelperTestGen11, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {

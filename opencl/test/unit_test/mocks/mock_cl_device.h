@@ -94,7 +94,7 @@ class MockClDevice : public ClDevice {
     ExecutionEnvironment *&executionEnvironment;
     static bool &createSingleDevice;
     static decltype(&createCommandStream) &createCommandStreamReceiverFunc;
-    std::vector<EngineControl> &engines;
+    std::vector<EngineControl> &allEngines;
 };
 
 class MockDeviceWithDebuggerActive : public MockDevice {

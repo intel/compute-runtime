@@ -902,7 +902,7 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
         if (specificEngineSelected) {
             this->queueFamilySelected = true;
             if (!getDevice().hasRootCsr()) {
-                const auto &engine = getDevice().getEngineGroups()[selectedQueueFamilyIndex].engines[selectedQueueIndex];
+                const auto &engine = getDevice().getRegularEngineGroups()[selectedQueueFamilyIndex].engines[selectedQueueIndex];
                 auto engineType = engine.getEngineType();
                 auto engineUsage = engine.getEngineUsage();
                 if ((DebugManager.flags.EngineUsageHint.get() != -1) &&

@@ -26,7 +26,7 @@ DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(RootDeviceEnviron
 DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
-    auto &engines = device->getEngines();
+    auto &engines = device->getAllEngines();
     for (const auto &engine : engines) {
         engine.osContext->ensureContextInitialized();
         this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false);
@@ -51,7 +51,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evict(Device *device, GraphicsAllocation &gfxAllocation) {
-    auto &engines = device->getEngines();
+    auto &engines = device->getAllEngines();
     auto retVal = MemoryOperationsStatus::SUCCESS;
     for (const auto &engine : engines) {
         retVal = this->evictWithinOsContext(engine.osContext, gfxAllocation);
@@ -81,7 +81,7 @@ void DrmMemoryOperationsHandlerBind::evictImpl(OsContext *osContext, GraphicsAll
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
     bool isResident = true;
-    auto &engines = device->getEngines();
+    auto &engines = device->getAllEngines();
     for (const auto &engine : engines) {
         isResident &= gfxAllocation.isAlwaysResident(engine.osContext->getContextId());
     }

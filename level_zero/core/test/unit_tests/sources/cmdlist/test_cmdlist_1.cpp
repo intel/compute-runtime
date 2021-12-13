@@ -1224,7 +1224,7 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
 }
 
 TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListForEveryEnigneThenItHasImmediateCommandQueueCreated) {
-    auto &engineGroups = neoDevice->getEngineGroups();
+    auto &engineGroups = neoDevice->getRegularEngineGroups();
     for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
         for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
             ze_command_queue_desc_t desc = {};

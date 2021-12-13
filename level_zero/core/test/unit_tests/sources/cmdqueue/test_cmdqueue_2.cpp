@@ -38,7 +38,7 @@ TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCa
 
 HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreatingCommandQueueThenCommandQueueIsCreated) {
     ze_command_queue_handle_t commandQueue = {};
-    auto &engineGroups = neoDevice->getEngineGroups();
+    auto &engineGroups = neoDevice->getRegularEngineGroups();
     for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
         for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
             ze_command_queue_desc_t desc = {};
@@ -55,7 +55,7 @@ HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreating
 
 HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBiggerThanAvailableEnginesWhenCreatingCommandQueueThenInvalidArgumentErrorIsReturned) {
     ze_command_queue_handle_t commandQueue = {};
-    auto &engineGroups = neoDevice->getEngineGroups();
+    auto &engineGroups = neoDevice->getRegularEngineGroups();
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(engineGroups.size());
     desc.index = 0;
@@ -74,12 +74,12 @@ HWTEST_F(ContextCreateCommandQueueTest, givenRootDeviceAndImplicitScalingDisable
     NEO::UltDeviceFactory deviceFactory{1, 2};
     auto &rootDevice = *deviceFactory.rootDevices[0];
     auto &subDevice0 = *deviceFactory.subDevices[0];
-    rootDevice.engineGroups.resize(1);
-    subDevice0.getEngineGroups().push_back(NEO::Device::EngineGroupT{});
-    subDevice0.getEngineGroups().back().engineGroupType = EngineGroupType::Compute;
-    subDevice0.getEngineGroups().back().engines.resize(1);
-    subDevice0.getEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
-    auto ordinal = static_cast<uint32_t>(subDevice0.getEngineGroups().size() - 1);
+    rootDevice.regularEngineGroups.resize(1);
+    subDevice0.getRegularEngineGroups().push_back(NEO::Device::EngineGroupT{});
+    subDevice0.getRegularEngineGroups().back().engineGroupType = EngineGroupType::Compute;
+    subDevice0.getRegularEngineGroups().back().engines.resize(1);
+    subDevice0.getRegularEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
+    auto ordinal = static_cast<uint32_t>(subDevice0.getRegularEngineGroups().size() - 1);
     Mock<L0::DeviceImp> l0RootDevice(&rootDevice, rootDevice.getExecutionEnvironment());
 
     ze_command_queue_handle_t commandQueue = nullptr;

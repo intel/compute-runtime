@@ -351,7 +351,7 @@ TEST_F(DrmMemoryManagerTest, WhenAskedAndAllowedAndBigAllocationThenPinAfterAllo
     mock->ioctl_expected.gemClose = 2;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -384,7 +384,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmContextIdWhenAllocationIsCreatedThenPinWith
     mock->ioctl_expected.gemClose = 2;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -420,7 +420,7 @@ TEST_F(DrmMemoryManagerTest, WhenNotAskedButAllowedThenDoNotPinAfterAllocate) {
     mock->ioctl_expected.gemWait = 1;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -439,7 +439,7 @@ TEST_F(DrmMemoryManagerTest, WhenAskedButNotAllowedThenDoNotPinAfterAllocate) {
     mock->ioctl_expected.gemClose = 1;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -459,7 +459,7 @@ TEST_F(DrmMemoryManagerTest, WhenAskedAndAllowedAndBigAllocationHostPtrThenPinAf
     mock->ioctl_expected.gemWait = 1;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -482,7 +482,7 @@ TEST_F(DrmMemoryManagerTest, givenSmallAllocationHostPtrAllocationWhenForcePinIs
     mock->ioctl_expected.gemClose = 2;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -870,7 +870,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
                                                                                                     true,
                                                                                                     *executionEnvironment));
 
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -908,7 +908,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
                                                                                                     true,
                                                                                                     *executionEnvironment));
 
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -954,7 +954,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
                                                                                                     true,
                                                                                                     *executionEnvironment));
 
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -990,7 +990,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
                                                                                                     true,
                                                                                                     *executionEnvironment));
 
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -1026,7 +1026,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
                                                                                                     false,
                                                                                                     true,
                                                                                                     *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3152,7 +3152,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAlloc
                                                                                                     false,
                                                                                                     true,
                                                                                                     *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3218,7 +3218,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPopulateOsHandlesIsCalledThenHostMemoryIsValidated) {
 
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3262,7 +3262,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     };
 
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3315,7 +3315,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
     mock->ioctl_expected.gemClose = 2;
 
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, true, true, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3337,7 +3337,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
                                                                                                     true,
                                                                                                     *executionEnvironment));
 
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3359,7 +3359,7 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmal
     mock->ioctl_expected.gemClose = 2;    // 1 pinBB, 1 small allocation
 
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, true, true, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3410,7 +3410,7 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAllowedAndNoPinBBInMemoryManagerWhenAl
     mock->ioctl_expected.gemClose = 1;
     mock->ioctl_res = -1;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, true, false, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3520,7 +3520,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForN
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationEnabledWhenAllocationIsCreatedThenBufferObjectIsPinnedOnlyOnce) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3547,7 +3547,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationDisabledWhenAllocationIsCreatedThenBufferObjectIsNotPinned) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, false, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3573,7 +3573,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesMarksFragmentsToFree) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3626,7 +3626,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesDoesNotStoreTheFragments) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
@@ -3677,7 +3677,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenPopulateOsHandlesSucceedsThenFragmentIsStoredInHostPtrManager) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }

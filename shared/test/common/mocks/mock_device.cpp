@@ -34,8 +34,8 @@ MockDevice::MockDevice()
 
     OsContext *osContext = getMemoryManager()->createAndRegisterOsContext(commandStreamReceiver, engineDescriptor);
     commandStreamReceiver->setupContext(*osContext);
-    this->engines.resize(1);
-    this->engines[0] = {commandStreamReceiver, osContext};
+    this->allEngines.resize(1);
+    this->allEngines[0] = {commandStreamReceiver, osContext};
     initializeCaps();
 }
 
@@ -77,12 +77,12 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) {
 
-    auto osContext = this->engines[engineIndex].osContext;
+    auto osContext = this->allEngines[engineIndex].osContext;
     auto memoryManager = executionEnvironment->memoryManager.get();
-    auto registeredEngine = *memoryManager->getRegisteredEngineForCsr(engines[engineIndex].commandStreamReceiver);
+    auto registeredEngine = *memoryManager->getRegisteredEngineForCsr(allEngines[engineIndex].commandStreamReceiver);
 
     registeredEngine.commandStreamReceiver = newCsr;
-    engines[engineIndex].commandStreamReceiver = newCsr;
+    allEngines[engineIndex].commandStreamReceiver = newCsr;
     memoryManager->getRegisteredEngines().emplace_back(registeredEngine);
     osContext->incRefInternal();
     newCsr->setupContext(*osContext);

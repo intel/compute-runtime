@@ -2350,18 +2350,18 @@ struct CopyOnlyQueueTests : ::testing::Test {
         typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, *defaultHwInfo);
 
         auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
-        auto copyEngineGroup = std::find_if(device->engineGroups.begin(), device->engineGroups.end(), [](const auto &engineGroup) {
+        auto copyEngineGroup = std::find_if(device->regularEngineGroups.begin(), device->regularEngineGroups.end(), [](const auto &engineGroup) {
             return engineGroup.engineGroupType == EngineGroupType::Copy;
         });
-        if (copyEngineGroup == device->engineGroups.end()) {
+        if (copyEngineGroup == device->regularEngineGroups.end()) {
             GTEST_SKIP();
         }
-        device->engineGroups.clear();
-        device->engines.clear();
+        device->regularEngineGroups.clear();
+        device->allEngines.clear();
 
         device->createEngine(0, typeUsageRcs);
         device->createEngine(1, typeUsageBcs);
-        bcsEngine = &device->getEngines().back();
+        bcsEngine = &device->getAllEngines().back();
 
         clDevice = std::make_unique<MockClDevice>(device);
 
@@ -2433,7 +2433,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
     bool ccsFound = false;
-    for (auto &engine : device->engines) {
+    for (auto &engine : device->allEngines) {
         if (engine.osContext->getEngineType() == aub_stream::EngineType::ENGINE_CCS) {
             ccsFound = true;
             break;

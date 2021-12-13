@@ -133,7 +133,7 @@ HWTEST2_F(DeviceCopyQueueGroupTest,
     res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    for (auto &engineGroup : neoMockDevice->getEngineGroups()) {
+    for (auto &engineGroup : neoMockDevice->getRegularEngineGroups()) {
         EXPECT_NE(NEO::EngineGroupType::Copy, engineGroup.engineGroupType);
     }
 }

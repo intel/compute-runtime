@@ -62,8 +62,8 @@ class Device : public ReferenceTrackedObject<Device> {
     const DeviceInfo &getDeviceInfo() const;
     EngineControl *tryGetEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);
     EngineControl &getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);
-    EngineGroupsT &getEngineGroups() {
-        return this->engineGroups;
+    EngineGroupsT &getRegularEngineGroups() {
+        return this->regularEngineGroups;
     }
     size_t getEngineGroupIndexFromEngineGroupType(EngineGroupType engineGroupType) const;
     EngineControl &getEngine(uint32_t index);
@@ -86,7 +86,7 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL bool isDebuggerActive() const;
     Debugger *getDebugger() const { return getRootDeviceEnvironment().debugger.get(); }
     NEO::SourceLevelDebugger *getSourceLevelDebugger();
-    const EnginesT &getEngines() const;
+    const EnginesT &getAllEngines() const;
     const std::string getDeviceName(const HardwareInfo &hwInfo) const;
 
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
@@ -170,8 +170,8 @@ class Device : public ReferenceTrackedObject<Device> {
 
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
-    EnginesT engines;
-    EngineGroupsT engineGroups;
+    EnginesT allEngines;
+    EngineGroupsT regularEngineGroups;
     std::vector<SubDevice *> subdevices;
 
     PreemptionMode preemptionMode;
@@ -199,7 +199,7 @@ class Device : public ReferenceTrackedObject<Device> {
 };
 
 inline EngineControl &Device::getDefaultEngine() {
-    return engines[defaultEngineIndex];
+    return allEngines[defaultEngineIndex];
 }
 
 inline MemoryManager *Device::getMemoryManager() const {
