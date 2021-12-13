@@ -5,16 +5,11 @@
  *
  */
 
-#include "shared/source/os_interface/linux/os_interface_linux.h"
-
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/linux/hw_device_id.h"
 
 #include <sys/stat.h>
 #include <system_error>
@@ -35,8 +30,7 @@ bool OSInterface::isDebugAttachAvailable() const {
 }
 
 bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex,
-                        RootDeviceEnvironment *rootDeviceEnv,
-                        std::unique_ptr<OSInterface> &dstOsInterface, std::unique_ptr<MemoryOperationsHandler> &dstMemoryOpsHandler) {
+                        RootDeviceEnvironment *rootDeviceEnv) {
     auto hwDeviceIdDrm = std::unique_ptr<HwDeviceIdDrm>(reinterpret_cast<HwDeviceIdDrm *>(hwDeviceId.release()));
 
     Drm *drm = Drm::create(std::move(hwDeviceIdDrm), *rootDeviceEnv);
@@ -44,6 +38,7 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
         return false;
     }
 
+    auto &dstOsInterface = rootDeviceEnv->osInterface;
     dstOsInterface.reset(new OSInterface());
     dstOsInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     auto hardwareInfo = rootDeviceEnv->getMutableHardwareInfo();
@@ -51,7 +46,7 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
     if (hwConfig->configureHwInfoDrm(hardwareInfo, hardwareInfo, dstOsInterface.get())) {
         return false;
     }
-    dstMemoryOpsHandler = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
+    rootDeviceEnv->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
 
     [[maybe_unused]] bool result = rootDeviceEnv->initAilConfiguration();
     DEBUG_BREAK_IF(!result);

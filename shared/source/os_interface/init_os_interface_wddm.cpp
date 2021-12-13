@@ -11,7 +11,7 @@
 namespace NEO {
 
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
-    return initWddmOsInterface(std::move(hwDeviceId), rootDeviceIndex, this, osInterface, memoryOperationsInterface);
+    return initWddmOsInterface(std::move(hwDeviceId), this);
 }
 
 } // namespace NEO
