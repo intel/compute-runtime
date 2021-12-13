@@ -3639,16 +3639,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline uint32_t getInstructionBufferSize() const {
         return (TheStructure.Common.InstructionBufferSize);
     }
-    inline void setStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        if (value == 0) {
-            TheStructure.RawData[3] = 0x00710000;
-        } else {
-            TheStructure.RawData[3] = 0x00790000;
-        }
-    }
-    inline uint32_t getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables() const {
-        return (uint32_t)(((TheStructure.RawData[3] & 0x007f0000u) == 0x00710000u) ? 0 : 2);
-    }
     inline void setInstructionMemoryObjectControlState(const uint32_t value) {
         TheStructure.Common.InstructionMemoryObjectControlState_AgeForQuadlru = value;
         TheStructure.Common.InstructionMemoryObjectControlState_Reserved = (value >> 2);

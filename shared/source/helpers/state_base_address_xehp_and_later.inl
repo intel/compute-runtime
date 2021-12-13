@@ -61,11 +61,11 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED));
     }
 
-    stateBaseAddress->setSurfaceStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
-    stateBaseAddress->setDynamicStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
-    stateBaseAddress->setGeneralStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
-    stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
-    stateBaseAddress->setBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
+    stateBaseAddress->setSurfaceStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
+    stateBaseAddress->setDynamicStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
+    stateBaseAddress->setGeneralStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
+    stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
+    stateBaseAddress->setBindlessSamplerStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
 
     bool enableMultiGpuAtomics = isMultiOsContextCapable;
     if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {

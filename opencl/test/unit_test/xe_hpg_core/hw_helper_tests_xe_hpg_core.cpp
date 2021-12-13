@@ -114,19 +114,6 @@ XE_HPG_CORETEST_F(HwInfoConfigTestXeHpgCore, givenDebugVariableSetWhenConfigureI
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
 
-using XeHpgCoreRenderSurfaceStateDataTests = ::testing::Test;
-
-XE_HPG_CORETEST_F(XeHpgCoreRenderSurfaceStateDataTests, WhenMemoryObjectControlStateIndexToMocsTablesIsSetThenValueIsShift) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    uint32_t value = 4;
-    surfaceState.setMemoryObjectControlStateIndexToMocsTables(value);
-
-    EXPECT_EQ(surfaceState.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables, value >> 1);
-    EXPECT_EQ(surfaceState.getMemoryObjectControlStateIndexToMocsTables(), value);
-}
-
 using LriHelperTestsXeHpgCore = ::testing::Test;
 
 XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMmioRemapEnableCorrectlySet) {

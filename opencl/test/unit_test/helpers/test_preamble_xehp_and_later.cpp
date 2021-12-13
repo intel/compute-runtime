@@ -256,16 +256,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushC
     hwParserCsr.findHardwareCommands<FamilyType>();
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto expectedMocsIndexForStateless = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
-    auto expectedMocsIndexForHeap = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
+    auto expectedMocsForStateless = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    auto expectedMocsForHeap = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
 
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getSurfaceStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getDynamicStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getGeneralStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getInstructionMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForStateless, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getSurfaceStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getDynamicStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getGeneralStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getInstructionMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSurfaceStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForStateless, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseAddressHasAllCachesOffWhenDebugFlagIsPresent) {
@@ -281,14 +281,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushC
     hwParserCsr.findHardwareCommands<FamilyType>();
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto expectedMocsIndexForHeap = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED);
+    auto expectedMocsForHeap = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED);
 
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getSurfaceStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getDynamicStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getGeneralStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getInstructionMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables());
-    EXPECT_EQ(expectedMocsIndexForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getSurfaceStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getDynamicStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getGeneralStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getInstructionMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSurfaceStateMemoryObjectControlState());
+    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL1DebugFlagWhenStatelessMocsIsProgrammedThenItHasL1CachingOn) {

@@ -34,8 +34,8 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     auto l3CacheOnPolicy = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
 
     if (gmmHelper != nullptr) {
-        stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
-        stateBaseAddress->setBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(l3CacheOnPolicy));
+        stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
+        stateBaseAddress->setBindlessSamplerStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
     }
 
     appendExtraCacheSettings(stateBaseAddress, gmmHelper);

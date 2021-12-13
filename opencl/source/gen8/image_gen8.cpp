@@ -20,7 +20,7 @@ template <>
 void ImageHw<Family>::setMediaSurfaceRotation(void *) {}
 
 template <>
-void ImageHw<Family>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *, uint32_t) {}
+void ImageHw<Family>::setSurfaceMemoryObjectControlState(void *, uint32_t) {}
 
 } // namespace NEO
 

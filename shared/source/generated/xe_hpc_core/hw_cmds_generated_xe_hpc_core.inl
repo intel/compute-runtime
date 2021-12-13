@@ -401,12 +401,12 @@ typedef struct tagMEDIA_SURFACE_STATE {
     inline uint32_t getXOffsetForUCb() const {
         return TheStructure.Common.XOffsetForU_Cb;
     }
-    inline void setSurfaceMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
+    inline void setSurfaceMemoryObjectControlState(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7e);
-        TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables = value;
+        TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables = value >> 1;
     }
-    inline uint32_t getSurfaceMemoryObjectControlStateIndexToMocsTables() const {
-        return TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables;
+    inline uint32_t getSurfaceMemoryObjectControlState() const {
+        return TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables << 1;
     }
     inline void setVerticalLineStrideOffset(const bool value) {
         TheStructure.Common.VerticalLineStrideOffset = value;
@@ -2132,13 +2132,6 @@ typedef struct tagRENDER_SURFACE_STATE {
         mocs |= (TheStructure.Common.MemoryObjectControlStateIndexToMocsTables << 1);
         return (mocs);
     }
-    inline void setMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3f);
-        TheStructure.Common.MemoryObjectControlStateIndexToMocsTables = value >> 1;
-    }
-    inline uint32_t getMemoryObjectControlStateIndexToMocsTables() const {
-        return (TheStructure.Common.MemoryObjectControlStateIndexToMocsTables << 1);
-    }
     inline void setWidth(const uint32_t value) {
         TheStructure.Common.Width = value - 1;
     }
@@ -3040,11 +3033,11 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline bool getGeneralStateBaseAddressModifyEnable() const {
         return TheStructure.Common.GeneralStateBaseAddressModifyEnable;
     }
-    inline void setGeneralStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setGeneralStateMemoryObjectControlState(const uint64_t value) {
         UNRECOVERABLE_IF(value > 0x7fL);
         TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMocsTables = (value >> 1); // patched
     }
-    inline uint64_t getGeneralStateMemoryObjectControlStateIndexToMocsTables() const {
+    inline uint64_t getGeneralStateMemoryObjectControlState() const {
         return TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMocsTables << 1; // patched
     }
     typedef enum tagGENERALSTATEBASEADDRESS {
@@ -3082,13 +3075,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline bool getDisableSupportForMultiGpuPartialWritesForStatelessMessages() const {
         return TheStructure.Common.DisableSupportForMultiGpuPartialWritesForStatelessMessages;
     }
-    inline void setStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables = (value >> 1); // patched
-    }
-    inline uint32_t getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables() const {
-        return TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables << 1; // patched
-    }
     inline void setStatelessDataPortAccessMemoryObjectControlState(const uint32_t value) { // patched
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateReserved_112 = value;
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables = (value >> 1);
@@ -3111,11 +3097,11 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline bool getSurfaceStateBaseAddressModifyEnable() const {
         return TheStructure.Common.SurfaceStateBaseAddressModifyEnable;
     }
-    inline void setSurfaceStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setSurfaceStateMemoryObjectControlState(const uint64_t value) {
         UNRECOVERABLE_IF(value > 0x7fL);
         TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMocsTables = (value >> 1); // patched
     }
-    inline uint64_t getSurfaceStateMemoryObjectControlStateIndexToMocsTables() const {
+    inline uint64_t getSurfaceStateMemoryObjectControlState() const {
         return TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMocsTables << 1; // patched
     }
     typedef enum tagSURFACESTATEBASEADDRESS {
@@ -3135,11 +3121,11 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline bool getDynamicStateBaseAddressModifyEnable() const {
         return TheStructure.Common.DynamicStateBaseAddressModifyEnable;
     }
-    inline void setDynamicStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setDynamicStateMemoryObjectControlState(const uint64_t value) {
         UNRECOVERABLE_IF(value > 0x7fL);
         TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMocsTables = (value >> 1); // patched
     }
-    inline uint64_t getDynamicStateMemoryObjectControlStateIndexToMocsTables() const {
+    inline uint64_t getDynamicStateMemoryObjectControlState() const {
         return TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMocsTables << 1; // patched
     }
     typedef enum tagDYNAMICSTATEBASEADDRESS {
@@ -3158,13 +3144,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
     }
     inline bool getInstructionBaseAddressModifyEnable() const {
         return TheStructure.Common.InstructionBaseAddressModifyEnable;
-    }
-    inline void setInstructionMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0x7fL);
-        TheStructure.Common.InstructionMemoryObjectControlStateIndexToMocsTables = (value >> 1); // patched
-    }
-    inline uint64_t getInstructionMemoryObjectControlStateIndexToMocsTables() const {
-        return TheStructure.Common.InstructionMemoryObjectControlStateIndexToMocsTables << 1; //patched
     }
     inline void setInstructionMemoryObjectControlState(const uint32_t value) { // patched
         uint64_t val = static_cast<uint64_t>(value);
@@ -3245,11 +3224,11 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline bool getBindlessSurfaceStateBaseAddressModifyEnable() const {
         return TheStructure.Common.BindlessSurfaceStateBaseAddressModifyEnable;
     }
-    inline void setBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setBindlessSurfaceStateMemoryObjectControlState(const uint64_t value) {
         UNRECOVERABLE_IF((value >> 1) > 0x3fL);
         TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables = value >> 1;
     }
-    inline uint64_t getBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables() const {
+    inline uint64_t getBindlessSurfaceStateMemoryObjectControlState() const {
         return (TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables << 1);
     }
     typedef enum tagBINDLESSSURFACESTATEBASEADDRESS {
@@ -3281,11 +3260,11 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline uint64_t getBindlessSamplerStateMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateReserved_612);
     }
-    inline void setBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setBindlessSamplerStateMemoryObjectControlState(const uint64_t value) {
         UNRECOVERABLE_IF((value >> 1) > 0x3fL);
         TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMocsTables = value >> 1;
     }
-    inline uint64_t getBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables() const {
+    inline uint64_t getBindlessSamplerStateMemoryObjectControlState() const {
         return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMocsTables << 1);
     }
     typedef enum tagBINDLESSSAMPLERSTATEBASEADDRESS {

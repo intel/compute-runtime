@@ -823,19 +823,6 @@ XE_HPC_CORETEST_F(HwInfoConfigTestXeHpcCore, givenMultitileConfigWhenConfiguring
     }
 }
 
-using XeHpcCoreRenderSurfaceStateDataTests = ::testing::Test;
-
-XE_HPC_CORETEST_F(XeHpcCoreRenderSurfaceStateDataTests, WhenMemoryObjectControlStateIndexToMocsTablesIsSetThenValueIsShift) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    uint32_t value = 4;
-    surfaceState.setMemoryObjectControlStateIndexToMocsTables(value);
-
-    EXPECT_EQ(surfaceState.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables, value >> 1);
-    EXPECT_EQ(surfaceState.getMemoryObjectControlStateIndexToMocsTables(), value);
-}
-
 using LriHelperTestsXeHpcCore = ::testing::Test;
 
 XE_HPC_CORETEST_F(LriHelperTestsXeHpcCore, whenProgrammingLriCommandThenExpectMmioRemapEnableCorrectlySet) {

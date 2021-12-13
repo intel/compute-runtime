@@ -167,7 +167,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory, uint32_t rootDeviceIndex
     state.setXOffsetForVCr(0);
     state.setYOffsetForVCr(0);
 
-    setSurfaceMemoryObjectControlStateIndexToMocsTable(
+    setSurfaceMemoryObjectControlState(
         reinterpret_cast<void *>(&state),
         gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
 
@@ -214,13 +214,13 @@ inline void ImageHw<GfxFamily>::setMediaSurfaceRotation(void *memory) {
 }
 
 template <typename GfxFamily>
-inline void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) {
+inline void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlState(void *memory, uint32_t value) {
     using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
     using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
 
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
 
-    surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
+    surfaceState->setSurfaceMemoryObjectControlState(value);
 }
 
 } // namespace NEO

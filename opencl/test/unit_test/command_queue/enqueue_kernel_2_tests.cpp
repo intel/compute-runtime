@@ -275,7 +275,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, givenDebugV
     auto itorCmd = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(itorWalker, itorCmd);
     auto *cmdSBA = (STATE_BASE_ADDRESS *)*itorCmd;
-    auto mocsProgrammed = cmdSBA->getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables() >> 1;
+    auto mocsProgrammed = cmdSBA->getStatelessDataPortAccessMemoryObjectControlState() >> 1;
     EXPECT_EQ(1u, mocsProgrammed);
 }
 

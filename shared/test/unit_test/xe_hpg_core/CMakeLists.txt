@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(TESTS_GEN12LP)
+if(TESTS_XE_HPG_CORE)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_gen12lp_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_xe_hpg_core_tests.cpp
   )
   add_subdirectories()
 endif()
