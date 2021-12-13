@@ -314,6 +314,7 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
             id++;
         }
         programInfo.prepareLinkerInputStorage();
+        programInfo.linkerInput->undefinedSymbolsAllowed = programInfo.levelZeroDynamicLinkProgram;
         programInfo.linkerInput->decodeElfSymbolTableAndRelocations(programInfo.decodedElf, nameToKernelId);
     }
 

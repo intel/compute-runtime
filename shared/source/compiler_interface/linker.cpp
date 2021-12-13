@@ -214,7 +214,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
         auto bind = elf.extractSymbolBind(symbol);
 
         if (bind == Elf::SYMBOL_TABLE_BIND::STB_GLOBAL) {
-            SymbolInfo &symbolInfo = symbols[elf.getSymbolName(symbol.name)];
+            SymbolInfo symbolInfo;
             symbolInfo.offset = static_cast<uint32_t>(symbol.value);
             symbolInfo.size = static_cast<uint32_t>(symbol.size);
             auto type = elf.extractSymbolType(symbol);
@@ -224,8 +224,9 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
 
             switch (type) {
             default:
-                DEBUG_BREAK_IF(true);
-                break;
+                this->valid &= this->undefinedSymbolsAllowed;
+                DEBUG_BREAK_IF(false == this->undefinedSymbolsAllowed);
+                continue;
             case Elf::SYMBOL_TABLE_TYPE::STT_OBJECT:
                 symbolInfo.segment = symbolSegment;
                 traits.exportsGlobalVariables |= symbolSegment == SegmentType::GlobalVariables;
@@ -243,6 +244,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
                 }
             } break;
             }
+            symbols.insert({elf.getSymbolName(symbol.name), symbolInfo});
         }
     }
 }

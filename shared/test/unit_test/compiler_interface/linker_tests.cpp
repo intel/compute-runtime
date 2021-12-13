@@ -892,7 +892,7 @@ TEST(LinkerInputTests, GivenGlobalFunctionsInTwoSegementsWhenDecodingThenUnrecov
     EXPECT_THROW(linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId), std::exception);
 
     auto symbols = linkerInput.getSymbols();
-    ASSERT_EQ(2u, symbols.size());
+    ASSERT_EQ(1u, symbols.size());
     EXPECT_EQ(0, linkerInput.getExportedFunctionsSegmentId());
 }
 
@@ -928,7 +928,7 @@ TEST(LinkerInputTests, GivenNoKernelNameToIdWhenDecodingGlobalFunctionThenExport
     EXPECT_EQ(-1, linkerInput.getExportedFunctionsSegmentId());
 }
 
-TEST(LinkerInputTests, GivenGlobalElfSymbolOfNoTypeWhenDecodingThenSymbolWithUnknownSegmentIsAddedAndDebugBreakCalled) {
+TEST(LinkerInputTests, GivenGlobalElfSymbolOfNoTypeWhenDecodingThenDebugBreakCalled) {
     NEO::LinkerInput linkerInput = {};
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
@@ -960,8 +960,7 @@ TEST(LinkerInputTests, GivenGlobalElfSymbolOfNoTypeWhenDecodingThenSymbolWithUnk
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
 
     auto symbols = linkerInput.getSymbols();
-    ASSERT_EQ(1u, symbols.size());
-    EXPECT_EQ(SegmentType::Unknown, symbols.begin()->second.segment);
+    ASSERT_EQ(0u, symbols.size());
 
     EXPECT_FALSE(linkerInput.getTraits().exportsGlobalVariables);
     EXPECT_FALSE(linkerInput.getTraits().exportsGlobalConstants);
