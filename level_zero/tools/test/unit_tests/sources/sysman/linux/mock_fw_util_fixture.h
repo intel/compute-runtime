@@ -36,5 +36,17 @@ struct MockLinuxFwUtilInterface : public LinuxFwUtilInterface {
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 };
 
+class LinuxOsLibrary : public OsLibrary {};
+struct MockOsLibrary : public LinuxOsLibrary {
+  public:
+    virtual ~MockOsLibrary() = default;
+    void *getProcAddress(const std::string &procName) override {
+        return nullptr;
+    }
+    bool isLoaded() override {
+        return false;
+    }
+};
+
 } // namespace ult
 } // namespace L0

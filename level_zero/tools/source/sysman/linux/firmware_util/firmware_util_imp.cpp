@@ -180,8 +180,8 @@ FirmwareUtilImp::FirmwareUtilImp(const std::string &pciBDF) {
 };
 
 FirmwareUtilImp::~FirmwareUtilImp() {
-    deviceClose(&fwDeviceHandle);
     if (nullptr != libraryHandle) {
+        deviceClose(&fwDeviceHandle);
         delete libraryHandle;
         libraryHandle = nullptr;
     }
