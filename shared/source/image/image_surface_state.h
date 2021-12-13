@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -32,6 +33,8 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
     bool isImageArray = imageInfo.imgDesc.imageArraySize > 1 &&
                         (imageInfo.imgDesc.imageType == ImageType::Image2DArray ||
                          imageInfo.imgDesc.imageType == ImageType::Image1DArray);
+
+    isImageArray |= (imageInfo.imgDesc.imageType == ImageType::Image2D || imageInfo.imgDesc.imageType == ImageType::Image2DArray) && DebugManager.flags.Force2dImageAsArray.get() == 1;
 
     uint32_t renderTargetViewExtent = static_cast<uint32_t>(imageCount);
     uint32_t minimumArrayElement = 0;

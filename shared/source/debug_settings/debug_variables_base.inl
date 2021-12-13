@@ -178,6 +178,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceTile0PlacementForTile1ResourcesWaActive, -1
 DECLARE_DEBUG_VARIABLE(int32_t, ClosEnabled, -1, "-1: default, 0: disabled, 1: enabled. Enable CLOS based cache reservation")
 DECLARE_DEBUG_VARIABLE(int32_t, EngineUsageHint, -1, "-1: default, >=0: engine usage value to use when creating command queue on user selected engine")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceBcsEngineIndex, -1, "-1: default, >=0 Copy Engine index")
+DECLARE_DEBUG_VARIABLE(int32_t, Force2dImageAsArray, -1, "-1: default, 0: WA Disabled, 1: Forces surface state of 2dImage to array")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
