@@ -515,11 +515,11 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
     auto deviceImp = static_cast<DeviceImp *>(device);
-    EXPECT_TRUE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(deviceImp->allocationsForReuse->peekIsEmpty());
 
     commandQueue->destroy();
 
-    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
 }
 
 struct DeviceWithDualStorage : Test<DeviceFixture> {

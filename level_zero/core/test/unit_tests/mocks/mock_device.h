@@ -104,6 +104,7 @@ struct Mock<L0::DeviceImp> : public L0::DeviceImp {
         device->incRefInternal();
         Base::execEnvironment = execEnv;
         Base::neoDevice = device;
+        Base::allocationsForReuse = std::make_unique<NEO::AllocationsList>();
     }
 };
 

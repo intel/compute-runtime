@@ -121,7 +121,7 @@ struct DeviceImp : public Device {
     NEO::SVMAllocsManager::MapBasedAllocationTracker peerAllocations;
     NEO::SpinLock peerAllocationsMutex;
     std::map<NEO::SvmAllocationData *, NEO::MemAdviseFlags> memAdviseSharedAllocations;
-    NEO::AllocationsList allocationsForReuse;
+    std::unique_ptr<NEO::AllocationsList> allocationsForReuse;
     void createSysmanHandle(bool isSubDevice);
 
   protected:

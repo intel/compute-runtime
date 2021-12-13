@@ -788,6 +788,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     neoDevice->incRefInternal();
 
     device->execEnvironment = (void *)neoDevice->getExecutionEnvironment();
+    device->allocationsForReuse = std::make_unique<NEO::AllocationsList>();
     device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true);
     device->metricContext = MetricContext::create(*device);
     device->builtins = BuiltinFunctionsLib::create(
@@ -897,7 +898,11 @@ void DeviceImp::releaseResources() {
     metricContext.reset();
     builtins.reset();
     cacheReservation.reset();
-    allocationsForReuse.freeAllGraphicsAllocations(neoDevice);
+
+    if (allocationsForReuse.get()) {
+        allocationsForReuse->freeAllGraphicsAllocations(neoDevice);
+        allocationsForReuse.reset();
+    }
 
     if (getSourceLevelDebugger()) {
         getSourceLevelDebugger()->notifyDeviceDestruction();
@@ -1017,7 +1022,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
 }
 
 NEO::GraphicsAllocation *DeviceImp::obtainReusableAllocation(size_t requiredSize, NEO::GraphicsAllocation::AllocationType type) {
-    auto alloc = allocationsForReuse.detachAllocation(requiredSize, nullptr, nullptr, type);
+    auto alloc = allocationsForReuse->detachAllocation(requiredSize, nullptr, nullptr, type);
     if (alloc == nullptr)
         return nullptr;
     else
@@ -1025,7 +1030,7 @@ NEO::GraphicsAllocation *DeviceImp::obtainReusableAllocation(size_t requiredSize
 }
 
 void DeviceImp::storeReusableAllocation(NEO::GraphicsAllocation &alloc) {
-    allocationsForReuse.pushFrontOne(alloc);
+    allocationsForReuse->pushFrontOne(alloc);
 }
 
 ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) {

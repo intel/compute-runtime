@@ -485,9 +485,9 @@ TEST_F(DeviceTest, givenNonEmptyAllocationsListWhenRequestingAllocationSmallerOr
                                                                                                            NEO::GraphicsAllocation::AllocationType::FILL_PATTERN,
                                                                                                            neoDevice->getDeviceBitfield()});
     device->storeReusableAllocation(*allocation);
-    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
     auto obtaindedAllocation = device->obtainReusableAllocation(dataSize, NEO::GraphicsAllocation::AllocationType::FILL_PATTERN);
-    EXPECT_TRUE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(deviceImp->allocationsForReuse->peekIsEmpty());
     EXPECT_NE(nullptr, obtaindedAllocation);
     EXPECT_EQ(allocation, obtaindedAllocation);
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
@@ -505,10 +505,10 @@ TEST_F(DeviceTest, givenNonEmptyAllocationsListWhenRequestingAllocationBiggerInS
                                                                                                            NEO::GraphicsAllocation::AllocationType::FILL_PATTERN,
                                                                                                            neoDevice->getDeviceBitfield()});
     device->storeReusableAllocation(*allocation);
-    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
     auto obtaindedAllocation = device->obtainReusableAllocation(4 * dataSize + 1u, NEO::GraphicsAllocation::AllocationType::FILL_PATTERN);
     EXPECT_EQ(nullptr, obtaindedAllocation);
-    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
 }
 
 TEST_F(DeviceTest, givenNonEmptyAllocationsListAndUnproperAllocationTypeWhenRequestingAllocationThenNullptrIsReturned) {
@@ -523,10 +523,10 @@ TEST_F(DeviceTest, givenNonEmptyAllocationsListAndUnproperAllocationTypeWhenRequ
                                                                                                            NEO::GraphicsAllocation::AllocationType::BUFFER,
                                                                                                            neoDevice->getDeviceBitfield()});
     device->storeReusableAllocation(*allocation);
-    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
     auto obtaindedAllocation = device->obtainReusableAllocation(4 * dataSize + 1u, NEO::GraphicsAllocation::AllocationType::FILL_PATTERN);
     EXPECT_EQ(nullptr, obtaindedAllocation);
-    EXPECT_FALSE(deviceImp->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
 }
 
 struct DeviceHostPointerTest : public ::testing::Test {
