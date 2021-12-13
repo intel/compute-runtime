@@ -16,6 +16,8 @@
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
+#include "test_traits_common.h"
+
 using namespace NEO;
 
 using MultiRootDeviceCommandStreamReceiverBufferTests = MultiRootDeviceFixture;
@@ -660,6 +662,41 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
         }
     }
     EXPECT_TRUE(found);
+}
+
+struct PreambleThreadArbitrationMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (HwMapper<productFamily>::GfxProduct::supportsCmdSet(IGFX_GEN8_CORE)) {
+            return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::implementsPreambleThreadArbitration;
+        }
+        return false;
+    }
+};
+
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenVariousInputWhenFlushingTaskThenProgramThreadArbitrationPolicyWhenNeeded, PreambleThreadArbitrationMatcher) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.requiredThreadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    flushTask(commandStreamReceiver);
+    size_t parsingOffset = commandStreamReceiver.commandStream.getUsed();
+    for (auto arbitrationChanged : ::testing::Bool()) {
+        commandStreamReceiver.lastSentThreadArbitrationPolicy = arbitrationChanged ? ThreadArbitrationPolicy::NotPresent
+                                                                                   : hwHelper.getDefaultThreadArbitrationPolicy();
+        for (auto isPreambleNeeded : ::testing::Bool()) {
+            commandStreamReceiver.isPreambleSent = !isPreambleNeeded;
+
+            flushTask(commandStreamReceiver);
+            HardwareParse csHwParser;
+            csHwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, parsingOffset);
+            auto miLoadRegisterCommandsCount = findAll<MI_LOAD_REGISTER_IMM *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end()).size();
+            size_t expectedCount = (isPreambleNeeded ? 2 : (arbitrationChanged ? 1 : 0));
+            EXPECT_EQ(expectedCount, miLoadRegisterCommandsCount);
+            parsingOffset = commandStreamReceiver.commandStream.getUsed();
+        }
+    }
 }
 
 namespace CpuIntrinsicsTests {

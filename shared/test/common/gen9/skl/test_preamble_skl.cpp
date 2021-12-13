@@ -71,35 +71,6 @@ SKLTEST_F(Gen9L3Config, GivenSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
 }
 
 typedef PreambleFixture ThreadArbitration;
-SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsSetToRoundRobin) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
-    typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
-    LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
-    MockDevice mockDevice;
-    PreambleHelper<SKLFamily>::programPreamble(&linearStream, mockDevice, l3Config,
-                                               ThreadArbitrationPolicy::RoundRobin,
-                                               nullptr);
-
-    parseCommands<SKLFamily>(cs);
-
-    auto ppC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(ppC, cmdList.end());
-
-    auto itorLRI = reverse_find<MI_LOAD_REGISTER_IMM *>(cmdList.rbegin(), cmdList.rend());
-    ASSERT_NE(cmdList.rend(), itorLRI);
-
-    const auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
-    EXPECT_EQ(0xE404u, lri.getRegisterOffset());
-    EXPECT_EQ(0x100u, lri.getDataDword());
-
-    MockDevice device;
-    EXPECT_EQ(0u, PreambleHelper<SKLFamily>::getAdditionalCommandsSize(device));
-    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize());
-}
-
 SKLTEST_F(ThreadArbitration, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {
     EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, HwHelperHw<SKLFamily>::get().getDefaultThreadArbitrationPolicy());
 }

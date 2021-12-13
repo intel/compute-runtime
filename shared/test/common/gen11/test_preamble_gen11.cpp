@@ -115,7 +115,7 @@ GEN11TEST_F(PreemptionWatermarkGen11, WhenPreambleIsCreatedThenWorkAroundsIsNotP
 }
 
 typedef PreambleFixture ThreadArbitrationGen11;
-GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsSet) {
+GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsNotSet) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     typedef ICLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
@@ -126,6 +126,28 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
     PreambleHelper<FamilyType>::programPreamble(&linearStream, mockDevice, l3Config,
                                                 ThreadArbitrationPolicy::RoundRobin,
                                                 nullptr);
+
+    parseCommands<FamilyType>(cs);
+
+    auto ppC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(cmdList.end(), ppC);
+
+    auto cmd = findMmioCmd<FamilyType>(cmdList.begin(), cmdList.end(), RowChickenReg4::address);
+    ASSERT_EQ(nullptr, cmd);
+
+    MockDevice device;
+    EXPECT_EQ(0u, PreambleHelper<ICLFamily>::getAdditionalCommandsSize(device));
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize());
+}
+
+GEN11TEST_F(ThreadArbitrationGen11, whenThreadArbitrationPolicyIsProgrammedThenCorrectValuesAreSet) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    typedef ICLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef ICLFamily::PIPE_CONTROL PIPE_CONTROL;
+    LinearStream &cs = linearStream;
+    MockDevice mockDevice;
+    PreambleHelper<FamilyType>::programThreadArbitration(&linearStream, ThreadArbitrationPolicy::RoundRobin);
 
     parseCommands<FamilyType>(cs);
 

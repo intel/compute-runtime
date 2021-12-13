@@ -129,9 +129,6 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(
     if (!this->isPreambleSent) {
         size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
     }
-    if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
-        size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
-    }
     if (!this->isPreambleSent) {
         if (DebugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
             size += PreambleHelper<GfxFamily>::getSemaphoreDelayCommandSize();
@@ -333,6 +330,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
     }
 
+    bool isPreambleNeeded = !this->isPreambleSent;
     programHardwareContext(commandStreamCSR);
     programComputeMode(commandStreamCSR, dispatchFlags, device.getHardwareInfo());
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
@@ -342,7 +340,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
 
-    if (this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
+    if (this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy || isPreambleNeeded) {
         PreambleHelper<GfxFamily>::programThreadArbitration(&commandStreamCSR, this->requiredThreadArbitrationPolicy);
         this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;
     }
@@ -823,6 +821,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 
     size += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.csrDependencies);
     size += TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(dispatchFlags.csrDependencies);
+
+    if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
+        size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
+    }
 
     if (stallingCommandsOnNextFlushRequired) {
         size += getCmdSizeForStallingCommands(dispatchFlags);

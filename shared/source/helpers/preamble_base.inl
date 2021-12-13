@@ -77,7 +77,6 @@ template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
     programL3(pCommandStream, l3Config);
-    programThreadArbitration(pCommandStream, requiredThreadArbitrationPolicy);
     programPreemption(pCommandStream, device, preemptionCsr);
     if (device.isDebuggerActive()) {
         programKernelDebugging(pCommandStream);

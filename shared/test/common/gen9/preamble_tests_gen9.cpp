@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/preamble/preamble_fixture.h"
 #include "shared/test/unit_test/source_level_debugger/source_level_debugger_preamble_test.h"
 
 #include "gtest/gtest.h"
@@ -60,4 +61,60 @@ GEN9TEST_F(PreambleTestGen9, givenGen9ThenL3IsProgrammed) {
         PreambleHelper<FamilyType>::isL3Configurable(*defaultHwInfo);
 
     EXPECT_EQ(l3ConfigDifference, isL3Programmable);
+}
+
+using ThreadArbitrationGen9 = PreambleFixture;
+GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsNotSet) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
+    LinearStream &cs = linearStream;
+    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
+    MockDevice mockDevice;
+    PreambleHelper<SKLFamily>::programPreamble(&linearStream, mockDevice, l3Config,
+                                               ThreadArbitrationPolicy::RoundRobin,
+                                               nullptr);
+
+    parseCommands<SKLFamily>(cs);
+
+    auto ppC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(cmdList.end(), ppC);
+
+    auto itorLRI = reverse_find<MI_LOAD_REGISTER_IMM *>(cmdList.rbegin(), cmdList.rend());
+    ASSERT_NE(cmdList.rend(), itorLRI);
+
+    const auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
+    EXPECT_NE(0xE404u, lri.getRegisterOffset());
+    EXPECT_NE(0x100u, lri.getDataDword());
+
+    MockDevice device;
+    EXPECT_EQ(0u, PreambleHelper<SKLFamily>::getAdditionalCommandsSize(device));
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize());
+}
+
+GEN9TEST_F(ThreadArbitrationGen9, whenThreadArbitrationPolicyIsProgrammedThenCorrectValuesAreSet) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
+    LinearStream &cs = linearStream;
+    MockDevice mockDevice;
+    PreambleHelper<FamilyType>::programThreadArbitration(&linearStream, ThreadArbitrationPolicy::RoundRobin);
+
+    parseCommands<SKLFamily>(cs);
+
+    auto ppC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(ppC, cmdList.end());
+
+    auto itorLRI = reverse_find<MI_LOAD_REGISTER_IMM *>(cmdList.rbegin(), cmdList.rend());
+    ASSERT_NE(cmdList.rend(), itorLRI);
+
+    const auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
+    EXPECT_EQ(0xE404u, lri.getRegisterOffset());
+    EXPECT_EQ(0x100u, lri.getDataDword());
+
+    MockDevice device;
+    EXPECT_EQ(0u, PreambleHelper<SKLFamily>::getAdditionalCommandsSize(device));
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize());
 }
