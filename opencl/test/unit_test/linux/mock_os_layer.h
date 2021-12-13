@@ -21,7 +21,6 @@
 
 extern int (*c_open)(const char *pathname, int flags, ...);
 extern int (*openFull)(const char *pathname, int flags, ...);
-extern int (*c_ioctl)(int fd, unsigned long int request, ...);
 
 extern int drmOtherRequests(unsigned long int request, ...);
 

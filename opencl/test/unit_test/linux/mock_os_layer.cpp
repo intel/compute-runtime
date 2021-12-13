@@ -17,7 +17,6 @@
 
 int (*c_open)(const char *pathname, int flags, ...) = nullptr;
 int (*openFull)(const char *pathname, int flags, ...) = nullptr;
-int (*c_ioctl)(int fd, unsigned long int request, ...) = nullptr;
 
 int fakeFd = 1023;
 int haveDri = 0;                                       // index of dri to serve, -1 - none
@@ -271,8 +270,6 @@ int drmQueryItem(drm_i915_query *query) {
 }
 
 int ioctl(int fd, unsigned long int request, ...) throw() {
-    if (c_ioctl == nullptr)
-        c_ioctl = (int (*)(int, unsigned long int, ...))dlsym(RTLD_NEXT, "ioctl");
     int res;
     va_list vl;
     va_start(vl, request);
@@ -318,7 +315,6 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
         return res;
     }
 
-    res = c_ioctl(fd, request, vl);
     va_end(vl);
-    return res;
+    return -1;
 }
