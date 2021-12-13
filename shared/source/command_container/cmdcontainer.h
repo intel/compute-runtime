@@ -20,6 +20,7 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 class LinearStream;
+class AllocationsList;
 
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
 using CmdBufferContainer = std::vector<GraphicsAllocation *>;
@@ -77,7 +78,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
 
-    ErrorCode initialize(Device *device);
+    ErrorCode initialize(Device *device, AllocationsList *reusableAllocationList);
 
     void prepareBindfulSsh();
 
@@ -93,6 +94,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     IndirectHeap *getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment);
     void allocateNextCommandBuffer();
+
+    void handleCmdBufferAllocations(size_t startIndex);
+    GraphicsAllocation *obtainNextCommandBufferAllocation();
 
     void reset();
 
@@ -114,6 +118,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
   protected:
     void *iddBlock = nullptr;
     Device *device = nullptr;
+    AllocationsList *reusableAllocationList = nullptr;
     std::unique_ptr<HeapHelper> heapHelper;
 
     CmdBufferContainer cmdBufferAllocations;

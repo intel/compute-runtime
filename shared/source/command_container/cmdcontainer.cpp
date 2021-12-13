@@ -16,6 +16,7 @@
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
@@ -26,11 +27,7 @@ CommandContainer::~CommandContainer() {
         return;
     }
 
-    auto memoryManager = device->getMemoryManager();
-
-    for (auto *alloc : cmdBufferAllocations) {
-        memoryManager->freeGraphicsMemory(alloc);
-    }
+    this->handleCmdBufferAllocations(0u);
 
     for (auto allocationIndirectHeap : allocationIndirectHeaps) {
         if (heapHelper) {
@@ -44,19 +41,14 @@ CommandContainer::~CommandContainer() {
     }
 }
 
-ErrorCode CommandContainer::initialize(Device *device) {
+ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList) {
     this->device = device;
+    this->reusableAllocationList = reusableAllocationList;
 
     size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
-    AllocationProperties properties{device->getRootDeviceIndex(),
-                                    true /* allocateMemory*/,
-                                    alignedSize,
-                                    GraphicsAllocation::AllocationType::COMMAND_BUFFER,
-                                    (device->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
-                                    false,
-                                    device->getDeviceBitfield()};
 
-    auto cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    auto cmdBufferAllocation = this->obtainNextCommandBufferAllocation();
+
     if (!cmdBufferAllocation) {
         return ErrorCode::OUT_OF_DEVICE_MEMORY;
     }
@@ -124,9 +116,7 @@ void CommandContainer::reset() {
     getDeallocationContainer().clear();
     sshAllocations.clear();
 
-    for (size_t i = 1; i < cmdBufferAllocations.size(); i++) {
-        device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
-    }
+    this->handleCmdBufferAllocations(1u);
     cmdBufferAllocations.erase(cmdBufferAllocations.begin() + 1, cmdBufferAllocations.end());
 
     commandStream->replaceBuffer(cmdBufferAllocations[0]->getUnderlyingBuffer(),
@@ -220,17 +210,40 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
     return indirectHeap;
 }
 
-void CommandContainer::allocateNextCommandBuffer() {
-    size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
-    AllocationProperties properties{device->getRootDeviceIndex(),
-                                    true /* allocateMemory*/,
-                                    alignedSize,
-                                    GraphicsAllocation::AllocationType::COMMAND_BUFFER,
-                                    (device->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
-                                    false,
-                                    device->getDeviceBitfield()};
+void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
+    for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
+        if (this->reusableAllocationList) {
+            reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
+        } else {
+            this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
+        }
+    }
+}
 
-    auto cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation() {
+    size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
+
+    GraphicsAllocation *cmdBufferAllocation = nullptr;
+    if (this->reusableAllocationList) {
+        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, nullptr, GraphicsAllocation::AllocationType::COMMAND_BUFFER).release();
+    }
+    if (!cmdBufferAllocation) {
+        AllocationProperties properties{device->getRootDeviceIndex(),
+                                        true /* allocateMemory*/,
+                                        alignedSize,
+                                        GraphicsAllocation::AllocationType::COMMAND_BUFFER,
+                                        (device->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
+                                        false,
+                                        device->getDeviceBitfield()};
+
+        cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    }
+
+    return cmdBufferAllocation;
+}
+
+void CommandContainer::allocateNextCommandBuffer() {
+    auto cmdBufferAllocation = this->obtainNextCommandBufferAllocation();
     UNRECOVERABLE_IF(!cmdBufferAllocation);
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);

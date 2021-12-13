@@ -24,7 +24,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
     void SetUp() {
         DeviceFixture::SetUp();
         cmdContainer = std::make_unique<MyMockCommandContainer>();
-        cmdContainer->initialize(pDevice);
+        cmdContainer->initialize(pDevice, nullptr);
         cmdContainer->setDirtyStateForAllHeaps(false);
     }
     void TearDown() {

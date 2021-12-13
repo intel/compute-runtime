@@ -365,7 +365,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(-1);
         cmdContainer.reset(new MyMockCommandContainer());
-        cmdContainer->initialize(pDevice);
+        cmdContainer->initialize(pDevice, nullptr);
 
         bool requiresUncachedMocs = false;
         uint32_t partitionCount = 0;
@@ -392,7 +392,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(0);
         cmdContainer.reset(new MyMockCommandContainer());
-        cmdContainer->initialize(pDevice);
+        cmdContainer->initialize(pDevice, nullptr);
 
         bool requiresUncachedMocs = false;
         uint32_t partitionCount = 0;
@@ -414,7 +414,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(1);
         cmdContainer.reset(new MyMockCommandContainer());
-        cmdContainer->initialize(pDevice);
+        cmdContainer->initialize(pDevice, nullptr);
 
         bool requiresUncachedMocs = false;
         uint32_t partitionCount = 0;
