@@ -7,8 +7,7 @@
 
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"

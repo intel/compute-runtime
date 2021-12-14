@@ -6,8 +6,7 @@
  */
 
 #include "shared/test/common/mocks/mock_device.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"

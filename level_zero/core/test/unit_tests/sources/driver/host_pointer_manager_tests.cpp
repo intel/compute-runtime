@@ -6,8 +6,7 @@
  */
 
 #include "shared/test/common/mocks/mock_memory_manager.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"

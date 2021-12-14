@@ -5,7 +5,7 @@
  *
  */
 
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"

@@ -10,8 +10,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_files.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"

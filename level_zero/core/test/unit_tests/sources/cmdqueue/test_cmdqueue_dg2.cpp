@@ -6,8 +6,7 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"

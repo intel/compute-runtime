@@ -5,7 +5,7 @@
  *
  */
 
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <level_zero/zes_api.h>
 #include <level_zero/zes_ddi.h>

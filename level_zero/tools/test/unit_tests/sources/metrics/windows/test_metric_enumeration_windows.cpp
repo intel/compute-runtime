@@ -7,8 +7,7 @@
 
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_wddm.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 

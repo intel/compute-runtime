@@ -7,7 +7,7 @@
 
 #include "level_zero/tools/test/unit_tests/sources/debug/test_debug_api.inl"
 
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/source/debug/debug_handlers.h"
 

@@ -9,8 +9,7 @@
 #include "shared/source/helpers/l3_range.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/gen12lp/cmdlist_gen12lp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

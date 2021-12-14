@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/os_interface/debug_env_reader.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
