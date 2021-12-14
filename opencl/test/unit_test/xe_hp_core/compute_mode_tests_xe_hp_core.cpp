@@ -106,7 +106,6 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedSta
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     SetUpImpl<FamilyType>();
 
-    getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy = getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy;
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
     overrideComputeModeRequest<FamilyType>(false, false, false);

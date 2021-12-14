@@ -20,8 +20,6 @@ struct ComputeModeRequirements : public ::testing::Test {
     struct myCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
-        using CommandStreamReceiverHw<FamilyType>::lastSentThreadArbitrationPolicy;
-        using CommandStreamReceiverHw<FamilyType>::requiredThreadArbitrationPolicy;
         myCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
             : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &this->csrSizeRequestFlags; }
@@ -36,9 +34,9 @@ struct ComputeModeRequirements : public ::testing::Test {
                                     uint32_t numGrfRequired = 128u) {
         overrideComputeModeRequest<FamilyType>(reqestChanged, requireCoherency, hasSharedHandles, numGrfRequiredChanged, numGrfRequired);
         if (modifyThreadArbitrationPolicy) {
+            auto &hwHelper = NEO::HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
             auto csrHw = getCsrHw<FamilyType>();
-            csrHw->lastSentThreadArbitrationPolicy = csrHw->requiredThreadArbitrationPolicy;
-            csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.value = csrHw->requiredThreadArbitrationPolicy;
+            csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.value = hwHelper.getDefaultThreadArbitrationPolicy();
             csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
         }
     }

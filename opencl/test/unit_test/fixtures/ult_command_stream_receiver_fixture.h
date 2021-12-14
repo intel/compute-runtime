@@ -59,6 +59,8 @@ struct UltCommandStreamReceiverTest
         graphicsAllocation = new MockGraphicsAllocation(sshBuffer, sizeStream);
         ssh.replaceGraphicsAllocation(graphicsAllocation);
 
+        flushTaskFlags.threadArbitrationPolicy = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).getDefaultThreadArbitrationPolicy();
+
         pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
     }
 
@@ -131,18 +133,18 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
         auto gmmHelper = pDevice->getGmmHelper();
-        auto mocsIndex = HwHelper::get(defaultHwInfo->platform.eDisplayCoreFamily).getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
+        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eDisplayCoreFamily);
+        auto mocsIndex = hwHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
 
         commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex;
         commandStreamReceiver.lastSentL3Config = L3Config;
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;
 
-        commandStreamReceiver.lastSentThreadArbitrationPolicy = commandStreamReceiver.requiredThreadArbitrationPolicy;
         commandStreamReceiver.lastMediaSamplerConfig = 0;
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
-                                                                              commandStreamReceiver.requiredThreadArbitrationPolicy);
+                                                                              hwHelper.getDefaultThreadArbitrationPolicy());
     }
 
     template <typename GfxFamily>

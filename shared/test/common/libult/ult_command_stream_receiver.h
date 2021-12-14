@@ -90,7 +90,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::lastMemoryCompressionState;
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
-    using BaseClass::CommandStreamReceiver::lastSentThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::lastSentUseGlobalAtomics;
     using BaseClass::CommandStreamReceiver::lastSpecialPipelineSelectMode;
     using BaseClass::CommandStreamReceiver::lastVmeSubslicesConfig;
@@ -105,7 +104,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
     using BaseClass::CommandStreamReceiver::requiredPrivateScratchSize;
     using BaseClass::CommandStreamReceiver::requiredScratchSize;
-    using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::samplerCacheFlushRequired;
     using BaseClass::CommandStreamReceiver::scratchSpaceController;
     using BaseClass::CommandStreamReceiver::stallingCommandsOnNextFlushRequired;

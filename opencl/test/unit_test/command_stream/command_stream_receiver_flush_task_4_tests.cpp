@@ -674,28 +674,28 @@ struct PreambleThreadArbitrationMatcher {
     }
 };
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenVariousInputWhenFlushingTaskThenProgramThreadArbitrationPolicyWhenNeeded, PreambleThreadArbitrationMatcher) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenPolicyValueChangedWhenFlushingTaskThenProgramThreadArbitrationPolicy, PreambleThreadArbitrationMatcher) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
 
-    commandStreamReceiver.requiredThreadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
     flushTask(commandStreamReceiver);
     size_t parsingOffset = commandStreamReceiver.commandStream.getUsed();
     for (auto arbitrationChanged : ::testing::Bool()) {
-        commandStreamReceiver.lastSentThreadArbitrationPolicy = arbitrationChanged ? ThreadArbitrationPolicy::NotPresent
-                                                                                   : hwHelper.getDefaultThreadArbitrationPolicy();
-        for (auto isPreambleNeeded : ::testing::Bool()) {
-            commandStreamReceiver.isPreambleSent = !isPreambleNeeded;
+        commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value =
+            arbitrationChanged ? -1 : hwHelper.getDefaultThreadArbitrationPolicy();
 
-            flushTask(commandStreamReceiver);
-            HardwareParse csHwParser;
-            csHwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, parsingOffset);
-            auto miLoadRegisterCommandsCount = findAll<MI_LOAD_REGISTER_IMM *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end()).size();
-            size_t expectedCount = (isPreambleNeeded ? 2 : (arbitrationChanged ? 1 : 0));
-            EXPECT_EQ(expectedCount, miLoadRegisterCommandsCount);
-            parsingOffset = commandStreamReceiver.commandStream.getUsed();
+        flushTask(commandStreamReceiver);
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, parsingOffset);
+        auto miLoadRegisterCommandsCount = findAll<MI_LOAD_REGISTER_IMM *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end()).size();
+        if (arbitrationChanged) {
+            EXPECT_GE(miLoadRegisterCommandsCount, 1u);
+        } else {
+            EXPECT_EQ(0u, miLoadRegisterCommandsCount);
         }
+        parsingOffset = commandStreamReceiver.commandStream.getUsed();
     }
 }
 

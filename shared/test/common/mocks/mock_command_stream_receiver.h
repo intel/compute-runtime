@@ -38,7 +38,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::osContext;
     using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::preemptionAllocation;
-    using CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::tagsMultiAllocation;
     using CommandStreamReceiver::taskCount;
@@ -180,7 +179,6 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::pageTableManagerInitialized;
     using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::requiredScratchSize;
-    using CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using CommandStreamReceiver::streamProperties;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::taskCount;

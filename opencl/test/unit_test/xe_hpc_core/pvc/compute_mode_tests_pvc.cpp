@@ -31,16 +31,14 @@ PVCTEST_F(PvcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyWhe
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
-    auto newEuThreadSchedulingMode = ThreadArbitrationPolicy::RoundRobin;
+    auto &hwHelper = NEO::HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+    auto newEuThreadSchedulingMode = hwHelper.getDefaultThreadArbitrationPolicy();
     auto expectedEuThreadSchedulingMode = static_cast<EU_THREAD_SCHEDULING_MODE_OVERRIDE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     expectedScmCmd.setEuThreadSchedulingModeOverride(expectedEuThreadSchedulingMode);
-
-    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
-    getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy = newEuThreadSchedulingMode;
 
     overrideComputeModeRequest<FamilyType>(true, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -64,8 +62,6 @@ PVCTEST_F(PvcComputeModeRequirements, givenRequiredThreadArbitrationPolicyAlread
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask);
 
-    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
-
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
@@ -83,13 +79,11 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComm
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
-    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
-    overrideComputeModeRequest<FamilyType>(false, false, false);
+    overrideComputeModeRequest<FamilyType>(false, false, false, false);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_EQ(0u, retSize);
 
-    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
-    overrideComputeModeRequest<FamilyType>(false, false, false);
+    overrideComputeModeRequest<FamilyType>(false, false, false, true);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_EQ(cmdsSize, retSize);
 }
@@ -99,7 +93,6 @@ PVCTEST_F(PvcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSizeI
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     SetUpImpl<FamilyType>();
-    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
 
     auto numGrfRequired = 128u;
     auto numGrfRequiredChanged = false;
@@ -120,7 +113,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
     LinearStream stream(buff, 1024);
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
-    overrideComputeModeRequest<FamilyType>(false, false, false, false);
+    overrideComputeModeRequest<FamilyType>(false, false, false, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 }
@@ -135,7 +128,6 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     uint32_t numGrfRequired = GrfConfig::LargeGrfNumber;
 
-    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
     overrideComputeModeRequest<FamilyType>(false, false, false, true, numGrfRequired);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -153,7 +145,6 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfReq
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
 
-    getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
     overrideComputeModeRequest<FamilyType>(false, false, false, true, numGrfRequired);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -173,7 +164,6 @@ PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedH
     auto flushTask = [&](bool threadArbitrationPolicyChanged) {
         if (threadArbitrationPolicyChanged) {
             getCsrHw<FamilyType>()->streamProperties.stateComputeMode.threadArbitrationPolicy.value = -1;
-            getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
         }
         startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
         csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
@@ -202,7 +192,7 @@ PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedH
     };
 
     getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setProperties(flags.requiresCoherency, flags.numGrfRequired,
-                                                                            getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy);
+                                                                            flags.threadArbitrationPolicy);
 
     flushTask(true);
     findCmd(true); // first time

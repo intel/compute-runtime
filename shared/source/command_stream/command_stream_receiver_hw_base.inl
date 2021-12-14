@@ -57,7 +57,6 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
     localMemoryEnabled = hwHelper.getEnableLocalMemory(peekHwInfo());
 
-    requiredThreadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&peekHwInfo().capabilityTable.kmdNotifyProperties));
 
     if (DebugManager.flags.FlattenBatchBufferForAUBDump.get() || DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
@@ -247,24 +246,22 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (DebugManager.flags.ForceSLML3Config.get()) {
         dispatchFlags.useSLM = true;
     }
-    if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        dispatchFlags.threadArbitrationPolicy = static_cast<uint32_t>(DebugManager.flags.OverrideThreadArbitrationPolicy.get());
-    }
 
     auto newL3Config = PreambleHelper<GfxFamily>::getL3Config(peekHwInfo(), dispatchFlags.useSLM);
     auto isSpecialPipelineSelectModeChanged = PreambleHelper<GfxFamily>::isSpecialPipelineSelectModeChanged(lastSpecialPipelineSelectMode,
                                                                                                             dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode,
                                                                                                             peekHwInfo());
 
-    if (dispatchFlags.threadArbitrationPolicy != ThreadArbitrationPolicy::NotPresent) {
-        this->requiredThreadArbitrationPolicy = dispatchFlags.threadArbitrationPolicy;
+    if (dispatchFlags.threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
+        auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+        dispatchFlags.threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
     }
     if (dispatchFlags.numGrfRequired == GrfConfig::NotApplicable) {
         dispatchFlags.numGrfRequired = lastSentNumGrfRequired;
     }
 
     this->streamProperties.stateComputeMode.setProperties(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
-                                                          this->requiredThreadArbitrationPolicy);
+                                                          dispatchFlags.threadArbitrationPolicy);
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
@@ -331,7 +328,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
     }
 
-    bool isPreambleNeeded = !this->isPreambleSent;
     programHardwareContext(commandStreamCSR);
     programComputeMode(commandStreamCSR, dispatchFlags, device.getHardwareInfo());
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
@@ -341,9 +337,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
 
-    if (this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy || isPreambleNeeded) {
-        PreambleHelper<GfxFamily>::programThreadArbitration(&commandStreamCSR, this->requiredThreadArbitrationPolicy);
-        this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;
+    if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty) {
+        auto threadArbitrationPolicy = static_cast<uint32_t>(this->streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+        PreambleHelper<GfxFamily>::programThreadArbitration(&commandStreamCSR, threadArbitrationPolicy);
     }
 
     stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
@@ -823,7 +819,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.csrDependencies);
     size += TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(dispatchFlags.csrDependencies);
 
-    if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
+    if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty) {
         size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
     }
 
@@ -908,10 +904,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionAllocation);
+        auto threadArbitrationPolicy = static_cast<uint32_t>(this->streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, threadArbitrationPolicy, this->preemptionAllocation);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
-        this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;
     }
 }
 

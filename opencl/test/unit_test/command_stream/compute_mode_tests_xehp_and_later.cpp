@@ -22,7 +22,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutShare
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     SetUpImpl<FamilyType>();
 
-    getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy = getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy;
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
 
     overrideComputeModeRequest<FamilyType>(false, false, false);
@@ -168,7 +167,6 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithoutSharedHandles
     IndirectHeap stream(graphicAlloc);
 
     auto flushTask = [&](bool coherencyRequired) {
-        getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
         flags.requiresCoherency = coherencyRequired;
         startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
         csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
@@ -226,7 +224,6 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithSharedHandlesWhe
     IndirectHeap stream(graphicsAlloc);
 
     auto flushTask = [&](bool coherencyRequired) {
-        getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
         flags.requiresCoherency = coherencyRequired;
         makeResidentSharedAlloc();
 
@@ -399,8 +396,6 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setLargeGrfMode(true);
     auto expectedBitsMask = FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask;
-
-    getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
 
     overrideComputeModeRequest<FamilyType>(true, false, false, true, 256u);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);

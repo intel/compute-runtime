@@ -20,7 +20,7 @@ HWTEST2_F(ComputeModeRequirementsPvcAndLater, givenComputeModeCmdSizeWhenLargeGr
 
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 128u);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_EQ(cmdSize, retSize);
+    EXPECT_EQ(0u, retSize);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 256u);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();

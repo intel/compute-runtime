@@ -70,14 +70,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenForceImplicitFlushDebugVariab
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode) {
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
-    commandStreamReceiver.lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
 
     DebugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
 
-    flushTask(commandStreamReceiver);
+    EXPECT_EQ(-1, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, commandStreamReceiver.lastSentThreadArbitrationPolicy);
+    flushTask(commandStreamReceiver);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
+              static_cast<uint32_t>(commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenTaskCountIsIncremented) {
@@ -953,7 +953,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble);
 
     commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
-                                                                          commandStreamReceiver.requiredThreadArbitrationPolicy);
+                                                                          flushTaskFlags.threadArbitrationPolicy);
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(sizeNeeded, csrCS.getUsed());
@@ -987,7 +987,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble - sizeNeededForStateBaseAddress);
 
     commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
-                                                                          commandStreamReceiver.requiredThreadArbitrationPolicy);
+                                                                          flushTaskFlags.threadArbitrationPolicy);
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(sizeNeeded, csrCS.getUsed());
@@ -1025,7 +1025,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
 
     commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
-                                                                          commandStreamReceiver.requiredThreadArbitrationPolicy);
+                                                                          flushTaskFlags.threadArbitrationPolicy);
     commandStreamReceiver.flushTask(
         commandStream,
         0,
@@ -1304,21 +1304,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTas
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    uint32_t beforeFlushRequiredThreadArbitrationPolicy = mockCsr->requiredThreadArbitrationPolicy;
-
-    mockCsr->flushTask(commandStream,
-                       0,
-                       dsh,
-                       ioh,
-                       ssh,
-                       taskLevel,
-                       dispatchFlags,
-                       *pDevice);
-
-    EXPECT_EQ(beforeFlushRequiredThreadArbitrationPolicy, mockCsr->requiredThreadArbitrationPolicy);
-
     dispatchFlags.threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
-    mockCsr->requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -1329,7 +1315,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTas
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(dispatchFlags.threadArbitrationPolicy, mockCsr->requiredThreadArbitrationPolicy);
+    EXPECT_EQ(dispatchFlags.threadArbitrationPolicy, static_cast<uint32_t>(mockCsr->streamProperties.stateComputeMode.threadArbitrationPolicy.value));
 }
 
 class CommandStreamReceiverFlushTaskMemoryCompressionTests : public UltCommandStreamReceiverTest,

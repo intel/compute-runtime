@@ -34,7 +34,6 @@ using namespace NEO;
 HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyNotChangedWhenEstimatingPreambleCmdSizeThenReturnItsValue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
     auto expectedCmdSize = sizeof(typename FamilyType::PIPE_CONTROL) + sizeof(typename FamilyType::MEDIA_VFE_STATE);
     EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice));
 }
@@ -144,11 +143,10 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPoli
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
 
-    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
     auto policyNotChangedPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
     auto policyNotChangedFlush = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
 
-    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy + 1;
+    commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
     auto policyChangedPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
     auto policyChangedFlush = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
 
@@ -160,9 +158,8 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPoli
     EXPECT_EQ(expectedDifference, actualDifferenceForFlush);
 }
 
-HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentWhenEstimatingFlushTaskSizeThenResultDependsOnPolicyProgrammingAndAdditionalCmdsSize) {
+HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentWhenEstimatingFlushTaskSizeThenResultDependsOnAdditionalCmdsSize) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
 
     commandStreamReceiver.isPreambleSent = false;
     auto preambleNotSentPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
@@ -177,8 +174,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentWhenEstimatingFlushTaskS
 
     commandStreamReceiver.isPreambleSent = false;
     auto expectedDifferenceForPreamble = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
-    auto expectedDifferenceForFlush = expectedDifferenceForPreamble + PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize() +
-                                      commandStreamReceiver.getCmdSizeForL3Config() +
+    auto expectedDifferenceForFlush = expectedDifferenceForPreamble + commandStreamReceiver.getCmdSizeForL3Config() +
                                       PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(pDevice->getHardwareInfo());
 
     EXPECT_EQ(expectedDifferenceForPreamble, actualDifferenceForPreamble);
@@ -215,7 +211,6 @@ HWTEST_F(UltCommandStreamReceiverTest, givenCommandStreamReceiverInInitialStateW
 
 HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndForceSemaphoreDelayBetweenWaitsFlagWhenEstimatingPreambleCmdSizeThenResultIsExpected) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
     DebugManagerStateRestore debugManagerStateRestore;
 
     DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(-1);

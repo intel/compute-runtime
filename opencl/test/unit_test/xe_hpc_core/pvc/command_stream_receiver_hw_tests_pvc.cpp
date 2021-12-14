@@ -42,13 +42,14 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitration
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy = static_cast<uint32_t>(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT);
 
     DebugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
 
-    flushTask(commandStreamReceiver);
+    EXPECT_EQ(-1, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, commandStreamReceiver.lastSentThreadArbitrationPolicy);
+    flushTask(commandStreamReceiver);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
+              static_cast<uint32_t>(commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
 }
 
 PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushingThenDefaultPolicyIsProgrammed) {
@@ -59,11 +60,11 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushin
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     uint32_t notExistPolicy = -2;
-    commandStreamReceiver.requiredThreadArbitrationPolicy = notExistPolicy;
+    flushTaskFlags.threadArbitrationPolicy = notExistPolicy;
 
     flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(notExistPolicy, commandStreamReceiver.lastSentThreadArbitrationPolicy);
+    EXPECT_EQ(notExistPolicy, static_cast<uint32_t>(commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
 }
 
 PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLastSpecialPipelineSelectModeIsTrueAndFlushTaskIsCalledThenDontReprogramPipelineSelect) {

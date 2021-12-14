@@ -75,7 +75,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programThreadArbitrationPolicy(Device *device) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto &hwHelper = NEO::HwHelper::get(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
-    threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    auto threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
     if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         threadArbitrationPolicy = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
     }
