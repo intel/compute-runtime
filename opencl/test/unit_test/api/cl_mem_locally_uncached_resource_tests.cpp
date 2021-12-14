@@ -51,12 +51,12 @@ uint32_t cmdQueueMocs(CommandQueue *pCmdQ) {
 }
 
 const size_t n = 512;
-const size_t globalWorkSize[3] = {n, 1, 1};
-const size_t localWorkSize[3] = {256, 1, 1};
+[[maybe_unused]] const size_t globalWorkSize[3] = {n, 1, 1};
+[[maybe_unused]] const size_t localWorkSize[3] = {256, 1, 1};
 
-const cl_mem_properties_intel *propertiesCacheable = nullptr;
-const cl_mem_properties_intel propertiesUncacheable[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0};
-const cl_mem_properties_intel propertiesUncacheableInSurfaceState[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE, 0};
+[[maybe_unused]] const cl_mem_properties_intel *propertiesCacheable = nullptr;
+[[maybe_unused]] const cl_mem_properties_intel propertiesUncacheable[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0};
+[[maybe_unused]] const cl_mem_properties_intel propertiesUncacheableInSurfaceState[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE, 0};
 
 using clMemLocallyUncachedResourceFixture = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
