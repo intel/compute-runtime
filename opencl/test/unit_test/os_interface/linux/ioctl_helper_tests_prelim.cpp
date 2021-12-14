@@ -257,3 +257,36 @@ TEST(IoctlHelperTestsPrelim, givenDrmAllocationWhenSetMemAdviseWithDevicePreferr
     }
     EXPECT_EQ(2u, drm.ioctlCallsCount);
 }
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenGetDirectSubmissionFlagThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    uint32_t ioctlVal = (1u << 31);
+    EXPECT_EQ(ioctlVal, IoctlHelper::get(drm.get())->getDirectSubmissionFlag());
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenAppendDrmContextFlagsThenCorrectFlagsSet) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.DirectSubmissionDrmContext.set(-1);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    uint32_t ioctlVal = (1u << 31);
+
+    drm_i915_gem_context_create_ext ctx{};
+    drm->appendDrmContextFlags(ctx, true);
+    EXPECT_EQ(ioctlVal, ctx.flags);
+
+    ctx.flags = 0u;
+    DebugManager.flags.DirectSubmissionDrmContext.set(0);
+
+    drm->appendDrmContextFlags(ctx, true);
+    EXPECT_EQ(0u, ctx.flags);
+
+    DebugManager.flags.DirectSubmissionDrmContext.set(1);
+    drm->appendDrmContextFlags(ctx, false);
+    EXPECT_EQ(ioctlVal, ctx.flags);
+}

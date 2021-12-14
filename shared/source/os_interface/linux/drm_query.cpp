@@ -126,8 +126,7 @@ bool Drm::isVmBindAvailable() {
     return this->bindAvailable;
 }
 
-uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isSpecialContextRequested,
-                                  bool isCooperativeContextRequested) {
+uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isCooperativeContextRequested) {
     drm_i915_gem_context_create_ext_setparam extSetparam = {};
 
     if (drmVmId > 0) {
@@ -138,9 +137,6 @@ uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t
         gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
     }
     return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
-}
-
-void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpecialContextRequested) {
 }
 
 void Drm::queryPageFaultSupport() {

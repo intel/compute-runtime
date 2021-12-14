@@ -79,4 +79,8 @@ bool IoctlHelperUpstream::setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attri
     return true;
 }
 
+uint32_t IoctlHelperUpstream::getDirectSubmissionFlag() {
+    return 0u;
+}
+
 } // namespace NEO

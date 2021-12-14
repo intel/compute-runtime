@@ -392,12 +392,12 @@ void Drm::setUnrecoverableContext(uint32_t drmContextId) {
     ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
 }
 
-uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested, bool isCooperativeContextRequested) {
+uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) {
     drm_i915_gem_context_create_ext gcc = {};
 
-    this->appendDrmContextFlags(gcc, isSpecialContextRequested);
+    this->appendDrmContextFlags(gcc, isDirectSubmissionRequested);
 
-    auto retVal = this->createDrmContextExt(gcc, drmVmId, isSpecialContextRequested, isCooperativeContextRequested);
+    auto retVal = this->createDrmContextExt(gcc, drmVmId, isCooperativeContextRequested);
     UNRECOVERABLE_IF(retVal != 0);
 
     return gcc.ctx_id;
@@ -926,6 +926,15 @@ bool Drm::querySystemInfo() {
     this->systemInfo.reset(new SystemInfo(deviceBlob, length));
 
     return true;
+}
+
+void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isDirectSubmissionRequested) {
+    if (DebugManager.flags.DirectSubmissionDrmContext.get() != -1) {
+        isDirectSubmissionRequested = DebugManager.flags.DirectSubmissionDrmContext.get();
+    }
+    if (isDirectSubmissionRequested) {
+        gcc.flags |= IoctlHelper::get(this)->getDirectSubmissionFlag();
+    }
 }
 
 } // namespace NEO

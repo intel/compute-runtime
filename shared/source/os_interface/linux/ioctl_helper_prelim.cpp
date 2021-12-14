@@ -163,4 +163,8 @@ bool IoctlHelperPrelim20::setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attri
     return true;
 }
 
+uint32_t IoctlHelperPrelim20::getDirectSubmissionFlag() {
+    return PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS;
+}
+
 } // namespace NEO
