@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 

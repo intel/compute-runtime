@@ -8,8 +8,7 @@
 #include "shared/source/debug_settings/debug_variables_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <unordered_map>
 

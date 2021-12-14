@@ -9,8 +9,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 

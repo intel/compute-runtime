@@ -9,8 +9,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

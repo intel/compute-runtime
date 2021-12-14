@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO::Ar;
 

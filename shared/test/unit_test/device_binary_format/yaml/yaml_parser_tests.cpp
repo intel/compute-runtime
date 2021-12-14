@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <limits>
 #include <stdexcept>

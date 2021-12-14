@@ -8,8 +8,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 using HwHelperTestXeHP = ::testing::Test;

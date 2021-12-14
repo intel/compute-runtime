@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/helpers/l3_range.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

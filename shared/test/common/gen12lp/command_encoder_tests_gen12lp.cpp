@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

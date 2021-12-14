@@ -11,8 +11,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/mocks/mock_elf.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gmock/gmock.h"
 

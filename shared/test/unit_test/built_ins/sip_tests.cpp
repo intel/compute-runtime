@@ -12,8 +12,7 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_sip.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "common/StateSaveAreaHeader.h"
 

@@ -8,8 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "hw_cmds.h"
 

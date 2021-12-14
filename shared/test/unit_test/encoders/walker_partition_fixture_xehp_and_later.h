@@ -10,8 +10,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace WalkerPartition;
 

@@ -17,8 +17,7 @@
 #include "shared/test/common/mocks/mock_cif.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gmock/gmock.h"
 #include "hw_cmds.h"

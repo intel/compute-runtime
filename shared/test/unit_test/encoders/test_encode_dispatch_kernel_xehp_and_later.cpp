@@ -20,8 +20,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "hw_cmds.h"
 

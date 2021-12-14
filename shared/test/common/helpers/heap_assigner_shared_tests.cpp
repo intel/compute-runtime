@@ -7,8 +7,7 @@
 
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/memory_manager/gfx_partition.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

@@ -8,8 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 using CommandEncoderTests = ::testing::Test;

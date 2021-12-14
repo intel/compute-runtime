@@ -12,8 +12,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using PreambleTest = ::testing::Test;
 

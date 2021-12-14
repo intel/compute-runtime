@@ -9,8 +9,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 extern PRODUCT_FAMILY productFamily;
 

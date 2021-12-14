@@ -7,9 +7,8 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/command_stream/stream_properties_tests_common.h"
-
-#include "test.h"
 
 namespace NEO {
 

@@ -8,8 +8,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <algorithm>
 #include <cstdint>

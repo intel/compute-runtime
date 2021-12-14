@@ -11,8 +11,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

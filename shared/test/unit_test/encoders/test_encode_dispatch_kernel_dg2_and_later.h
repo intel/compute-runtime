@@ -8,8 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "hw_cmds.h"
 

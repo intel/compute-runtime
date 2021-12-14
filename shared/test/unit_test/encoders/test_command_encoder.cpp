@@ -8,8 +8,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

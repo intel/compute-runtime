@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/utilities/heap_allocator.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 

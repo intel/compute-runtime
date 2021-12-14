@@ -10,8 +10,7 @@
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

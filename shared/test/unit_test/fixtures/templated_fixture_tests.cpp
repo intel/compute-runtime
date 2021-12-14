@@ -7,8 +7,7 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 struct TemplatedFixtureTests : public ::testing::Test {

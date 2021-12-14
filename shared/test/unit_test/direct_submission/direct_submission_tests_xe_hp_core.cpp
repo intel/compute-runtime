@@ -9,8 +9,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/direct_submission_fixture.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "hw_cmds.h"
 

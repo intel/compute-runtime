@@ -9,8 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 using CommandEncoderXeHpgCorePlusTests = Test<DeviceFixture>;

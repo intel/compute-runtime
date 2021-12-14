@@ -7,8 +7,7 @@
 
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     NEO::KernelDescriptor desc;

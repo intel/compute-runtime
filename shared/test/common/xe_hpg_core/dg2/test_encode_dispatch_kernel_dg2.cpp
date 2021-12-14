@@ -10,8 +10,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "hw_cmds.h"
 

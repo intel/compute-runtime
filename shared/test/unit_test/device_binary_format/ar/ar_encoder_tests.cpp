@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,7 @@
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <cstring>
 

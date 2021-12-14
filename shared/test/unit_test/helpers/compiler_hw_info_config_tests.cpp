@@ -8,8 +8,7 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

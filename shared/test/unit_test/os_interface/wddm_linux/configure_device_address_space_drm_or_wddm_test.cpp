@@ -18,8 +18,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gmm_memory.h"
 

@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/memory_manager/alignment_selector.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 

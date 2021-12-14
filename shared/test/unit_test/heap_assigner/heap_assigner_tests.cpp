@@ -7,8 +7,7 @@
 
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 

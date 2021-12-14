@@ -9,9 +9,8 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/preemption_fixture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/direct_submission/dispatchers/dispatcher_fixture.h"
-
-#include "test.h"
 
 using RenderDispatcherTest = Test<DispatcherFixture>;
 

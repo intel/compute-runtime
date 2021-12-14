@@ -10,8 +10,7 @@
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <algorithm>
 #include <cstdint>

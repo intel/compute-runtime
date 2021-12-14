@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/utilities/timer_util.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 

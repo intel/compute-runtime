@@ -7,9 +7,8 @@
 
 #include "shared/source/direct_submission/dispatchers/dispatcher.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/direct_submission/dispatchers/dispatcher_fixture.h"
-
-#include "test.h"
 
 using namespace NEO;
 

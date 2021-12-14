@@ -10,9 +10,8 @@
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/program_info.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
-
-#include "test.h"
 
 TEST(IsDeviceBinaryFormatZebin, GivenValidExecutableTypeBinaryThenReturnTrue) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;

@@ -11,8 +11,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 

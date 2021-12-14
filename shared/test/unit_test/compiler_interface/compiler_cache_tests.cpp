@@ -17,8 +17,7 @@
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "os_inc.h"
 

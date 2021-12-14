@@ -8,8 +8,7 @@
 #include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

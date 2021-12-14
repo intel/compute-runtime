@@ -13,8 +13,7 @@
 #include "shared/test/common/fixtures/command_container_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "hw_cmds.h"
 #include "test_traits_common.h"

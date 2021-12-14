@@ -8,9 +8,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
-
-#include "test.h"
 
 namespace NEO {
 

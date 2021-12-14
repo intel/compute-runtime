@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/utilities/range.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO::Elf;
 

@@ -9,12 +9,11 @@
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/windows/adapter_info_tests.h"
 #include "shared/wsl_compute_helper/source/gmm_resource_info_accessor.h"
 #include "shared/wsl_compute_helper/source/wsl_compute_helper.h"
 #include "shared/wsl_compute_helper/source/wsl_compute_helper_types_tokens_structs.h"
-
-#include "test.h"
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)

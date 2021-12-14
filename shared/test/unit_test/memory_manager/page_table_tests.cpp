@@ -11,8 +11,7 @@
 #include "shared/source/memory_manager/page_table.h"
 #include "shared/source/memory_manager/page_table.inl"
 #include "shared/test/common/mocks/mock_physical_address_allocator.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
