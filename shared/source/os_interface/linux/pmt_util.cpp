@@ -14,6 +14,7 @@
 #include <climits>
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <fcntl.h>
 #include <map>
@@ -101,7 +102,7 @@ ssize_t PmtUtil::readTelem(std::string_view telemDir, const std::size_t count, c
     telemFilename << telemDir << "/telem";
     int fd = SysCalls::open(telemFilename.str().c_str(), O_RDONLY);
     if (fd > 0) {
-        bytesRead = SysCalls::pread(fd, data, count, offset);
+        bytesRead = SysCalls::pread(fd, data, count, static_cast<off_t>(offset));
         SysCalls::close(fd);
     }
     return bytesRead;

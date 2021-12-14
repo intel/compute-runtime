@@ -6,7 +6,9 @@
  */
 
 #include <map>
+#include <poll.h>
 #include <string>
+#include <string_view>
 
 namespace NEO {
 
