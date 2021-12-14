@@ -114,7 +114,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
     }
     this->ownedPrivateAllocations.clear();
-    partitionCount = 1;
+    if (device->isImplicitScalingCapable() && !this->internalUsage) {
+        this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
+    } else {
+        this->partitionCount = 1;
+    }
     return ZE_RESULT_SUCCESS;
 }
 

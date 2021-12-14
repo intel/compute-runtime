@@ -834,7 +834,7 @@ HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectVa
     }
 }
 
-HWTEST_F(CommandListCreate, whenCommandListIsResetThenPartitionCountIsReversedToOne) {
+HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenPartitionCountIsReversedToOne) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
                                                                      device,
@@ -842,12 +842,10 @@ HWTEST_F(CommandListCreate, whenCommandListIsResetThenPartitionCountIsReversedTo
                                                                      0u,
                                                                      returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    commandList->partitionCount = 2;
+    EXPECT_EQ(1u, commandList->partitionCount);
 
     returnValue = commandList->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
     EXPECT_EQ(1u, commandList->partitionCount);
 }
 
@@ -856,12 +854,20 @@ using MultiTileImmediateCommandListTest = Test<MultiTileCommandListFixture<true,
 HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImmediateCommandListThenExpectPartitionCountMatchTileCount, IsWithinXeGfxFamily) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
     EXPECT_EQ(2u, commandList->partitionCount);
+
+    auto returnValue = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(2u, commandList->partitionCount);
 }
 
 using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixture<true, true>>;
 
 HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCreatingInternalImmediateCommandListThenExpectPartitionCountEqualOne, IsWithinXeGfxFamily) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    EXPECT_EQ(1u, commandList->partitionCount);
+
+    auto returnValue = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(1u, commandList->partitionCount);
 }
 
