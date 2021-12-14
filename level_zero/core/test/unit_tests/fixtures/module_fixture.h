@@ -116,6 +116,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     class MockKernel : public WhiteBox<L0::KernelImp> {
       public:
         using KernelImp::crossThreadData;
+        using KernelImp::crossThreadDataSize;
         using KernelImp::kernelArgHandlers;
         using KernelImp::kernelHasIndirectAccess;
         using KernelImp::privateMemoryGraphicsAllocation;

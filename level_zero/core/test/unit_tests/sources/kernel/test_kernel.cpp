@@ -659,6 +659,55 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAll
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, kernel->initialize(&kernelDesc));
 }
 
+TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatched) {
+    KernelDescriptorRTCallsTrue mockDescriptor = {};
+    mockDescriptor.kernelMetadata.kernelName = "rt_test";
+    for (auto i = 0u; i < 3u; i++) {
+        mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
+    }
+
+    std::unique_ptr<MockImmutableData> mockKernelImmutableData =
+        std::make_unique<MockImmutableData>(32u);
+    mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    module = std::make_unique<MockModule>(device,
+                                          moduleBuildLog,
+                                          ModuleType::User,
+                                          32u,
+                                          mockKernelImmutableData.get());
+    module->maxGroupSize = 10;
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "rt_test";
+
+    auto immDataVector =
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module.get()->getKernelImmutableDataVector());
+
+    immDataVector->push_back(std::move(mockKernelImmutableData));
+
+    auto crossThreadData = std::make_unique<uint32_t[]>(4);
+    kernel->crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData.get()));
+    kernel->crossThreadDataSize = sizeof(uint32_t[4]);
+
+    neoDevice->setRTDispatchGlobalsForceAllocation();
+
+    auto result = kernel->initialize(&kernelDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
+    EXPECT_NE(nullptr, rtDispatchGlobals);
+
+    auto dispatchGlobalsAddressPatched = *reinterpret_cast<uintptr_t *>(crossThreadData.get());
+    auto dispatchGlobalsGpuAddressOffset = static_cast<uintptr_t>(rtDispatchGlobals->getGpuAddressToPatch());
+    EXPECT_EQ(dispatchGlobalsGpuAddressOffset, dispatchGlobalsAddressPatched);
+
+    kernel->crossThreadData.release();
+}
+
 using KernelIndirectPropertiesFromIGCTests = KernelImmutableDataTests;
 
 TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicThenHasIndirectAccessIsSetToFalse) {
