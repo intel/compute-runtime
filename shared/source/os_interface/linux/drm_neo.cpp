@@ -19,6 +19,7 @@
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/pci_path.h"
@@ -907,6 +908,24 @@ void Drm::getPrelimVersion(std::string &prelimVersion) {
         ifs >> prelimVersion;
     }
     ifs.close();
+}
+
+int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
+    return IoctlHelper::get(this)->waitUserFence(this, ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags);
+}
+
+bool Drm::querySystemInfo() {
+    auto length = 0;
+    auto request = IoctlHelper::get(this)->getHwConfigIoctlVal();
+    auto deviceBlobQuery = this->query(request, DrmQueryItemFlags::empty, length);
+    auto deviceBlob = reinterpret_cast<uint32_t *>(deviceBlobQuery.get());
+    if (!deviceBlob) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
+        return false;
+    }
+    this->systemInfo.reset(new SystemInfo(deviceBlob, length));
+
+    return true;
 }
 
 } // namespace NEO

@@ -14,7 +14,7 @@
 namespace NEO {
 
 uint32_t IoctlHelperUpstream::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
-    drm_i915_gem_create_ext_memory_regions memRegions;
+    drm_i915_gem_create_ext_memory_regions memRegions{};
     memRegions.num_regions = dataSize;
     memRegions.regions = reinterpret_cast<uintptr_t>(data);
     memRegions.base.name = I915_GEM_CREATE_EXT_MEMORY_REGIONS;
@@ -56,6 +56,15 @@ uint16_t IoctlHelperUpstream::closAllocWays(Drm *drm, CacheRegion closIndex, uin
 
 CacheRegion IoctlHelperUpstream::closFree(Drm *drm, CacheRegion closIndex) {
     return CacheRegion::None;
+}
+
+int IoctlHelperUpstream::waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+                                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) {
+    return 0;
+}
+
+uint32_t IoctlHelperUpstream::getHwConfigIoctlVal() {
+    return DRM_I915_QUERY_HWCONFIG_TABLE;
 }
 
 } // namespace NEO

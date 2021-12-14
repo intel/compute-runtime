@@ -107,20 +107,6 @@ bool Drm::isDebugAttachAvailable() {
     return false;
 }
 
-bool Drm::querySystemInfo() {
-    auto length = 0;
-
-    auto deviceBlobQuery = this->query(DRM_I915_QUERY_HWCONFIG_TABLE, DrmQueryItemFlags::empty, length);
-    auto deviceBlob = reinterpret_cast<uint32_t *>(deviceBlobQuery.get());
-    if (!deviceBlob) {
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
-        return false;
-    }
-    this->systemInfo.reset(new SystemInfo(deviceBlob, length));
-
-    return true;
-}
-
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     this->cacheInfo.reset(new CacheInfoImpl());
 }
@@ -134,10 +120,6 @@ int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObj
 }
 
 void Drm::waitForBind(uint32_t vmHandleId) {
-}
-
-int Drm::waitUserFence(uint32_t ctx, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
-    return 0;
 }
 
 bool Drm::isVmBindAvailable() {

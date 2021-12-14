@@ -30,6 +30,9 @@ class IoctlHelper {
     virtual CacheRegion closAlloc(Drm *drm) = 0;
     virtual uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(Drm *drm, CacheRegion closIndex) = 0;
+    virtual int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+                              uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) = 0;
+    virtual uint32_t getHwConfigIoctlVal() = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -39,6 +42,9 @@ class IoctlHelperUpstream : public IoctlHelper {
     CacheRegion closAlloc(Drm *drm) override;
     uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
+    int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
+    uint32_t getHwConfigIoctlVal() override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -59,6 +65,9 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     CacheRegion closAlloc(Drm *drm) override;
     uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
+    int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
+    uint32_t getHwConfigIoctlVal() override;
 };
 
 } // namespace NEO

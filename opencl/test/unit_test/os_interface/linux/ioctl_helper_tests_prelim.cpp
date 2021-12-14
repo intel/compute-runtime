@@ -172,3 +172,26 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocWa
     EXPECT_EQ(0u, numWays);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenWaitUserFenceThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    uint64_t gpuAddress = 0x1020304000ull;
+    uint64_t value = 0x98765ull;
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    for (uint32_t i = 0u; i < 4; i++) {
+        auto ret = ioctlHelper->waitUserFence(drm.get(), 10u, gpuAddress, value, i, -1, 0u);
+        EXPECT_EQ(0, ret);
+    }
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenGetHwConfigIoctlValThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    uint32_t ioctlVal = (1 << 16) | 6;
+    EXPECT_EQ(ioctlVal, IoctlHelper::get(drm.get())->getHwConfigIoctlVal());
+}

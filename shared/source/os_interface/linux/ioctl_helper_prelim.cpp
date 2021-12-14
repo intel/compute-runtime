@@ -101,4 +101,38 @@ CacheRegion IoctlHelperPrelim20::closFree(Drm *drm, CacheRegion closIndex) {
     return closIndex;
 }
 
+int IoctlHelperPrelim20::waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+                                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) {
+    prelim_drm_i915_gem_wait_user_fence wait = {};
+
+    wait.ctx_id = ctxId;
+    wait.flags = flags;
+
+    switch (dataWidth) {
+    case 3u:
+        wait.mask = PRELIM_I915_UFENCE_WAIT_U64;
+        break;
+    case 2u:
+        wait.mask = PRELIM_I915_UFENCE_WAIT_U32;
+        break;
+    case 1u:
+        wait.mask = PRELIM_I915_UFENCE_WAIT_U16;
+        break;
+    default:
+        wait.mask = PRELIM_I915_UFENCE_WAIT_U8;
+        break;
+    }
+
+    wait.op = PRELIM_I915_UFENCE_WAIT_GTE;
+    wait.addr = address;
+    wait.value = value;
+    wait.timeout = timeout;
+
+    return IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE, &wait);
+}
+
+uint32_t IoctlHelperPrelim20::getHwConfigIoctlVal() {
+    return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
+}
+
 } // namespace NEO
