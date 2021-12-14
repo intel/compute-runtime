@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -15,6 +16,7 @@
 
 #include "test.h"
 
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -826,6 +828,94 @@ HWTEST2_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGe
     EXPECT_EQ(imageInfo.surfaceFormat->ImageElementSizeInBytes, imageMemoryPropertiesExp.size);
     EXPECT_EQ(imageInfo.slicePitch, imageMemoryPropertiesExp.slicePitch);
     EXPECT_EQ(imageInfo.rowPitch, imageMemoryPropertiesExp.rowPitch);
+}
+
+HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnableCompression, ImageSupport) {
+    DebugManagerStateRestore restore;
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = true;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                     ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R,
+                     ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B,
+                     ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    {
+        Image *image_ptr = nullptr;
+        auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_NE(nullptr, image_ptr);
+        std::unique_ptr<L0::Image> image(image_ptr);
+
+        EXPECT_EQ(L0HwHelperHw<FamilyType>::get().imageCompressionSupported(device->getHwInfo()), image->getAllocation()->isCompressionEnabled());
+    }
+
+    {
+        NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+
+        Image *image_ptr = nullptr;
+        auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_NE(nullptr, image_ptr);
+        std::unique_ptr<L0::Image> image(image_ptr);
+
+        EXPECT_TRUE(image->getAllocation()->isCompressionEnabled());
+    }
+
+    {
+        NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(0);
+
+        Image *image_ptr = nullptr;
+        auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_NE(nullptr, image_ptr);
+        std::unique_ptr<L0::Image> image(image_ptr);
+
+        EXPECT_FALSE(image->getAllocation()->isCompressionEnabled());
+    }
+}
+
+HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingLinearImageThenDontEnableCompression, ImageSupport) {
+    DebugManagerStateRestore restore;
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = true;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_1D;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                     ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R,
+                     ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B,
+                     ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    Image *image_ptr = nullptr;
+    auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_NE(nullptr, image_ptr);
+    std::unique_ptr<L0::Image> image(image_ptr);
+
+    EXPECT_FALSE(image->getAllocation()->isCompressionEnabled());
 }
 
 } // namespace ult

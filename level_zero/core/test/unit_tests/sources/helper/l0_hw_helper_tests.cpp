@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/matchers.h"
 
@@ -65,6 +66,21 @@ static void printAttentionBitmask(uint8_t *expected, uint8_t *actual, uint32_t m
         std::cout << "\n\n";
     }
 }
+
+HWTEST_F(L0HwHelperTest, givenL0HwHelperWhenAskingForImageCompressionSupportThenReturnFalse) {
+    DebugManagerStateRestore restore;
+
+    auto &l0HwHelper = L0::L0HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+
+    EXPECT_FALSE(l0HwHelper.imageCompressionSupported(*NEO::defaultHwInfo));
+
+    NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+    EXPECT_TRUE(l0HwHelper.imageCompressionSupported(*NEO::defaultHwInfo));
+
+    NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(0);
+    EXPECT_FALSE(l0HwHelper.imageCompressionSupported(*NEO::defaultHwInfo));
+}
+
 HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     auto &l0HwHelper = L0::L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);

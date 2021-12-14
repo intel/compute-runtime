@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/helpers/properties_parser.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
 
@@ -89,6 +90,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             }
         } else {
             NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::IMAGE, device->getNEODevice()->getDeviceBitfield());
+
+            auto &hwInfo = device->getHwInfo();
+            auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+            properties.flags.preferCompressed = l0HwHelper.imageCompressionSupported(hwInfo);
+            properties.flags.preferCompressed &= !imgInfo.linearStorage;
 
             allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         }

@@ -88,4 +88,13 @@ std::vector<ze_device_thread_t> L0HwHelperHw<GfxFamily>::getThreadsFromAttention
 
     return threads;
 }
+
+template <typename GfxFamily>
+bool L0HwHelperHw<GfxFamily>::imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
+    if (NEO::DebugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
+        return !!NEO::DebugManager.flags.RenderCompressedImagesEnabled.get();
+    }
+
+    return false;
+}
 } // namespace L0
