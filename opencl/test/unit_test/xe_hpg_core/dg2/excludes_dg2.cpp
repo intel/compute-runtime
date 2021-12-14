@@ -5,7 +5,7 @@
  *
  */
 
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 HWTEST_EXCLUDE_PRODUCT(HwHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, WhenAllowCompressionIsCalledThenTrueIsReturned, IGFX_DG2);

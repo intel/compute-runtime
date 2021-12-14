@@ -8,9 +8,9 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 

@@ -10,10 +10,10 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "test.h"
 
 using PreambleTest = ::testing::Test;
 using namespace NEO;

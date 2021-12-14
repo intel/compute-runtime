@@ -13,10 +13,10 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/tbx/tbx_proto.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_lrca_helper.h"
-#include "test.h"
 
 using namespace NEO;
 

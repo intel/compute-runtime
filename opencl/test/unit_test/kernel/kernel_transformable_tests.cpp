@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/program/kernel_info.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -13,7 +14,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_sampler.h"
-#include "test.h"
 
 #include <memory>
 

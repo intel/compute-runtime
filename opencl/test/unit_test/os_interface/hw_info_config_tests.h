@@ -8,9 +8,9 @@
 #pragma once
 
 #include "shared/source/device/device.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 

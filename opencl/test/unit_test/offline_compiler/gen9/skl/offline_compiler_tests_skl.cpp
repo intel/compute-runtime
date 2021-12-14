@@ -8,10 +8,10 @@
 #include "shared/source/compiler_interface/compiler_options/compiler_options.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_offline_compiler.h"
 #include "opencl/test/unit_test/offline_compiler/offline_compiler_tests.h"
-#include "test.h"
 
 namespace NEO {
 

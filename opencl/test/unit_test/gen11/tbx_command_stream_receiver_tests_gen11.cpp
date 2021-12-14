@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 

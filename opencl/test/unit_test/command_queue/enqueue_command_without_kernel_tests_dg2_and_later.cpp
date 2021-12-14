@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/resource_barrier.h"
 #include "opencl/source/event/event_builder.h"
@@ -20,7 +21,6 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
-#include "test.h"
 
 namespace NEO {
 using IsDG2AndLater = IsAtLeastXeHpgCore;

@@ -5,9 +5,10 @@
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 

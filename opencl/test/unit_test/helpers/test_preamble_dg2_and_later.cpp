@@ -9,10 +9,10 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/preamble/preamble_fixture.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "test.h"
 
 using namespace NEO;
 

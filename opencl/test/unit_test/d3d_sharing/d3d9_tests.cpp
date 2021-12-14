@@ -8,6 +8,7 @@
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"
@@ -20,7 +21,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_d3d_objects.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "test.h"
 
 namespace NEO {
 template <>

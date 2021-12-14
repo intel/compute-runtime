@@ -13,8 +13,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/hw_info_config.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "aub_mapper.h"
 

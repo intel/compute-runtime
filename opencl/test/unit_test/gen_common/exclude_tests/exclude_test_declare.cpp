@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <type_traits>
 

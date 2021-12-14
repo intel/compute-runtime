@@ -6,13 +6,13 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_parent_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-#include "test.h"
 
 using namespace NEO;
 

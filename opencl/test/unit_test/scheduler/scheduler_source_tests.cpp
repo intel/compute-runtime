@@ -8,13 +8,13 @@
 #include "opencl/test/unit_test/scheduler/scheduler_source_tests.h"
 
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 #include "hw_cmds.h"

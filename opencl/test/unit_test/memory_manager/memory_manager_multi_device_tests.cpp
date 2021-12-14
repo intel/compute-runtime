@@ -9,9 +9,9 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/memory_allocator_multi_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 

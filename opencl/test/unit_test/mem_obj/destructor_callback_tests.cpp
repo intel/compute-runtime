@@ -6,10 +6,10 @@
  */
 
 #include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 

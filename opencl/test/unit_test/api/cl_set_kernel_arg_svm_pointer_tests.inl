@@ -6,11 +6,11 @@
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-#include "test.h"
 
 #include "cl_api_tests.h"
 

@@ -5,10 +5,11 @@
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
-#include "test.h"
 
 namespace NEO {
 TEST(CsrSelectionArgsTests, givenBuffersWhenCreatingCsrSelectionArgsThenSetupArgsCorrectly) {

@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/utilities/numeric.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
@@ -16,7 +17,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "test.h"
 
 using namespace NEO;
 

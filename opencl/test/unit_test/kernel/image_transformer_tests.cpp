@@ -6,11 +6,11 @@
  */
 
 #include "shared/source/program/kernel_info.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/kernel/image_transformer.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel_info.h"
-#include "test.h"
 
 using namespace NEO;
 

@@ -8,9 +8,9 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
-#include "test.h"
 
 using namespace NEO;
 

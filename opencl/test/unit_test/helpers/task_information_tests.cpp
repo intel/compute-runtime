@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/task_information.h"
@@ -15,7 +16,6 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
 
 #include <memory>
 

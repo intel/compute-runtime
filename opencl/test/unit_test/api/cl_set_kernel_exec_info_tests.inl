@@ -5,10 +5,11 @@
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/command_stream/thread_arbitration_policy_helper.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
 
 #include "cl_api_tests.h"
 

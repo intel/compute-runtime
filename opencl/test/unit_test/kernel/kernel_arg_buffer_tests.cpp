@@ -9,6 +9,7 @@
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -20,7 +21,6 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
-#include "test.h"
 
 #include "CL/cl.h"
 #include "gtest/gtest.h"

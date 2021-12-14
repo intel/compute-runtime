@@ -15,8 +15,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/sku_info/sku_info_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "hw_cmds.h"
 #include "third_party/opencl_headers/CL/cl.h"

@@ -18,10 +18,10 @@
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
-#include "test.h"
 
 #include <array>
 #include <memory>

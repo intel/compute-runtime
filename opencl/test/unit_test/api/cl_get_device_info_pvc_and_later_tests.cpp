@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/api/cl_api_tests.h"
-#include "test.h"
 
 using namespace NEO;
 

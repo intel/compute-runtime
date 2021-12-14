@@ -17,6 +17,7 @@
 #include "shared/test/common/libult/create_command_stream.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
@@ -30,7 +31,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 

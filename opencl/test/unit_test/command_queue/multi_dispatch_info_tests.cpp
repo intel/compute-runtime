@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-#include "test.h"
 
 using namespace NEO;
 

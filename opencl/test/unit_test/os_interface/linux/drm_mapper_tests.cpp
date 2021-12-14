@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "drm/i915_drm.h"
 

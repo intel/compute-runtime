@@ -11,10 +11,10 @@
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
 
 #include "patch_shared.h"
 

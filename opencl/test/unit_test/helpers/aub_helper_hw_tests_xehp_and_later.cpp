@@ -7,9 +7,9 @@
 
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 

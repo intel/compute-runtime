@@ -8,8 +8,7 @@
 #include "opencl/test/unit_test/aub_tests/command_queue/enqueue_write_copy_read_buffer_aub_tests.h"
 
 #include "shared/source/memory_manager/allocations_list.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

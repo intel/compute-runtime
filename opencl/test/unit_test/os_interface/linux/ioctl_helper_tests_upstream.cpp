@@ -9,9 +9,9 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_impl.h"
-#include "test.h"
 
 using namespace NEO;
 

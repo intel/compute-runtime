@@ -7,12 +7,13 @@
 
 #pragma once
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-#include "test.h"
 
 using namespace NEO;
 

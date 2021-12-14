@@ -8,9 +8,8 @@
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/utilities/destructor_counted.h"
-
-#include "test.h"
 
 namespace NEO {
 

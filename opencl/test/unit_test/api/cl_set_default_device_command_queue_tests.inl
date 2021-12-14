@@ -6,11 +6,11 @@
  */
 
 #include "shared/source/device/device.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
-#include "test.h"
 
 #include "cl_api_tests.h"
 

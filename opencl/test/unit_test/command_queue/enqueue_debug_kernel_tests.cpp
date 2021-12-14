@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/kernel_filename_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/program/program.h"
@@ -18,7 +19,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
-#include "test.h"
 
 #include "compiler_options.h"
 #include "gmock/gmock.h"

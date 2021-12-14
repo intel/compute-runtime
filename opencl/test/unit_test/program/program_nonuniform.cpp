@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -21,7 +22,6 @@
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_with_source.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-#include "test.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

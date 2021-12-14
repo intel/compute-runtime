@@ -11,10 +11,10 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/memory_allocator_fixture.h"
-#include "test.h"
 
 struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
                                        public ::testing::Test {

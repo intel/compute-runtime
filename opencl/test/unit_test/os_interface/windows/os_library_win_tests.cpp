@@ -7,8 +7,7 @@
 
 #include "shared/source/os_interface/windows/os_library_win.h"
 #include "shared/test/common/helpers/variable_backup.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 

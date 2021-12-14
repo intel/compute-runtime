@@ -6,8 +6,7 @@
  */
 
 #include "shared/test/common/helpers/default_hw_info.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 using namespace NEO;
 
 TEST(SklHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {

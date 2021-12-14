@@ -6,9 +6,9 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/command_stream/compute_mode_tests.h"
-#include "test.h"
 
 using namespace NEO;
 

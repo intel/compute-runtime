@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/utilities/arrayref.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/sharings/d3d/cl_d3d_api.h"
 #include "opencl/source/sharings/d3d/d3d_buffer.h"
@@ -15,7 +16,6 @@
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_d3d_objects.h"
-#include "test.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

@@ -12,8 +12,7 @@
 #endif
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 

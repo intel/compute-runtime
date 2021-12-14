@@ -10,9 +10,9 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 

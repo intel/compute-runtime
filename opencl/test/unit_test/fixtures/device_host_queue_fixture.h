@@ -6,13 +6,14 @@
  */
 
 #pragma once
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-#include "test.h"
 
 using namespace NEO;
 

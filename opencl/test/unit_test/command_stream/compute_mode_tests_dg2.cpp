@@ -11,10 +11,10 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/command_stream/compute_mode_tests.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
-#include "test.h"
 
 #include "test_traits_common.h"
 

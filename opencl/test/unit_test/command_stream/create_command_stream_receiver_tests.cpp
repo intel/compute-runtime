@@ -13,10 +13,10 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/create_command_stream.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
-#include "test.h"
 
 using namespace NEO;
 

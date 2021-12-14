@@ -6,11 +6,11 @@
  */
 
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/sharings/va/va_device.h"
 #include "opencl/source/sharings/va/va_sharing_functions.h"
 #include "opencl/test/unit_test/linux/mock_os_layer.h"
-#include "test.h"
 
 #include <va/va_backend.h>
 

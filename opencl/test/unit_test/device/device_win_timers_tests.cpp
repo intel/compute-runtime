@@ -9,10 +9,10 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_ostime_win.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
@@ -13,7 +15,6 @@
 #include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
-#include "test.h"
 
 using namespace NEO;
 
