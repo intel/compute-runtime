@@ -1659,6 +1659,13 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenVerifyHandleThenRe
     EXPECT_TRUE(memoryManager.verifyHandle(testOSHandle, 0, 0));
 }
 
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenisNTHandleThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    osHandle testOSHandle = 1;
+    EXPECT_FALSE(memoryManager.isNTHandle(testOSHandle, 0));
+}
+
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenGpuAddressIsSetThenAllocationWithSpecifiedGpuAddressInSystemMemoryIsCreated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto memoryManager = new OsAgnosticMemoryManager(executionEnvironment);

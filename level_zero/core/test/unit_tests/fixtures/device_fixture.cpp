@@ -148,5 +148,33 @@ void SingleRootMultiSubDeviceFixture::SetUp() {
     neoDevice = device->getNEODevice();
 }
 
+void GetMemHandlePtrTestFixture::SetUp() {
+    NEO::MockCompilerEnableGuard mock(true);
+    neoDevice =
+        NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+    auto mockBuiltIns = new MockBuiltins();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<DriverHandleGetMemHandlePtrMock>();
+    driverHandle->initialize(std::move(devices));
+    prevMemoryManager = driverHandle->getMemoryManager();
+    currMemoryManager = new MemoryManagerMemHandleMock();
+    driverHandle->setMemoryManager(currMemoryManager);
+    device = driverHandle->devices[0];
+
+    context = std::make_unique<L0::ContextImp>(driverHandle.get());
+    EXPECT_NE(context, nullptr);
+    context->getDevices().insert(std::make_pair(device->toHandle(), device));
+    auto neoDevice = device->getNEODevice();
+    context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+    context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+}
+
+void GetMemHandlePtrTestFixture::TearDown() {
+    driverHandle->setMemoryManager(prevMemoryManager);
+    delete currMemoryManager;
+}
+
 } // namespace ult
 } // namespace L0

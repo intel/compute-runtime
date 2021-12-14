@@ -1618,6 +1618,15 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmMemoryManagerWhenVerifyNTHandleThenVe
     EXPECT_EQ(0, wddm->counterVerifySharedHandle);
 }
 
+TEST_F(MockWddmMemoryManagerTest, givenWddmMemoryManagerWhenIsNTHandleisCalledThenVerifyNTHandleisCalled) {
+    wddm->init();
+    MockWddmMemoryManager memoryManager(*executionEnvironment);
+    osHandle handle = 1;
+    memoryManager.isNTHandle(handle, 0);
+    EXPECT_EQ(1, wddm->counterVerifyNTHandle);
+    EXPECT_EQ(0, wddm->counterVerifySharedHandle);
+}
+
 TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemoryForBufferWithoutHostPtrThen64kbAdressIsAllocated) {
     DebugManagerStateRestore dbgRestore;
     wddm->init();

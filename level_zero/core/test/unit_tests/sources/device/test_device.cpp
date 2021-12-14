@@ -1463,7 +1463,7 @@ struct MultipleDevicesFixture : public ::testing::Test {
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        context = std::make_unique<ContextShareableMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         for (auto i = 0u; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
@@ -1478,7 +1478,7 @@ struct MultipleDevicesFixture : public ::testing::Test {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     MockMemoryManagerMultiDevice *memoryManager = nullptr;
     std::unique_ptr<UltDeviceFactory> deviceFactory;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<ContextShareableMock> context;
 
     const uint32_t numRootDevices = 2u;
     const uint32_t numSubDevices = 2u;

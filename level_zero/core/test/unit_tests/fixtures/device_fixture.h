@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 class MockPageFaultManager;
@@ -25,7 +26,39 @@ struct Device;
 struct ContextImp;
 
 namespace ult {
-class MockBuiltins;
+
+struct MockDriverModel : NEO::DriverModel {
+    size_t maxAllocSize;
+
+    MockDriverModel(size_t maxAllocSize) : NEO::DriverModel(NEO::DriverModelType::UNKNOWN), maxAllocSize(maxAllocSize) {}
+
+    void setGmmInputArgs(void *args) override {}
+    uint32_t getDeviceHandle() const override { return {}; }
+    PhysicalDevicePciBusInfo getPciBusInfo() const override { return {}; }
+    size_t getMaxMemAllocSize() const override {
+        return maxAllocSize;
+    }
+};
+
+struct MockDriverModelWDDM : NEO::DriverModel {
+    size_t maxAllocSize;
+
+    MockDriverModelWDDM(size_t maxAllocSize) : NEO::DriverModel(NEO::DriverModelType::WDDM), maxAllocSize(maxAllocSize) {}
+
+    void setGmmInputArgs(void *args) override {}
+    uint32_t getDeviceHandle() const override { return {}; }
+    PhysicalDevicePciBusInfo getPciBusInfo() const override { return {}; }
+    size_t getMaxMemAllocSize() const override {
+        return maxAllocSize;
+    }
+};
+
+struct ContextShareableMock : public L0::ContextImp {
+    ContextShareableMock(L0::DriverHandleImp *driverHandle) : L0::ContextImp(driverHandle) {}
+    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice) override {
+        return true;
+    }
+};
 
 struct DeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
@@ -38,6 +71,47 @@ struct DeviceFixture {
     L0::Device *device = nullptr;
     L0::ContextImp *context = nullptr;
     MockBuiltins *mockBuiltIns = nullptr;
+};
+
+struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
+    void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAloc) override {
+        if (failHandleLookup) {
+            return nullptr;
+        }
+        return &mockFd;
+    }
+
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle) override {
+        if (failHandleLookup) {
+            return nullptr;
+        }
+        return &mockHandle;
+    }
+
+    uint64_t mockHandle = 57;
+    int mockFd = 57;
+    bool failHandleLookup = false;
+};
+
+class MemoryManagerMemHandleMock : public MockMemoryManager {
+  public:
+    bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) override {
+        return NTHandle;
+    };
+
+    bool NTHandle = false;
+};
+
+struct GetMemHandlePtrTestFixture {
+    NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
+    void SetUp();    // NOLINT(readability-identifier-naming)
+    void TearDown(); // NOLINT(readability-identifier-naming)
+    NEO::MemoryManager *prevMemoryManager = nullptr;
+    MemoryManagerMemHandleMock *currMemoryManager = nullptr;
+    std::unique_ptr<DriverHandleGetMemHandlePtrMock> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    std::unique_ptr<L0::ContextImp> context;
 };
 
 struct PageFaultDeviceFixture {

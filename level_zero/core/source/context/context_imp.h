@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -123,6 +125,8 @@ struct ContextImp : Context {
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
+    bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) override;
+    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, ze_ipc_memory_flags_t flags) override;
 
   protected:
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);

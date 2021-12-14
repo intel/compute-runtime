@@ -160,9 +160,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
-
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, this->driverHandle->rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.allocationFlags.flags.shareable = static_cast<uint32_t>(lookupTable.exportMemory);
+    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice);
     unifiedMemoryProperties.device = neoDevice;
     unifiedMemoryProperties.allocationFlags.flags.compressedHint = isAllocationSuitableForCompression(lookupTable, *device, size);
 
@@ -430,7 +429,7 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
              reinterpret_cast<void *>(pIpcHandle.data),
              sizeof(handle));
 
-    *ptr = this->driverHandle->importFdHandle(hDevice, flags, handle, nullptr);
+    *ptr = getMemHandlePtr(hDevice, handle, flags);
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,6 +73,7 @@ class WddmMemoryManager : public MemoryManager {
     AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override { return AddressRange{0, 0}; };
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
     bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool ntHandle) override;
+    bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) override;
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
 

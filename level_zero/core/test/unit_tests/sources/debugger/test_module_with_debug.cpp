@@ -577,6 +577,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
 
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
     module->initialize(&moduleDesc, neoDevice);
 
     EXPECT_EQ(4, memoryOperationsHandler->makeResidentCalledCount);
@@ -628,6 +629,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
 
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
     module->initialize(&moduleDesc, neoDevice);
 
     EXPECT_EQ(0, memoryOperationsHandler->makeResidentCalledCount);
