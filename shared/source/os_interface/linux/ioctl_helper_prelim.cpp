@@ -136,4 +136,31 @@ uint32_t IoctlHelperPrelim20::getHwConfigIoctlVal() {
     return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
 }
 
+uint32_t IoctlHelperPrelim20::getAtomicAdvise(bool isNonAtomic) {
+    return isNonAtomic ? PRELIM_I915_VM_ADVISE_ATOMIC_NONE : PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
+}
+
+uint32_t IoctlHelperPrelim20::getPreferredLocationAdvise() {
+    return PRELIM_I915_VM_ADVISE_PREFERRED_LOCATION;
+}
+
+bool IoctlHelperPrelim20::setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) {
+    prelim_drm_i915_gem_vm_advise vmAdvise{};
+
+    vmAdvise.handle = handle;
+    vmAdvise.attribute = attribute;
+    if (region != nullptr) {
+        vmAdvise.region = *reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(region);
+    }
+
+    int ret = IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE, &vmAdvise);
+    if (ret != 0) {
+        int err = errno;
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
+    return true;
+}
+
 } // namespace NEO

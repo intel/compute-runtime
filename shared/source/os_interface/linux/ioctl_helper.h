@@ -33,6 +33,9 @@ class IoctlHelper {
     virtual int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
                               uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) = 0;
     virtual uint32_t getHwConfigIoctlVal() = 0;
+    virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
+    virtual uint32_t getPreferredLocationAdvise() = 0;
+    virtual bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -45,6 +48,9 @@ class IoctlHelperUpstream : public IoctlHelper {
     int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
     uint32_t getHwConfigIoctlVal() override;
+    uint32_t getAtomicAdvise(bool isNonAtomic) override;
+    uint32_t getPreferredLocationAdvise() override;
+    bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -68,6 +74,9 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
     uint32_t getHwConfigIoctlVal() override;
+    uint32_t getAtomicAdvise(bool isNonAtomic) override;
+    uint32_t getPreferredLocationAdvise() override;
+    bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
 };
 
 } // namespace NEO

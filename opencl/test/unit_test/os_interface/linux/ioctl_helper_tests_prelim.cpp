@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -193,4 +194,66 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenGetHwConfigIoctlValThenCorrectValue
 
     uint32_t ioctlVal = (1 << 16) | 6;
     EXPECT_EQ(ioctlVal, IoctlHelper::get(drm.get())->getHwConfigIoctlVal());
+}
+
+TEST(IoctlHelperTestsPrelim, givenDrmAllocationWhenSetMemAdviseFailsThenDontUpdateMemAdviceFlags) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmPrelimMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.ioctlRetVal = -1;
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    MemAdviseFlags memAdviseFlags{};
+    memAdviseFlags.non_atomic = 1;
+
+    allocation.setMemAdvise(&drm, memAdviseFlags);
+
+    EXPECT_EQ(1u, drm.ioctlCallsCount);
+    EXPECT_NE(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+}
+
+TEST(IoctlHelperTestsPrelim, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmPrelimMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    MemAdviseFlags memAdviseFlags{};
+
+    for (auto nonAtomic : {true, false}) {
+        memAdviseFlags.non_atomic = nonAtomic;
+
+        EXPECT_TRUE(allocation.setMemAdvise(&drm, memAdviseFlags));
+        EXPECT_EQ(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+    }
+    EXPECT_EQ(2u, drm.ioctlCallsCount);
+}
+
+TEST(IoctlHelperTestsPrelim, givenDrmAllocationWhenSetMemAdviseWithDevicePreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmPrelimMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    MemAdviseFlags memAdviseFlags{};
+
+    for (auto devicePreferredLocation : {true, false}) {
+        memAdviseFlags.device_preferred_location = devicePreferredLocation;
+
+        EXPECT_TRUE(allocation.setMemAdvise(&drm, memAdviseFlags));
+        EXPECT_EQ(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+    }
+    EXPECT_EQ(2u, drm.ioctlCallsCount);
 }

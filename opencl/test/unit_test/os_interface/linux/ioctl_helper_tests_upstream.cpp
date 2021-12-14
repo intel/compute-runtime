@@ -91,3 +91,23 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocWaysThenReturnZeroWays)
 
     EXPECT_EQ(0, cacheRegion);
 }
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetAdviseThenReturnCorrectValue) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    EXPECT_EQ(0u, ioctlHelper->getAtomicAdvise(false));
+    EXPECT_EQ(0u, ioctlHelper->getAtomicAdvise(true));
+    EXPECT_EQ(0u, ioctlHelper->getPreferredLocationAdvise());
+}
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmBoAdviseThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    EXPECT_TRUE(ioctlHelper->setVmBoAdvise(drm.get(), 0, 0, nullptr));
+}

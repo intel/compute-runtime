@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include <sstream>
@@ -167,4 +168,46 @@ void DrmAllocation::markForCapture() {
         }
     }
 }
+
+bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
+    bool success = true;
+
+    if (flags.cached_memory != enabledMemAdviseFlags.cached_memory) {
+        CachePolicy memType = flags.cached_memory ? CachePolicy::WriteBack : CachePolicy::Uncached;
+        setCachePolicy(memType);
+    }
+
+    auto ioctlHelper = IoctlHelper::get(drm);
+    if (flags.non_atomic != enabledMemAdviseFlags.non_atomic) {
+        for (auto bo : bufferObjects) {
+            if (bo != nullptr) {
+                success &= ioctlHelper->setVmBoAdvise(drm, bo->peekHandle(), ioctlHelper->getAtomicAdvise(flags.non_atomic), nullptr);
+            }
+        }
+    }
+
+    if (flags.device_preferred_location != enabledMemAdviseFlags.device_preferred_location) {
+        drm_i915_gem_memory_class_instance region{};
+        for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
+            auto bo = bufferObjects[handleId];
+            if (bo != nullptr) {
+                if (flags.device_preferred_location) {
+                    region.memory_class = I915_MEMORY_CLASS_DEVICE;
+                    region.memory_instance = handleId;
+                } else {
+                    region.memory_class = -1;
+                    region.memory_instance = 0;
+                }
+                success &= ioctlHelper->setVmBoAdvise(drm, bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
+            }
+        }
+    }
+
+    if (success) {
+        enabledMemAdviseFlags = flags;
+    }
+
+    return success;
+}
+
 } // namespace NEO

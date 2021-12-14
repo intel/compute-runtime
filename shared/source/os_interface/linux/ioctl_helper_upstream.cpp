@@ -67,4 +67,16 @@ uint32_t IoctlHelperUpstream::getHwConfigIoctlVal() {
     return DRM_I915_QUERY_HWCONFIG_TABLE;
 }
 
+uint32_t IoctlHelperUpstream::getAtomicAdvise(bool isNonAtomic) {
+    return 0;
+}
+
+uint32_t IoctlHelperUpstream::getPreferredLocationAdvise() {
+    return 0;
+}
+
+bool IoctlHelperUpstream::setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) {
+    return true;
+}
+
 } // namespace NEO
