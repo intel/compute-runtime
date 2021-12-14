@@ -198,9 +198,6 @@ class MockCommandQueue : public CommandQueue {
 
     cl_int finish() override { return CL_SUCCESS; }
 
-    cl_int enqueueInitDispatchGlobals(DispatchGlobalsArgs *dispatchGlobalsArgs, cl_uint numEventsInWaitList,
-                                      const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
-
     cl_int flush() override { return CL_SUCCESS; }
 
     bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override { return isCacheFlushRequired; }

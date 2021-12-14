@@ -12,10 +12,6 @@
 
 namespace NEO {
 
-bool Kernel::requiresPerDssBackedBuffer() const {
-    return DebugManager.flags.ForcePerDssBackedBufferProgramming.get();
-}
-
 int32_t Kernel::setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue) {
     return CL_INVALID_VALUE;
 }

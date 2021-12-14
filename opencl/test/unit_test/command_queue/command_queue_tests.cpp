@@ -1251,18 +1251,6 @@ TEST(CommandQueue, GivenCommandQueueWhenCheckingIfIsCacheFlushCommandCalledThenF
     EXPECT_FALSE(isCommandCacheFlush);
 }
 
-TEST(CommandQueue, GivenCommandQueueWhenEnqueueInitDispatchGlobalsCalledThenSuccessReturned) {
-    MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0, false);
-
-    cl_int result = cmdQ.enqueueInitDispatchGlobals(
-        nullptr,
-        0,
-        nullptr,
-        nullptr);
-    EXPECT_EQ(CL_SUCCESS, result);
-}
-
 TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestampPacketIsCreated) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableTimestampPacket.set(0);

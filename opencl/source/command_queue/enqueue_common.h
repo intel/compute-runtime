@@ -794,7 +794,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     auto specialPipelineSelectMode = false;
     Kernel *kernel = nullptr;
-    bool usePerDssBackedBuffer = false;
     bool auxTranslationRequired = false;
     bool useGlobalAtomics = false;
 
@@ -813,10 +812,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         auxTranslationRequired |= kernel->isAuxTranslationRequired();
         if (kernel->hasUncacheableStatelessArgs()) {
             anyUncacheableArgs = true;
-        }
-
-        if (kernel->requiresPerDssBackedBuffer()) {
-            usePerDssBackedBuffer = true;
         }
 
         if (kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics) {
@@ -889,7 +884,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         implicitFlush,                                                                              //implicitFlush
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
         false,                                                                                      //epilogueRequired
-        usePerDssBackedBuffer,                                                                      //usePerDssBackedBuffer
+        false,                                                                                      //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred(),                                                       //useSingleSubdevice
         useGlobalAtomics,                                                                           //useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                                   //areMultipleSubDevicesInContext

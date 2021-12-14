@@ -36,7 +36,6 @@ class Kernel;
 class MemObj;
 class PerformanceCounters;
 struct CompletionStamp;
-struct DispatchGlobalsArgs;
 struct MultiDispatchInfo;
 
 enum class QueuePriority {
@@ -188,8 +187,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                           const cl_event *eventWaitList, cl_event *event) = 0;
 
     virtual cl_int finish() = 0;
-    virtual cl_int enqueueInitDispatchGlobals(DispatchGlobalsArgs *dispatchGlobalsArgs, cl_uint numEventsInWaitList,
-                                              const cl_event *eventWaitList, cl_event *event) = 0;
 
     virtual cl_int flush() = 0;
 

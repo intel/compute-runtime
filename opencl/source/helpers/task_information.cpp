@@ -247,7 +247,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         false,                                                                            //implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
         false,                                                                            //epilogueRequired
-        kernel->requiresPerDssBackedBuffer(),                                             //usePerDssBackedBuffer
+        false,                                                                            //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred(),                                             //useSingleSubdevice
         kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                         //areMultipleSubDevicesInContext

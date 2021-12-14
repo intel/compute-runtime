@@ -12,7 +12,6 @@
 #include "opencl/source/command_queue/command_queue_hw_disabled_device_enqueue.inl"
 
 #include "command_queue_helpers_gen12lp.inl"
-#include "enqueue_init_dispatch_globals.h"
 
 namespace NEO {
 

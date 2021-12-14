@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/helpers/l3_range.h"
-#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"

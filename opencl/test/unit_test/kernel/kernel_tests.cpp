@@ -3027,23 +3027,6 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhe
     device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
 }
 
-TEST(KernelTest, givenKernelWhenForcePerDssBackedBufferProgrammingIsSetThenKernelRequiresPerDssBackedBuffer) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.ForcePerDssBackedBufferProgramming.set(true);
-
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    MockKernelWithInternals kernel(*device);
-
-    EXPECT_TRUE(kernel.mockKernel->requiresPerDssBackedBuffer());
-}
-
-TEST(KernelTest, givenKernelWhenForcePerDssBackedBufferProgrammingIsNotSetThenKernelDoesntRequirePerDssBackedBuffer) {
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    MockKernelWithInternals kernel(*device);
-
-    EXPECT_FALSE(kernel.mockKernel->requiresPerDssBackedBuffer());
-}
-
 TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaultValue) {
     UltClDeviceFactory deviceFactory{1, 0};
 

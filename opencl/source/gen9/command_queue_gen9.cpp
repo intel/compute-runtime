@@ -13,8 +13,6 @@
 #include "opencl/source/command_queue/command_queue_hw_enabled_device_enqueue.inl"
 #include "opencl/source/command_queue/enqueue_resource_barrier.h"
 
-#include "enqueue_init_dispatch_globals.h"
-
 namespace NEO {
 
 typedef SKLFamily Family;

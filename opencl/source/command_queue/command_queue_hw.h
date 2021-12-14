@@ -341,10 +341,6 @@ class CommandQueueHw : public CommandQueue {
                                   cl_event *event) override;
 
     cl_int finish() override;
-    cl_int enqueueInitDispatchGlobals(DispatchGlobalsArgs *dispatchGlobalsArgs,
-                                      cl_uint numEventsInWaitList,
-                                      const cl_event *eventWaitList,
-                                      cl_event *event) override;
     cl_int flush() override;
 
     template <uint32_t enqueueType>

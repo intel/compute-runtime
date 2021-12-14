@@ -11,8 +11,6 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_resource_barrier.h"
 
-#include "enqueue_init_dispatch_globals.h"
-
 namespace NEO {
 
 using Family = XeHpFamily;
