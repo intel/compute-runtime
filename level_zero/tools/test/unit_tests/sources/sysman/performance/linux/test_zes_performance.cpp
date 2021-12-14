@@ -35,7 +35,7 @@ class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pPerformanceHandleContext->init(deviceHandles);
+        pSysmanDeviceImp->pPerformanceHandleContext->init(deviceHandles, device);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {

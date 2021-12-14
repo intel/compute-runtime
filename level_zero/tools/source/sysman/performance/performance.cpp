@@ -30,11 +30,12 @@ void PerformanceHandleContext::createHandle(ze_device_handle_t deviceHandle, zes
     }
 }
 
-ze_result_t PerformanceHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+ze_result_t PerformanceHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles, ze_device_handle_t coreDevice) {
     for (const auto &deviceHandle : deviceHandles) {
         createHandle(deviceHandle, ZES_ENGINE_TYPE_FLAG_MEDIA);
         createHandle(deviceHandle, ZES_ENGINE_TYPE_FLAG_COMPUTE);
     }
+    createHandle(coreDevice, ZES_ENGINE_TYPE_FLAG_OTHER);
     return ZE_RESULT_SUCCESS;
 }
 

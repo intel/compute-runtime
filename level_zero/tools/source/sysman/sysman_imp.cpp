@@ -126,7 +126,7 @@ ze_result_t SysmanDeviceImp::init() {
         pDiagnosticsHandleContext->init(deviceHandles);
     }
     if (pPerformanceHandleContext) {
-        pPerformanceHandleContext->init(deviceHandles);
+        pPerformanceHandleContext->init(deviceHandles, hCoreDevice);
     }
     return result;
 }
