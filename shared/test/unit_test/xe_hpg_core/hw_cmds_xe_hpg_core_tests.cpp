@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/xe_hpg_core/hw_cmds_base.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

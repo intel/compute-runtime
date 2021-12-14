@@ -6,8 +6,7 @@
  */
 
 #include "shared/test/common/helpers/variable_backup.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
