@@ -1272,6 +1272,153 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
 }
 
+TEST(PopulateKernelDescriptor, GivenArgumentByValueWithMoreThanOneElementWithSourceOffsetsSpecifiedThenSetThemAccordingly) {
+    NEO::ConstStringRef yaml = R"===(
+kernels:
+  - name:            some_kernel
+    execution_env:
+        simd_size: 8
+    payload_arguments:
+        - arg_type : arg_byvalue
+          offset : 40
+          size : 1
+          arg_index	: 0
+          source_offset : 0
+        - arg_type : arg_byvalue
+          offset : 44
+          size : 4
+          arg_index	: 0
+          source_offset : 1
+...
+)===";
+    namespace Defaults = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults;
+    NEO::ZeInfoPayloadArguments args;
+    int32_t maxArgIndex = Defaults::argIndex;
+    int32_t maxSmpIndex = Defaults::samplerIndex;
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    NEO::ZebinSections zebinSections;
+    std::string errors, warnings;
+
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(yaml, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    auto &argsNode = *parser.findNodeWithKeyDfs("payload_arguments");
+    auto readPayloadArgsRes = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, readPayloadArgsRes);
+    EXPECT_EQ(args[0].sourceOffset, 0);
+    EXPECT_EQ(args[1].sourceOffset, 1);
+
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto res = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, res);
+    auto elements = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescValue>().elements;
+    EXPECT_EQ(0, elements[0].sourceOffset);
+    EXPECT_EQ(1, elements[1].sourceOffset);
+}
+
+TEST(PopulateKernelDescriptor, GiveArgumentByValueWithOneElementWithoutSourceOffsetSpecifiedSetItToZero) {
+    NEO::ConstStringRef yaml = R"===(
+kernels:
+  - name:            some_kernel
+    execution_env:
+        simd_size: 8
+    payload_arguments:
+        - arg_type : arg_byvalue
+          offset : 40
+          size : 1
+          arg_index	: 0
+...
+)===";
+    namespace Defaults = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults;
+    NEO::ZeInfoPayloadArguments args;
+    int32_t maxArgIndex = Defaults::argIndex;
+    int32_t maxSmpIndex = Defaults::samplerIndex;
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    NEO::ZebinSections zebinSections;
+    std::string errors, warnings;
+
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(yaml, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    auto &argsNode = *parser.findNodeWithKeyDfs("payload_arguments");
+    auto readPayloadArgsRes = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, readPayloadArgsRes);
+    EXPECT_EQ(args[0].sourceOffset, Defaults::sourceOffset);
+
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto res = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, res);
+    auto elements = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescValue>().elements;
+    EXPECT_EQ(0, elements[0].sourceOffset);
+}
+
+TEST(PopulateKernelDescriptor, GivenArgumentByValueWithoutAnySourceOffsetsSpecifiedThenPopulateKernelDescriptorReturnsError) {
+    NEO::ConstStringRef yaml = R"===(
+kernels:
+  - name:            some_kernel
+    execution_env:
+        simd_size: 8
+    payload_arguments:
+        - arg_type : arg_byvalue
+          offset : 40
+          size : 1
+          arg_index	: 0
+        - arg_type : arg_byvalue
+          offset : 44
+          size : 4
+          arg_index	: 0
+...
+)===";
+    namespace Defaults = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults;
+    NEO::ZeInfoPayloadArguments args;
+    int32_t maxArgIndex = Defaults::argIndex;
+    int32_t maxSmpIndex = Defaults::samplerIndex;
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    NEO::ZebinSections zebinSections;
+    std::string errors, warnings;
+
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(yaml, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    auto &argsNode = *parser.findNodeWithKeyDfs("payload_arguments");
+    auto readPayloadArgsRes = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, readPayloadArgsRes);
+    EXPECT_EQ(args[0].sourceOffset, Defaults::sourceOffset);
+    EXPECT_EQ(args[1].sourceOffset, Defaults::sourceOffset);
+
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_STREQ("Missing source offset value for element in argByValue\n", errors.c_str());
+}
+
 TEST(ReadEnumCheckedArgType, GivenValidStringRepresentationThenParseItCorrectly) {
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadPayloadArgument::ArgType;

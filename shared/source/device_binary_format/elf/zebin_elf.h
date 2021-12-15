@@ -205,6 +205,7 @@ static constexpr ConstStringRef addrmode("addrmode");
 static constexpr ConstStringRef addrspace("addrspace");
 static constexpr ConstStringRef accessType("access_type");
 static constexpr ConstStringRef samplerIndex("sampler_index");
+static constexpr ConstStringRef sourceOffset("source_offset");
 namespace ArgType {
 static constexpr ConstStringRef localSize("local_size");
 static constexpr ConstStringRef groupCount("group_count");
@@ -450,6 +451,7 @@ enum AccessType : uint8_t {
 
 using ArgTypeT = ArgType;
 using OffseT = int32_t;
+using SourceOffseT = int32_t;
 using SizeT = int32_t;
 using ArgIndexT = int32_t;
 using AddrmodeT = MemoryAddressingMode;
@@ -462,11 +464,13 @@ namespace Defaults {
 static constexpr ArgIndexT argIndex = -1;
 static constexpr SlmAlignment slmArgAlignment = 16U;
 static constexpr SamplerIndexT samplerIndex = -1;
+static constexpr SourceOffseT sourceOffset = -1;
 } // namespace Defaults
 
 struct PayloadArgumentBaseT {
     ArgTypeT argType = ArgTypeUnknown;
     OffseT offset = 0;
+    SourceOffseT sourceOffset = Defaults::sourceOffset;
     SizeT size = 0;
     ArgIndexT argIndex = Defaults::argIndex;
     AddrmodeT addrmode = MemoryAddressingModeUnknown;

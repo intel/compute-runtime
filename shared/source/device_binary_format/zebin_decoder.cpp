@@ -578,6 +578,8 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::samplerIndex == key) {
                 validPayload &= parser.readValueChecked(payloadArgumentMemberNd, payloadArgMetadata.samplerIndex);
                 outMaxSamplerIndex = std::max<int32_t>(outMaxSamplerIndex, payloadArgMetadata.samplerIndex);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::sourceOffset == key) {
+                validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.sourceOffset, context, outErrReason);
             } else {
                 outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
             }
@@ -817,8 +819,14 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgByvalue: {
         auto &argAsValue = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescValue>(true);
         ArgDescValue::Element valueElement;
+        valueElement.sourceOffset = 0;
+        if (src.sourceOffset != -1) {
+            valueElement.sourceOffset = src.sourceOffset;
+        } else if (argAsValue.elements.empty() == false) {
+            outErrReason.append("Missing source offset value for element in argByValue\n");
+            return DecodeError::InvalidBinary;
+        }
         valueElement.offset = src.offset;
-        valueElement.sourceOffset = 0U;
         valueElement.size = src.size;
         argAsValue.elements.push_back(valueElement);
         break;
