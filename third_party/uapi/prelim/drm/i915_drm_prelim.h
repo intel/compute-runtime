@@ -129,50 +129,35 @@ struct prelim_drm_i915_gem_context_create_ext_clone {
 #define PRELIM_I915_PMU_SGUNIT_ERROR_CORRECTABLE		(16)
 #define PRELIM_I915_PMU_SGUNIT_ERROR_NONFATAL			(17)
 #define PRELIM_I915_PMU_SGUNIT_ERROR_FATAL			(18)
-#define PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_PSF_CSC_0		(19)
-#define PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_PSF_CSC_1		(20)
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_PSF_CSC_0		(21)
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_PSF_CSC_1		(22)
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_PSF_CSC_2		(23)
-#define PRELIM_I915_PMU_SOC_ERROR_FATAL_PSF_CSC_0		(24)
-#define PRELIM_I915_PMU_SOC_ERROR_FATAL_PSF_CSC_1		(25)
-#define PRELIM_I915_PMU_SOC_ERROR_FATAL_PSF_CSC_2		(26)
-#define PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_PUNIT		(27)
-#define PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_MDFI_EAST		(28)
-#define PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_MDFI_WEST		(29)
-#define PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_MDFI_SOUTH	(30)
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_PUNIT		(31)
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_MDFI_EAST		(32)
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_MDFI_WEST		(33)
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_MDFI_SOUTH		(34)
-#define PRELIM_I915_PMU_SOC_ERROR_FATAL_PUNIT			(35)
-#define PRELIM_I915_PMU_SOC_ERROR_FATAL_MDFI_EAST		(36)
-#define PRELIM_I915_PMU_SOC_ERROR_FATAL_MDFI_WEST		(37)
-#define PRELIM_I915_PMU_SOC_ERROR_FATAL_MDFI_SOUTH		(38)
-
-#define PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_FBR(ss, n) \
-	(PRELIM_I915_PMU_SOC_ERROR_FATAL_MDFI_SOUTH + 0x1 + (ss) * 0x4 + (n))
-
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_FBR(ss, n) \
-	(PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_FBR(1, 5) + (ss) * 0x4 + (n))
+#define PRELIM_I915_PMU_SOC_ERROR_FATAL_PSF_CSC_0		(19)
+#define PRELIM_I915_PMU_SOC_ERROR_FATAL_PSF_CSC_1		(20)
+#define PRELIM_I915_PMU_SOC_ERROR_FATAL_PSF_CSC_2		(21)
+#define PRELIM_I915_PMU_SOC_ERROR_FATAL_PUNIT			(22)
+#define PRELIM_I915_PMU_SOC_ERROR_FATAL_MDFI_EAST		(23)
+#define PRELIM_I915_PMU_SOC_ERROR_FATAL_MDFI_WEST		(24)
+#define PRELIM_I915_PMU_SOC_ERROR_FATAL_MDFI_SOUTH		(25)
 
 #define PRELIM_I915_PMU_SOC_ERROR_FATAL_FBR(ss, n) \
-	(PRELIM_I915_PMU_SOC_ERROR_NONFATAL_FBR(1, 5) + (ss) * 0x4 + (n))
-
-#define PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_HBM(ss, n)\
-	(PRELIM_I915_PMU_SOC_ERROR_FATAL_FBR(1, 5) + (ss) * 0x10 + (n))
-
-#define PRELIM_I915_PMU_SOC_ERROR_NONFATAL_HBM(ss, n)\
-	(PRELIM_I915_PMU_SOC_ERROR_CORRECTABLE_HBM(1, 16) + (ss) * 0x10 + (n))
+	(PRELIM_I915_PMU_SOC_ERROR_FATAL_MDFI_SOUTH + 0x1 + (ss) * 0x4 + (n))
 
 #define PRELIM_I915_PMU_SOC_ERROR_FATAL_HBM(ss, n)\
-	(PRELIM_I915_PMU_SOC_ERROR_NONFATAL_HBM(1, 16) + (ss) * 0x10 + (n))
+	(PRELIM_I915_PMU_SOC_ERROR_FATAL_FBR(1, 5) + (ss) * 0x10 + (n))
 
-/* 161 is the last ID used by SOC errors */
-#define PRELIM_I915_PMU_GT_ERROR_FATAL_FPU		(162)
-#define PRELIM_I915_PMU_GT_ERROR_FATAL_TLB		(163)
-#define PRELIM_I915_PMU_GT_ERROR_FATAL_L3_FABRIC	(164)
+#define PRELIM_I915_PMU_GT_ERROR_FATAL_FPU			(67)
+#define PRELIM_I915_PMU_GT_ERROR_FATAL_TLB			(68)
+#define PRELIM_I915_PMU_GT_ERROR_FATAL_L3_FABRIC		(69)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_PSF_0		(70)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_PSF_1		(71)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_PSF_2		(72)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_CD0			(73)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_CD0_MDFI		(74)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_MDFI_EAST		(75)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_MDFI_SOUTH		(76)
 
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_HBM(ss, n)\
+	(PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_MDFI_SOUTH + 0x1 + (ss) * 0x10 + (n))
+
+/* 108 is the last ID used by SOC errors */
 #define PRELIM_I915_PMU_HW_ERROR(gt, id) \
 	((__PRELIM_I915_PMU_HW_ERROR_EVENT_ID_OFFSET + (id)) | \
 	((__u64)(gt) << __PRELIM_I915_PMU_GT_SHIFT))
@@ -214,8 +199,6 @@ struct prelim_drm_i915_gem_context_create_ext_clone {
 #define PRELIM_DRM_I915_GEM_CACHE_RESERVE	0x53
 #define PRELIM_DRM_I915_GEM_VM_GETPARAM		DRM_I915_GEM_CONTEXT_GETPARAM
 #define PRELIM_DRM_I915_GEM_VM_SETPARAM		DRM_I915_GEM_CONTEXT_SETPARAM
-#define PRELIM_DRM_I915_GEM_OBJECT_SETPARAM	DRM_I915_GEM_CONTEXT_SETPARAM
-#define PRELIM_DRM_I915_PXP_OPS			0x52
 
 
 #define PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_CREATE, struct prelim_drm_i915_gem_create_ext)
@@ -232,9 +215,6 @@ struct prelim_drm_i915_gem_context_create_ext_clone {
 #define PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE		DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_GEM_CACHE_RESERVE, struct prelim_drm_i915_gem_cache_reserve)
 #define PRELIM_DRM_IOCTL_I915_GEM_VM_GETPARAM		DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_GEM_VM_GETPARAM, struct prelim_drm_i915_gem_vm_param)
 #define PRELIM_DRM_IOCTL_I915_GEM_VM_SETPARAM		DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_GEM_VM_SETPARAM, struct prelim_drm_i915_gem_vm_param)
-#define PRELIM_DRM_IOCTL_I915_GEM_OBJECT_SETPARAM	DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_GEM_OBJECT_SETPARAM, struct prelim_drm_i915_gem_object_param)
-#define PRELIM_DRM_IOCTL_I915_PXP_OPS			DRM_IOWR(DRM_COMMAND_BASE + PRELIM_DRM_I915_PXP_OPS, struct prelim_drm_i915_pxp_ops)
-
 /* End PRELIM ioctl's */
 
 /* getparam */
@@ -284,10 +264,9 @@ struct prelim_drm_i915_gem_create_ext {
 	 */
 	__u32 handle;
 	__u32 pad;
-#define PRELIM_I915_GEM_CREATE_EXT_SETPARAM		(PRELIM_I915_USER_EXT | 1)
-#define PRELIM_I915_GEM_CREATE_EXT_PROTECTED_CONTENT	(PRELIM_I915_USER_EXT | 2)
+#define PRELIM_I915_GEM_CREATE_EXT_SETPARAM	(PRELIM_I915_USER_EXT | 1)
 #define PRELIM_I915_GEM_CREATE_EXT_FLAGS_UNKNOWN \
-	(~(PRELIM_I915_GEM_CREATE_EXT_SETPARAM | PRELIM_I915_GEM_CREATE_EXT_PROTECTED_CONTENT))
+	(~PRELIM_I915_GEM_CREATE_EXT_SETPARAM)
 	__u64 extensions;
 };
 
@@ -328,119 +307,6 @@ struct prelim_drm_i915_gem_create_ext_setparam {
 	struct i915_user_extension base;
 	struct prelim_drm_i915_gem_object_param param;
 };
-
-/**
- * struct drm_i915_gem_create_ext_protected_content - The
- * I915_OBJECT_PARAM_PROTECTED_CONTENT extension.
- *
- * If this extension is provided, buffer contents are expected to be
- * protected by PXP encryption and requires decryption for scan out
- * and processing. This is only possible on platforms that have PXP enabled,
- * on all other scenarios ysing this extension will cause the ioctl to fail
- * and return -ENODEV. The flags parameter is reserved for future expansion and
- * must currently be set to zero.
- *
- * The buffer contents are considered invalid after a PXP session teardown.
- *
- * The encryption is guaranteed to be processed correctly only if the object
- * is submitted with a context created using the
- * I915_CONTEXT_PARAM_PROTECTED_CONTENT flag. This will also enable extra checks
- * at submission time on the validity of the objects involved, which can lead to
- * the following errors being returned from the execbuf ioctl:
- *
- * -ENODEV: PXP session not currently active
- * -ENOEXEC: buffer has become invalid after a teardown event
- */
-struct prelim_drm_i915_gem_create_ext_protected_content {
-	struct i915_user_extension base;
-	__u32 flags;
-};
-
-/*
- * struct pxp_set_session_status_params - Params to reserved, set or destroy
- * the session from the PXP state machine.
- */
-struct prelim_drm_i915_pxp_set_session_status_params {
-	__u32 pxp_tag; /* in/out, session identifier tag */
-	__u32 session_type; /* in, session type */
-	__u32 session_mode; /* in, session mode */
-#define PRELIM_DRM_I915_PXP_MODE_LM 0
-#define PRELIM_DRM_I915_PXP_MODE_HM 1
-#define PRELIM_DRM_I915_PXP_MODE_SM 2
-
-	__u32 req_session_state; /* in, new session state */
-	/* Request KMD to allocate session id and move it to INIT */
-#define PRELIM_DRM_I915_PXP_REQ_SESSION_ID_INIT 0
-	/* Inform KMD that UMD has completed the initialization */
-#define PRELIM_DRM_I915_PXP_REQ_SESSION_IN_PLAY 1
-	/* Request KMD to terminate the session */
-#define PRELIM_DRM_I915_PXP_REQ_SESSION_TERMINATE 2
-} __attribute__((packed));
-
-/*
- * struct pxp_tee_io_message_params - Params to send/receive message to/from TEE.
- */
-struct prelim_drm_i915_pxp_tee_io_message_params {
-	__u64 msg_in; /* in - pointer to buffer containing input message */
-	__u32 msg_in_size; /* in - input message size */
-	__u64 msg_out; /* in - pointer to buffer to store the output message */
-	__u32 msg_out_buf_size; /* in -  provided output message buffer size */
-	__u32 msg_out_ret_size; /* out- output message actual size returned from TEE */
-} __attribute__((packed));
-
-/*
- * struct drm_i915_pxp_query_tag - Params to query the PXP tag of specified
- * session id and whether the session is alive from PXP state machine.
- */
-struct prelim_drm_i915_pxp_query_tag {
-	__u32 session_is_alive;
-
-	/*
-	 * in  - Session ID, out pxp tag.
-	 * Tag format:
-	 * bits   0-6: session id
-	 * bit      7: rsvd
-	 * bits  8-15: instance id
-	 * bit     16: session enabled
-	 * bit     17: mode hm
-	 * bit     18: rsvd
-	 * bit     19: mode sm
-	 * bits 20-31: rsvd
-	 */
-	__u32 pxp_tag;
-#define PRELIM_DRM_I915_PXP_TAG_SESSION_ID_MASK		(0x7f)
-#define PRELIM_DRM_I915_PXP_TAG_INSTANCE_ID_MASK	(0xff << 8)
-#define PRELIM_DRM_I915_PXP_TAG_SESSION_ENABLED		(0x1 << 16)
-#define PRELIM_DRM_I915_PXP_TAG_SESSION_HM		(0x1 << 17)
-#define PRELIM_DRM_I915_PXP_TAG_SESSION_SM		(0x1 << 19)
-} __attribute__((packed));
-
-/*
- * DRM_I915_PXP_OPS -
- *
- * PXP is an i915 componment, that helps user space to establish the hardware
- * protected session and manage the status of each alive software session,
- * as well as the life cycle of each session.
- *
- * This ioctl is to allow user space driver to create, set, and destroy each
- * session. It also provides the communication chanel to TEE (Trusted
- * Execution Environment) for the protected hardware session creation.
- */
-
-struct prelim_drm_i915_pxp_ops {
-	__u32 action; /* in - specified action of this operation */
-#define PRELIM_DRM_I915_PXP_ACTION_SET_SESSION_STATUS 0
-#define PRELIM_DRM_I915_PXP_ACTION_TEE_IO_MESSAGE 1
-#define PRELIM_DRM_I915_PXP_ACTION_QUERY_PXP_TAG 2
-
-	__u32 status; /* out - status output for this operation */
-#define PRELIM_DRM_I915_PXP_OP_STATUS_SUCCESS 0
-#define PRELIM_DRM_I915_PXP_OP_STATUS_RETRY_REQUIRED 1
-#define PRELIM_DRM_I915_PXP_OP_STATUS_SESSION_NOT_AVAILABLE 2
-#define PRELIM_DRM_I915_PXP_OP_STATUS_ERROR_UNKNOWN 3
-
-	__u64 params; /* in/out - pointer to data matching the action */
-} __attribute__((packed));
 
 #define PRELIM_PERF_VERSION	(1000)
 
@@ -547,8 +413,6 @@ struct prelim_drm_i915_query_item {
 #define PRELIM_DRM_I915_QUERY_CS_CYCLES		(PRELIM_DRM_I915_QUERY | 9)
 
 #define PRELIM_DRM_I915_QUERY_FABRIC_INFO	(PRELIM_DRM_I915_QUERY | 11)
-
-#define PRELIM_DRM_I915_QUERY_HW_IP_VERSION	(PRELIM_DRM_I915_QUERY | 12)
 
 #define PRELIM_DRM_I915_QUERY_ENGINE_INFO	(PRELIM_DRM_I915_QUERY | 13)
 #define PRELIM_DRM_I915_QUERY_L3_BANK_COUNT	(PRELIM_DRM_I915_QUERY | 14)
@@ -972,26 +836,6 @@ struct prelim_drm_i915_gem_context_param {
 #define PRELIM_I915_CONTEXT_PARAM_ACC		(PRELIM_I915_CONTEXT_PARAM | 0xd)
 };
 
-/*
- * I915_CONTEXT_PARAM_PROTECTED_CONTENT:
- *
- * Mark that the context makes use of protected content, which will result
- * in the context being invalidated when the protected content session is.
- * This flag can only be set at context creation time and, when set to true,
- * must be preceded by an explicit setting of I915_CONTEXT_PARAM_RECOVERABLE
- * to false. This flag can't be set to true in conjunction with setting the
- * I915_CONTEXT_PARAM_BANNABLE flag to false.
- *
- * Given the numerous restriction on this flag, there are several unique
- * failure cases:
- *
- * -ENODEV: feature not available
- * -EEXIST: trying to modify an existing context
- * -EPERM: trying to mark a recoverable or not bannable context as protected
- * -EACCES: submitting an invalidated context for execution
- */
-#define PRELIM_I915_CONTEXT_PARAM_PROTECTED_CONTENT (PRELIM_I915_CONTEXT_PARAM | 0xe)
-
 struct prelim_drm_i915_gem_context_create_ext {
 #define PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS		(1u << 31)
 #define PRELIM_I915_CONTEXT_CREATE_FLAGS_UNKNOWN \
@@ -1383,28 +1227,6 @@ struct prelim_drm_i915_query_cs_cycles {
 };
 
 /**
- * prelim_struct drm_i915_query_hw_ip_version
- *
- * Hardware IP version (i.e., architecture generation) associated with a
- * specific engine.
- */
-struct prelim_drm_i915_query_hw_ip_version {
-	/** Engine to query HW IP version for */
-	struct i915_engine_class_instance engine;
-
-	__u8 flags;	/* MBZ */
-
-	/** Architecture  version */
-	__u8 arch;
-
-	/** Architecture release id */
-	__u8 release;
-
-	/** Stepping (e.g., A0, A1, B0, etc.) */
-	__u8 stepping;
-};
-
-/**
  * struct prelim_drm_i915_query_fabric_info
  *
  * With the given fabric id, query fabric info wrt the device.
@@ -1455,7 +1277,6 @@ struct prelim_drm_i915_engine_info {
 #define I915_VIDEO_CLASS_CAPABILITY_HEVC		(1 << 0)
 #define I915_VIDEO_AND_ENHANCE_CLASS_CAPABILITY_SFC	(1 << 1)
 #define PRELIM_I915_VIDEO_CLASS_CAPABILITY_VDENC	(1ull << 63)
-#define I915_VIDEO_CLASS_CAPABILITY_VDENC		(1 << 2)
 #define PRELIM_I915_COPY_CLASS_CAP_BLOCK_COPY		(1ull << 63)
 	/*
 	 * The following are capabilties of the copy engines, while all engines
