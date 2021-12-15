@@ -388,7 +388,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenNoSubdeviceBitfieldWhenCreateStorageInfo
     EXPECT_EQ(memoryManager->createStorageInfoFromProperties(properties).getMemoryBanks(), emptyInfo.getMemoryBanks());
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationWithCpuAccessRequiredWhenCreatingStorageInfoThenSetCpuVisableSegmentIsRequiredAndIsLocakbleFlagIsEnabled) {
+TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationWithCpuAccessRequiredWhenCreatingStorageInfoThenSetCpuVisibleSegmentIsRequiredAndIsLockableFlagIsEnabled) {
     auto firstAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::UNKNOWN);
     auto lastAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::COUNT);
 
@@ -405,7 +405,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationWithCpuAccessRequiredW
     }
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationThatIsLockableWhenCreatingStorageInfoThenIsLocakbleFlagIsEnabled) {
+TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationThatIsLockableWhenCreatingStorageInfoThenIsLockableFlagIsEnabled) {
     auto firstAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::UNKNOWN);
     auto lastAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::COUNT);
 
