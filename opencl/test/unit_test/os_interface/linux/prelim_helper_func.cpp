@@ -9,6 +9,8 @@
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
+#include <sys/ioctl.h>
+
 int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal) {
     if (request == PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT) {
         auto createExtParams = static_cast<prelim_drm_i915_gem_create_ext *>(arg);

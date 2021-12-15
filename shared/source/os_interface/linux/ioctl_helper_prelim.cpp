@@ -14,6 +14,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <sys/ioctl.h>
 
 namespace NEO {
 
