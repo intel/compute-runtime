@@ -54,8 +54,6 @@ IncludeCategories:
     Priority:        1
   - Regex:           '^.(documentation|manifests|offline_compiler|opencl|scripts)/'
     Priority:        2
-  - Regex:           '^"test\.h"$'
-    Priority:        2
   - Regex:           '^.(level_zero)/'
     Priority:        3
   - Regex:           '(d3d9types|d3d10_1)\.h'
