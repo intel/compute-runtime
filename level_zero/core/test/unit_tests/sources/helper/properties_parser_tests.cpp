@@ -140,6 +140,45 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithSupportedExportHandlesWh
     EXPECT_TRUE(l0LookupTable.exportMemory);
 }
 
+TEST(L0StructuresLookupTableTests, givenL0StructuresWithSupportedCompressionHintsWhenPrepareLookupTableThenProperFieldsInLookupTableAreSet) {
+    {
+        ze_external_memory_import_win32_handle_t exportStruct = {};
+        exportStruct.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        exportStruct.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+
+        StructuresLookupTable l0LookupTable = {};
+        auto result = prepareL0StructuresLookupTable(l0LookupTable, &exportStruct);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_TRUE(l0LookupTable.compressedHint);
+        EXPECT_FALSE(l0LookupTable.uncompressedHint);
+    }
+
+    {
+        ze_external_memory_import_win32_handle_t exportStruct = {};
+        exportStruct.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        exportStruct.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED;
+
+        StructuresLookupTable l0LookupTable = {};
+        auto result = prepareL0StructuresLookupTable(l0LookupTable, &exportStruct);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_FALSE(l0LookupTable.compressedHint);
+        EXPECT_TRUE(l0LookupTable.uncompressedHint);
+    }
+
+    {
+        ze_external_memory_import_win32_handle_t exportStruct = {};
+        exportStruct.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        exportStruct.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED | ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED;
+
+        StructuresLookupTable l0LookupTable = {};
+        auto result = prepareL0StructuresLookupTable(l0LookupTable, &exportStruct);
+
+        EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION);
+    }
+}
+
 TEST(L0StructuresLookupTableTests, givenL0StructuresWithUnsupportedExportHandlesWhenPrepareLookupTableThenUnsuppoertedErrorIsReturned) {
     ze_external_memory_import_win32_handle_t exportStruct = {};
     exportStruct.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;

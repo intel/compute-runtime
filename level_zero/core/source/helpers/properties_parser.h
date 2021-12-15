@@ -51,22 +51,26 @@ inline NEO::ImageDescriptor convertDescriptor(const ze_image_desc_t &imageDesc) 
 }
 
 struct StructuresLookupTable {
-    bool exportMemory;
-    bool isSharedHandle;
+    struct ImageProperties {
+        NEO::ImageDescriptor imageDescriptor;
+        uint32_t planeIndex;
+        bool isPlanarExtension;
+    } imageProperties;
+
     struct SharedHandleType {
+        void *ntHnadle;
+        int fd;
         bool isSupportedHandle;
         bool isDMABUFHandle;
-        int fd;
         bool isNTHandle;
-        void *ntHnadle;
     } sharedHandleType;
+
     bool areImageProperties;
-    struct ImageProperties {
-        bool isPlanarExtension;
-        uint32_t planeIndex;
-        NEO::ImageDescriptor imageDescriptor;
-    } imageProperties;
+    bool exportMemory;
+    bool isSharedHandle;
     bool relaxedSizeAllowed;
+    bool compressedHint;
+    bool uncompressedHint;
 };
 
 inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupTable, const void *desc) {
@@ -115,6 +119,16 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
                 reinterpret_cast<const ze_external_memory_export_desc_t *>(extendedDesc);
             if (externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF || externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) {
                 lookupTable.exportMemory = true;
+            } else {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC) {
+            auto memoryCompressionHintsDesc = reinterpret_cast<const ze_memory_compression_hints_ext_desc_t *>(extendedDesc);
+
+            if (memoryCompressionHintsDesc->flags == ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED) {
+                lookupTable.compressedHint = true;
+            } else if (memoryCompressionHintsDesc->flags == ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED) {
+                lookupTable.uncompressedHint = true;
             } else {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
