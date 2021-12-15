@@ -91,11 +91,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         } else {
             NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::IMAGE, device->getNEODevice()->getDeviceBitfield());
 
-            auto &hwInfo = device->getHwInfo();
-            auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-            properties.flags.preferCompressed = l0HwHelper.imageCompressionSupported(hwInfo);
-            properties.flags.preferCompressed &= !imgInfo.linearStorage;
+            properties.flags.preferCompressed = isSuitableForCompression(lookupTable, imgInfo);
 
             allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         }
@@ -223,6 +219,18 @@ void ImageCoreFamily<gfxCoreFamily>::copyRedescribedSurfaceStateToSSH(void *surf
     auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
     memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
              &redescribedSurfaceState, sizeof(RENDER_SURFACE_STATE));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool ImageCoreFamily<gfxCoreFamily>::isSuitableForCompression(const StructuresLookupTable &structuresLookupTable, const NEO::ImageInfo &imgInfo) {
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (structuresLookupTable.uncompressedHint) {
+        return false;
+    }
+
+    return (l0HwHelper.imageCompressionSupported(hwInfo) && !imgInfo.linearStorage);
 }
 
 } // namespace L0
