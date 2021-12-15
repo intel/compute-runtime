@@ -236,8 +236,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     EXPECT_NE(initialAllocation, reallocatedAllocation);
 }
 
-using SklAndLaterMatcher = IsAtLeastProduct<IGFX_SKYLAKE>;
-HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferSizeDoesNotExceedEstimate, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferSizeDoesNotExceedEstimate, IsAtLeastSkl) {
     createKernel();
     ze_group_count_t groupCount{1, 1, 1};
 
@@ -539,7 +538,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAn
     EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelThenKernelIsExecutedOnImmediateCmdQ, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelThenKernelIsExecutedOnImmediateCmdQ, IsAtLeastSkl) {
     createKernel();
 
     const ze_command_queue_desc_t desc = {};
@@ -565,7 +564,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelWithInvalidEventThenInvalidArgumentErrorIsReturned, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelWithInvalidEventThenInvalidArgumentErrorIsReturned, IsAtLeastSkl) {
     createKernel();
 
     const ze_command_queue_desc_t desc = {};
@@ -591,7 +590,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelIndirectThenKernelIsExecutedOnImmediateCmdQ, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelIndirectThenKernelIsExecutedOnImmediateCmdQ, IsAtLeastSkl) {
     createKernel();
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
@@ -616,7 +615,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelIndirectWithInvalidEventThenInvalidArgumentErrorIsReturned, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelIndirectWithInvalidEventThenInvalidArgumentErrorIsReturned, IsAtLeastSkl) {
     createKernel();
 
     const ze_command_queue_desc_t desc = {};
@@ -1206,7 +1205,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidEventListWhenAppendLaunchCoo
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsAtLeastSkl) {
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -1259,7 +1258,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenRequiredStateAndFinalStateAreCorrectlySet, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenRequiredStateAndFinalStateAreCorrectlySet, IsAtLeastSkl) {
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -1283,7 +1282,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenR
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->finalStreamState.frontEndState.disableOverdispatch.value);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeKernelWhenAppendLaunchCooperativeKernelIsCalledThenCommandListTypeIsProperlySet, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeKernelWhenAppendLaunchCooperativeKernelIsCalledThenCommandListTypeIsProperlySet, IsAtLeastSkl) {
     createKernel();
     kernel->setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -1305,7 +1304,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeKernelWhenAppendLaunchC
     EXPECT_TRUE(pCommandList->containsCooperativeKernelsFlag);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllowedWhenAppendLaunchCooperativeKernelIsCalledThenCommandListTypeIsProperlySet, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllowedWhenAppendLaunchCooperativeKernelIsCalledThenCommandListTypeIsProperlySet, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
     createKernel();
@@ -1333,7 +1332,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllow
     EXPECT_TRUE(pCommandList->containsCooperativeKernelsFlag);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsAndAllowMixingWhenAppendLaunchCooperativeKernelIsCalledThenReturnSuccess, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsAndAllowMixingWhenAppendLaunchCooperativeKernelIsCalledThenReturnSuccess, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
     Mock<::L0::Kernel> kernel;

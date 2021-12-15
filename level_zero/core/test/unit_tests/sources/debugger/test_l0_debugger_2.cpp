@@ -381,8 +381,7 @@ HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledFor
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-using IsSklOrAbove = IsAtLeastProduct<IGFX_SKYLAKE>;
-HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, IsSklOrAbove) {
+HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -400,7 +399,7 @@ HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionEnabledComm
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, IsSklOrAbove) {
+HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
 
@@ -424,7 +423,7 @@ struct Deleter {
     }
 };
 
-HWTEST2_F(L0DebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsSklOrAbove) {
+HWTEST2_F(L0DebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsAtLeastSkl) {
     ze_command_queue_desc_t queueDesc = {};
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));

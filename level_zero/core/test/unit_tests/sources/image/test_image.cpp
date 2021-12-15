@@ -27,11 +27,10 @@
 namespace L0 {
 namespace ult {
 
-using ImageSupport = IsAtLeastProduct<IGFX_SKYLAKE>;
 using ImageCreate = Test<DeviceFixture>;
 using ImageView = Test<DeviceFixture>;
 
-HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreatedCorrectly, ImageSupport) {
+HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreatedCorrectly, IsAtLeastSkl) {
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     zeDesc.arraylevels = 1u;
@@ -73,7 +72,7 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreat
     EXPECT_EQ(imageInfo.useLocalMemory, false);
 }
 
-HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedImageThenNullPtrImageIsReturned, ImageSupport) {
+HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedImageThenNullPtrImageIsReturned, IsAtLeastSkl) {
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     zeDesc.arraylevels = 1u;
@@ -111,7 +110,7 @@ struct WhiteBox<::L0::ImageCoreFamily<T>> : public ::L0::ImageCoreFamily<T> {
     using BaseClass::surfaceState;
 };
 
-HWTEST2_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet, ImageSupport) {
+HWTEST2_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -145,7 +144,7 @@ HWTEST2_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrect
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
 }
 
-HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated, ImageSupport) {
+HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     const size_t width = 32;
     const size_t height = 32;
@@ -221,7 +220,7 @@ HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated
     zeImageDestroy(planeUV);
 }
 
-HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageWithInvalidStructViewThenProperErrorIsReturned, ImageSupport) {
+HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageWithInvalidStructViewThenProperErrorIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     const size_t width = 32;
     const size_t height = 32;
@@ -266,7 +265,7 @@ HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageWithInvalidStructViewThenPro
     ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, ret);
 }
 
-HWTEST2_F(ImageCreate, givenFDWhenCreatingImageThenSuccessIsReturned, ImageSupport) {
+HWTEST2_F(ImageCreate, givenFDWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -296,7 +295,7 @@ HWTEST2_F(ImageCreate, givenFDWhenCreatingImageThenSuccessIsReturned, ImageSuppo
     ASSERT_EQ(static_cast<int>(imageHW->getAllocation()->peekSharedHandle()), importFd.fd);
 }
 
-HWTEST2_F(ImageCreate, givenOpaqueFdWhenCreatingImageThenUnsuportedErrorIsReturned, ImageSupport) {
+HWTEST2_F(ImageCreate, givenOpaqueFdWhenCreatingImageThenUnsuportedErrorIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -325,7 +324,7 @@ HWTEST2_F(ImageCreate, givenOpaqueFdWhenCreatingImageThenUnsuportedErrorIsReturn
     ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, ret);
 }
 
-HWTEST2_F(ImageCreate, givenExportStructWhenCreatingImageThenUnsupportedErrorIsReturned, ImageSupport) {
+HWTEST2_F(ImageCreate, givenExportStructWhenCreatingImageThenUnsupportedErrorIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -369,7 +368,7 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
     }
 };
 
-HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingImageThenSuccessIsReturned, ImageSupport) {
+HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -423,7 +422,7 @@ class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
     }
 };
 
-HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsReturned, ImageSupport) {
+HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
 
@@ -465,7 +464,7 @@ HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsRet
     delete device;
 }
 
-HWTEST2_F(ImageCreate, givenMediaBlockOptionWhenCopySurfaceStateThenSurfaceStateIsSet, ImageSupport) {
+HWTEST2_F(ImageCreate, givenMediaBlockOptionWhenCopySurfaceStateThenSurfaceStateIsSet, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -496,7 +495,7 @@ HWTEST2_F(ImageCreate, givenMediaBlockOptionWhenCopySurfaceStateThenSurfaceState
     EXPECT_EQ(surfaceState->getWidth(), (static_cast<uint32_t>(imageHW->getImageInfo().surfaceFormat->ImageElementSizeInBytes) * static_cast<uint32_t>(imageHW->getImageInfo().imgDesc.imageWidth)) / sizeof(uint32_t));
 }
 
-HWTEST2_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThenValidImageIsCreated, ImageSupport) {
+HWTEST2_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThenValidImageIsCreated, IsAtLeastSkl) {
     auto params = GetParam();
 
     ze_image_desc_t zeDesc = {};
@@ -793,7 +792,7 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
 
 using ImageGetMemoryProperties = Test<DeviceFixture>;
 
-HWTEST2_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGetMemroyPropertiesThenProperDataAreSet, ImageSupport) {
+HWTEST2_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGetMemroyPropertiesThenProperDataAreSet, IsAtLeastSkl) {
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     zeDesc.arraylevels = 1u;
@@ -829,7 +828,7 @@ HWTEST2_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGe
     EXPECT_EQ(imageInfo.rowPitch, imageMemoryPropertiesExp.rowPitch);
 }
 
-HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnableCompression, ImageSupport) {
+HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnableCompression, IsAtLeastSkl) {
     DebugManagerStateRestore restore;
 
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = true;
@@ -886,7 +885,7 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
     }
 }
 
-HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingLinearImageThenDontEnableCompression, ImageSupport) {
+HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingLinearImageThenDontEnableCompression, IsAtLeastSkl) {
     DebugManagerStateRestore restore;
 
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = true;

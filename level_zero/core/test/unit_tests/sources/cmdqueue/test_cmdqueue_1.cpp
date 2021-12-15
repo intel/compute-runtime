@@ -473,10 +473,8 @@ HWTEST2_F(CommandQueueProgramSBATest,
     commandQueue->destroy();
 }
 
-using BindlessCommandQueueSBASupport = IsAtLeastProduct<IGFX_SKYLAKE>;
-
 HWTEST2_F(CommandQueueProgramSBATest,
-          givenBindlessModeEnabledWhenProgrammingStateBaseAddressThenBindlessBaseAddressAndSizeAreSet, BindlessCommandQueueSBASupport) {
+          givenBindlessModeEnabledWhenProgrammingStateBaseAddressThenBindlessBaseAddressAndSizeAreSet, IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
@@ -601,7 +599,6 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
     commandQueue->destroy();
 }
 
-using CommandQueueDestroySupport = IsAtLeastProduct<IGFX_SKYLAKE>;
 using CommandQueueDestroy = Test<DeviceFixture>;
 
 template <bool multiTile>
@@ -960,9 +957,8 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
 };
 
 using CommandQueueExecuteTest = Test<DeviceFixture>;
-using CommandQueueExecuteTestSupport = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchWhenExecuteThenSshWasUsed, CommandQueueExecuteTestSupport) {
+HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchWhenExecuteThenSshWasUsed, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -988,7 +984,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     alignedFree(alloc);
 }
 
-HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEnabledThenHeapContainerIsEmpty, CommandQueueExecuteTestSupport) {
+HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEnabledThenHeapContainerIsEmpty, IsAtLeastSkl) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -1011,7 +1007,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEn
 }
 
 using ExecuteCommandListTests = Test<ContextFixture>;
-HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenContainersAreEmpty, CommandQueueExecuteTestSupport) {
+HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenContainersAreEmpty, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -1039,7 +1035,7 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     alignedFree(alloc);
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSDirtyFlagAndGSBADirtyFlagAreSetOnlyOnce, CommandQueueExecuteTestSupport) {
+HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSDirtyFlagAndGSBADirtyFlagAreSetOnlyOnce, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);

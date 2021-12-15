@@ -1521,9 +1521,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendingBarrierWithIncorrectWai
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
-
-HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, Platforms) {
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -1561,7 +1559,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, contextOffset));
 }
 
-HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, Platforms) {
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -1596,7 +1594,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCop
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, contextOffset));
 }
 
-HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothingAddedToStream, Platforms) {
+HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothingAddedToStream, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();

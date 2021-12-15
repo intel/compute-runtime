@@ -1808,10 +1808,9 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
-using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillWithoutSettingEnableCrossDeviceAccessThenInvalidArgumentIsReturned,
-          Platforms) {
+          IsAtLeastSkl) {
     DebugManager.flags.EnableCrossDeviceAccess.set(false);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -1839,7 +1838,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingSameDeviceThenSuccessIsReturned,
-          Platforms) {
+          IsAtLeastSkl) {
     DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
 
@@ -1866,7 +1865,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned,
-          Platforms) {
+          IsAtLeastSkl) {
     DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -1894,7 +1893,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingDevice0ThenSuccessIsReturned,
-          Platforms) {
+          IsAtLeastSkl) {
     DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -1922,7 +1921,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenHostPointerAllocationPassedToAppendBlitFillUsingDevice0ThenInvalidArgumentIsReturned,
-          Platforms) {
+          IsAtLeastSkl) {
     DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
 
@@ -1941,7 +1940,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationWithoutSettingEnableCrossDeviceAccessThenPeerAllocNotFoundReturnsTrue,
-          Platforms) {
+          IsAtLeastSkl) {
     DebugManager.flags.EnableCrossDeviceAccess.set(false);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -1968,7 +1967,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned,
-          Platforms) {
+          IsAtLeastSkl) {
     DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -1995,7 +1994,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
-          Platforms) {
+          IsAtLeastSkl) {
     DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];

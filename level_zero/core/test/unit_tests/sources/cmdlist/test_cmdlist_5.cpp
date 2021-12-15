@@ -139,9 +139,8 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
 };
 
 using AppendQueryKernelTimestamps = CommandListCreate;
-using TestPlatforms = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenProperBuiltinWasAdded, TestPlatforms) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenProperBuiltinWasAdded, IsAtLeastSkl) {
     std::unique_ptr<MockDeviceForSpv<false, false>> testDevice = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
     testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::QueryKernelTimestamps);
@@ -200,7 +199,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     context->freeMem(alloc);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenProperBuiltinWasAdded, TestPlatforms) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenProperBuiltinWasAdded, IsAtLeastSkl) {
     std::unique_ptr<MockDeviceForSpv<false, false>> testDevice = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
     testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::QueryKernelTimestamps);
@@ -264,7 +263,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     context->freeMem(offsetAlloc);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet, TestPlatforms) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet, IsAtLeastSkl) {
     std::unique_ptr<MockDeviceForSpv<false, false>> testDevice = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
     testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::QueryKernelTimestamps);
@@ -314,7 +313,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     context->freeMem(alloc);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSuggestGroupSizeThenUnknownResultReturned, TestPlatforms) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSuggestGroupSizeThenUnknownResultReturned, IsAtLeastSkl) {
     class MockQueryKernelTimestampsKernel : public L0::KernelImp {
       public:
         ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
@@ -392,7 +391,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     context->freeMem(alloc);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSetGroupSizeThenUnknownResultReturned, TestPlatforms) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSetGroupSizeThenUnknownResultReturned, IsAtLeastSkl) {
     class MockQueryKernelTimestampsKernel : public L0::KernelImp {
       public:
         ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
@@ -477,7 +476,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     context->freeMem(alloc);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAllEventData, TestPlatforms) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAllEventData, IsAtLeastSkl) {
     class MockQueryKernelTimestampsKernel : public L0::KernelImp {
       public:
         MockQueryKernelTimestampsKernel(L0::Module *module) : KernelImp(module) {
@@ -795,7 +794,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
 }
 
-HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingCommandListThenExpectAllFlagsSetToDefault, TestPlatforms) {
+HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingCommandListThenExpectAllFlagsSetToDefault, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
@@ -822,7 +821,7 @@ HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingComma
     EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
 }
 
-HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectValueIsReturned, TestPlatforms) {
+HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectValueIsReturned, IsAtLeastSkl) {
     for (auto testValue : ::testing::Bool()) {
         MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
         commandList.initialize(device, NEO::EngineGroupType::Compute, 0u);

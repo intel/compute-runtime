@@ -21,11 +21,9 @@
 namespace L0 {
 namespace ult {
 
-using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
-
 using CommandListCreate = Test<DeviceFixture>;
 
-HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, Platforms) {
+HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
@@ -59,7 +57,7 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimest
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenPipeControlWithTimestampWriteEncoded, Platforms) {
+HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenPipeControlWithTimestampWriteEncoded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
@@ -86,7 +84,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP, cmd->getPostSyncOperation());
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer, Platforms) {
+HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer, IsAtLeastSkl) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     uint64_t timestampAddress = 0x123456785500;
@@ -101,7 +99,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     EXPECT_TRUE(addressIsInContainer);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimestampThenReturnsSuccess, Platforms) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimestampThenReturnsSuccess, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -151,7 +149,7 @@ HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenLeftMiddleAndRig
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListCreate, whenCommandListIsCreatedThenFlagsAreCorrectlySet, Platforms) {
+HWTEST2_F(CommandListCreate, whenCommandListIsCreatedThenFlagsAreCorrectlySet, IsAtLeastSkl) {
     ze_command_list_flags_t flags[] = {0b0, 0b1, 0b10, 0b11};
 
     ze_result_t returnValue;
@@ -220,7 +218,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModeTraitsSetToFalsePropert
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, Platforms) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
 
     Mock<::L0::Kernel> kernel;
@@ -245,7 +243,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertes
 using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
-          Platforms) {
+          IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -262,7 +260,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
 
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenImportedHostPointerAndCopyEngineWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
-          Platforms) {
+          IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
 
@@ -279,7 +277,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
 
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenHostPointerImportedWhenGettingAlignedAllocationThenRetrieveProperOffsetAndAddress,
-          Platforms) {
+          IsAtLeastSkl) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -319,7 +317,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
 
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenHostPointerImportedWhenGettingPointerFromAnotherPageThenRetrieveBaseAddressAndProperOffset,
-          Platforms) {
+          IsAtLeastSkl) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -344,7 +342,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, Platforms) {
+HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -437,7 +435,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
     EXPECT_EQ(cmdList.end(), itor);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, Platforms) {
+HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, IsAtLeastSkl) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
@@ -512,7 +510,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
     EXPECT_EQ(cmdList.end(), itor);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenSuccessIsReturned, Platforms) {
+HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenSuccessIsReturned, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -556,7 +554,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, Platforms) {
+HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -654,7 +652,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPointerWhenFindIsCalledThenRegisterHappens, Platforms) {
+HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPointerWhenFindIsCalledThenRegisterHappens, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceHostPointerImport.set(1);
     void *testPtr = heapPointer;

@@ -158,9 +158,8 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
 }
 
 using SLDebuggerInternalUsageTest = Test<ActiveDebuggerFixture>;
-using IsSklOrAbove = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsSklOrAbove) {
+HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsAtLeastSkl) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using STATE_SIP = typename FamilyType::STATE_SIP;
     ze_command_queue_desc_t queueDesc = {};

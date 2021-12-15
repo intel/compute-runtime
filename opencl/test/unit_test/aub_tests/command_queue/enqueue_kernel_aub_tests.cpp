@@ -868,8 +868,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     expectMemory<FamilyType>(remainderBufferGpuAddress, this->expectedRemainderMemory, sizeRemainderMemory);
 }
 
-using IsSklAndLater = IsAtLeastProduct<IGFX_SKYLAKE>;
-
 struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
                            public ::testing::Test {
 
@@ -885,7 +883,7 @@ struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
     DebugManagerStateRestore restorer;
 };
 
-HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsSklAndLater) {
+HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsAtLeastSkl) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
     simulatedCsr->initializeEngine();
@@ -963,7 +961,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenRes
                              bufferDataSrc, bufferSize);
 }
 
-HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate, IsSklAndLater) {
+HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate, IsAtLeastSkl) {
     constexpr unsigned int testWidth = 5;
     constexpr unsigned int testHeight = 1;
     constexpr unsigned int testDepth = 1;

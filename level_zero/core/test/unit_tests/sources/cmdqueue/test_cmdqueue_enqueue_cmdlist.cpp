@@ -384,8 +384,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
     }
 }
 
-using IsSklOrAbove = IsAtLeastProduct<IGFX_SKYLAKE>;
-HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAreExecutedTwoTimesThenStateSipIsAddedOnlyTheFirstTime, IsSklOrAbove) {
+HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAreExecutedTwoTimesThenStateSipIsAddedOnlyTheFirstTime, IsAtLeastSkl) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using PARSE = typename FamilyType::PARSE;
 
@@ -457,7 +456,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
     }
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNonCooperativeKernelsWhenExecuteCommandListsIsCalledThenErrorIsReturned, IsSklOrAbove) {
+HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNonCooperativeKernelsWhenExecuteCommandListsIsCalledThenErrorIsReturned, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -714,11 +713,11 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenExecutingThenQueuePreemptionIsSwitchedAndStateSipProgrammedOnce, IsSklOrAbove) {
+HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenExecutingThenQueuePreemptionIsSwitchedAndStateSipProgrammedOnce, IsAtLeastSkl) {
     twoCommandListCommandPreemptionTest<FamilyType>(false);
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenNoCmdStreamPreemptionRequiredThenNoCmdStreamProgrammingAndStateSipProgrammedOnce, IsSklOrAbove) {
+HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenNoCmdStreamPreemptionRequiredThenNoCmdStreamProgrammingAndStateSipProgrammedOnce, IsAtLeastSkl) {
     twoCommandListCommandPreemptionTest<FamilyType>(true);
 }
 

@@ -798,9 +798,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeorWhenD
 
 using EncodeDispatchKernelTest = Test<CommandEncodeStatesFixture>;
 
-using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
-
-HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenSshFromContainerIsUsed, Platforms) {
+HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER = typename FamilyType::WALKER_TYPE;
@@ -831,7 +829,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
     EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenThenSshFromContainerIsNotUsed, Platforms) {
+HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenThenSshFromContainerIsNotUsed, IsAtLeastSkl) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER = typename FamilyType::WALKER_TYPE;

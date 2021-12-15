@@ -100,8 +100,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
     ASSERT_TRUE(postSyncFound);
 }
 
-using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
-HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenPipeControlForTimestampAndSignalEncoded, Platforms) {
+HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenPipeControlForTimestampAndSignalEncoded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->commandContainer;
@@ -143,7 +142,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTim
     EXPECT_FALSE(cmd->getDcFlushEnable());
 }
 
-HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeControlAppendedCorrectly, Platforms) {
+HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeControlAppendedCorrectly, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;

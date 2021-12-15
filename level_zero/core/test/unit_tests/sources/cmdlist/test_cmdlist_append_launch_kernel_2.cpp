@@ -1078,8 +1078,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
 }
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
-using SklAndLaterMatcher = IsAtLeastProduct<IGFX_SKYLAKE>;
-HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsWhenAppendLaunchCooperativeKernelIsCalledThenReturnError, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsWhenAppendLaunchCooperativeKernelIsCalledThenReturnError, IsAtLeastSkl) {
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();

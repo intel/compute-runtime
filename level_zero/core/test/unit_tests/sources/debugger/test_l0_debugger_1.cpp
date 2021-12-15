@@ -479,8 +479,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenDebugS
     EXPECT_EQ(actualMocs, mocsNoCache);
 }
 
-using IsSklOrAbove = IsAtLeastProduct<IGFX_SKYLAKE>;
-HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, IsSklOrAbove) {
+HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, IsAtLeastSkl) {
     ze_command_queue_desc_t queueDesc = {};
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
@@ -771,7 +770,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForRegularC
     commandQueue->destroy();
 }
 
-HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsSklOrAbove) {
+HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -794,7 +793,7 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandList
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsSklOrAbove) {
+HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
 

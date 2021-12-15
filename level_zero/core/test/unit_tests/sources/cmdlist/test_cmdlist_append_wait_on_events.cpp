@@ -240,8 +240,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnTimestampEventWithThre
     ASSERT_EQ(9u, semaphoreWaitsFound);
 }
 
-using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
-HWTEST2_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithWaitOnEventsThenSemaphoreWaitAndPipeControlForTimestampEncoded, Platforms) {
+HWTEST2_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithWaitOnEventsThenSemaphoreWaitAndPipeControlForTimestampEncoded, IsAtLeastSkl) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;

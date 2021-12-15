@@ -119,8 +119,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenEve
     }
 }
 
-using SklAndLaterMatcher = IsAtLeastProduct<IGFX_SKYLAKE>;
-HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenCommandsAreExecuted, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenCommandsAreExecuted, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -137,7 +136,7 @@ HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventRe
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeControlAppendedCorrectly, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeControlAppendedCorrectly, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -183,7 +182,7 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
     ASSERT_EQ(EventPacketsCount::eventPackets, postSyncFound);
 }
 
-HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPipeControlWithDcFlushAppended, SklAndLaterMatcher) {
+HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPipeControlWithDcFlushAppended, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;

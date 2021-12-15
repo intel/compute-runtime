@@ -54,3 +54,5 @@ using IsXEHP = IsProduct<IGFX_XE_HP_SDV>;
 using IsDG2 = IsProduct<IGFX_DG2>;
 
 using IsPVC = IsProduct<IGFX_PVC>;
+
+using IsAtLeastSkl = IsAtLeastProduct<IGFX_SKYLAKE>;

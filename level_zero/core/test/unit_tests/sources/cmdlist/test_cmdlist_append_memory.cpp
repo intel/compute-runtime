@@ -17,8 +17,6 @@ namespace ult {
 
 using AppendMemoryCopy = Test<DeviceFixture>;
 
-using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
-
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockAppendMemoryCopy : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
   public:
@@ -83,7 +81,7 @@ class MockAppendMemoryCopy : public WhiteBox<::L0::CommandListCoreFamily<gfxCore
     size_t dstBlitCopyRegionOffset = 0;
 };
 
-HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenTwoNewAllocationAreAddedToHostMapPtr, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenTwoNewAllocationAreAddedToHostMapPtr, IsAtLeastSkl) {
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -94,7 +92,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionC
     EXPECT_EQ(cmdList.hostPtrMap.size(), 2u);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCopyRegion2DCalledThenSrcDstPointersArePageAligned, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCopyRegion2DCalledThenSrcDstPointersArePageAligned, IsAtLeastSkl) {
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -107,7 +105,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCo
     EXPECT_TRUE(cmdList.dstAlignedPtr == (cmdList.dstAlignedPtr & sshAlignmentMask));
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCopyRegion3DCalledThenSrcDstPointersArePageAligned, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCopyRegion3DCalledThenSrcDstPointersArePageAligned, IsAtLeastSkl) {
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -120,7 +118,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenMemoryCo
     EXPECT_TRUE(cmdList.dstAlignedPtr == (cmdList.dstAlignedPtr & sshAlignmentMask));
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion2DCalledThenSrcDstNotZeroOffsetsArePassed, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion2DCalledThenSrcDstNotZeroOffsetsArePassed, IsAtLeastSkl) {
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1233);
@@ -132,7 +130,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemo
     EXPECT_GT(cmdList.dstBlitCopyRegionOffset, 0u);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion3DCalledThenSrcDstNotZeroOffsetsArePassed, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion3DCalledThenSrcDstNotZeroOffsetsArePassed, IsAtLeastSkl) {
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1233);
@@ -144,7 +142,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndUnalignedHostPointersWhenBlitMemo
     EXPECT_GT(cmdList.dstBlitCopyRegionOffset, 0u);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCommandListAndAlignedHostPointersWhenBlitMemoryCopyRegion3DCalledThenSrcDstZeroOffsetsArePassed, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndAlignedHostPointersWhenBlitMemoryCopyRegion3DCalledThenSrcDstZeroOffsetsArePassed, IsAtLeastSkl) {
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     void *srcPtr = alignDown(reinterpret_cast<void *>(0x1233), NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
@@ -156,7 +154,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndAlignedHostPointersWhenBlitMemory
     EXPECT_EQ(cmdList.dstBlitCopyRegionOffset, 0u);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAdded, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;
@@ -181,7 +179,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionC
     EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
 }
 
-HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsAtLeastSkl) {
     Mock<CommandQueue> cmdQueue;
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -203,7 +201,7 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThen
     commandList->cmdQImmediate = nullptr;
 }
 
-HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyWithInvalidEventThenInvalidArgumentErrorIsReturned, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyWithInvalidEventThenInvalidArgumentErrorIsReturned, IsAtLeastSkl) {
     Mock<CommandQueue> cmdQueue;
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -222,7 +220,7 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyWith
     commandList->cmdQImmediate = nullptr;
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;
@@ -245,7 +243,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledT
     EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, Platforms) {
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
