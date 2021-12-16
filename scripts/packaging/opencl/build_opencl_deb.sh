@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -87,9 +87,9 @@ fi
 cat << EOF | tee $BUILD_DIR/CMakeLists.txt
 cmake_minimum_required (VERSION 3.2 FATAL_ERROR)
 
-project(igdrcl)
+project(neo)
 
-add_subdirectory($REPO_DIR opencl)
+add_subdirectory($REPO_DIR neo)
 EOF
 
 (

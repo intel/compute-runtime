@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -92,9 +92,9 @@ perl -pi -e "s/^ver = .*/ver = $NEO_L0_VERSION_PATCH/" $BUILD_DIR/debian/rules
 cat << EOF | tee $BUILD_DIR/CMakeLists.txt
 cmake_minimum_required (VERSION 3.2 FATAL_ERROR)
 
-project(l0_gpu_driver)
+project(neo)
 
-add_subdirectory($REPO_DIR l0_gpu_driver)
+add_subdirectory($REPO_DIR neo)
 EOF
 
 (
