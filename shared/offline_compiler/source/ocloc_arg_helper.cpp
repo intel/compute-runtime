@@ -346,6 +346,10 @@ unsigned int OclocArgHelper::returnIGFXforGen(const std::string &device) {
     return it->second;
 }
 
+bool OclocArgHelper::areQuotesRequired(const std::string_view &argName) {
+    return argName == "-options" || argName == "-internal_options";
+}
+
 PRODUCT_CONFIG OclocArgHelper::findConfigMatch(const std::string &device, bool firstAppearance) {
     auto numeration = getMajorMinorRevision(device);
     if (numeration.empty()) {

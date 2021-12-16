@@ -147,4 +147,5 @@ class OclocArgHelper {
     std::string returnProductNameForDevice(unsigned short deviceId);
     bool isGen(const std::string &device);
     unsigned int returnIGFXforGen(const std::string &device);
+    bool areQuotesRequired(const std::string_view &argName);
 };

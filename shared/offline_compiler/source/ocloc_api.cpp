@@ -64,8 +64,17 @@ Examples:
 extern "C" {
 void printOclocCmdLine(unsigned int numArgs, const char *argv[], std::unique_ptr<OclocArgHelper> &helper) {
     printf("Command was:");
-    for (auto i = 0u; i < numArgs; ++i)
-        printf(" %s", argv[i]);
+    bool useQuotes = false;
+    for (auto i = 0u; i < numArgs; ++i) {
+        const char *currArg = argv[i];
+        if (useQuotes) {
+            printf(" \"%s\"", currArg);
+            useQuotes = false;
+        } else {
+            printf(" %s", currArg);
+            useQuotes = helper->areQuotesRequired(currArg);
+        }
+    }
     printf("\n");
 }
 

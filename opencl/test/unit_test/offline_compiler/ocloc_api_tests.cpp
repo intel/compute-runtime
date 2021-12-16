@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 #include "hw_cmds.h"
 
+#include <algorithm>
 #include <string>
 
 extern Environment *gEnvironment;
@@ -179,6 +180,58 @@ TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
 
     EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::INVALID_FILE);
     EXPECT_NE(std::string::npos, output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s + argv[5]));
+}
+
+TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenBothAreInQuotes) {
+    const char *argv[] = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/IDoNotExist.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options", "-D DEBUG -cl-kernel-arg-info", "-internal_options", "-internalOption1 -internal-option-2"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s +
+                            gEnvironment->devicePrefix.c_str() +
+                            " -options \"-D DEBUG -cl-kernel-arg-info\" -internal_options \"-internalOption1 -internal-option-2\"") != std::string::npos);
+
+    size_t quotesCount = std::count(output.begin(), output.end(), '\"');
+    EXPECT_EQ(quotesCount, 4u);
+}
+
+TEST(OfflineCompilerTest, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotesAreCorrect) {
+    const char *argv[] = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/IDoNotExist.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options", "-options", "-internal_options", "-internalOption"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s +
+                            gEnvironment->devicePrefix.c_str() +
+                            " -options \"-options\" -internal_options \"-internalOption\"") != std::string::npos);
+
+    size_t quotesCount = std::count(output.begin(), output.end(), '\"');
+    EXPECT_EQ(quotesCount, 4u);
 }
 
 TEST(OclocApiTests, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPackedAsElf) {
