@@ -186,6 +186,7 @@ function(neo_gen_kernels platform_name_with_type platform_name revision_id suffi
     get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
     get_filename_component(workdir ${filepath} DIRECTORY)
+    get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
@@ -197,7 +198,7 @@ function(neo_gen_kernels platform_name_with_type platform_name revision_id suffi
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir}
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -226,6 +227,7 @@ function(neo_gen_kernels_with_options platform_name_with_type platform_name revi
     get_filename_component(filename ${filearg} NAME)
     get_filename_component(basename ${filearg} NAME_WE)
     get_filename_component(base_workdir ${filearg} DIRECTORY)
+    get_filename_component(absolute_filepath ${filearg} ABSOLUTE)
 
     set(outputdir "${TargetDir}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
     set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
@@ -243,7 +245,7 @@ function(neo_gen_kernels_with_options platform_name_with_type platform_name revi
 
         add_custom_command(
                            OUTPUT ${output_files}
-                           COMMAND ${ocloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id} -options ${arg} -options_name
+                           COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id} -options ${arg} -options_name
                            WORKING_DIRECTORY ${workdir}
                            DEPENDS ${filearg} ocloc
         )
@@ -273,6 +275,7 @@ function(neo_gen_kernels_with_internal_options platform_name_with_type platform_
   get_filename_component(filename ${filearg} NAME)
   get_filename_component(basename ${filearg} NAME_WE)
   get_filename_component(base_workdir ${filearg} DIRECTORY)
+  get_filename_component(absolute_filepath ${filearg} ABSOLUTE)
 
   set(outputdir "${TargetDir}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
@@ -295,7 +298,7 @@ function(neo_gen_kernels_with_internal_options platform_name_with_type platform_
 
     add_custom_command(
                        OUTPUT ${output_files}
-                       COMMAND ${ocloc_cmd_prefix} -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
+                       COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
                        WORKING_DIRECTORY ${workdir}
                        DEPENDS ${filearg} ocloc
     )
@@ -324,6 +327,7 @@ function(neo_gen_kernel_with_kernel_debug_options platform_name_with_type platfo
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
   get_filename_component(base_workdir ${filepath} DIRECTORY)
+  get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
   set(outputdir "${TargetDir}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
@@ -339,9 +343,10 @@ function(neo_gen_kernel_with_kernel_debug_options platform_name_with_type platfo
         ${outputpath_base}.gen
         ${outputpath_base}.dbg
     )
+
     add_custom_command(
                        OUTPUT ${output_files}
-                       COMMAND ${ocloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
+                       COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
                        WORKING_DIRECTORY ${workdir}
                        DEPENDS ${filepath} ocloc
     )
@@ -364,6 +369,7 @@ endfunction()
 function(neo_gen_kernel_from_ll platform_name_with_type platform_name suffix filepath output_name compile_options)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
+  get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
   set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
@@ -377,7 +383,7 @@ function(neo_gen_kernel_from_ll platform_name_with_type platform_name suffix fil
 
          add_custom_command(
                      OUTPUT ${output_files}
-                     COMMAND ${ocloc_cmd_prefix} -q -file ${filename} -output ${output_name} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
+                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -output ${output_name} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
                      WORKING_DIRECTORY ${workdir}
                      DEPENDS ${filepath} ocloc
   )

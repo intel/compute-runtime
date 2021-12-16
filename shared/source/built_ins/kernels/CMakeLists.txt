@@ -58,16 +58,16 @@ function(compile_builtin core_type platform_type builtin bits builtin_options mo
   set(FILENAME ${builtin})
   # get name of the file w/o extension
   get_filename_component(BASENAME ${builtin} NAME_WE)
+  get_filename_component(absolute_filepath ${builtin} ABSOLUTE)
 
   set(OUTPUT_FILE_SPV
       ${OUTPUTDIR}/${mode}_${BASENAME}_${family_name_with_type}.spv
   )
-
   list(APPEND __ocloc__options__ "-cl-kernel-arg-info")
   set(INTERNAL_OPTIONS "${${mode}_OPTIONS}")
   add_custom_command(
                      OUTPUT ${OUTPUT_FILE_SPV}
-                     COMMAND ${ocloc_cmd_prefix} -q -file ${FILENAME} -spv_only -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -spv_only -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${builtin} ocloc copy_compiler_files
   )
@@ -81,9 +81,10 @@ function(compile_builtin core_type platform_type builtin bits builtin_options mo
           ${BINARY_OUTPUT}.gen
           ${BINARY_OUTPUT}.bin
       )
+      get_filename_component(absolute_filepath_spv ${OUTPUT_FILE_SPV} ABSOLUTE)
       add_custom_command(
                          OUTPUT ${OUTPUT_FILES_BINARIES}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${OUTPUT_FILE_SPV} -spirv_input -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
       )
@@ -123,10 +124,11 @@ function(generate_cpp_spirv builtin)
   get_filename_component(BASENAME ${builtin} NAME_WE)
   get_filename_component(DIR ${builtin} DIRECTORY)
 
+  set(INPUT_FILENAME ${builtin}.builtin_kernel)
+  get_filename_component(absolute_filepath ${INPUT_FILENAME} ABSOLUTE)
+
   set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/spirv/${DIR}")
   string(REPLACE "//" "/" OUTPUTDIR ${OUTPUTDIR})
-
-  set(INPUT_FILENAME ${builtin}.builtin_kernel)
 
   set(GENERATED_SPV_INPUT ${OUTPUTDIR}/${BASENAME}.spv)
   set(OUTPUT_FILE_CPP
@@ -135,7 +137,7 @@ function(generate_cpp_spirv builtin)
   if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
     add_custom_command(
                        OUTPUT ${GENERATED_SPV_INPUT}
-                       COMMAND ${ocloc_cmd_prefix} -q -spv_only -file ${INPUT_FILENAME} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
+                       COMMAND ${ocloc_cmd_prefix} -q -spv_only -file ${absolute_filepath} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files
     )

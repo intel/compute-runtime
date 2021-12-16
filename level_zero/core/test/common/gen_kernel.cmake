@@ -14,6 +14,7 @@ function(level_zero_generate_kernels target_list platform_name suffix options)
     get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
     get_filename_component(workdir ${filepath} DIRECTORY)
+    get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
@@ -25,9 +26,9 @@ function(level_zero_generate_kernels target_list platform_name suffix options)
       )
 
       add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -60,6 +61,7 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
     get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
     get_filename_component(workdir ${filepath} DIRECTORY)
+    get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
     set(outputpath_base "${outputdir}${prefix}_${basename}_${suffix}")
 
@@ -76,9 +78,9 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
              string(CONCAT internal_options \" ${internal_options} \" )
 
              add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options} , workdir is ${workdir}
+                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options} , workdir is ${workdir}
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options}
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )

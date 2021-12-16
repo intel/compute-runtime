@@ -14,6 +14,7 @@ function(compile_kernels_gen platform_name_with_type revision_id platform_name s
     get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
     get_filename_component(workdir ${filepath} DIRECTORY)
+    get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
 
@@ -26,7 +27,7 @@ function(compile_kernels_gen platform_name_with_type revision_id platform_name s
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )
