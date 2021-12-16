@@ -11,6 +11,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 namespace L0 {
+struct StructuresLookupTable;
 
 struct ContextImp : Context {
     ContextImp(DriverHandle *driverHandle);
@@ -121,6 +122,8 @@ struct ContextImp : Context {
     bool isDeviceDefinedForThisContext(Device *inDevice);
 
   protected:
+    bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
+
     std::map<ze_device_handle_t, Device *> devices;
     DriverHandleImp *driverHandle = nullptr;
 };

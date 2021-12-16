@@ -97,4 +97,18 @@ bool L0HwHelperHw<GfxFamily>::imageCompressionSupported(const NEO::HardwareInfo 
 
     return false;
 }
+
+template <typename GfxFamily>
+bool L0HwHelperHw<GfxFamily>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
+    if (NEO::DebugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
+        return !!NEO::DebugManager.flags.RenderCompressedBuffersEnabled.get();
+    }
+
+    return false;
+}
+
+template <typename GfxFamily>
+bool L0HwHelperHw<GfxFamily>::forceDefaultUsmCompressionSupport() const {
+    return false;
+}
 } // namespace L0

@@ -19,6 +19,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
@@ -31,6 +32,152 @@ namespace L0 {
 namespace ult {
 
 using MemoryTest = Test<DeviceFixture>;
+
+struct CompressionMemoryTest : public MemoryTest {
+    GraphicsAllocation *allocDeviceMem(size_t size) {
+        ptr = nullptr;
+        ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                     &deviceDesc,
+                                                     size, 4096, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+
+        NEO::SvmAllocationData *allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+        EXPECT_NE(nullptr, allocData);
+        auto allocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        EXPECT_NE(nullptr, allocation);
+
+        return allocation;
+    }
+
+    DebugManagerStateRestore restore;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = nullptr;
+};
+
+HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressionIfPossible, IsAtLeastSkl) {
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelperHw<FamilyType>::get();
+    auto &hwHelper = NEO::HwHelperHw<FamilyType>::get();
+
+    // Default path
+    {
+        auto allocation = allocDeviceMem(2048);
+
+        auto supportedByDefault = l0HwHelper.usmCompressionSupported(hwInfo) && l0HwHelper.forceDefaultUsmCompressionSupport();
+
+        EXPECT_EQ(supportedByDefault, allocation->isCompressionEnabled());
+
+        context->freeMem(ptr);
+    }
+
+    // Compressed hint
+    {
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+
+        ze_external_memory_import_win32_handle_t compressionHint = {};
+        compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+
+        deviceDesc.pNext = &compressionHint;
+
+        auto allocation = allocDeviceMem(2048);
+
+        EXPECT_EQ(hwHelper.isBufferSizeSuitableForCompression(2048, hwInfo), allocation->isCompressionEnabled());
+
+        context->freeMem(ptr);
+
+        deviceDesc.pNext = nullptr;
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+    }
+
+    // Compressed hint
+    {
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        NEO::DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+
+        ze_external_memory_import_win32_handle_t compressionHint = {};
+        compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+
+        deviceDesc.pNext = &compressionHint;
+
+        auto allocation = allocDeviceMem(2048);
+
+        EXPECT_TRUE(allocation->isCompressionEnabled());
+
+        context->freeMem(ptr);
+
+        deviceDesc.pNext = nullptr;
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+        NEO::DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(-1);
+    }
+
+    // Compressed hint without debug flag
+    {
+        ze_external_memory_import_win32_handle_t compressionHint = {};
+        compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+
+        deviceDesc.pNext = &compressionHint;
+
+        auto allocation = allocDeviceMem(2048);
+
+        EXPECT_EQ(l0HwHelper.usmCompressionSupported(hwInfo), allocation->isCompressionEnabled());
+
+        context->freeMem(ptr);
+
+        deviceDesc.pNext = nullptr;
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+    }
+
+    // Uncompressed hint
+    {
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+
+        ze_external_memory_import_win32_handle_t compressionHint = {};
+        compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED;
+
+        deviceDesc.pNext = &compressionHint;
+
+        auto allocation = allocDeviceMem(2048);
+
+        EXPECT_FALSE(allocation->isCompressionEnabled());
+
+        context->freeMem(ptr);
+
+        deviceDesc.pNext = nullptr;
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+    }
+
+    // Debug flag == 0
+    {
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+
+        auto allocation = allocDeviceMem(2048);
+
+        EXPECT_FALSE(allocation->isCompressionEnabled());
+
+        context->freeMem(ptr);
+
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+    }
+
+    // Size restriction
+    {
+        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+
+        auto allocation = allocDeviceMem(1);
+
+        if (!hwHelper.isBufferSizeSuitableForCompression(1, hwInfo)) {
+            EXPECT_FALSE(allocation->isCompressionEnabled());
+        }
+
+        context->freeMem(ptr);
+    }
+}
 
 TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsDeviceHandle) {
     size_t size = 10;

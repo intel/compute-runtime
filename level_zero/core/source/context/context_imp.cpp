@@ -14,6 +14,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 
@@ -163,6 +164,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, this->driverHandle->rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.allocationFlags.flags.shareable = static_cast<uint32_t>(lookupTable.exportMemory);
     unifiedMemoryProperties.device = neoDevice;
+    unifiedMemoryProperties.allocationFlags.flags.compressedHint = isAllocationSuitableForCompression(lookupTable, *device, size);
 
     if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
@@ -684,6 +686,22 @@ ze_result_t ContextImp::createImage(ze_device_handle_t hDevice,
                                     const ze_image_desc_t *desc,
                                     ze_image_handle_t *phImage) {
     return L0::Device::fromHandle(hDevice)->createImage(desc, phImage);
+}
+
+bool ContextImp::isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize) {
+    auto &hwInfo = device.getHwInfo();
+    auto &hwHelper = device.getHwHelper();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (!l0HwHelper.usmCompressionSupported(hwInfo) || !hwHelper.isBufferSizeSuitableForCompression(allocSize, hwInfo) || structuresLookupTable.uncompressedHint) {
+        return false;
+    }
+
+    if (l0HwHelper.forceDefaultUsmCompressionSupport()) {
+        return true;
+    }
+
+    return structuresLookupTable.compressedHint;
 }
 
 } // namespace L0

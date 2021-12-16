@@ -203,7 +203,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
     unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
-    unifiedMemoryProperties.flags.preferCompressed = compressionEnabled;
+    unifiedMemoryProperties.flags.preferCompressed = compressionEnabled || memoryProperties.allocationFlags.flags.compressedHint;
 
     if (memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
         unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
