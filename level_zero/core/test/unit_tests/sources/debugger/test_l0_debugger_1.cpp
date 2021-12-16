@@ -20,12 +20,6 @@ namespace ult {
 
 using L0DebuggerTest = Test<L0DebuggerHwFixture>;
 
-struct Deleter {
-    void operator()(CommandQueueImp *cmdQ) {
-        cmdQ->destroy();
-    }
-};
-
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsLegacyThenFalseIsReturned) {
     EXPECT_FALSE(neoDevice->getDebugger()->isLegacy());
 }

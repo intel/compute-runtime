@@ -81,5 +81,10 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     NEO::ResidencyContainer residencyContainerSnapshot;
 };
 
+struct Deleter {
+    void operator()(CommandQueueImp *cmdQ) {
+        cmdQ->destroy();
+    }
+};
 } // namespace ult
 } // namespace L0

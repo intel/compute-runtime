@@ -164,12 +164,6 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
     using STATE_SIP = typename FamilyType::STATE_SIP;
     ze_command_queue_desc_t queueDesc = {};
 
-    struct Deleter {
-        void operator()(CommandQueueImp *cmdQ) {
-            cmdQ->destroy();
-        }
-    };
-
     device->setPreemptionMode(NEO::PreemptionMode::Disabled);
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc));

@@ -417,12 +417,6 @@ HWTEST2_F(L0DebuggerInternalUsageTest, givenUseCsrImmediateSubmissionDisabledCom
     commandList->destroy();
 }
 
-struct Deleter {
-    void operator()(CommandQueueImp *cmdQ) {
-        cmdQ->destroy();
-    }
-};
-
 HWTEST2_F(L0DebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsAtLeastSkl) {
     ze_command_queue_desc_t queueDesc = {};
 
