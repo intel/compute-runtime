@@ -78,6 +78,22 @@ TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgToFatBinaryWhenConfigMatche
     EXPECT_TRUE(NEO::requestedFatBinary(3, fewConfigs, argHelper.get()));
 }
 
+TEST(OclocFatBinaryProductConfigSupport, WhenPlatformIsSupportedThenAtLeastOneCorrespondingProductConfigExists) {
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    auto allSuportedPlatforms = getAllSupportedTargetPlatforms();
+    for (auto &platform : allSuportedPlatforms) {
+        bool supportExist = false;
+        for (auto &config : allEnabledDeviceConfigs) {
+            if (config.hwInfo->platform.eProductFamily == platform) {
+                supportExist = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(supportExist);
+    }
+}
+
 TEST(OclocFatBinaryRequestedFatBinary, WhenPlatformIsProvidedButDoesNotContainMoreThanOneProductThenReturnFalse) {
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     const char *skl[] = {"ocloc", "-device", "skl"};

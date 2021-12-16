@@ -18,6 +18,7 @@ typedef enum {
     APL = 0x090300,
     GLK = 0x090400,
     ICL = 0x0b0000,
+    LKF = 0x0b0100,
     JSL = 0x0b0200,
     EHL = 0x0b0200,
     DG1 = 0x0c0000,
