@@ -22,6 +22,8 @@
 
 #include "CL/cl.h"
 
+static_assert(NEO::HwInfoConfig::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
+
 struct _ze_device_handle_t {};
 namespace NEO {
 class Device;
