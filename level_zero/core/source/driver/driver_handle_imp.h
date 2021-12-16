@@ -108,6 +108,7 @@ struct DriverHandleImp : public DriverHandle {
     bool enableProgramDebugging = false;
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
+    uint8_t powerHint = 0;
 };
 
 extern struct DriverHandleImp *GlobalDriver;

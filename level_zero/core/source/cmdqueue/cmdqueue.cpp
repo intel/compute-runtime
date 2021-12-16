@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,6 +161,11 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     }
 
     auto &osContext = csr->getOsContext();
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    if (driverHandleImp->powerHint && driverHandleImp->powerHint != osContext.getUmdPowerHintValue()) {
+        osContext.setUmdPowerHintValue(driverHandleImp->powerHint);
+        osContext.reInitializeContext();
+    }
     osContext.ensureContextInitialized();
     csr->initDirectSubmission(*device->getNEODevice(), osContext);
     return commandQueue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -792,15 +792,13 @@ void Wddm::kmDafLock(D3DKMT_HANDLE handle) {
 bool Wddm::createContext(OsContextWin &osContext) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL CreateContext = {};
-    CREATECONTEXT_PVTDATA PrivateData = {};
 
-    PrivateData.IsProtectedProcess = FALSE;
-    PrivateData.IsDwm = FALSE;
+    CREATECONTEXT_PVTDATA PrivateData = initPrivateData(osContext);
+
     PrivateData.ProcessID = NEO::getPid();
-    PrivateData.GpuVAContext = TRUE;
     PrivateData.pHwContextId = &hwContextId;
-    PrivateData.IsMediaUsage = false;
     PrivateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
+
     auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
     applyAdditionalContextFlags(PrivateData, osContext, *rootDeviceEnvironment.getHardwareInfo());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -958,6 +958,8 @@ TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingC
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.ordinal = ordinal;
     queueDesc.index = 0;
+
+    l0RootDevice.driverHandle = driverHandle.get();
 
     l0RootDevice.implicitScalingCapable = true;
     auto returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);

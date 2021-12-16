@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ using MultiDeviceContextTests = Test<MultiDeviceFixture>;
 TEST_F(MultiDeviceContextTests,
        whenCreatingContextWithZeroNumDevicesThenAllDevicesAreAssociatedWithTheContext) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -48,7 +48,7 @@ TEST_F(MultiDeviceContextTests,
 TEST_F(MultiDeviceContextTests,
        whenCreatingContextWithNonZeroNumDevicesThenOnlySpecifiedDeviceAndItsSubDevicesAreAssociatedWithTheContext) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_device_handle_t device0 = driverHandle->devices[0]->toHandle();
     DeviceImp *deviceImp0 = static_cast<DeviceImp *>(device0);
@@ -104,7 +104,7 @@ TEST_F(MultiDeviceContextTests,
 TEST_F(MultiDeviceContextTests,
        whenAllocatingDeviceMemoryWithDeviceNotDefinedForContextThenDeviceLostIsReturned) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_device_handle_t device = driverHandle->devices[1]->toHandle();
 
@@ -126,7 +126,7 @@ TEST_F(MultiDeviceContextTests,
 TEST_F(MultiDeviceContextTests,
        whenAllocatingSharedMemoryWithDeviceNotDefinedForContextThenDeviceLostIsReturned) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_device_handle_t device = driverHandle->devices[1]->toHandle();
 
@@ -201,7 +201,7 @@ TEST_F(ContextHostAllocTests,
        whenAllocatingHostMemoryOnlyIndexesOfDevicesWithinTheContextAreUsed) {
     L0::ContextImp *context = nullptr;
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc,
                                                   numberOfDevicesInContext,
                                                   zeDevices.data(),
@@ -225,7 +225,7 @@ TEST_F(ContextHostAllocTests,
 using ContextGetStatusTest = Test<DeviceFixture>;
 TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsReturnedWhenResourcesHaveBeenReleased) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -245,11 +245,78 @@ TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsRe
     context->destroy();
 }
 
+using ContextPowerSavingHintTest = Test<DeviceFixture>;
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintDescThenPowerHintSetInDriverHandle) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
+    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
+    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
+    powerHintContext.hint = 1;
+    ctxtDesc.pNext = &powerHintContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(powerHintContext.hint, driverHandle->powerHint);
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    context->destroy();
+}
+
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintMinimumThenPowerHintSetInDriverHandle) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
+    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
+    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
+    powerHintContext.hint = ZE_POWER_SAVING_HINT_TYPE_MIN;
+    ctxtDesc.pNext = &powerHintContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(powerHintContext.hint, driverHandle->powerHint);
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    context->destroy();
+}
+
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintMaximumThenPowerHintSetInDriverHandle) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
+    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
+    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
+    powerHintContext.hint = ZE_POWER_SAVING_HINT_TYPE_MAX;
+    ctxtDesc.pNext = &powerHintContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(powerHintContext.hint, driverHandle->powerHint);
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    context->destroy();
+}
+
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintGreaterThanMaxHintThenErrorIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
+    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
+    powerHintContext.hint = ZE_POWER_SAVING_HINT_TYPE_MAX + 1;
+    ctxtDesc.pNext = &powerHintContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, res);
+}
+
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithoutPowerHintDescThenPowerHintIsNotSetInDriverHandle) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_scheduling_hint_exp_desc_t invalidExpContext = {};
+    invalidExpContext.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC;
+    ctxtDesc.pNext = &invalidExpContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0, driverHandle->powerHint);
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    context->destroy();
+}
+
 using ContextTest = Test<DeviceFixture>;
 
 TEST_F(ContextTest, whenCreatingAndDestroyingContextThenSuccessIsReturned) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -660,7 +727,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
 TEST_F(ContextTest, whenGettingDriverThenDriverIsRetrievedSuccessfully) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -675,7 +742,7 @@ TEST_F(ContextTest, whenGettingDriverThenDriverIsRetrievedSuccessfully) {
 
 TEST_F(ContextTest, whenCallingVirtualMemInterfacesThenUnsupportedIsReturned) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -701,7 +768,7 @@ TEST_F(ContextTest, whenCallingVirtualMemInterfacesThenUnsupportedIsReturned) {
 
 TEST_F(ContextTest, whenCallingPhysicalMemInterfacesThenUnsupportedIsReturned) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -722,7 +789,7 @@ TEST_F(ContextTest, whenCallingPhysicalMemInterfacesThenUnsupportedIsReturned) {
 
 TEST_F(ContextTest, whenCallingMappingVirtualInterfacesThenUnsupportedIsReturned) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -763,7 +830,7 @@ using IsAtMostProductDG1 = IsAtMostProduct<IGFX_DG1>;
 
 HWTEST2_F(ContextTest, WhenCreatingImageThenSuccessIsReturned, IsAtMostProductDG1) {
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 

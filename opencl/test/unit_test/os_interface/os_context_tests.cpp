@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,22 @@ TEST(OSContext, givenCooperativeEngineWhenIsCooperativeEngineIsCalledThenReturnT
     EXPECT_FALSE(pOsContext->isLowPriority());
     EXPECT_FALSE(pOsContext->isInternalEngine());
     EXPECT_TRUE(pOsContext->isCooperativeEngine());
+    delete pOsContext;
+}
+
+TEST(OSContext, givenReinitializeContextWhenContextIsInitThenContextIsStillIinitializedAfter) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    auto pOsContext = OsContext::create(nullptr, 0, engineDescriptor);
+    EXPECT_NO_THROW(pOsContext->reInitializeContext());
+    EXPECT_NO_THROW(pOsContext->ensureContextInitialized());
+    delete pOsContext;
+}
+
+TEST(OSContext, givenSetPowerHintThenGetPowerHintShowsTheSameValue) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    auto pOsContext = OsContext::create(nullptr, 0, engineDescriptor);
+    pOsContext->setUmdPowerHintValue(1);
+    EXPECT_EQ(1, pOsContext->getUmdPowerHintValue());
     delete pOsContext;
 }
 

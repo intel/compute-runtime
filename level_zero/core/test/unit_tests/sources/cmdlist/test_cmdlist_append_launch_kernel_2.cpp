@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1151,7 +1151,7 @@ struct MultiTileCommandListAppendLaunchFunctionXeHpCoreFixture : MultiDeviceModu
         device = driverHandle->devices[0];
 
         ze_context_handle_t hContext;
-        ze_context_desc_t desc;
+        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         ze_result_t res = device->getDriverHandle()->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));

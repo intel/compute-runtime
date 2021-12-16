@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -396,7 +396,7 @@ struct Sample {
         }
 
         // Obtain context.
-        ze_context_desc_t contextDesc = {};
+        ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         VALIDATECALL(zeContextCreate(driverHandle, &contextDesc, &contextHandle));
 
         // Obtain all devices.

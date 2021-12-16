@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,20 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
     ContextImp *context = new ContextImp(this);
     if (nullptr == context) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    if (desc->pNext) {
+        const ze_base_desc_t *expDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
+        if (expDesc->stype == ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC) {
+            const ze_context_power_saving_hint_exp_desc_t *powerHintExpDesc =
+                reinterpret_cast<const ze_context_power_saving_hint_exp_desc_t *>(expDesc);
+            if (powerHintExpDesc->hint == ZE_POWER_SAVING_HINT_TYPE_MIN || powerHintExpDesc->hint <= ZE_POWER_SAVING_HINT_TYPE_MAX) {
+                powerHint = static_cast<uint8_t>(powerHintExpDesc->hint);
+            } else {
+                delete context;
+                return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+            }
+        }
     }
 
     *phContext = context->toHandle();

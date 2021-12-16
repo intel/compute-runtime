@@ -226,6 +226,23 @@ TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
     EXPECT_TRUE(context != static_cast<D3DKMT_HANDLE>(0));
 }
 
+TEST_F(Wddm20Tests, whenCreatingContextWithPowerHintSuccessIsReturned) {
+    auto newContext = osContext.get();
+    newContext->setUmdPowerHintValue(1);
+    EXPECT_EQ(1, newContext->getUmdPowerHintValue());
+    wddm->createContext(*newContext);
+    EXPECT_TRUE(wddm->createContext(*newContext));
+}
+
+TEST_F(Wddm20Tests, whenInitPrivateDataThenDefaultValuesAreSet) {
+    auto newContext = osContext.get();
+    CREATECONTEXT_PVTDATA PrivateData = initPrivateData(*newContext);
+    EXPECT_FALSE(PrivateData.IsProtectedProcess);
+    EXPECT_FALSE(PrivateData.IsDwm);
+    EXPECT_TRUE(PrivateData.GpuVAContext);
+    EXPECT_FALSE(PrivateData.IsMediaUsage);
+}
+
 TEST_F(Wddm20Tests, WhenCreatingAllocationAndDestroyingAllocationThenCorrectResultReturned) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
     WddmAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);

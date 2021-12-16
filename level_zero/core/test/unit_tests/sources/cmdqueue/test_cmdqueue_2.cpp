@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,6 +85,8 @@ HWTEST_F(ContextCreateCommandQueueTest, givenRootDeviceAndImplicitScalingDisable
     subDevice0.getRegularEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
     auto ordinal = static_cast<uint32_t>(subDevice0.getRegularEngineGroups().size() - 1);
     Mock<L0::DeviceImp> l0RootDevice(&rootDevice, rootDevice.getExecutionEnvironment());
+
+    l0RootDevice.driverHandle = driverHandle.get();
 
     ze_command_queue_handle_t commandQueue = nullptr;
     ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -376,6 +378,51 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionF
     returnValue = commandQueue->synchronize(timeout);
     EXPECT_EQ(returnValue, ZE_RESULT_NOT_READY);
 
+    commandQueue->destroy();
+}
+using CommandQueuePowerHintTest = Test<ContextFixture>;
+
+HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPowerHintUnsetThenSuccessIsReturned) {
+    auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                            device->getNEODevice()->getDeviceBitfield()));
+    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    driverHandleImp->powerHint = 1;
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPowerHintAlreadySetThenSuccessIsReturned) {
+    auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                            device->getNEODevice()->getDeviceBitfield()));
+    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    driverHandleImp->powerHint = 1;
+    auto &osContext = csr->getOsContext();
+    osContext.setUmdPowerHintValue(1);
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
     commandQueue->destroy();
 }
 

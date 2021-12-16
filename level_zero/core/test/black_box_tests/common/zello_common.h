@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,8 +194,7 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
     }
 
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
-    ze_context_desc_t context_desc = {};
-    context_desc.stype = ZE_STRUCTURE_TYPE_CONTEXT_DESC;
+    ze_context_desc_t context_desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &context_desc, &context));
 
     uint32_t deviceCount = 0;

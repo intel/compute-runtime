@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,5 +54,36 @@ TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackIsDisabledThenOsCont
     *getRegisterTrimNotificationFailCallFcn() = true;
 
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_NO_THROW(osContext->ensureContextInitialized());
+}
+
+TEST_F(OsContextWinTest, givenReinitializeContextWhenContextIsInitThenContextIsDestroyedAndRecreated) {
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_NO_THROW(osContext->reInitializeContext());
+    EXPECT_NO_THROW(osContext->ensureContextInitialized());
+}
+
+TEST_F(OsContextWinTest, givenReinitializeContextWhenContextIsNotInitThenContextIsCreated) {
+    EXPECT_NO_THROW(osContext->reInitializeContext());
+    EXPECT_NO_THROW(osContext->ensureContextInitialized());
+}
+
+struct OsContextWinTestNoCleanup : public WddmTestWithMockGdiDllNoCleanup {
+    void SetUp() override {
+        WddmTestWithMockGdiDllNoCleanup::SetUp();
+        preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+        engineTypeUsage = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0];
+
+        init();
+    }
+
+    PreemptionMode preemptionMode;
+    EngineTypeUsage engineTypeUsage;
+};
+
+TEST_F(OsContextWinTestNoCleanup, givenReinitializeContextWhenContextIsInitThenContextIsNotDestroyed) {
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_TRUE(this->wddm->skipResourceCleanup());
+    EXPECT_NO_THROW(osContext->reInitializeContext());
     EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }

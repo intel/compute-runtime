@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -111,6 +111,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/init_context_private_data.cpp
 )
 
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)

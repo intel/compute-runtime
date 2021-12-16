@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,7 @@ enum class HeapIndex : uint32_t;
 unsigned int readEnablePreemptionRegKey();
 unsigned int getPid();
 bool isShutdownInProgress();
+CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext);
 
 class Wddm : public DriverModel {
   public:

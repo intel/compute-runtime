@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ void AUBFixtureL0::SetUp(const NEO::HardwareInfo *hardwareInfo) {
     device = driverHandle->devices[0];
 
     ze_context_handle_t hContext;
-    ze_context_desc_t desc;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));

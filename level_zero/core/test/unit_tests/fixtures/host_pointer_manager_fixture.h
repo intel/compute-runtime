@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ struct HostPointerManagerFixure {
         heapPointer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(heapSize, MemoryConstants::pageSize);
         ASSERT_NE(nullptr, heapPointer);
 
-        ze_context_desc_t desc;
+        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         ze_result_t ret = hostDriverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
         context = L0::Context::fromHandle(hContext);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,15 @@ TEST_F(WddmTests, givenWddmWhenPassesIncorrectHandleToVerifyNTHandleThenReturnFa
 TEST_F(WddmTests, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
     init();
     EXPECT_FALSE(wddm->skipResourceCleanup());
+}
+
+TEST_F(WddmTests, whenCreatingContextWithPowerHintSuccessIsReturned) {
+    init();
+    auto newContext = osContext.get();
+    newContext->setUmdPowerHintValue(1);
+    EXPECT_EQ(1, newContext->getUmdPowerHintValue());
+    wddm->createContext(*newContext);
+    EXPECT_TRUE(wddm->createContext(*newContext));
 }
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ class OsContextWin : public OsContext {
     Wddm *getWddm() const { return &wddm; }
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
     static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    void reInitializeContext() override;
 
   protected:
     void initializeContext() override;
