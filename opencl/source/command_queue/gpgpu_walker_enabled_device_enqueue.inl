@@ -108,7 +108,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         MI_BATCH_BUFFER_START cmdBbStart = GfxFamily::cmdInitBatchBufferStart;
         cmdBbStart.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH);
         uint64_t slbAddress = devQueueHw.getSlbBuffer()->getGpuAddress();
-        cmdBbStart.setBatchBufferStartAddressGraphicsaddress472(slbAddress);
+        cmdBbStart.setBatchBufferStartAddress(slbAddress);
         *bbStart = cmdBbStart;
     }
 }

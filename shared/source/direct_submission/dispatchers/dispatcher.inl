@@ -18,7 +18,7 @@ inline void Dispatcher<GfxFamily>::dispatchStartCommandBuffer(LinearStream &cmdB
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
     MI_BATCH_BUFFER_START cmd = GfxFamily::cmdInitBatchBufferStart;
-    cmd.setBatchBufferStartAddressGraphicsaddress472(gpuStartAddress);
+    cmd.setBatchBufferStartAddress(gpuStartAddress);
     cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
 
     auto bbufferStart = cmdBuffer.getSpaceForCmd<MI_BATCH_BUFFER_START>();

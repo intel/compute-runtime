@@ -1262,10 +1262,10 @@ typedef struct tagMI_BATCH_BUFFER_START {
         BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS47_2_BIT_SHIFT = 0x2,
         BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS47_2_ALIGN_SIZE = 0x4,
     } BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS47_2;
-    inline void setBatchBufferStartAddressGraphicsaddress472(const uint64_t value) {
+    inline void setBatchBufferStartAddress(const uint64_t value) {
         TheStructure.Common.BatchBufferStartAddress_Graphicsaddress47_2 = value >> BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS47_2_BIT_SHIFT;
     }
-    inline uint64_t getBatchBufferStartAddressGraphicsaddress472() const {
+    inline uint64_t getBatchBufferStartAddress() const {
         return (TheStructure.Common.BatchBufferStartAddress_Graphicsaddress47_2 << BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS47_2_BIT_SHIFT);
     }
     typedef enum tagBATCHBUFFERSTARTADDRESS_RESERVED {

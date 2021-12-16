@@ -6032,13 +6032,7 @@ typedef struct tagMI_BATCH_BUFFER_START {
     inline void setBatchBufferStartAddress(const uint64_t value) {
         TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
     }
-    inline void setBatchBufferStartAddressGraphicsaddress472(const uint64_t value) {
-        TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
-    }
     inline uint64_t getBatchBufferStartAddress() const {
-        return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
-    }
-    inline uint64_t getBatchBufferStartAddressGraphicsaddress472() const {
         return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
     }
     inline void setNestedLevelBatchBuffer(const NESTED_LEVEL_BATCH_BUFFER value) {

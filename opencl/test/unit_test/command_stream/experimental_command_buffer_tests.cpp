@@ -81,7 +81,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     ASSERT_NE(bbList.end(), it);
     bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*it);
     ASSERT_NE(nullptr, bbStart);
-    EXPECT_EQ(exCmdBufferGpuAddr, bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(exCmdBufferGpuAddr, bbStart->getBatchBufferStartAddress());
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 
     MI_BATCH_BUFFER_END *bbEnd = nullptr;
@@ -220,7 +220,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     ASSERT_NE(bbList.end(), it);
     bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*it);
     ASSERT_NE(nullptr, bbStart);
-    EXPECT_EQ(exCmdBufferGpuAddr, bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(exCmdBufferGpuAddr, bbStart->getBatchBufferStartAddress());
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 
     PIPE_CONTROL *pipeControl = nullptr;
@@ -317,7 +317,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     ASSERT_NE(bbList.end(), it);
     bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*it);
     ASSERT_NE(nullptr, bbStart);
-    EXPECT_EQ(oldExCmdBufferGpuAddr, bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(oldExCmdBufferGpuAddr, bbStart->getBatchBufferStartAddress());
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 
     flushTask(commandStreamReceiver);
@@ -339,7 +339,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     ASSERT_NE(bbList.end(), it);
     bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*it);
     ASSERT_NE(nullptr, bbStart);
-    EXPECT_EQ(newExCmdBufferGpuAddr, bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(newExCmdBufferGpuAddr, bbStart->getBatchBufferStartAddress());
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 }
 

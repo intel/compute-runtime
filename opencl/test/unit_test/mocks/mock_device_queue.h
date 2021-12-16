@@ -168,7 +168,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
         memset(expectedCmds.prefetch, 0x0, DeviceQueueHw<GfxFamily>::getCSPrefetchSize());
         expectedCmds.bbStart = GfxFamily::cmdInitBatchBufferStart;
         auto slbPtr = reinterpret_cast<uintptr_t>(this->getSlbBuffer()->getUnderlyingBuffer());
-        expectedCmds.bbStart.setBatchBufferStartAddressGraphicsaddress472(slbPtr);
+        expectedCmds.bbStart.setBatchBufferStartAddress(slbPtr);
     }
 
     IGIL_CommandQueue *getIgilQueue() {

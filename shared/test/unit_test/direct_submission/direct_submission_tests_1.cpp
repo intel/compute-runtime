@@ -524,7 +524,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenSettingAddressInReturnCo
     void *space = directSubmission.ringCommandStream.getSpace(sizeof(MI_BATCH_BUFFER_START));
     directSubmission.setReturnAddress(space, returnAddress);
     MI_BATCH_BUFFER_START *bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(space);
-    EXPECT_EQ(returnAddress, bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(returnAddress, bbStart->getBatchBufferStartAddress());
 }
 
 HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedAllocationsFreed) {

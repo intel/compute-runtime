@@ -90,7 +90,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenGpuAddressWhenEncodeBBStartThenAd
     ASSERT_NE(itor, commands.end());
     {
         auto cmd = genCmdCast<MI_BATCH_BUFFER_START *>(*itor);
-        EXPECT_EQ(gpuAddress, cmd->getBatchBufferStartAddressGraphicsaddress472());
+        EXPECT_EQ(gpuAddress, cmd->getBatchBufferStartAddress());
     }
 }
 

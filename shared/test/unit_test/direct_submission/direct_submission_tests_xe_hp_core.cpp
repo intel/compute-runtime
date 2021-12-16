@@ -37,7 +37,7 @@ XE_HP_CORE_TEST_F(DirectSubmissionTestXE_HP_CORE, givenBlitterUsedWhenDispatchin
 
     uint64_t exptectedJumpAddress = directSubmission.ringCommandStream.getGraphicsAllocation()->getGpuAddress();
     exptectedJumpAddress += sizeof(MI_BATCH_BUFFER_START);
-    EXPECT_EQ(exptectedJumpAddress, bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(exptectedJumpAddress, bbStart->getBatchBufferStartAddress());
 }
 
 XE_HP_CORE_TEST_F(DirectSubmissionTestXE_HP_CORE, givenBlitterUsedWhenDispatchingPrefetchDisableTrueThenExpectArbCheckCmd) {

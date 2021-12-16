@@ -96,7 +96,7 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
 
     auto cur = (uint32_t *)pRing;
     auto bbs = FamilyType::cmdInitBatchBufferStart;
-    bbs.setBatchBufferStartAddressGraphicsaddress472(gpuBatchBuffer);
+    bbs.setBatchBufferStartAddress(gpuBatchBuffer);
     bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     *(MI_BATCH_BUFFER_START *)cur = bbs;
     cur = ptrOffset(cur, sizeof(MI_BATCH_BUFFER_START));

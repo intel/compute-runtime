@@ -108,7 +108,7 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary) {
     MI_BATCH_BUFFER_START cmd = GfxFamily::cmdInitBatchBufferStart;
 
-    cmd.setBatchBufferStartAddressGraphicsaddress472(startAddress);
+    cmd.setBatchBufferStartAddress(startAddress);
     cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     if (secondary) {
         cmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);

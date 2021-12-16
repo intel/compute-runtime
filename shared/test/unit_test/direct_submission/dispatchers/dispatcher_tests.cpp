@@ -29,7 +29,7 @@ HWTEST_F(DispatcherTest, givenBaseDispatcherWhenAddingStartCmdThenExpectBbStart)
     hwParse.parseCommands<FamilyType>(cmdBuffer);
     MI_BATCH_BUFFER_START *start = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     ASSERT_NE(nullptr, start);
-    EXPECT_EQ(gpuVa, start->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(gpuVa, start->getBatchBufferStartAddress());
 }
 
 HWTEST_F(DispatcherTest, givenBaseDispatcherWhenAskingForStopCmdSizeThenReturnBbStopCmdSize) {

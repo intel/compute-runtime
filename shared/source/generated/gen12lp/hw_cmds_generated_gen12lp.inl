@@ -1203,12 +1203,6 @@ typedef struct tagMI_BATCH_BUFFER_START {
     inline uint64_t getBatchBufferStartAddress() const {
         return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
     }
-    inline void setBatchBufferStartAddressGraphicsaddress472(const uint64_t value) {
-        TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
-    }
-    inline uint64_t getBatchBufferStartAddressGraphicsaddress472() const {
-        return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
-    }
     inline void setSecondLevelBatchBuffer(const SECOND_LEVEL_BATCH_BUFFER value) {
         TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer = value;
     }

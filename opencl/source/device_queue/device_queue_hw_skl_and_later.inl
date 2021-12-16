@@ -113,7 +113,7 @@ void DeviceQueueHw<GfxFamily>::buildSlbDummyCommands() {
     auto bbStartSpace = slbCS.getSpaceForCmd<MI_BATCH_BUFFER_START>();
     auto bbStart = GfxFamily::cmdInitBatchBufferStart;
     auto slbPtr = reinterpret_cast<uintptr_t>(slbBuffer->getUnderlyingBuffer());
-    bbStart.setBatchBufferStartAddressGraphicsaddress472(slbPtr);
+    bbStart.setBatchBufferStartAddress(slbPtr);
     *bbStartSpace = bbStart;
 
     igilCmdQueue->m_controls.m_CleanupSectionSize = 0;

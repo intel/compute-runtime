@@ -155,7 +155,7 @@ HWTEST2_F(ExecutionModelSchedulerFixture, WhenDispatchingSchedulerThenProgrammin
     auto *bbStart = (MI_BATCH_BUFFER_START *)*hwParser.itorBBStartAfterWalker;
 
     uint64_t slbAddress = pDevQueueHw->getSlbBuffer()->getGpuAddress();
-    EXPECT_EQ(slbAddress, bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(slbAddress, bbStart->getBatchBufferStartAddress());
 }
 
 HWTEST2_F(ExecutionModelSchedulerFixture, WhenDispatchingSchedulerThenStandardCmdqIohIsNotUsed, DeviceEnqueueSupport) {

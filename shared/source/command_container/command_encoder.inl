@@ -771,7 +771,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *
         cmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
     }
     cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
-    cmd.setBatchBufferStartAddressGraphicsaddress472(address);
+    cmd.setBatchBufferStartAddress(address);
     auto buffer = commandStream->getSpaceForCmd<MI_BATCH_BUFFER_START>();
     *buffer = cmd;
 }

@@ -492,7 +492,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBufferAub(uint64_t batchB
 
         // Add our BBS
         auto bbs = GfxFamily::cmdInitBatchBufferStart;
-        bbs.setBatchBufferStartAddressGraphicsaddress472(static_cast<uint64_t>(batchBufferGpuAddress));
+        bbs.setBatchBufferStartAddress(static_cast<uint64_t>(batchBufferGpuAddress));
         bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
         *(MI_BATCH_BUFFER_START *)pTail = bbs;
         pTail = ((MI_BATCH_BUFFER_START *)pTail) + 1;
@@ -840,7 +840,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
     MI_BATCH_BUFFER_START *miBatchBufferStartSpace = linearStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
     DEBUG_BREAK_IF(bufferSize != linearStream.getUsed());
     auto miBatchBufferStart = GfxFamily::cmdInitBatchBufferStart;
-    miBatchBufferStart.setBatchBufferStartAddressGraphicsaddress472(AUB::ptrToPPGTT(buffer.get()));
+    miBatchBufferStart.setBatchBufferStartAddress(AUB::ptrToPPGTT(buffer.get()));
     miBatchBufferStart.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     *miBatchBufferStartSpace = miBatchBufferStart;
 

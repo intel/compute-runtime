@@ -159,7 +159,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandL
                   bbs->getSecondLevelBatchBuffer());
         EXPECT_EQ(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT,
                   bbs->getAddressSpaceIndicator());
-        EXPECT_EQ(allocation->getGpuAddress(), bbs->getBatchBufferStartAddressGraphicsaddress472());
+        EXPECT_EQ(allocation->getGpuAddress(), bbs->getBatchBufferStartAddress());
     }
 
     auto itorBBE = find<MI_BATCH_BUFFER_END *>(itorCurrent, cmdList.end());

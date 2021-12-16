@@ -1090,7 +1090,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenCha
 
     // Expect to see address based on startOffset of task
     auto expectedAddress = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptrOffset(commandStream.getCpuBase(), startOffset)));
-    EXPECT_EQ(expectedAddress, bbs->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(expectedAddress, bbs->getBatchBufferStartAddress());
 
     // MI_BATCH_BUFFER_START from UMD must be PPGTT for security reasons
     EXPECT_EQ(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT, bbs->getAddressSpaceIndicator());
