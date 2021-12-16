@@ -274,6 +274,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getDeviceBitfield(), !isCooperative) &&
         !isInternal) {
         const uint64_t workPartitionAllocationGpuVa = device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
+        if (eventAddress != 0) {
+            postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
+        }
         ImplicitScalingDispatch<Family>::dispatchCommands(*listCmdBufferStream,
                                                           walkerCmd,
                                                           device->getDeviceBitfield(),

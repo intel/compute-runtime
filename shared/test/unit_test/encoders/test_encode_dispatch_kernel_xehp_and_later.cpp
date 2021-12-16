@@ -887,6 +887,7 @@ struct CommandEncodeStatesImplicitScalingFixture : public CommandEncodeStatesFix
         DebugManager.flags.CreateMultipleSubDevices.set(2);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
         mockDeviceBackup = std::make_unique<VariableBackup<bool>>(&MockDevice::createSingleDevice, false);
+        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&ImplicitScaling::apiSupport, true);
 
         CommandEncodeStatesFixture::SetUp();
     }
@@ -898,26 +899,61 @@ struct CommandEncodeStatesImplicitScalingFixture : public CommandEncodeStatesFix
     DebugManagerStateRestore restorer;
     std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
     std::unique_ptr<VariableBackup<bool>> mockDeviceBackup;
+    std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };
 
-struct CommandEncodeStatesDynamicImplicitScaling : ::testing::Test, CommandEncodeStatesImplicitScalingFixture {
-    void SetUp() override {
+using CommandEncodeStatesImplicitScaling = Test<CommandEncodeStatesImplicitScalingFixture>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
+            givenStaticPartitioningWhenNonTimestampEventProvidedThenExpectTimestampComputeWalkerPostSync) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    uint32_t dims[] = {16, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    uint32_t partitionCount = 0;
+    bool requiresUncachedMocs = false;
+    uint64_t eventAddress = 0xFF112233000;
+    constexpr bool timestampEvent = false;
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), eventAddress, timestampEvent, false, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false, false);
+    size_t usedBuffer = cmdContainer->getCommandStream()->getUsed();
+    EXPECT_EQ(2u, partitionCount);
+
+    GenCmdList partitionedWalkerList;
+    CmdParse<FamilyType>::parseCommandBuffer(
+        partitionedWalkerList,
+        cmdContainer->getCommandStream()->getCpuBase(),
+        usedBuffer);
+
+    auto itor = find<WALKER_TYPE *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    ASSERT_NE(itor, partitionedWalkerList.end());
+    auto partitionWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto &postSync = partitionWalkerCmd->getPostSync();
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
+    EXPECT_EQ(eventAddress, postSync.getDestinationAddress());
+}
+
+struct CommandEncodeStatesDynamicImplicitScalingFixture : CommandEncodeStatesImplicitScalingFixture {
+    void SetUp() {
         DebugManager.flags.EnableStaticPartitioning.set(0);
         CommandEncodeStatesImplicitScalingFixture::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() {
         CommandEncodeStatesImplicitScalingFixture::TearDown();
     }
 
     DebugManagerStateRestore restore{};
 };
 
+using CommandEncodeStatesDynamicImplicitScaling = Test<CommandEncodeStatesDynamicImplicitScalingFixture>;
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelThenExpectPartitionCommandBuffer) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-
-    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -986,7 +1022,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
 
     uint32_t dims[] = {16, 1, 1};
@@ -1093,7 +1128,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling,
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
     uint32_t dims[] = {16, 1, 1};
@@ -1161,7 +1195,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
