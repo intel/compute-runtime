@@ -20,6 +20,8 @@ template <>
 struct WhiteBox<::L0::Device> : public ::L0::Device {
     using Base = L0::Device;
     using Base::implicitScalingCapable;
+    using L0::Device::getNEODevice;
+    using L0::Device::neoDevice;
 };
 
 using Device = WhiteBox<::L0::Device>;
@@ -28,7 +30,6 @@ template <>
 struct Mock<Device> : public Device {
     Mock() = default;
 
-    ADDMETHOD_NOBASE(getRootDeviceIndex, uint32_t, 0u, ());
     ADDMETHOD_NOBASE(canAccessPeer, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_bool_t *value));
     ADDMETHOD_NOBASE(createCommandList, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList));
     ADDMETHOD_NOBASE(createCommandListImmediate, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_queue_desc_t *desc, ze_command_list_handle_t *commandList));
@@ -66,7 +67,6 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE_VOIDRETURN(setDriverHandle, (L0::DriverHandle *));
     ADDMETHOD_CONST_NOBASE(getDevicePreemptionMode, NEO::PreemptionMode, NEO::PreemptionMode::Initial, ());
     ADDMETHOD_CONST_NOBASE_REFRETURN(getDeviceInfo, const NEO::DeviceInfo &, ());
-    ADDMETHOD_NOBASE(getNEODevice, NEO::Device *, nullptr, ());
     ADDMETHOD_NOBASE_VOIDRETURN(activateMetricGroups, ());
     ADDMETHOD_CONST_NOBASE(getDebugSurface, NEO::GraphicsAllocation *, nullptr, ());
     ADDMETHOD_NOBASE(allocateManagedMemoryFromHostPtr, NEO::GraphicsAllocation *, nullptr, (void *buffer, size_t size, struct L0::CommandList *commandList));

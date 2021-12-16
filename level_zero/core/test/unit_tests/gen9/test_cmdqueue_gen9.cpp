@@ -210,8 +210,7 @@ HWTEST2_F(CommandQueueGroupMultiDevice,
                                                                                returnValue));
 
     L0::CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
-    L0::DeviceImp *deviceImp = reinterpret_cast<L0::DeviceImp *>(device);
-    auto &nearestSubDevice = *deviceImp->neoDevice->getNearestGenericSubDevice(0);
+    auto &nearestSubDevice = *device->getNEODevice()->getNearestGenericSubDevice(0);
     const auto rcsIndex = nearestSubDevice.getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::RenderCompute);
     auto expectedCSR = nearestSubDevice.getRegularEngineGroups()[rcsIndex].engines[queueGroupIndex].commandStreamReceiver;
     EXPECT_EQ(cmdQueue->getCsr(), expectedCSR);

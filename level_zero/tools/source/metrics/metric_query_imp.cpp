@@ -216,7 +216,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDeviceIndex.SubDeviceIndex.Index = 0;
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.neoDevice->getRootDevice()->getNumSubDevices(), 1u);
+        subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
 
         workloadPartition.Type = ClientOptionsType::WorkloadPartition;
         workloadPartition.WorkloadPartition.Enabled = false;
@@ -228,10 +228,10 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDevice.SubDevice.Enabled = true;
 
         subDeviceIndex.Type = ClientOptionsType::SubDeviceIndex;
-        subDeviceIndex.SubDeviceIndex.Index = static_cast<NEO::SubDevice *>(deviceImp.neoDevice)->getSubDeviceIndex();
+        subDeviceIndex.SubDeviceIndex.Index = static_cast<NEO::SubDevice *>(deviceImp.getNEODevice())->getSubDeviceIndex();
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.neoDevice->getRootDevice()->getNumSubDevices(), 1u);
+        subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
 
         workloadPartition.Type = ClientOptionsType::WorkloadPartition;
         workloadPartition.WorkloadPartition.Enabled = isWorkloadPartitionEnabled;
@@ -254,7 +254,7 @@ bool MetricsLibrary::createContext() {
     });
 
     const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-    const auto &commandStreamReceiver = *deviceImp.neoDevice->getDefaultEngine().commandStreamReceiver;
+    const auto &commandStreamReceiver = *deviceImp.getNEODevice()->getDefaultEngine().commandStreamReceiver;
     const auto engineType = commandStreamReceiver.getOsContext().getEngineType();
     const bool isComputeUsed = NEO::EngineHelpers::isCcs(engineType);
 

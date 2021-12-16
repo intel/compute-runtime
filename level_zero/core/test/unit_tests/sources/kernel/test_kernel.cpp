@@ -1418,14 +1418,12 @@ using KernelImpPatchBindlessTest = Test<ModuleFixture>;
 
 TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledThenOffsetPatchedCorrectly) {
     Mock<Kernel> kernel;
-    WhiteBox<::L0::DeviceImp> mockDevice;
-    mockDevice.neoDevice = neoDevice;
     neoDevice->incRefInternal();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
                                                                                                                              neoDevice->getRootDeviceIndex(),
                                                                                                                              neoDevice->getDeviceBitfield());
-    Mock<Module> mockModule(&mockDevice, nullptr);
+    Mock<Module> mockModule(device, nullptr);
     kernel.module = &mockModule;
     NEO::MockGraphicsAllocation alloc;
     uint32_t bindless = 0x40;
@@ -1440,6 +1438,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
     EXPECT_EQ(ssPtr, expectedSsInHeap.ssPtr);
     EXPECT_TRUE(memcmp(const_cast<uint8_t *>(patchLocation), &patchValue, sizeof(patchValue)) == 0);
     EXPECT_TRUE(std::find(kernel.getResidencyContainer().begin(), kernel.getResidencyContainer().end(), expectedSsInHeap.heapAllocation) != kernel.getResidencyContainer().end());
+    neoDevice->decRefInternal();
 }
 
 HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessThenSurfaceStateUpdated, MatchAny) {

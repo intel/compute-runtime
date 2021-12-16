@@ -213,7 +213,7 @@ TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsD
 
     std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
     ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
 }
 
 TEST_F(EventPoolCreate, GivenNoDeviceThenEventPoolIsCreated) {
@@ -506,7 +506,7 @@ TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamRece
     std::unique_ptr<L0::Event> event(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
     ASSERT_NE(nullptr, event.get()->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event.get()->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event.get()->csr);
 }
 
 TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndOffsetAreSet) {

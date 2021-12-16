@@ -2181,10 +2181,10 @@ TEST_F(DeviceTest, givenNoL0DebuggerWhenGettingL0DebuggerThenNullptrReturned) {
 TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesReleased) {
     auto deviceImp = static_cast<DeviceImp *>(device);
     EXPECT_FALSE(deviceImp->resourcesReleased);
-    EXPECT_FALSE(nullptr == deviceImp->neoDevice);
+    EXPECT_FALSE(nullptr == deviceImp->getNEODevice());
     deviceImp->releaseResources();
     EXPECT_TRUE(deviceImp->resourcesReleased);
-    EXPECT_TRUE(nullptr == deviceImp->neoDevice);
+    EXPECT_TRUE(nullptr == deviceImp->getNEODevice());
     EXPECT_TRUE(nullptr == deviceImp->pageFaultCommandList);
     EXPECT_TRUE(nullptr == deviceImp->getDebugSurface());
     deviceImp->releaseResources();

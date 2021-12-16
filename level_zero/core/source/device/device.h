@@ -43,7 +43,13 @@ struct DebugSession;
 enum class ModuleType;
 
 struct Device : _ze_device_handle_t {
-    virtual uint32_t getRootDeviceIndex() = 0;
+    uint32_t getRootDeviceIndex() const {
+        return neoDevice->getRootDeviceIndex();
+    }
+    NEO::Device *getNEODevice() const {
+        return this->neoDevice;
+    }
+
     virtual ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) = 0;
     virtual ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                           ze_command_list_handle_t *commandList) = 0;
@@ -118,7 +124,6 @@ struct Device : _ze_device_handle_t {
 
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;
-    virtual NEO::Device *getNEODevice() = 0;
     NEO::SourceLevelDebugger *getSourceLevelDebugger() { return getNEODevice()->getSourceLevelDebugger(); }
     DebuggerL0 *getL0Debugger() {
         auto debugger = getNEODevice()->getDebugger();
@@ -142,6 +147,7 @@ struct Device : _ze_device_handle_t {
     virtual void storeReusableAllocation(NEO::GraphicsAllocation &alloc) = 0;
 
   protected:
+    NEO::Device *neoDevice = nullptr;
     bool implicitScalingCapable = false;
 };
 

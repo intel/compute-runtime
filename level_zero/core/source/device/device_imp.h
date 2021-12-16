@@ -29,7 +29,6 @@ namespace L0 {
 struct SysmanDevice;
 
 struct DeviceImp : public Device {
-    uint32_t getRootDeviceIndex() override;
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                   ze_command_list_handle_t *commandList) override;
@@ -83,7 +82,6 @@ struct DeviceImp : public Device {
     NEO::PreemptionMode getDevicePreemptionMode() const override;
     const NEO::DeviceInfo &getDeviceInfo() const override;
 
-    NEO::Device *getNEODevice() override;
     void activateMetricGroups() override;
     void processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties);
     NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }
@@ -102,7 +100,6 @@ struct DeviceImp : public Device {
     bool toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &deviceIndex);
     bool toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t deviceIndex);
 
-    NEO::Device *neoDevice = nullptr;
     bool isSubdevice = false;
     void *execEnvironment = nullptr;
     std::unique_ptr<BuiltinFunctionsLib> builtins = nullptr;

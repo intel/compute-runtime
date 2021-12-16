@@ -26,7 +26,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->hostAddress = reinterpret_cast<void *>(baseHostAddr + (desc->index * eventPool->getEventSize()));
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
-    event->csr = static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver;
+    event->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     EventPoolImp *EventPoolImp = static_cast<struct EventPoolImp *>(eventPool);
     // do not reset even if it has been imported, since event pool
@@ -309,7 +309,7 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *pCo
 
         auto packetId = i;
         if (deviceImp->isSubdevice) {
-            packetId = static_cast<NEO::SubDevice *>(deviceImp->neoDevice)->getSubDeviceIndex();
+            packetId = static_cast<NEO::SubDevice *>(deviceImp->getNEODevice())->getSubDeviceIndex();
         }
 
         globalStartTs = kernelEventCompletionData[timestampPacket].getGlobalStartValue(packetId);

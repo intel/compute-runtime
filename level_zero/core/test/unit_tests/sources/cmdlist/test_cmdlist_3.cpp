@@ -1119,7 +1119,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
 
     std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
     ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendSignalEvent(event);
 
@@ -1159,7 +1159,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
 
     std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
     ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendBarrier(event, 0, nullptr);
 
@@ -1201,7 +1201,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
 
     std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
     ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendEventReset(event);
 

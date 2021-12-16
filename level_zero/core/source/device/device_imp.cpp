@@ -52,10 +52,6 @@ bool releaseFP64Override();
 
 namespace L0 {
 
-uint32_t DeviceImp::getRootDeviceIndex() {
-    return neoDevice->getRootDeviceIndex();
-}
-
 DriverHandle *DeviceImp::getDriverHandle() {
     return this->driverHandle;
 }
@@ -940,10 +936,6 @@ NEO::PreemptionMode DeviceImp::getDevicePreemptionMode() const {
 
 const NEO::DeviceInfo &DeviceImp::getDeviceInfo() const {
     return neoDevice->getDeviceInfo();
-}
-
-NEO::Device *DeviceImp::getNEODevice() {
-    return neoDevice;
 }
 
 NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffer, size_t size, struct CommandList *commandList) {
