@@ -14,7 +14,7 @@
 namespace NEO {
 
 SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice)
-    : Device(executionEnvironment), rootDevice(static_cast<RootDevice &>(rootDevice)), subDeviceIndex(subDeviceIndex) {
+    : Device(executionEnvironment, rootDevice.getRootDeviceIndex()), rootDevice(static_cast<RootDevice &>(rootDevice)), subDeviceIndex(subDeviceIndex) {
     UNRECOVERABLE_IF(rootDevice.isSubDevice());
     deviceBitfield = 0;
     deviceBitfield.set(subDeviceIndex);
@@ -31,10 +31,6 @@ void SubDevice::incRefInternal() {
 }
 unique_ptr_if_unused<Device> SubDevice::decRefInternal() {
     return rootDevice.decRefInternal();
-}
-
-uint32_t SubDevice::getRootDeviceIndex() const {
-    return this->rootDevice.getRootDeviceIndex();
 }
 
 uint32_t SubDevice::getSubDeviceIndex() const {

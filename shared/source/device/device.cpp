@@ -30,8 +30,8 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
                                                   uint32_t rootDeviceIndex,
                                                   const DeviceBitfield deviceBitfield);
 
-Device::Device(ExecutionEnvironment *executionEnvironment)
-    : executionEnvironment(executionEnvironment) {
+Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex)
+    : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {
     this->executionEnvironment->incRefInternal();
 }
 

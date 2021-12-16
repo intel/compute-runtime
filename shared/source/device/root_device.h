@@ -17,7 +17,6 @@ class RootDevice : public Device {
     RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex);
     ~RootDevice() override;
 
-    uint32_t getRootDeviceIndex() const override;
     Device *getRootDevice() const override;
     bool isSubDevice() const override { return false; }
 
@@ -26,7 +25,5 @@ class RootDevice : public Device {
     void createBindlessHeapsHelper() override;
 
     void initializeRootCommandStreamReceiver();
-
-    const uint32_t rootDeviceIndex;
 };
 } // namespace NEO

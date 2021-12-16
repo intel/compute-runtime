@@ -108,7 +108,9 @@ class Device : public ReferenceTrackedObject<Device> {
     BuiltIns *getBuiltIns() const;
     void allocateSyncBufferHandler();
 
-    virtual uint32_t getRootDeviceIndex() const = 0;
+    uint32_t getRootDeviceIndex() const {
+        return this->rootDeviceIndex;
+    }
     uint32_t getNumGenericSubDevices() const;
     Device *getSubDevice(uint32_t deviceId) const;
     Device *getNearestGenericSubDevice(uint32_t deviceId);
@@ -134,7 +136,7 @@ class Device : public ReferenceTrackedObject<Device> {
 
   protected:
     Device() = delete;
-    Device(ExecutionEnvironment *executionEnvironment);
+    Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL void initializeCaps();
 
@@ -183,6 +185,7 @@ class Device : public ReferenceTrackedObject<Device> {
     bool hasGenericSubDevices = false;
     bool engineInstanced = false;
     bool rootCsrCreated = false;
+    const uint32_t rootDeviceIndex;
 
     SelectorCopyEngine selectorCopyEngine = {};
 

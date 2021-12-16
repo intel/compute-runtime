@@ -17,8 +17,6 @@ class SubDevice : public Device {
     void incRefInternal() override;
     unique_ptr_if_unused<Device> decRefInternal() override;
 
-    uint32_t getRootDeviceIndex() const override;
-
     Device *getRootDevice() const override;
 
     uint32_t getSubDeviceIndex() const;

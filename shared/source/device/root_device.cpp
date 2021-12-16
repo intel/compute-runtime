@@ -21,16 +21,12 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
                                                   uint32_t rootDeviceIndex,
                                                   const DeviceBitfield deviceBitfield);
 
-RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
+RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment, rootDeviceIndex) {}
 
 RootDevice::~RootDevice() {
     if (getRootDeviceEnvironment().tagsManager) {
         getRootDeviceEnvironment().tagsManager->shutdown();
     }
-}
-
-uint32_t RootDevice::getRootDeviceIndex() const {
-    return rootDeviceIndex;
 }
 
 Device *RootDevice::getRootDevice() const {
