@@ -710,6 +710,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         }
     }
 
+    unifyExcludeIrFlags();
+
     if (DebugManager.flags.OverrideRevision.get() != -1) {
         revisionId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
     }
@@ -735,6 +737,16 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     }
 
     return retVal;
+}
+
+void OfflineCompiler::unifyExcludeIrFlags() {
+    const auto excludeIrFromZebin{internalOptions.find(CompilerOptions::excludeIrFromZebin.data()) != std::string::npos};
+    if (!excludeIr && excludeIrFromZebin) {
+        excludeIr = true;
+    } else if (excludeIr && !excludeIrFromZebin) {
+        const std::string prefix{"-ze"};
+        CompilerOptions::concatenateAppend(internalOptions, prefix + CompilerOptions::excludeIrFromZebin.data());
+    }
 }
 
 void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {

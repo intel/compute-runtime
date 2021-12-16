@@ -116,6 +116,7 @@ class OfflineCompiler {
         return suffix;
     }
     MOCKABLE_VIRTUAL void writeOutAllFiles();
+    void unifyExcludeIrFlags();
     HardwareInfo hwInfo;
 
     PRODUCT_CONFIG deviceConfig = UNKNOWN_ISA;

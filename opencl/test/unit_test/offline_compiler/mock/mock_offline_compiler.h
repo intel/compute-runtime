@@ -18,6 +18,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::argHelper;
     using OfflineCompiler::deviceName;
     using OfflineCompiler::elfBinary;
+    using OfflineCompiler::excludeIr;
     using OfflineCompiler::fclDeviceCtx;
     using OfflineCompiler::forceStatelessToStatefulOptimization;
     using OfflineCompiler::genBinary;

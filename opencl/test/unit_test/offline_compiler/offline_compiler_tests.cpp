@@ -536,8 +536,42 @@ TEST_F(OfflineCompilerTests, givenDashGInBiggerOptionStringWhenInitializingThenI
     EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr("-cl-kernel-debug-enable")));
 }
 
-TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShouldBeExcluded) {
+TEST_F(OfflineCompilerTests, givenExcludeIrFromZebinInternalOptionWhenInitIsPerformedThenIrExcludeFlagsShouldBeUnified) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-internal_options",
+        "-ze-allow-zebin -ze-exclude-ir-from-zebin",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
 
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    EXPECT_TRUE(mockOfflineCompiler.excludeIr);
+}
+
+TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenInitIsPerformedThenIrExcludeFlagsShouldBeUnified) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-exclude_ir",
+        "-internal_options",
+        "-ze-allow-zebin",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const auto expectedInternalOption{"-ze-exclude-ir-from-zebin"};
+    const auto excludeIrFromZebinEnabled{mockOfflineCompiler.internalOptions.find(expectedInternalOption) != std::string::npos};
+    EXPECT_TRUE(excludeIrFromZebinEnabled);
+}
+
+TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShouldBeExcluded) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -550,7 +584,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShou
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     const auto buildResult{mockOfflineCompiler.build()};
-    EXPECT_EQ(OfflineCompiler::SUCCESS, buildResult);
+    ASSERT_EQ(OfflineCompiler::SUCCESS, buildResult);
 
     std::string errorReason{};
     std::string warning{};
@@ -563,7 +597,6 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShou
 }
 
 TEST_F(OfflineCompilerTests, givenLackOfExcludeIrArgumentWhenCompilingKernelThenIrShouldBeIncluded) {
-
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -575,7 +608,7 @@ TEST_F(OfflineCompilerTests, givenLackOfExcludeIrArgumentWhenCompilingKernelThen
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     const auto buildResult{mockOfflineCompiler.build()};
-    EXPECT_EQ(OfflineCompiler::SUCCESS, buildResult);
+    ASSERT_EQ(OfflineCompiler::SUCCESS, buildResult);
 
     std::string errorReason{};
     std::string warning{};
