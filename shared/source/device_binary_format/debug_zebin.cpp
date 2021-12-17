@@ -39,6 +39,7 @@ void DebugZebinCreator::createDebugZebin() {
         sectionHeader.link = section.header->link;
         sectionHeader.info = section.header->info;
         sectionHeader.name = section.header->name;
+        sectionHeader.flags = section.header->flags;
     }
     debugZebin = elfEncoder.encode();
 }

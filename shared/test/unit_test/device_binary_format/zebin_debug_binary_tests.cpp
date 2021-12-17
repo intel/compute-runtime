@@ -125,6 +125,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
         EXPECT_EQ(zebin.sectionHeaders[i].header->link, debugZebin.sectionHeaders[i].header->link);
         EXPECT_EQ(zebin.sectionHeaders[i].header->info, debugZebin.sectionHeaders[i].header->info);
         EXPECT_EQ(zebin.sectionHeaders[i].header->name, debugZebin.sectionHeaders[i].header->name);
+        EXPECT_EQ(zebin.sectionHeaders[i].header->flags, debugZebin.sectionHeaders[i].header->flags);
 
         auto sectionName = debugZebin.getSectionName(i);
         auto refSectionName = NEO::ConstStringRef(sectionName);
