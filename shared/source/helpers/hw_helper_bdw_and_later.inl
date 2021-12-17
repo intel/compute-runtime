@@ -46,6 +46,11 @@ bool HwHelperHw<GfxFamily>::isTimestampWaitSupported() const {
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
+    return false;
+}
+
+template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported() const {
     return false;
 }

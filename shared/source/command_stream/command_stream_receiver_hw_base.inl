@@ -187,12 +187,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     bool updateTag = false;
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
+        updateTag = !isUpdateTagFromWaitEnabled();
+
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             //for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
             //for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
             levelClosed = true;
             //if we guard with ppc, flush dc as well to speed up completion latency
-            if (dispatchFlags.guardCommandBufferWithPipeControl) {
+            if (dispatchFlags.guardCommandBufferWithPipeControl && updateTag) {
                 dispatchFlags.dcFlush = true;
             }
         }
@@ -206,7 +208,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         auto address = getTagAllocation()->getGpuAddress();
 
-        updateTag = !isUpdateTagFromWaitEnabled();
         updateTag |= dispatchFlags.blocking;
         updateTag |= dispatchFlags.dcFlush;
 
@@ -1311,7 +1312,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchB
 
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
-    bool enabled = false;
+    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+    auto enabled = hwHelper.isUpdateTaskCountFromWaitSupported();
+    enabled &= this->isAnyDirectSubmissionEnabled();
 
     switch (DebugManager.flags.UpdateTaskCountFromWait.get()) {
     case 0:

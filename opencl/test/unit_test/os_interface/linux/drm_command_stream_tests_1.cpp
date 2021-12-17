@@ -931,6 +931,33 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
     {
         DebugManagerStateRestore restore;
         DebugManager.flags.EnableLocalMemory.set(1);
+        DebugManager.flags.UpdateTaskCountFromWait.set(3);
+
+        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
+        EXPECT_EQ(DispatchMode::ImmediateDispatch, csr1.dispatchMode);
+
+        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
+        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
+        EXPECT_EQ(DispatchMode::BatchedDispatch, csr2.dispatchMode);
+    }
+
+    {
+        DebugManagerStateRestore restore;
+        DebugManager.flags.EnableLocalMemory.set(0);
+        DebugManager.flags.UpdateTaskCountFromWait.set(3);
+
+        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
+        EXPECT_EQ(DispatchMode::ImmediateDispatch, csr1.dispatchMode);
+
+        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
+        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
+        EXPECT_EQ(DispatchMode::BatchedDispatch, csr2.dispatchMode);
+    }
+
+    {
+        DebugManagerStateRestore restore;
+        DebugManager.flags.EnableLocalMemory.set(1);
+        DebugManager.flags.UpdateTaskCountFromWait.set(0);
 
         MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::BatchedDispatch, csr1.dispatchMode);
@@ -943,6 +970,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
     {
         DebugManagerStateRestore restore;
         DebugManager.flags.EnableLocalMemory.set(0);
+        DebugManager.flags.UpdateTaskCountFromWait.set(0);
 
         MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::ImmediateDispatch, csr1.dispatchMode);
