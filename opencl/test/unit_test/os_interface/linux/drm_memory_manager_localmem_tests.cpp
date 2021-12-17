@@ -91,7 +91,7 @@ class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
 HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObjectInMemoryRegionIsCalledThenBufferObjectWithAGivenGpuAddressAndSizeIsCreatedAndAllocatedInASpecifiedMemoryRegion, NonDefaultIoctlsSupported) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -131,7 +131,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
         auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
-        drm_i915_memory_region_info regionInfo[2] = {};
+        MemoryRegion regionInfo[2] = {};
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
         regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -176,7 +176,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
         auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
-        drm_i915_memory_region_info regionInfo[2] = {};
+        MemoryRegion regionInfo[2] = {};
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
         regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -235,7 +235,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
     auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -302,7 +302,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoWhenAllocateWithAlignm
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -327,7 +327,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndNotUseObjectMmapProper
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(0);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -350,7 +350,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndFailedMmapOffsetWhenAl
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -370,7 +370,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndDisabledMmapBOCreation
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(0);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -392,7 +392,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndFailedGemCreateExtWhen
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -947,7 +947,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsU
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
@@ -984,7 +984,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsA
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
+    MemoryRegion regionInfo[2] = {};
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 

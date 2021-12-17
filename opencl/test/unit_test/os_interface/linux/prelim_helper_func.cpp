@@ -5,11 +5,15 @@
  *
  */
 
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
+#include <memory>
 #include <sys/ioctl.h>
+
+using namespace NEO;
 
 int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal) {
     if (request == PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT) {
@@ -43,4 +47,19 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal) {
         closReserveArg->clos_index = 1u;
     }
     return ioctlRetVal;
+}
+
+std::unique_ptr<uint8_t[]> getRegionInfo(const MemoryRegion *inputRegions, uint32_t size) {
+    int length = sizeof(prelim_drm_i915_query_memory_regions) + size * sizeof(prelim_drm_i915_memory_region_info);
+    auto data = std::make_unique<uint8_t[]>(length);
+    auto memoryRegions = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(data.get());
+    memoryRegions->num_regions = size;
+
+    for (uint32_t i = 0; i < size; i++) {
+        memoryRegions->regions[i].region.memory_class = inputRegions[i].region.memoryClass;
+        memoryRegions->regions[i].region.memory_instance = inputRegions[i].region.memoryInstance;
+        memoryRegions->regions[i].probed_size = inputRegions[i].probedSize;
+        memoryRegions->regions[i].unallocated_size = inputRegions[i].unallocatedSize;
+    }
+    return data;
 }

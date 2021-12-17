@@ -146,7 +146,7 @@ class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
 };
 
 struct MockedMemoryInfo : public NEO::MemoryInfo {
-    MockedMemoryInfo(const drm_i915_memory_region_info *regionInfo, size_t count) : MemoryInfo(regionInfo, count) {}
+    MockedMemoryInfo(const MemoryRegion *regionInfo, size_t count) : MemoryInfo(regionInfo, count) {}
     ~MockedMemoryInfo() override{};
 
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
@@ -191,11 +191,11 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
             i++;
         }
         mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
-        drm_i915_memory_region_info regionInfo[2] = {};
+        MemoryRegion regionInfo[2] = {};
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-        regionInfo[0].probed_size = 8 * GB;
+        regionInfo[0].probedSize = 8 * GB;
         regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
-        regionInfo[1].probed_size = 16 * GB;
+        regionInfo[1].probedSize = 16 * GB;
         mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo, 2));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         memoryManager.reset(new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment));

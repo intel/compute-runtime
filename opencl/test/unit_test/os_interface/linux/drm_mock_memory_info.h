@@ -9,9 +9,9 @@
 
 #include "shared/source/os_interface/linux/memory_info.h"
 
-constexpr drm_i915_memory_region_info memoryRegions[2] = {
-    {{I915_MEMORY_CLASS_SYSTEM, 0}, 0, 64 * GB, 0, {}},
-    {{I915_MEMORY_CLASS_DEVICE, 0}, 0, 8 * GB, 0, {}}};
+constexpr MemoryRegion memoryRegions[2] = {
+    {{I915_MEMORY_CLASS_SYSTEM, 0}, 64 * GB, 0},
+    {{I915_MEMORY_CLASS_DEVICE, 0}, 8 * GB, 0}};
 
 struct MockMemoryInfo : public MemoryInfo {
     MockMemoryInfo() : MemoryInfo(memoryRegions, 2) {}

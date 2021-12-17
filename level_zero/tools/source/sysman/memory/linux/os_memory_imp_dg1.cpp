@@ -40,7 +40,7 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 }
 
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
-    std::vector<drm_i915_memory_region_info> deviceRegions;
+    std::vector<NEO::MemoryRegion> deviceRegions;
     if (pDrm->queryMemoryInfo() == false) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -50,12 +50,12 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     for (auto region : memoryInfo->getDrmRegionInfos()) {
-        if (region.region.memory_class == I915_MEMORY_CLASS_DEVICE) {
+        if (region.region.memoryClass == I915_MEMORY_CLASS_DEVICE) {
             deviceRegions.push_back(region);
         }
     }
-    pState->free = deviceRegions[subdeviceId].unallocated_size;
-    pState->size = deviceRegions[subdeviceId].probed_size;
+    pState->free = deviceRegions[subdeviceId].unallocatedSize;
+    pState->size = deviceRegions[subdeviceId].probedSize;
     pState->health = ZES_MEM_HEALTH_OK;
 
     return ZE_RESULT_SUCCESS;

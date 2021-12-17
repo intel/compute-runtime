@@ -16,7 +16,7 @@ constexpr static auto gfxProduct = IGFX_DG1;
 
 extern uint32_t createGemExtMemoryRegions(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle);
 extern bool isQueryDrmTip(uint8_t *dataQuery, int32_t length);
-extern std::unique_ptr<uint8_t[]> translateToDrmTip(uint8_t *dataQuery, int32_t &length);
+extern std::unique_ptr<uint8_t[]> translateToDrmTip(uint8_t *dataQuery);
 
 template <>
 uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
@@ -58,13 +58,12 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_
 }
 
 template <>
-std::unique_ptr<uint8_t[]> IoctlHelperImpl<gfxProduct>::translateIfRequired(uint8_t *dataQuery, int32_t length) {
-    if (isQueryDrmTip(dataQuery, length)) {
-        DEBUG_BREAK_IF(true);
-        return std::unique_ptr<uint8_t[]>(dataQuery);
+std::unique_ptr<MemoryRegion[]> IoctlHelperImpl<gfxProduct>::translateToMemoryRegions(uint8_t *dataQuery, uint32_t length, uint32_t &numRegions) {
+    if (!isQueryDrmTip(dataQuery, length)) {
+        auto translated = translateToDrmTip(dataQuery);
+        return IoctlHelperUpstream::translateToMemoryRegions(translated.get(), length, numRegions);
     }
-    auto data = std::unique_ptr<uint8_t[]>(dataQuery);
-    return translateToDrmTip(data.get(), length);
+    return IoctlHelperUpstream::translateToMemoryRegions(dataQuery, length, numRegions);
 }
 
 template class IoctlHelperImpl<gfxProduct>;

@@ -51,8 +51,17 @@ uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, void *data, uint32_t dataSi
     return ret;
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::translateIfRequired(uint8_t *dataQuery, int32_t length) {
-    return std::unique_ptr<uint8_t[]>(dataQuery);
+std::unique_ptr<MemoryRegion[]> IoctlHelperPrelim20::translateToMemoryRegions(uint8_t *dataQuery, uint32_t length, uint32_t &numRegions) {
+    auto *data = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(dataQuery);
+    auto memRegions = std::make_unique<MemoryRegion[]>(data->num_regions);
+    for (uint32_t i = 0; i < data->num_regions; i++) {
+        memRegions[i].probedSize = data->regions[i].probed_size;
+        memRegions[i].unallocatedSize = data->regions[i].unallocated_size;
+        memRegions[i].region.memoryClass = data->regions[i].region.memory_class;
+        memRegions[i].region.memoryInstance = data->regions[i].region.memory_instance;
+    }
+    numRegions = data->num_regions;
+    return memRegions;
 }
 
 CacheRegion IoctlHelperPrelim20::closAlloc(Drm *drm) {

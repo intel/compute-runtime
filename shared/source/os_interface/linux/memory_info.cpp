@@ -12,9 +12,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/ioctl_helper.h"
-
-#include "drm/i915_drm.h"
 
 namespace NEO {
 
@@ -22,7 +19,7 @@ uint32_t MemoryInfo::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_
     return IoctlHelper::get(drm)->createGemExt(drm, data, dataSize, allocSize, handle);
 }
 
-drm_i915_gem_memory_class_instance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
+MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     if (!hwHelper.getEnableLocalMemory(hwInfo) || memoryBank == 0) {
         return systemMemoryRegion.region;
@@ -46,13 +43,13 @@ size_t MemoryInfo::getMemoryRegionSize(uint32_t memoryBank) {
         printRegionSizes();
     }
     if (memoryBank == 0) {
-        return systemMemoryRegion.probed_size;
+        return systemMemoryRegion.probedSize;
     }
 
     auto index = Math::log2(memoryBank);
 
     if (index < localMemoryRegions.size()) {
-        return localMemoryRegions[index].probed_size;
+        return localMemoryRegions[index].probedSize;
     }
 
     return 0;
@@ -60,9 +57,9 @@ size_t MemoryInfo::getMemoryRegionSize(uint32_t memoryBank) {
 
 void MemoryInfo::printRegionSizes() {
     for (auto region : drmQueryRegions) {
-        std::cout << "Memory type: " << region.region.memory_class
-                  << ", memory instance: " << region.region.memory_instance
-                  << ", region size: " << region.probed_size << std::endl;
+        std::cout << "Memory type: " << region.region.memoryClass
+                  << ", memory instance: " << region.region.memoryInstance
+                  << ", region size: " << region.probedSize << std::endl;
     }
 }
 

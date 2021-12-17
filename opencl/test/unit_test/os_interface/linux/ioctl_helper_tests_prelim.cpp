@@ -16,6 +16,7 @@
 using namespace NEO;
 
 extern int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal);
+extern std::unique_ptr<uint8_t[]> getRegionInfo(const MemoryRegion *inputRegions, uint32_t size);
 
 class DrmPrelimMock : public DrmMock {
   public:
@@ -78,14 +79,30 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenCreateGemExtWithDebugFlagThenPrintD
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(IoctlHelperTestsPrelim, givenPrelimsWhenTranslateIfRequiredThenReturnSameData) {
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenTranslateToMemoryRegionsThenReturnSameData) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto *data = new uint8_t{};
+    MemoryRegion expectedMemRegions[2] = {};
+    expectedMemRegions[0].region.memoryClass = I915_MEMORY_CLASS_SYSTEM;
+    expectedMemRegions[0].region.memoryInstance = 0;
+    expectedMemRegions[0].probedSize = 1024;
+    expectedMemRegions[1].region.memoryClass = I915_MEMORY_CLASS_DEVICE;
+    expectedMemRegions[1].region.memoryInstance = 0;
+    expectedMemRegions[1].probedSize = 1024;
+
+    auto regionInfo = getRegionInfo(expectedMemRegions, 2);
+
+    auto numRegions = 0u;
     auto ioctlHelper = IoctlHelper::get(drm.get());
-    auto ret = ioctlHelper->translateIfRequired(data, 1);
-    EXPECT_EQ(ret.get(), data);
+    auto memRegions = ioctlHelper->translateToMemoryRegions(reinterpret_cast<uint8_t *>(regionInfo.get()), 0, numRegions);
+    EXPECT_EQ(2u, numRegions);
+    for (uint32_t i = 0; i < numRegions; i++) {
+        EXPECT_EQ(expectedMemRegions[i].region.memoryClass, memRegions[i].region.memoryClass);
+        EXPECT_EQ(expectedMemRegions[i].region.memoryInstance, memRegions[i].region.memoryInstance);
+        EXPECT_EQ(expectedMemRegions[i].probedSize, memRegions[i].probedSize);
+        EXPECT_EQ(expectedMemRegions[i].unallocatedSize, memRegions[i].unallocatedSize);
+    }
 }
 
 TEST(IoctlHelperTestsPrelim, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {

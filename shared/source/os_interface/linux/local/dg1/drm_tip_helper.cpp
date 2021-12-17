@@ -41,7 +41,7 @@ namespace PROD_DG1 {
 #include "third_party/uapi/dg1/drm/i915_drm.h"
 } // namespace PROD_DG1
 
-std::unique_ptr<uint8_t[]> translateToDrmTip(uint8_t *dataQuery, int32_t &length) {
+std::unique_ptr<uint8_t[]> translateToDrmTip(uint8_t *dataQuery) {
     auto dataOnProdDrm = reinterpret_cast<PROD_DG1::drm_i915_query_memory_regions *>(dataQuery);
     auto lengthTranslated = static_cast<int32_t>(sizeof(drm_i915_query_memory_regions) + dataOnProdDrm->num_regions * sizeof(drm_i915_memory_region_info));
     auto dataQueryTranslated = std::make_unique<uint8_t[]>(lengthTranslated);
@@ -53,7 +53,6 @@ std::unique_ptr<uint8_t[]> translateToDrmTip(uint8_t *dataQuery, int32_t &length
         dataTranslated->regions[i].probed_size = dataOnProdDrm->regions[i].probed_size;
         dataTranslated->regions[i].unallocated_size = dataOnProdDrm->regions[i].unallocated_size;
     }
-    length = lengthTranslated;
     return dataQueryTranslated;
 }
 
