@@ -168,6 +168,14 @@ struct CommandList : _ze_command_list_handle_t {
         commandListPerThreadScratchSize = size;
     }
 
+    uint32_t getCommandListPerThreadPrivateScratchSize() const {
+        return commandListPerThreadPrivateScratchSize;
+    }
+
+    void setCommandListPerThreadPrivateScratchSize(uint32_t size) {
+        commandListPerThreadPrivateScratchSize = size;
+    }
+
     uint32_t getCommandListSLMEnable() const {
         return commandListSLMEnabled;
     }
@@ -245,6 +253,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     uint32_t cmdListType = CommandListType::TYPE_REGULAR;
     uint32_t commandListPerThreadScratchSize = 0u;
+    uint32_t commandListPerThreadPrivateScratchSize = 0u;
     uint32_t threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
     uint32_t partitionCount = 1;
     bool isFlushTaskSubmissionEnabled = false;

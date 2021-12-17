@@ -157,6 +157,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     size_t totalCmdBuffers = 0;
     uint32_t perThreadScratchSpaceSize = 0;
+    uint32_t perThreadPrivateScratchSize = 0;
     NEO::PageFaultManager *pageFaultManager = nullptr;
     if (performMigration) {
         pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
@@ -188,11 +189,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             statePreemption = commandListPreemption;
         }
 
-        if (perThreadScratchSpaceSize < commandList->getCommandListPerThreadScratchSize()) {
-            perThreadScratchSpaceSize = commandList->getCommandListPerThreadScratchSize();
-        }
+        perThreadScratchSpaceSize = std::max(perThreadScratchSpaceSize, commandList->getCommandListPerThreadScratchSize());
 
-        if (commandList->getCommandListPerThreadScratchSize() != 0) {
+        perThreadPrivateScratchSize = std::max(perThreadPrivateScratchSize, commandList->getCommandListPerThreadPrivateScratchSize());
+
+        if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
             if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
                 heapContainer.push_back(commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
             }
@@ -237,7 +238,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     handleScratchSpace(heapContainer,
                        scratchSpaceController,
                        gsbaStateDirty, frontEndStateDirty,
-                       perThreadScratchSpaceSize);
+                       perThreadScratchSpaceSize, perThreadPrivateScratchSize);
 
     auto &streamProperties = csr->getStreamProperties();
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);

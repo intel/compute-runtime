@@ -53,6 +53,9 @@ class ScratchSpaceController {
     inline uint32_t getPerThreadScratchSpaceSize() {
         return static_cast<uint32_t>(scratchSizeBytes / computeUnitsUsedForScratch);
     }
+    inline uint32_t getPerThreadPrivateScratchSize() {
+        return static_cast<uint32_t>(privateScratchSizeBytes / computeUnitsUsedForScratch);
+    }
 
     virtual void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) = 0;
     virtual void programHeaps(HeapContainer &heapContainer,

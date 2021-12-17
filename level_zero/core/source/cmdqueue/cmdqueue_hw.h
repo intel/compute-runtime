@@ -48,7 +48,8 @@ struct CommandQueueHw : public CommandQueueImp {
     MOCKABLE_VIRTUAL void handleScratchSpace(NEO::HeapContainer &heapContainer,
                                              NEO::ScratchSpaceController *scratchController,
                                              bool &gsbaState, bool &frontEndState,
-                                             uint32_t perThreadScratchSpaceSize);
+                                             uint32_t perThreadScratchSpaceSize,
+                                             uint32_t perThreadPrivateScratchSize);
 
     bool getPreemptionCmdProgramming() override;
     void patchCommands(CommandList &commandList, uint64_t scratchAddress);

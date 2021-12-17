@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -14,8 +16,11 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/aub_csr_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+
+#include "test_traits_common.h"
 
 namespace L0 {
 namespace ult {
@@ -596,6 +601,235 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     res = context->freeMem(ptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     commandQueue->destroy();
+}
+using CommandQueueScratchTests = Test<DeviceFixture>;
+
+using Platforms = IsAtLeastProduct<IGFX_XE_HP_SDV>;
+
+HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenProperScratchSlotIsSetAndScratchAllocationReturned, Platforms) {
+    class MockScratchSpaceControllerXeHPAndLater : public NEO::ScratchSpaceControllerXeHPAndLater {
+      public:
+        uint32_t scratchSlot = 0u;
+        bool programHeapsCalled = false;
+        NEO::GraphicsAllocation *scratchAllocation = nullptr;
+        MockScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
+                                               NEO::ExecutionEnvironment &environment,
+                                               InternalAllocationStorage &allocationStorage) : NEO::ScratchSpaceControllerXeHPAndLater(rootDeviceIndex, environment, allocationStorage) {}
+
+        void programHeaps(HeapContainer &heapContainer,
+                          uint32_t scratchSlot,
+                          uint32_t requiredPerThreadScratchSize,
+                          uint32_t requiredPerThreadPrivateScratchSize,
+                          uint32_t currentTaskCount,
+                          OsContext &osContext,
+                          bool &stateBaseAddressDirty,
+                          bool &vfeStateDirty) override {
+            this->scratchSlot = scratchSlot;
+            programHeapsCalled = true;
+        }
+
+        NEO::GraphicsAllocation *getScratchSpaceAllocation() override {
+            return scratchAllocation;
+        }
+
+      protected:
+    };
+
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    NEO::ExecutionEnvironment *execEnv = static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment());
+    std::unique_ptr<ScratchSpaceController> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(device->getRootDeviceIndex(),
+                                                                                                                         *execEnv,
+                                                                                                                         *csr.getInternalAllocationStorage());
+
+    const ze_command_queue_desc_t desc = {};
+
+    std::unique_ptr<L0::CommandQueue> commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, &csr, &desc);
+    auto commandQueueHw = static_cast<MockCommandQueueHw<gfxCoreFamily> *>(commandQueue.get());
+
+    NEO::ResidencyContainer residencyContainer;
+    NEO::HeapContainer heapContainer;
+
+    void *surfaceHeap = alignedMalloc(0x1000, 0x1000);
+    NEO::GraphicsAllocation graphicsAllocationHeap(0, NEO::GraphicsAllocation::AllocationType::BUFFER, surfaceHeap, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    heapContainer.push_back(&graphicsAllocationHeap);
+    bool gsbaStateDirty = false;
+    bool frontEndStateDirty = false;
+
+    NEO::GraphicsAllocation graphicsAllocation(1u, NEO::GraphicsAllocation::AllocationType::BUFFER, nullptr, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
+
+    auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
+    scratch->scratchAllocation = &graphicsAllocation;
+    commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), gsbaStateDirty, frontEndStateDirty, 0x1000, 0u);
+
+    EXPECT_TRUE(scratch->programHeapsCalled);
+    EXPECT_GT(csr.makeResidentCalledTimes, 0u);
+
+    alignedFree(surfaceHeap);
+}
+
+HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHeapContainerIsZeroSizeThenNoFunctionIsCalled, Platforms) {
+    class MockScratchSpaceControllerXeHPAndLater : public NEO::ScratchSpaceControllerXeHPAndLater {
+      public:
+        using NEO::ScratchSpaceControllerXeHPAndLater::scratchAllocation;
+        bool programHeapsCalled = false;
+        MockScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
+                                               NEO::ExecutionEnvironment &environment,
+                                               InternalAllocationStorage &allocationStorage) : NEO::ScratchSpaceControllerXeHPAndLater(rootDeviceIndex, environment, allocationStorage) {}
+
+        void programHeaps(HeapContainer &heapContainer,
+                          uint32_t scratchSlot,
+                          uint32_t requiredPerThreadScratchSize,
+                          uint32_t requiredPerThreadPrivateScratchSize,
+                          uint32_t currentTaskCount,
+                          OsContext &osContext,
+                          bool &stateBaseAddressDirty,
+                          bool &vfeStateDirty) override {
+            programHeapsCalled = true;
+        }
+
+      protected:
+    };
+
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    NEO::ExecutionEnvironment *execEnv = static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment());
+    std::unique_ptr<ScratchSpaceController> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(device->getRootDeviceIndex(),
+                                                                                                                         *execEnv,
+                                                                                                                         *csr.getInternalAllocationStorage());
+
+    const ze_command_queue_desc_t desc = {};
+
+    std::unique_ptr<L0::CommandQueue> commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, &csr, &desc);
+    auto commandQueueHw = static_cast<MockCommandQueueHw<gfxCoreFamily> *>(commandQueue.get());
+
+    NEO::ResidencyContainer residencyContainer;
+    NEO::HeapContainer heapContainer;
+    bool gsbaStateDirty = false;
+    bool frontEndStateDirty = false;
+
+    NEO::GraphicsAllocation graphicsAllocation(1u, NEO::GraphicsAllocation::AllocationType::BUFFER, nullptr, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
+
+    auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
+    scratch->scratchAllocation = &graphicsAllocation;
+    commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), gsbaStateDirty, frontEndStateDirty, 0x1000, 0u);
+
+    EXPECT_FALSE(scratch->programHeapsCalled);
+    scratch->scratchAllocation = nullptr;
+}
+
+HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenBindlessEnabledThenHandleScratchSpaceCallsProgramBindlessSurfaceStateForScratch, Platforms) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    class MockScratchSpaceControllerXeHPAndLater : public NEO::ScratchSpaceControllerXeHPAndLater {
+      public:
+        bool programHeapsCalled = false;
+        NEO::MockGraphicsAllocation alloc;
+        MockScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
+                                               NEO::ExecutionEnvironment &environment,
+                                               InternalAllocationStorage &allocationStorage) : NEO::ScratchSpaceControllerXeHPAndLater(rootDeviceIndex, environment, allocationStorage) {}
+
+        void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
+                                                   uint32_t requiredPerThreadScratchSize,
+                                                   uint32_t requiredPerThreadPrivateScratchSize,
+                                                   uint32_t currentTaskCount,
+                                                   OsContext &osContext,
+                                                   bool &stateBaseAddressDirty,
+                                                   bool &vfeStateDirty,
+                                                   NEO::CommandStreamReceiver *csr) override {
+            programHeapsCalled = true;
+        }
+
+        NEO::GraphicsAllocation *getScratchSpaceAllocation() override {
+            return &alloc;
+        }
+
+      protected:
+    };
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    NEO::ExecutionEnvironment *execEnv = static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment());
+    std::unique_ptr<ScratchSpaceController> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(device->getRootDeviceIndex(),
+                                                                                                                         *execEnv,
+                                                                                                                         *csr.getInternalAllocationStorage());
+    const ze_command_queue_desc_t desc = {};
+
+    std::unique_ptr<L0::CommandQueue> commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, &csr, &desc);
+    auto commandQueueHw = static_cast<MockCommandQueueHw<gfxCoreFamily> *>(commandQueue.get());
+
+    bool gsbaStateDirty = false;
+    bool frontEndStateDirty = false;
+    NEO::ResidencyContainer residency;
+    NEO::HeapContainer heapContainer;
+
+    // scratch part
+    commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), gsbaStateDirty, frontEndStateDirty, 0x1000, 0u);
+
+    EXPECT_TRUE(static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get())->programHeapsCalled);
+
+    // private part
+    static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get())->programHeapsCalled = false;
+
+    commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), gsbaStateDirty, frontEndStateDirty, 0x0, 0x1000);
+
+    EXPECT_TRUE(static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get())->programHeapsCalled);
+}
+
+HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr, &desc);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+
+    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0));
+    commandList->commandsToPatch.push_back({});
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0));
+    commandList->commandsToPatch.clear();
+
+    CFE_STATE destinationCfeStates[4];
+    int32_t initialScratchAddress = 0x123400;
+    for (size_t i = 0; i < 4; i++) {
+        auto sourceCfeState = new CFE_STATE;
+        *sourceCfeState = FamilyType::cmdInitCfeState;
+        if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+            sourceCfeState->setNumberOfWalkers(2);
+        }
+        sourceCfeState->setMaximumNumberOfThreads(16);
+        sourceCfeState->setScratchSpaceBuffer(initialScratchAddress);
+
+        destinationCfeStates[i] = FamilyType::cmdInitCfeState;
+        if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+            EXPECT_NE(destinationCfeStates[i].getNumberOfWalkers(), sourceCfeState->getNumberOfWalkers());
+        }
+        EXPECT_NE(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState->getMaximumNumberOfThreads());
+
+        CommandList::CommandToPatch commandToPatch;
+        commandToPatch.pDestination = &destinationCfeStates[i];
+        commandToPatch.pCommand = sourceCfeState;
+        commandToPatch.type = CommandList::CommandToPatch::CommandType::FrontEndState;
+        commandList->commandsToPatch.push_back(commandToPatch);
+    }
+
+    uint64_t patchedScratchAddress = 0xABCD00;
+    commandQueue->patchCommands(*commandList, patchedScratchAddress);
+    for (size_t i = 0; i < 4; i++) {
+        EXPECT_EQ(patchedScratchAddress, destinationCfeStates[i].getScratchSpaceBuffer());
+        auto &sourceCfeState = *reinterpret_cast<CFE_STATE *>(commandList->commandsToPatch[i].pCommand);
+        if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+            EXPECT_EQ(destinationCfeStates[i].getNumberOfWalkers(), sourceCfeState.getNumberOfWalkers());
+        }
+        EXPECT_EQ(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState.getMaximumNumberOfThreads());
+        EXPECT_EQ(destinationCfeStates[i].getScratchSpaceBuffer(), sourceCfeState.getScratchSpaceBuffer());
+    }
 }
 
 } // namespace ult

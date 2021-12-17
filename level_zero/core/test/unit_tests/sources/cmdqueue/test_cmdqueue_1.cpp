@@ -947,7 +947,8 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
     void handleScratchSpace(NEO::HeapContainer &heapContainer,
                             NEO::ScratchSpaceController *scratchController,
                             bool &gsbaState, bool &frontEndState,
-                            uint32_t perThreadScratchSpaceSize) override {
+                            uint32_t perThreadScratchSpaceSize,
+                            uint32_t perThreadPrivateScratchSize) override {
         this->mockHeapContainer = heapContainer;
     }
 
@@ -967,6 +968,34 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     commandList->setCommandListPerThreadScratchSize(100u);
+    auto commandListHandle = commandList->toHandle();
+
+    void *alloc = alignedMalloc(0x100, 0x100);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+
+    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation1);
+    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation2);
+
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    EXPECT_EQ(commandQueue->mockHeapContainer.size(), 3u);
+    commandQueue->destroy();
+    commandList->destroy();
+    alignedFree(alloc);
+}
+
+using CommandQueueExecuteTest = Test<DeviceFixture>;
+
+HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateScratchWhenExecuteThenSshWasUsed, IsAtLeastXeHpCore) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
+    commandQueue->initialize(false, false);
+    auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    commandList->setCommandListPerThreadPrivateScratchSize(100u);
     auto commandListHandle = commandList->toHandle();
 
     void *alloc = alignedMalloc(0x100, 0x100);
@@ -1490,6 +1519,72 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
     ASSERT_EQ(2u, GSBAStates.size());
+
+    commandQueue->destroy();
+    commandQueue1->destroy();
+}
+
+HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPrivateScratchUniquePerCmdListThenCFEIsProgrammedOncePerSubmission, IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    auto commandList0 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList1 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    commandList0->setCommandListPerThreadPrivateScratchSize(0u);
+    commandList1->setCommandListPerThreadPrivateScratchSize(512u);
+    auto commandListHandle0 = commandList0->toHandle();
+    auto commandListHandle1 = commandList1->toHandle();
+
+    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false);
+    EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
+    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto mediaVfeStates = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_EQ(2u, mediaVfeStates.size());
+
+    commandList0->reset();
+    commandList0->setCommandListPerThreadPrivateScratchSize(1024u);
+    commandList1->reset();
+    commandList1->setCommandListPerThreadPrivateScratchSize(2048u);
+
+    auto commandQueue1 = whitebox_cast(CommandQueue::create(productFamily,
+                                                            device,
+                                                            csr,
+                                                            &desc,
+                                                            false,
+                                                            false,
+                                                            returnValue));
+    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
+    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
+    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
+    EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
+
+    usedSpaceAfter = commandQueue1->commandStream->getUsed();
+
+    GenCmdList cmdList1;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    mediaVfeStates = findAll<CFE_STATE *>(cmdList1.begin(), cmdList1.end());
+
+    ASSERT_EQ(2u, mediaVfeStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();

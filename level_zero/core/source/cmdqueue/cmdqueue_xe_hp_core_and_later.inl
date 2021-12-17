@@ -111,19 +111,27 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHeaps,
                                                        NEO::ScratchSpaceController *scratchController,
                                                        bool &gsbaState, bool &frontEndState,
-                                                       uint32_t perThreadScratchSpaceSize) {
-    if (perThreadScratchSpaceSize > 0) {
+                                                       uint32_t perThreadScratchSpaceSize, uint32_t perThreadPrivateScratchSize) {
+    if (perThreadScratchSpaceSize > 0 || perThreadPrivateScratchSize > 0) {
         if (sshHeaps.size() > 0) {
             uint32_t offsetIndex = maxPtssIndex * csr->getOsContext().getEngineType() + 1u;
-            scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSize, 0u, csr->peekTaskCount(),
+            scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                             csr->getOsContext(), gsbaState, frontEndState);
         }
         if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
-            scratchController->programBindlessSurfaceStateForScratch(device->getNEODevice()->getBindlessHeapsHelper(), perThreadScratchSpaceSize, 0u, csr->peekTaskCount(),
+            scratchController->programBindlessSurfaceStateForScratch(device->getNEODevice()->getBindlessHeapsHelper(), perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                                                      csr->getOsContext(), gsbaState, frontEndState, csr);
         }
         auto scratchAllocation = scratchController->getScratchSpaceAllocation();
-        csr->makeResident(*scratchAllocation);
+        if (scratchAllocation != nullptr) {
+            csr->makeResident(*scratchAllocation);
+        }
+
+        auto privateScratchAllocation = scratchController->getPrivateScratchSpaceAllocation();
+
+        if (privateScratchAllocation != nullptr) {
+            csr->makeResident(*privateScratchAllocation);
+        }
     }
 }
 

@@ -107,7 +107,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &heapContainer,
                                                        NEO::ScratchSpaceController *scratchController,
                                                        bool &gsbaState, bool &frontEndState,
-                                                       uint32_t perThreadScratchSpaceSize) {
+                                                       uint32_t perThreadScratchSpaceSize, uint32_t perThreadPrivateScratchSize) {
 
     if (perThreadScratchSpaceSize > 0) {
         scratchController->setRequiredScratchSpace(nullptr, 0u, perThreadScratchSpaceSize, 0u, csr->peekTaskCount(),
