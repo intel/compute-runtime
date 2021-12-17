@@ -63,6 +63,14 @@ struct KernelImmutableData {
 
     const NEO::KernelInfo *getKernelInfo() const { return kernelInfo; }
 
+    void setIsaCopiedToAllocation() {
+        isaCopiedToAllocation = true;
+    }
+
+    bool isIsaCopiedToAllocation() const {
+        return isaCopiedToAllocation;
+    }
+
   protected:
     MOCKABLE_VIRTUAL void createRelocatedDebugData(NEO::GraphicsAllocation *globalConstBuffer,
                                                    NEO::GraphicsAllocation *globalVarBuffer);
@@ -82,6 +90,8 @@ struct KernelImmutableData {
     std::unique_ptr<uint8_t[]> dynamicStateHeapTemplate = nullptr;
 
     std::vector<NEO::GraphicsAllocation *> residencyContainer;
+
+    bool isaCopiedToAllocation = false;
 };
 
 struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {

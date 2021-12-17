@@ -12,7 +12,9 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_elf.h"
+#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/compiler_interface/linker_mock.h"
 
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -395,18 +397,117 @@ TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenModuleIsCreatedThenDeb
     EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, L0::BuildOptions::optDisable));
 }
 
-TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenKernelsAreInitializedThenAllocationsAreBound) {
-    uint32_t kernelHeap = 0;
+TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenKernelsAreInitializedThenAllocationsAreNotResidentAndNotCopied) {
+    uint32_t kernelHeap = 0xDEAD;
     KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.KernelHeapSize = 4;
     kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
 
     KernelImmutableData kernelImmutableData(device);
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
     kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-    EXPECT_EQ(1, memoryOperationsHandler->makeResidentCalledCount);
+    EXPECT_EQ(0, memoryOperationsHandler->makeResidentCalledCount);
+
+    auto isa = kernelImmutableData.getIsaGraphicsAllocation()->getUnderlyingBuffer();
+    EXPECT_THAT(isa, testing::Not(MemCompare(&kernelHeap, sizeof(kernelHeap))));
 };
+
+using ModuleTest = Test<ModuleFixture>;
+
+HWTEST_F(ModuleTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyLinkedThenIsaAllocationsAreCopiedAndResident) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    auto memoryOperationsHandler = new NEO::MockMemoryOperations();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
+
+    auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
+
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+
+    memoryOperationsHandler->makeResidentCalledCount = 0;
+
+    module->initialize(&moduleDesc, neoDevice);
+
+    EXPECT_EQ(4, memoryOperationsHandler->makeResidentCalledCount);
+
+    for (auto &ki : module->getKernelImmutableDataVector()) {
+        EXPECT_TRUE(ki->isIsaCopiedToAllocation());
+    }
+}
+
+HWTEST_F(ModuleTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymbolsIsCreatedThenIsaAllocationsAreNotCopiedAndNotResident) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    auto memoryOperationsHandler = new NEO::MockMemoryOperations();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
+
+    auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
+
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<Module>(new Module(device, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->dataRelocations.push_back(unresolvedRelocation);
+    linkerInput->traits.requiresPatchingOfGlobalVariablesBuffer = true;
+
+    module->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    memoryOperationsHandler->makeResidentCalledCount = 0;
+
+    module->initialize(&moduleDesc, neoDevice);
+
+    EXPECT_EQ(0, memoryOperationsHandler->makeResidentCalledCount);
+
+    for (auto &ki : module->getKernelImmutableDataVector()) {
+        EXPECT_FALSE(ki->isIsaCopiedToAllocation());
+    }
+
+    EXPECT_FALSE(module->isFullyLinked);
+}
 
 } // namespace ult
 } // namespace L0

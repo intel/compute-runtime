@@ -20,6 +20,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_initialization.h"
@@ -552,6 +553,30 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         passDebugData();
     }
 
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (this->isFullyLinked) {
+        for (auto &ki : kernelImmDatas) {
+
+            if (this->type == ModuleType::User && !ki->isIsaCopiedToAllocation()) {
+
+                NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *ki->getIsaGraphicsAllocation()),
+                                                                      *neoDevice, ki->getIsaGraphicsAllocation(), 0, ki->getKernelInfo()->heapInfo.pKernelHeap,
+                                                                      static_cast<size_t>(ki->getKernelInfo()->heapInfo.KernelHeapSize));
+
+                ki->setIsaCopiedToAllocation();
+            }
+
+            if (device->getL0Debugger()) {
+                NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+                if (memoryOperationsIface) {
+                    auto allocation = ki->getIsaGraphicsAllocation();
+                    memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
+                }
+            }
+        }
+    }
     return success;
 }
 
@@ -676,10 +701,12 @@ ze_result_t ModuleImp::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData)
 
 void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching) {
     if (this->translationUnit->programInfo.linkerInput && this->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
-        for (const auto &kernelImmData : this->kernelImmDatas) {
+        for (auto &kernelImmData : this->kernelImmDatas) {
             if (nullptr == kernelImmData->getIsaGraphicsAllocation()) {
                 continue;
             }
+
+            UNRECOVERABLE_IF(kernelImmData->isIsaCopiedToAllocation());
 
             kernelImmData->getIsaGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
             kernelImmData->getIsaGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
@@ -687,6 +714,8 @@ void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSeg
             this->device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(kernelImmData->getIsaGraphicsAllocation(), 0,
                                                                                         isaSegmentsForPatching[segmentId].hostPointer,
                                                                                         isaSegmentsForPatching[segmentId].segmentSize);
+
+            kernelImmData->setIsaCopiedToAllocation();
         }
     }
 }
@@ -755,7 +784,7 @@ bool ModuleImp::linkBinary() {
         }
         isFullyLinked = false;
         return LinkingStatus::LinkedPartially == linkStatus;
-    } else {
+    } else if (type != ModuleType::Builtin) {
         copyPatchedSegments(isaSegmentsForPatching);
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));

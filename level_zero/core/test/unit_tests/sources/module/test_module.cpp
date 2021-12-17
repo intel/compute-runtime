@@ -1300,6 +1300,48 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
     zeModuleBuildLogDestroy(dynLinkLog);
 }
 
+TEST_F(ModuleDynamicLinkTests, givenUnresolvedSymbolsWhenModuleIsCreatedThenIsaAllocationsAreNotCopied) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<Module>(new Module(device, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->dataRelocations.push_back(unresolvedRelocation);
+    linkerInput->traits.requiresPatchingOfGlobalVariablesBuffer = true;
+    module->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    module->initialize(&moduleDesc, neoDevice);
+
+    for (auto &ki : module->getKernelImmutableDataVector()) {
+        EXPECT_FALSE(ki->isIsaCopiedToAllocation());
+    }
+
+    EXPECT_FALSE(module->isFullyLinked);
+}
+
 class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Test {
   public:
     void SetUp() override {
@@ -2051,6 +2093,30 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndNoDebuggerOrStackCallsWhenLink
     EXPECT_EQ(0u, *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
 
     EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+}
+
+using ModuleIsaCopyTest = Test<ModuleImmutableDataFixture>;
+
+TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {
+    MockImmutableMemoryManager *mockMemoryManager = static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
+
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+    bool isInternal = false;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    uint32_t previouscopyMemoryToAllocationCalledTimes = mockMemoryManager->copyMemoryToAllocationCalledTimes;
+
+    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
+
+    uint32_t numOfKernels = static_cast<uint32_t>(module->getKernelImmutableDataVector().size());
+    const uint32_t numOfGlobalBuffers = 1;
+
+    EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes + numOfGlobalBuffers + numOfKernels, mockMemoryManager->copyMemoryToAllocationCalledTimes);
+
+    for (auto &kid : module->getKernelImmutableDataVector()) {
+        EXPECT_TRUE(kid->isIsaCopiedToAllocation());
+    }
 }
 
 using ModuleWithZebinTest = Test<ModuleWithZebinFixture>;

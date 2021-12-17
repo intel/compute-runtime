@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
@@ -323,7 +324,7 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPriv
 
 using KernelImmutableDataIsaCopyTests = KernelImmutableDataTests;
 
-TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedWhenModuleIsCreated) {
+TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsCopiedWhenModuleIsCreated) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -339,9 +340,6 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedW
 
     size_t copyForGlobalSurface = 1u;
     auto copyForIsa = module->getKernelImmutableDataVector().size();
-    if (module->translationUnit->programInfo.linkerInput && module->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
-        copyForIsa += module->getKernelImmutableDataVector().size();
-    }
     size_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
                                                                copyForGlobalSurface + copyForIsa;
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
@@ -356,7 +354,7 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopiedW
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 }
 
-TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKernelThenIsaIsCopied) {
+TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKernelThenIsaIsNotCopied) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -375,7 +373,7 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKer
                                   module.get()->translationUnit->globalVarBuffer,
                                   isInternal);
 
-    EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes + 1u,
+    EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 }
 
@@ -404,7 +402,7 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInterna
 
 using KernelImmutableDataWithNullHeapTests = KernelImmutableDataTests;
 
-TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenSingleIsaIsCopied) {
+TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenIsaIsCopiedOnce) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -421,9 +419,6 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenSingl
 
     size_t copyForGlobalSurface = 1u;
     size_t copyForPatchingIsa = 0u;
-    if (module->translationUnit->programInfo.linkerInput && module->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
-        copyForPatchingIsa += module->getKernelImmutableDataVector().size();
-    }
     size_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
                                                                copyForGlobalSurface + copyForPatchingIsa;
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
@@ -438,6 +433,66 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenSingl
 
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes,
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
+}
+
+TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedIsaIsNotCopiedDuringLinking) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    MockImmutableMemoryManager *mockMemoryManager = static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
+
+    uint8_t binary[16];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfGlobalVariablesBuffer = true;
+
+    std::unique_ptr<L0::ult::MockModule> moduleMock = std::make_unique<L0::ult::MockModule>(device, moduleBuildLog, ModuleType::Builtin);
+    moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    moduleMock->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    uint32_t kernelHeap = 0;
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+
+    Mock<::L0::Kernel> kernelMock;
+    kernelMock.module = moduleMock.get();
+    kernelMock.immutableData.kernelInfo = kernelInfo;
+    kernelMock.immutableData.surfaceStateHeapSize = 64;
+    kernelMock.immutableData.surfaceStateHeapTemplate.reset(new uint8_t[64]);
+    kernelMock.immutableData.getIsaGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL);
+    kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
+
+    moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+    moduleMock->kernelImmData = &kernelMock.immutableData;
+
+    size_t previouscopyMemoryToAllocationCalledTimes = mockMemoryManager->copyMemoryToAllocationCalledTimes;
+    auto result = moduleMock->initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(result);
+    size_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes;
+
+    EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes, mockMemoryManager->copyMemoryToAllocationCalledTimes);
+
+    for (auto &ki : moduleMock->kernelImmDatas) {
+        EXPECT_FALSE(ki->isIsaCopiedToAllocation());
+    }
+
+    expectedPreviouscopyMemoryToAllocationCalledTimes++;
+
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = "";
+
+    moduleMock->kernelImmData = moduleMock->kernelImmDatas[0].get();
+
+    kernelMock.initialize(&desc);
+
+    EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes, mockMemoryManager->copyMemoryToAllocationCalledTimes);
 }
 
 TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenContainerHasOneExtraSpaceForAllocation) {
