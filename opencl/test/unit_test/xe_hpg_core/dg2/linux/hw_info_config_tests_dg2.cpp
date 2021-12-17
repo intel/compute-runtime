@@ -38,5 +38,7 @@ DG2TEST_F(HwInfoConfigTestLinuxDg2, GivenDg2WhenConfigureHardwareCustomThenKmdNo
     OSInterface osIface;
     hwInfoConfig->configureHardwareCustom(&pInHwInfo, &osIface);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
-    EXPECT_EQ(20ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
+    EXPECT_EQ(20ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
