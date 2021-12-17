@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -266,7 +266,7 @@ ze_result_t MetricGroupDomains::activateDeferred(const uint32_t subDeviceIndex,
         DEBUG_BREAK_IF(!phMetricGroups[i]);
 
         zet_metric_group_handle_t handle = phMetricGroups[i];
-        auto pMetricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(handle));
+        auto pMetricGroupImp = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(handle));
         if (pMetricGroupImp->getMetricGroups().size() > 0) {
             handle = pMetricGroupImp->getMetricGroups()[subDeviceIndex];
         }

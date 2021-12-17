@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,8 +71,8 @@ struct MetricEnumeration {
     static const char *oaConcurrentGroupName;
 };
 
-struct MetricGroupImp : MetricGroup {
-    ~MetricGroupImp() override;
+struct OaMetricGroupImp : MetricGroup {
+    ~OaMetricGroupImp() override;
 
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
     ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
@@ -128,8 +128,8 @@ struct MetricGroupImp : MetricGroup {
     std::vector<zet_metric_group_handle_t> metricGroups;
 };
 
-struct MetricImp : Metric {
-    ~MetricImp() override{};
+struct OaMetricImp : Metric {
+    ~OaMetricImp() override{};
 
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
 

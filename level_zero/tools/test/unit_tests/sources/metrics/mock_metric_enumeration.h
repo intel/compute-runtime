@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -212,10 +212,10 @@ struct Mock<MetricGroup> : public MetricGroup {
     MOCK_METHOD(ze_result_t, closeIoStream, (), (override));
 };
 
-struct MetricGroupImpTest : public MetricGroupImp {
-    using MetricGroupImp::copyValue;
-    using MetricGroupImp::pReferenceConcurrentGroup;
-    using MetricGroupImp::pReferenceMetricSet;
+struct MetricGroupImpTest : public OaMetricGroupImp {
+    using OaMetricGroupImp::copyValue;
+    using OaMetricGroupImp::pReferenceConcurrentGroup;
+    using OaMetricGroupImp::pReferenceMetricSet;
 };
 
 } // namespace ult

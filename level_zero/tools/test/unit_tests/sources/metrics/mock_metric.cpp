@@ -266,12 +266,12 @@ void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
 
 void MetricStreamerMultiDeviceFixture::cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer) {
 
-    MetricStreamerImp *pStreamerImp = static_cast<MetricStreamerImp *>(MetricStreamer::fromHandle(hStreamer));
+    OaMetricStreamerImp *pStreamerImp = static_cast<OaMetricStreamerImp *>(MetricStreamer::fromHandle(hStreamer));
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
 
     for (size_t index = 0; index < deviceImp.subDevices.size(); index++) {
         zet_metric_streamer_handle_t metricStreamerSubDeviceHandle = pStreamerImp->getMetricStreamers()[index];
-        MetricStreamerImp *pStreamerSubDevImp = static_cast<MetricStreamerImp *>(MetricStreamer::fromHandle(metricStreamerSubDeviceHandle));
+        OaMetricStreamerImp *pStreamerSubDevImp = static_cast<OaMetricStreamerImp *>(MetricStreamer::fromHandle(metricStreamerSubDeviceHandle));
         auto device = deviceImp.subDevices[index];
         auto &metricContext = device->getMetricContext();
         auto &metricsLibrary = metricContext.getMetricsLibrary();

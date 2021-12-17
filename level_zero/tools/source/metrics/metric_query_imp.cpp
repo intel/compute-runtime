@@ -433,13 +433,13 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
     }
 
     const auto &deviceImp = *static_cast<DeviceImp *>(device);
-    auto metricPoolImp = new MetricQueryPoolImp(device->getMetricContext(), hMetricGroup, *pDesc);
+    auto metricPoolImp = new OaMetricQueryPoolImp(device->getMetricContext(), hMetricGroup, *pDesc);
 
     if (metricContext.isImplicitScalingCapable()) {
 
         auto emptyMetricGroups = std::vector<zet_metric_group_handle_t>();
         auto &metricGroups = hMetricGroup
-                                 ? static_cast<MetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup))->getMetricGroups()
+                                 ? static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup))->getMetricGroups()
                                  : emptyMetricGroups;
 
         const bool useMetricGroupSubDevice = metricGroups.size() > 0;
@@ -457,7 +457,7 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
                                                               ? metricGroups[subDeviceMetricContext.getSubDeviceIndex()]
                                                               : hMetricGroup;
 
-            auto metricPoolSubdeviceImp = new MetricQueryPoolImp(subDeviceMetricContext, metricGroupHandle, *pDesc);
+            auto metricPoolSubdeviceImp = new OaMetricQueryPoolImp(subDeviceMetricContext, metricGroupHandle, *pDesc);
 
             // Create metric query pool.
             if (!metricPoolSubdeviceImp->create()) {
@@ -496,14 +496,14 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
     return ZE_RESULT_SUCCESS;
 }
 
-MetricQueryPoolImp::MetricQueryPoolImp(MetricContext &metricContextInput,
-                                       zet_metric_group_handle_t hEventMetricGroupInput,
-                                       const zet_metric_query_pool_desc_t &poolDescription)
+OaMetricQueryPoolImp::OaMetricQueryPoolImp(MetricContext &metricContextInput,
+                                           zet_metric_group_handle_t hEventMetricGroupInput,
+                                           const zet_metric_query_pool_desc_t &poolDescription)
     : metricContext(metricContextInput), metricsLibrary(metricContext.getMetricsLibrary()),
       description(poolDescription),
       hMetricGroup(hEventMetricGroupInput) {}
 
-bool MetricQueryPoolImp::create() {
+bool OaMetricQueryPoolImp::create() {
     switch (description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return createMetricQueryPool();
@@ -515,7 +515,7 @@ bool MetricQueryPoolImp::create() {
     }
 }
 
-ze_result_t MetricQueryPoolImp::destroy() {
+ze_result_t OaMetricQueryPoolImp::destroy() {
     switch (description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         if (metricQueryPools.size() > 0) {
@@ -552,7 +552,7 @@ ze_result_t MetricQueryPoolImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-bool MetricQueryPoolImp::allocateGpuMemory() {
+bool OaMetricQueryPoolImp::allocateGpuMemory() {
 
     if (description.type == ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE) {
         // Get allocation size.
@@ -579,7 +579,7 @@ bool MetricQueryPoolImp::allocateGpuMemory() {
     return true;
 }
 
-bool MetricQueryPoolImp::createMetricQueryPool() {
+bool OaMetricQueryPoolImp::createMetricQueryPool() {
     // Validate metric group query - only event based is supported.
     auto metricGroupProperites = MetricGroup::getProperties(hMetricGroup);
     const bool validMetricGroup = metricGroupProperites.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
@@ -598,7 +598,7 @@ bool MetricQueryPoolImp::createMetricQueryPool() {
     return metricsLibrary.createMetricQuery(description.count, query, pAllocation);
 }
 
-bool MetricQueryPoolImp::createSkipExecutionQueryPool() {
+bool OaMetricQueryPoolImp::createSkipExecutionQueryPool() {
 
     pool.reserve(description.count);
     for (uint32_t i = 0; i < description.count; ++i) {
@@ -614,8 +614,8 @@ MetricQueryPool *MetricQueryPool::fromHandle(zet_metric_query_pool_handle_t hand
 
 zet_metric_query_pool_handle_t MetricQueryPool::toHandle() { return this; }
 
-ze_result_t MetricQueryPoolImp::createMetricQuery(uint32_t index,
-                                                  zet_metric_query_handle_t *phMetricQuery) {
+ze_result_t OaMetricQueryPoolImp::createMetricQuery(uint32_t index,
+                                                    zet_metric_query_handle_t *phMetricQuery) {
 
     if (index >= description.count) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -623,11 +623,11 @@ ze_result_t MetricQueryPoolImp::createMetricQuery(uint32_t index,
 
     if (metricQueryPools.size() > 0) {
 
-        auto pMetricQueryImp = new MetricQueryImp(metricContext, *this, index);
+        auto pMetricQueryImp = new OaMetricQueryImp(metricContext, *this, index);
 
         for (auto metricQueryPoolHandle : metricQueryPools) {
             auto &metricQueries = pMetricQueryImp->getMetricQueries();
-            auto metricQueryPoolImp = static_cast<MetricQueryPoolImp *>(MetricQueryPool::fromHandle(metricQueryPoolHandle));
+            auto metricQueryPoolImp = static_cast<OaMetricQueryPoolImp *>(MetricQueryPool::fromHandle(metricQueryPoolHandle));
             metricQueries.push_back(&metricQueryPoolImp->pool[index]);
         }
 
@@ -643,16 +643,16 @@ ze_result_t MetricQueryPoolImp::createMetricQuery(uint32_t index,
     }
 }
 
-std::vector<zet_metric_query_pool_handle_t> &MetricQueryPoolImp::getMetricQueryPools() {
+std::vector<zet_metric_query_pool_handle_t> &OaMetricQueryPoolImp::getMetricQueryPools() {
     return metricQueryPools;
 }
 
-MetricQueryImp::MetricQueryImp(MetricContext &metricContextInput, MetricQueryPoolImp &poolInput,
-                               const uint32_t slotInput)
+OaMetricQueryImp::OaMetricQueryImp(MetricContext &metricContextInput, OaMetricQueryPoolImp &poolInput,
+                                   const uint32_t slotInput)
     : metricContext(metricContextInput), metricsLibrary(metricContext.getMetricsLibrary()),
       pool(poolInput), slot(slotInput) {}
 
-ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
+ze_result_t OaMetricQueryImp::appendBegin(CommandList &commandList) {
     switch (pool.description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return writeMetricQuery(commandList, nullptr, 0, nullptr, true);
@@ -664,8 +664,8 @@ ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
     }
 }
 
-ze_result_t MetricQueryImp::appendEnd(CommandList &commandList, ze_event_handle_t hSignalEvent,
-                                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+ze_result_t OaMetricQueryImp::appendEnd(CommandList &commandList, ze_event_handle_t hSignalEvent,
+                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     switch (pool.description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return writeMetricQuery(commandList, hSignalEvent, numWaitEvents, phWaitEvents, false);
@@ -677,7 +677,7 @@ ze_result_t MetricQueryImp::appendEnd(CommandList &commandList, ze_event_handle_
     }
 }
 
-ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
+ze_result_t OaMetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
 
     const bool calculateSizeOnly = *pRawDataSize == 0;
     const size_t metricQueriesSize = metricQueries.size();
@@ -691,7 +691,7 @@ ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
             const size_t rawDataOffsetsRequiredSize = sizeof(uint32_t) * metricQueriesSize;
             const size_t rawDataSizesRequiredSize = sizeof(uint32_t) * metricQueriesSize;
 
-            auto pMetricQueryImp = static_cast<MetricQueryImp *>(MetricQuery::fromHandle(metricQueries[0]));
+            auto pMetricQueryImp = static_cast<OaMetricQueryImp *>(MetricQuery::fromHandle(metricQueries[0]));
             result = pMetricQueryImp->metricsLibrary.getMetricQueryReportSize(*pRawDataSize);
 
             const size_t rawDataRequiredSize = *pRawDataSize * metricQueriesSize;
@@ -744,11 +744,11 @@ ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
                : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t MetricQueryImp::reset() {
+ze_result_t OaMetricQueryImp::reset() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MetricQueryImp::destroy() {
+ze_result_t OaMetricQueryImp::destroy() {
 
     if (metricQueries.size() > 0) {
         delete this;
@@ -757,13 +757,13 @@ ze_result_t MetricQueryImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-std::vector<zet_metric_query_handle_t> &MetricQueryImp::getMetricQueries() {
+std::vector<zet_metric_query_handle_t> &OaMetricQueryImp::getMetricQueries() {
     return metricQueries;
 }
 
-ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,
-                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                             const bool begin) {
+ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                               const bool begin) {
 
     bool result = true;
     const bool writeCompletionEvent = hSignalEvent && !begin;
@@ -790,7 +790,7 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_
             uint64_t gpuAddress = pool.pAllocation->getGpuAddress() + (i * allocationSizeForSubDevice);
             uint8_t *cpuAddress = static_cast<uint8_t *>(pool.pAllocation->getUnderlyingBuffer()) + (i * allocationSizeForSubDevice);
 
-            auto &metricQueryImp = *static_cast<MetricQueryImp *>(MetricQuery::fromHandle(metricQueries[i]));
+            auto &metricQueryImp = *static_cast<OaMetricQueryImp *>(MetricQuery::fromHandle(metricQueries[i]));
             auto &metricLibrarySubDevice = metricQueryImp.metricsLibrary;
             auto &metricContextSubDevice = metricQueryImp.metricContext;
 
@@ -861,9 +861,9 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t MetricQueryImp::writeSkipExecutionQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,
-                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                                    const bool begin) {
+ze_result_t OaMetricQueryImp::writeSkipExecutionQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,
+                                                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                      const bool begin) {
 
     bool writeCompletionEvent = hSignalEvent && !begin;
     bool result = false;

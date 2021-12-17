@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@ struct Event;
 
 namespace L0 {
 
-struct MetricStreamerImp : MetricStreamer {
-    ~MetricStreamerImp() override{};
+struct OaMetricStreamerImp : MetricStreamer {
+    ~OaMetricStreamerImp() override{};
 
     ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize, uint8_t *pRawData) override;
     ze_result_t close() override;

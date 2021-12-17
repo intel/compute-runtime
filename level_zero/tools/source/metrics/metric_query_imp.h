@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,10 +105,10 @@ struct MetricsLibrary {
     std::vector<QueryHandle_1_0> queries;
 };
 
-struct MetricQueryImp : MetricQuery {
+struct OaMetricQueryImp : MetricQuery {
   public:
-    MetricQueryImp(MetricContext &metricContext, struct MetricQueryPoolImp &pool,
-                   const uint32_t slot);
+    OaMetricQueryImp(MetricContext &metricContext, struct OaMetricQueryPoolImp &pool,
+                     const uint32_t slot);
 
     ze_result_t appendBegin(CommandList &commandList) override;
     ze_result_t appendEnd(CommandList &commandList, ze_event_handle_t hSignalEvent,
@@ -132,14 +132,14 @@ struct MetricQueryImp : MetricQuery {
   protected:
     MetricContext &metricContext;
     MetricsLibrary &metricsLibrary;
-    MetricQueryPoolImp &pool;
+    OaMetricQueryPoolImp &pool;
     uint32_t slot;
     std::vector<zet_metric_query_handle_t> metricQueries;
 };
 
-struct MetricQueryPoolImp : MetricQueryPool {
+struct OaMetricQueryPoolImp : MetricQueryPool {
   public:
-    MetricQueryPoolImp(MetricContext &metricContext, zet_metric_group_handle_t hEventMetricGroup, const zet_metric_query_pool_desc_t &poolDescription);
+    OaMetricQueryPoolImp(MetricContext &metricContext, zet_metric_group_handle_t hEventMetricGroup, const zet_metric_query_pool_desc_t &poolDescription);
 
     bool create();
     ze_result_t destroy() override;
@@ -157,7 +157,7 @@ struct MetricQueryPoolImp : MetricQueryPool {
   public:
     MetricContext &metricContext;
     MetricsLibrary &metricsLibrary;
-    std::vector<MetricQueryImp> pool;
+    std::vector<OaMetricQueryImp> pool;
     NEO::GraphicsAllocation *pAllocation = nullptr;
     uint32_t allocationSize = 0;
     zet_metric_query_pool_desc_t description = {};
