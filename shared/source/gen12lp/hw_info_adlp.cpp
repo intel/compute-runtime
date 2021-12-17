@@ -35,12 +35,14 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     EngineDirectSubmissionInitVec{
         {aub_stream::ENGINE_RCS, {true, true}},
         {aub_stream::ENGINE_CCS, {true, true}}},    // directSubmissionEngines
-    {0, 0, 0, false, false, false},                 // kmdNotifyProperties
+    {0, 0, 0, 0, false, false, false, false},       // kmdNotifyProperties
     MemoryConstants::max64BitAppAddress,            // gpuAddressSpace
     0,                                              // sharedSystemMemCapabilities
     83.333,                                         // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                      // requiredPreemptionSurfaceSize
     &isSimulationADLP,                              // isSimulation
+    "lp",                                           // platformType
+    "",                                             // deviceName
     PreemptionMode::MidThread,                      // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                         // defaultEngineType
     0,                                              // maxRenderFrequency
@@ -63,8 +65,6 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     false,                                          // ftrRenderCompressedImages
     true,                                           // instrumentationEnabled
     true,                                           // ftr64KBpages
-    "lp",                                           // platformType
-    "",                                             // deviceName
     true,                                           // sourceLevelDebuggerSupported
     false,                                          // supportsVme
     false,                                          // supportCacheFlushAfterWalker

@@ -17,12 +17,15 @@ struct KmdNotifyProperties {
     int64_t delayKmdNotifyMicroseconds;
     int64_t delayQuickKmdSleepMicroseconds;
     int64_t delayQuickKmdSleepForSporadicWaitsMicroseconds;
+    int64_t delayQuickKmdSleepForDirectSubmissionMicroseconds;
     // Main switch for KMD Notify optimization - if its disabled, all below are disabled too
     bool enableKmdNotify;
     // Use smaller delay in specific situations (ie. from AsyncEventsHandler)
     bool enableQuickKmdSleep;
     // If waits are called sporadically  use QuickKmdSleep mode, otherwise use standard delay
     bool enableQuickKmdSleepForSporadicWaits;
+    // If direct submission is enabled, use direct submission delay, otherwise use standard delay
+    bool enableQuickKmdSleepForDirectSubmission;
 };
 
 namespace KmdNotifyConstants {
@@ -42,7 +45,8 @@ class KmdNotifyHelper {
                              uint32_t taskCountToWait,
                              FlushStamp flushStampToWait,
                              bool forcePowerSavingMode,
-                             bool kmdWaitModeActive);
+                             bool kmdWaitModeActive,
+                             bool directSubmissionEnabled);
 
     bool quickKmdSleepForSporadicWaitsEnabled() const { return properties->enableQuickKmdSleepForSporadicWaits; }
     MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();

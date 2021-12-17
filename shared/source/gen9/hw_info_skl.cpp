@@ -42,12 +42,14 @@ const PLATFORM SKL::platform = {
 const RuntimeCapabilityTable SKL::capabilityTable{
     EngineDirectSubmissionInitVec{
         {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
-    {0, 0, 0, false, false, false},                // kmdNotifyProperties
+    {0, 0, 0, 0, false, false, false, false},      // kmdNotifyProperties
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationSKL,                              // isSimulation
+    "core",                                        // platformType
+    "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
@@ -70,8 +72,6 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     true,                                          // ftr64KBpages
     true,                                          // instrumentationEnabled
-    "core",                                        // platformType
-    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker

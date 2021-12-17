@@ -68,6 +68,8 @@ TEST_F(DeviceFactoryTest, WhenOverridingUsingDebugManagerThenOverridesAreApplied
     auto refDelayQuickKmdSleepMicroseconds = hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
     auto refEnableQuickKmdSleepForSporadicWaits = hwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits;
     auto refDelayQuickKmdSleepForSporadicWaitsMicroseconds = hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds;
+    auto refEnableQuickKmdSleepForDirectSubmission = hwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission;
+    auto refDelayQuickKmdSleepForDirectSubmissionMicroseconds = hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds;
 
     DebugManager.flags.OverrideEnableKmdNotify.set(!refEnableKmdNotify);
     DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.set(static_cast<int32_t>(refDelayKmdNotifyMicroseconds) + 10);
@@ -77,6 +79,9 @@ TEST_F(DeviceFactoryTest, WhenOverridingUsingDebugManagerThenOverridesAreApplied
 
     DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.set(!refEnableQuickKmdSleepForSporadicWaits);
     DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.set(static_cast<int32_t>(refDelayQuickKmdSleepForSporadicWaitsMicroseconds) + 12);
+
+    DebugManager.flags.OverrideEnableQuickKmdSleepForDirectSubmission.set(!refEnableQuickKmdSleepForDirectSubmission);
+    DebugManager.flags.OverrideDelayQuickKmdSleepForDirectSubmissionMicroseconds.set(static_cast<int32_t>(refDelayQuickKmdSleepForDirectSubmissionMicroseconds) + 15);
 
     platformsImpl->clear();
     executionEnvironment = constructPlatform()->peekExecutionEnvironment();
@@ -94,6 +99,11 @@ TEST_F(DeviceFactoryTest, WhenOverridingUsingDebugManagerThenOverridesAreApplied
               hwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
     EXPECT_EQ(refDelayQuickKmdSleepForSporadicWaitsMicroseconds + 12,
               hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
+
+    EXPECT_EQ(!refEnableQuickKmdSleepForDirectSubmission,
+              hwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
+    EXPECT_EQ(refDelayQuickKmdSleepForDirectSubmissionMicroseconds + 15,
+              hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
 
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {

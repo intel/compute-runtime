@@ -34,12 +34,14 @@ const PLATFORM GLK::platform = {
 const RuntimeCapabilityTable GLK::capabilityTable{
     EngineDirectSubmissionInitVec{
         {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
-    {30000, 0, 0, true, false, false},             // kmdNotifyProperties
+    {30000, 0, 0, 0, true, false, false, false},   // kmdNotifyProperties
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     0,                                             // sharedSystemMemCapabilities
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationGLK,                              // isSimulation
+    "lp",                                          // platformType
+    "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
@@ -62,8 +64,6 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     false,                                         // ftr64KBpages
     true,                                          // instrumentationEnabled
-    "lp",                                          // platformType
-    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker

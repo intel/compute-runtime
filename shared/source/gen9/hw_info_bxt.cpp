@@ -39,12 +39,14 @@ const PLATFORM BXT::platform = {
 const RuntimeCapabilityTable BXT::capabilityTable{
     EngineDirectSubmissionInitVec{
         {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
-    {0, 0, 0, false, false, false},                // kmdNotifyProperties
+    {0, 0, 0, 0, false, false, false, false},      // kmdNotifyProperties
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     0,                                             // sharedSystemMemCapabilities
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationBXT,                              // isSimulation
+    "lp",                                          // platformType
+    "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
@@ -67,8 +69,6 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     false,                                         // ftr64KBpages
     true,                                          // instrumentationEnabled
-    "lp",                                          // platformType
-    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker

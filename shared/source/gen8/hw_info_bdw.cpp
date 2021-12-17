@@ -41,51 +41,51 @@ const PLATFORM BDW::platform = {
 
 const RuntimeCapabilityTable BDW::capabilityTable{
     EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
-    {50000, 5000, 200000, true, true, true},       // kmdNotifyProperties
-    MemoryConstants::max48BitAddress,              // gpuAddressSpace
-    0,                                             // sharedSystemMemCapabilities
-    80,                                            // defaultProfilingTimerResolution
-    MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationBDW,                              // isSimulation
-    PreemptionMode::Disabled,                      // defaultPreemptionMode
-    aub_stream::ENGINE_RCS,                        // defaultEngineType
-    0,                                             // maxRenderFrequency
-    30,                                            // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Bdw, // aubDeviceId
-    0,                                             // extraQuantityThreadsPerEU
-    64,                                            // slmSize
-    sizeof(BDW::GRF),                              // grfSize
-    36u,                                           // timestampValidBits
-    32u,                                           // kernelTimestampValidBits
-    false,                                         // blitterOperationsSupported
-    true,                                          // ftrSupportsInteger64BitAtomics
-    true,                                          // ftrSupportsFP64
-    true,                                          // ftrSupports64BitMath
-    true,                                          // ftrSvm
-    true,                                          // ftrSupportsCoherency
-    false,                                         // ftrSupportsVmeAvcTextureSampler
-    false,                                         // ftrSupportsVmeAvcPreemption
-    false,                                         // ftrRenderCompressedBuffers
-    false,                                         // ftrRenderCompressedImages
-    false,                                         // ftr64KBpages
-    true,                                          // instrumentationEnabled
-    "core",                                        // platformType
-    "",                                            // deviceName
-    false,                                         // sourceLevelDebuggerSupported
-    false,                                         // supportsVme
-    false,                                         // supportCacheFlushAfterWalker
-    true,                                          // supportsImages
-    false,                                         // supportsDeviceEnqueue
-    true,                                          // supportsPipes
-    true,                                          // supportsOcl21Features
-    false,                                         // supportsOnDemandPageFaults
-    true,                                          // supportsIndependentForwardProgress
-    true,                                          // hostPtrTrackingEnabled
-    false,                                         // levelZeroSupported
-    true,                                          // isIntegratedDevice
-    true,                                          // supportsMediaBlock
-    false                                          // fusedEuEnabled
+        {aub_stream::ENGINE_RCS, {true, true}}},       // directSubmissionEngines
+    {50000, 5000, 200000, 0, true, true, true, false}, // kmdNotifyProperties
+    MemoryConstants::max48BitAddress,                  // gpuAddressSpace
+    0,                                                 // sharedSystemMemCapabilities
+    80,                                                // defaultProfilingTimerResolution
+    MemoryConstants::pageSize,                         // requiredPreemptionSurfaceSize
+    &isSimulationBDW,                                  // isSimulation
+    "core",                                            // platformType
+    "",                                                // deviceName
+    PreemptionMode::Disabled,                          // defaultPreemptionMode
+    aub_stream::ENGINE_RCS,                            // defaultEngineType
+    0,                                                 // maxRenderFrequency
+    30,                                                // clVersionSupport
+    CmdServicesMemTraceVersion::DeviceValues::Bdw,     // aubDeviceId
+    0,                                                 // extraQuantityThreadsPerEU
+    64,                                                // slmSize
+    sizeof(BDW::GRF),                                  // grfSize
+    36u,                                               // timestampValidBits
+    32u,                                               // kernelTimestampValidBits
+    false,                                             // blitterOperationsSupported
+    true,                                              // ftrSupportsInteger64BitAtomics
+    true,                                              // ftrSupportsFP64
+    true,                                              // ftrSupports64BitMath
+    true,                                              // ftrSvm
+    true,                                              // ftrSupportsCoherency
+    false,                                             // ftrSupportsVmeAvcTextureSampler
+    false,                                             // ftrSupportsVmeAvcPreemption
+    false,                                             // ftrRenderCompressedBuffers
+    false,                                             // ftrRenderCompressedImages
+    false,                                             // ftr64KBpages
+    true,                                              // instrumentationEnabled
+    false,                                             // sourceLevelDebuggerSupported
+    false,                                             // supportsVme
+    false,                                             // supportCacheFlushAfterWalker
+    true,                                              // supportsImages
+    false,                                             // supportsDeviceEnqueue
+    true,                                              // supportsPipes
+    true,                                              // supportsOcl21Features
+    false,                                             // supportsOnDemandPageFaults
+    true,                                              // supportsIndependentForwardProgress
+    true,                                              // hostPtrTrackingEnabled
+    false,                                             // levelZeroSupported
+    true,                                              // isIntegratedDevice
+    true,                                              // supportsMediaBlock
+    false                                              // fusedEuEnabled
 };
 
 WorkaroundTable BDW::workaroundTable = {};

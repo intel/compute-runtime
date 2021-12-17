@@ -39,12 +39,14 @@ const RuntimeCapabilityTable DG2::capabilityTable{
         {aub_stream::ENGINE_CCS1, {true, false, true, true}},
         {aub_stream::ENGINE_CCS2, {true, false, true, true}},
         {aub_stream::ENGINE_CCS3, {true, false, true, true}}}, // directSubmissionEngines
-    {0, 0, 0, false, false, false},                            // kmdNotifyProperties
+    {0, 0, 0, 0, false, false, false, false},                  // kmdNotifyProperties
     MemoryConstants::max48BitAddress,                          // gpuAddressSpace
     0,                                                         // sharedSystemMemCapabilities
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
     &isSimulationDG2,                                          // isSimulation
+    "dg2",                                                     // platformType
+    "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency
@@ -67,8 +69,6 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     false,                                                     // ftrRenderCompressedImages
     true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
-    "dg2",                                                     // platformType
-    "",                                                        // deviceName
     true,                                                      // sourceLevelDebuggerSupported
     false,                                                     // supportsVme
     true,                                                      // supportCacheFlushAfterWalker

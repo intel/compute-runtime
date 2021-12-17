@@ -26,12 +26,13 @@ struct KmdNotifyTests : public ::testing::Test {
         cmdQ.reset(new MockCommandQueue(&context, device.get(), nullptr, false));
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountToWait;
         cmdQ->getGpgpuCommandStreamReceiver().waitForFlushStamp(flushStampToWait);
-        overrideKmdNotifyParams(true, 2, true, 1, false, 0);
+        overrideKmdNotifyParams(true, 2, true, 1, false, 0, false, 0);
     }
 
     void overrideKmdNotifyParams(bool kmdNotifyEnable, int64_t kmdNotifyDelay,
                                  bool quickKmdSleepEnable, int64_t quickKmdSleepDelay,
-                                 bool quickKmdSleepEnableForSporadicWaits, int64_t quickKmdSleepDelayForSporadicWaits) {
+                                 bool quickKmdSleepEnableForSporadicWaits, int64_t quickKmdSleepDelayForSporadicWaits,
+                                 bool quickKmdSleepEnableForDirectSubmission, int64_t quickKmdSleepDelayForDirectSubmission) {
         auto &properties = hwInfo->capabilityTable.kmdNotifyProperties;
         properties.enableKmdNotify = kmdNotifyEnable;
         properties.delayKmdNotifyMicroseconds = kmdNotifyDelay;
@@ -39,6 +40,8 @@ struct KmdNotifyTests : public ::testing::Test {
         properties.delayQuickKmdSleepMicroseconds = quickKmdSleepDelay;
         properties.enableQuickKmdSleepForSporadicWaits = quickKmdSleepEnableForSporadicWaits;
         properties.delayQuickKmdSleepForSporadicWaitsMicroseconds = quickKmdSleepDelayForSporadicWaits;
+        properties.enableQuickKmdSleepForDirectSubmission = quickKmdSleepEnableForDirectSubmission;
+        properties.delayQuickKmdSleepForDirectSubmissionMicroseconds = quickKmdSleepDelayForDirectSubmission;
     }
 
     class MockKmdNotifyHelper : public KmdNotifyHelper {
@@ -103,7 +106,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTr
 }
 
 HWTEST_F(KmdNotifyTests, givenTaskCountAndKmdNotifyDisabledWhenWaitUntilCompletionCalledThenTryCpuPollingWithoutTimeout) {
-    overrideKmdNotifyParams(false, 0, false, 0, false, 0);
+    overrideKmdNotifyParams(false, 0, false, 0, false, 0, false, 0);
     auto csr = createMockCsr<FamilyType>();
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
@@ -154,7 +157,7 @@ HWTEST_F(KmdNotifyTests, givenEnabledQuickSleepWhenWaitUntilCompleteIsCalledThen
 }
 
 HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSleepRequestIsCalledThenUseBaseDelayValue) {
-    overrideKmdNotifyParams(true, 1, false, 0, false, 0);
+    overrideKmdNotifyParams(true, 1, false, 0, false, 0, false, 0);
     auto csr = createMockCsr<FamilyType>();
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
@@ -180,7 +183,7 @@ HWTEST_F(KmdNotifyTests, givenZeroFlushStampWhenWaitIsCalledThenDisableTimeout) 
 }
 
 HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsSporadicWaitThenOverrideQuickSleepRequest) {
-    overrideKmdNotifyParams(true, 3, true, 2, true, 1);
+    overrideKmdNotifyParams(true, 3, true, 2, true, 1, false, 0);
     auto csr = createMockCsr<FamilyType>();
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
@@ -193,7 +196,7 @@ HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsSporadicWaitThenOverrid
 }
 
 HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsNotSporadicWaitThenOverrideQuickSleepRequest) {
-    overrideKmdNotifyParams(true, 3, true, 2, true, 9999999);
+    overrideKmdNotifyParams(true, 3, true, 2, true, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
@@ -203,14 +206,14 @@ HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsNotSporadicWaitThenOver
 }
 
 HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenPowerSavingModeIsRequestedThenTimeoutIsEnabled) {
-    overrideKmdNotifyParams(false, 3, false, 2, false, 9999999);
+    overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 1, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, true);
 }
 
 HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModeAndCallWaitThenTimeoutIsEnabled) {
-    overrideKmdNotifyParams(false, 3, false, 2, false, 9999999);
+    overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 1, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
     cmdQ->throttle = QueueThrottle::LOW;
@@ -218,7 +221,7 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModeAndCal
 }
 
 HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButThereIsNoFlushStampeAndCallWaitThenTimeoutIsDisabled) {
-    overrideKmdNotifyParams(false, 3, false, 2, false, 9999999);
+    overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
 
@@ -227,7 +230,7 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButTher
 }
 
 HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIsDisabledThenDontOverrideQuickSleepRequest) {
-    overrideKmdNotifyParams(true, 3, true, 2, false, 0);
+    overrideKmdNotifyParams(true, 3, true, 2, false, 0, false, 0);
     auto csr = createMockCsr<FamilyType>();
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
@@ -259,7 +262,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountLowerThanHwTagWhenWaitCalledThenDontMulti
 }
 
 HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWhenWaitCalledThenUpdateWaitTimestamp) {
-    overrideKmdNotifyParams(true, 3, true, 2, true, 1);
+    overrideKmdNotifyParams(true, 3, true, 2, true, 1, false, 0);
 
     auto csr = createMockCsr<FamilyType>();
     EXPECT_NE(0, mockKmdNotifyHelper->lastWaitForCompletionTimestampUs.load());
@@ -270,7 +273,7 @@ HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWhenWaitCalledThenUpda
 }
 
 HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWithDisabledSporadicWaitOptimizationWhenWaitCalledThenDontUpdateWaitTimestamp) {
-    overrideKmdNotifyParams(true, 3, true, 2, false, 0);
+    overrideKmdNotifyParams(true, 3, true, 2, false, 0, false, 0);
 
     auto csr = createMockCsr<FamilyType>();
     EXPECT_EQ(0, mockKmdNotifyHelper->lastWaitForCompletionTimestampUs.load());
@@ -298,7 +301,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffLowerThanMinimumToCheckAcLineWhenObtain
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
     int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true);
+    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true, false);
 
     EXPECT_EQ(0u, helper.updateAcLineStatusCalled);
 }
@@ -313,7 +316,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndDisab
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
     int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true);
+    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true, false);
 
     EXPECT_EQ(1u, helper.updateAcLineStatusCalled);
 }
@@ -322,7 +325,7 @@ TEST_F(KmdNotifyTests, givenKmdWaitModeNotActiveWhenObtainTimeoutParamsThenFalse
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     int64_t timeout = 0;
-    auto enableTimeout = helper.obtainTimeoutParams(timeout, false, 1, 1, 1, false, false);
+    auto enableTimeout = helper.obtainTimeoutParams(timeout, false, 1, 1, 1, false, false, false);
 
     EXPECT_FALSE(enableTimeout);
     EXPECT_FALSE(timeout);
@@ -338,7 +341,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndEnabl
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
     int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true);
+    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true, false);
 
     EXPECT_EQ(0u, helper.updateAcLineStatusCalled);
 }
@@ -349,7 +352,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenAcLineIsDisconnectedTh
     helper.acLineConnected = false;
 
     int64_t timeout = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false, true);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false, true, false);
 
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine, timeout);
@@ -363,7 +366,7 @@ TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenAcLineIsDisconnectedThe
     helper.acLineConnected = false;
 
     int64_t timeout = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false, true);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false, true, false);
 
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, timeout);
@@ -376,7 +379,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcL
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, false);
 
     EXPECT_FALSE(timeoutEnabled);
 }
@@ -390,7 +393,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsSetTh
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, false);
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(1, timeout);
 }
@@ -401,7 +404,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsReque
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, true, true);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, true, true, false);
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(1, timeout);
 }
@@ -415,7 +418,49 @@ TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenPowerSavingModeIsSetAnd
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, false);
     EXPECT_FALSE(timeoutEnabled);
     EXPECT_EQ(0, timeout);
+}
+
+TEST_F(KmdNotifyTests, givenEnabledKmdDirectSubmissionNotifyMechanismWhenDirectSubmissionIsEnabledThenSelectDelayTimeoutForDirectSubmission) {
+    overrideKmdNotifyParams(true, 150, false, 0, false, 0, true, 20);
+
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
+
+    constexpr int64_t expectedTimeout = 20;
+    constexpr bool directSubmission = true;
+    int64_t timeout = 0;
+    FlushStamp flushStampToWait = 1;
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, directSubmission);
+    EXPECT_TRUE(timeoutEnabled);
+    EXPECT_EQ(expectedTimeout, timeout);
+}
+
+TEST_F(KmdNotifyTests, givenEnabledKmdDirectSubmissionNotifyMechanismWhenDirectSubmissionIsDisabledThenSelectBaseDelayTimeout) {
+    overrideKmdNotifyParams(true, 150, false, 0, false, 0, true, 20);
+
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
+
+    constexpr int64_t expectedTimeout = 150;
+    constexpr bool directSubmission = false;
+    int64_t timeout = 0;
+    FlushStamp flushStampToWait = 1;
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, directSubmission);
+    EXPECT_TRUE(timeoutEnabled);
+    EXPECT_EQ(expectedTimeout, timeout);
+}
+
+TEST_F(KmdNotifyTests, givenDisabledKmdDirectSubmissionNotifyMechanismWhenDirectSubmissionIsEnabledThenSelectBaseDelayTimeout) {
+    overrideKmdNotifyParams(true, 150, false, 0, false, 0, false, 20);
+
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
+
+    constexpr int64_t expectedTimeout = 150;
+    constexpr bool directSubmission = true;
+    int64_t timeout = 0;
+    FlushStamp flushStampToWait = 1;
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, directSubmission);
+    EXPECT_TRUE(timeoutEnabled);
+    EXPECT_EQ(expectedTimeout, timeout);
 }

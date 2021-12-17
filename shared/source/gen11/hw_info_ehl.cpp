@@ -37,12 +37,14 @@ const PLATFORM EHL::platform = {
 const RuntimeCapabilityTable EHL::capabilityTable{
     EngineDirectSubmissionInitVec{
         {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
-    {0, 0, 0, false, false, false},                // kmdNotifyProperties
+    {0, 0, 0, 0, false, false, false, false},      // kmdNotifyProperties
     MemoryConstants::max36BitAddress,              // gpuAddressSpace
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationEHL,                              // isSimulation
+    "lp",                                          // platformType
+    "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
@@ -65,8 +67,6 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     true,                                          // ftr64KBpages
     true,                                          // instrumentationEnabled
-    "lp",                                          // platformType
-    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker

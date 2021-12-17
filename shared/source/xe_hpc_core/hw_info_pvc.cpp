@@ -47,12 +47,14 @@ const RuntimeCapabilityTable PVC::capabilityTable{
         {aub_stream::ENGINE_BCS6, {true, false, true, true}},
         {aub_stream::ENGINE_BCS7, {true, false, true, true}},
         {aub_stream::ENGINE_BCS8, {true, false, true, true}}}, // directSubmissionEngines
-    {0, 0, 0, false, false, false},                            // kmdNotifyProperties
+    {0, 0, 0, 0, false, false, false, false},                  // kmdNotifyProperties
     maxNBitValue(57),                                          // gpuAddressSpace
     0,                                                         // sharedSystemMemCapabilities
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
     &isSimulationPVC,                                          // isSimulation
+    "core",                                                    // platformType
+    "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency
@@ -75,8 +77,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     false,                                                     // ftrRenderCompressedImages
     true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
-    "core",                                                    // platformType
-    "",                                                        // deviceName
     false,                                                     // sourceLevelDebuggerSupported
     false,                                                     // supportsVme
     false,                                                     // supportCacheFlushAfterWalker

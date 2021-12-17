@@ -28,6 +28,8 @@ struct RuntimeCapabilityTable {
     double defaultProfilingTimerResolution;
     size_t requiredPreemptionSurfaceSize;
     bool (*isSimulation)(unsigned short);
+    const char *platformType;
+    const char *deviceName;
     PreemptionMode defaultPreemptionMode;
     aub_stream::EngineType defaultEngineType;
     uint32_t maxRenderFrequency;
@@ -50,8 +52,6 @@ struct RuntimeCapabilityTable {
     bool ftrRenderCompressedImages;
     bool ftr64KBpages;
     bool instrumentationEnabled;
-    const char *platformType;
-    const char *deviceName;
     bool debuggerSupported;
     bool supportsVme;
     bool supportCacheFlushAfterWalker;
@@ -83,6 +83,8 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.kmdNotifyProperties.delayKmdNotifyMicroseconds == rhs.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     result &= (lhs.kmdNotifyProperties.delayQuickKmdSleepMicroseconds == rhs.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
     result &= (lhs.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds == rhs.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
+    result &= (lhs.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission == rhs.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
+    result &= (lhs.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds == rhs.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
     result &= (lhs.kmdNotifyProperties.enableKmdNotify == rhs.kmdNotifyProperties.enableKmdNotify);
     result &= (lhs.kmdNotifyProperties.enableQuickKmdSleep == rhs.kmdNotifyProperties.enableQuickKmdSleep);
     result &= (lhs.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits == rhs.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);

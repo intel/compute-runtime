@@ -19,7 +19,8 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
                                           uint32_t taskCountToWait,
                                           FlushStamp flushStampToWait,
                                           bool forcePowerSavingMode,
-                                          bool kmdWaitModeActive) {
+                                          bool kmdWaitModeActive,
+                                          bool directSubmissionEnabled) {
     if (flushStampToWait == 0) {
         return false;
     }
@@ -44,6 +45,8 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
         timeoutValueOutput = KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine;
     } else if (quickKmdSleepRequest && properties->enableQuickKmdSleep) {
         timeoutValueOutput = properties->delayQuickKmdSleepMicroseconds;
+    } else if (directSubmissionEnabled && properties->enableQuickKmdSleepForDirectSubmission) {
+        timeoutValueOutput = properties->delayQuickKmdSleepForDirectSubmissionMicroseconds;
     } else {
         timeoutValueOutput = getBaseTimeout(multiplier);
     }
