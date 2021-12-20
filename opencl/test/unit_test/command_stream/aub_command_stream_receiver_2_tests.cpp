@@ -24,16 +24,9 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/source/mem_obj/mem_obj_helper.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/aub_command_stream_receiver_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "third_party/aub_stream/headers/aubstream.h"
 
@@ -584,12 +577,12 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
 
 using AubCommandStreamReceiverNoHostPtrTests = ::testing::Test;
 HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
     auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto engineInstance = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-    UltDeviceFactory deviceFactory{1, 0};
+    UltDeviceFactory deviceFactory{1, 0, *executionEnvironment};
     DeviceBitfield deviceBitfield(1);
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(engineInstance, deviceBitfield));
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *executionEnvironment, 0, deviceBitfield));
@@ -603,8 +596,8 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, deviceFactory.rootDevices[0]);
-    AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(aubCsr->getRootDeviceIndex(), imgInfo, true, memoryProperties, *hwInfo, osContext.getDeviceBitfield(), true);
+    AllocationProperties allocProperties{0u /* rootDeviceIndex */, true /* allocateMemory */,
+                                         imgInfo, GraphicsAllocation::AllocationType::IMAGE, deviceBitfield};
 
     auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
@@ -621,7 +614,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
 }
 
 HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnLockedResourceThenResourceShouldNotBeUnlocked) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     DeviceBitfield deviceBitfield(1);
@@ -856,7 +849,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
     EXPECT_NE(0u, aubCsr->handle);
 }
 
-using InjectMmmioTest = Test<ClDeviceFixture>;
+using InjectMmmioTest = Test<DeviceFixture>;
 
 HWTEST_F(InjectMmmioTest, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
     DebugManagerStateRestore stateRestore;

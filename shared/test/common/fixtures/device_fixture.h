@@ -22,5 +22,6 @@ struct DeviceFixture {
     volatile uint32_t *pTagMemory = nullptr;
     HardwareInfo hardwareInfo = {};
     PLATFORM platformHelper = {};
+    const uint32_t rootDeviceIndex = 0u;
 };
 } // namespace NEO

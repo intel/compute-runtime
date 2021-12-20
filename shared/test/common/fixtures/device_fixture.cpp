@@ -18,7 +18,7 @@ void DeviceFixture::SetUp() {
 }
 
 void DeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
-    pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo);
+    pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
     ASSERT_NE(nullptr, pDevice);
 
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();

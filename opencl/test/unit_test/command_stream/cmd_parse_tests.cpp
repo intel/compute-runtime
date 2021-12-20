@@ -6,23 +6,12 @@
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 using namespace NEO;
 
-struct CommandParse
-    : public ClDeviceFixture,
-      public ::testing::Test {
-    void SetUp() override {
-        ClDeviceFixture::SetUp();
-    }
-
-    void TearDown() override {
-        ClDeviceFixture::TearDown();
-    }
-};
+using CommandParse = Test<DeviceFixture>;
 
 HWTEST_F(CommandParse, WhenGeneratingCommandBufferThenIsNotNull) {
     typedef typename FamilyType::PARSE PARSE;

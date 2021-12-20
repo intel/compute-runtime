@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,14 +8,12 @@
 #pragma once
 #include "shared/source/aub/aub_subcapture.h"
 
-#include "opencl/source/os_interface/ocl_reg_path.h"
-
 using namespace NEO;
 
 class AubSubCaptureManagerMock : public AubSubCaptureManager {
   public:
     AubSubCaptureManagerMock(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon)
-        : AubSubCaptureManager(fileName, subCaptureCommon, oclRegPath) {}
+        : AubSubCaptureManager(fileName, subCaptureCommon, "") {}
 
     void setSubCaptureIsActive(bool on) {
         subCaptureIsActive = on;

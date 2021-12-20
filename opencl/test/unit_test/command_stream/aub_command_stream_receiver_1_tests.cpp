@@ -22,10 +22,7 @@
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 #include "opencl/test/unit_test/fixtures/aub_command_stream_receiver_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 
 using namespace NEO;
