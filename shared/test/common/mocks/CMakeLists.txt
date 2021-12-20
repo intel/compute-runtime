@@ -67,9 +67,11 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_source_level_debugger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_svm_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context.cpp
@@ -80,6 +82,7 @@ if(WIN32)
   list(APPEND NEO_CORE_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
@@ -91,6 +94,12 @@ else()
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
+  )
+endif()
+
+if(TESTS_XEHP_AND_LATER)
+  list(APPEND NEO_CORE_tests_mocks
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_scratch_space_controller_xehp_and_later.h
   )
 endif()
 

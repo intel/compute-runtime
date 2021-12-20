@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/resource_barrier.h"
@@ -17,7 +18,6 @@
 #include "opencl/source/memory_manager/resource_surface.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 
 namespace NEO {
 

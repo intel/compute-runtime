@@ -36,8 +36,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sampler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sharing_factory.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.h
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
@@ -47,18 +45,11 @@ set(IGDRCL_SRCS_tests_mocks
     ${NEO_CORE_tests_compiler_mocks}
 )
 
-if(TESTS_XEHP_AND_LATER)
-  list(APPEND IGDRCL_SRCS_tests_mocks
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_scratch_space_controller_xehp_and_later.h
-  )
-endif()
-
 if(WIN32)
   file(GLOB IGDRCL_SRC_tests_mock_wddm "${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm2[0-9]\.*")
   list(APPEND IGDRCL_SRCS_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_d3d_objects.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime_win.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/os_interface/windows/mock_gdi_interface.cpp
        ${IGDRCL_SRC_tests_mock_wddm}
   )
