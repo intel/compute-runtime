@@ -12,6 +12,7 @@ set(IGDRCL_SRCS_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_file_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_command_stream_receiver_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_tbx_command_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_1_tests.cpp

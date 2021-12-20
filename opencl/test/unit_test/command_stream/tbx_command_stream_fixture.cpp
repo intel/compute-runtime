@@ -8,11 +8,8 @@
 #include "opencl/test/unit_test/command_stream/tbx_command_stream_fixture.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/device/device.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/test/common/mocks/mock_device.h"
-
-#include "opencl/source/command_queue/command_queue.h"
 
 #include "gtest/gtest.h"
 
@@ -28,6 +25,5 @@ void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
 
 void TbxCommandStreamFixture::TearDown() {
     delete memoryManager;
-    CommandStreamFixture::TearDown();
 }
 } // namespace NEO

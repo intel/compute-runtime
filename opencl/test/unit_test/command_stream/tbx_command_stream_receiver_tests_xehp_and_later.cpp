@@ -9,29 +9,28 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-struct XeHPAndLaterTbxCommandStreamReceiverTests : ClDeviceFixture, ::testing::Test {
+struct XeHPAndLaterTbxCommandStreamReceiverTests : DeviceFixture, ::testing::Test {
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
         hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0);
         hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
-        ClDeviceFixture::SetUpImpl(&hardwareInfo);
+        DeviceFixture::SetUpImpl(&hardwareInfo);
     }
 
     void SetUp() override {
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 };
 

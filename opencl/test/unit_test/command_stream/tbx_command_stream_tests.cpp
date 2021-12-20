@@ -6,8 +6,6 @@
  */
 
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
-#include "shared/source/command_stream/aub_command_stream_receiver.h"
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -16,33 +14,20 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_banks.h"
-#include "shared/source/os_interface/os_context.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_aub_center.h"
-#include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_tbx_csr.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/mem_obj/mem_obj.h"
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/command_stream/tbx_command_stream_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-
-#include "tbx_command_stream_fixture.h"
 
 #include <cstdint>
 
@@ -53,7 +38,7 @@ extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_M
 } // namespace NEO
 
 struct TbxFixture : public TbxCommandStreamFixture,
-                    public ClDeviceFixture,
+                    public DeviceFixture,
                     public MockAubCenterFixture {
 
     using TbxCommandStreamFixture::SetUp;
@@ -61,16 +46,16 @@ struct TbxFixture : public TbxCommandStreamFixture,
     TbxFixture() : MockAubCenterFixture(CommandStreamReceiverType::CSR_TBX) {}
 
     void SetUp() {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
         setMockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
         TbxCommandStreamFixture::SetUp(pDevice);
         MockAubCenterFixture::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() {
         MockAubCenterFixture::TearDown();
         TbxCommandStreamFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 };
 
@@ -88,7 +73,7 @@ struct MockTbxCsrToTestDumpTbxNonWritable : public TbxCommandStreamReceiverHw<Gf
 };
 
 TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenNullptrIsReturned) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     GFXCORE_FAMILY family = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily;
     VariableBackup<TbxCommandStreamReceiverCreateFunc> tbxCsrFactoryBackup(&tbxCommandStreamReceiverFactory[family]);
 
@@ -99,8 +84,7 @@ TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenN
 }
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1u);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
     hwInfo->platform.eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
@@ -110,7 +94,7 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
 }
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenTypeIsCheckedThenTbxCsrIsReturned) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->initializeMemoryManager();
     std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create("", false, *executionEnvironment, 0, 1));
     EXPECT_NE(nullptr, csr);
@@ -897,39 +881,6 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInNonSubCaptureModeWhenCheckAndActiva
     auto status = tbxCsr.checkAndActivateAubSubCapture("");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
-}
-
-HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCorrectly) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-
-    MockContext context(pClDevice);
-
-    MockTbxCsr<FamilyType> tbxCsr0{*pDevice->executionEnvironment, pDevice->getDeviceBitfield()};
-    tbxCsr0.initializeTagAllocation();
-    MockTbxCsr<FamilyType> tbxCsr1{*pDevice->executionEnvironment, pDevice->getDeviceBitfield()};
-    tbxCsr1.initializeTagAllocation();
-
-    MockOsContext osContext0(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
-    tbxCsr0.setupContext(osContext0);
-    EngineControl engineControl0{&tbxCsr0, &osContext0};
-
-    MockOsContext osContext1(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, pDevice->getDeviceBitfield()));
-    tbxCsr1.setupContext(osContext0);
-    EngineControl engineControl1{&tbxCsr1, &osContext1};
-
-    MockCommandQueueHw<FamilyType> cmdQ(&context, pClDevice, nullptr);
-    cmdQ.gpgpuEngine = &engineControl0;
-    cmdQ.clearBcsEngines();
-    cmdQ.bcsEngines[0] = &engineControl1;
-
-    cl_int error = CL_SUCCESS;
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, error));
-
-    uint32_t hostPtr = 0;
-    error = cmdQ.enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, error);
 }
 
 HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalledButBcsIsUsedThenGraphicsAllocationShouldNotBeDumped) {
