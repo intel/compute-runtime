@@ -17,6 +17,7 @@ if(TESTS_DG2)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_helper_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dg2.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_traits_dg2.h
   )
 
   target_sources(${TARGET_NAME} PRIVATE ${NEO_CORE_TESTS_XE_HPG_CORE_DG2})

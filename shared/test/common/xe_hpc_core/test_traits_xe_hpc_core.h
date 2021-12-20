@@ -25,4 +25,5 @@ struct TestTraits<IGFX_XE_HPC_CORE> {
     static constexpr bool fusedEuDispatchSupported = true;
     static constexpr bool numberOfWalkersInCfeStateSupported = true;
     static constexpr bool isUsingNonDefaultIoctls = true;
+    static constexpr bool forceGpuNonCoherent = false;
 };

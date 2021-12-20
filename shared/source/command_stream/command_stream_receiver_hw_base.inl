@@ -254,15 +254,16 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                                                                             dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode,
                                                                                                             hwInfo);
 
+    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
     if (dispatchFlags.threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         dispatchFlags.threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
     }
     if (dispatchFlags.numGrfRequired == GrfConfig::NotApplicable) {
         dispatchFlags.numGrfRequired = lastSentNumGrfRequired;
     }
 
-    this->streamProperties.stateComputeMode.setProperties(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
+    auto requiresCoherency = hwHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
+    this->streamProperties.stateComputeMode.setProperties(requiresCoherency, dispatchFlags.numGrfRequired,
                                                           dispatchFlags.threadArbitrationPolicy);
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
@@ -357,7 +358,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
     auto mocsIndex = latestSentStatelessMocsConfig;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     if (dispatchFlags.l3CacheSettings != L3CachingSettings::NotApplicable) {
         auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;

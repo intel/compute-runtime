@@ -13,9 +13,13 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/xe_hpg_core/cmdlist_xe_hpg_core.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include "test_traits_platforms_common.h"
 
 namespace L0 {
 namespace ult {
@@ -311,5 +315,67 @@ HWTEST2_F(CommandListCreate, givenRangeBetweenTwoPagesWhenAppendRangesBarrierThe
     EXPECT_EQ(l3Ranges->getAddressMask(), NEO::L3Range::getMaskFromSize(2 * MemoryConstants::pageSize));
 }
 
+template <PRODUCT_FAMILY productFamily>
+struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProductFamily<productFamily>> {
+    CommandListAdjustStateComputeMode() : WhiteBox<::L0::CommandListProductFamily<productFamily>>(1) {}
+    using ::L0::CommandListProductFamily<productFamily>::updateStreamProperties;
+    using ::L0::CommandListProductFamily<productFamily>::finalStreamState;
+};
+struct ProgramAllFieldsInComputeMode {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (NEO::ToGfxCoreFamily<productFamily>::get() != IGFX_XE_HPG_CORE) {
+            return false;
+        } else {
+            return !TestTraitsPlatforms<productFamily>::programOnlyChangedFieldsInComputeStateMode;
+        }
+    }
+};
+
+HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenFieldsChanged, ProgramAllFieldsInComputeMode) {
+    DebugManagerStateRestore restorer;
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+    auto pCommandList = std::make_unique<CommandListAdjustStateComputeMode<productFamily>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+}
+struct ProgramDirtyFieldsInComputeMode {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (NEO::ToGfxCoreFamily<productFamily>::get() != IGFX_XE_HPG_CORE) {
+            return false;
+        } else {
+            return TestTraitsPlatforms<productFamily>::programOnlyChangedFieldsInComputeStateMode;
+        }
+    }
+};
+
+HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceDirtyFieldsChanged, ProgramDirtyFieldsInComputeMode) {
+    DebugManagerStateRestore restorer;
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+    auto pCommandList = std::make_unique<CommandListAdjustStateComputeMode<productFamily>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+    EXPECT_FALSE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+}
 } // namespace ult
 } // namespace L0

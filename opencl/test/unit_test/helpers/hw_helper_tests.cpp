@@ -30,6 +30,8 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "test_traits_common.h"
+
 #include <chrono>
 #include <iostream>
 #include <numeric>
@@ -1418,4 +1420,32 @@ HWTEST2_F(HwHelperTest, givenAtsOrDg2WhenDisableL3ForDebugCalledThenTrueIsReturn
 HWTEST_F(HwHelperTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenFalseIsReturned) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_FALSE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
+}
+struct CoherentWANotNeeded {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if (productFamily == IGFX_BROADWELL)
+            return false;
+        return !TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceGpuNonCoherent;
+    }
+};
+HWTEST2_F(HwHelperTest, givenHwInfoConfigWhenCheckingForceNonGpuCoherencyWAThenPassedValueReturned, CoherentWANotNeeded) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_TRUE(hwHelper.forceNonGpuCoherencyWA(true));
+    EXPECT_FALSE(hwHelper.forceNonGpuCoherencyWA(false));
+}
+
+struct ForceNonCoherentMode {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if (productFamily == IGFX_BROADWELL)
+            return false;
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceGpuNonCoherent;
+    }
+};
+
+HWTEST2_F(HwHelperTest, givenHwInfoConfigWhenCheckingForceNonGpuCoherencyWAThenFalseIsReturned, ForceNonCoherentMode) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.forceNonGpuCoherencyWA(true));
+    EXPECT_FALSE(hwHelper.forceNonGpuCoherencyWA(false));
 }

@@ -25,4 +25,5 @@ struct TestTraits<IGFX_XE_HP_CORE> {
     static constexpr bool deviceEnqueueSupport = false;
     static constexpr bool fusedEuDispatchSupported = true;
     static constexpr bool numberOfWalkersInCfeStateSupported = true;
+    static constexpr bool forceGpuNonCoherent = false;
 };

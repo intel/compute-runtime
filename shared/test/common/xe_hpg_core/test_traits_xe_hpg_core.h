@@ -18,11 +18,12 @@ struct TestTraits<IGFX_XE_HPG_CORE> {
     static constexpr bool l3ControlSupported = true;
     static constexpr bool forceNonCoherentSupported = true;
     static constexpr bool threadPreemptionDisableBitMatcher = true;
-    static constexpr bool programOnlyChangedFieldsInComputeStateMode = true;
+    static constexpr bool programOnlyChangedFieldsInComputeStateMode = false;
     static constexpr bool iohInSbaSupported = false;
     static constexpr bool auxTranslationSupported = true;
     static constexpr bool deviceEnqueueSupport = false;
     static constexpr bool isUsingNonDefaultIoctls = true;
     static constexpr bool fusedEuDispatchSupported = true;
     static constexpr bool numberOfWalkersInCfeStateSupported = true;
+    static constexpr bool forceGpuNonCoherent = false;
 };

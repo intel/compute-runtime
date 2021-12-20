@@ -9,7 +9,6 @@ if(SUPPORT_DG2)
       ${HW_SOURCES_XE_HPG_CORE}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_dg2.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_dg2.h
       ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/kernel_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/image_dg2.cpp

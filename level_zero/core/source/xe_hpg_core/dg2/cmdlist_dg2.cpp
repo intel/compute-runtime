@@ -5,18 +5,10 @@
  *
  */
 
-#include "cmdlist_dg2.h"
-
-#include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
-#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
-#include "level_zero/core/source/cmdlist/cmdlist_hw_xehp_and_later.inl"
-
-#include "cmdlist_extended.inl"
+#include "level_zero/core/source/xe_hpg_core/cmdlist_xe_hpg_core.h"
+#include "level_zero/core/source/xe_hpg_core/cmdlist_xe_hpg_core.inl"
 
 namespace L0 {
-
-template struct CommandListCoreFamily<IGFX_XE_HPG_CORE>;
-
 static CommandListPopulateFactory<IGFX_DG2, CommandListProductFamily<IGFX_DG2>>
     populateDG2;
 

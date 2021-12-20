@@ -16,4 +16,5 @@ struct TestTraits<IGFX_GEN9_CORE> {
     static constexpr bool isUsingNonDefaultIoctls = false;
     static constexpr bool deviceEnqueueSupport = true;
     static constexpr bool implementsPreambleThreadArbitration = true;
+    static constexpr bool forceGpuNonCoherent = false;
 };

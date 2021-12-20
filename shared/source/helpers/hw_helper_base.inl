@@ -705,9 +705,12 @@ template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::disableL3CacheForDebug() const {
     return false;
 }
-
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isRevisionSpecificBinaryBuiltinRequired() const {
     return false;
+}
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
+    return requiresCoherency;
 }
 } // namespace NEO

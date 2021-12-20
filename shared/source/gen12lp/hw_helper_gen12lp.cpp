@@ -186,6 +186,11 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
     }
 }
 
+template <>
+bool HwHelperHw<Family>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
+    return false;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

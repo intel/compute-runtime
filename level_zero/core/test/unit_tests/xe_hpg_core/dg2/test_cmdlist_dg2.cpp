@@ -10,7 +10,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
-#include "level_zero/core/source/xe_hpg_core/dg2/cmdlist_dg2.h"
+#include "level_zero/core/source/xe_hpg_core/cmdlist_xe_hpg_core.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -59,30 +59,6 @@ HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAddi
 
     EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
     EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
-}
-
-template <PRODUCT_FAMILY productFamily>
-struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProductFamily<productFamily>> {
-    CommandListAdjustStateComputeMode() : WhiteBox<::L0::CommandListProductFamily<productFamily>>(1) {}
-    using ::L0::CommandListProductFamily<productFamily>::updateStreamProperties;
-    using ::L0::CommandListProductFamily<productFamily>::finalStreamState;
-};
-HWTEST2_F(CommandListTests, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenAllFieldsChanged, IsDG2) {
-    DebugManagerStateRestore restorer;
-    Mock<::L0::Kernel> kernel;
-    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-    kernel.module = pMockModule.get();
-    auto pCommandList = std::make_unique<CommandListAdjustStateComputeMode<productFamily>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
-    pCommandList->updateStreamProperties(kernel, false, false);
-    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
-    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
-    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
-    pCommandList->updateStreamProperties(kernel, false, false);
-    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
-    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
 } // namespace ult
 } // namespace L0

@@ -31,7 +31,9 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_traits.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_traits_platforms.h
     ${CMAKE_CURRENT_SOURCE_DIR}/includes${BRANCH_DIR_SUFFIX}test_traits_common.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes${BRANCH_DIR_SUFFIX}test_traits_platforms_common.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_helper.h

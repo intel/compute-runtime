@@ -153,6 +153,7 @@ class HwHelper {
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) = 0;
     virtual bool disableL3CacheForDebug() const = 0;
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
+    virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
 
   protected:
     HwHelper() = default;
@@ -388,6 +389,7 @@ class HwHelperHw : public HwHelper {
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override;
     bool disableL3CacheForDebug() const override;
     bool isRevisionSpecificBinaryBuiltinRequired() const override;
+    bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

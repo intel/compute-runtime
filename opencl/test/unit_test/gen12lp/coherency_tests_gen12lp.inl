@@ -221,7 +221,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
         hwParser.parseCommands<FamilyType>(csr->commandStream, startOffset);
         bool foundOne = false;
 
-        STATE_COMPUTE_MODE::FORCE_NON_COHERENT expectedCoherentValue = expectCoherent ? STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED : STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
+        STATE_COMPUTE_MODE::FORCE_NON_COHERENT expectedCoherentValue = STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
         uint32_t expectedCoherentMask = FamilyType::stateComputeModeForceNonCoherentMask;
 
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
@@ -254,17 +254,6 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
     flushTask(false);
     findCmd(false, false, false); // not changed
 
-    flushTask(true);
-    findCmd(true, true, false); // changed
-
-    flushTask(true);
-    findCmd(false, true, false); // not changed
-
-    flushTask(false);
-    findCmd(true, false, false); // changed
-
-    flushTask(false);
-    findCmd(false, false, false); // not changed
     csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }
 
@@ -286,8 +275,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedH
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, startOffset);
         bool foundOne = false;
-
-        STATE_COMPUTE_MODE::FORCE_NON_COHERENT expectedCoherentValue = expectCoherent ? STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED : STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
+        STATE_COMPUTE_MODE::FORCE_NON_COHERENT expectedCoherentValue = STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
         uint32_t expectedCoherentMask = FamilyType::stateComputeModeForceNonCoherentMask;
 
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {

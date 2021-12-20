@@ -7,6 +7,9 @@
 if(SUPPORT_XE_HPG_CORE)
   set(HW_SOURCES_XE_HPG_CORE
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_xe_hpg_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_xe_hpg_core.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_xe_hpg_core.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/debugger_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/image_xe_hpg_core.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/sampler_xe_hpg_core.inl

@@ -218,6 +218,30 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModeTraitsSetToFalsePropert
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
 
+struct ForceNonCoherentMode {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if (productFamily == IGFX_BROADWELL)
+            return false;
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceGpuNonCoherent;
+    }
+};
+
+HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenClearComputeModePropertiesIfNeededIsCalledThenCoherencyFieldIsSetToFalse, ForceNonCoherentMode) {
+    DebugManagerStateRestore restorer;
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
+    commandList->clearComputeModePropertiesIfNeeded(false, 0, 0);
+    EXPECT_EQ(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value, 0);
+    commandList->clearComputeModePropertiesIfNeeded(true, 0, 0);
+    EXPECT_EQ(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value, 0);
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
 

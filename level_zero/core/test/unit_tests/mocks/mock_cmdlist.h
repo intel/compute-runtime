@@ -40,6 +40,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::clearCommandsToPatch;
+    using BaseClass::clearComputeModePropertiesIfNeeded;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandListPerThreadScratchSize;
