@@ -55,7 +55,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
     auto localMemoryEnabled = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
 
-    this->dispatchMode = localMemoryEnabled && !this->isUpdateTagFromWaitEnabled() ? DispatchMode::BatchedDispatch : DispatchMode::ImmediateDispatch;
+    this->dispatchMode = localMemoryEnabled ? DispatchMode::BatchedDispatch : DispatchMode::ImmediateDispatch;
 
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get());
