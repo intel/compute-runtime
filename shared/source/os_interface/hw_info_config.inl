@@ -273,6 +273,11 @@ bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isDcFlushAllowed() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }

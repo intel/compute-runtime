@@ -13,8 +13,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t numRanges,
                                                                     const size_t *pRangeSizes,
                                                                     const void **pRanges) {
+    const auto &hwInfo = this->device->getHwInfo();
     NEO::PipeControlArgs args;
-    args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(),
                                                                   args);
 }

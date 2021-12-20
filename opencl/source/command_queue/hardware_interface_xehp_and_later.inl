@@ -97,8 +97,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
 
+    const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
-        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.KernelHeapSize, 0, commandQueue.getDevice().getHardwareInfo());
+        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.KernelHeapSize, 0, hwInfo);
     }
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
@@ -122,7 +123,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            numWorkGroups, localWorkSizes, simd, dim,
                                                            localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
 
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd, kernel.getExecutionType());
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, kernel.getExecutionType());
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, !kernel.isSingleSubdevicePreferred());
@@ -137,7 +138,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                              false,
                                                              false,
                                                              kernel.usesImages(),
-                                                             workPartitionAllocationGpuVa);
+                                                             workPartitionAllocationGpuVa,
+                                                             hwInfo);
         if (queueCsr.isStaticWorkPartitioningEnabled()) {
             queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), partitionCount));
         }

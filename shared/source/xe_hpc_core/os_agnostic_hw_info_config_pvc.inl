@@ -110,3 +110,8 @@ bool HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWA
 
     return required;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isDcFlushAllowed() const {
+    return false;
+}

@@ -27,8 +27,9 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         NEO::Device *neoDevice = device->getNEODevice();
         auto globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
+        auto &hwInfo = neoDevice->getHardwareInfo();
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
         auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
         STATE_BASE_ADDRESS sbaCmd;
@@ -52,7 +53,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                         1u);
         *pSbaCmd = sbaCmd;
 
-        auto &hwInfo = neoDevice->getHardwareInfo();
         auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
             pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));

@@ -101,7 +101,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipeline
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, peekHwInfo());
     args.textureCacheInvalidationEnable = true;
 
     addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
@@ -174,14 +174,15 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode) {
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
+    const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
         cmdStream,
         PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
         barrierTimestampPacketGpuAddress,
         0,
-        peekHwInfo(),
+        hwInfo,
         args);
 }
 

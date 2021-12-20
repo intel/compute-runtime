@@ -188,7 +188,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
 
     if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs()) && debuggingEnabled &&
         !hwHelper.isSipWANeeded(hwInfo)) {
@@ -220,12 +220,13 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncC
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
+    const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
     if (isMultiTileOperationEnabled()) {
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
                                                                     this->deviceBitfield,
                                                                     args,
-                                                                    peekHwInfo(),
+                                                                    hwInfo,
                                                                     0,
                                                                     0,
                                                                     false,
@@ -238,14 +239,15 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode) {
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
+    const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
     if (isMultiTileOperationEnabled()) {
         args.workloadPartitionOffset = true;
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
                                                                     this->deviceBitfield,
                                                                     args,
-                                                                    peekHwInfo(),
+                                                                    hwInfo,
                                                                     barrierTimestampPacketGpuAddress,
                                                                     0,
                                                                     false,
@@ -257,7 +259,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
             PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
             barrierTimestampPacketGpuAddress,
             0,
-            peekHwInfo(),
+            hwInfo,
             args);
     }
 }

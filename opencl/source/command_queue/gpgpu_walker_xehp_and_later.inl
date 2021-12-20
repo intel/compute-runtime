@@ -102,13 +102,14 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
 
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
-    if (MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true)) {
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo)) {
         postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     } else {
         postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     }
 
-    EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, *rootDeviceEnvironment.getHardwareInfo());
+    EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, hwInfo);
 
     if (DebugManager.flags.OverridePostSyncMocs.get() != -1) {
         postSyncData.setMocs(DebugManager.flags.OverridePostSyncMocs.get());

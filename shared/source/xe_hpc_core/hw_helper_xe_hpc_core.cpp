@@ -216,11 +216,6 @@ bool MemorySynchronizationCommands<Family>::isPipeControlWArequired(const Hardwa
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isDcFlushAllowed(bool isFlushPreferred) {
-    return false;
-}
-
-template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo) {
     return (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1 ? 2 : 1) * getSizeForSingleAdditionalSynchronization(hwInfo);
 }

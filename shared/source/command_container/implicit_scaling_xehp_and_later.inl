@@ -82,7 +82,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                           bool useSecondaryBatchBuffer,
                                                           bool apiSelfCleanup,
                                                           bool usesImages,
-                                                          uint64_t workPartitionAllocationGpuVa) {
+                                                          uint64_t workPartitionAllocationGpuVa,
+                                                          const HardwareInfo &hwInfo) {
     uint32_t totalProgrammedSize = 0u;
     const uint32_t tileCount = static_cast<uint32_t>(devices.count());
     const bool preferStaticPartitioning = workPartitionAllocationGpuVa != 0u;
@@ -106,7 +107,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                 cmdBufferGpuAddress,
                                                                                 &walkerCmd,
                                                                                 totalProgrammedSize,
-                                                                                args);
+                                                                                args,
+                                                                                hwInfo);
     } else {
         if (DebugManager.flags.ExperimentalSetWalkerPartitionCount.get()) {
             partitionCount = DebugManager.flags.ExperimentalSetWalkerPartitionCount.get();
@@ -120,7 +122,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                  cmdBufferGpuAddress,
                                                                                  &walkerCmd,
                                                                                  totalProgrammedSize,
-                                                                                 args);
+                                                                                 args,
+                                                                                 hwInfo);
     }
     commandStream.getSpace(totalProgrammedSize);
 }

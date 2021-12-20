@@ -261,6 +261,12 @@ template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isDcFlushAllowed() const {
+    return true;
+}
+
 template <>
 uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;

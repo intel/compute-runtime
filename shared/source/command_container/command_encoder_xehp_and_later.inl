@@ -137,7 +137,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
             kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
             dispatchInterface->getDynamicStateHeapData(),
-            device->getBindlessHeapsHelper(), device->getHardwareInfo());
+            device->getBindlessHeapsHelper(), hwInfo);
         if (ApiSpecificConfig::getBindlessConfiguration()) {
             container.getResidencyContainer().push_back(device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
         }
@@ -209,7 +209,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     if (container.isAnyHeapDirty() || requiresUncachedMocs || requiresGlobalAtomicsUpdate) {
         PipeControlArgs args;
-        args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
+        args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true, hwInfo);
         MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), args);
         STATE_BASE_ADDRESS sbaCmd;
         auto gmmHelper = container.getDevice()->getGmmHelper();
@@ -251,7 +251,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         postSync.setDestinationAddress(eventAddress);
 
         auto gmmHelper = device->getRootDeviceEnvironment().getGmmHelper();
-        if (MemorySynchronizationCommands<Family>::isDcFlushAllowed(true)) {
+        if (MemorySynchronizationCommands<Family>::isDcFlushAllowed(true, hwInfo)) {
             postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
         } else {
             postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
@@ -285,7 +285,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                           true,
                                                           true,
                                                           false,
-                                                          workPartitionAllocationGpuVa);
+                                                          workPartitionAllocationGpuVa,
+                                                          hwInfo);
     } else {
         partitionCount = 1;
         auto buffer = listCmdBufferStream->getSpace(sizeof(walkerCmd));

@@ -24,6 +24,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
+    const auto &hwInfo = devQueueHw.getDevice().getHardwareInfo();
     NEO::PipeControlArgs args;
     MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
 
@@ -100,7 +101,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
     // Do not put BB_START only when returning in first Scheduler run
     if (devQueueHw.getSchedulerReturnInstance() != 1) {
-        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
         MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
 
         // Add BB Start Cmd to the SLB in the Primary Batch Buffer

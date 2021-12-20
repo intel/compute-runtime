@@ -34,8 +34,9 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
+    const auto &hwInfo = this->device->getHwInfo();
     NEO::PipeControlArgs pcArgs;
-    pcArgs.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    pcArgs.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
     pcArgs.textureCacheInvalidationEnable = true;
 
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, pcArgs);

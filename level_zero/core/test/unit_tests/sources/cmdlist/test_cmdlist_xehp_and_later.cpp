@@ -45,7 +45,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     auto itorPc = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorPc);
     auto cmdPc = genCmdCast<PIPE_CONTROL *>(*itorPc);
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), cmdPc->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true, *defaultHwInfo), cmdPc->getDcFlushEnable());
     EXPECT_TRUE(cmdPc->getCommandStreamerStallEnable());
     EXPECT_TRUE(cmdPc->getTextureCacheInvalidationEnable());
 

@@ -112,7 +112,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                                     kernelDescriptor.payloadMappings.samplerTable.numSamplers,
                                                                     kernelDescriptor.payloadMappings.samplerTable.borderColor,
                                                                     dispatchInterface->getDynamicStateHeapData(),
-                                                                    device->getBindlessHeapsHelper(), device->getHardwareInfo());
+                                                                    device->getBindlessHeapsHelper(), hwInfo);
     }
 
     idd.setSamplerStatePointer(samplerStateOffset);
@@ -169,7 +169,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     if (flush) {
         PipeControlArgs args;
-        args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
+        args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true, hwInfo);
         if (dirtyHeaps) {
             args.hdcPipelineFlush = true;
         }

@@ -51,7 +51,8 @@ struct ImplicitScalingDispatch {
                                  bool useSecondaryBatchBuffer,
                                  bool apiSelfCleanup,
                                  bool usesImages,
-                                 uint64_t workPartitionAllocationGpuVa);
+                                 uint64_t workPartitionAllocationGpuVa,
+                                 const HardwareInfo &hwInfo);
 
     static bool &getPipeControlStallRequired();
 

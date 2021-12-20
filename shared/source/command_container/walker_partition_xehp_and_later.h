@@ -518,7 +518,8 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
                                                   uint64_t gpuAddressOfAllocation,
                                                   COMPUTE_WALKER<GfxFamily> *inputWalker,
                                                   uint32_t &totalBytesProgrammed,
-                                                  WalkerPartitionArgs &args) {
+                                                  WalkerPartitionArgs &args,
+                                                  const NEO::HardwareInfo &hwInfo) {
     totalBytesProgrammed = 0u;
     void *currentBatchBufferPointer = cpuPointer;
 
@@ -559,7 +560,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
 
     if (args.emitPipeControlStall) {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
         programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args);
     }
 
@@ -660,7 +661,8 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
                                                  uint64_t gpuAddressOfAllocation,
                                                  COMPUTE_WALKER<GfxFamily> *inputWalker,
                                                  uint32_t &totalBytesProgrammed,
-                                                 WalkerPartitionArgs &args) {
+                                                 WalkerPartitionArgs &args,
+                                                 const NEO::HardwareInfo &hwInfo) {
     totalBytesProgrammed = 0u;
     void *currentBatchBufferPointer = cpuPointer;
 
@@ -688,7 +690,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
 
     if (args.emitPipeControlStall) {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
         programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args);
     }
 

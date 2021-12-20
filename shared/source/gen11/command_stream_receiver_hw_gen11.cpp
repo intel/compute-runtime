@@ -38,11 +38,12 @@ template <>
 void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, DispatchFlags &dispatchFlags) {
     using PWR_CLK_STATE_REGISTER = Family::PWR_CLK_STATE_REGISTER;
 
-    if (HwInfoConfig::get(peekHwInfo().platform.eProductFamily)->isAdditionalMediaSamplerProgrammingRequired()) {
+    const auto &hwInfo = peekHwInfo();
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAdditionalMediaSamplerProgrammingRequired()) {
         if (dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 PipeControlArgs args;
-                args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
+                args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true, hwInfo);
                 args.renderTargetCacheFlushEnable = true;
                 args.instructionCacheInvalidateEnable = true;
                 args.textureCacheInvalidationEnable = true;
@@ -52,13 +53,13 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 args.stateCacheInvalidationEnable = true;
                 MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
-                uint32_t numSubslices = peekHwInfo().gtSystemInfo.SubSliceCount;
+                uint32_t numSubslices = hwInfo.gtSystemInfo.SubSliceCount;
                 uint32_t numSubslicesWithVme = numSubslices / 2; // 1 VME unit per DSS
                 uint32_t numSlicesForPowerGating = 1;            // power gating supported only if #Slices = 1
 
                 PWR_CLK_STATE_REGISTER reg = Family::cmdInitPwrClkStateRegister;
-                reg.TheStructure.Common.EUmin = peekHwInfo().gtSystemInfo.MaxEuPerSubSlice;
-                reg.TheStructure.Common.EUmax = peekHwInfo().gtSystemInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmin = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmax = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
                 reg.TheStructure.Common.SSCountEn = 1; // Enable SScount
                 reg.TheStructure.Common.SScount = numSubslicesWithVme;
                 reg.TheStructure.Common.EnableSliceCountRequest = 1; // Enable SliceCountRequest
@@ -76,7 +77,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
         } else {
             if (lastVmeSubslicesConfig) {
                 PipeControlArgs args;
-                args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
+                args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true, hwInfo);
                 args.renderTargetCacheFlushEnable = true;
                 args.instructionCacheInvalidateEnable = true;
                 args.textureCacheInvalidationEnable = true;
@@ -93,13 +94,13 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 // In Gen11-LP, software programs this register as if GT consists of
                 // 2 slices with 4 subslices in each slice. Hardware maps this to the
                 // LP 1 slice/8-subslice physical layout
-                uint32_t numSubslices = peekHwInfo().gtSystemInfo.SubSliceCount;
+                uint32_t numSubslices = hwInfo.gtSystemInfo.SubSliceCount;
                 uint32_t numSubslicesMapped = numSubslices / 2;
-                uint32_t numSlicesMapped = peekHwInfo().gtSystemInfo.SliceCount * 2;
+                uint32_t numSlicesMapped = hwInfo.gtSystemInfo.SliceCount * 2;
 
                 PWR_CLK_STATE_REGISTER reg = Family::cmdInitPwrClkStateRegister;
-                reg.TheStructure.Common.EUmin = peekHwInfo().gtSystemInfo.MaxEuPerSubSlice;
-                reg.TheStructure.Common.EUmax = peekHwInfo().gtSystemInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmin = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmax = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
                 reg.TheStructure.Common.SSCountEn = 1; // Enable SScount
                 reg.TheStructure.Common.SScount = numSubslicesMapped;
                 reg.TheStructure.Common.EnableSliceCountRequest = 1; // Enable SliceCountRequest

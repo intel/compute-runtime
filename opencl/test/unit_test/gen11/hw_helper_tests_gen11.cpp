@@ -50,7 +50,7 @@ GEN11TEST_F(MemorySynchronizatiopCommandsTestsGen11, WhenProgrammingCacheFlushTh
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
 
     LinearStream stream(buffer.get(), 128);
-    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream);
+    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream, *defaultHwInfo);
     PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());

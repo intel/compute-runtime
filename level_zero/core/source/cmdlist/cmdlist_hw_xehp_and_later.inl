@@ -130,6 +130,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
+    const auto &hwInfo = this->device->getHwInfo();
     if (NEO::DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
         increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl());
 
@@ -165,7 +166,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         auto event = Event::fromHandle(hEvent);
         eventAlloc = &event->getAllocation(this->device);
         commandContainer.addToResidencyContainer(eventAlloc);
-        L3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope);
+        L3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope, hwInfo);
         isTimestampEvent = event->isEventTimestampFlagSet();
         eventAddress = event->getPacketAddress(this->device);
     }
@@ -240,7 +241,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
             event->setPacketsInUse(partitionCount);
         }
         if (L3FlushEnable) {
-            size_t estimatedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(neoDevice->getHardwareInfo());
+            size_t estimatedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
             increaseCommandStreamSpace(estimatedSize);
             programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);
         }

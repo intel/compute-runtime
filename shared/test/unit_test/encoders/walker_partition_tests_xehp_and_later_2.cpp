@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/unit_test/encoders/walker_partition_fixture_xehp_and_later.h"
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramRegisterCommandWhenItIsCalledThenLoadRegisterImmIsSetUnderPointer) {
@@ -34,7 +35,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
-                                                                              testArgs);
+                                                                              testArgs,
+                                                                              *defaultHwInfo);
     auto totalProgrammedSize = computeControlSectionOffset<FamilyType>(testArgs) +
                                sizeof(BatchBufferControlData);
     EXPECT_EQ(totalProgrammedSize, totalBytesProgrammed);
@@ -875,7 +877,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
-                                                                              testArgs);
+                                                                              testArgs,
+                                                                              *defaultHwInfo);
 
     EXPECT_EQ(totalProgrammedSize, totalBytesProgrammed);
     auto wparidMaskProgrammingLocation = cmdBufferAddress;
@@ -936,7 +939,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1076,7 +1079,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
-                                                                              testArgs);
+                                                                              testArgs,
+                                                                              *defaultHwInfo);
 
     EXPECT_EQ(totalProgrammedSize, totalBytesProgrammed);
     auto wparidMaskProgrammingLocation = cmdBufferAddress;
@@ -1138,7 +1142,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1281,7 +1285,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
                                                                               gpuVirtualAddress,
                                                                               &walker,
                                                                               totalBytesProgrammed,
-                                                                              testArgs);
+                                                                              testArgs,
+                                                                              *defaultHwInfo);
 
     EXPECT_EQ(totalProgrammedSize, totalBytesProgrammed);
     auto wparidMaskProgrammingLocation = cmdBufferAddress;

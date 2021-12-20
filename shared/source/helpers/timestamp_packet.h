@@ -174,7 +174,7 @@ struct TimestampPacketHelper {
             auto cacheFlushTimestampPacketGpuAddress = getContextEndGpuAddress(*timestampPacketDependencies->cacheFlushNodes.peekNodes()[0]);
 
             PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 cmdStream, GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                 cacheFlushTimestampPacketGpuAddress, 0, hwInfo, args);

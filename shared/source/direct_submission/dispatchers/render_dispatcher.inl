@@ -34,7 +34,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
                                                               bool partitionedWorkload) {
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
     args.workloadPartitionOffset = partitionedWorkload;
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
         cmdBuffer,
@@ -53,7 +53,7 @@ inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareInf
 
 template <typename GfxFamily>
 inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address) {
-    MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(cmdBuffer);
+    MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(cmdBuffer, hwInfo);
 }
 
 template <typename GfxFamily>

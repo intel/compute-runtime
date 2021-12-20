@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/hw_helper.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 
@@ -164,8 +165,9 @@ void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
 
 template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
+    const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
     MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
 }
 

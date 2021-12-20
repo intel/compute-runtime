@@ -307,14 +307,15 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
             using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
             using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
+            const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
             PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandStream,
                 POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                 address,
                 static_cast<uint64_t>(confirmationTrigger),
-                commandQueue.getDevice().getHardwareInfo(),
+                hwInfo,
                 args);
         }
 

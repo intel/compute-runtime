@@ -53,7 +53,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(Line
     auto &hwInfo = peekHwInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
 
     if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs()) && dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
         DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);

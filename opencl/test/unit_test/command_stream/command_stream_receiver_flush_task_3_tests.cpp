@@ -983,7 +983,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenCommandA
     auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itorPipeControl);
 
     mockCsr->flushBatchedSubmissions();
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWithOutOfOrderModeFisabledWhenCommandAreSubmittedThenDcFlushIsAdded) {
@@ -1015,7 +1015,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWithOutOfOrd
     auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itorPipeControl);
 
     mockCsr->flushBatchedSubmissions();
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhenFlushTaskThenThereIsNoPipeControlForUpdateTaskCount) {
@@ -1173,7 +1173,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEpiloguePipeControlThenDcFlus
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(cmdBuffer->epiloguePipeControlLocation);
     ASSERT_NE(nullptr, pipeControl);
     mockCsr->flushBatchedSubmissions();
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEpiloguePipeControlWhendDcFlushDisabledByDebugFlagThenDcFlushIsDisabled) {
