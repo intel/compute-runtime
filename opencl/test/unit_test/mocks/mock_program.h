@@ -10,12 +10,11 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/program/program.h"
-
-#include "gmock/gmock.h"
 
 #include <string>
 
@@ -202,10 +201,10 @@ class MockProgram : public Program {
     int isOptionValueValidOverride = -1;
 };
 
-class GMockProgram : public Program {
+class MockProgramAppendKernelDebugOptions : public Program {
   public:
     using Program::Program;
-    MOCK_METHOD(bool, appendKernelDebugOptions, (ClDevice &, std::string &), (override));
+    ADDMETHOD_NOBASE(appendKernelDebugOptions, bool, true, (ClDevice & clDevice, std::string &internalOptions));
 };
 
 } // namespace NEO

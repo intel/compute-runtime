@@ -20,12 +20,14 @@ using namespace NEO;
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);
+    auto mock = new MockSourceLevelDebugger(new MockOsLibrary);
 
-    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(gmock);
-    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
-
-    EXPECT_CALL(*gmock, notifyDeviceDestruction()).Times(1);
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(mock);
+    {
+        auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
+        EXPECT_EQ(0u, mock->notifyDeviceDestructionCalled);
+    }
+    EXPECT_EQ(1u, mock->notifyDeviceDestructionCalled);
 }
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsCreatedThenPreemptionIsDisabled) {

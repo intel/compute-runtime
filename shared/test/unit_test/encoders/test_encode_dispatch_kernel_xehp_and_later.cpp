@@ -36,7 +36,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t slmTotalSize = 1;
-    EXPECT_CALL(*dispatchInterface.get(), getSlmTotalSize()).WillRepeatedly(::testing::Return(slmTotalSize));
+
+    dispatchInterface->getSlmTotalSizeResult = slmTotalSize;
 
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
@@ -89,7 +90,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZero
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t slmTotalSize = 0;
-    EXPECT_CALL(*dispatchInterface.get(), getSlmTotalSize()).WillRepeatedly(::testing::Return(slmTotalSize));
+
+    dispatchInterface->getSlmTotalSizeResult = slmTotalSize;
 
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
@@ -118,7 +120,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeD
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t slmTotalSize = 0;
-    EXPECT_CALL(*dispatchInterface.get(), getSlmTotalSize()).WillRepeatedly(::testing::Return(slmTotalSize));
+
+    dispatchInterface->getSlmTotalSizeResult = slmTotalSize;
 
     bool requiresUncachedMocs = false;
     int32_t maxValueToProgram = 0x8;
@@ -161,8 +164,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhe
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0;
 
     unsigned char *bindingTableStateRaw = reinterpret_cast<unsigned char *>(&bindingTableState);
-    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(bindingTableStateRaw));
-    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
+    dispatchInterface->getSurfaceStateHeapDataResult = bindingTableStateRaw;
+    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
 
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
@@ -200,8 +203,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhe
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0;
 
     unsigned char *bindingTableStateRaw = reinterpret_cast<unsigned char *>(&bindingTableState);
-    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(bindingTableStateRaw));
-    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
+    dispatchInterface->getSurfaceStateHeapDataResult = bindingTableStateRaw;
+    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
 
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
@@ -240,7 +243,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDisp
     dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0;
 
     unsigned char *samplerStateRaw = reinterpret_cast<unsigned char *>(&samplerState);
-    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(samplerStateRaw));
+    dispatchInterface->getDynamicStateHeapDataResult = samplerStateRaw;
 
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
@@ -321,8 +324,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatc
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     cmdContainer->slmSize = 1;
-    EXPECT_CALL(*dispatchInterface.get(), getSlmTotalSize()).WillRepeatedly(::testing::Return(cmdContainer->slmSize));
     cmdContainer->setDirtyStateForAllHeaps(false);
+    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
 
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
@@ -357,9 +360,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0;
     dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
     unsigned char *samplerStateRaw = reinterpret_cast<unsigned char *>(&samplerState);
-    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(samplerStateRaw));
+    dispatchInterface->getDynamicStateHeapDataResult = samplerStateRaw;
     unsigned char *bindingTableRaw = reinterpret_cast<unsigned char *>(&bindingTable);
-    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(bindingTableRaw));
+    dispatchInterface->getSurfaceStateHeapDataResult = bindingTableRaw;
 
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(-1);
@@ -507,7 +510,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = true;
-    EXPECT_CALL(*dispatchInterface.get(), getCrossThreadDataSize()).WillRepeatedly(::testing::Return(0));
+    dispatchInterface->getCrossThreadDataSizeResult = 0u;
 
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
@@ -532,14 +535,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    dispatchInterface->localIdGenerationByRuntime = false;
     dispatchInterface->requiredWalkGroupOrder = 2u;
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = true;
     dispatchInterface->kernelDescriptor.kernelAttributes.numLocalIdChannels = 3u;
     dispatchInterface->kernelDescriptor.kernelAttributes.simdSize = 32u;
+    dispatchInterface->getCrossThreadDataSizeResult = 32u;
 
-    EXPECT_CALL(*dispatchInterface.get(), getCrossThreadDataSize()).WillRepeatedly(::testing::Return(32u));
-    EXPECT_CALL(*dispatchInterface.get(), requiresGenerationOfLocalIdsByRuntime()).WillRepeatedly(::testing::Return(false));
+    dispatchInterface->requiresGenerationOfLocalIdsByRuntimeResult = false;
 
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;

@@ -8,8 +8,7 @@
 #pragma once
 
 #include "shared/source/source_level_debugger/source_level_debugger.h"
-
-#include "gmock/gmock.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <string>
 
@@ -31,7 +30,74 @@ class MockSourceLevelDebugger : public SourceLevelDebugger {
     void setActive(bool active) {
         isActive = active;
     }
+
+    bool isDebuggerActive() override {
+        return isActive;
+    }
+
+    bool isOptimizationDisabled() const override {
+        isOptimizationDisabledCalled++;
+        if (callBaseIsOptimizationDisabled) {
+            return SourceLevelDebugger::isOptimizationDisabled();
+        }
+        return isOptimizationDisabledResult;
+    }
+
+    mutable uint32_t isOptimizationDisabledCalled = 0u;
+    bool isOptimizationDisabledResult = false;
+
+    bool notifySourceCode(const char *sourceCode, size_t size, std::string &filename) const override {
+        notifySourceCodeCalled++;
+        if (callBaseNotifySourceCode) {
+            return SourceLevelDebugger::notifySourceCode(sourceCode, size, filename);
+        }
+        return notifySourceCodeResult;
+    }
+
+    mutable uint32_t notifySourceCodeCalled = 0u;
+    bool notifySourceCodeResult = false;
+
+    bool notifyKernelDebugData(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize) const override {
+        notifyKernelDebugDataCalled++;
+        if (callBaseNotifyKernelDebugData) {
+            return SourceLevelDebugger::notifyKernelDebugData(debugData, name, isa, isaSize);
+        }
+        return notifyKernelDebugDataResult;
+    }
+
+    mutable uint32_t notifyKernelDebugDataCalled = 0u;
+    bool notifyKernelDebugDataResult = false;
+
+    bool notifyNewDevice(uint32_t deviceHandle) override {
+        notifyNewDeviceCalled++;
+        if (callBaseNotifyNewDevice) {
+            return SourceLevelDebugger::notifyNewDevice(deviceHandle);
+        }
+        return notifyNewDeviceResult;
+    }
+
+    mutable uint32_t notifyNewDeviceCalled = 0u;
+    bool notifyNewDeviceResult = false;
+
+    bool initialize(bool useLocalMemory) override {
+        initializeCalled++;
+        if (callBaseInitialize) {
+            return SourceLevelDebugger::initialize(useLocalMemory);
+        }
+        return initializeResult;
+    }
+
+    mutable uint32_t initializeCalled = 0u;
+    bool initializeResult = false;
+
+    ADDMETHOD_NOBASE(notifyDeviceDestruction, bool, false, ());
+
     static const uint32_t mockDeviceHandle = 23;
+    bool callBaseIsOptimizationDisabled = false;
+    bool callBaseNotifySourceCode = false;
+    bool callBaseNotifyKernelDebugData = false;
+    bool callBaseNotifyNewDevice = false;
+    bool callBaseInitialize = false;
 };
 
 class MockActiveSourceLevelDebugger : public SourceLevelDebugger {
@@ -78,24 +144,4 @@ class MockActiveSourceLevelDebugger : public SourceLevelDebugger {
     static const uint32_t mockDeviceHandle = 23;
     bool isOptDisabled = false;
     std::string sourceCodeFilename;
-};
-
-class GMockSourceLevelDebugger : public SourceLevelDebugger {
-  public:
-    GMockSourceLevelDebugger(OsLibrary *library) : SourceLevelDebugger(library) {
-    }
-    void setActive(bool active) {
-        isActive = active;
-    }
-
-    bool isDebuggerActive() override {
-        return isActive;
-    }
-
-    MOCK_METHOD(bool, notifyDeviceDestruction, (), (override));
-    MOCK_METHOD(bool, notifyKernelDebugData, (const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize), (const, override));
-    MOCK_METHOD(bool, isOptimizationDisabled, (), (const, override));
-    MOCK_METHOD(bool, notifyNewDevice, (uint32_t), (override));
-    MOCK_METHOD(bool, notifySourceCode, (const char *, size_t, std::string &), (const, override));
-    MOCK_METHOD(bool, initialize, (bool), (override));
 };

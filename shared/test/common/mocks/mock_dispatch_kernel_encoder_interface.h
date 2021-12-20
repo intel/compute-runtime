@@ -9,8 +9,7 @@
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-
-#include "gmock/gmock.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <stdint.h>
 
@@ -19,32 +18,7 @@ class GraphicsAllocation;
 
 struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
   public:
-    MockDispatchKernelEncoder();
-
-    MOCK_METHOD(const KernelDescriptor &, getKernelDescriptor, (), (const, override));
-
-    MOCK_METHOD(const uint32_t *, getGroupSize, (), (const, override));
-    MOCK_METHOD(uint32_t, getSlmTotalSize, (), (const, override));
-
-    MOCK_METHOD(const uint8_t *, getCrossThreadData, (), (const, override));
-    MOCK_METHOD(uint32_t, getCrossThreadDataSize, (), (const, override));
-
-    MOCK_METHOD(uint32_t, getThreadExecutionMask, (), (const, override));
-
-    MOCK_METHOD(const uint8_t *, getPerThreadData, (), (const, override));
-    MOCK_METHOD(uint32_t, getPerThreadDataSize, (), (const, override));
-
-    MOCK_METHOD(uint32_t, getPerThreadDataSizeForWholeThreadGroup, (), (const, override));
-
-    MOCK_METHOD(const uint8_t *, getSurfaceStateHeapData, (), (const, override));
-    MOCK_METHOD(uint32_t, getSurfaceStateHeapDataSize, (), (const, override));
-
-    MOCK_METHOD(GraphicsAllocation *, getIsaAllocation, (), (const, override));
-    MOCK_METHOD(const uint8_t *, getDynamicStateHeapData, (), (const, override));
-
-    MOCK_METHOD(bool, requiresGenerationOfLocalIdsByRuntime, (), (const, override));
-
-    MOCK_METHOD(SlmPolicy, getSlmPolicy, (), (const, override));
+    MockDispatchKernelEncoder() = default;
 
     uint32_t getRequiredWorkgroupOrder() const override {
         return requiredWalkGroupOrder;
@@ -52,21 +26,34 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     uint32_t getNumThreadsPerThreadGroup() const override {
         return 1;
     }
-    void expectAnyMockFunctionCall();
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return nullptr; }
     uint32_t getSizeForImplicitArgsPatching() const override { return 0; }
     void patchImplicitArgs(void *&pOut) const override {}
 
-    ::testing::NiceMock<MockGraphicsAllocation> mockAllocation;
+    MockGraphicsAllocation mockAllocation{};
     static constexpr uint32_t crossThreadSize = 0x40;
     static constexpr uint32_t perThreadSize = 0x20;
-    uint8_t dataCrossThread[crossThreadSize];
-    uint8_t dataPerThread[perThreadSize];
-    KernelDescriptor kernelDescriptor;
-
-    uint32_t groupSizes[3];
-    bool localIdGenerationByRuntime = true;
+    uint8_t dataCrossThread[crossThreadSize]{};
+    uint8_t dataPerThread[perThreadSize]{};
+    uint32_t groupSizes[3]{32, 1, 1};
     uint32_t requiredWalkGroupOrder = 0x0u;
+    KernelDescriptor kernelDescriptor{};
+
+    ADDMETHOD_CONST_NOBASE(getKernelDescriptor, const KernelDescriptor &, kernelDescriptor, ());
+    ADDMETHOD_CONST_NOBASE(getGroupSize, const uint32_t *, groupSizes, ());
+    ADDMETHOD_CONST_NOBASE(getSlmTotalSize, uint32_t, 0u, ());
+    ADDMETHOD_CONST_NOBASE(getCrossThreadData, const uint8_t *, dataCrossThread, ());
+    ADDMETHOD_CONST_NOBASE(getCrossThreadDataSize, uint32_t, crossThreadSize, ());
+    ADDMETHOD_CONST_NOBASE(getThreadExecutionMask, uint32_t, 0u, ());
+    ADDMETHOD_CONST_NOBASE(getPerThreadData, const uint8_t *, dataPerThread, ());
+    ADDMETHOD_CONST_NOBASE(getPerThreadDataSize, uint32_t, perThreadSize, ());
+    ADDMETHOD_CONST_NOBASE(getPerThreadDataSizeForWholeThreadGroup, uint32_t, 0u, ());
+    ADDMETHOD_CONST_NOBASE(getSurfaceStateHeapData, const uint8_t *, nullptr, ());
+    ADDMETHOD_CONST_NOBASE(getSurfaceStateHeapDataSize, uint32_t, 0u, ());
+    ADDMETHOD_CONST_NOBASE(getIsaAllocation, GraphicsAllocation *, &mockAllocation, ());
+    ADDMETHOD_CONST_NOBASE(getDynamicStateHeapData, const uint8_t *, nullptr, ());
+    ADDMETHOD_CONST_NOBASE(requiresGenerationOfLocalIdsByRuntime, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(getSlmPolicy, SlmPolicy, SlmPolicy::SlmPolicyNone, ());
 };
 } // namespace NEO

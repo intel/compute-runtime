@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <vector>
 
 using namespace NEO;
 
@@ -230,46 +231,51 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
     cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto program = std::unique_ptr<GMockProgram>(new GMockProgram(&mockContext, false, mockContext.getDevices()));
+    auto program = std::unique_ptr<MockProgramAppendKernelDebugOptions>(new MockProgramAppendKernelDebugOptions(&mockContext, false, mockContext.getDevices()));
     program->enableKernelDebug();
-
-    EXPECT_CALL(*program, appendKernelDebugOptions(::testing::_, ::testing::_)).Times(static_cast<int>(mockContext.getRootDeviceIndices().size()));
 
     cl_program clProgramToLink = pProgram;
     retVal = program->link(pProgram->getDevices(), nullptr, 1, &clProgramToLink);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(static_cast<unsigned int>(mockContext.getRootDeviceIndices().size()), program->appendKernelDebugOptionsCalled);
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenDebuggerIsNotifiedWithKernelDebugData) {
+    const size_t rootDeviceIndicesSize = mockContext.getRootDeviceIndices().size();
+    std::vector<MockSourceLevelDebugger *> sourceLevelDebugger(rootDeviceIndicesSize, nullptr);
+    size_t i = 0;
+
     for (auto &rootDeviceIndex : mockContext.getRootDeviceIndices()) {
-        GMockSourceLevelDebugger *sourceLevelDebugger = new GMockSourceLevelDebugger(nullptr);
-        ON_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Return(false));
-        ON_CALL(*sourceLevelDebugger, isOptimizationDisabled()).WillByDefault(::testing::Return(false));
-
-        EXPECT_CALL(*sourceLevelDebugger, isOptimizationDisabled()).Times(1);
-        EXPECT_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).Times(1);
-        EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(1);
-
-        sourceLevelDebugger->setActive(true);
-        pDevice->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->debugger.reset(sourceLevelDebugger);
+        sourceLevelDebugger[i] = new MockSourceLevelDebugger(nullptr);
+        sourceLevelDebugger[i]->setActive(true);
+        pDevice->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->debugger.reset(sourceLevelDebugger[i]);
+        i++;
     }
 
     cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (auto &el : sourceLevelDebugger) {
+        EXPECT_EQ(1u, el->isOptimizationDisabledCalled);
+        EXPECT_EQ(false, el->isOptimizationDisabledResult);
+
+        EXPECT_EQ(1u, el->notifySourceCodeCalled);
+        EXPECT_EQ(false, el->notifySourceCodeResult);
+
+        EXPECT_EQ(1u, el->notifyKernelDebugDataCalled);
+    }
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenDebuggerIsNotifiedWithKernelDebugData) {
+    const size_t rootDeviceIndicesSize = mockContext.getRootDeviceIndices().size();
+    std::vector<MockSourceLevelDebugger *> sourceLevelDebugger(rootDeviceIndicesSize, nullptr);
+    size_t i = 0;
+
     for (auto &rootDeviceIndex : mockContext.getRootDeviceIndices()) {
-        GMockSourceLevelDebugger *sourceLevelDebugger = new GMockSourceLevelDebugger(nullptr);
-        ON_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Return(false));
-        ON_CALL(*sourceLevelDebugger, isOptimizationDisabled()).WillByDefault(::testing::Return(false));
-
-        EXPECT_CALL(*sourceLevelDebugger, isOptimizationDisabled()).Times(2);
-        EXPECT_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).Times(1);
-        EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(1);
-
-        sourceLevelDebugger->setActive(true);
-        pDevice->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->debugger.reset(sourceLevelDebugger);
+        sourceLevelDebugger[i] = new MockSourceLevelDebugger(nullptr);
+        sourceLevelDebugger[i]->setActive(true);
+        pDevice->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->debugger.reset(sourceLevelDebugger[i]);
+        i++;
     }
 
     cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,
@@ -280,6 +286,16 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
     retVal = pProgram->link(pProgram->getDevices(), nullptr,
                             1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (auto &el : sourceLevelDebugger) {
+        EXPECT_EQ(2u, el->isOptimizationDisabledCalled);
+        EXPECT_EQ(false, el->isOptimizationDisabledResult);
+
+        EXPECT_EQ(1u, el->notifySourceCodeCalled);
+        EXPECT_EQ(false, el->notifySourceCodeResult);
+
+        EXPECT_EQ(1u, el->notifyKernelDebugDataCalled);
+    }
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBuiltThenPatchTokenAllocateSipSurfaceHasSizeGreaterThanZero) {
