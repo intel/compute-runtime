@@ -133,7 +133,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     if (NEO::DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
         increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl());
 
-        NEO::PipeControlArgs args = {};
+        NEO::PipeControlArgs args;
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
     }
     NEO::Device *neoDevice = device->getNEODevice();
@@ -165,9 +165,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         auto event = Event::fromHandle(hEvent);
         eventAlloc = &event->getAllocation(this->device);
         commandContainer.addToResidencyContainer(eventAlloc);
-        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
-            L3FlushEnable = (!event->signalScope) ? false : true;
-        }
+        L3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope);
         isTimestampEvent = event->isEventTimestampFlagSet();
         eventAddress = event->getPacketAddress(this->device);
     }

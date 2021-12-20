@@ -282,7 +282,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, WhenSettingExtr
         HardwareInfo hardwareInfo = *defaultHwInfo;
         hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
-        PipeControlArgs args{};
+        PipeControlArgs args;
         MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args, hardwareInfo);
 
         if (ftrLocalMemory) {

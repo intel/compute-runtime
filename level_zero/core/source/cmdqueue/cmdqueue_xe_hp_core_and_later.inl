@@ -27,7 +27,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         NEO::Device *neoDevice = device->getNEODevice();
         auto globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
-        NEO::PipeControlArgs args(true);
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
         auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
         STATE_BASE_ADDRESS sbaCmd;

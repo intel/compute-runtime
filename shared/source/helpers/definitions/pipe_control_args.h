@@ -13,6 +13,5 @@ struct HardwareInfo;
 
 struct PipeControlArgs : PipeControlArgsBase {
     PipeControlArgs() = default;
-    PipeControlArgs(bool dcFlush) : PipeControlArgsBase(dcFlush) {}
 };
 } // namespace NEO

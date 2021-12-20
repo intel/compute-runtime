@@ -42,7 +42,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
         if (dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 PipeControlArgs args;
-                args.dcFlushEnable = true;
+                args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
                 args.renderTargetCacheFlushEnable = true;
                 args.instructionCacheInvalidateEnable = true;
                 args.textureCacheInvalidationEnable = true;
@@ -76,7 +76,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
         } else {
             if (lastVmeSubslicesConfig) {
                 PipeControlArgs args;
-                args.dcFlushEnable = true;
+                args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
                 args.renderTargetCacheFlushEnable = true;
                 args.instructionCacheInvalidateEnable = true;
                 args.textureCacheInvalidationEnable = true;

@@ -216,7 +216,7 @@ bool MemorySynchronizationCommands<Family>::isPipeControlWArequired(const Hardwa
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isDcFlushAllowed() {
+bool MemorySynchronizationCommands<Family>::isDcFlushAllowed(bool isFlushPreferred) {
     return false;
 }
 

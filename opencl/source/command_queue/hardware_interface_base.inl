@@ -307,7 +307,8 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
             using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
             using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-            PipeControlArgs args(true);
+            PipeControlArgs args;
+            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandStream,
                 POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,

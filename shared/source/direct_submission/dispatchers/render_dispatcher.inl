@@ -33,7 +33,8 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
                                                               bool useNotifyEnable,
                                                               bool partitionedWorkload) {
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
-    PipeControlArgs args(true);
+    PipeControlArgs args;
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
     args.workloadPartitionOffset = partitionedWorkload;
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
         cmdBuffer,
@@ -57,7 +58,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuf
 
 template <typename GfxFamily>
 inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address) {
-    PipeControlArgs args(false);
+    PipeControlArgs args;
     args.tlbInvalidation = true;
     args.pipeControlFlushEnable = true;
     args.textureCacheInvalidationEnable = true;

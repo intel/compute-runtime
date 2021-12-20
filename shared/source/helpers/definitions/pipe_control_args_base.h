@@ -27,6 +27,5 @@ struct PipeControlArgsBase {
 
   protected:
     PipeControlArgsBase() = default;
-    PipeControlArgsBase(bool dcFlush) : dcFlushEnable(dcFlush) {}
 };
 } // namespace NEO

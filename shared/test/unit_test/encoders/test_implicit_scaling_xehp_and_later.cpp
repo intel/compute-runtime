@@ -995,7 +995,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    PipeControlArgs flushArgs(false);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = false;
     ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, false, false);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -1008,7 +1009,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(1u, hwParser.pipeControlList.size());
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*hwParser.pipeControlList.begin());
-    EXPECT_EQ(false, pipeControl->getDcFlushEnable());
+    EXPECT_FALSE(pipeControl->getDcFlushEnable());
 
     auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
     EXPECT_EQ(1u, miAtomicList.size());
@@ -1047,7 +1048,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    PipeControlArgs flushArgs(true);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
     ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -1062,7 +1064,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     EXPECT_EQ(1u, hwParser.pipeControlList.size());
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*hwParser.pipeControlList.begin());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
 
     auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
     EXPECT_EQ(3u, miAtomicList.size());
@@ -1102,7 +1104,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    PipeControlArgs flushArgs(true);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
     ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -1114,7 +1117,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     EXPECT_EQ(1u, hwParser.pipeControlList.size());
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*hwParser.pipeControlList.begin());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
 
     auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
     EXPECT_EQ(5u, miAtomicList.size());
@@ -1148,7 +1151,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
                                                                         true);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    PipeControlArgs flushArgs(false);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = false;
     uint64_t postSyncAddress = 0xFF000A180F0;
     uint64_t postSyncValue = 0xFF00FF;
     ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, false, false);
@@ -1188,7 +1192,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     }
     EXPECT_EQ(postSyncAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     EXPECT_EQ(postSyncValue, pipeControl->getImmediateData());
-    EXPECT_EQ(false, pipeControl->getDcFlushEnable());
+    EXPECT_FALSE(pipeControl->getDcFlushEnable());
 
     auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
     EXPECT_EQ(1u, miAtomicList.size());
@@ -1227,7 +1231,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
                                                                         true);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    PipeControlArgs flushArgs(true);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
     uint64_t postSyncAddress = 0xFF000A180F0;
     uint64_t postSyncValue = 0xFF00FF;
     ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, true, true);
@@ -1268,7 +1273,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     }
     EXPECT_EQ(postSyncAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     EXPECT_EQ(postSyncValue, pipeControl->getImmediateData());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
 
     auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
     EXPECT_EQ(3u, miAtomicList.size());
@@ -1310,7 +1315,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
                                                                         true);
     EXPECT_EQ(expectedSize, estimatedSize);
 
-    PipeControlArgs flushArgs(true);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
     uint64_t postSyncAddress = 0xFF000A180F0;
     uint64_t postSyncValue = 0xFF00FF;
     ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, true, true);
@@ -1349,7 +1355,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     }
     EXPECT_EQ(postSyncAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     EXPECT_EQ(postSyncValue, pipeControl->getImmediateData());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
 
     auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
     EXPECT_EQ(5u, miAtomicList.size());

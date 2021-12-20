@@ -434,7 +434,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             args.commandWithPostSync = true;
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(child, fence->getGpuAddress(), Fence::STATE_SIGNALED, args);
         } else {
-            NEO::PipeControlArgs args(true);
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
             if (partitionCount > 1) {
                 args.workloadPartitionOffset = true;
             }
@@ -576,7 +577,8 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountWrite(NEO::LinearStream &co
         args.notifyEnable = csr->isUsedNotifyEnableForPostSync();
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, gpuAddress, taskCountToWrite, args);
     } else {
-        NEO::PipeControlArgs args(true);
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
         if (partitionCount > 1) {
             args.workloadPartitionOffset = true;
         }

@@ -317,10 +317,7 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
     pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
     pipeControl.setTlbInvalidate(args.tlbInvalidation);
     pipeControl.setNotifyEnable(args.notifyEnable);
-
-    if (isDcFlushAllowed()) {
-        pipeControl.setDcFlushEnable(args.dcFlushEnable);
-    }
+    pipeControl.setDcFlushEnable(args.dcFlushEnable);
 
     setPipeControlExtraProperties(pipeControl, args);
 
@@ -348,8 +345,8 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
 }
 
 template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed() {
-    return true;
+bool MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(bool isFlushPreferred) {
+    return isFlushPreferred;
 }
 
 template <typename GfxFamily>
@@ -552,7 +549,8 @@ void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &c
     PIPE_CONTROL *pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
     PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
 
-    PipeControlArgs args(true);
+    PipeControlArgs args;
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
     args.renderTargetCacheFlushEnable = true;
     args.instructionCacheInvalidateEnable = true;
     args.textureCacheInvalidationEnable = true;

@@ -74,7 +74,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenSettingExtraPipeControlProperti
         HardwareInfo hardwareInfo = *defaultHwInfo;
         hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
-        PipeControlArgs args{};
+        PipeControlArgs args;
         MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args, hardwareInfo);
 
         if (ftrLocalMemory) {

@@ -328,20 +328,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenMiLoadRegisterRegWhenItI
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlCommandWhenItIsProgrammedThenItIsProperlySet) {
     auto expectedUsedSize = sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
     void *pipeControlCAddress = cmdBufferAddress;
-    PipeControlArgs args(true);
+    PipeControlArgs args;
+    args.dcFlushEnable = true;
     WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, args);
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(pipeControlCAddress);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
 
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlCommandWhenItIsProgrammedWithDcFlushFalseThenExpectDcFlushFlagFalse) {
     auto expectedUsedSize = sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
     void *pipeControlCAddress = cmdBufferAddress;
-    PipeControlArgs args(false);
+    PipeControlArgs args;
+    args.dcFlushEnable = false;
     WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, args);
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(pipeControlCAddress);
     ASSERT_NE(nullptr, pipeControl);
@@ -356,7 +358,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlComman
     DebugManager.flags.DoNotFlushCaches.set(true);
     auto expectedUsedSize = sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
     void *pipeControlCAddress = cmdBufferAddress;
-    PipeControlArgs args(true);
+    PipeControlArgs args;
+    args.dcFlushEnable = true;
     WalkerPartition::programPipeControlCommand<FamilyType>(cmdBufferAddress, totalBytesProgrammed, args);
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(pipeControlCAddress);
     ASSERT_NE(nullptr, pipeControl);
@@ -933,7 +936,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), pipeControl->getDcFlushEnable());
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1135,7 +1138,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), pipeControl->getDcFlushEnable());
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1371,7 +1374,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenDo
     EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
     EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
 
-    PipeControlArgs flushArgs(false);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = false;
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
@@ -1384,7 +1388,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenDo
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(cmdBufferAddress);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(false, pipeControl->getDcFlushEnable());
+    EXPECT_FALSE(pipeControl->getDcFlushEnable());
     auto parsedOffset = sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1439,7 +1443,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
     EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
 
-    PipeControlArgs flushArgs(true);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
@@ -1463,7 +1468,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1555,7 +1560,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
     EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
 
-    PipeControlArgs flushArgs(true);
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
     WalkerPartition::constructBarrierCommandBuffer<FamilyType>(cmdBuffer,
                                                                gpuVirtualAddress,
                                                                totalBytesProgrammed,
@@ -1584,7 +1590,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));

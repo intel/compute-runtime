@@ -164,7 +164,8 @@ void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
 
 template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
-    PipeControlArgs args(true);
+    PipeControlArgs args;
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
     MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
 }
 

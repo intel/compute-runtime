@@ -59,7 +59,7 @@ bool HwHelperHw<Family>::isStatelesToStatefullWithOffsetSupported() const {
 template <>
 void MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &commandStream, PipeControlArgs &args) {
     Family::PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-    args.dcFlushEnable = true;
+    args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
     MemorySynchronizationCommands<Family>::setPipeControl(cmd, args);
     Family::PIPE_CONTROL *cmdBuffer = commandStream.getSpaceForCmd<Family::PIPE_CONTROL>();
     *cmdBuffer = cmd;

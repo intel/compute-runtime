@@ -32,7 +32,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenPvcThenAuxTranslationIsNotRequire
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperwhenAskingForDcFlushThenReturnFalse) {
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed());
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true));
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {

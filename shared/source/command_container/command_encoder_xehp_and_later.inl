@@ -208,7 +208,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     if (container.isAnyHeapDirty() || requiresUncachedMocs || requiresGlobalAtomicsUpdate) {
-        PipeControlArgs args(true);
+        PipeControlArgs args;
+        args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
         MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), args);
         STATE_BASE_ADDRESS sbaCmd;
         auto gmmHelper = container.getDevice()->getGmmHelper();
@@ -250,7 +251,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         postSync.setDestinationAddress(eventAddress);
 
         auto gmmHelper = device->getRootDeviceEnvironment().getGmmHelper();
-        if (MemorySynchronizationCommands<Family>::isDcFlushAllowed()) {
+        if (MemorySynchronizationCommands<Family>::isDcFlushAllowed(true)) {
             postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
         } else {
             postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));

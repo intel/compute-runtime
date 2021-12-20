@@ -284,9 +284,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
         }
     } else {
         NEO::PipeControlArgs args;
-        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
-            args.dcFlushEnable = (!event->signalScope) ? false : true;
-        }
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope);
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_SIGNALED, args, false, false, false);
         if (this->isSyncModeQueue) {
             auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
@@ -317,9 +315,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
         }
     } else {
         NEO::PipeControlArgs args;
-        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
-            args.dcFlushEnable = (!event->signalScope) ? false : true;
-        }
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope);
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_CLEARED, args, false, false, false);
         if (this->isSyncModeQueue) {
             auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
@@ -374,7 +370,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
         }
     } else {
         bool dcFlushRequired = false;
-        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true)) {
             for (uint32_t i = 0; i < numEvents; i++) {
                 auto event = Event::fromHandle(phWaitEvents[i]);
                 dcFlushRequired |= (!event->waitScope) ? false : true;

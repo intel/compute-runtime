@@ -102,7 +102,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
 
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
-    if (MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+    if (MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true)) {
         postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     } else {
         postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));

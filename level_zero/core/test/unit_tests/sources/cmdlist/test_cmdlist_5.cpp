@@ -619,7 +619,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWith
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
-    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed()) {
+    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true)) {
         EXPECT_NE(cmdList.end(), itor);
     } else {
         EXPECT_EQ(cmdList.end(), itor);

@@ -132,7 +132,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppe
         ASSERT_NE(cmd, nullptr);
 
         EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), cmd->getDcFlushEnable());
     }
 }
 
@@ -297,7 +297,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
     commandList->commandContainer.getCommandStream()->getSpace(consumeSpace);
 
     size_t expectedConsumedSpace = sizeof(MI_SEMAPHORE_WAIT);
-    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed()) {
+    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true)) {
         expectedConsumedSpace += sizeof(PIPE_CONTROL);
     }
 
@@ -329,14 +329,14 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
                                                       usedSpaceAfter));
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed()) {
+    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true)) {
         ASSERT_NE(cmdList.end(), itorPC);
         {
             auto cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
             ASSERT_NE(cmd, nullptr);
 
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(true), cmd->getDcFlushEnable());
         }
     } else {
         EXPECT_EQ(cmdList.end(), itorPC);

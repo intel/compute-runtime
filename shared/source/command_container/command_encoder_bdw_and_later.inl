@@ -168,7 +168,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     bool flush = container.slmSize != slmSizeNew || dirtyHeaps || requiresUncachedMocs;
 
     if (flush) {
-        PipeControlArgs args(true);
+        PipeControlArgs args;
+        args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true);
         if (dirtyHeaps) {
             args.hdcPipelineFlush = true;
         }

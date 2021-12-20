@@ -23,7 +23,8 @@ void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t num
     auto &hwInfo = commandContainer.getDevice()->getHardwareInfo();
     bool supportL3Control = hwInfo.capabilityTable.supportCacheFlushAfterWalker;
     if (!supportL3Control) {
-        NEO::PipeControlArgs args(true);
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(),
                                                                       args);
     } else {
