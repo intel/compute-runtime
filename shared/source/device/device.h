@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ namespace NEO {
 class OSTime;
 class SourceLevelDebugger;
 class SubDevice;
+struct PhysicalDevicePciBusInfo;
 
 struct SelectorCopyEngine : NonCopyableOrMovableClass {
     std::atomic<bool> isMainUsed = false;
@@ -200,6 +201,7 @@ class Device : public ReferenceTrackedObject<Device> {
         bool isValid = false;
         std::array<uint8_t, HwInfoConfig::uuidSize> id;
     } uuid;
+    bool generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
 };
 
 inline EngineControl &Device::getDefaultEngine() {

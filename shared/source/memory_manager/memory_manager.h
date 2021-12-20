@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -184,8 +184,8 @@ class MemoryManager {
 
     const ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; }
 
-    OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
-                                          const EngineDescriptor &engineDescriptor);
+    MOCKABLE_VIRTUAL OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
+                                                           const EngineDescriptor &engineDescriptor);
     uint32_t getRegisteredEnginesCount() const { return static_cast<uint32_t>(registeredEngines.size()); }
     EngineControlContainer &getRegisteredEngines();
     EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);

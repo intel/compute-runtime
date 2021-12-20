@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -271,6 +271,11 @@ bool Device::createDeviceImpl() {
     if (!isEngineInstanced()) {
         auto hardwareInfo = getRootDeviceEnvironment().getMutableHardwareInfo();
         uuid.isValid = HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
+
+        if (!uuid.isValid && getRootDeviceEnvironment().osInterface != nullptr) {
+            PhysicalDevicePciBusInfo pciBusInfo = getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
+            uuid.isValid = generateUuidFromPciBusInfo(pciBusInfo, uuid.id);
+        }
     }
 
     return true;
@@ -646,8 +651,28 @@ OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get
 bool Device::getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
     if (this->uuid.isValid) {
         uuid = this->uuid.id;
+
+        if (!isSubDevice() && deviceBitfield.count() == 1) {
+            // In case of no sub devices created (bits set in affinity mask == 1), return the UUID of enabled sub-device.
+            uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+            uuid[HwInfoConfig::uuidSize - 1] = subDeviceIndex + 1;
+        }
     }
     return this->uuid.isValid;
+}
+
+bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+    if (pciBusInfo.pciDomain != PhysicalDevicePciBusInfo::InvalidValue) {
+
+        uuid.fill(0);
+        memcpy_s(&uuid[0], 2, &pciBusInfo.pciDomain, 2);
+        memcpy_s(&uuid[2], 1, &pciBusInfo.pciBus, 1);
+        memcpy_s(&uuid[3], 1, &pciBusInfo.pciDevice, 1);
+        memcpy_s(&uuid[4], 1, &pciBusInfo.pciFunction, 1);
+        uuid[HwInfoConfig::uuidSize - 1] = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+        return true;
+    }
+    return false;
 }
 
 } // namespace NEO
