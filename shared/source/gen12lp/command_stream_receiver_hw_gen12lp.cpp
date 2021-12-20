@@ -39,7 +39,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
     }
 
     size_t size = 0;
-    if (this->streamProperties.stateComputeMode.isDirty() || csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged) {
+    if (this->streamProperties.stateComputeMode.isDirty() || csrSizeRequestFlags.numGrfRequiredChanged) {
         size += sizeof(typename Family::STATE_COMPUTE_MODE);
         if (csrSizeRequestFlags.hasSharedHandles) {
             size += sizeof(typename Family::PIPE_CONTROL);

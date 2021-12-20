@@ -11,7 +11,7 @@ namespace NEO {
 
 template <>
 bool StateComputeModeHelper<TGLLPFamily>::isStateComputeModeRequired(const CsrSizeRequestFlags &csrSizeRequestFlags, bool isThreadArbitionPolicyProgrammed) {
-    return csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged;
+    return csrSizeRequestFlags.numGrfRequiredChanged;
 }
 
 } // namespace NEO

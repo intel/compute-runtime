@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
@@ -101,11 +100,11 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesWhenGettingCmdSize
 
     overrideCoherencyRequest(false, false, true);
     auto retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_EQ(cmdsSize, retSize);
+    EXPECT_EQ(0u, retSize);
 
     overrideCoherencyRequest(false, true, true);
     retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_EQ(cmdsSize, retSize);
+    EXPECT_EQ(0u, retSize);
 
     overrideCoherencyRequest(true, true, true);
     retSize = csr->getCmdSizeForComputeMode();
@@ -257,7 +256,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
     csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }
 
-GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedHandlesWhenFlushTaskCalledThenAlwaysProgramCmds) {
+GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenSharedHandlesWhenFlushTaskCalledThenProgramPipeControlWhenNeeded) {
     auto startOffset = csr->commandStream.getUsed();
     auto graphicsAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap stream(graphicsAlloc);
@@ -289,14 +288,10 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedH
                 EXPECT_NE(nullptr, pc);
             }
         }
-        EXPECT_TRUE(foundOne);
+        EXPECT_EQ(valueChanged, foundOne);
     };
 
     flushTaskAndFindCmds(false, true);  // first time
-    flushTaskAndFindCmds(false, false); // not changed
-    flushTaskAndFindCmds(true, true);   // changed
-    flushTaskAndFindCmds(true, false);  // not changed
-    flushTaskAndFindCmds(false, true);  // changed
     flushTaskAndFindCmds(false, false); // not changed
 
     csr->getMemoryManager()->freeGraphicsMemory(graphicsAlloc);
