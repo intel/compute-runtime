@@ -40,6 +40,7 @@ CommandMapUnmap::CommandMapUnmap(MapOperationType operationType, MemObj &memObj,
 
 CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     if (terminated) {
+        this->terminated = true;
         memObj.decRefInternal();
         return completionStamp;
     }
@@ -131,6 +132,7 @@ CommandComputeKernel::~CommandComputeKernel() {
 
 CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminated) {
     if (terminated) {
+        this->terminated = true;
         for (auto surface : surfaces) {
             delete surface;
         }
@@ -348,6 +350,7 @@ void CommandWithoutKernel::dispatchBlitOperation() {
 
 CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {
     if (terminated) {
+        this->terminated = true;
         return completionStamp;
     }
 
@@ -472,8 +475,26 @@ void Command::setTimestampPacketNode(TimestampPacketContainer &current, Timestam
 }
 
 Command::~Command() {
-    if (commandQueue.getDeferredTimestampPackets() && timestampPacketDependencies.get()) {
-        timestampPacketDependencies->moveNodesToNewContainer(*commandQueue.getDeferredTimestampPackets());
+    if (terminated) {
+        if (commandQueue.getTimestampPacketContainer()) {
+            std::array<uint32_t, 8u> timestampData;
+            timestampData.fill(std::numeric_limits<uint32_t>::max());
+            if (currentTimestampPacketNodes.get()) {
+                for (auto &node : currentTimestampPacketNodes->peekNodes()) {
+                    for (const auto &cmdQueueNode : commandQueue.getTimestampPacketContainer()->peekNodes()) {
+                        if (node == cmdQueueNode) {
+                            for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
+                                node->assignDataToAllTimestamps(i, timestampData.data());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        if (commandQueue.getDeferredTimestampPackets() && timestampPacketDependencies.get()) {
+            timestampPacketDependencies->moveNodesToNewContainer(*commandQueue.getDeferredTimestampPackets());
+        }
     }
 
     for (cl_event &eventFromWaitList : eventsWaitlist) {

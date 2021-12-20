@@ -104,6 +104,7 @@ class Command : public IFNode<Command> {
     CompletionStamp completionStamp = {};
 
   protected:
+    bool terminated = false;
     CommandQueue &commandQueue;
     std::unique_ptr<KernelOperation> kernelOperation;
     std::unique_ptr<TimestampPacketContainer> currentTimestampPacketNodes;

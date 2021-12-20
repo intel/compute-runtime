@@ -943,6 +943,69 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingD
     device->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
 }
 
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenTerminatedLatestEnqueuedTaskWhenHandlingDependenciesForBlockedEnqueueThenDoNotPutAllNodesToDeferredListAndSetTimestampData) {
+    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+
+    auto gfxAllocation = createGfxAllocation(1, true);
+    setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
+
+    TimestampPacketContainer *deferredTimestampPackets = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get())->deferredTimestampPackets.get();
+    TimestampPacketContainer *timestampPacketContainer = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get())->timestampPacketContainer.get();
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
+
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+
+    userEvent.setStatus(-1);
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(timestampPacketContainer->peekNodes()[0]->getContextEndValue(0u), 0xffffffff);
+
+    device->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
+}
+
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenTerminatedTaskWhenHandlingDependenciesForBlockedEnqueueThenDoNotPutAllNodesToDeferredListAndDoNotSetTimestampData) {
+    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+
+    auto gfxAllocation = createGfxAllocation(1, true);
+    setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
+
+    TimestampPacketContainer *deferredTimestampPackets = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get())->deferredTimestampPackets.get();
+    TimestampPacketContainer *timestampPacketContainer = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get())->timestampPacketContainer.get();
+
+    UserEvent userEvent;
+    [[maybe_unused]] UserEvent *ue = &userEvent;
+    cl_event waitlist[] = {&userEvent};
+    UserEvent userEvent1;
+    [[maybe_unused]] UserEvent *ue1 = &userEvent1;
+    cl_event waitlist1[] = {&userEvent1};
+
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist1, nullptr);
+
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+
+    userEvent.setStatus(-1);
+
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(timestampPacketContainer->peekNodes()[0]->getContextEndValue(0u), 1u);
+
+    userEvent1.setStatus(-1);
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(timestampPacketContainer->peekNodes()[0]->getContextEndValue(0u), 0xffffffff);
+
+    device->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
+}
+
 using BlitEnqueueWithNoTimestampPacketTests = BlitEnqueueTests<0>;
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacketsWritewhenEnqueueingBlitOperationThenEnginesAreSynchronized) {
