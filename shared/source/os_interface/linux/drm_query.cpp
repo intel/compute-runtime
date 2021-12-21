@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
@@ -49,12 +48,6 @@ std::unique_ptr<uint8_t[]> Drm::getMemoryRegions() {
 }
 
 bool Drm::queryMemoryInfo() {
-    auto pHwInfo = getRootDeviceEnvironment().getHardwareInfo();
-    auto isLocalMemSupported = HwHelper::get(pHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*pHwInfo);
-    if (!isLocalMemSupported) {
-        return true;
-    }
-
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty, length);
     if (dataQuery) {

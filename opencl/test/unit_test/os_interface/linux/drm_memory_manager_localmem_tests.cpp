@@ -865,17 +865,6 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCa
     EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0)), memoryManager.getLocalMemorySize(0u, 0xF));
 }
 
-TEST_F(DrmMemoryManagerTestImpl, givenLocalMemoryDisabledWhenQueryMemoryInfoThenReturnTrueAndDontCreateMemoryInfo) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(0);
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    auto drm = std::make_unique<DrmMock>(*executionEnvironment.rootDeviceEnvironments[0]);
-    auto ret = drm->queryMemoryInfo();
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(nullptr, drm->memoryInfo);
-}
-
 TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoAndInvalidDeviceBitfieldThenReturnZero) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();

@@ -18,23 +18,6 @@
 
 using namespace NEO;
 
-TEST(MemoryInfo, givenNotSupportedLocalMemoryQueryingMemoryInfoThenMemoryInfoIsNotCreated) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(0);
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
-
-    auto ret = drm->queryMemoryInfo();
-    auto memoryInfo = drm->getMemoryInfo();
-
-    EXPECT_EQ(0u, drm->ioctlCallsCount);
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(nullptr, memoryInfo);
-}
-
 TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);

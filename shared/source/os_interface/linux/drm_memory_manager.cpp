@@ -705,11 +705,25 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     auto rootDeviceIndex = inputGraphicsAllocation->getRootDeviceIndex();
     gpuRange = acquireGpuRange(sizeWithPadding, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
 
-    auto srcPtr = inputGraphicsAllocation->getUnderlyingBuffer();
+    void *srcPtr = nullptr;
+    auto drmInputAllocation = static_cast<DrmAllocation *>(inputGraphicsAllocation);
+    if (drmInputAllocation->getMmapPtr()) {
+        auto bo = drmInputAllocation->getBO();
+        drm_i915_gem_mmap mmap_arg = {};
+        mmap_arg.handle = bo->peekHandle();
+        mmap_arg.size = bo->peekSize();
+        if (getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmap_arg) != 0) {
+            return nullptr;
+        }
+        srcPtr = addrToPtr(mmap_arg.addr_ptr);
+        inputGraphicsAllocation->lock(srcPtr);
+    } else {
+        srcPtr = inputGraphicsAllocation->getUnderlyingBuffer();
+    }
     auto srcSize = inputGraphicsAllocation->getUnderlyingBufferSize();
     auto alignedSrcSize = alignUp(srcSize, MemoryConstants::pageSize);
-    auto alignedPtr = (uintptr_t)alignDown(srcPtr, MemoryConstants::pageSize);
-    auto offset = (uintptr_t)srcPtr - alignedPtr;
+    auto alignedPtr = reinterpret_cast<uintptr_t>(alignDown(srcPtr, MemoryConstants::pageSize));
+    auto offset = ptrDiff(srcPtr, alignedPtr);
 
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(alignedPtr, alignedSrcSize, 0, rootDeviceIndex));
     if (!bo) {

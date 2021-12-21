@@ -5710,4 +5710,49 @@ TEST_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCall
     }
 }
 
+TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithoutMmapPtrThenOnlyUserptrCalled) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    void *cpuPtr = (void *)0x30000;
+    size_t size = 0x1000;
+    DrmAllocation gfxAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
+    auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
+    ASSERT_NE(nullptr, gfxPaddedAllocation);
+    memoryManager->freeGraphicsMemoryImpl(gfxPaddedAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithMmapPtrThenMmapCalled) {
+    mock->ioctl_expected.gemMmap = 1;
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+    BufferObject bo(mock, 1, 1024, 0);
+
+    void *cpuPtr = (void *)0x30000;
+    size_t size = 0x1000;
+    DrmAllocation gfxAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, &bo, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
+    gfxAllocation.setMmapPtr(cpuPtr);
+    gfxAllocation.setMmapSize(size);
+    auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
+    ASSERT_NE(nullptr, gfxPaddedAllocation);
+    EXPECT_TRUE(gfxAllocation.isLocked());
+    memoryManager->freeGraphicsMemoryImpl(gfxPaddedAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithMmapPtrAndFailedMmapCalledThenReturnNullptr) {
+    mock->ioctl_expected.gemMmap = 1;
+    mock->ioctl_res = -1;
+
+    BufferObject bo(mock, 1, 1024, 0);
+
+    void *cpuPtr = (void *)0x30000;
+    size_t size = 0x1000;
+    DrmAllocation gfxAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, &bo, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
+    gfxAllocation.setMmapPtr(cpuPtr);
+    gfxAllocation.setMmapSize(size);
+    auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
+    ASSERT_EQ(nullptr, gfxPaddedAllocation);
+    mock->ioctl_res = 0;
+}
+
 } // namespace NEO
