@@ -111,7 +111,7 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
 
         this->kernelImmData = &immutableData;
 
-        auto allocation = new NEO::GraphicsAllocation(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+        auto allocation = new NEO::GraphicsAllocation(0, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA,
                                                       nullptr, 0, 0, 4096,
                                                       MemoryPool::System4KBPages);
 
