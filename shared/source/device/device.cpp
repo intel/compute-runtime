@@ -43,12 +43,8 @@ Device::~Device() {
     }
 
     finalizeRayTracing();
-    getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
-    rtMemoryBackedBuffer = nullptr;
 
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
-    getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
-    rtMemoryBackedBuffer = nullptr;
 
     if (performanceCounters) {
         performanceCounters->shutdown();

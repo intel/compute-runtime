@@ -887,18 +887,23 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                               kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
 
     if (this->usesRayTracing()) {
-        uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
-        neoDevice->initializeRayTracing(bvhLevels);
-        auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(bvhLevels);
-        if (rtDispatchGlobals == nullptr) {
-            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-        }
-        this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
-        this->residencyContainer.push_back(rtDispatchGlobals);
+        if (this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize > 0) {
+            uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
+            neoDevice->initializeRayTracing(bvhLevels);
+            auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(bvhLevels);
+            if (rtDispatchGlobals == nullptr) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+            this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
+            this->residencyContainer.push_back(rtDispatchGlobals);
 
-        NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
-                          this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals,
-                          static_cast<uintptr_t>(rtDispatchGlobals->getGpuAddressToPatch()));
+            NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
+                              this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals,
+                              static_cast<uintptr_t>(rtDispatchGlobals->getGpuAddressToPatch()));
+        } else {
+            neoDevice->initializeRayTracing(0);
+            this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
+        }
     }
 
     return ZE_RESULT_SUCCESS;
