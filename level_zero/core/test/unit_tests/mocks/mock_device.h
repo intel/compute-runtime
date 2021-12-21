@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,7 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE(getComputeProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_compute_properties_t * pComputeProperties));
     ADDMETHOD_NOBASE(getP2PProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_device_p2p_properties_t *pP2PProperties));
     ADDMETHOD_NOBASE(getKernelProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_module_properties_t * pKernelProperties));
+    ADDMETHOD_NOBASE(getPciProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_pci_ext_properties_t * pPciProperties));
     ADDMETHOD_NOBASE(getMemoryProperties, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, ze_device_memory_properties_t *pMemProperties));
     ADDMETHOD_NOBASE(getMemoryAccessProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_memory_access_properties_t * pMemAccessProperties));
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_properties_t * pDeviceProperties));

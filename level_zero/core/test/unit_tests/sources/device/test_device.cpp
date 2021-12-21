@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -947,6 +948,54 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenTimestampValidBitsAreCorrectly
     EXPECT_EQ(32u, deviceProps.kernelTimestampValidBits);
 }
 
+TEST_F(DeviceTest, givenNullDriverInfowhenPciPropertiesIsCalledThenUninitializedErrorIsReturned) {
+    auto deviceImp = static_cast<L0::DeviceImp *>(device);
+    ze_pci_ext_properties_t pciProperties = {};
+
+    deviceImp->driverInfo.reset(nullptr);
+    ze_result_t res = device->getPciProperties(&pciProperties);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
+}
+
+TEST_F(DeviceTest, givenValidPciExtPropertiesWhenPciPropertiesIsCalledThenSuccessIsReturned) {
+
+    auto deviceImp = static_cast<L0::DeviceImp *>(device);
+    const NEO::PhysicalDevicePciBusInfo pciBusInfo(0, 1, 2, 3);
+    NEO::DriverInfoMock *driverInfo = new DriverInfoMock();
+    ze_pci_ext_properties_t pciProperties = {};
+
+    driverInfo->setPciBusInfo(pciBusInfo);
+    deviceImp->driverInfo.reset(driverInfo);
+    ze_result_t res = device->getPciProperties(&pciProperties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(pciBusInfo.pciDomain, pciProperties.address.domain);
+    EXPECT_EQ(pciBusInfo.pciBus, pciProperties.address.bus);
+    EXPECT_EQ(pciBusInfo.pciDevice, pciProperties.address.device);
+    EXPECT_EQ(pciBusInfo.pciFunction, pciProperties.address.function);
+}
+
+TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitializedErrorIsReturned) {
+    constexpr uint32_t INVALID = NEO::PhysicalDevicePciBusInfo::InvalidValue;
+    auto deviceImp = static_cast<L0::DeviceImp *>(device);
+    ze_pci_ext_properties_t pciProperties = {};
+    std::vector<NEO::PhysicalDevicePciBusInfo> pciBusInfos;
+
+    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, 1, 2, INVALID));
+    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, 1, INVALID, 3));
+    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, INVALID, 2, 3));
+    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(INVALID, 1, 2, 3));
+
+    for (auto pciBusInfo : pciBusInfos) {
+        NEO::DriverInfoMock *driverInfo = new DriverInfoMock();
+        driverInfo->setPciBusInfo(pciBusInfo);
+        deviceImp->driverInfo.reset(driverInfo);
+
+        ze_result_t res = device->getPciProperties(&pciProperties);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
+    }
+}
 TEST_F(DeviceTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedAndNoPropertiesAreReturned) {
     ze_device_external_memory_properties_t externalMemoryProperties;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,7 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t getP2PProperties(ze_device_handle_t hPeerDevice,
                                          ze_device_p2p_properties_t *pP2PProperties) = 0;
     virtual ze_result_t getKernelProperties(ze_device_module_properties_t *pKernelProperties) = 0;
+    virtual ze_result_t getPciProperties(ze_pci_ext_properties_t *pPciProperties) = 0;
     virtual ze_result_t getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) = 0;
     virtual ze_result_t getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) = 0;
     virtual ze_result_t getProperties(ze_device_properties_t *pDeviceProperties) = 0;

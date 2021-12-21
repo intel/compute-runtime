@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,6 +224,7 @@ zeGetDeviceProcAddrTable(
     pDdiTable->pfnGetGlobalTimestamps = zeDeviceGetGlobalTimestamps;
     pDdiTable->pfnReserveCacheExt = zeDeviceReserveCacheExt;
     pDdiTable->pfnSetCacheAdviceExt = zeDeviceSetCacheAdviceExt;
+    pDdiTable->pfnPciGetPropertiesExt = zeDevicePciGetPropertiesExt;
     driver_ddiTable.core_ddiTable.Device = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnGet = zeDeviceGet_Tracing;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -138,4 +138,11 @@ zeDeviceSetCacheAdviceExt(
     size_t regionSize,
     ze_cache_ext_region_t cacheRegion) {
     return L0::Device::fromHandle(hDevice)->setCacheAdvice(ptr, regionSize, cacheRegion);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDevicePciGetPropertiesExt(
+    ze_device_handle_t hDevice,
+    ze_pci_ext_properties_t *pPciProperties) {
+    return L0::Device::fromHandle(hDevice)->getPciProperties(pPciProperties);
 }

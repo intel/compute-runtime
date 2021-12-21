@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -304,6 +304,26 @@ ze_result_t DeviceImp::getComputeProperties(ze_device_compute_properties_t *pCom
 ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
                                         ze_device_p2p_properties_t *pP2PProperties) {
     pP2PProperties->flags = 0;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DeviceImp::getPciProperties(ze_pci_ext_properties_t *pPciProperties) {
+    if (!driverInfo) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    auto pciBusInfo = driverInfo->getPciBusInfo();
+    auto isPciValid = [&](auto pci) -> bool {
+        return (pci.pciDomain != NEO::PhysicalDevicePciBusInfo::InvalidValue &&
+                pci.pciBus != NEO::PhysicalDevicePciBusInfo::InvalidValue &&
+                pci.pciDevice != NEO::PhysicalDevicePciBusInfo::InvalidValue &&
+                pci.pciFunction != NEO::PhysicalDevicePciBusInfo::InvalidValue);
+    };
+    if (!isPciValid(pciBusInfo)) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    pPciProperties->address = {pciBusInfo.pciDomain, pciBusInfo.pciBus,
+                               pciBusInfo.pciDevice, pciBusInfo.pciFunction};
+    pPciProperties->maxSpeed = {-1, -1, -1};
     return ZE_RESULT_SUCCESS;
 }
 
@@ -786,6 +806,9 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device, neoDevice->getBuiltIns());
     device->cacheReservation = CacheReservation::create(*device);
     device->maxNumHwThreads = NEO::HwHelper::getMaxThreadsForVfe(neoDevice->getHardwareInfo());
+
+    auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+    device->driverInfo.reset(NEO::DriverInfo::create(&neoDevice->getHardwareInfo(), osInterface));
 
     auto debugSurfaceSize = NEO::SipKernel::maxDbgSurfaceSize;
     std::vector<char> stateSaveAreaHeader;
