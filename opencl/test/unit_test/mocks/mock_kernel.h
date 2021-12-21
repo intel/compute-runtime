@@ -11,6 +11,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/kernel/kernel.h"
@@ -21,7 +22,6 @@
 #include "opencl/source/scheduler/scheduler_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_kernel_info.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include <cassert>

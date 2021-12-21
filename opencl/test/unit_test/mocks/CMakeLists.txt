@@ -8,8 +8,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_async_event_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_async_event_handler.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_stream.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_subcapture_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_block_kernel_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_buffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_device.cpp
@@ -18,18 +16,12 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr_simulated_common_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_ocl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_internal_allocation_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_lrca_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.cpp
@@ -49,7 +41,6 @@ if(WIN32)
   file(GLOB IGDRCL_SRC_tests_mock_wddm "${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm2[0-9]\.*")
   list(APPEND IGDRCL_SRCS_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_d3d_objects.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime_win.h
        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/os_interface/windows/mock_gdi_interface.cpp
        ${IGDRCL_SRC_tests_mock_wddm}
   )

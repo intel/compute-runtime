@@ -59,10 +59,13 @@ endmacro()
 apply_macro_for_each_core_type("TESTED")
 
 set(neo_libult_common_SRCS_LIB_ULT
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/aub_command_stream_receiver_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.h

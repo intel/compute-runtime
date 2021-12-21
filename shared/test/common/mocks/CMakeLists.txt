@@ -20,6 +20,8 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_file_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_stream.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_subcapture_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_bindless_heaps_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtinslib.h
@@ -32,6 +34,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr_simulated_common_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.h
@@ -55,12 +58,18 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_ptr_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_hw_info_config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_internal_allocation_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_io_functions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_lrca_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_migration_sync_data.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_multi_graphics_allocation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_physical_address_allocator.h
@@ -80,6 +89,7 @@ set(NEO_CORE_tests_mocks
 
 if(WIN32)
   list(APPEND NEO_CORE_tests_mocks
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime_win.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h

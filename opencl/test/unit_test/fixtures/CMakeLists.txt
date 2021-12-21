@@ -6,7 +6,6 @@
 
 set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_enqueue_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_preemption_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_preemption_fixture.h

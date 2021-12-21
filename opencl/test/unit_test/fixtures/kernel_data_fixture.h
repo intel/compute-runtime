@@ -9,10 +9,10 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/test/common/mocks/mock_kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_kernel_info.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"

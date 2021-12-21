@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_kernel_info.h"
+#include "shared/test/common/mocks/mock_kernel_info.h"
 
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 
