@@ -66,12 +66,10 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
 
-    auto mask = pipelineSelectEnablePipelineSelectMaskBits |
-                pipelineSelectMediaSamplerDopClockGateMaskBits;
+    auto mask = pipelineSelectEnablePipelineSelectMaskBits;
 
     cmd.setMaskBits(mask);
     cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 
     appendProgramPipelineSelect(&cmd, pipelineSelectArgs.specialPipelineSelectMode, hwInfo);
 

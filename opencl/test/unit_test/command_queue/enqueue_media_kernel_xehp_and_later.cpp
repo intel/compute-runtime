@@ -42,11 +42,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueBlo
     ASSERT_NE(cmdPipelineSelect, nullptr);
     auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
 
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
     EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
-    EXPECT_FALSE(pCmd->getMediaSamplerDopClockGateEnable());
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
     pCmdQ->releaseVirtualEvent();
 }
@@ -78,11 +77,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueBlo
     ASSERT_NE(cmdPipelineSelect, nullptr);
     auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
 
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
     EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
-    EXPECT_TRUE(pCmd->getMediaSamplerDopClockGateEnable());
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
     pCmdQ->releaseVirtualEvent();
 }
@@ -103,11 +101,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueVme
     EXPECT_EQ(1u, numCommands);
 
     auto pCmd = getCommand<PIPELINE_SELECT>();
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
     EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
-    EXPECT_FALSE(pCmd->getMediaSamplerDopClockGateEnable());
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
@@ -127,11 +124,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueNon
     EXPECT_EQ(1u, numCommands);
 
     auto pCmd = getCommand<PIPELINE_SELECT>();
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
     EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
-    EXPECT_TRUE(pCmd->getMediaSamplerDopClockGateEnable());
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
@@ -194,9 +190,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueVme
 
     auto pCmd = static_cast<PIPELINE_SELECT *>(commands.back());
 
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
-    EXPECT_FALSE(pCmd->getMediaSamplerDopClockGateEnable());
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
@@ -227,9 +222,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterCsrWhenEnqueueNon
 
     auto pCmd = static_cast<PIPELINE_SELECT *>(commands.back());
 
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
-    EXPECT_TRUE(pCmd->getMediaSamplerDopClockGateEnable());
     EXPECT_FALSE(pCmd->getSystolicModeEnable());
 }
 
@@ -292,7 +286,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterWhenEnqueueSystol
     EXPECT_EQ(1u, numCommands);
 
     auto pCmd = getCommand<PIPELINE_SELECT>();
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
     EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
@@ -316,7 +310,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterWhenEnqueueNonSys
     EXPECT_EQ(1u, numCommands);
 
     auto pCmd = getCommand<PIPELINE_SELECT>();
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
     EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
@@ -348,7 +342,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterWhenEnqueueTwoSys
     EXPECT_EQ(1u, numCommands);
 
     auto pCmd = getCommand<PIPELINE_SELECT>();
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
     EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
@@ -379,7 +373,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MediaKernelTest, givenXeHPAndLaterWhenEnqueueTwoKer
     auto numCommands = getCommandCount<PIPELINE_SELECT>();
     EXPECT_EQ(2u, numCommands);
 
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectSystolicModeEnableMaskBits;
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
 
     auto itorCmd = find<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
