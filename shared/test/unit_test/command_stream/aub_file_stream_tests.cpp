@@ -23,8 +23,6 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 #include "driver_version.h"
 #include "sys_calls.h"
 

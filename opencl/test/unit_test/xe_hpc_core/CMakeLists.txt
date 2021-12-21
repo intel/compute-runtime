@@ -13,7 +13,6 @@ if(TESTS_XE_HPC_CORE)
   set(IGDRCL_SRCS_tests_xe_hpc_core
       ${IGDRCL_SRCS_tests_xe_hpc_core_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_2_tests_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_tests_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe_hpc_core.cpp

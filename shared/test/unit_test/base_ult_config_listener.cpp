@@ -10,6 +10,8 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 
+#include "third_party/aub_stream/headers/aubstream.h"
+
 void NEO::BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
     debugVarSnapshot = DebugManager.flags;
     injectFcnSnapshot = DebugManager.injectFcn;
@@ -18,6 +20,8 @@ void NEO::BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
 }
 
 void NEO::BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
+    aub_stream::injectMMIOList(aub_stream::MMIOList{});
+
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     EXPECT_EQ(debugVarSnapshot.variableName.getRef(), DebugManager.flags.variableName.getRef());

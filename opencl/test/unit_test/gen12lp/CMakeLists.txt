@@ -13,11 +13,9 @@ if(TESTS_GEN12LP)
   set(IGDRCL_SRCS_tests_gen12lp
       ${IGDRCL_SRCS_tests_gen12lp_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_gen12lp.inl
-      ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/gen12lp_tests_wrapper.cpp

@@ -11,6 +11,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 

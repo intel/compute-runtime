@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
@@ -16,11 +17,9 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-using Gen12LPAubCommandStreamReceiverTests = Test<ClDeviceFixture>;
+using Gen12LPAubCommandStreamReceiverTests = Test<DeviceFixture>;
 
 GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGUCWorkQueueItemHeaderIsCalledThenAppropriateValueDependingOnEngineTypeIsReturned) {
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));

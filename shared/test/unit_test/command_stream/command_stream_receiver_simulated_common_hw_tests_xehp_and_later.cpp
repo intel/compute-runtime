@@ -1,23 +1,48 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
+#include "shared/source/aub/aub_helper.h"
+#include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
+#include "shared/source/helpers/hardware_context_controller.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_aub_stream.h"
 #include "shared/test/common/mocks/mock_csr_simulated_common_hw.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+using XeHPAndLaterMockSimulatedCsrHwTests = Test<DeviceFixture>;
 
-using namespace NEO;
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenLmemIsInitializedAndLmemCfgMmioIsWritten) {
+    std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    csrSimulatedCommonHw->localMemoryEnabled = true;
 
-using Gen12LPCommandStreamReceiverSimulatedCommonHwTests = Test<ClDeviceFixture>;
+    auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
+    csrSimulatedCommonHw->stream = stream.get();
+    csrSimulatedCommonHw->initGlobalMMIO();
 
-GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubCommandStreamReceiverWhewGlobalMmiosAreInitializedThenMOCSRegistersAreConfigured) {
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00101010, 0x00000080u)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000cf58, 0x80000000u)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenLmemIsInitializedAndLmemCfgMmioIsWritten) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+
+    std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+
+    auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
+    csrSimulatedCommonHw->stream = stream.get();
+    csrSimulatedCommonHw->initGlobalMMIO();
+
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00101010, 0x00000080u)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000cf58, 0x80000000u)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenMOCSRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
@@ -91,7 +116,7 @@ GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubComman
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x000040FC, 0x00000038)));
 }
 
-GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenLNCFRegistersAreConfigured) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenLNCFRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
@@ -123,7 +148,7 @@ GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubComman
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B074, 0x00170013)));
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B078, 0x0000001F)));
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B07C, 0x00000000)));
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B080, 0x00000030)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B080, 0x00300030)));
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B084, 0x00170013)));
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B088, 0x0010001F)));
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B08C, 0x00170013)));
@@ -133,14 +158,118 @@ GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubComman
     EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B09C, 0x00300010)));
 }
 
-GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenLmemCfgMmioIsWritten) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenPerfMmioRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    csrSimulatedCommonHw.localMemoryEnabled = true;
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
     csrSimulatedCommonHw.stream = stream.get();
 
     csrSimulatedCommonHw.initGlobalMMIO();
 
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000CF58, 0x80000000)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B004, 0x2FC0100B)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000B404, 0x00000160)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00008708, 0x00000000)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenTRTTRegistersAreConfigured) {
+    MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
+    csrSimulatedCommonHw.stream = stream.get();
+
+    csrSimulatedCommonHw.initGlobalMMIO();
+
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00004410, 0xffffffff)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00004414, 0xfffffffe)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00004404, 0x000000ff)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00004408, 0x00000000)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000440C, 0x00000000)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00004400, 0x00000001)));
+    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x00004DFC, 0x00000000)));
+}
+
+class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing::Test {
+  public:
+    template <typename FamilyType>
+    void setUpImpl() {
+        hardwareInfo = *defaultHwInfo;
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0);
+        hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+        DeviceFixture::SetUpImpl(&hardwareInfo);
+    }
+
+    void SetUp() override {
+    }
+
+    void TearDown() override {
+        DeviceFixture::TearDown();
+    }
+
+    void checkMMIOs(MMIOList &list, uint32_t tilesNumber, uint32_t localMemorySizeTotalInGB) {
+        const uint32_t numberOfTiles = tilesNumber;
+        const uint32_t totalLocalMemorySizeGB = localMemorySizeTotalInGB;
+
+        MMIOPair tileAddrRegisters[] = {{0x00004900, 0x0001},
+                                        {0x00004904, 0x0001},
+                                        {0x00004908, 0x0001},
+                                        {0x0000490c, 0x0001}};
+
+        uint32_t localMemoryBase = 0x0;
+        for (uint32_t i = 0; i < sizeof(tileAddrRegisters) / sizeof(MMIOPair); i++) {
+            tileAddrRegisters[i].second |= localMemoryBase << 1;
+            tileAddrRegisters[i].second |= (totalLocalMemorySizeGB / numberOfTiles) << 8;
+            localMemoryBase += (totalLocalMemorySizeGB / numberOfTiles);
+        }
+
+        uint32_t mmiosFound = 0;
+        for (auto &mmioPair : list) {
+            for (uint32_t i = 0; i < numberOfTiles; i++) {
+                if (mmioPair.first == tileAddrRegisters[i].first && mmioPair.second == tileAddrRegisters[i].second) {
+                    mmiosFound++;
+                }
+            }
+        }
+        EXPECT_EQ(numberOfTiles, mmiosFound);
+    }
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
+    setUpImpl<FamilyType>();
+    std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    csrSimulatedCommonHw->localMemoryEnabled = true;
+
+    auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
+    csrSimulatedCommonHw->stream = stream.get();
+    csrSimulatedCommonHw->initGlobalMMIO();
+
+    checkMMIOs(stream->mmioList, 1, 32);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemoryEnabledAnd4TileConfigWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    setUpImpl<FamilyType>();
+    std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    csrSimulatedCommonHw->localMemoryEnabled = true;
+
+    auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
+    csrSimulatedCommonHw->stream = stream.get();
+    csrSimulatedCommonHw->initGlobalMMIO();
+
+    checkMMIOs(stream->mmioList, 4, 32);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
+    setUpImpl<FamilyType>();
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+
+    std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    csrSimulatedCommonHw->localMemoryEnabled = true;
+
+    auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
+    csrSimulatedCommonHw->stream = stream.get();
+    csrSimulatedCommonHw->initGlobalMMIO();
+
+    checkMMIOs(stream->mmioList, 1, 32);
 }

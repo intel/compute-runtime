@@ -14,8 +14,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "third_party/aub_stream/headers/aubstream.h"
-
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
     BaseUltConfigListener::OnTestStart(testInfo);
 
@@ -30,7 +28,6 @@ void NEO::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
     // Clear global platform that it shouldn't be reused between tests
     platformsImpl->clear();
     MemoryManager::maxOsContextCount = 0u;
-    aub_stream::injectMMIOList(aub_stream::MMIOList{});
 
     BaseUltConfigListener::OnTestEnd(testInfo);
 }
