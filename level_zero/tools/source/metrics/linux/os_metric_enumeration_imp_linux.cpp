@@ -8,7 +8,6 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/io_functions.h"
 
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 
@@ -75,31 +74,6 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
     }
 
     return nullptr;
-}
-
-bool MetricEnumeration::isReportTriggerAvailable() {
-
-    const char *perfStreamParanoidFile = "/proc/sys/dev/i915/perf_stream_paranoid";
-    bool reportTriggerAvailable = false;
-
-    FILE *fileDescriptor = NEO::IoFunctions::fopenPtr(perfStreamParanoidFile, "rb");
-    if (fileDescriptor != nullptr) {
-        char paranoidVal[2] = {0};
-        size_t bytesRead = NEO::IoFunctions::freadPtr(&paranoidVal[0], 1, 1, fileDescriptor);
-        NEO::IoFunctions::fclosePtr(fileDescriptor);
-
-        if (bytesRead == 1) {
-            reportTriggerAvailable = strncmp(paranoidVal, "0", 1) == 0;
-        }
-    }
-
-    if (!reportTriggerAvailable) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
-                              "INFO: Metrics Collection requires i915 paranoid mode to be disabled\n"
-                              "INFO: set /proc/sys/dev/i915/perf_stream_paranoid to 0\n");
-    }
-
-    return reportTriggerAvailable;
 }
 
 } // namespace L0
