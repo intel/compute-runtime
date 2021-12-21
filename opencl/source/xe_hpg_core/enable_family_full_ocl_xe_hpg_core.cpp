@@ -5,9 +5,6 @@
  *
  */
 
-#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -19,18 +16,15 @@
 
 namespace NEO {
 
-typedef XE_HPG_COREFamily Family;
+using Family = XE_HPG_COREFamily;
 
 struct EnableOCLXeHpgCore {
     EnableOCLXeHpgCore() {
-        populateFactoryTable<AUBCommandStreamReceiverHw<Family>>();
         populateFactoryTable<BufferHw<Family>>();
         populateFactoryTable<ClHwHelperHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
-        populateFactoryTable<CommandStreamReceiverHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();
-        populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
     }
 };
 
