@@ -23,7 +23,7 @@ HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAl
 
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData, args);
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData, args, *defaultHwInfo);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
 
     unsigned int sizeMultiplier = 1;
@@ -79,7 +79,7 @@ HWTEST_F(CommandEncoderTests, givenNotify) {
     MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData, args);
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData, args, *defaultHwInfo);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
 
     unsigned int sizeMultiplier = 1;

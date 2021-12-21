@@ -41,10 +41,10 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnviron
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchPreBlitCommand(LinearStream &linearStream) {
+void BlitCommandsHelper<GfxFamily>::dispatchPreBlitCommand(LinearStream &linearStream, const HardwareInfo &hwInfo) {
     if (BlitCommandsHelper<GfxFamily>::preBlitCommandWARequired()) {
         MiFlushArgs args;
-        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args);
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args, hwInfo);
     }
 }
 
@@ -58,7 +58,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream) {
+void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, const HardwareInfo &hwInfo) {
     MiFlushArgs args;
     if (DebugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
         switch (DebugManager.flags.PostBlitCommand.get()) {
@@ -66,7 +66,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
             EncodeMiArbCheck<GfxFamily>::program(linearStream);
             return;
         case BlitterConstants::PostBlitMode::MiFlush:
-            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args);
+            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args, hwInfo);
             return;
         default:
             return;
@@ -74,7 +74,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
     }
 
     if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
-        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args);
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args, hwInfo);
     }
 
     EncodeMiArbCheck<GfxFamily>::program(linearStream);
@@ -178,7 +178,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
     PRINT_DEBUG_STRING(DebugManager.flags.PrintBlitDispatchDetails.get(), stdout,
                        "\nBlit dispatch with AuxTranslationDirection %u ", static_cast<uint32_t>(blitProperties.auxTranslationDirection));
 
-    dispatchPreBlitCommand(linearStream);
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    dispatchPreBlitCommand(linearStream, hwInfo);
 
     for (uint64_t slice = 0; slice < blitProperties.copySize.z; slice++) {
         for (uint64_t row = 0; row < blitProperties.copySize.y; row++) {
@@ -218,7 +219,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
                     *bltStream = bltCmd;
                 }
 
-                dispatchPostBlitCommand(linearStream);
+                dispatchPostBlitCommand(linearStream, hwInfo);
 
                 auto blitSize = width * height;
                 sizeToBlit -= blitSize;
@@ -286,26 +287,30 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsRegion(const BlitPropert
     bltCmd.setSourceX1CoordinateLeft(static_cast<uint32_t>(blitProperties.srcOffset.x));
     bltCmd.setSourceY1CoordinateTop(static_cast<uint32_t>(blitProperties.srcOffset.y));
 
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
     appendBlitCommandsForImages(blitProperties, bltCmd, rootDeviceEnvironment, srcSlicePitch, dstSlicePitch);
     appendColorDepth(blitProperties, bltCmd);
     appendSurfaceType(blitProperties, bltCmd);
-    dispatchPreBlitCommand(linearStream);
+    dispatchPreBlitCommand(linearStream, hwInfo);
     for (uint32_t i = 0; i < blitProperties.copySize.z; i++) {
         appendSliceOffsets(blitProperties, bltCmd, i, rootDeviceEnvironment, srcSlicePitch, dstSlicePitch);
         auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
         *cmd = bltCmd;
-        dispatchPostBlitCommand(linearStream);
+        dispatchPostBlitCommand(linearStream, hwInfo);
     }
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger, DebugPauseState waitCondition) {
+void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress,
+                                                               DebugPauseState confirmationTrigger, DebugPauseState waitCondition,
+                                                               const HardwareInfo &hwInfo) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(confirmationTrigger), args);
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(confirmationTrigger),
+                                                 args, hwInfo);
 
     EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
 }
@@ -367,7 +372,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const Bl
     const auto maxWidthToCopy = getMaxBlitWidth(rootDeviceEnvironment);
     const auto maxHeightToCopy = getMaxBlitHeight(rootDeviceEnvironment);
 
-    dispatchPreBlitCommand(linearStream);
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    dispatchPreBlitCommand(linearStream, hwInfo);
 
     for (size_t slice = 0u; slice < blitProperties.copySize.z; ++slice) {
         auto srcAddress = calculateBlitCommandSourceBaseAddressCopyRegion(blitProperties, slice);
@@ -393,7 +399,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const Bl
 
                 auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
                 *cmd = bltCmd;
-                dispatchPostBlitCommand(linearStream);
+                dispatchPostBlitCommand(linearStream, hwInfo);
 
                 srcAddress += width;
                 dstAddress += width;

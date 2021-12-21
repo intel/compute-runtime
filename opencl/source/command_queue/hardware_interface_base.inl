@@ -139,8 +139,10 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     dispatchProfilingPerfStartCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
 
+    const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
+        dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation,
+                                   DebugPauseState::hasUserStartConfirmation, hwInfo);
     }
 
     mainKernel->performKernelTuning(commandQueue.getGpgpuCommandStreamReceiver(),
@@ -179,7 +181,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
+        dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserEndConfirmation,
+                                   DebugPauseState::hasUserEndConfirmation, hwInfo);
     }
 
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
@@ -299,7 +302,8 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
     LinearStream *commandStream,
     CommandQueue &commandQueue,
     DebugPauseState confirmationTrigger,
-    DebugPauseState waitCondition) {
+    DebugPauseState waitCondition,
+    const HardwareInfo &hwInfo) {
 
     if (!commandQueue.isSpecial()) {
         auto address = commandQueue.getGpgpuCommandStreamReceiver().getDebugPauseStateGPUAddress();

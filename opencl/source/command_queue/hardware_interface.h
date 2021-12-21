@@ -75,7 +75,8 @@ class HardwareInterface {
         LinearStream *commandStream,
         CommandQueue &commandQueue,
         DebugPauseState confirmationTrigger,
-        DebugPauseState waitCondition);
+        DebugPauseState waitCondition,
+        const HardwareInfo &hwInfo);
 
     static void programWalker(
         LinearStream &commandStream,

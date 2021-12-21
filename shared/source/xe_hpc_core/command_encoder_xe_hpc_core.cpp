@@ -152,7 +152,7 @@ size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size) {
 }
 
 template <>
-inline void EncodeMiFlushDW<Family>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd) {
+inline void EncodeMiFlushDW<Family>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const HardwareInfo &hwInfo) {
     miFlushDwCmd->setFlushLlc(1);
 }
 

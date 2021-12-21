@@ -57,7 +57,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuf
 }
 
 template <typename GfxFamily>
-inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address) {
+inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const HardwareInfo &hwInfo) {
     PipeControlArgs args;
     args.tlbInvalidation = true;
     args.pipeControlFlushEnable = true;

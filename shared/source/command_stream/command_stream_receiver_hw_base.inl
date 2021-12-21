@@ -1011,8 +1011,11 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     getOsContext().ensureContextInitialized();
     this->initDirectSubmission(device, getOsContext());
 
+    const auto &hwInfo = this->peekHwInfo();
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
+        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
+                                                                  DebugPauseState::waitingForUserStartConfirmation,
+                                                                  DebugPauseState::hasUserStartConfirmation, hwInfo);
     }
 
     programEnginePrologue(commandStream);
@@ -1034,14 +1037,14 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         if (blitProperties.outputTimestampPacket) {
             if (profilingEnabled) {
                 MiFlushArgs args;
-                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0llu, newTaskCount, args);
+                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0llu, newTaskCount, args, hwInfo);
 
                 BlitCommandsHelper<GfxFamily>::encodeProfilingEndMmios(commandStream, *blitProperties.outputTimestampPacket);
             } else {
                 auto timestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.outputTimestampPacket);
                 MiFlushArgs args;
                 args.commandWithPostSync = true;
-                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0, args);
+                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0, args, hwInfo);
             }
             makeResident(*blitProperties.outputTimestampPacket->getBaseGraphicsAllocation());
         }
@@ -1065,13 +1068,15 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         MiFlushArgs args;
         args.commandWithPostSync = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
-        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount, args);
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount, args, hwInfo);
 
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
     }
 
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
+        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
+                                                                  DebugPauseState::waitingForUserEndConfirmation,
+                                                                  DebugPauseState::hasUserEndConfirmation, hwInfo);
     }
 
     void *endingCmdPtr = nullptr;
@@ -1149,10 +1154,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
     auto &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
     auto commandStreamStart = commandStream.getUsed();
 
+    const auto &hwInfo = this->peekHwInfo();
     MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), taskCount + 1, args);
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), taskCount + 1, args, hwInfo);
 
     makeResident(*tagAllocation);
 
@@ -1169,13 +1175,14 @@ void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(GraphicsAllocation *even
 
     programHardwareContext(commandStream);
 
+    const auto &hwInfo = this->peekHwInfo();
     MiFlushArgs args;
     if (eventAlloc) {
         args.commandWithPostSync = true;
-        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, immediateGpuAddress, immediateData, args);
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, immediateGpuAddress, immediateData, args, hwInfo);
         makeResident(*eventAlloc);
     } else {
-        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0, 0, args);
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0, 0, args, hwInfo);
     }
 
     this->flushSmallTask(commandStream, commandStreamStart);
@@ -1238,12 +1245,13 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl(GraphicsAllocation *ev
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::flushSemaphoreWait(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isStartOfDispatch, bool isEndOfDispatch) {
     auto lock = obtainUniqueOwnership();
+    const auto &hwInfo = this->peekHwInfo();
     if (isStartOfDispatch && args.dcFlushEnable) {
         if (this->osContext->getEngineType() == aub_stream::ENGINE_BCS) {
             LinearStream &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
             cmdStreamStart = commandStream.getUsed();
             MiFlushArgs args;
-            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0, 0, args);
+            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0, 0, args, hwInfo);
         } else {
             LinearStream &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl());
             cmdStreamStart = commandStream.getUsed();

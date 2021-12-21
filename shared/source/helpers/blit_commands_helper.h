@@ -114,9 +114,9 @@ struct BlitCommandsHelper {
     static uint64_t getMaxBlitWidthOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static void dispatchPreBlitCommand(LinearStream &linearStream);
+    static void dispatchPreBlitCommand(LinearStream &linearStream, const HardwareInfo &hwInfo);
     static size_t estimatePreBlitCommandSize();
-    static void dispatchPostBlitCommand(LinearStream &linearStream);
+    static void dispatchPostBlitCommand(LinearStream &linearStream, const HardwareInfo &hwInfo);
     static size_t estimatePostBlitCommandSize();
     static size_t estimateBlitCommandsSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
                                            bool profilingEnabled, const RootDeviceEnvironment &rootDeviceEnvironment);
@@ -146,7 +146,8 @@ struct BlitCommandsHelper {
     static void appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_COPY_BLT &blitCmd);
     static void appendSliceOffsets(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch);
     static void getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails, const RootDeviceEnvironment &rootDeviceEnvironment);
-    static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger, DebugPauseState waitCondition);
+    static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger,
+                                           DebugPauseState waitCondition, const HardwareInfo &hwInfo);
     static size_t getSizeForDebugPauseCommands();
     static bool useOneBlitCopyCommand(const Vec3<size_t> &copySize, uint32_t bytesPerPixel);
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize);

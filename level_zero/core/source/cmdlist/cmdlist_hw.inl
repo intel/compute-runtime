@@ -318,14 +318,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
     event->resetPackets();
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+    const auto &hwInfo = this->device->getHwInfo();
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
         args.commandWithPostSync = true;
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
                                                           event->getGpuAddress(this->device),
-                                                          Event::STATE_CLEARED, args);
+                                                          Event::STATE_CLEARED, args, hwInfo);
     } else {
-        const auto &hwInfo = this->device->getHwInfo();
         NEO::PipeControlArgs args;
         args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope, hwInfo);
         size_t estimateSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packetsToReset;
@@ -1695,13 +1695,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         uint64_t baseAddr = event->getGpuAddress(this->device);
 
+        const auto &hwInfo = this->device->getHwInfo();
         if (isCopyOnly()) {
             NEO::MiFlushArgs args;
             args.commandWithPostSync = true;
             increaseCommandStreamSpace(NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), baseAddr, Event::STATE_SIGNALED, args);
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), baseAddr, Event::STATE_SIGNALED,
+                                                              args, hwInfo);
         } else {
-            const auto &hwInfo = this->device->getHwInfo();
             increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo));
             NEO::PipeControlArgs args;
             args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope, hwInfo);
@@ -1730,9 +1731,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(ze
     }
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
 
+    const auto &hwInfo = this->device->getHwInfo();
     if (!beforeWalker) {
         NEO::MiFlushArgs args;
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args);
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, hwInfo);
     }
     appendWriteKernelTimestamp(hEvent, beforeWalker, false);
 }
@@ -1848,13 +1850,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         eventSignalOffset = event->getContextEndOffset();
     }
 
+    const auto &hwInfo = this->device->getHwInfo();
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
         args.commandWithPostSync = true;
         increaseCommandStreamSpace(NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED, args);
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset),
+                                                          Event::STATE_SIGNALED, args, hwInfo);
     } else {
-        const auto &hwInfo = this->device->getHwInfo();
         NEO::PipeControlArgs args;
         bool applyScope = event->signalScope;
         args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(applyScope, hwInfo);
@@ -1945,7 +1948,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     if (dcFlushRequired) {
         if (isCopyOnly()) {
             NEO::MiFlushArgs args;
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args);
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, hwInfo);
         } else {
             NEO::PipeControlArgs args;
             args.dcFlushEnable = true;
@@ -2077,6 +2080,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         }
     }
 
+    const auto &hwInfo = this->device->getHwInfo();
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
         args.timeStampOperation = true;
@@ -2084,7 +2088,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
                                                           reinterpret_cast<uint64_t>(dstptr),
                                                           0,
-                                                          args);
+                                                          args,
+                                                          hwInfo);
     } else {
         NEO::PipeControlArgs args;
 
@@ -2360,13 +2365,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     }
     appendEventForProfiling(hSignalEvent, true);
 
+    const auto &hwInfo = this->device->getHwInfo();
     if (!hSignalEvent) {
         if (isCopyOnly()) {
             size_t estimatedSizeRequired = NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
             increaseCommandStreamSpace(estimatedSizeRequired);
 
             NEO::MiFlushArgs args;
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args);
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, hwInfo);
         } else {
             appendComputeBarrierCommand();
         }

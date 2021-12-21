@@ -25,7 +25,7 @@ class BlitterDispatcher : public Dispatcher<GfxFamily> {
     static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address);
-    static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address);
+    static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const HardwareInfo &hwInfo);
     static size_t getSizeCacheFlush(const HardwareInfo &hwInfo);
     static size_t getSizeTlbFlush();
     static bool isMultiTileSynchronizationSupported() {

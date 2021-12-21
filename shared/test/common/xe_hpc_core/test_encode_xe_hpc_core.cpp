@@ -34,7 +34,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenMiFlushDwIsProgrammedThenSetAn
 
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, 0x1230000, 456, args);
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, 0x1230000, 456, args, *defaultHwInfo);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
     EXPECT_EQ(0u, miFlushDwCmd->getFlushCcs());
     EXPECT_EQ(1u, miFlushDwCmd->getFlushLlc());

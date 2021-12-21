@@ -19,7 +19,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsPro
 
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, 0x1230000, 456, args);
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, 0x1230000, 456, args, *defaultHwInfo);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
     EXPECT_EQ(0u, miFlushDwCmd->getFlushCcs());
     EXPECT_EQ(0u, miFlushDwCmd->getFlushLlc());
