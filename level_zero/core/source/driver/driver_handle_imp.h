@@ -63,7 +63,7 @@ struct DriverHandleImp : public DriverHandle {
                                                                      uintptr_t *gpuAddress) override;
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,
                                                NEO::SvmAllocationData *allocData,
-                                               void *ptr,
+                                               void *basePtr,
                                                uintptr_t *peerGpuAddress);
     void createHostPointerManager();
     void sortNeoDevices(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);

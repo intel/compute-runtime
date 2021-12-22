@@ -1658,7 +1658,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
         if (driverHandle->isRemoteResourceNeeded(ptr, gpuAllocation, allocData, device)) {
             if (allocData) {
-                gpuAllocation = driverHandle->getPeerAllocation(device, allocData, ptr, nullptr);
+                uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+                gpuAllocation = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), nullptr);
             }
             if (gpuAllocation == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1794,7 +1795,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
             uint64_t offset = sourcePtr - pbase;
 
-            alloc = driverHandle->getPeerAllocation(device, allocData, const_cast<void *>(buffer), &alignedPtr);
+            alloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &alignedPtr);
             alignedPtr += offset;
         } else {
             alignedPtr = sourcePtr;

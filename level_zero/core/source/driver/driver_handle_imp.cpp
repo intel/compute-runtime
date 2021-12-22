@@ -444,7 +444,7 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_
 
 NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                                                             NEO::SvmAllocationData *allocData,
-                                                            void *ptr,
+                                                            void *basePtr,
                                                             uintptr_t *peerGpuAddress) {
     if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 0) {
         return nullptr;
@@ -458,7 +458,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
 
     std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
 
-    auto iter = deviceImp->peerAllocations.allocations.find(ptr);
+    auto iter = deviceImp->peerAllocations.allocations.find(basePtr);
     if (iter != deviceImp->peerAllocations.allocations.end()) {
         peerAllocData = &iter->second;
         alloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
@@ -476,7 +476,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
         }
 
         peerAllocData = this->getSvmAllocsManager()->getSVMAlloc(peerPtr);
-        deviceImp->peerAllocations.allocations.insert(std::make_pair(ptr, *peerAllocData));
+        deviceImp->peerAllocations.allocations.insert(std::make_pair(basePtr, *peerAllocData));
     }
 
     if (peerGpuAddress) {

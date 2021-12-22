@@ -18,6 +18,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
@@ -1734,7 +1735,7 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         auto alloc = new NEO::MockGraphicsAllocation(0,
                                                      NEO::GraphicsAllocation::AllocationType::BUFFER,
-                                                     reinterpret_cast<void *>(0x1234),
+                                                     reinterpret_cast<void *>(sharedHandleAddress++),
                                                      0x1000,
                                                      0,
                                                      sizeof(uint32_t),
@@ -1742,6 +1743,8 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
+
+    uint64_t sharedHandleAddress = 0x1234;
 };
 
 struct ContextIpcMock : public L0::ContextImp {
@@ -2167,27 +2170,47 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest,
-         givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceThenPeerAllocationIsUsed) {
+         givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceThenPeerAllocation) {
     DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
+    L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
 
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(), &deviceDesc, size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
+
+    void *ptr1 = nullptr;
+    result = context->allocDeviceMem(device0->toHandle(), &deviceDesc, size, alignment, &ptr1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr1);
 
     createModuleFromBinary(device1);
     createKernel();
 
+    // set argument in device 1's list with ptr from device 0: peer allocation is created
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 1u);
 
+    // set argument in device 1's list with ptr1 from device 0: anoter peer allocation is created
+    result = kernel->setArgBuffer(0, sizeof(ptr), &ptr1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 2u);
+
+    // set argument in device 1's list with ptr from device 0 plus offset: no new peer allocation is created
+    // since a peer allocation is already avialable
+    void *ptrOffset = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 4);
+    result = kernel->setArgBuffer(0, sizeof(ptr), &ptrOffset);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 2u);
+
+    result = context->freeMem(ptr1);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }

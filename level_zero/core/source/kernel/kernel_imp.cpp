@@ -623,7 +623,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
         uint64_t offset = (uint64_t)requestedAddress - pbase;
 
-        alloc = driverHandle->getPeerAllocation(device, allocData, requestedAddress, &gpuAddress);
+        alloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &gpuAddress);
         if (alloc == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
