@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -69,6 +70,8 @@ cl_int Program::build(
             } else if (this->createdFrom != CreatedFrom::BINARY) {
                 options = "";
             }
+
+            const bool shouldSuppressRebuildWarning{CompilerOptions::extract(CompilerOptions::noRecompiledFromIr, options)};
             extractInternalOptions(options, internalOptions);
             applyAdditionalOptions(internalOptions);
 
@@ -128,6 +131,9 @@ cl_int Program::build(
             NEO::TranslationOutput compilerOuput = {};
 
             for (const auto &clDevice : deviceVector) {
+                if (shouldWarnAboutRebuild && !shouldSuppressRebuildWarning) {
+                    this->updateBuildLog(clDevice->getRootDeviceIndex(), CompilerWarnings::recompiledFromIr.data(), CompilerWarnings::recompiledFromIr.length());
+                }
                 auto compilerErr = pCompilerInterface->build(clDevice->getDevice(), inputArgs, compilerOuput);
                 this->updateBuildLog(clDevice->getRootDeviceIndex(), compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
                 this->updateBuildLog(clDevice->getRootDeviceIndex(), compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());

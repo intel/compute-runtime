@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/module/module_imp.h"
 
+#include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device/device.h"
@@ -276,6 +277,10 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
     }
 
     if (nullptr == this->unpackedDeviceBinary) {
+        if (!shouldSuppressRebuildWarning) {
+            updateBuildLog(NEO::CompilerWarnings::recompiledFromIr.str());
+        }
+
         return buildFromSpirV(this->irBinary.get(), static_cast<uint32_t>(this->irBinarySize), this->options.c_str(), "", nullptr);
     } else {
         return processUnpackedBinary();
@@ -508,7 +513,9 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
             return false;
         }
     } else {
-        this->createBuildOptions(desc->pBuildFlags, buildOptions, internalBuildOptions);
+        std::string buildFlagsInput{desc->pBuildFlags != nullptr ? desc->pBuildFlags : ""};
+        this->translationUnit->shouldSuppressRebuildWarning = NEO::CompilerOptions::extract(NEO::CompilerOptions::noRecompiledFromIr, buildFlagsInput);
+        this->createBuildOptions(buildFlagsInput.c_str(), buildOptions, internalBuildOptions);
 
         if (type == ModuleType::User && NEO::DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
             NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());

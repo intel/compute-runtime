@@ -57,6 +57,7 @@ struct ModuleTranslationUnit {
     NEO::ProgramInfo programInfo;
 
     std::string options;
+    bool shouldSuppressRebuildWarning{false};
 
     std::string buildLog;
 

@@ -25,20 +25,21 @@ struct ModuleBuildLogImp : public ModuleBuildLog {
     }
 
     ze_result_t getString(size_t *pSize, char *pBuildLog) override {
-        const char *buildLog = this->buildLog.c_str();
-
-        if (buildLog != nullptr) {
-            auto szLog = this->buildLog.size();
-
-            if (pBuildLog) {
-                memcpy_s(pBuildLog, szLog, buildLog, szLog);
-                pBuildLog[szLog] = '\0';
-            }
-
-            *pSize = szLog + 1;
-        } else {
-            *pSize = 0;
+        const size_t requiredSize{buildLog.size() + 1};
+        if (pBuildLog == nullptr) {
+            *pSize = requiredSize;
+            return ZE_RESULT_SUCCESS;
         }
+
+        if (*pSize < requiredSize) {
+            return ZE_RESULT_ERROR_INVALID_SIZE;
+        }
+
+        memcpy_s(pBuildLog, *pSize, buildLog.c_str(), buildLog.size());
+        pBuildLog[buildLog.size()] = '\0';
+
+        *pSize = requiredSize;
+
         return ZE_RESULT_SUCCESS;
     }
 

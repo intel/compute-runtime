@@ -53,6 +53,7 @@ class MockProgram : public Program {
     using Program::Program;
     using Program::separateBlockKernels;
     using Program::setBuildStatus;
+    using Program::shouldWarnAboutRebuild;
     using Program::sourceCode;
     using Program::specConstantsIds;
     using Program::specConstantsSizes;
@@ -144,9 +145,17 @@ class MockProgram : public Program {
 
     cl_int rebuildProgramFromIr() {
         this->isCreatedFromBinary = false;
+        this->shouldWarnAboutRebuild = true;
         setBuildStatus(CL_BUILD_NONE);
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtins;
         return this->build(getDevices(), this->options.c_str(), false, builtins);
+    }
+
+    cl_int recompile() {
+        this->isCreatedFromBinary = false;
+        this->shouldWarnAboutRebuild = true;
+        setBuildStatus(CL_BUILD_NONE);
+        return this->compile(getDevices(), this->options.c_str(), 0, nullptr, nullptr);
     }
 
     void replaceDeviceBinary(std::unique_ptr<char[]> &&newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) override {

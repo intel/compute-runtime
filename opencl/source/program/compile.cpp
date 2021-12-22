@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
@@ -67,11 +68,11 @@ cl_int Program::compile(
         }
 
         options = (buildOptions != nullptr) ? buildOptions : "";
+        const auto shouldSuppressRebuildWarning{CompilerOptions::extract(CompilerOptions::noRecompiledFromIr, options)};
 
         for (const auto &optionString : {CompilerOptions::gtpinRera, CompilerOptions::greaterThan4gbBuffersRequired}) {
-            size_t pos = options.find(optionString.data());
-            if (pos != std::string::npos) {
-                options.erase(pos, optionString.length());
+            const auto wasExtracted{CompilerOptions::extract(optionString, options)};
+            if (wasExtracted) {
                 CompilerOptions::concatenateAppend(internalOptions, optionString);
             }
         }
@@ -149,6 +150,10 @@ cl_int Program::compile(
         TranslationOutput compilerOuput;
         auto compilerErr = pCompilerInterface->compile(defaultDevice, inputArgs, compilerOuput);
         for (const auto &device : deviceVector) {
+            if (shouldWarnAboutRebuild && !shouldSuppressRebuildWarning) {
+                this->updateBuildLog(device->getRootDeviceIndex(), CompilerWarnings::recompiledFromIr.data(), CompilerWarnings::recompiledFromIr.length());
+            }
+
             this->updateBuildLog(device->getRootDeviceIndex(), compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
             this->updateBuildLog(device->getRootDeviceIndex(), compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
         }

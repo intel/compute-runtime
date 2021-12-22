@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -1551,6 +1553,83 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     EXPECT_TRUE(success);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
     EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNativeBinaryThenModuleRecompilationWarningIsIssued) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+    Module module(device, moduleBuildLog.get(), ModuleType::User);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    ASSERT_TRUE(success);
+
+    size_t buildLogSize{};
+    const auto querySizeResult{moduleBuildLog->getString(&buildLogSize, nullptr)};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, querySizeResult);
+
+    std::string buildLog(buildLogSize, '\0');
+    const auto queryBuildLogResult{moduleBuildLog->getString(&buildLogSize, buildLog.data())};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, queryBuildLogResult);
+
+    const auto containsWarning{buildLog.find(CompilerWarnings::recompiledFromIr.data()) != std::string::npos};
+    EXPECT_TRUE(containsWarning);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNativeBinaryAndWarningSuppressionIsPresentThenModuleRecompilationWarningIsNotIssued) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+    moduleDesc.pBuildFlags = CompilerOptions::noRecompiledFromIr.data();
+
+    std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+    Module module(device, moduleBuildLog.get(), ModuleType::User);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    ASSERT_TRUE(success);
+
+    size_t buildLogSize{};
+    const auto querySizeResult{moduleBuildLog->getString(&buildLogSize, nullptr)};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, querySizeResult);
+
+    std::string buildLog(buildLogSize, '\0');
+    const auto queryBuildLogResult{moduleBuildLog->getString(&buildLogSize, buildLog.data())};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, queryBuildLogResult);
+
+    const auto containsWarning{buildLog.find(CompilerWarnings::recompiledFromIr.data()) != std::string::npos};
+    EXPECT_FALSE(containsWarning);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequiredTargetProductProperly) {

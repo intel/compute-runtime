@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/program/program_tests.h"
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
@@ -2577,6 +2578,76 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     EXPECT_EQ(IGC::CodeType::oclGenBin, compilerInterface->requestedTranslationCtxs[0].second);
 }
 
+TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildIsCalledThenRebuildWarningIsIssued) {
+    const auto program{clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)))};
+    uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
+    program->irBinary = makeCopy(spirv, sizeof(spirv));
+    program->irBinarySize = sizeof(spirv);
+    program->isSpirV = true;
+
+    const auto buildResult{program->rebuildProgramFromIr()};
+    ASSERT_EQ(CL_SUCCESS, buildResult);
+
+    const std::string buildLog{program->getBuildLog(pClDevice->getRootDeviceIndex())};
+    const auto containsWarning{buildLog.find(CompilerWarnings::recompiledFromIr.data()) != std::string::npos};
+
+    EXPECT_TRUE(containsWarning);
+}
+
+TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildIsCalledButSuppressFlagIsEnabledThenRebuildWarningIsNotIssued) {
+    const auto program{clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)))};
+    uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
+    program->irBinary = makeCopy(spirv, sizeof(spirv));
+    program->irBinarySize = sizeof(spirv);
+    program->isSpirV = true;
+
+    const auto buildOptions{CompilerOptions::noRecompiledFromIr};
+    program->setBuildOptions(buildOptions.data());
+
+    const auto buildResult{program->rebuildProgramFromIr()};
+    ASSERT_EQ(CL_SUCCESS, buildResult);
+
+    const std::string buildLog{program->getBuildLog(pClDevice->getRootDeviceIndex())};
+    const auto containsWarning{buildLog.find(CompilerWarnings::recompiledFromIr.data()) != std::string::npos};
+
+    EXPECT_FALSE(containsWarning);
+}
+
+TEST_F(ProgramTests, givenProgramWithSpirvWhenRecompileIsCalledThenRebuildWarningIsIssued) {
+    const auto program{clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)))};
+    uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
+    program->irBinary = makeCopy(spirv, sizeof(spirv));
+    program->irBinarySize = sizeof(spirv);
+    program->isSpirV = true;
+
+    const auto compileResult{program->recompile()};
+    ASSERT_EQ(CL_SUCCESS, compileResult);
+
+    const std::string buildLog{program->getBuildLog(pClDevice->getRootDeviceIndex())};
+    const auto containsWarning{buildLog.find(CompilerWarnings::recompiledFromIr.data()) != std::string::npos};
+
+    EXPECT_TRUE(containsWarning);
+}
+
+TEST_F(ProgramTests, givenProgramWithSpirvWhenRecompileIsCalledButSuppressFlagIsEnabledThenRebuildWarningIsNotIssued) {
+    const auto program{clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)))};
+    uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
+    program->irBinary = makeCopy(spirv, sizeof(spirv));
+    program->irBinarySize = sizeof(spirv);
+    program->isSpirV = true;
+
+    const auto buildOptions{CompilerOptions::noRecompiledFromIr};
+    program->setBuildOptions(buildOptions.data());
+
+    const auto compileResult{program->recompile()};
+    ASSERT_EQ(CL_SUCCESS, compileResult);
+
+    const std::string buildLog{program->getBuildLog(pClDevice->getRootDeviceIndex())};
+    const auto containsWarning{buildLog.find(CompilerWarnings::recompiledFromIr.data()) != std::string::npos};
+
+    EXPECT_FALSE(containsWarning);
+}
+
 TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
     auto compilerInterface = new MockCompilerInterface();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
@@ -2766,6 +2837,25 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
     EXPECT_EQ(nullptr, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinary);
     EXPECT_EQ(0U, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
 }
+
+TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedThenRebuildWarningIsEnabled) {
+    DebugManagerStateRestore dbgRestorer{};
+    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+
+    PatchTokensTestData::ValidEmptyProgram programTokens;
+    cl_int retVal{CL_INVALID_BINARY};
+
+    const auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), programTokens.storage.data(), programTokens.storage.size(), &retVal));
+    ASSERT_NE(nullptr, pProgram.get());
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_TRUE(pProgram->shouldWarnAboutRebuild);
+}
+
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramNotBuiltInWhenBuiltInKernelRebulildIsForcedThenDeviceBinaryIsUsed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.RebuildPrecompiledKernels.set(true);

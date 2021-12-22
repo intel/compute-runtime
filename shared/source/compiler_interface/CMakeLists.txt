@@ -20,6 +20,7 @@ set(NEO_CORE_COMPILER_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options/compiler_options_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options/compiler_options_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options${BRANCH_DIR_SUFFIX}compiler_options.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_warnings/compiler_warnings.h
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_COMPILER_INTERFACE ${NEO_CORE_COMPILER_INTERFACE})

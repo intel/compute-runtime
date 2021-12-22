@@ -10,6 +10,9 @@
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include <algorithm>
+#include <functional>
+
 namespace NEO {
 namespace CompilerOptions {
 static constexpr ConstStringRef greaterThan4gbBuffersRequired = "-cl-intel-greater-than-4GB-buffer-required";
@@ -34,6 +37,7 @@ static constexpr ConstStringRef allowZebin = "-allow-zebin";
 static constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
 static constexpr ConstStringRef optLevel = "-ze-opt-level=O";
 static constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
+static constexpr ConstStringRef noRecompiledFromIr = "-Wno-recompiled-from-ir";
 
 constexpr size_t nullterminateSize = 1U;
 constexpr size_t spaceSeparatorSize = 1U;
@@ -106,6 +110,21 @@ constexpr size_t concatenationLength(const ConstStringRef (&options)[NumOptions]
         ret += spaceSeparatorSize + opt.length();
     }
     return (ret != 0U) ? ret - nullterminateSize : 0U;
+}
+
+template <typename ContainerT>
+inline bool extract(const ConstStringRef &toBeExtracted, ContainerT &options) {
+    const auto first{std::search(options.begin(), options.end(),
+                                 std::default_searcher{toBeExtracted.begin(), toBeExtracted.end()})};
+
+    if (first == options.end()) {
+        return false;
+    }
+
+    const auto last{std::next(first, toBeExtracted.length())};
+    options.erase(first, last);
+
+    return true;
 }
 
 template <size_t MaxLength = 256>
