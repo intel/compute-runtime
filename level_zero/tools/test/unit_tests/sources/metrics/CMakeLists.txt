@@ -17,6 +17,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_query_pool_3.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_streamer_1.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_streamer_2.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_streamer_3.cpp
 
 )
 
