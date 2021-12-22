@@ -1414,3 +1414,8 @@ HWTEST2_F(HwHelperTest, givenAtsOrDg2WhenDisableL3ForDebugCalledThenTrueIsReturn
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_TRUE(hwHelper.disableL3CacheForDebug());
 }
+
+HWTEST_F(HwHelperTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenFalseIsReturned) {
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
+}

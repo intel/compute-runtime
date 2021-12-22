@@ -6,7 +6,10 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_builtinslib.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
@@ -69,3 +72,33 @@ void givenUseBindlessBuiltinEnabledWhenBinExtensionPassedThenNameHasBindlessPref
     EXPECT_EQ(0, strcmp(expectedResourceNameForPlatformAndStepping.c_str(), resourceNameForPlatformAndStepping.c_str()));
 }
 } // namespace NEO
+
+using namespace NEO;
+
+using BuiltInSharedTest = Test<DeviceFixture>;
+HWTEST_F(BuiltInSharedTest, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceForNotRegisteredRevisionThenBuiltinFromDefaultRevisionIsTaken) {
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;
+    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+
+    const std::array<uint32_t, 11> builtinTypes{EBuiltInOps::CopyBufferToBuffer,
+                                                EBuiltInOps::CopyBufferRect,
+                                                EBuiltInOps::FillBuffer,
+                                                EBuiltInOps::CopyBufferToImage3d,
+                                                EBuiltInOps::CopyImage3dToBuffer,
+                                                EBuiltInOps::CopyImageToImage1d,
+                                                EBuiltInOps::CopyImageToImage2d,
+                                                EBuiltInOps::CopyImageToImage3d,
+                                                EBuiltInOps::FillImage1d,
+                                                EBuiltInOps::FillImage2d,
+                                                EBuiltInOps::FillImage3d};
+
+    for (auto &builtinType : builtinTypes) {
+        EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    }
+
+    UltDeviceFactory deviceFactory{1, 0};
+    auto pDeviceWithDefaultRevision = deviceFactory.rootDevices[0];
+    for (auto &builtinType : builtinTypes) {
+        EXPECT_EQ(mockBuiltinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Binary, *pDeviceWithDefaultRevision).size(), mockBuiltinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    }
+}

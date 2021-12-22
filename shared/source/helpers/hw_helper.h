@@ -152,6 +152,7 @@ class HwHelper {
     virtual bool isStatelesToStatefullWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) = 0;
     virtual bool disableL3CacheForDebug() const = 0;
+    virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
 
   protected:
     HwHelper() = default;
@@ -386,6 +387,7 @@ class HwHelperHw : public HwHelper {
     bool isStatelesToStatefullWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override;
     bool disableL3CacheForDebug() const override;
+    bool isRevisionSpecificBinaryBuiltinRequired() const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

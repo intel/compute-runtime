@@ -11,9 +11,9 @@
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
-using HwHelperTestPvc = ::testing::Test;
+using HwHelperXeHpcCoreTest = ::testing::Test;
 
-PVCTEST_F(HwHelperTestPvc, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
+XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
     ComputeSlmTestInput computeSlmValuesPvcAndLaterTestsInput[] = {
         {0, 0 * KB},
         {1, 0 * KB + 1},
@@ -49,12 +49,17 @@ PVCTEST_F(HwHelperTestPvc, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
     EXPECT_THROW(hwHelper.computeSlmValues(hwInfo, 129 * KB), std::exception);
 }
 
-PVCTEST_F(HwHelperTestPvc, WhenGettingIsCpuImageTransferPreferredThenTrueIsReturned) {
+XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, WhenGettingIsCpuImageTransferPreferredThenTrueIsReturned) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_TRUE(hwHelper.isCpuImageTransferPreferred(*defaultHwInfo));
 }
 
-PVCTEST_F(HwHelperTestPvc, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned) {
+XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 3584u);
+}
+
+XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenTrueIsReturned) {
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_TRUE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
 }

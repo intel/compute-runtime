@@ -197,9 +197,16 @@ BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps::Type builtin, Buil
                                                                                    getFamilyNameWithType(hwInfo),
                                                                                    hwInfo.platform.usRevId);
 
-    for (auto &rn : {resourceNameForPlatformTypeAndStepping, resourceNameForPlatformType, resourceNameGeneric}) { // first look for dedicated version, only fallback to generic one
+    StackVec<const std::string *, 3> resourcesToLookup;
+    resourcesToLookup.push_back(&resourceNameForPlatformTypeAndStepping);
+    if (BuiltinCode::ECodeType::Binary != requestedCodeType || !hwHelper.isRevisionSpecificBinaryBuiltinRequired()) {
+        resourcesToLookup.push_back(&resourceNameForPlatformType);
+        resourcesToLookup.push_back(&resourceNameGeneric);
+    }
+    for (auto &rn : resourcesToLookup) { // first look for dedicated version, only fallback to generic one
         for (auto &s : allStorages) {
-            bc = s.get()->load(rn);
+            UNRECOVERABLE_IF(!rn);
+            bc = s.get()->load(*rn);
             if (bc.size() != 0) {
                 return bc;
             }
