@@ -12,6 +12,8 @@ namespace NEO {
 class MockOsContext : public OsContext {
   public:
     using OsContext::checkDirectSubmissionSupportsEngine;
+    using OsContext::directSubmissionActive;
+    using OsContext::directSubmissionAvailableChecked;
     using OsContext::engineType;
     using OsContext::engineUsage;
     using OsContext::getDeviceBitfield;

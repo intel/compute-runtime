@@ -66,7 +66,7 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
         enableDirectSubmission = DebugManager.flags.EnableDirectSubmission.get();
     }
 
-    if (enableDirectSubmission) {
+    if (enableDirectSubmission && !directSubmissionAvailableChecked) {
         auto contextEngineType = this->getEngineType();
         const DirectSubmissionProperties &directSubmissionProperty =
             hwInfo.capabilityTable.directSubmissionEngines.data[contextEngineType];
@@ -95,9 +95,10 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
             this->setDirectSubmissionActive();
         }
 
-        return engineSupported && startDirect;
+        this->directSubmissionAvailableChecked = true;
     }
-    return false;
+
+    return this->directSubmissionActive;
 }
 
 bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProperties &directSubmissionProperty, aub_stream::EngineType contextEngineType, bool &startOnInit, bool &startInContext) {

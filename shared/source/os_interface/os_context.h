@@ -67,6 +67,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const bool rootDevice = false;
     bool defaultContext = false;
     bool directSubmissionActive = false;
+    bool directSubmissionAvailableChecked = false;
     std::once_flag contextInitializedFlag = {};
     bool contextInitialized = false;
     bool engineInstancedDevice = false;

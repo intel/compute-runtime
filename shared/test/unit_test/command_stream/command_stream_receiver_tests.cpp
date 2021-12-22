@@ -22,6 +22,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
@@ -391,6 +392,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckTaskCou
 struct InitDirectSubmissionFixture {
     void SetUp() {
         DebugManager.flags.EnableDirectSubmission.set(1);
+        DebugManager.flags.EnableGemCloseWorker.set(0);
         executionEnvironment = new MockExecutionEnvironment();
         DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -423,6 +425,7 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenIni
 
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
@@ -450,6 +453,7 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerDisabledWhenIn
 
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
@@ -469,6 +473,7 @@ HWTEST_F(InitDirectSubmissionTest, whenDirectSubmissionEnabledOnRcsThenExpectFea
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
@@ -479,6 +484,26 @@ HWTEST_F(InitDirectSubmissionTest, whenDirectSubmissionEnabledOnRcsThenExpectFea
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
 
     csr.reset();
+}
+
+HWTEST_F(InitDirectSubmissionTest, givenCheckIfDirectSubmissionEnableWhenCallItMultipleTimesThenCheckDirectSubmissionEnablingConditionsOnce) {
+    std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
+    osContext->ensureContextInitialized();
+    osContext->setDefaultContext(true);
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
+    bool submitOnInit = false;
+
+    auto ret = osContext->isDirectSubmissionAvailable(*hwInfo, submitOnInit);
+    EXPECT_TRUE(ret);
+
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionActive = false;
+    ret = osContext->isDirectSubmissionAvailable(*hwInfo, submitOnInit);
+    EXPECT_FALSE(ret);
 }
 
 template <class Type>
@@ -501,6 +526,7 @@ HWTEST_F(InitDirectSubmissionTest, whenCallInitDirectSubmissionAgainThenItIsNotR
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
@@ -527,6 +553,7 @@ HWTEST_F(InitDirectSubmissionTest, whenCallInitDirectSubmissionThenObtainLock) {
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
@@ -542,6 +569,8 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionEnabledWhenPlatformNotSu
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionActive = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = false;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
@@ -560,7 +589,7 @@ HWTEST_F(InitDirectSubmissionTest, whenDirectSubmissionEnabledOnBcsThenExpectFea
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].submitOnInit = false;
@@ -580,7 +609,7 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionEnabledWhenPlatformNotSu
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = false;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].submitOnInit = false;
@@ -600,7 +629,7 @@ HWTEST_F(InitDirectSubmissionTest, givenLowPriorityContextWhenDirectSubmissionDi
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useLowPriority = false;
@@ -619,7 +648,7 @@ HWTEST_F(InitDirectSubmissionTest, givenLowPriorityContextWhenDirectSubmissionEn
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority},
                                                                                                         PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useLowPriority = true;
@@ -638,7 +667,7 @@ HWTEST_F(InitDirectSubmissionTest, givenInternalContextWhenDirectSubmissionDisab
                                                                                                         device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useInternal = false;
@@ -657,7 +686,7 @@ HWTEST_F(InitDirectSubmissionTest, givenInternalContextWhenDirectSubmissionEnabl
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Internal}, PreemptionMode::ThreadGroup,
                                                                                                         device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useInternal = true;
@@ -677,7 +706,7 @@ HWTEST_F(InitDirectSubmissionTest, givenRootDeviceContextWhenDirectSubmissionDis
                                                                                                         device->getDeviceBitfield(), true)));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(true);
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useRootDevice = false;
@@ -696,7 +725,7 @@ HWTEST_F(InitDirectSubmissionTest, givenRootDeviceContextWhenDirectSubmissionEna
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Internal}, PreemptionMode::ThreadGroup,
                                                                                                         device->getDeviceBitfield(), true)));
     osContext->ensureContextInitialized();
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useRootDevice = true;
@@ -716,7 +745,7 @@ HWTEST_F(InitDirectSubmissionTest, givenNonDefaultContextWhenDirectSubmissionDis
                                                                                                         device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(false);
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useNonDefault = false;
@@ -736,7 +765,7 @@ HWTEST_F(InitDirectSubmissionTest, givenNonDefaultContextContextWhenDirectSubmis
                                                                                                         device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(false);
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useNonDefault = true;
@@ -759,7 +788,7 @@ HWTEST_F(InitDirectSubmissionTest, GivenBlitterOverrideEnabledWhenBlitterIsNonDe
                                                                                                         device->getDeviceBitfield())));
     osContext->ensureContextInitialized();
     osContext->setDefaultContext(false);
-
+    static_cast<MockOsContext *>(osContext.get())->directSubmissionAvailableChecked = false;
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = false;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].useNonDefault = false;
