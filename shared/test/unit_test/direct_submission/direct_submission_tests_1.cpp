@@ -67,7 +67,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenStopThenRingIsNotStarted
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.directSubmission.reset(&directSubmission);
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
@@ -87,7 +87,7 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
     csr.blitterDirectSubmission.reset(&directSubmission);
     csr.setupContext(*osContext.get());
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
@@ -114,7 +114,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenMakingResourcesResidentT
     csr.directSubmission.reset(&directSubmission);
     csr.setupContext(*osContext2.get());
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *alloc = directSubmission.ringCommandStream.getGraphicsAllocation();
@@ -137,7 +137,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStarted
                                                                                       *osContext.get());
     EXPECT_TRUE(directSubmission.disableCpuCacheFlush);
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
@@ -152,7 +152,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsNotStar
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(directSubmission.ringStart);
 
@@ -168,7 +168,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsPr
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_EQ(RingBufferUse::FirstBuffer, directSubmission.currentRingBuffer);
 
@@ -182,7 +182,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSe
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_EQ(RingBufferUse::FirstBuffer, directSubmission.currentRingBuffer);
 
@@ -200,7 +200,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAllocateFailWhenRingIsStarte
     EXPECT_TRUE(directSubmission.disableCpuCacheFlush);
 
     directSubmission.allocateOsResourcesReturn = false;
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_FALSE(ret);
     EXPECT_FALSE(directSubmission.ringStart);
 
@@ -212,7 +212,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSubmitFailWhenRingIsStartedT
                                                                                       *osContext.get());
 
     directSubmission.submitReturn = false;
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_FALSE(ret);
     EXPECT_FALSE(directSubmission.ringStart);
 
@@ -223,7 +223,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsStartedThenEx
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     size_t usedSize = directSubmission.ringCommandStream.getUsed();
 
@@ -236,7 +236,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedThe
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     size_t usedSize = directSubmission.ringCommandStream.getUsed();
 
@@ -250,7 +250,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedSub
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     size_t usedSize = directSubmission.ringCommandStream.getUsed();
 
@@ -265,7 +265,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedAnd
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     auto expectedRingBuffer = directSubmission.currentRingBuffer;
     GraphicsAllocation *oldRingBuffer = directSubmission.ringCommandStream.getGraphicsAllocation();
@@ -287,7 +287,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStopWhenStopRingIsCalledThen
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
     uint32_t oldQueueCount = directSubmission.semaphoreData->QueueWorkCount;
@@ -355,7 +355,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSemaphoreThenExp
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
     directSubmission.dispatchSemaphoreSection(1u);
@@ -366,7 +366,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchStartSectionThen
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
     directSubmission.dispatchStartSection(1ull);
@@ -376,7 +376,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchStartSectionThen
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSwitchRingBufferSectionThenExpectCorrectSizeUsed) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
     directSubmission.dispatchSwitchRingBufferSection(1ull);
@@ -388,7 +388,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchFlushSectionThen
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
                                                                     *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
     Dispatcher::dispatchCacheFlush(directSubmission.ringCommandStream, *directSubmission.hwInfo, 0ull);
@@ -400,7 +400,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchTagUpdateSection
     MockDirectSubmissionHw<FamilyType, Dispatcher>
         directSubmission(*pDevice, *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     Dispatcher::dispatchMonitorFence(directSubmission.ringCommandStream, 0ull, 0ull, *directSubmission.hwInfo, false, false);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
@@ -412,7 +412,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchEndingSectionThe
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
                                                                     *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
     Dispatcher::dispatchStopCommandBuffer(directSubmission.ringCommandStream);
@@ -517,7 +517,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenSettingAddressInReturnCo
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
     uint64_t returnAddress = 0x1A2BF000;
@@ -533,7 +533,7 @@ HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedA
     std::unique_ptr<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>> directSubmission =
         std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*pDevice,
                                                                                            *osContext.get());
-    bool ret = directSubmission->initialize(false);
+    bool ret = directSubmission->initialize(false, false);
     EXPECT_TRUE(ret);
 
     GraphicsAllocation *nulledAllocation = directSubmission->ringBuffer;
@@ -544,7 +544,7 @@ HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedA
     directSubmission = std::make_unique<
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*pDevice,
                                                                           *osContext.get());
-    ret = directSubmission->initialize(false);
+    ret = directSubmission->initialize(false, false);
     EXPECT_TRUE(ret);
 
     nulledAllocation = directSubmission->ringBuffer2;
@@ -555,7 +555,7 @@ HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedA
     directSubmission = std::make_unique<
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*pDevice,
                                                                           *osContext.get());
-    ret = directSubmission->initialize(false);
+    ret = directSubmission->initialize(false, false);
     EXPECT_TRUE(ret);
     nulledAllocation = directSubmission->semaphores;
     directSubmission->semaphores = nullptr;
@@ -642,7 +642,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_FALSE(directSubmission.disableMonitorFence);
     EXPECT_EQ(0u, directSubmission.workloadMode);
     EXPECT_EQ(nullptr, directSubmission.diagnostic.get());
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(directSubmission.ringStart);
     EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
@@ -677,7 +677,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_FALSE(directSubmission.disableMonitorFence);
     EXPECT_EQ(0u, directSubmission.workloadMode);
     EXPECT_EQ(nullptr, directSubmission.diagnostic.get());
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
     EXPECT_EQ(1u, directSubmission.disabledDiagnosticCalled);
@@ -712,7 +712,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_FALSE(directSubmission.disableMonitorFence);
     EXPECT_EQ(0u, directSubmission.workloadMode);
     EXPECT_EQ(nullptr, directSubmission.diagnostic.get());
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(directSubmission.ringStart);
     EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
@@ -761,7 +761,7 @@ HWTEST_F(DirectSubmissionTest,
                           directSubmission.getDiagnosticModeSection();
     expectedSize += expectedExecCount * directSubmission.getSizeDispatch();
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
     EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
@@ -849,7 +849,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(expectedDispatch, directSubmission.getSizeDispatch());
     expectedSize += expectedExecCount * expectedDispatch;
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
     EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
@@ -944,7 +944,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DirectSubmissionTest,
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
                                                                     *osContext.get());
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     size_t usedSize = directSubmission.ringCommandStream.getUsed();
 

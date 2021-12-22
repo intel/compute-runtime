@@ -51,7 +51,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     directSubmission.partitionedMode = true;
     directSubmission.workPartitionAllocation = ultCsr->getWorkPartitionAllocation();
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.partitionConfigSet);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
@@ -303,7 +303,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
@@ -342,7 +342,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_EQ(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
@@ -374,7 +374,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
@@ -410,7 +410,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, directSubmission.semaphoreData->QueueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
@@ -445,7 +445,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWh
 
     testing::internal::CaptureStdout();
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
@@ -482,7 +482,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     directSubmission.partitionConfigSet = false;
     directSubmission.workPartitionAllocation = ultCsr->getWorkPartitionAllocation();
 
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.partitionConfigSet);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
@@ -543,7 +543,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     directSubmission.partitionConfigSet = false;
     directSubmission.workPartitionAllocation = ultCsr->getWorkPartitionAllocation();
 
-    bool ret = directSubmission.initialize(false);
+    bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(directSubmission.partitionConfigSet);
     EXPECT_FALSE(directSubmission.ringStart);
@@ -577,4 +577,77 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(0x221Cu, loadRegisterMem->getRegisterAddress());
     uint64_t gpuAddress = ultCsr->getWorkPartitionAllocation()->getGpuAddress();
     EXPECT_EQ(gpuAddress, loadRegisterMem->getMemoryAddress());
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest,
+         givenRenderDirectSubmissionUsingNotifyEnabledWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithNotifyFlag) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    FlushStampTracker flushStamp(true);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    directSubmission.disableMonitorFence = false;
+
+    bool ret = directSubmission.initialize(true, true);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(directSubmission.useNotifyForPostSync);
+
+    size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
+    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, sizeUsedBefore);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool foundFenceUpdate = false;
+    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            foundFenceUpdate = true;
+            EXPECT_TRUE(pipeControl->getNotifyEnable());
+            break;
+        }
+    }
+    EXPECT_TRUE(foundFenceUpdate);
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest,
+         givenBlitterDirectSubmissionUsingNotifyEnabledWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithNotifyFlag) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using Dispatcher = BlitterDispatcher<FamilyType>;
+
+    FlushStampTracker flushStamp(true);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    directSubmission.disableMonitorFence = false;
+
+    bool ret = directSubmission.initialize(true, true);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(directSubmission.useNotifyForPostSync);
+
+    size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
+    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, sizeUsedBefore);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto miFlushList = hwParse.getCommandsList<MI_FLUSH_DW>();
+
+    bool foundFenceUpdate = false;
+    for (auto it = miFlushList.begin(); it != miFlushList.end(); it++) {
+        auto miFlush = genCmdCast<MI_FLUSH_DW *>(*it);
+        if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
+            foundFenceUpdate = true;
+            EXPECT_TRUE(miFlush->getNotifyEnable());
+            break;
+        }
+    }
+    EXPECT_TRUE(foundFenceUpdate);
 }

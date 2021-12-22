@@ -63,6 +63,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::startRingBuffer;
     using BaseClass::stopRingBuffer;
     using BaseClass::switchRingBuffersAllocations;
+    using BaseClass::useNotifyForPostSync;
     using BaseClass::workloadMode;
     using BaseClass::workloadModeOneExpectedValue;
     using BaseClass::workloadModeOneStoreAddress;

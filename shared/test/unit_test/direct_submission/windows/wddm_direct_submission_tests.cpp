@@ -55,7 +55,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
 
     EXPECT_EQ(1u, wddmDirectSubmission->commandBufferHeader->NeedsMidBatchPreEmptionSupport);
 
-    bool ret = wddmDirectSubmission->initialize(true);
+    bool ret = wddmDirectSubmission->initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(wddmDirectSubmission->ringStart);
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffer);
@@ -87,7 +87,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndNotStarted
 
     EXPECT_EQ(0u, wddmDirectSubmission->commandBufferHeader->NeedsMidBatchPreEmptionSupport);
 
-    bool ret = wddmDirectSubmission->initialize(false);
+    bool ret = wddmDirectSubmission->initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(wddmDirectSubmission->ringStart);
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffer);
@@ -112,7 +112,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSubmitingCmdBufferThenExpectPass
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device.get(),
                                                                                             *osContext.get());
 
-    bool ret = wddmDirectSubmission.initialize(false);
+    bool ret = wddmDirectSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
     uint64_t gpuAddress = 0xFF00FF000;
@@ -231,7 +231,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenEx
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device.get(),
                                                                                             *osContext.get());
 
-    bool ret = wddmDirectSubmission.initialize(true);
+    bool ret = wddmDirectSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
     uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffer->getGpuAddress() + usedSpace;
@@ -257,7 +257,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device.get(),
                                                                                             *osContext.get());
 
-    bool ret = wddmDirectSubmission.initialize(false);
+    bool ret = wddmDirectSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
@@ -284,7 +284,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device.get(),
                                                                                             *osContext.get());
 
-    bool ret = wddmDirectSubmission.initialize(true);
+    bool ret = wddmDirectSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     uint64_t expectedWaitFence = 0x10ull;
     wddmDirectSubmission.completionRingBuffers[RingBufferUse::SecondBuffer] = expectedWaitFence;

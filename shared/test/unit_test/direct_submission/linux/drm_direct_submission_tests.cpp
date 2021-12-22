@@ -74,6 +74,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::switchRingBuffers;
     using BaseClass::tagAddress;
     using BaseClass::updateTagValue;
+    using BaseClass::useNotifyForPostSync;
     using BaseClass::wait;
     using BaseClass::workPartitionAllocation;
 
@@ -116,7 +117,7 @@ HWTEST_F(DrmDirectSubmissionTest, whenCreateDirectSubmissionThenValidObjectIsRet
                                                                                                  *osContext.get());
     EXPECT_NE(directSubmission.get(), nullptr);
 
-    bool ret = directSubmission->initialize(false);
+    bool ret = directSubmission->initialize(false, false);
     EXPECT_TRUE(ret);
 }
 

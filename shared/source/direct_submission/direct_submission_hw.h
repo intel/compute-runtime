@@ -59,7 +59,7 @@ class DirectSubmissionHw {
 
     virtual ~DirectSubmissionHw();
 
-    bool initialize(bool submitOnInit);
+    bool initialize(bool submitOnInit, bool useNotify);
 
     MOCKABLE_VIRTUAL bool stopRingBuffer();
 
@@ -160,5 +160,6 @@ class DirectSubmissionHw {
     bool disableMonitorFence = false;
     bool partitionedMode = false;
     bool partitionConfigSet = true;
+    bool useNotifyForPostSync = false;
 };
 } // namespace NEO

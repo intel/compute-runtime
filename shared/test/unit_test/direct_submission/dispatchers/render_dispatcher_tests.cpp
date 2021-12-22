@@ -148,3 +148,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
 HWTEST_F(RenderDispatcherTest, givenRenderWhenCheckingForMultiTileSynchronizationSupportThenExpectTrue) {
     EXPECT_TRUE(RenderDispatcher<FamilyType>::isMultiTileSynchronizationSupported());
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
+            givenRenderDispatcherNotifyFlagTrueWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValueAndNotifyParameter) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    uint64_t gpuAddress = 0xADD35500ull;
+    uint64_t value = 0x102030;
+
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuAddress, value, hardwareInfo, true, false);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(cmdBuffer);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool foundMonitorFence = false;
+    for (auto &it : hwParse.pipeControlList) {
+        PIPE_CONTROL *pipeControl = reinterpret_cast<PIPE_CONTROL *>(it);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            foundMonitorFence = true;
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+            EXPECT_EQ(value, pipeControl->getImmediateData());
+            EXPECT_TRUE(pipeControl->getNotifyEnable());
+            break;
+        }
+    }
+    EXPECT_TRUE(foundMonitorFence);
+}

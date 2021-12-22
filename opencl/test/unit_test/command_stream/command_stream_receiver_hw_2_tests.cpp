@@ -1375,7 +1375,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
     csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(*pDevice, *csr.osContext);
     csr.recordFlusheBatchBuffer = true;
     DirectSubmission *directSubmission = reinterpret_cast<DirectSubmission *>(csr.blitterDirectSubmission.get());
-    bool initRet = directSubmission->initialize(true);
+    bool initRet = directSubmission->initialize(true, false);
     EXPECT_TRUE(initRet);
 
     cl_int retVal = CL_SUCCESS;
@@ -1418,7 +1418,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenFlushTagUpdateThenBatc
     csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(*pDevice, *csr.osContext);
     csr.recordFlusheBatchBuffer = true;
     DirectSubmission *directSubmission = reinterpret_cast<DirectSubmission *>(csr.blitterDirectSubmission.get());
-    bool initRet = directSubmission->initialize(true);
+    bool initRet = directSubmission->initialize(true, false);
     EXPECT_TRUE(initRet);
 
     csr.flushTagUpdate();

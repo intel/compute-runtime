@@ -124,12 +124,12 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
             if (!initBlitterDirectSubmission) {
                 directSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext);
-                ret = directSubmission->initialize(true);
+                ret = directSubmission->initialize(true, false);
                 this->dispatchMode = DispatchMode::ImmediateDispatch;
             } else {
                 blitterDirectSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(device, osContext);
-                blitterDirectSubmission->initialize(true);
+                blitterDirectSubmission->initialize(true, false);
             }
         }
         return ret;

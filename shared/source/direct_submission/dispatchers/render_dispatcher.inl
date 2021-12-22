@@ -35,6 +35,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
     args.workloadPartitionOffset = partitionedWorkload;
+    args.notifyEnable = useNotifyEnable;
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
         cmdBuffer,
         POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
