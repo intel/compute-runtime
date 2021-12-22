@@ -176,6 +176,8 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
     auto cmdContainer = std::make_unique<CommandContainer>();
     cmdContainer->initialize(pDevice, &allocList);
     auto &cmdBufferAllocs = cmdContainer->getCmdBufferAllocations();
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 0u);
     EXPECT_EQ(cmdBufferAllocs.size(), 1u);
     EXPECT_TRUE(allocList.peekIsEmpty());
 
@@ -186,6 +188,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
     auto cmdBuffer1 = cmdBufferAllocs[1];
 
     cmdContainer->reset();
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 1u);
     EXPECT_EQ(cmdBufferAllocs.size(), 1u);
     EXPECT_EQ(cmdBufferAllocs[0], cmdBuffer0);
     EXPECT_FALSE(allocList.peekIsEmpty());
@@ -197,6 +200,8 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
     EXPECT_TRUE(allocList.peekIsEmpty());
 
     cmdContainer.reset();
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 3u);
+    EXPECT_FALSE(allocList.peekIsEmpty());
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
