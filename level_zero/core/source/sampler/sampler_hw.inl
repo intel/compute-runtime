@@ -27,9 +27,9 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
 
     switch (desc->addressMode) {
     case ZE_SAMPLER_ADDRESS_MODE_NONE:
-    case ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:
-        break;
     case ZE_SAMPLER_ADDRESS_MODE_CLAMP:
+        break;
+    case ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:
         addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
         addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
         addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;

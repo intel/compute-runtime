@@ -84,11 +84,11 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
         EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP,
                   sampler->samplerState.getTczAddressControlMode());
     } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP) {
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
                   sampler->samplerState.getTcxAddressControlMode());
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
                   sampler->samplerState.getTcyAddressControlMode());
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
                   sampler->samplerState.getTczAddressControlMode());
     } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_MIRROR) {
         EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR,
@@ -98,11 +98,11 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
         EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR,
                   sampler->samplerState.getTczAddressControlMode());
     } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER) {
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
                   sampler->samplerState.getTcxAddressControlMode());
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
                   sampler->samplerState.getTcyAddressControlMode());
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
                   sampler->samplerState.getTczAddressControlMode());
     }
 
