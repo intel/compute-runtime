@@ -249,7 +249,7 @@ class Drm : public DriverModel {
     uint32_t getPciDomain() {
         return pciDomain;
     }
-    MOCKABLE_VIRTUAL std::unique_ptr<uint8_t[]> getMemoryRegions();
+    MOCKABLE_VIRTUAL std::vector<uint8_t> getMemoryRegions();
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -260,7 +260,7 @@ class Drm : public DriverModel {
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
     std::string getSysFsPciPath();
-    std::unique_ptr<uint8_t[]> query(uint32_t queryId, uint32_t queryItemFlags, int32_t &length);
+    std::vector<uint8_t> query(uint32_t queryId, uint32_t queryItemFlags);
     void printIoctlStatistics();
 
 #pragma pack(1)

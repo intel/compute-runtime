@@ -29,7 +29,8 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsNotCreatedAndIoctl
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThenReturnZero) {
-    SystemInfo systemInfo(nullptr, 0);
+    std::vector<uint8_t> inputData{};
+    SystemInfo systemInfo(inputData);
 
     EXPECT_EQ(0u, systemInfo.getL3CacheSizeInKb());
     EXPECT_EQ(0u, systemInfo.getL3BankCount());
@@ -105,7 +106,7 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsN
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecificAtrributesThenReturnCorrectValues) {
-    SystemInfo systemInfo(dummyDeviceBlobData, sizeof(dummyDeviceBlobData));
+    SystemInfo systemInfo(inputBlobData);
 
     EXPECT_EQ(0x0Au, systemInfo.getMaxMemoryChannels());
     EXPECT_EQ(0x0Bu, systemInfo.getMemoryType());

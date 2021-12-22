@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace NEO {
 class Drm;
@@ -36,8 +37,8 @@ class IoctlHelper {
     static IoctlHelper *get(Drm *drm);
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
 
-    virtual uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) = 0;
-    virtual std::unique_ptr<MemoryRegion[]> translateToMemoryRegions(uint8_t *dataQuery, uint32_t length, uint32_t &numRegions) = 0;
+    virtual uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) = 0;
+    virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) = 0;
     virtual CacheRegion closAlloc(Drm *drm) = 0;
     virtual uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(Drm *drm, CacheRegion closIndex) = 0;
@@ -52,8 +53,8 @@ class IoctlHelper {
 
 class IoctlHelperUpstream : public IoctlHelper {
   public:
-    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
-    std::unique_ptr<MemoryRegion[]> translateToMemoryRegions(uint8_t *dataQuery, uint32_t length, uint32_t &numRegions) override;
+    uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
+    std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;
     uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
@@ -73,14 +74,14 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
         static IoctlHelperImpl<gfxProduct> instance;
         return &instance;
     }
-    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
-    std::unique_ptr<MemoryRegion[]> translateToMemoryRegions(uint8_t *dataQuery, uint32_t length, uint32_t &numRegions) override;
+    uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
+    std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
 };
 
 class IoctlHelperPrelim20 : public IoctlHelper {
   public:
-    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override;
-    std::unique_ptr<MemoryRegion[]> translateToMemoryRegions(uint8_t *dataQuery, uint32_t length, uint32_t &numRegions) override;
+    uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
+    std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;
     uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;

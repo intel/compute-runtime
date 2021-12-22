@@ -49,13 +49,14 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal) {
     return ioctlRetVal;
 }
 
-std::unique_ptr<uint8_t[]> getRegionInfo(const MemoryRegion *inputRegions, uint32_t size) {
-    int length = sizeof(prelim_drm_i915_query_memory_regions) + size * sizeof(prelim_drm_i915_memory_region_info);
-    auto data = std::make_unique<uint8_t[]>(length);
-    auto memoryRegions = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(data.get());
-    memoryRegions->num_regions = size;
+std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions) {
+    auto inputSize = static_cast<uint32_t>(inputRegions.size());
+    int length = sizeof(prelim_drm_i915_query_memory_regions) + inputSize * sizeof(prelim_drm_i915_memory_region_info);
+    auto data = std::vector<uint8_t>(length);
+    auto memoryRegions = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(data.data());
+    memoryRegions->num_regions = inputSize;
 
-    for (uint32_t i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < inputSize; i++) {
         memoryRegions->regions[i].region.memory_class = inputRegions[i].region.memoryClass;
         memoryRegions->regions[i].region.memory_instance = inputRegions[i].region.memoryInstance;
         memoryRegions->regions[i].probed_size = inputRegions[i].probedSize;

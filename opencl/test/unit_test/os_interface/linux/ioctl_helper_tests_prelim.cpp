@@ -16,7 +16,7 @@
 using namespace NEO;
 
 extern int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal);
-extern std::unique_ptr<uint8_t[]> getRegionInfo(const MemoryRegion *inputRegions, uint32_t size);
+extern std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions);
 
 class DrmPrelimMock : public DrmMock {
   public:
@@ -42,15 +42,10 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenCreateGemExtThenReturnSuccess) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[0].probed_size = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
-    regionInfo[1].probed_size = 16 * GB;
-
     auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
-    auto ret = ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
+    std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
 
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
@@ -65,14 +60,11 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenCreateGemExtWithDebugFlagThenPrintD
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
-
     testing::internal::CaptureStdout();
     auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
-    ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
+    std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, param: 0x1000000010001, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 1024\n");
@@ -83,7 +75,7 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenTranslateToMemoryRegionsThenReturnS
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    MemoryRegion expectedMemRegions[2] = {};
+    std::vector<MemoryRegion> expectedMemRegions(2);
     expectedMemRegions[0].region.memoryClass = I915_MEMORY_CLASS_SYSTEM;
     expectedMemRegions[0].region.memoryInstance = 0;
     expectedMemRegions[0].probedSize = 1024;
@@ -91,13 +83,12 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenTranslateToMemoryRegionsThenReturnS
     expectedMemRegions[1].region.memoryInstance = 0;
     expectedMemRegions[1].probedSize = 1024;
 
-    auto regionInfo = getRegionInfo(expectedMemRegions, 2);
+    auto regionInfo = getRegionInfo(expectedMemRegions);
 
-    auto numRegions = 0u;
     auto ioctlHelper = IoctlHelper::get(drm.get());
-    auto memRegions = ioctlHelper->translateToMemoryRegions(reinterpret_cast<uint8_t *>(regionInfo.get()), 0, numRegions);
-    EXPECT_EQ(2u, numRegions);
-    for (uint32_t i = 0; i < numRegions; i++) {
+    auto memRegions = ioctlHelper->translateToMemoryRegions(regionInfo);
+    EXPECT_EQ(2u, memRegions.size());
+    for (uint32_t i = 0; i < memRegions.size(); i++) {
         EXPECT_EQ(expectedMemRegions[i].region.memoryClass, memRegions[i].region.memoryClass);
         EXPECT_EQ(expectedMemRegions[i].region.memoryInstance, memRegions[i].region.memoryInstance);
         EXPECT_EQ(expectedMemRegions[i].probedSize, memRegions[i].probedSize);

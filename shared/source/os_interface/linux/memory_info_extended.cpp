@@ -15,8 +15,8 @@
 
 namespace NEO {
 
-MemoryInfo::MemoryInfo(const MemoryRegion *regionInfo, size_t count)
-    : drmQueryRegions(regionInfo, regionInfo + count), systemMemoryRegion(drmQueryRegions[0]) {
+MemoryInfo::MemoryInfo(const RegionContainer &regionInfo)
+    : drmQueryRegions(regionInfo), systemMemoryRegion(drmQueryRegions[0]) {
     UNRECOVERABLE_IF(systemMemoryRegion.region.memoryClass != I915_MEMORY_CLASS_SYSTEM);
     std::copy_if(drmQueryRegions.begin(), drmQueryRegions.end(), std::back_inserter(localMemoryRegions),
                  [](const MemoryRegion &memoryRegionInfo) {

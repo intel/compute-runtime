@@ -600,7 +600,7 @@ bool Drm::isi915Version(int fileDescriptor) {
     return strcmp(name, "i915") == 0;
 }
 
-std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, uint32_t queryItemFlags, int32_t &length) {
+std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     drm_i915_query query{};
     drm_i915_query_item queryItem{};
     queryItem.query_id = queryId;
@@ -608,23 +608,19 @@ std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, uint32_t queryItemFlags,
     queryItem.flags = queryItemFlags;
     query.items_ptr = reinterpret_cast<__u64>(&queryItem);
     query.num_items = 1;
-    length = 0;
 
     auto ret = this->ioctl(DRM_IOCTL_I915_QUERY, &query);
     if (ret != 0 || queryItem.length <= 0) {
-        return nullptr;
+        return {};
     }
 
-    auto data = std::make_unique<uint8_t[]>(queryItem.length);
-    memset(data.get(), 0, queryItem.length);
-    queryItem.data_ptr = castToUint64(data.get());
+    auto data = std::vector<uint8_t>(queryItem.length, 0);
+    queryItem.data_ptr = castToUint64(data.data());
 
     ret = this->ioctl(DRM_IOCTL_I915_QUERY, &query);
     if (ret != 0 || queryItem.length <= 0) {
-        return nullptr;
+        return {};
     }
-
-    length = queryItem.length;
     return data;
 }
 
@@ -915,16 +911,13 @@ int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWi
 }
 
 bool Drm::querySystemInfo() {
-    auto length = 0;
     auto request = IoctlHelper::get(this)->getHwConfigIoctlVal();
-    auto deviceBlobQuery = this->query(request, DrmQueryItemFlags::empty, length);
-    auto deviceBlob = reinterpret_cast<uint32_t *>(deviceBlobQuery.get());
-    if (!deviceBlob) {
+    auto deviceBlobQuery = this->query(request, DrmQueryItemFlags::empty);
+    if (deviceBlobQuery.empty()) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
         return false;
     }
-    this->systemInfo.reset(new SystemInfo(deviceBlob, length));
-
+    this->systemInfo.reset(new SystemInfo(deviceBlobQuery));
     return true;
 }
 

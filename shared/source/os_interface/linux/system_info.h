@@ -7,13 +7,14 @@
 
 #pragma once
 #include <cstdint>
+#include <vector>
 
 namespace NEO {
 struct HardwareInfo;
 
 struct SystemInfo {
 
-    SystemInfo(const uint32_t *blobData, int32_t blobSize);
+    SystemInfo(const std::vector<uint8_t> &inputData);
 
     ~SystemInfo() = default;
 
@@ -37,7 +38,7 @@ struct SystemInfo {
     void checkSysInfoMismatch(HardwareInfo *hwInfo);
 
   protected:
-    void parseDeviceBlob(const uint32_t *data, int32_t size);
+    void parseDeviceBlob(const std::vector<uint8_t> &inputData);
     void extendParseDeviceBlob(const uint32_t *data, uint32_t element);
 
     uint32_t maxSlicesSupported = 0;

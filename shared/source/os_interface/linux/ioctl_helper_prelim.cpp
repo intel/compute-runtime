@@ -18,9 +18,15 @@
 
 namespace NEO {
 
-uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
+uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) {
+    uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
+    prelim_drm_i915_gem_memory_class_instance data[regionsSize];
+    for (uint32_t i = 0; i < regionsSize; i++) {
+        data[i].memory_class = memClassInstances[i].memoryClass;
+        data[i].memory_instance = memClassInstances[i].memoryInstance;
+    }
     prelim_drm_i915_gem_object_param regionParam{};
-    regionParam.size = dataSize;
+    regionParam.size = regionsSize;
     regionParam.data = reinterpret_cast<uintptr_t>(data);
     regionParam.param = PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_MEMORY_REGIONS;
 
@@ -36,7 +42,7 @@ uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, void *data, uint32_t dataSi
                      allocSize, regionParam.param);
 
     if (DebugManager.flags.PrintBOCreateDestroyResult.get()) {
-        for (uint32_t i = 0; i < dataSize; i++) {
+        for (uint32_t i = 0; i < regionsSize; i++) {
             auto region = reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(data)[i];
             printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
                              region.memory_class, region.memory_instance);
@@ -51,16 +57,15 @@ uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, void *data, uint32_t dataSi
     return ret;
 }
 
-std::unique_ptr<MemoryRegion[]> IoctlHelperPrelim20::translateToMemoryRegions(uint8_t *dataQuery, uint32_t length, uint32_t &numRegions) {
-    auto *data = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(dataQuery);
-    auto memRegions = std::make_unique<MemoryRegion[]>(data->num_regions);
+std::vector<MemoryRegion> IoctlHelperPrelim20::translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
+    auto *data = reinterpret_cast<const prelim_drm_i915_query_memory_regions *>(regionInfo.data());
+    auto memRegions = std::vector<MemoryRegion>(data->num_regions);
     for (uint32_t i = 0; i < data->num_regions; i++) {
         memRegions[i].probedSize = data->regions[i].probed_size;
         memRegions[i].unallocatedSize = data->regions[i].unallocated_size;
         memRegions[i].region.memoryClass = data->regions[i].region.memory_class;
         memRegions[i].region.memoryInstance = data->regions[i].region.memory_instance;
     }
-    numRegions = data->num_regions;
     return memRegions;
 }
 

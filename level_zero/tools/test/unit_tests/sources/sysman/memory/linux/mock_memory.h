@@ -42,7 +42,7 @@ template <>
 struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
     Mock<MemoryNeoDrm>(RootDeviceEnvironment &rootDeviceEnvironment) : MemoryNeoDrm(rootDeviceEnvironment) {}
     bool queryMemoryInfoMockPositiveTest() {
-        MemoryRegion regionInfo[2] = {};
+        std::vector<MemoryRegion> regionInfo(2);
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
         regionInfo[0].probedSize = probedSizeRegionZero;
         regionInfo[0].unallocatedSize = unallocatedSizeRegionZero;
@@ -50,7 +50,7 @@ struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
         regionInfo[1].probedSize = probedSizeRegionOne;
         regionInfo[1].unallocatedSize = unallocatedSizeRegionOne;
 
-        this->memoryInfo.reset(new MemoryInfo(regionInfo, 2));
+        this->memoryInfo.reset(new MemoryInfo(regionInfo));
         return true;
     }
 

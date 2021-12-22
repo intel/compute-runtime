@@ -146,13 +146,13 @@ class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
 };
 
 struct MockedMemoryInfo : public NEO::MemoryInfo {
-    MockedMemoryInfo(const MemoryRegion *regionInfo, size_t count) : MemoryInfo(regionInfo, count) {}
+    MockedMemoryInfo(const std::vector<MemoryRegion> &regionInfo) : MemoryInfo(regionInfo) {}
     ~MockedMemoryInfo() override{};
 
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
         return 1024u;
     }
-    uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) override {
+    uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override {
         if (allocSize == 0) {
             return EINVAL;
         }
@@ -191,12 +191,12 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
             i++;
         }
         mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
-        MemoryRegion regionInfo[2] = {};
+        std::vector<MemoryRegion> regionInfo(2);
         regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
         regionInfo[0].probedSize = 8 * GB;
         regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
         regionInfo[1].probedSize = 16 * GB;
-        mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo, 2));
+        mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         memoryManager.reset(new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment));
 

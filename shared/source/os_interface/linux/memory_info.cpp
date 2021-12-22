@@ -15,8 +15,8 @@
 
 namespace NEO {
 
-uint32_t MemoryInfo::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
-    return IoctlHelper::get(drm)->createGemExt(drm, data, dataSize, allocSize, handle);
+uint32_t MemoryInfo::createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) {
+    return IoctlHelper::get(drm)->createGemExt(drm, memClassInstances, allocSize, handle);
 }
 
 MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
@@ -66,7 +66,8 @@ void MemoryInfo::printRegionSizes() {
 uint32_t MemoryInfo::createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
     auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
-    auto ret = createGemExt(drm, &regionClassAndInstance, 1, allocSize, handle);
+    std::vector<MemoryClassInstance> region = {regionClassAndInstance};
+    auto ret = createGemExt(drm, region, allocSize, handle);
     return ret;
 }
 

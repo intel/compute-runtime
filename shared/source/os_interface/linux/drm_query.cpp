@@ -33,27 +33,24 @@ std::string getIoctlParamStringRemaining(int param) {
 } // namespace IoctlToStringHelper
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
-    auto length = 0;
-    auto dataQuery = this->query(DRM_I915_QUERY_ENGINE_INFO, DrmQueryItemFlags::empty, length);
-    auto data = reinterpret_cast<drm_i915_query_engine_info *>(dataQuery.get());
-    if (data) {
-        this->engineInfo.reset(new EngineInfoImpl(data->engines, data->num_engines));
-        return true;
+    auto dataQuery = this->query(DRM_I915_QUERY_ENGINE_INFO, DrmQueryItemFlags::empty);
+    if (dataQuery.empty()) {
+        return false;
     }
-    return false;
+    auto data = reinterpret_cast<drm_i915_query_engine_info *>(dataQuery.data());
+    this->engineInfo.reset(new EngineInfoImpl(data->engines, data->num_engines));
+    return true;
 }
 
-std::unique_ptr<uint8_t[]> Drm::getMemoryRegions() {
-    return nullptr;
+std::vector<uint8_t> Drm::getMemoryRegions() {
+    return {};
 }
 
 bool Drm::queryMemoryInfo() {
-    auto length = 0;
-    auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty, length);
-    if (dataQuery) {
-        auto numRegions = 0u;
-        auto memRegions = IoctlHelper::get(this)->translateToMemoryRegions(dataQuery.get(), length, numRegions);
-        this->memoryInfo.reset(new MemoryInfo(memRegions.get(), numRegions));
+    auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty);
+    if (!dataQuery.empty()) {
+        auto memRegions = IoctlHelper::get(this)->translateToMemoryRegions(dataQuery);
+        this->memoryInfo.reset(new MemoryInfo(memRegions));
         return true;
     }
     return false;
@@ -77,13 +74,11 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 }
 
 bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyData) {
-    int32_t length;
-    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, DrmQueryItemFlags::topology, length);
-    auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.get());
-
-    if (!data) {
+    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, DrmQueryItemFlags::topology);
+    if (dataQuery.empty()) {
         return false;
     }
+    auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.data());
 
     topologyData.maxSliceCount = data->max_slices;
     topologyData.maxSubSliceCount = data->max_subslices;

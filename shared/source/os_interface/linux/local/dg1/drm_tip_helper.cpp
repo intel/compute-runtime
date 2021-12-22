@@ -13,26 +13,10 @@
 
 namespace NEO {
 
-uint32_t createGemExtMemoryRegions(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
-    drm_i915_gem_create_ext_memory_regions extRegions{};
-    extRegions.base.name = I915_GEM_CREATE_EXT_MEMORY_REGIONS;
-    extRegions.num_regions = dataSize;
-    extRegions.regions = reinterpret_cast<uintptr_t>(data);
-
-    drm_i915_gem_create_ext createExt{};
-    createExt.size = allocSize;
-    createExt.extensions = reinterpret_cast<uintptr_t>(&extRegions);
-
-    auto ret = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
-
-    handle = createExt.handle;
-    return ret;
-}
-
-bool isQueryDrmTip(uint8_t *dataQuery, int32_t length) {
-    auto dataOnDrmTip = reinterpret_cast<drm_i915_query_memory_regions *>(dataQuery);
-    auto lengthOnDrmTip = static_cast<int32_t>(sizeof(drm_i915_query_memory_regions) + dataOnDrmTip->num_regions * sizeof(drm_i915_memory_region_info));
-    return length == lengthOnDrmTip;
+bool isQueryDrmTip(const std::vector<uint8_t> &queryInfo) {
+    auto dataOnDrmTip = reinterpret_cast<const drm_i915_query_memory_regions *>(queryInfo.data());
+    auto lengthOnDrmTip = static_cast<uint32_t>(sizeof(drm_i915_query_memory_regions) + dataOnDrmTip->num_regions * sizeof(drm_i915_memory_region_info));
+    return static_cast<uint32_t>(queryInfo.size()) == lengthOnDrmTip;
 }
 
 namespace PROD_DG1 {
@@ -41,11 +25,11 @@ namespace PROD_DG1 {
 #include "third_party/uapi/dg1/drm/i915_drm.h"
 } // namespace PROD_DG1
 
-std::unique_ptr<uint8_t[]> translateToDrmTip(uint8_t *dataQuery) {
-    auto dataOnProdDrm = reinterpret_cast<PROD_DG1::drm_i915_query_memory_regions *>(dataQuery);
+std::vector<uint8_t> translateToDrmTip(const uint8_t *dataQuery) {
+    auto dataOnProdDrm = reinterpret_cast<const PROD_DG1::drm_i915_query_memory_regions *>(dataQuery);
     auto lengthTranslated = static_cast<int32_t>(sizeof(drm_i915_query_memory_regions) + dataOnProdDrm->num_regions * sizeof(drm_i915_memory_region_info));
-    auto dataQueryTranslated = std::make_unique<uint8_t[]>(lengthTranslated);
-    auto dataTranslated = reinterpret_cast<drm_i915_query_memory_regions *>(dataQueryTranslated.get());
+    auto dataQueryTranslated = std::vector<uint8_t>(lengthTranslated, 0u);
+    auto dataTranslated = reinterpret_cast<drm_i915_query_memory_regions *>(dataQueryTranslated.data());
     dataTranslated->num_regions = dataOnProdDrm->num_regions;
     for (uint32_t i = 0; i < dataTranslated->num_regions; i++) {
         dataTranslated->regions[i].region.memory_class = dataOnProdDrm->regions[i].region.memory_class;

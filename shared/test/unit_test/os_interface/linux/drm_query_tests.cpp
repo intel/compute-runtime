@@ -140,5 +140,5 @@ TEST(DrmQueryTest, givenDrmWhenGettingMemoryRegionsThenReturnNull) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    EXPECT_EQ(drm.getMemoryRegions(), nullptr);
+    EXPECT_TRUE(drm.getMemoryRegions().empty());
 }

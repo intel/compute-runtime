@@ -9,11 +9,11 @@
 
 #include "shared/source/os_interface/linux/memory_info.h"
 
-constexpr MemoryRegion memoryRegions[2] = {
+const std::vector<MemoryRegion> memoryRegions = {
     {{I915_MEMORY_CLASS_SYSTEM, 0}, 64 * GB, 0},
     {{I915_MEMORY_CLASS_DEVICE, 0}, 8 * GB, 0}};
 
 struct MockMemoryInfo : public MemoryInfo {
-    MockMemoryInfo() : MemoryInfo(memoryRegions, 2) {}
+    MockMemoryInfo() : MemoryInfo(memoryRegions) {}
     ~MockMemoryInfo() override{};
 };

@@ -23,15 +23,10 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtThenReturnCorrectValue) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    drm_i915_memory_region_info regionInfo[2] = {};
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[0].probed_size = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
-    regionInfo[1].probed_size = 16 * GB;
-
     auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
-    auto ret = ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
+    std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
 
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, handle);
@@ -47,15 +42,12 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WithDrmTipWhenCreateGemExtWithDebugFlagTh
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm_i915_memory_region_info regionInfo[2] = {};
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
     testing::internal::CaptureStdout();
     auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
-
-    auto ret = ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
+    std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: 0 BO-1 with size: 1024\n");
@@ -71,18 +63,15 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPrintDeb
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmMockProdDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm_i915_memory_region_info regionInfo[2] = {};
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
     testing::internal::CaptureStdout();
     auto ioctlHelper = IoctlHelper::get(drm.get());
     uint32_t handle = 0;
-
-    auto ret = ioctlHelper->createGemExt(drm.get(), &regionInfo[1], 1, 1024, handle);
+    std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
 
     std::string output = testing::internal::GetCapturedStdout();
-    std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_SETPARAM has returned: 0 BO-1 with size: 1024\n");
+    std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: -1 BO-0 with size: 1024\nGEM_CREATE_EXT with EXT_SETPARAM has returned: 0 BO-1 with size: 1024\n");
     EXPECT_EQ(expectedOutput, output);
     EXPECT_EQ(2u, drm->ioctlCallsCount);
     EXPECT_EQ(0u, ret);

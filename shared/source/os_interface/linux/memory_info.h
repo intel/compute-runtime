@@ -22,11 +22,11 @@ class MemoryInfo {
 
     virtual ~MemoryInfo(){};
 
-    MemoryInfo(const MemoryRegion *regionInfo, size_t count);
+    MemoryInfo(const RegionContainer &regionInfo);
 
     void assignRegionsFromDistances(const void *distanceInfosPtr, size_t size);
 
-    MOCKABLE_VIRTUAL uint32_t createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle);
+    MOCKABLE_VIRTUAL uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle);
 
     MemoryClassInstance getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo);
 

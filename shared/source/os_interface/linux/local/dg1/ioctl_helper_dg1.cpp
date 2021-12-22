@@ -14,31 +14,26 @@
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_DG1;
 
-extern uint32_t createGemExtMemoryRegions(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle);
-extern bool isQueryDrmTip(uint8_t *dataQuery, int32_t length);
-extern std::unique_ptr<uint8_t[]> translateToDrmTip(uint8_t *dataQuery);
+extern bool isQueryDrmTip(const std::vector<uint8_t> &queryInfo);
+extern std::vector<uint8_t> translateToDrmTip(const uint8_t *dataQuery);
 
 template <>
-uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_t dataSize, size_t allocSize, uint32_t &handle) {
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu", allocSize);
-
-    if (DebugManager.flags.PrintBOCreateDestroyResult.get()) {
-        for (uint32_t i = 0; i < dataSize; i++) {
-            auto region = reinterpret_cast<drm_i915_gem_memory_class_instance *>(data)[i];
-            printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
-                             region.memory_class, region.memory_instance);
-        }
-        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
+uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) {
+    auto ret = IoctlHelperUpstream::createGemExt(drm, memClassInstances, allocSize, handle);
+    if (ret == 0) {
+        return ret;
     }
-
-    if (createGemExtMemoryRegions(drm, data, dataSize, allocSize, handle) == 0) {
-        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: %d BO-%u with size: %lu\n", 0, handle, allocSize);
-        return 0;
-    }
+    //fallback to PROD_DG1 kernel
     handle = 0u;
+    uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
+    drm_i915_gem_memory_class_instance data[regionsSize];
+    for (auto i = 0u; i < regionsSize; i++) {
+        data[i].memory_class = memClassInstances[i].memoryClass;
+        data[i].memory_instance = memClassInstances[i].memoryInstance;
+    }
 
     drm_i915_gem_object_param regionParam{};
-    regionParam.size = dataSize;
+    regionParam.size = regionsSize;
     regionParam.data = reinterpret_cast<uintptr_t>(data);
     regionParam.param = I915_OBJECT_PARAM | I915_PARAM_MEMORY_REGIONS;
 
@@ -50,7 +45,7 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_
     createExt.size = allocSize;
     createExt.extensions = reinterpret_cast<uintptr_t>(&setparamRegion);
 
-    auto ret = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
+    ret = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
 
     handle = createExt.handle;
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_SETPARAM has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
@@ -58,12 +53,12 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, void *data, uint32_
 }
 
 template <>
-std::unique_ptr<MemoryRegion[]> IoctlHelperImpl<gfxProduct>::translateToMemoryRegions(uint8_t *dataQuery, uint32_t length, uint32_t &numRegions) {
-    if (!isQueryDrmTip(dataQuery, length)) {
-        auto translated = translateToDrmTip(dataQuery);
-        return IoctlHelperUpstream::translateToMemoryRegions(translated.get(), length, numRegions);
+std::vector<MemoryRegion> IoctlHelperImpl<gfxProduct>::translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
+    if (!isQueryDrmTip(regionInfo)) {
+        auto translated = translateToDrmTip(regionInfo.data());
+        return IoctlHelperUpstream::translateToMemoryRegions(translated);
     }
-    return IoctlHelperUpstream::translateToMemoryRegions(dataQuery, length, numRegions);
+    return IoctlHelperUpstream::translateToMemoryRegions(regionInfo);
 }
 
 template class IoctlHelperImpl<gfxProduct>;
