@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -19,8 +20,6 @@
 #include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
-
-#include "pipe_control_args.h"
 
 #include <algorithm>
 

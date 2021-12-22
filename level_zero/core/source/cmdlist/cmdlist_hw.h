@@ -8,12 +8,12 @@
 #pragma once
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/pipe_control_args.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 
 #include "igfxfmid.h"
-#include "pipe_control_args.h"
 
 namespace NEO {
 enum class ImageType;

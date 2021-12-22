@@ -9,11 +9,11 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "engine_node.h"
-#include "pipe_control_args.h"
 
 namespace NEO {
 

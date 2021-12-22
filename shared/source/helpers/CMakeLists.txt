@@ -94,6 +94,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/pause_on_gpu_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pipe_control_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/populate_factory.h
@@ -128,8 +129,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}hw_cmds.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/engine_group_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/mi_flush_args.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/definitions/pipe_control_args_base.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}pipe_control_args.h
 )
 
 if(SUPPORT_XEHP_AND_LATER)

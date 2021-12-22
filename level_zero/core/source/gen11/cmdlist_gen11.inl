@@ -5,7 +5,7 @@
  *
  */
 
-#include "pipe_control_args.h"
+#include "shared/source/helpers/pipe_control_args.h"
 
 namespace L0 {
 

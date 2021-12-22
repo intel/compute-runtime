@@ -9,6 +9,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
@@ -17,8 +18,6 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
-
-#include "pipe_control_args.h"
 
 namespace NEO {
 

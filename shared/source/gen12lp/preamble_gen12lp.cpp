@@ -7,10 +7,10 @@
 
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble_bdw_and_later.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "pipe_control_args.h"
 #include "reg_configs_common.h"
 
 namespace NEO {

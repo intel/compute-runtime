@@ -7,8 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/hw_helper.h"
-
-#include "pipe_control_args.h"
+#include "shared/source/helpers/pipe_control_args.h"
 
 namespace NEO {
 

@@ -19,12 +19,11 @@
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/options.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/utilities/spinlock.h"
-
-#include "pipe_control_args.h"
 
 #include <cstddef>
 #include <cstdint>

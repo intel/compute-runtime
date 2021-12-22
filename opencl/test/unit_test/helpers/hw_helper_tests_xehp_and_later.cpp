@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -22,7 +23,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "engine_node.h"
-#include "pipe_control_args.h"
 
 using HwHelperTestXeHPAndLater = Test<ClDeviceFixture>;
 

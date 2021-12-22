@@ -9,8 +9,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/hw_helper.h"
-
-#include "pipe_control_args.h"
+#include "shared/source/helpers/pipe_control_args.h"
 
 namespace NEO {
 

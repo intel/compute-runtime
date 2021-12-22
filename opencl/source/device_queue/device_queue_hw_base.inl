@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -15,8 +16,6 @@
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-
-#include "pipe_control_args.h"
 
 namespace NEO {
 template <typename GfxFamily>

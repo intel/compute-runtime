@@ -8,10 +8,9 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/state_compute_mode_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
-
-#include "pipe_control_args.h"
 
 namespace NEO {
 template <typename GfxFamily>

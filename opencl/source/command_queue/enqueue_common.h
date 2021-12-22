@@ -11,6 +11,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/local_work_size.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
@@ -41,8 +42,6 @@
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/program/printf_handler.h"
 #include "opencl/source/utilities/cl_logger.h"
-
-#include "pipe_control_args.h"
 
 #include <algorithm>
 #include <new>

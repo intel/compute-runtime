@@ -13,9 +13,8 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/ptr_math.h"
-
-#include "pipe_control_args.h"
 
 #include <cassert>
 #include <optional>

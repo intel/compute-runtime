@@ -10,9 +10,8 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-
-#include "pipe_control_args.h"
 
 namespace NEO {
 

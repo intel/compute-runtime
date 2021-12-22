@@ -12,10 +12,9 @@
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/tag_allocator.h"
-
-#include "pipe_control_args.h"
 
 #include <cstdint>
 #include <vector>

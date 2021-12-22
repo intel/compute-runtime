@@ -8,14 +8,13 @@
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/mem_obj/buffer.h"
-
-#include "pipe_control_args.h"
 
 #include <memory>
 

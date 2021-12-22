@@ -6,8 +6,12 @@
  */
 
 #pragma once
+
 namespace NEO {
-struct PipeControlArgsBase {
+
+struct PipeControlArgs {
+    PipeControlArgs() = default;
+
     bool dcFlushEnable = false;
     bool renderTargetCacheFlushEnable = false;
     bool instructionCacheInvalidateEnable = false;
@@ -24,8 +28,6 @@ struct PipeControlArgsBase {
     bool workloadPartitionOffset = false;
     bool amfsFlushEnable = false;
     bool unTypedDataPortCacheFlush = false;
-
-  protected:
-    PipeControlArgsBase() = default;
 };
+
 } // namespace NEO
