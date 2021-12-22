@@ -29,6 +29,7 @@ FileLogger<DebugLevel>::FileLogger(std::string filename, const DebugVariables &f
     logApiCalls = flags.LogApiCalls.get();
     logAllocationMemoryPool = flags.LogAllocationMemoryPool.get();
     logAllocationType = flags.LogAllocationType.get();
+    logAllocationStdout = flags.LogAllocationStdout.get();
 }
 
 template <DebugFunctionalityLevel DebugLevel>
@@ -84,14 +85,10 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
         printDebugString(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
     }
 
-    if (false == enabled()) {
-        return;
-    }
-
+    std::stringstream ss;
     if (logAllocationMemoryPool || logAllocationType) {
         std::thread::id thisThread = std::this_thread::get_id();
 
-        std::stringstream ss;
         ss << " ThreadID: " << thisThread;
         ss << " AllocationType: " << getAllocationTypeString(graphicsAllocation);
         ss << " MemoryPool: " << graphicsAllocation->getMemoryPool();
@@ -100,9 +97,19 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
 
         ss << graphicsAllocation->getAllocationInfoString();
         ss << std::endl;
+    }
+    auto str = ss.str();
 
-        auto str = ss.str();
+    if (logAllocationStdout) {
+        printf("%s", str.c_str());
+        return;
+    }
 
+    if (false == enabled()) {
+        return;
+    }
+
+    if (logAllocationMemoryPool || logAllocationType) {
         writeToFile(logFileName, str.c_str(), str.size(), std::ios::app);
     }
 }

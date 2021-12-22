@@ -142,6 +142,7 @@ class FileLogger {
     bool logApiCalls = false;
     bool logAllocationMemoryPool = false;
     bool logAllocationType = false;
+    bool logAllocationStdout = false;
 
     // Required for variadic template with 0 args passed
     void printInputs(std::stringstream &ss) {}
