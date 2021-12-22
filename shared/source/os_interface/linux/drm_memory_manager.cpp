@@ -143,7 +143,7 @@ void DrmMemoryManager::releaseBufferObject(uint32_t rootDeviceIndex) {
 
 void DrmMemoryManager::commonCleanup() {
     if (gemCloseWorker) {
-        gemCloseWorker->close(false);
+        gemCloseWorker->close(true);
     }
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < pinBBs.size(); ++rootDeviceIndex) {
