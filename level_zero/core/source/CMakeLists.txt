@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -62,6 +62,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_imp.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/sampler_patch_values.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image/image.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image/image_format_desc_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image/image_format_desc_helper.h
