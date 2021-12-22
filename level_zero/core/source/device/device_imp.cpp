@@ -63,11 +63,6 @@ void DeviceImp::setDriverHandle(DriverHandle *driverHandle) {
 ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
     *value = false;
 
-    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() != -1) {
-        *value = static_cast<bool>(NEO::DebugManager.flags.EnableCrossDeviceAccess.get());
-        return ZE_RESULT_SUCCESS;
-    }
-
     DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
     uint32_t peerRootDeviceIndex = pPeerDevice->getNEODevice()->getRootDeviceIndex();
 

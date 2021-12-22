@@ -1733,6 +1733,9 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
   public:
     MemoryManagerOpenIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerIpcMock(executionEnvironment) {}
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+        if (failOnCreateGraphicsAllocationFromSharedHandle) {
+            return nullptr;
+        }
         auto alloc = new NEO::MockGraphicsAllocation(0,
                                                      NEO::GraphicsAllocation::AllocationType::BUFFER,
                                                      reinterpret_cast<void *>(sharedHandleAddress++),
@@ -1745,6 +1748,8 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
     }
 
     uint64_t sharedHandleAddress = 0x1234;
+
+    bool failOnCreateGraphicsAllocationFromSharedHandle = false;
 };
 
 struct ContextIpcMock : public L0::ContextImp {
@@ -1842,7 +1847,6 @@ struct MultipleDevicePeerAllocationFailTest : public ::testing::Test {
 
 TEST_F(MultipleDevicePeerAllocationFailTest,
        givenImportFdHandleFailedThenPeerAllocationReturnsNullptr) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -1959,9 +1963,10 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
 };
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToAppendBlitFillWithoutSettingEnableCrossDeviceAccessThenInvalidArgumentIsReturned,
+          givenDeviceAllocationPassedToAppendBlitFillAndImportFdHandleFailingThenInvalidArgumentIsReturned,
           IsAtLeastSkl) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(false);
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -1989,7 +1994,6 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingSameDeviceThenSuccessIsReturned,
           IsAtLeastSkl) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
 
     size_t size = 1024;
@@ -2016,7 +2020,6 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned,
           IsAtLeastSkl) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2044,7 +2047,6 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingDevice0ThenSuccessIsReturned,
           IsAtLeastSkl) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2072,7 +2074,6 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenHostPointerAllocationPassedToAppendBlitFillUsingDevice0ThenInvalidArgumentIsReturned,
           IsAtLeastSkl) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
 
     size_t size = 1024;
@@ -2089,9 +2090,10 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 }
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToGetAllignedAllocationWithoutSettingEnableCrossDeviceAccessThenPeerAllocNotFoundReturnsTrue,
+          givenDeviceAllocationPassedToGetAllignedAllocationAndImportFdHandleFailingThenPeerAllocNotFoundReturnsTrue,
           IsAtLeastSkl) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(false);
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2118,7 +2120,6 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned,
           IsAtLeastSkl) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2145,7 +2146,6 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
           IsAtLeastSkl) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2170,8 +2170,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest,
-         givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceThenPeerAllocation) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
+         givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceThenPeerAllocationIsUsed) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
     L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
@@ -2216,8 +2215,9 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest,
-         givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceWithoutSettingEnableCrossDeviceAccessThenInvalidArgumentIsReturned) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(false);
+         givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceAndCreationOfSharedHandleAllocationFailedThenInvalidArgumentIsReturned) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2242,8 +2242,9 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
 }
 
 TEST_F(MultipleDevicePeerAllocationTest,
-       whenPeerAllocationForDeviceAllocationIsRequestedWhenSettingEnableCrossDeviceAccessToZeroThenNullptrIsReturned) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(0);
+       whenPeerAllocationForDeviceAllocationIsRequestedAndImportFdHandleFailingThenNullptrIsReturned) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2269,7 +2270,6 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
 TEST_F(MultipleDevicePeerAllocationTest,
        whenPeerAllocationForDeviceAllocationIsRequestedThenPeerAllocationIsReturned) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2295,7 +2295,6 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
 TEST_F(MultipleDevicePeerAllocationTest,
        whenPeerAllocationForDeviceAllocationIsRequestedThenPeerAllocationIsAddedToDeviceMapAndRemovedWhenAllocationIsFreed) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2333,7 +2332,6 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
 TEST_F(MultipleDevicePeerAllocationTest,
        whenPeerAllocationForDeviceAllocationIsRequestedThenPeerAllocationIsAddedToDeviceMapAndReturnedWhenLookingForPeerAllocationAgain) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2380,7 +2378,6 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
 TEST_F(MultipleDevicePeerAllocationTest,
        whenPeerAllocationForDeviceAllocationIsRequestedWithoutPassingPeerGpuAddressParameterThenPeerAllocationIsReturned) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2405,7 +2402,6 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
 TEST_F(MultipleDevicePeerAllocationTest,
        whenPeerAllocationForDeviceAllocationIsRequestedTwiceThenSamePeerAllocationIsReturned) {
-    DebugManager.flags.EnableCrossDeviceAccess.set(true);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 

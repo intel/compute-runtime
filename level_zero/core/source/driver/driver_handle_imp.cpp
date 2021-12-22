@@ -446,10 +446,6 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                                                             NEO::SvmAllocationData *allocData,
                                                             void *basePtr,
                                                             uintptr_t *peerGpuAddress) {
-    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 0) {
-        return nullptr;
-    }
-
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
     NEO::GraphicsAllocation *alloc = nullptr;
 
