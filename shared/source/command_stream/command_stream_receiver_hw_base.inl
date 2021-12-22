@@ -213,7 +213,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         if (updateTag) {
             PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(dispatchFlags.dcFlush, hwInfo);
+            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dispatchFlags.dcFlush, hwInfo);
             args.notifyEnable = isUsedNotifyEnableForPostSync();
             args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
             args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
@@ -747,7 +747,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             //make sure we flush DC if needed
             if (epiloguePipeControlLocation) {
-                bool flushDcInEpilogue = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(
+                bool flushDcInEpilogue = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(
                     !DebugManager.flags.DisableDcFlushInEpilogue.get(), hwInfo);
                 ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(flushDcInEpilogue);
             }
@@ -1199,7 +1199,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
     auto commandStreamStart = commandStream.getUsed();
 
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(commandStream,

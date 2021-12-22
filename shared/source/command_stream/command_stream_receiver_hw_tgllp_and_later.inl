@@ -22,7 +22,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
             PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
+            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
             addPipeControlPriorToNonPipelinedStateCommand(stream, args);
         }
 
@@ -48,7 +48,7 @@ inline bool CommandStreamReceiverHw<Family>::isComputeModeNeeded() const {
 template <>
 inline void CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true, peekHwInfo());
+    args.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, peekHwInfo());
     args.textureCacheInvalidationEnable = true;
     args.hdcPipelineFlush = true;
 

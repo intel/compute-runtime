@@ -285,7 +285,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
     } else {
         const auto &hwInfo = this->device->getHwInfo();
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope, hwInfo);
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_SIGNALED, args, false, false, false);
         if (this->isSyncModeQueue) {
             auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
@@ -317,7 +317,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
     } else {
         const auto &hwInfo = this->device->getHwInfo();
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(event->signalScope, hwInfo);
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_CLEARED, args, false, false, false);
         if (this->isSyncModeQueue) {
             auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
@@ -373,7 +373,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
     } else {
         bool dcFlushRequired = false;
         const auto &hwInfo = this->device->getHwInfo();
-        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo)) {
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
             for (uint32_t i = 0; i < numEvents; i++) {
                 auto event = Event::fromHandle(phWaitEvents[i]);
                 dcFlushRequired |= (!event->waitScope) ? false : true;

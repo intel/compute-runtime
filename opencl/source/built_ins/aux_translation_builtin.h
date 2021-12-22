@@ -81,7 +81,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     template <typename GfxFamily, bool dcFlush>
     static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const HardwareInfo &hwInfo) {
         PipeControlArgs args;
-        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(dcFlush, hwInfo);
+        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dcFlush, hwInfo);
         MemorySynchronizationCommands<GfxFamily>::addPipeControl(linearStream, args);
     }
 

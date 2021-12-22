@@ -36,7 +36,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
     const auto &hwInfo = this->device->getHwInfo();
     NEO::PipeControlArgs pcArgs;
-    pcArgs.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
+    pcArgs.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     pcArgs.textureCacheInvalidationEnable = true;
 
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, pcArgs);

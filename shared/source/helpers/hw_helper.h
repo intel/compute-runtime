@@ -459,7 +459,7 @@ struct MemorySynchronizationCommands {
 
     static void addPipeControlWithCSStallOnly(LinearStream &commandStream);
 
-    static bool isDcFlushAllowed(bool isFlushPreferred, const HardwareInfo &hwInfo);
+    static bool getDcFlushEnable(bool isFlushPreferred, const HardwareInfo &hwInfo);
 
     static void addFullCacheFlush(LinearStream &commandStream, const HardwareInfo &hwInfo);
     static void setCacheFlushExtraProperties(PipeControlArgs &args);

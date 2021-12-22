@@ -29,7 +29,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         auto globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
         auto &hwInfo = neoDevice->getHardwareInfo();
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
         auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
         STATE_BASE_ADDRESS sbaCmd;

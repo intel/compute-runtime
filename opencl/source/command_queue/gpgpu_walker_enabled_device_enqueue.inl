@@ -101,7 +101,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
     // Do not put BB_START only when returning in first Scheduler run
     if (devQueueHw.getSchedulerReturnInstance() != 1) {
-        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
+        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
         MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
 
         // Add BB Start Cmd to the SLB in the Primary Batch Buffer

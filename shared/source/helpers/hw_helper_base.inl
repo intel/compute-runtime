@@ -344,7 +344,7 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
 }
 
 template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(bool isFlushPreferred, const HardwareInfo &hwInfo) {
+bool MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(bool isFlushPreferred, const HardwareInfo &hwInfo) {
     if (isFlushPreferred) {
         const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
         return hwInfoConfig.isDcFlushAllowed();
@@ -553,7 +553,7 @@ void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &c
     PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
 
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     args.renderTargetCacheFlushEnable = true;
     args.instructionCacheInvalidateEnable = true;
     args.textureCacheInvalidationEnable = true;

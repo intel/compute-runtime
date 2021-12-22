@@ -168,7 +168,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     if (flush) {
         PipeControlArgs args;
-        args.dcFlushEnable = MemorySynchronizationCommands<Family>::isDcFlushAllowed(true, hwInfo);
+        args.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
         if (dirtyHeaps) {
             args.hdcPipelineFlush = true;
         }

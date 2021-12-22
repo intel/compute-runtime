@@ -559,7 +559,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
 
     if (args.emitPipeControlStall) {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
         programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args);
     }
 
@@ -689,7 +689,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
 
     if (args.emitPipeControlStall) {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed(true, hwInfo);
+        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
         programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args);
     }
 
