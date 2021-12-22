@@ -32,6 +32,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
+#include "level_zero/core/source/kernel/sampler_patch_values.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
@@ -40,35 +41,6 @@
 #include <memory>
 
 namespace L0 {
-enum class SamplerPatchValues : uint32_t {
-    DefaultSampler = 0x00,
-    AddressNone = 0x00,
-    AddressClamp = 0x01,
-    AddressClampToEdge = 0x02,
-    AddressRepeat = 0x03,
-    AddressMirroredRepeat = 0x04,
-    AddressMirroredRepeat101 = 0x05,
-    NormalizedCoordsFalse = 0x00,
-    NormalizedCoordsTrue = 0x08
-};
-
-inline SamplerPatchValues getAddrMode(ze_sampler_address_mode_t addressingMode) {
-    switch (addressingMode) {
-    case ZE_SAMPLER_ADDRESS_MODE_REPEAT:
-        return SamplerPatchValues::AddressRepeat;
-    case ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:
-        return SamplerPatchValues::AddressClampToEdge;
-    case ZE_SAMPLER_ADDRESS_MODE_CLAMP:
-        return SamplerPatchValues::AddressClamp;
-    case ZE_SAMPLER_ADDRESS_MODE_NONE:
-        return SamplerPatchValues::AddressNone;
-    case ZE_SAMPLER_ADDRESS_MODE_MIRROR:
-        return SamplerPatchValues::AddressMirroredRepeat;
-    default:
-        DEBUG_BREAK_IF(true);
-    }
-    return SamplerPatchValues::AddressNone;
-}
 
 KernelImmutableData::KernelImmutableData(L0::Device *l0device) : device(l0device) {}
 
@@ -681,7 +653,7 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
 
     auto samplerDesc = sampler->getSamplerDesc();
 
-    NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerSnapWa, (samplerDesc.addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP && samplerDesc.filterMode == ZE_SAMPLER_FILTER_MODE_NEAREST) ? std::numeric_limits<uint32_t>::max() : 0u);
+    NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerSnapWa, (samplerDesc.addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER && samplerDesc.filterMode == ZE_SAMPLER_FILTER_MODE_NEAREST) ? std::numeric_limits<uint32_t>::max() : 0u);
     NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerAddressingMode, static_cast<uint32_t>(getAddrMode(samplerDesc.addressMode)));
     NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerNormalizedCoords, samplerDesc.isNormalized ? static_cast<uint32_t>(SamplerPatchValues::NormalizedCoordsTrue) : static_cast<uint32_t>(SamplerPatchValues::NormalizedCoordsFalse));
 
