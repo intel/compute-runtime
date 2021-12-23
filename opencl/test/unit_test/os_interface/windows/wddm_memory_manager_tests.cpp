@@ -19,6 +19,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
@@ -34,7 +35,6 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
@@ -136,31 +136,39 @@ TEST(WddmAllocationTest, givenMemoryPoolWhenPassedToWddmAllocationConstructorThe
 TEST(WddmMemoryManagerExternalHeapTest, WhenExternalHeapIsCreatedThenItHasCorrectBase) {
     HardwareInfo *hwInfo;
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
-    std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get())));
-    wddm->init();
-    uint64_t base = 0x56000;
-    uint64_t size = 0x9000;
-    wddm->setHeap32(base, size);
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(wddm));
+    executionEnvironment->incRefInternal();
+    {
+        std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get())));
+        wddm->init();
+        uint64_t base = 0x56000;
+        uint64_t size = 0x9000;
+        wddm->setHeap32(base, size);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(wddm));
 
-    std::unique_ptr<WddmMemoryManager> memoryManager = std::unique_ptr<WddmMemoryManager>(new WddmMemoryManager(*executionEnvironment));
+        std::unique_ptr<WddmMemoryManager> memoryManager = std::unique_ptr<WddmMemoryManager>(new WddmMemoryManager(*executionEnvironment));
 
-    EXPECT_EQ(base, memoryManager->getExternalHeapBaseAddress(0, false));
+        EXPECT_EQ(base, memoryManager->getExternalHeapBaseAddress(0, false));
+    }
+    executionEnvironment->decRefInternal();
 }
 
 TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWmmWhenAsyncDeleterIsEnabledAndWaitForDeletionsIsCalledThenDeleterInWddmIsSetToNullptr) {
     HardwareInfo *hwInfo;
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
-    auto wddm = std::make_unique<WddmMock>(*executionEnvironment->rootDeviceEnvironments[0].get());
-    wddm->init();
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(wddm));
-    bool actualDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
-    DebugManager.flags.EnableDeferredDeleter.set(true);
-    MockWddmMemoryManager memoryManager(*executionEnvironment);
-    EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
-    memoryManager.waitForDeletions();
-    EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    DebugManager.flags.EnableDeferredDeleter.set(actualDeleterFlag);
+    executionEnvironment->incRefInternal();
+    {
+        auto wddm = std::make_unique<WddmMock>(*executionEnvironment->rootDeviceEnvironments[0].get());
+        wddm->init();
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(wddm));
+        bool actualDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
+        DebugManager.flags.EnableDeferredDeleter.set(true);
+        MockWddmMemoryManager memoryManager(*executionEnvironment);
+        EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
+        memoryManager.waitForDeletions();
+        EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
+        DebugManager.flags.EnableDeferredDeleter.set(actualDeleterFlag);
+    }
+    executionEnvironment->decRefInternal();
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
@@ -1463,8 +1471,9 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
 }
 
 struct WddmMemoryManagerWithAsyncDeleterTest : public ::testing::Test {
-    void SetUp() {
+    void SetUp() override {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
+        executionEnvironment->incRefInternal();
         wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
         wddm->resetGdi(new MockGdi());
         wddm->callBaseDestroyAllocations = false;
@@ -1473,6 +1482,11 @@ struct WddmMemoryManagerWithAsyncDeleterTest : public ::testing::Test {
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         memoryManager->setDeferredDeleter(deleter);
     }
+
+    void TearDown() override {
+        executionEnvironment->decRefInternal();
+    }
+
     MockDeferredDeleter *deleter = nullptr;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     ExecutionEnvironment *executionEnvironment;
@@ -1554,14 +1568,18 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDele
 TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenHeapInternalBaseIsReturned) {
     HardwareInfo *hwInfo;
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
-    auto wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[0].get());
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-    wddm->init();
-    MockWddmMemoryManager memoryManager(*executionEnvironment);
-    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
-    heapBase = std::max(heapBase, static_cast<uint64_t>(wddm->getWddmMinAddress()));
-    EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress(0, true));
+    executionEnvironment->incRefInternal();
+    {
+        auto wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[0].get());
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        wddm->init();
+        MockWddmMemoryManager memoryManager(*executionEnvironment);
+        auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
+        heapBase = std::max(heapBase, static_cast<uint64_t>(wddm->getWddmMinAddress()));
+        EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress(0, true));
+    }
+    executionEnvironment->decRefInternal();
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithTripleAllocationThenSuccessIsReturned) {

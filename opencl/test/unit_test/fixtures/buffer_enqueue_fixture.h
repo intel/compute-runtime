@@ -14,8 +14,8 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_execution_environment_helper.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
-#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 using namespace NEO;
@@ -27,7 +27,7 @@ struct BufferEnqueueFixture : public ClHardwareParse,
     }
 
     void SetUp() override {
-        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
+        executionEnvironment = getClExecutionEnvironmentImpl(hwInfo, 1);
     }
 
     void TearDown() override {

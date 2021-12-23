@@ -5,18 +5,18 @@
  *
  */
 
-#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/cl_execution_environment_helper.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {
 
-ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo, uint32_t rootDeviceEnvironments) {
+ExecutionEnvironment *getClExecutionEnvironmentImpl(HardwareInfo *&hwInfo, uint32_t rootDeviceEnvironments) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(rootDeviceEnvironments);
     DebugManagerStateRestore restorer;

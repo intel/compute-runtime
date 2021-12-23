@@ -13,18 +13,15 @@
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/gmm_callbacks_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-
 using namespace NEO;
 
-using Gen12LpGmmCallbacksTests = ::testing::Test;
+using Gen12LpGmmCallbacksTests = ::Test<GmmCallbacksFixture>;
 
 template <typename GfxFamily>
 struct MockAubCsrToTestNotifyAubCapture : public AUBCommandStreamReceiverHw<GfxFamily> {
@@ -33,9 +30,6 @@ struct MockAubCsrToTestNotifyAubCapture : public AUBCommandStreamReceiverHw<GfxF
 };
 
 GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCsrWithoutAubDumpWhenNotifyAubCaptureCallbackIsCalledThenDoNothing) {
-    HardwareInfo *hwInfo = nullptr;
-    ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
-    executionEnvironment->initializeMemoryManager();
     auto csr = std::make_unique<WddmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, 1);
     uint64_t address = 0xFEDCBA9876543210;
     size_t size = 1024;
@@ -46,9 +40,8 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCsrWithoutAubDumpWhenNotifyAubCaptu
 }
 
 GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenWddmCsrWhenWriteL3CalledThenWriteTwoMmio) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->initializeMemoryManager();
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
     UltCommandStreamReceiver<FamilyType> csr(*executionEnvironment, 0, 1);
     uint8_t buffer[128] = {};
     csr.commandStream.replaceBuffer(buffer, 128);

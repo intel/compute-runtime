@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_wddm_residency_allocations_container.h"
@@ -19,7 +20,6 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
-#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
@@ -176,9 +176,14 @@ class MockWddmMemoryManagerTest : public ::testing::Test {
   public:
     void SetUp() override {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 2);
+        executionEnvironment->incRefInternal();
         wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[1].get());
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+    }
+
+    void TearDown() override {
+        executionEnvironment->decRefInternal();
     }
 
     HardwareInfo *hwInfo = nullptr;

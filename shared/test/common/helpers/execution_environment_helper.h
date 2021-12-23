@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,6 @@
 
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
-
-#include "CL/cl.h"
 
 #include <cstdint>
 

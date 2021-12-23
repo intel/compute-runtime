@@ -62,10 +62,15 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/aub_command_stream_receiver_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/gmm_callbacks_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_management_fixture.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_management_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.h
@@ -74,8 +79,6 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_management_fixture.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_management_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
