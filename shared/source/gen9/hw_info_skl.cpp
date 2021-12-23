@@ -76,7 +76,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
-    true,                                          // supportsDeviceEnqueue
+    false,                                         // supportsDeviceEnqueue
     true,                                          // supportsPipes
     true,                                          // supportsOcl21Features
     false,                                         // supportsOnDemandPageFaults
