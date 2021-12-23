@@ -6,10 +6,11 @@
  */
 
 #pragma once
+#include "shared/test/common/helpers/default_hw_info.h"
+
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {
 
@@ -57,7 +58,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
     }
 
     void SetUp() override {
-        skipVmeTest = !platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.supportsVme;
+        skipVmeTest = !defaultHwInfo->capabilityTable.supportsVme;
         if (skipVmeTest) {
             GTEST_SKIP();
         }

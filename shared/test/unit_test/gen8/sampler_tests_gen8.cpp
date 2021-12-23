@@ -6,15 +6,14 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 #include <memory>
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen8SamplerTest;
+using Gen8SamplerTest = ::testing::Test;
 
 GEN8TEST_F(Gen8SamplerTest, WhenAppendingSamplerStateParamsThenStateIsNotChanged) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;

@@ -10,7 +10,7 @@
 
 using namespace NEO;
 
-typedef ::testing::Test Gen8GmmCallbacksTests;
+using Gen8GmmCallbacksTests = ::testing::Test;
 
 GEN8TEST_F(Gen8GmmCallbacksTests, GivenDefaultWhenNotifyingAubCaptureThenDeviceCallbackIsNotSupported) {
     EXPECT_EQ(0, DeviceCallbacks<FamilyType>::notifyAubCapture(nullptr, 0, 0, false));

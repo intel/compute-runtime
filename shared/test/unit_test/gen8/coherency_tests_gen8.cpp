@@ -9,17 +9,15 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 
-typedef ::testing::Test Gen8CoherencyRequirements;
+using Gen8CoherencyRequirements = ::testing::Test;
 
 GEN8TEST_F(Gen8CoherencyRequirements, WhenMemoryManagerIsInitializedThenNoCoherencyProgramming) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->initializeMemoryManager();
     CommandStreamReceiverHw<BDWFamily> csr(*executionEnvironment, 0, 1);
     LinearStream stream;

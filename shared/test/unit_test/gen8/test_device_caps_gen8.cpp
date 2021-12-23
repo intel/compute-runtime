@@ -6,35 +6,45 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen8DeviceCaps;
+using Gen8DeviceCaps = Test<DeviceFixture>;
 
-GEN8TEST_F(Gen8DeviceCaps, GivenDefaultSettingsWhenCheckingPreemptionModeThenPreemptionIsDisabled) {
+GEN8TEST_F(Gen8DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenDisabledIsReported) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckExtensionsThenDeviceProperlyReportsClKhrSubgroupsExtension) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    if (pClDevice->areOcl21FeaturesEnabled()) {
-        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
-    } else {
-        EXPECT_THAT(caps.deviceExtensions, ::testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
-    }
+GEN8TEST_F(Gen8DeviceCaps, BdwProfilingTimerResolution) {
+    const auto &caps = pDevice->getDeviceInfo();
+    EXPECT_EQ(80u, caps.outProfilingTimerResolution);
 }
 
-GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckingCapsThenDeviceDoesProperlyReportsIndependentForwardProgress) {
-    const auto &caps = pClDevice->getDeviceInfo();
+GEN8TEST_F(Gen8DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (pClDevice->areOcl21FeaturesEnabled()) {
-        EXPECT_TRUE(caps.independentForwardProgress != 0);
-    } else {
-        EXPECT_FALSE(caps.independentForwardProgress != 0);
-    }
+    uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
+                             hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+
+    EXPECT_EQ(expectedValue, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, givenHwInfoWhenRequestedMaxFrontEndThreadsThenReturnValidValue) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+
+    EXPECT_EQ(HwHelper::getMaxThreadsForVfe(hwInfo), pDevice->getDeviceInfo().maxFrontEndThreads);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, GivenBdwWhenCheckftr64KBpagesThenFalse) {
+    EXPECT_FALSE(defaultHwInfo->capabilityTable.ftr64KBpages);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, GivenDefaultSettingsWhenCheckingPreemptionModeThenPreemptionIsDisabled) {
+    EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
 GEN8TEST_F(Gen8DeviceCaps, WhenCheckingKmdNotifyMechanismThenPropertiesAreSetCorrectly) {
@@ -54,11 +64,8 @@ GEN8TEST_F(Gen8DeviceCaps, WhenCheckingCompressionThenItIsDisabled) {
 }
 
 GEN8TEST_F(Gen8DeviceCaps, WhenCheckingImage3dDimensionsThenCapsAreSetCorrectly) {
-    const auto &caps = pClDevice->getDeviceInfo();
     const auto &sharedCaps = pDevice->getDeviceInfo();
-    EXPECT_EQ(2048u, caps.image3DMaxWidth);
     EXPECT_EQ(2048u, sharedCaps.image3DMaxDepth);
-    EXPECT_EQ(2048u, caps.image3DMaxHeight);
 }
 
 GEN8TEST_F(Gen8DeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {

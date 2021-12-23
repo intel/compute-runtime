@@ -5,20 +5,19 @@
  *
  */
 
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> BroadwellOnlyTest;
+using BroadwellOnlyTest = ::testing::Test;
 
 BDWTEST_F(BroadwellOnlyTest, WhenGettingProductFamilyThenBroadwellIsReturned) {
-    EXPECT_EQ(IGFX_BROADWELL, pDevice->getHardwareInfo().platform.eProductFamily);
+    EXPECT_EQ(IGFX_BROADWELL, defaultHwInfo->platform.eProductFamily);
 }
 
-typedef Test<ClDeviceFixture> Gen8OnlyTest;
+using Gen8OnlyTest = ::testing::Test;
 
 GEN8TEST_F(Gen8OnlyTest, WhenGettingRenderCoreFamilyThenGen8CoreIsReturned) {
-    EXPECT_EQ(IGFX_GEN8_CORE, pDevice->getRenderCoreFamily());
+    EXPECT_EQ(IGFX_GEN8_CORE, defaultHwInfo->platform.eRenderCoreFamily);
 }
