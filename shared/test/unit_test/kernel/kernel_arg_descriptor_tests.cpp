@@ -437,14 +437,14 @@ TEST(SetOffsetsVec, GivenArrayOfCrossThreadDataThenCopiesProperAmountOfElements)
 TEST(PatchNonPointer, GivenUndefinedOffsetThenReturnsFalse) {
     uint8_t buffer[64];
     uint32_t value = 7;
-    EXPECT_FALSE(NEO::patchNonPointer(buffer, NEO::undefined<NEO::CrossThreadDataOffset>, value));
+    EXPECT_FALSE((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, NEO::undefined<NEO::CrossThreadDataOffset>, value)));
 }
 
 TEST(PatchNonPointer, GivenOutOfBoundsOffsetThenAbort) {
     uint8_t buffer[64];
     uint32_t value = 7;
-    EXPECT_THROW(NEO::patchNonPointer(buffer, sizeof(buffer), value), std::exception);
-    EXPECT_THROW(NEO::patchNonPointer(buffer, sizeof(buffer) - sizeof(value) + 1, value), std::exception);
+    EXPECT_THROW((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, sizeof(buffer), value)), std::exception);
+    EXPECT_THROW((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, sizeof(buffer) - sizeof(value) + 1, value)), std::exception);
 }
 
 TEST(PatchNonPointer, GivenValidOffsetThenPatchProperly) {
@@ -452,9 +452,9 @@ TEST(PatchNonPointer, GivenValidOffsetThenPatchProperly) {
     memset(buffer, 3, sizeof(buffer));
     uint32_t value32 = 7;
     uint64_t value64 = 13;
-    EXPECT_TRUE(NEO::patchNonPointer(buffer, 0, value32));
-    EXPECT_TRUE(NEO::patchNonPointer(buffer, 8, value64));
-    EXPECT_TRUE(NEO::patchNonPointer(buffer, sizeof(buffer) - sizeof(value64), value64));
+    EXPECT_TRUE((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, 0, value32)));
+    EXPECT_TRUE((NEO::patchNonPointer<uint64_t, uint64_t>(buffer, 8, value64)));
+    EXPECT_TRUE((NEO::patchNonPointer<uint64_t, uint64_t>(buffer, sizeof(buffer) - sizeof(value64), value64)));
 
     alignas(8) uint8_t expected[64];
     memset(expected, 3, sizeof(expected));

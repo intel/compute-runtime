@@ -147,20 +147,20 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
     createKernel();
 
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].as<NEO::ArgDescImage>());
-    imageArg.metadataPayload.imgWidth = 0x0;
-    imageArg.metadataPayload.imgHeight = 0x8;
-    imageArg.metadataPayload.imgDepth = 0x10;
+    imageArg.metadataPayload.imgWidth = 0x1c;
+    imageArg.metadataPayload.imgHeight = 0x18;
+    imageArg.metadataPayload.imgDepth = 0x14;
 
-    imageArg.metadataPayload.arraySize = 0x18;
-    imageArg.metadataPayload.numSamples = 0x1c;
-    imageArg.metadataPayload.channelDataType = 0x20;
-    imageArg.metadataPayload.channelOrder = 0x24;
-    imageArg.metadataPayload.numMipLevels = 0x28;
+    imageArg.metadataPayload.arraySize = 0x10;
+    imageArg.metadataPayload.numSamples = 0xc;
+    imageArg.metadataPayload.channelDataType = 0x8;
+    imageArg.metadataPayload.channelOrder = 0x4;
+    imageArg.metadataPayload.numMipLevels = 0x0;
 
     imageArg.metadataPayload.flatWidth = 0x30;
-    imageArg.metadataPayload.flatHeight = 0x38;
-    imageArg.metadataPayload.flatPitch = 0x40;
-    imageArg.metadataPayload.flatBaseOffset = 0x48;
+    imageArg.metadataPayload.flatHeight = 0x2c;
+    imageArg.metadataPayload.flatPitch = 0x28;
+    imageArg.metadataPayload.flatBaseOffset = 0x20;
 
     ze_image_desc_t desc = {};
 

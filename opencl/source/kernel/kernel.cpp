@@ -2698,7 +2698,7 @@ const HardwareInfo &Kernel::getHardwareInfo() const {
 }
 
 void Kernel::setWorkDim(uint32_t workDim) {
-    patchNonPointer(getCrossThreadDataRef(), getDescriptor().payloadMappings.dispatchTraits.workDim, workDim);
+    patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataRef(), getDescriptor().payloadMappings.dispatchTraits.workDim, workDim);
     if (pImplicitArgs) {
         pImplicitArgs->numWorkDim = workDim;
     }

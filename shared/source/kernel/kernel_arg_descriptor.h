@@ -259,13 +259,13 @@ inline void setOffsetsVec(CrossThreadDataOffset (&dst)[VecSize], const T (&src)[
     }
 }
 
-template <typename T>
-inline bool patchNonPointer(ArrayRef<uint8_t> buffer, CrossThreadDataOffset location, const T &value) {
+template <typename DstT, typename SrcT>
+inline bool patchNonPointer(ArrayRef<uint8_t> buffer, CrossThreadDataOffset location, const SrcT &value) {
     if (undefined<CrossThreadDataOffset> == location) {
         return false;
     }
-    UNRECOVERABLE_IF(location + sizeof(T) > buffer.size());
-    *reinterpret_cast<T *>(buffer.begin() + location) = value;
+    UNRECOVERABLE_IF(location + sizeof(DstT) > buffer.size());
+    *reinterpret_cast<DstT *>(buffer.begin() + location) = static_cast<DstT>(value);
     return true;
 }
 
@@ -273,17 +273,17 @@ template <uint32_t VecSize, typename T>
 inline uint32_t patchVecNonPointer(ArrayRef<uint8_t> buffer, const CrossThreadDataOffset (&location)[VecSize], const T (&value)[VecSize]) {
     uint32_t numPatched = 0;
     for (uint32_t i = 0; i < VecSize; ++i) {
-        numPatched += patchNonPointer(buffer, location[i], value[i]) ? 1 : 0;
+        numPatched += patchNonPointer<T, T>(buffer, location[i], value[i]) ? 1 : 0;
     }
     return numPatched;
 }
 
 inline bool patchPointer(ArrayRef<uint8_t> buffer, const ArgDescPointer &arg, uintptr_t value) {
     if (arg.pointerSize == 8) {
-        return patchNonPointer(buffer, arg.stateless, static_cast<uint64_t>(value));
+        return patchNonPointer<uint64_t, uint64_t>(buffer, arg.stateless, static_cast<uint64_t>(value));
     } else {
         UNRECOVERABLE_IF((arg.pointerSize != 4) && isValidOffset(arg.stateless));
-        return patchNonPointer(buffer, arg.stateless, static_cast<uint32_t>(value));
+        return patchNonPointer<uint32_t, uint32_t>(buffer, arg.stateless, static_cast<uint32_t>(value));
     }
 }
 

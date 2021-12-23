@@ -40,8 +40,8 @@ struct KernelHw : public KernelImp {
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
         size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
-        bool offsetWasPatched = NEO::patchNonPointer(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
-                                                     argInfo.bufferOffset, static_cast<uint32_t>(offset));
+        bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
+                                                                         argInfo.bufferOffset, static_cast<uint32_t>(offset));
         if (false == offsetWasPatched) {
             // fallback to handling offset in surface state
             baseAddress = reinterpret_cast<uintptr_t>(address);
