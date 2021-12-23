@@ -47,6 +47,16 @@ GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hw
     UNRECOVERABLE_IF(!gmmClientContext);
 }
 
+bool GmmHelper::isValidCanonicalGpuAddress(uint64_t address) {
+    auto decanonizedAddress = NEO::GmmHelper::decanonize(address);
+    auto canonizedAddress = NEO::GmmHelper::canonize(decanonizedAddress);
+
+    if (address == canonizedAddress) {
+        return true;
+    }
+    return false;
+}
+
 GmmHelper::~GmmHelper() = default;
 
 decltype(GmmHelper::createGmmContextWrapperFunc) GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<GmmClientContext>;

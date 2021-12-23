@@ -35,6 +35,8 @@ class GmmHelper {
         return (address & maxNBitValue(GmmHelper::addressWidth));
     }
 
+    bool isValidCanonicalGpuAddress(uint64_t address);
+
     GmmClientContext *getClientContext() const;
 
     static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *);

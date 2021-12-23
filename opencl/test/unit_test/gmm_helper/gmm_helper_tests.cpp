@@ -401,6 +401,61 @@ TEST_F(GmmCanonizeTests, WhenDecanonizingThenCorrectAddressIsReturned) {
     EXPECT_EQ(GmmHelper::decanonize(testAddr2), goodAddr2);
 }
 
+TEST_F(GmmCanonizeTests, WhenCheckingIsValidCanonicalGpuAddressThenOnlyValidAddressesReturnTrue) {
+    auto hwInfo = *defaultHwInfo;
+
+    // 48 bit
+    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48); //0x0000FFFFFFFFFFFF;
+    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+
+    uint64_t testAddr1 = 0x0000400000000000;
+    EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr1));
+
+    uint64_t testAddr2 = 0x00000f5670000000;
+    EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr2));
+
+    uint64_t testAddr3 = 0x0000800000000000;
+    EXPECT_FALSE(gmmHelper->isValidCanonicalGpuAddress(testAddr3));
+
+    uint64_t testAddr4 = 0xff00ffff00000000;
+    EXPECT_FALSE(gmmHelper->isValidCanonicalGpuAddress(testAddr4));
+
+    // 36 bit
+    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36); // 0x0000000FFFFFFFFF;
+    gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+
+    uint64_t testAddr5 = 0x0000000400000000;
+    EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr5));
+
+    uint64_t testAddr6 = 0x00000004ff000000;
+    EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr6));
+
+    uint64_t testAddr7 = 0x0000000800000000;
+    EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr7));
+
+    uint64_t testAddr8 = 0xff00000400000000;
+    EXPECT_FALSE(gmmHelper->isValidCanonicalGpuAddress(testAddr8));
+
+    // 57 bit
+    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57); // 0x01FFFFFFFFFFFFFFF;
+    gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+
+    uint64_t testAddr9 = 0x0080000000000000;
+    EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr9));
+
+    uint64_t testAddr10 = 0x00000004ff000000;
+    EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr10));
+
+    uint64_t testAddr11 = 0x0000000800000000;
+    EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr11));
+
+    uint64_t testAddr12 = 0xfe00fff400000000;
+    EXPECT_FALSE(gmmHelper->isValidCanonicalGpuAddress(testAddr12));
+
+    uint64_t testAddr13 = 0xfe008ff400000000;
+    EXPECT_FALSE(gmmHelper->isValidCanonicalGpuAddress(testAddr13));
+}
+
 TEST_F(GmmTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIsReturned) {
     ImageDescriptor imgDesc = {};
     imgDesc.imageType = ImageType::Image2D;
