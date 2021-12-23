@@ -23,12 +23,6 @@ if(TESTS_XE_HPG_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_xe_hpg_core.cpp
   )
 
-  if(DEFINED AUB_STREAM_PROJECT_NAME)
-    list(APPEND IGDRCL_SRCS_tests_xe_hpg_core
-         ${CMAKE_CURRENT_SOURCE_DIR}/aub_center_using_aubstream_lib_tests_xe_hpg_core.cpp
-    )
-  endif()
-
   get_property(NEO_CORE_TESTS_XE_HPG_CORE GLOBAL PROPERTY NEO_CORE_TESTS_XE_HPG_CORE)
   list(APPEND IGDRCL_SRCS_tests_xe_hpg_core ${NEO_CORE_TESTS_XE_HPG_CORE})
 

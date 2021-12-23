@@ -12,11 +12,10 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/tbx/tbx_proto.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_lrca_helper.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 using namespace NEO;
 
@@ -106,7 +105,7 @@ TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsNotSetThenGetMemBankSizeReturnsCo
     EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 }
 
-using AubHelperHwTest = Test<ClDeviceFixture>;
+using AubHelperHwTest = Test<DeviceFixture>;
 
 HWTEST_F(AubHelperHwTest, GivenDisabledLocalMemoryWhenGetDataHintForPml4EntryIsCalledThenTraceNotypeIsReturned) {
     AubHelperHw<FamilyType> aubHelper(false);

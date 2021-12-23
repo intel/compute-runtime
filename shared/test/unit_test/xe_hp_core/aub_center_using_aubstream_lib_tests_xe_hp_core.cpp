@@ -13,9 +13,9 @@
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/test_macros/test.h"
 using namespace NEO;
-typedef ::testing::Test xe_hpg_coreAubCenterTests;
+using XeHpCoreAubCenterTests = ::testing::Test;
 
-XE_HPG_CORETEST_F(xe_hpg_coreAubCenterTests, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenAubCenterCreatesAubManager) {
+XE_HP_CORE_TEST_F(XeHpCoreAubCenterTests, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenAubCenterCreatesAubManager) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(true);
 
