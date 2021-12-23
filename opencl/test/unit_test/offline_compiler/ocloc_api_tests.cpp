@@ -10,6 +10,7 @@
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/file_io.h"
 
 #include "environment.h"
 #include "gtest/gtest.h"
@@ -182,7 +183,7 @@ TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
     EXPECT_NE(std::string::npos, output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s + argv[5]));
 }
 
-TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenBothAreInQuotes) {
+TEST(OclocApiTests, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenBothAreInQuotes) {
     const char *argv[] = {
         "ocloc",
         "-q",
@@ -208,7 +209,7 @@ TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrinte
     EXPECT_EQ(quotesCount, 4u);
 }
 
-TEST(OfflineCompilerTest, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotesAreCorrect) {
+TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotesAreCorrect) {
     const char *argv[] = {
         "ocloc",
         "-q",
@@ -232,6 +233,61 @@ TEST(OfflineCompilerTest, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThen
 
     size_t quotesCount = std::count(output.begin(), output.end(), '\"');
     EXPECT_EQ(quotesCount, 4u);
+}
+
+TEST(OclocApiTests, givenInvalidInputOptionsAndInternalOptionsFilesWhenCmdlineIsPrintedThenTheyArePrinted) {
+    ASSERT_TRUE(fileExists("test_files/shouldfail.cl"));
+    ASSERT_TRUE(fileExists("test_files/shouldfail_options.txt"));
+    ASSERT_TRUE(fileExists("test_files/shouldfail_internal_options.txt"));
+
+    const char *argv[] = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/shouldfail.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+
+    EXPECT_TRUE(output.find("Compiling options read from file were:\n"
+                            "-shouldfailOptions") != std::string::npos);
+
+    EXPECT_TRUE(output.find("Internal options read from file were:\n"
+                            "-shouldfailInternalOptions") != std::string::npos);
+}
+
+TEST(OclocApiTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyArePrinted) {
+    ASSERT_TRUE(fileExists("test_files/valid_kernel.cl"));
+    ASSERT_TRUE(fileExists("test_files/valid_kernel_ocloc_options.txt"));
+
+    const char *argv[] = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/valid_kernel.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+
+    EXPECT_TRUE(output.find("Failed with ocloc options from file:\n"
+                            "-invalid_ocloc_option") != std::string::npos);
+    EXPECT_FALSE(output.find("Building with ocloc options:") != std::string::npos);
 }
 
 TEST(OclocApiTests, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPackedAsElf) {

@@ -1505,11 +1505,15 @@ TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCom
     auto &internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_STREQ(options.c_str(), "-shouldfailOptions");
     EXPECT_TRUE(internalOptions.find("-shouldfailInternalOptions") != std::string::npos);
+    EXPECT_TRUE(mockOfflineCompiler->getOptionsReadFromFile().find("-shouldfailOptions") != std::string::npos);
+    EXPECT_TRUE(mockOfflineCompiler->getInternalOptionsReadFromFile().find("-shouldfailInternalOptions") != std::string::npos);
 
     mockOfflineCompiler->build();
 
     EXPECT_STREQ(options.c_str(), "-shouldfailOptions");
     EXPECT_TRUE(internalOptions.find("-shouldfailInternalOptions") != std::string::npos);
+    EXPECT_TRUE(mockOfflineCompiler->getOptionsReadFromFile().find("-shouldfailOptions") != std::string::npos);
+    EXPECT_TRUE(mockOfflineCompiler->getInternalOptionsReadFromFile().find("-shouldfailInternalOptions") != std::string::npos);
 }
 
 TEST(OfflineCompilerTest, givenInputOptionsFileWithSpecialCharsWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSet) {

@@ -430,17 +430,17 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
             std::string oclocOptionsFromFile;
             bool oclocOptionsRead = readOptionsFromFile(oclocOptionsFromFile, oclocOptionsFileName, argHelper);
-            if (oclocOptionsRead && !isQuiet()) {
-                argHelper->printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
-            }
-
             if (oclocOptionsRead) {
+                argHelper->printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
                 std::istringstream iss(allArgs[0] + " " + oclocOptionsFromFile);
                 std::vector<std::string> tokens{
                     std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
 
                 retVal = parseCommandLine(tokens.size(), tokens);
                 if (retVal != SUCCESS) {
+                    if (isQuiet()) {
+                        printf("Failed with ocloc options from file:\n%s\n", oclocOptionsFromFile.c_str());
+                    }
                     return retVal;
                 }
             }
@@ -449,6 +449,9 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             optionsFileName.append("_options.txt");
 
             bool optionsRead = readOptionsFromFile(options, optionsFileName, argHelper);
+            if (optionsRead) {
+                optionsReadFromFile = std::string(options);
+            }
             if (optionsRead && !isQuiet()) {
                 argHelper->printf("Building with options:\n%s\n", options.c_str());
             }
@@ -458,6 +461,9 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
             std::string internalOptionsFromFile;
             bool internalOptionsRead = readOptionsFromFile(internalOptionsFromFile, internalOptionsFileName, argHelper);
+            if (internalOptionsRead) {
+                internalOptionsReadFromFile = std::string(internalOptionsFromFile);
+            }
             if (internalOptionsRead && !isQuiet()) {
                 argHelper->printf("Building with internal options:\n%s\n", internalOptionsFromFile.c_str());
             }

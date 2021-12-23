@@ -88,6 +88,14 @@ class OfflineCompiler {
         return hwInfo;
     }
 
+    std::string getOptionsReadFromFile() const {
+        return optionsReadFromFile;
+    }
+
+    std::string getInternalOptionsReadFromFile() const {
+        return internalOptionsReadFromFile;
+    }
+
   protected:
     OfflineCompiler();
 
@@ -129,6 +137,8 @@ class OfflineCompiler {
     std::string internalOptions;
     std::string sourceCode;
     std::string buildLog;
+    std::string optionsReadFromFile = "";
+    std::string internalOptionsReadFromFile = "";
 
     bool dumpFiles = true;
     bool useLlvmText = false;

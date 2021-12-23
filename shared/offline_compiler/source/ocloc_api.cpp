@@ -78,6 +78,20 @@ void printOclocCmdLine(unsigned int numArgs, const char *argv[], std::unique_ptr
     printf("\n");
 }
 
+void printOclocOptionsReadFromFile(OfflineCompiler *pCompiler) {
+    if (pCompiler) {
+        std::string options = pCompiler->getOptionsReadFromFile();
+        if (options != "") {
+            printf("Compiling options read from file were:\n%s\n", options.c_str());
+        }
+
+        std::string internalOptions = pCompiler->getInternalOptionsReadFromFile();
+        if (internalOptions != "") {
+            printf("Internal options read from file were:\n%s\n", internalOptions.c_str());
+        }
+    }
+}
+
 int oclocInvoke(unsigned int numArgs, const char *argv[],
                 const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
                 const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
@@ -153,9 +167,10 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                 }
             }
 
-            if (retVal != OfflineCompiler::ErrorCode::SUCCESS)
+            if (retVal != OfflineCompiler::ErrorCode::SUCCESS) {
+                printOclocOptionsReadFromFile(pCompiler.get());
                 printOclocCmdLine(numArgs, argv, helper);
-
+            }
             return retVal;
         }
     } catch (const std::exception &e) {
