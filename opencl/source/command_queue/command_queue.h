@@ -324,12 +324,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void updateLatestSentEnqueueType(EnqueueProperties::Operation newEnqueueType) { this->latestSentEnqueueType = newEnqueueType; }
     EnqueueProperties::Operation peekLatestSentEnqueueOperation() { return this->latestSentEnqueueType; }
 
-    void setupBarrierTimestampForBcsEngines(aub_stream::EngineType engineType, TimestampPacketDependencies &timestampPacketDependencies);
-    void processBarrierTimestampForBcsEngine(aub_stream::EngineType bcsEngineType, TimestampPacketDependencies &blitDependencies);
-    void setLastBcsPacket(aub_stream::EngineType bcsEngineType);
-    void fillCsrDependenciesWithLastBcsPackets(CsrDependencies &csrDeps);
-    void clearLastBcsPackets();
-
     // taskCount of last task
     uint32_t taskCount = 0;
 
@@ -415,11 +409,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     std::unique_ptr<TimestampPacketContainer> deferredTimestampPackets;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
-    struct BcsTimestampPacketContainers {
-        TimestampPacketContainer lastBarrierToWaitFor;
-        TimestampPacketContainer lastSignalledPacket;
-    };
-    std::array<BcsTimestampPacketContainers, bcsInfoMaskSize> bcsTimestampPacketContainers;
 };
 
 template <typename PtrType>

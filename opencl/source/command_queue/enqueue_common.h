@@ -248,10 +248,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                              timestampPacketDependencies, eventsRequest, blockQueue);
     }
 
-    if (!blockQueue && isOOQEnabled()) {
-        setupBarrierTimestampForBcsEngines(computeCommandStreamReceiver.getOsContext().getEngineType(), timestampPacketDependencies);
-    }
-
     if (eventBuilder.getEvent() && computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
         eventBuilder.getEvent()->addTimestampPacketNodes(timestampPacketDependencies.nonAuxToAuxNodes);
@@ -540,6 +536,8 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
                 hwInfo,
                 args);
         }
+
+        TimestampPacketHelper::programSemaphore<GfxFamily>(*commandStream, *currentTimestampPacketNode);
     }
     return blitProperties;
 }
@@ -895,13 +893,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = specialPipelineSelectMode;
 
-    const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
-
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && !clearDependenciesForSubCapture) {
         eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
-        if (isHandlingBarrier) {
-            fillCsrDependenciesWithLastBcsPackets(dispatchFlags.csrDependencies);
-        }
         dispatchFlags.csrDependencies.makeResident(getGpgpuCommandStreamReceiver());
     }
 
@@ -938,10 +931,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         taskLevel,
         dispatchFlags,
         getDevice());
-
-    if (isHandlingBarrier) {
-        clearLastBcsPackets();
-    }
 
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyFlushTask(completionStamp.taskCount);
@@ -1125,13 +1114,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             false,                                                               //memoryMigrationRequired
             false);                                                              //textureCacheFlush
 
-        const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
-
         if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
-            if (isHandlingBarrier) {
-                fillCsrDependenciesWithLastBcsPackets(dispatchFlags.csrDependencies);
-            }
             dispatchFlags.csrDependencies.makeResident(getGpgpuCommandStreamReceiver());
         }
 
@@ -1144,10 +1128,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             taskLevel,
             dispatchFlags,
             getDevice());
-
-        if (isHandlingBarrier) {
-            clearLastBcsPackets();
-        }
     }
 
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
@@ -1223,10 +1203,9 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
         timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
     }
 
-    if (!blockQueue) {
-        setupBarrierTimestampForBcsEngines(bcsCsr.getOsContext().getEngineType(), timestampPacketDependencies);
+    if (!blockQueue && getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired()) {
+        timestampPacketDependencies.barrierNodes.add(allocator->getTag());
     }
-    processBarrierTimestampForBcsEngine(bcsCsr.getOsContext().getEngineType(), timestampPacketDependencies);
 
     obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, bcsCsr);
     csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
@@ -1259,8 +1238,6 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
         }
 
         this->latestSentEnqueueType = enqueueProperties.operation;
-
-        setLastBcsPacket(bcsCsr.getOsContext().getEngineType());
     }
     updateFromCompletionStamp(completionStamp, eventBuilder.getEvent());
 

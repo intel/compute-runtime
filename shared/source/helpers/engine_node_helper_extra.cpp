@@ -12,5 +12,6 @@ namespace EngineHelpers {
 bool isBcsVirtualEngineEnabled() {
     return false;
 }
+
 } // namespace EngineHelpers
 } // namespace NEO

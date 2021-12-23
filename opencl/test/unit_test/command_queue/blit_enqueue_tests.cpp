@@ -233,12 +233,6 @@ struct BlitEnqueueTests : public ::testing::Test {
         return commandItor;
     }
 
-    template <typename Command>
-    void expectNoCommand(GenCmdList::iterator itorStart, GenCmdList::iterator itorEnd) {
-        auto commandItor = find<Command *>(itorStart, itorEnd);
-        EXPECT_TRUE(commandItor == itorEnd);
-    }
-
     template <typename Family>
     void verifySemaphore(GenCmdList::iterator &semaphoreItor, uint64_t expectedAddress) {
         using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
@@ -1031,10 +1025,13 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacket
     auto cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(bcsCommands.begin(), bcsCommands.end());
 
     cmdFound = expectMiFlush<MI_FLUSH_DW>(cmdFound++, bcsCommands.end());
+    auto miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
+    const auto bcsSignalAddress = miflushDwCmd->getDestinationAddress();
 
     cmdFound = expectCommand<WALKER_TYPE>(ccsCommands.begin(), ccsCommands.end());
 
-    expectNoCommand<MI_SEMAPHORE_WAIT>(cmdFound++, ccsCommands.end());
+    cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdFound++, ccsCommands.end());
+    verifySemaphore<FamilyType>(cmdFound, bcsSignalAddress);
 }
 
 struct BlitEnqueueWithDebugCapabilityTests : public BlitEnqueueTests<0> {
@@ -1789,7 +1786,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushR
     }
 }
 
-HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenSubmissionToDifferentEngineWhenRequestingForNewTimestmapPacketThenClearDependencies) {
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenSubmissionToDifferentEngineWhenRequestingForNewTimestmapPacketThenDontClearDependencies) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     const bool clearDependencies = true;
 
@@ -1797,6 +1794,12 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenSubmissionT
         TimestampPacketContainer previousNodes;
         mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, *gpgpuCsr); // init
         EXPECT_EQ(0u, previousNodes.peekNodes().size());
+    }
+
+    {
+        TimestampPacketContainer previousNodes;
+        mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, *bcsCsr);
+        EXPECT_EQ(1u, previousNodes.peekNodes().size());
     }
 
     {
