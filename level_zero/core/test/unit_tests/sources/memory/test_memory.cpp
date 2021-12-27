@@ -354,15 +354,137 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithHostInitialPlacementBiasFlagThe
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
+    SVMAllocsManagerFreeExtMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    bool freeSVMAlloc(void *ptr, bool blocking) override {
+        if (blocking) {
+            blockingCallsMade++;
+        }
+        return SVMAllocsManager::freeSVMAlloc(ptr, blocking);
+    }
+    uint32_t blockingCallsMade = 0;
+};
+
+struct FreeExtTests : public ::testing::Test {
+    void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
+        neoDevice =
+            NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        auto mockBuiltIns = new MockBuiltins();
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<DriverHandleImp>();
+        driverHandle->initialize(std::move(devices));
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerFreeExtMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
+        device = driverHandle->devices[0];
+
+        context = std::make_unique<ContextImp>(driverHandle.get());
+        EXPECT_NE(context, nullptr);
+        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+    }
+
+    void TearDown() override {
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        delete currSvmAllocsManager;
+    }
+    NEO::SVMAllocsManager *prevSvmAllocsManager;
+    NEO::SVMAllocsManager *currSvmAllocsManager;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    std::unique_ptr<ContextImp> context;
+};
+
+TEST_F(FreeExtTests,
+       whenFreeMemIsCalledWithoutArgumentThenNoBlockingCallIsMade) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    EXPECT_EQ(0u, memManager->blockingCallsMade);
+}
+
+TEST_F(FreeExtTests,
+       whenFreeMemExtIsCalledWithBlockingFreePolicyThenBlockingCallIsMade) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    EXPECT_EQ(1u, memManager->blockingCallsMade);
+}
+
+TEST_F(FreeExtTests,
+       whenFreeMemExtIsCalledWithDeferFreePolicyThenUnsuportedIsReturned) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(FreeExtTests,
+       whenFreeMemExtIsCalledWithDefaultFreePolicyThenNonBlockingCallIsMade) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    EXPECT_EQ(0u, memManager->blockingCallsMade);
+}
+
 struct SVMAllocsManagerOutOFMemoryMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerOutOFMemoryMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createUnifiedMemoryAllocation(size_t size,
                                         const UnifiedMemoryProperties &svmProperties) override {
         return nullptr;
     }
-};
-
-struct DriverHandleOutOfMemoryMock : public DriverHandleImp {
 };
 
 struct OutOfMemoryTests : public ::testing::Test {
@@ -374,7 +496,7 @@ struct OutOfMemoryTests : public ::testing::Test {
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<DriverHandleOutOfMemoryMock>();
+        driverHandle = std::make_unique<DriverHandleImp>();
         driverHandle->initialize(std::move(devices));
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         currSvmAllocsManager = new SVMAllocsManagerOutOFMemoryMock(driverHandle->memoryManager);
@@ -395,7 +517,7 @@ struct OutOfMemoryTests : public ::testing::Test {
     }
     NEO::SVMAllocsManager *prevSvmAllocsManager;
     NEO::SVMAllocsManager *currSvmAllocsManager;
-    std::unique_ptr<DriverHandleOutOfMemoryMock> driverHandle;
+    std::unique_ptr<DriverHandleImp> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<ContextImp> context;

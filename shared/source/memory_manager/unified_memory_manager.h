@@ -131,7 +131,7 @@ class SVMAllocsManager {
                                              const UnifiedMemoryProperties &unifiedMemoryProperties);
     void setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties);
     SvmAllocationData *getSVMAlloc(const void *ptr);
-    bool freeSVMAlloc(void *ptr, bool blocking);
+    MOCKABLE_VIRTUAL bool freeSVMAlloc(void *ptr, bool blocking);
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
     void insertSVMAlloc(const SvmAllocationData &svmData);
     void removeSVMAlloc(const SvmAllocationData &svmData);

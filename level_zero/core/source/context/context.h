@@ -53,6 +53,9 @@ struct Context : _ze_context_handle_t {
                                        size_t alignment,
                                        void **ptr) = 0;
     virtual ze_result_t freeMem(const void *ptr) = 0;
+    virtual ze_result_t freeMem(const void *ptr, bool blocking) = 0;
+    virtual ze_result_t freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
+                                   void *ptr) = 0;
     virtual ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
                                            void *ptr,
                                            size_t size) = 0;

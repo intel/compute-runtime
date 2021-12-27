@@ -269,6 +269,10 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 }
 
 ze_result_t ContextImp::freeMem(const void *ptr) {
+    return this->freeMem(ptr, false);
+}
+
+ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
     auto allocation = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -284,16 +288,28 @@ ze_result_t ContextImp::freeMem(const void *ptr) {
             auto peerAllocData = &iter->second;
             auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
             auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
-            this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr);
+            this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr, blocking);
             deviceImp->peerAllocations.allocations.erase(iter);
         }
     }
 
-    this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr));
+    this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
     if (this->driverHandle->svmAllocsManager->getSvmMapOperation(ptr)) {
         this->driverHandle->svmAllocsManager->removeSvmMapOperation(ptr);
     }
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ContextImp::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
+                                   void *ptr) {
+
+    if (pMemFreeDesc->freePolicy == ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE) {
+        return this->freeMem(ptr, true);
+    }
+    if (pMemFreeDesc->freePolicy == ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return this->freeMem(ptr, false);
 }
 
 ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, size_t size) {

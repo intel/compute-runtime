@@ -49,6 +49,14 @@ zeMemFree(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemFreeExt(
+    ze_context_handle_t hContext,
+    const ze_memory_free_ext_desc_t *pMemFreeDesc,
+    void *ptr) {
+    return L0::Context::fromHandle(hContext)->freeMemExt(pMemFreeDesc, ptr);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeMemGetAllocProperties(
     ze_context_handle_t hContext,
     const void *ptr,

@@ -34,6 +34,9 @@ struct ContextImp : Context {
                                size_t alignment,
                                void **ptr) override;
     ze_result_t freeMem(const void *ptr) override;
+    ze_result_t freeMem(const void *ptr, bool blocking) override;
+    ze_result_t freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
+                           void *ptr) override;
     ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
                                    void *ptr,
                                    size_t size) override;

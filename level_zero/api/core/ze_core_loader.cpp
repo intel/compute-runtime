@@ -60,6 +60,7 @@ zeGetMemProcAddrTable(
     pDdiTable->pfnAllocDevice = zeMemAllocDevice;
     pDdiTable->pfnAllocHost = zeMemAllocHost;
     pDdiTable->pfnFree = zeMemFree;
+    pDdiTable->pfnFreeExt = zeMemFreeExt;
     pDdiTable->pfnGetAllocProperties = zeMemGetAllocProperties;
     pDdiTable->pfnGetAddressRange = zeMemGetAddressRange;
     pDdiTable->pfnGetIpcHandle = zeMemGetIpcHandle;
