@@ -136,13 +136,14 @@ bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
 }
 
 template <typename TSPacketType>
-inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container) {
+inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container, CommandStreamReceiver &csr) {
     bool waited = false;
 
     if (container) {
         for (const auto &timestamp : container->peekNodes()) {
             for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
                 while (timestamp->getContextEndValue(i) == 1) {
+                    csr.downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex()));
                     WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>());
                 }
                 waited = true;
@@ -159,10 +160,10 @@ bool CommandQueueHw<Family>::waitForTimestamps(uint32_t taskCount) {
     bool waited = false;
 
     if (isWaitForTimestampsEnabled()) {
-        waited = waitForTimestampsWithinContainer<TSPacketType>(timestampPacketContainer.get());
+        waited = waitForTimestampsWithinContainer<TSPacketType>(timestampPacketContainer.get(), getGpgpuCommandStreamReceiver());
 
         if (isOOQEnabled()) {
-            waited |= waitForTimestampsWithinContainer<TSPacketType>(deferredTimestampPackets.get());
+            waited |= waitForTimestampsWithinContainer<TSPacketType>(deferredTimestampPackets.get(), getGpgpuCommandStreamReceiver());
         }
     }
 

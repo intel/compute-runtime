@@ -228,6 +228,8 @@ class CommandStreamReceiver {
         return scratchSpaceController.get();
     }
 
+    virtual void downloadAllocation(GraphicsAllocation &gfxAllocation){};
+
     void registerInstructionCacheFlush() {
         auto mutex = obtainUniqueOwnership();
         requiresInstructionCacheFlush = true;

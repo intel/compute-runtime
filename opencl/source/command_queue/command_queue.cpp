@@ -248,12 +248,12 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEn
         if (gtpinIsGTPinInitialized()) {
             gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
         }
+    }
 
-        for (const CopyEngineState &copyEngine : copyEnginesToWait) {
-            auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
-            bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
-            bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
-        }
+    for (const CopyEngineState &copyEngine : copyEnginesToWait) {
+        auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
+        bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
+        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
     }
 
     if (cleanTemporaryAllocationList) {

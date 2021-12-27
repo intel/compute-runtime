@@ -901,10 +901,12 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishThenCallWaitUti
         CpuIntrinsicsTests::pauseAddress = reinterpret_cast<volatile uint32_t *>(const_cast<void *>(deferredTimestampPackets->peekNodes()[0]->getContextEndAddress(0u)));
     };
     CpuIntrinsicsTests::pauseCounter = 0u;
+    EXPECT_FALSE(device->getUltCommandStreamReceiver<FamilyType>().downloadAllocationCalled);
 
     cmdQ->finish();
 
     EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
+    EXPECT_TRUE(device->getUltCommandStreamReceiver<FamilyType>().downloadAllocationCalled);
 
     cmdQ.reset();
 }
