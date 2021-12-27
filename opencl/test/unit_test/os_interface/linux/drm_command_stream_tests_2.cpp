@@ -178,7 +178,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCsrCreatedWithInactiveG
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmAllocationWhenGetBufferObjectToModifyIsCalledForAGivenHandleIdThenTheCorrespondingBufferObjectGetsModified) {
     auto size = 1024u;
-    auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, size, (osHandle)0u, MemoryPool::MemoryNull);
+    auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, size, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
 
     auto &bos = allocation->getBOs();
     for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
@@ -198,7 +198,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmAllocationWhenGetBuffer
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentThenSucceeds) {
     auto buffer = this->createBO(1024);
-    auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer, nullptr, buffer->peekSize(), (osHandle)0u, MemoryPool::MemoryNull);
+    auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
 
     csr->makeResident(*allocation);
@@ -216,8 +216,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentThenSucceeds)
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMultipleAllocationsWhenMakingResidentThenEachSucceeds) {
     BufferObject *buffer1 = this->createBO(4096);
     BufferObject *buffer2 = this->createBO(4096);
-    auto allocation1 = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer1, nullptr, buffer1->peekSize(), (osHandle)0u, MemoryPool::MemoryNull);
-    auto allocation2 = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer2, nullptr, buffer2->peekSize(), (osHandle)0u, MemoryPool::MemoryNull);
+    auto allocation1 = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer1, nullptr, buffer1->peekSize(), static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    auto allocation2 = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer2, nullptr, buffer2->peekSize(), static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, allocation1->getUnderlyingBuffer());
     EXPECT_EQ(nullptr, allocation2->getUnderlyingBuffer());
 
@@ -240,7 +240,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMultipleAllocationsWhenMak
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentTwiceThenRefCountIsOne) {
     auto buffer = this->createBO(1024);
-    auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer, nullptr, buffer->peekSize(), (osHandle)0u, MemoryPool::MemoryNull);
+    auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::MemoryNull);
 
     csr->makeResident(*allocation);
     csr->processResidency(csr->getResidencyAllocations(), 0u);
@@ -737,7 +737,7 @@ class DrmMockBuffer : public MockBufferStorage, public Buffer {
   public:
     static DrmMockBuffer *create() {
         char *data = static_cast<char *>(::alignedMalloc(128, 64));
-        DrmAllocation *alloc = new (std::nothrow) DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, &data, sizeof(data), (osHandle)0, MemoryPool::MemoryNull);
+        DrmAllocation *alloc = new (std::nothrow) DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, &data, sizeof(data), static_cast<osHandle>(0), MemoryPool::MemoryNull);
         return new DrmMockBuffer(data, 128, alloc);
     }
 
