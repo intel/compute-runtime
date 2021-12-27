@@ -1773,6 +1773,47 @@ HWTEST_F(ModuleTranslationUnitTest, givenSystemSharedAllocationAllowedWhenBuildi
     }
 }
 
+TEST(ModuleBuildLog, WhenGreaterBufferIsPassedToGetStringThenOutputSizeIsOverridden) {
+    const auto infoLog{"[INFO] This is a log!"};
+    const auto infoLogLength{strlen(infoLog)};
+    const auto moduleBuildLog{ModuleBuildLog::create()};
+    moduleBuildLog->appendString(infoLog, infoLogLength);
+
+    size_t buildLogSize{0};
+    const auto querySizeResult{moduleBuildLog->getString(&buildLogSize, nullptr)};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, querySizeResult);
+    EXPECT_EQ(infoLogLength + 1, buildLogSize);
+
+    const auto bufferSize{buildLogSize + 100};
+    std::string buffer(bufferSize, '\0');
+
+    buildLogSize = bufferSize;
+    const auto queryBuildLogResult{moduleBuildLog->getString(&buildLogSize, buffer.data())};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queryBuildLogResult);
+
+    EXPECT_GT(bufferSize, buildLogSize);
+    EXPECT_EQ(infoLogLength + 1, buildLogSize);
+    EXPECT_STREQ(infoLog, buffer.c_str());
+
+    const auto destroyResult{moduleBuildLog->destroy()};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, destroyResult);
+}
+
+TEST(ModuleBuildLog, WhenTooSmallBufferIsPassedToGetStringThenErrorIsReturned) {
+    const auto sampleLog{"Sample log!"};
+    const auto moduleBuildLog{ModuleBuildLog::create()};
+    moduleBuildLog->appendString(sampleLog, strlen(sampleLog));
+
+    std::array<char, 4> buffer{};
+    size_t buildLogSize{buffer.size()};
+
+    const auto queryBuildLogResult{moduleBuildLog->getString(&buildLogSize, buffer.data())};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, queryBuildLogResult);
+
+    const auto destroyResult{moduleBuildLog->destroy()};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, destroyResult);
+}
+
 using PrintfModuleTest = Test<DeviceFixture>;
 
 HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
