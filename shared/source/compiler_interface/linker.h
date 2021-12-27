@@ -152,8 +152,6 @@ struct LinkerInput {
 };
 
 struct Linker {
-    static constexpr std::string_view subDeviceID{"__SubDeviceID"};
-
     using RelocationInfo = LinkerInput::RelocationInfo;
 
     struct SegmentInfo {
@@ -199,7 +197,7 @@ struct Linker {
         patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg,
                           outUnresolvedExternals, pDevice, constantsInitData, variablesInitData);
         resolveImplicitArgs(kernelDescriptors, pDevice);
-        resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
+
         if (initialUnresolvedExternalsCount < outUnresolvedExternals.size()) {
             return LinkingStatus::LinkedPartially;
         }
@@ -229,7 +227,6 @@ struct Linker {
                            const void *constantsInitData, const void *variablesInitData);
 
     void resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, Device *pDevice);
-    void resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments);
 
     template <typename PatchSizeT>
     void patchIncrement(Device *pDevice, GraphicsAllocation *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue);
