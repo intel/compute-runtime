@@ -1284,6 +1284,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushSemaphoreWait(GraphicsAllocation *
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStreamTask, size_t commandStreamStartTask) {
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
     void *endingCmdPtr = nullptr;
@@ -1298,6 +1299,8 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
         *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
     }
 
+    auto bytesToPad = sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
+    EncodeNoop<GfxFamily>::emitNoop(commandStreamTask, bytesToPad);
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
 
     if (globalFenceAllocation) {

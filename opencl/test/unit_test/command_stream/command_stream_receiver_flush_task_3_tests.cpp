@@ -147,6 +147,19 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndTwoRecord
     EXPECT_EQ(mockCsr->recordedCommandBuffer->batchBuffer.endCmdPtr, lastbbEndPtr);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, whenFlushSmallTaskThenCommandStreamAlignedToCacheLine) {
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto &stream = csr.getCS(2 * MemoryConstants::cacheLineSize);
+    stream.getSpace(MemoryConstants::cacheLineSize - sizeof(MI_BATCH_BUFFER_END) - 2);
+    csr.flushSmallTask(stream, stream.getUsed());
+
+    auto used = csr.commandStream.getUsed();
+    auto expected = 2 * MemoryConstants::cacheLineSize;
+    EXPECT_EQ(used, expected);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeRecordedCommandBuffersWhenFlushTaskIsCalledThenBatchBuffersAreCombined) {
 
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
