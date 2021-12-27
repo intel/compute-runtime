@@ -1139,7 +1139,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushNonKernelTask(GraphicsAllocation *
     if (isWaitOnEvent) {
         this->flushSemaphoreWait(eventAlloc, immediateGpuAddress, immediateData, args, isStartOfDispatch, isEndOfDispatch);
     } else {
-        if (this->osContext->getEngineType() == aub_stream::ENGINE_BCS) {
+        if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
             this->flushMiFlushDW(eventAlloc, immediateGpuAddress, immediateData);
         } else {
             this->flushPipeControl(eventAlloc, immediateGpuAddress, immediateData, args);
