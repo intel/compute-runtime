@@ -1087,6 +1087,12 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSpecializationCon
     EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
 }
 
+TEST_F(CompilerInterfaceTest, givenCompilerInterfacewhenGettingIgcFeaturesAndWorkaroundsThenValidPointerIsReturned) {
+    auto igcFeaturesAndWorkarounds = pCompilerInterface->getIgcFeaturesAndWorkarounds(*pDevice);
+    EXPECT_NE(igcFeaturesAndWorkarounds, nullptr);
+    EXPECT_EQ(igcFeaturesAndWorkarounds->GetMaxOCLParamSize(), 0u);
+}
+
 TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenInterfaceVersionAbove4ThenPopulatePlatformInfo) {
     auto device = this->pDevice;
 

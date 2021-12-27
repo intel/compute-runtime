@@ -136,6 +136,8 @@ class CompilerInterface {
     MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
                                                                      std::vector<char> &stateSaveAreaHeader);
 
+    CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
+
   protected:
     MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl);
     MOCKABLE_VIRTUAL bool loadFcl();

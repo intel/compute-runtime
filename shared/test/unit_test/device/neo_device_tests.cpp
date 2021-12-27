@@ -78,3 +78,11 @@ TEST_F(DeviceTest, whenGetRTDispatchGlobalsIsCalledWithZeroSizeAndMockAllocatorT
     pDevice->initializeRayTracing(5);
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(0));
 }
+
+using DeviceGetCapsTest = Test<DeviceFixture>;
+
+TEST_F(DeviceGetCapsTest, givenNonZeroMaxParameterSizeFromIGCwhenDeviceIsCreatedThenMaxParameterSizeIsSetCorrectly) {
+    pDevice->maxParameterSizeFromIGC = 1u;
+    pDevice->initializeCaps();
+    EXPECT_EQ(pDevice->getDeviceInfo().maxParameterSize, 1u);
+}

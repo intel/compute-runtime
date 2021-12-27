@@ -78,7 +78,7 @@ void MockCompilerEnableGuard::Enable() {
         if (fclDebugVars == nullptr) {
             fclDebugVars.reset(new MockCompilerDebugVars);
         }
-        if (fclDebugVars == nullptr) {
+        if (igcDebugVars == nullptr) {
             igcDebugVars.reset(new MockCompilerDebugVars);
         }
 
