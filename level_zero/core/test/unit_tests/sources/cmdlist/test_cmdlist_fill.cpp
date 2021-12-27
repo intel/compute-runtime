@@ -55,8 +55,6 @@ class AppendFillFixture : public DeviceFixture {
             }
 
             numberOfCallsToAppendLaunchKernelWithParams++;
-            groupSizeX.push_back(Kernel::fromHandle(hKernel)->getGroupSize()[0]);
-            simdSize.push_back(Kernel::fromHandle(hKernel)->getImmutableData()->getDescriptor().kernelAttributes.simdSize);
             return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(hKernel,
                                                                                       pThreadGroupDimensions,
                                                                                       hEvent,
@@ -64,8 +62,7 @@ class AppendFillFixture : public DeviceFixture {
                                                                                       isPredicate,
                                                                                       isCooperative);
         }
-        std::vector<uint32_t> groupSizeX;
-        std::vector<uint32_t> simdSize;
+
         uint32_t thresholdOfCallsToAppendLaunchKernelWithParamsToFail = std::numeric_limits<uint32_t>::max();
         uint32_t numberOfCallsToAppendLaunchKernelWithParams = 0;
     };
@@ -211,83 +208,6 @@ HWTEST2_F(AppendFillTest,
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 
     delete[] nonMultipleDstPtr;
-}
-
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWithLessThan4BSizeAndSinglePatternThenSuccessIsReturnedAndGroupSizeXIsSetToSize, IsAtLeastSkl) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-
-    size_t smallSize = 2ull / sizeof(uint8_t);
-    uint8_t *smallPtr = new uint8_t[smallSize];
-    auto result = commandList->appendMemoryFill(smallPtr, pattern, 1, smallSize, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(commandList->groupSizeX[0], smallSize);
-
-    delete[] smallPtr;
-}
-
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWithMoreThan4BSizeAndSinglePatternThenSuccessIsReturnedAndGroupSizeXIsSetTosuggestedGroupSize, IsAtLeastSkl) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-
-    size_t largeSize = (4ull * MemoryConstants::megaByte) / sizeof(uint8_t);
-    uint8_t *largePtr = new uint8_t[largeSize];
-    if (largePtr == nullptr) {
-        std::cout << "skipping tests due to lack of memory, size: " << largeSize << std::endl;
-        GTEST_SKIP();
-    }
-    size_t adjustedSize = largeSize / sizeof(uint32_t);
-    EXPECT_LT(adjustedSize, UINT32_MAX);
-    uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
-    uint32_t groupSize[] = {groupSizeX, 1u, 1u};
-
-    auto builtInFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
-    builtInFunction->suggestGroupSize(groupSize[0], groupSize[1], groupSize[2],
-                                      &groupSize[0], &groupSize[1], &groupSize[2]);
-    auto result = commandList->appendMemoryFill(largePtr, pattern, 4, largeSize, nullptr, 0, nullptr);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(commandList->groupSizeX[0], groupSize[0]);
-
-    delete[] largePtr;
-}
-
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWith4GBSizeAndSinglePatternThenSuccessIsReturnedAndGroupSizeXIsSetTosuggestedGroupSize, IsAtLeastSkl) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-
-    size_t largeSize = (4ull * MemoryConstants::gigaByte);
-    uint8_t fakeBuffer = 0;
-    size_t adjustedSize = largeSize / sizeof(uint32_t);
-    EXPECT_LT(adjustedSize, UINT32_MAX);
-    uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
-    uint32_t groupSize[] = {groupSizeX, 1u, 1u};
-
-    auto builtInFunction = device->getBuiltinFunctionsLib()->getStatelessFunction(Builtin::FillBufferMiddle);
-    builtInFunction->suggestGroupSize(groupSize[0], groupSize[1], groupSize[2],
-                                      &groupSize[0], &groupSize[1], &groupSize[2]);
-    auto result = commandList->appendMemoryFill(&fakeBuffer, pattern, 4, largeSize, nullptr, 0, nullptr);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(commandList->groupSizeX[0], groupSize[0]);
-}
-
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWithBiggerThan16GBThenUnsupportedSizeIsReturned, IsAtLeastSkl) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    size_t largeSize = (16ull * MemoryConstants::gigaByte) + 1;
-    uint8_t fakeBuffer = 0;
-    auto result = commandList->appendMemoryFill(&fakeBuffer, pattern, 4, largeSize, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
-    EXPECT_EQ(0, fakeBuffer);
 }
 
 } // namespace ult
