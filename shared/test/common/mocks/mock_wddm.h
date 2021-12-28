@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,11 @@
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
 #include "shared/test/common/mocks/wddm_mock_helpers.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "gmock/gmock.h"
-
+#include <limits>
+#include <memory>
 #include <set>
-#include <vector>
 
 namespace NEO {
 class GraphicsAllocation;
@@ -168,18 +168,61 @@ class WddmMock : public Wddm {
     bool callBaseSetAllocationPriority = true;
 };
 
-struct GmockWddm : WddmMock {
-    GmockWddm(RootDeviceEnvironment &rootDeviceEnvironment);
-    ~GmockWddm() = default;
+struct MockWddm : WddmMock {
+    MockWddm(RootDeviceEnvironment &rootDeviceEnvironment);
+    ~MockWddm() = default;
     bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
         return true;
     }
 
     void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type);
     uintptr_t virtualAllocAddress;
-    MOCK_METHOD5(makeResident, bool(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize));
-    MOCK_METHOD3(evict, bool(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim));
-    MOCK_METHOD1(createAllocationsAndMapGpuVa, NTSTATUS(OsHandleStorage &osHandles));
+
+    bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override {
+        makeResidentCalled++;
+        MakeResidentParams params{};
+        params.cantTrimFurther = cantTrimFurther;
+        params.totalSize = totalSize;
+        if (handles) {
+            for (size_t i = 0; i < count; i++) {
+                params.handles.push_back(handles[i]);
+            }
+        }
+        if (numberOfBytesToTrim != nullptr) {
+            *numberOfBytesToTrim = makeResidentNumberOfBytesToTrim;
+        }
+        makeResidentParamsPassed.push_back(params);
+        if (makeResidentCalled <= makeResidentResults.size()) {
+            return makeResidentResults[makeResidentCalled - 1];
+        }
+        return makeResidentResult;
+    }
+
+    struct MakeResidentParams {
+        StackVec<D3DKMT_HANDLE, 2> handles;
+        bool cantTrimFurther{};
+        size_t totalSize{};
+    };
+
+    StackVec<MakeResidentParams, 2> makeResidentParamsPassed{};
+    uint32_t makeResidentCalled = 0u;
+    bool makeResidentResult = true;
+    std::vector<bool> makeResidentResults = {};
+    uint64_t makeResidentNumberOfBytesToTrim = 0;
+
+    ADDMETHOD_NOBASE(evict, bool, true, (const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim));
+
+    NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) override {
+        createAllocationsAndMapGpuVaCalled++;
+        if (callBaseCreateAllocationAndMapGpuVa) {
+            createAllocationsAndMapGpuVaResult = baseCreateAllocationAndMapGpuVa(osHandles);
+        }
+        return createAllocationsAndMapGpuVaResult;
+    }
+
+    uint32_t createAllocationsAndMapGpuVaCalled = 0u;
+    bool callBaseCreateAllocationAndMapGpuVa = false;
+    NTSTATUS createAllocationsAndMapGpuVaResult = STATUS_UNSUCCESSFUL;
 
     NTSTATUS baseCreateAllocationAndMapGpuVa(OsHandleStorage &osHandles) {
         return Wddm::createAllocationsAndMapGpuVa(osHandles);

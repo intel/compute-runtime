@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,8 +16,7 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-
-#include "gmock/gmock.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <string>
 
@@ -170,7 +169,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool fileIsOpen = false;
     std::string openFileName = "";
 
-    MOCK_METHOD(bool, addPatchInfoComments, (), (override));
+    ADDMETHOD_NOBASE(addPatchInfoComments, bool, true, ());
 
     using CommandStreamReceiverHw<GfxFamily>::localMemoryEnabled;
 };

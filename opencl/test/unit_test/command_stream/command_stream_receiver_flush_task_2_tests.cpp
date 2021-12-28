@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1390,9 +1390,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFlus
     MockGmmPageTableMngr *pageTableManager2 = new MockGmmPageTableMngr();
     csr2->pageTableManager.reset(pageTableManager2);
 
-    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr, ::testing::_)).Times(1);
-    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr2, ::testing::_)).Times(0);
-
     auto memoryManager = pDevice->getMemoryManager();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(graphicsAllocation);
@@ -1409,12 +1406,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFlus
 
     csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
 
-    EXPECT_CALL(*pageTableManager2, initContextAuxTableRegister(csr2, ::testing::_)).Times(1);
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterParamsPassed.size());
+    EXPECT_EQ(csr, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
+
     pDevice->resetCommandStreamReceiver(csr2);
     csr2->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
     EXPECT_TRUE(csr2->pageTableManagerInitialized);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+
+    EXPECT_EQ(1u, pageTableManager2->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(csr2, pageTableManager2->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCallBlitBufferThenPageTableManagerInitializedForProperCsr) {
@@ -1427,9 +1430,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
     MockGmmPageTableMngr *pageTableManager2 = new MockGmmPageTableMngr();
     bcsCsr2->pageTableManager.reset(pageTableManager2);
 
-    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(bcsCsr, ::testing::_)).Times(1);
-    EXPECT_CALL(*pageTableManager2, initContextAuxTableRegister(bcsCsr2, ::testing::_)).Times(0);
-
     auto memoryManager = pDevice->getMemoryManager();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
@@ -1455,13 +1455,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
     EXPECT_TRUE(bcsCsr->pageTableManagerInitialized);
     EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
 
-    EXPECT_CALL(*pageTableManager2, initContextAuxTableRegister(bcsCsr2, ::testing::_)).Times(1);
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(bcsCsr, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
+
     pDevice->resetCommandStreamReceiver(bcsCsr2);
     bcsCsr2->blitBuffer(container, true, false, *pDevice);
 
     EXPECT_TRUE(bcsCsr2->pageTableManagerInitialized);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+
+    EXPECT_EQ(1u, pageTableManager2->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(bcsCsr2, pageTableManager2->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCallBlitBufferAndPageTableManagerInitializedThenNotInitializeAgain) {
@@ -1471,8 +1476,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
     MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
     bcsCsr->pageTableManager.reset(pageTableManager);
 
-    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(bcsCsr, ::testing::_)).Times(1);
-
     auto memoryManager = pDevice->getMemoryManager();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
@@ -1496,10 +1499,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
 
     EXPECT_TRUE(bcsCsr->pageTableManagerInitialized);
 
-    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(bcsCsr, ::testing::_)).Times(0);
     bcsCsr->blitBuffer(container, true, false, *pDevice);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterParamsPassed.size());
+    EXPECT_EQ(bcsCsr, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNullPageTableManagerWhenCallBlitBufferThenPageTableManagerIsNotInitialized) {
@@ -1553,7 +1559,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenInit
     MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
     csr->pageTableManager.reset(pageTableManager);
 
-    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr, ::testing::_)).Times(2).WillRepeatedly(::testing::Return(GMM_ERROR));
+    pageTableManager->initContextAuxTableRegisterResult = GMM_ERROR;
 
     auto memoryManager = pDevice->getMemoryManager();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -1571,6 +1577,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenInit
 
     EXPECT_FALSE(csr->pageTableManagerInitialized);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(csr, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
+    EXPECT_EQ(csr, pageTableManager->initContextAuxTableRegisterParamsPassed[1].initialBBHandle);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenCsrIsMarkedWithNewResourceThenCallBatchedSubmission) {

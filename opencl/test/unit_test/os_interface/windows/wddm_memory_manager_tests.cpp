@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1841,14 +1841,13 @@ TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThen
     memoryManager.createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
     for (auto engine : memoryManager.getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(AllocationProperties(1, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, mockDeviceBitfield));
 
-    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
     expectedDdiUpdateAuxTable.BaseGpuVA = allocation->getGpuAddress();
     expectedDdiUpdateAuxTable.BaseResInfo = allocation->getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo();
@@ -1856,12 +1855,12 @@ TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThen
     expectedDdiUpdateAuxTable.Map = true;
 
     auto expectedCallCount = static_cast<int>(regularEngines.size());
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(expectedCallCount).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
 
     auto result = memoryManager.mapAuxGpuVA(allocation);
     EXPECT_TRUE(result);
-    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
     memoryManager.freeGraphicsMemory(allocation);
+    EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPageTableNotSupportedThenMapAuxVa) {
@@ -1882,12 +1881,10 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
     executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                                             PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
     for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
-
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
     auto hwInfoMock = hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily];
     ASSERT_NE(nullptr, hwInfoMock);
@@ -1895,6 +1892,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
     ASSERT_TRUE(result);
 
     EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
+    EXPECT_EQ(0u, mockMngr->updateAuxTableCalled);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPageTableSupportedThenMapAuxVa) {
@@ -1915,12 +1913,11 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
     executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                                             PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
     for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 
-    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
     expectedDdiUpdateAuxTable.BaseGpuVA = GmmHelper::canonize(wddm.getGfxPartition().Standard.Base);
     expectedDdiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
@@ -1929,15 +1926,14 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
 
     auto expectedCallCount = executionEnvironment->memoryManager.get()->getRegisteredEnginesCount();
 
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(expectedCallCount).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
-
     auto hwInfoMock = hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily];
     ASSERT_NE(nullptr, hwInfoMock);
     auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa);
     ASSERT_TRUE(result);
 
     EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
-    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndPageTableSupportedWhenReleaseingThenUnmapAuxVa) {
@@ -1956,7 +1952,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndPageTableSupported
     memoryManager.createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
     for (auto engine : memoryManager.getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
@@ -1965,7 +1961,6 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndPageTableSupported
     wddmAlloc->setGpuAddress(gpuVa);
     wddmAlloc->getDefaultGmm()->isCompressionEnabled = true;
 
-    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
     expectedDdiUpdateAuxTable.BaseGpuVA = gpuVa;
     expectedDdiUpdateAuxTable.BaseResInfo = wddmAlloc->getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo();
@@ -1974,10 +1969,10 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndPageTableSupported
 
     auto expectedCallCount = memoryManager.getRegisteredEnginesCount();
 
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(expectedCallCount).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
     memoryManager.freeGraphicsMemory(wddmAlloc);
 
-    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenReleaseingThenDontUnmapAuxVa) {
@@ -1992,7 +1987,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenReleaseingThen
     memoryManager.createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
     for (auto engine : memoryManager.getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
@@ -2000,9 +1995,8 @@ TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenReleaseingThen
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));
     wddmAlloc->getDefaultGmm()->isCompressionEnabled = false;
 
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
-
     memoryManager.freeGraphicsMemory(wddmAlloc);
+    EXPECT_EQ(0u, mockMngr->updateAuxTableCalled);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenMappedGpuVaThenDontMapAuxVa) {
@@ -2021,15 +2015,14 @@ TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenMappedGpuVaThe
     executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                                             PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
     for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
-
     auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa);
     ASSERT_TRUE(result);
+    EXPECT_EQ(0u, mockMngr->updateAuxTableCalled);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenReturnFalse) {
@@ -2057,7 +2050,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenD
     memoryManager.createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
     for (auto engine : memoryManager.getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
@@ -2071,11 +2064,10 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenD
     delete wddmAlloc->getDefaultGmm();
     wddmAlloc->setDefaultGmm(myGmm);
 
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
-
     auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa);
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
+    EXPECT_EQ(0u, mockMngr->updateAuxTableCalled);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpdateAuxTable) {
@@ -2094,7 +2086,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpd
     memoryManager.createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
     rootDeviceEnvironment->executionEnvironment.initializeMemoryManager();
     for (auto engine : memoryManager.getRegisteredEngines()) {
@@ -2111,11 +2103,10 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpd
 
     auto expectedCallCount = memoryManager.getRegisteredEnginesCount();
 
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(expectedCallCount);
-
     auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa);
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
+    EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
 }
 
 TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenPopulateOsHandlesReturnsInvalidPointer) {
@@ -2125,7 +2116,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenP
     handleStorage.fragmentStorageData[0].fragmentSize = 0x1000;
     handleStorage.fragmentStorageData[0].freeTheFragment = false;
 
-    EXPECT_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillOnce(::testing::Return(STATUS_GRAPHICS_NO_VIDEO_MEMORY));
+    wddm->createAllocationsAndMapGpuVaResult = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
 
     auto result = memoryManager->populateOsHandles(handleStorage, 0);
 
@@ -2145,7 +2136,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
     handleStorage.fragmentStorageData[1].cpuPtr = reinterpret_cast<void *>(0x2000);
     handleStorage.fragmentStorageData[1].fragmentSize = 0x6000;
 
-    EXPECT_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillOnce(::testing::Return(STATUS_GRAPHICS_NO_VIDEO_MEMORY));
+    wddm->createAllocationsAndMapGpuVaResult = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
 
     auto result = memoryManager->populateOsHandles(handleStorage, mockRootDeviceIndex);
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());

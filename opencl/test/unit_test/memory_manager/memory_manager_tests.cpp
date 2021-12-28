@@ -2864,8 +2864,8 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[1],
                                                                                                        PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
-    auto mockMngr2 = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
+    auto mockMngr2 = new MockGmmPageTableMngr();
 
     memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
     memoryManager->getRegisteredEngines()[1].commandStreamReceiver->pageTableManager.reset(mockMngr2);
@@ -2874,22 +2874,21 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
     gmm.isCompressionEnabled = true;
     allocation.setDefaultGmm(&gmm);
-    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
-    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable2 = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
     expectedDdiUpdateAuxTable.BaseGpuVA = allocation.getGpuAddress();
     expectedDdiUpdateAuxTable.BaseResInfo = allocation.getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo();
     expectedDdiUpdateAuxTable.DoNotWait = true;
     expectedDdiUpdateAuxTable.Map = true;
 
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
-    EXPECT_CALL(*mockMngr2, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg2) {givenDdiUpdateAuxTable2 = *arg2; return GMM_SUCCESS; }));
-
     bool result = memoryManager->mapAuxGpuVA(&allocation);
     EXPECT_TRUE(result);
 
-    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable2, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+
+    EXPECT_EQ(1u, mockMngr2->updateAuxTableCalled);
+
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr2->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
 }
 HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorThenMapAuxGpuVaReturnFalse) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
@@ -2910,7 +2909,8 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
     memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
-    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    auto mockMngr = new MockGmmPageTableMngr();
+    mockMngr->updateAuxTableResult = GMM_ERROR;
 
     memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
 
@@ -2919,10 +2919,9 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
     gmm.isCompressionEnabled = true;
     allocation.setDefaultGmm(&gmm);
 
-    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) { return GMM_ERROR; }));
-
     bool result = memoryManager->mapAuxGpuVA(&allocation);
     EXPECT_FALSE(result);
+    EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
 }
 
 HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThrow) {

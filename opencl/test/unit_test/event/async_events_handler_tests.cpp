@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
@@ -17,8 +18,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "gmock/gmock.h"
-
 using namespace NEO;
 using namespace ::testing;
 
@@ -27,7 +26,9 @@ class AsyncEventsHandlerTests : public ::testing::Test {
     class MyEvent : public Event {
       public:
         MyEvent(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType, uint32_t taskLevel, uint32_t taskCount)
-            : Event(ctx, cmdQueue, cmdType, taskLevel, taskCount) {}
+            : Event(ctx, cmdQueue, cmdType, taskLevel, taskCount) {
+            handler.reset(new MockHandler());
+        }
         int getExecutionStatus() {
             //return execution status without updating
             return executionStatus.load();
@@ -37,7 +38,15 @@ class AsyncEventsHandlerTests : public ::testing::Test {
             this->updateTaskCount(taskCount, 0);
         }
 
-        MOCK_METHOD2(wait, bool(bool blocking, bool quickKmdSleep));
+        bool wait(bool blocking, bool quickKmdSleep) override {
+            waitCalled++;
+            handler->allowAsyncProcess.store(false);
+            return waitResult;
+        }
+
+        uint32_t waitCalled = 0u;
+        bool waitResult = true;
+        std::unique_ptr<MockHandler> handler;
     };
 
     static void CL_CALLBACK callbackFcn(cl_event e, cl_int status, void *data) {
@@ -48,26 +57,26 @@ class AsyncEventsHandlerTests : public ::testing::Test {
         dbgRestore.reset(new DebugManagerStateRestore());
         DebugManager.flags.EnableAsyncEventsHandler.set(false);
         handler.reset(new MockHandler());
-        context = make_releaseable<NiceMock<MockContext>>();
+        context = make_releaseable<MockContext>();
 
         commandQueue = make_releaseable<MockCommandQueue>(context.get(), context->getDevice(0), nullptr, false);
 
         *(commandQueue->getGpgpuCommandStreamReceiver().getTagAddress()) = 0;
 
-        event1 = make_releaseable<NiceMock<MyEvent>>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
-        event2 = make_releaseable<NiceMock<MyEvent>>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
-        event3 = make_releaseable<NiceMock<MyEvent>>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
+        event1 = make_releaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
+        event2 = make_releaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
+        event3 = make_releaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
     }
 
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
     std::unique_ptr<MockHandler> handler;
     int counter = 0;
 
-    ReleaseableObjectPtr<NiceMock<MockContext>> context;
+    ReleaseableObjectPtr<MockContext> context;
     ReleaseableObjectPtr<MockCommandQueue> commandQueue;
-    ReleaseableObjectPtr<NiceMock<MyEvent>> event1;
-    ReleaseableObjectPtr<NiceMock<MyEvent>> event2;
-    ReleaseableObjectPtr<NiceMock<MyEvent>> event3;
+    ReleaseableObjectPtr<MyEvent> event1;
+    ReleaseableObjectPtr<MyEvent> event2;
+    ReleaseableObjectPtr<MyEvent> event3;
 };
 
 TEST_F(AsyncEventsHandlerTests, givenEventsWhenListIsProcessedThenUpdateExecutionStatus) {
@@ -340,20 +349,13 @@ TEST_F(AsyncEventsHandlerTests, givenEventWithoutCallbacksWhenProcessedThenDontR
 TEST_F(AsyncEventsHandlerTests, givenSleepCandidateWhenProcessedThenCallWaitWithQuickKmdSleepRequest) {
     event1->setTaskStamp(0, 1);
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
-    handler->registerEvent(event1.get());
-    handler->allowAsyncProcess.store(true);
+    event1->handler->registerEvent(event1.get());
+    event1->handler->allowAsyncProcess.store(true);
 
-    // break infinite loop after first iteartion
-    auto unsetAsyncFlag = [&](bool blocking, bool quickKmdSleep) {
-        handler->allowAsyncProcess.store(false);
-        return true;
-    };
-
-    EXPECT_CALL(*event1, wait(true, true)).Times(1).WillOnce(Invoke(unsetAsyncFlag));
-
-    MockHandler::asyncProcess(handler.get());
+    MockHandler::asyncProcess(event1->handler.get());
 
     event1->setStatus(CL_COMPLETE);
+    EXPECT_EQ(1u, event1->waitCalled);
 }
 
 TEST_F(AsyncEventsHandlerTests, WhenReturningThenAsyncProcessWillCallProcessList) {

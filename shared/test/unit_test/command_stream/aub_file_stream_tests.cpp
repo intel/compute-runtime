@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,10 +30,6 @@
 #include <memory>
 
 using namespace NEO;
-
-using ::testing::_;
-using ::testing::Invoke;
-using ::testing::Return;
 
 using AubFileStreamTests = Test<AubCommandStreamReceiverFixture>;
 
@@ -303,8 +299,8 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCallingAddAubComme
     aubCsr->addAubComment(comment);
 
     EXPECT_TRUE(aubCsr->addAubCommentCalled);
-    EXPECT_TRUE(aubFileStream->addCommentCalled);
-    EXPECT_STREQ(comment, aubFileStream->receivedComment.c_str());
+    EXPECT_LT(0u, aubFileStream->addCommentCalled);
+    EXPECT_STREQ(comment, aubFileStream->comments[0].c_str());
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenCallingAddAubCommentThenCallAddCommentOnAubManager) {
@@ -733,22 +729,15 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenExpe
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIsCalledThenMemTraceCommentWithDriverVersionIsPutIntoAubStream) {
-    auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
     aubCsr->stream = mockAubFileStream.get();
-
-    std::vector<std::string> comments;
-
-    EXPECT_CALL(*mockAubFileStream, addComment(_)).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
-        comments.push_back(std::string(str));
-        return true;
-    }));
     aubCsr->initializeEngine();
 
     std::string commentWithDriverVersion = "driver version: " + std::string(driverVersion);
-    EXPECT_EQ(commentWithDriverVersion, comments[0]);
+    EXPECT_EQ(commentWithDriverVersion, mockAubFileStream->comments[0]);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenMemTraceCommentWithDriverVersionIsPutIntoAubStream) {
@@ -766,7 +755,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
 }
 
 HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {
-    auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
@@ -775,23 +764,18 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenNoPatc
 
     aubCsr->stream = mockAubFileStream.get();
 
-    std::vector<std::string> comments;
-
-    EXPECT_CALL(*mockAubFileStream, addComment(_)).Times(2).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
-        comments.push_back(std::string(str));
-        return true;
-    }));
     bool result = aubCsr->addPatchInfoComments();
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(2u, comments.size());
+    ASSERT_EQ(2u, mockAubFileStream->comments.size());
 
-    EXPECT_EQ("PatchInfoData\n", comments[0]);
-    EXPECT_EQ("AllocationsList\n", comments[1]);
+    EXPECT_EQ("PatchInfoData\n", mockAubFileStream->comments[0]);
+    EXPECT_EQ("AllocationsList\n", mockAubFileStream->comments[1]);
+    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
 
 HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
-    auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
@@ -799,14 +783,15 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenFirstA
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     aubCsr->stream = mockAubFileStream.get();
+    mockAubFileStream->addCommentResult = false;
 
-    EXPECT_CALL(*mockAubFileStream, addComment(_)).Times(1).WillOnce(Return(false));
     bool result = aubCsr->addPatchInfoComments();
     EXPECT_FALSE(result);
+    EXPECT_EQ(1u, mockAubFileStream->addCommentCalled);
 }
 
 HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSecondAddCommentsFailsThenFunctionReturnsFalse) {
-    auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
@@ -815,13 +800,15 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSecond
 
     aubCsr->stream = mockAubFileStream.get();
 
-    EXPECT_CALL(*mockAubFileStream, addComment(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
+    mockAubFileStream->addCommentResults = {true, false};
+
     bool result = aubCsr->addPatchInfoComments();
     EXPECT_FALSE(result);
+    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
 
 HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObjectsAddedThenCommentsAreNotEmpty) {
-    auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
@@ -836,23 +823,17 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenPatchI
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData[0]));
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData[1]));
 
-    std::vector<std::string> comments;
-
-    EXPECT_CALL(*mockAubFileStream, addComment(_)).Times(2).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
-        comments.push_back(std::string(str));
-        return true;
-    }));
     bool result = aubCsr->addPatchInfoComments();
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(2u, comments.size());
+    ASSERT_EQ(2u, mockAubFileStream->comments.size());
 
-    EXPECT_EQ("PatchInfoData", comments[0].substr(0, 13));
-    EXPECT_EQ("AllocationsList", comments[1].substr(0, 15));
+    EXPECT_EQ("PatchInfoData", mockAubFileStream->comments[0].substr(0, 13));
+    EXPECT_EQ("AllocationsList", mockAubFileStream->comments[1].substr(0, 15));
 
     std::string line;
     std::istringstream input1;
-    input1.str(comments[0]);
+    input1.str(mockAubFileStream->comments[0]);
 
     uint32_t lineNo = 0;
     while (std::getline(input1, line)) {
@@ -871,7 +852,7 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenPatchI
     lineNo = 0;
 
     std::istringstream input2;
-    input2.str(comments[1]);
+    input2.str(mockAubFileStream->comments[1]);
     while (std::getline(input2, line)) {
         if (line.substr(0, 15) == "AllocationsList") {
             continue;
@@ -888,10 +869,11 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenPatchI
         EXPECT_TRUE(line.size() > 9);
         lineNo++;
     }
+    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
 
 HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSourceAllocationIsNullThenDoNotAddToAllocationsList) {
-    auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
@@ -903,23 +885,17 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSource
     PatchInfoData patchInfoData = {0x0, 0u, PatchInfoAllocationType::Default, 0xBBBBBBBB, 0u, PatchInfoAllocationType::Default};
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData));
 
-    std::vector<std::string> comments;
-
-    EXPECT_CALL(*mockAubFileStream, addComment(_)).Times(2).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
-        comments.push_back(std::string(str));
-        return true;
-    }));
     bool result = aubCsr->addPatchInfoComments();
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(2u, comments.size());
+    ASSERT_EQ(2u, mockAubFileStream->comments.size());
 
-    ASSERT_EQ("PatchInfoData", comments[0].substr(0, 13));
-    ASSERT_EQ("AllocationsList", comments[1].substr(0, 15));
+    ASSERT_EQ("PatchInfoData", mockAubFileStream->comments[0].substr(0, 13));
+    ASSERT_EQ("AllocationsList", mockAubFileStream->comments[1].substr(0, 15));
 
     std::string line;
     std::istringstream input;
-    input.str(comments[1]);
+    input.str(mockAubFileStream->comments[1]);
 
     uint32_t lineNo = 0;
 
@@ -940,10 +916,11 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSource
         EXPECT_TRUE(line.size() > 9);
         lineNo++;
     }
+    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
 
 HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTargetAllocationIsNullThenDoNotAddToAllocationsList) {
-    auto mockAubFileStream = std::make_unique<GmockAubFileStream>();
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
@@ -955,23 +932,17 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTarget
     PatchInfoData patchInfoData = {0xAAAAAAAA, 0u, PatchInfoAllocationType::Default, 0x0, 0u, PatchInfoAllocationType::Default};
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData));
 
-    std::vector<std::string> comments;
-
-    EXPECT_CALL(*mockAubFileStream, addComment(_)).Times(2).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
-        comments.push_back(std::string(str));
-        return true;
-    }));
     bool result = aubCsr->addPatchInfoComments();
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(2u, comments.size());
+    ASSERT_EQ(2u, mockAubFileStream->comments.size());
 
-    ASSERT_EQ("PatchInfoData", comments[0].substr(0, 13));
-    ASSERT_EQ("AllocationsList", comments[1].substr(0, 15));
+    ASSERT_EQ("PatchInfoData", mockAubFileStream->comments[0].substr(0, 13));
+    ASSERT_EQ("AllocationsList", mockAubFileStream->comments[1].substr(0, 15));
 
     std::string line;
     std::istringstream input;
-    input.str(comments[1]);
+    input.str(mockAubFileStream->comments[1]);
 
     uint32_t lineNo = 0;
 
@@ -992,6 +963,7 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTarget
         EXPECT_TRUE(line.size() > 9);
         lineNo++;
     }
+    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices) {

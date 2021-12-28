@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -426,8 +426,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
 
     ResidencyContainer allocationsForResidency;
 
-    EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(1);
     aubCsr->flush(batchBuffer, allocationsForResidency);
+    EXPECT_EQ(1u, aubCsr->addPatchInfoCommentsCalled);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoCommentsIsNotCalled) {
@@ -439,9 +439,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
 
     ResidencyContainer allocationsForResidency;
 
-    EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(0);
-
     aubCsr->flush(batchBuffer, allocationsForResidency);
+    EXPECT_EQ(0u, aubCsr->addPatchInfoCommentsCalled);
 }
 
 HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForEmptyPatchInfoListThenIndirectPatchCommandBufferIsNotCreated) {

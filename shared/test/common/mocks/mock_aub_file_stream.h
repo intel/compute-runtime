@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,11 @@
 #pragma once
 
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "gmock/gmock.h"
+
+#include <vector>
 
 namespace NEO {
 
@@ -53,23 +56,29 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
         compareOperationFromExpectMemory = compareOperation;
     }
     bool addComment(const char *message) override {
-        receivedComment.assign(message);
-        addCommentCalled = true;
-        return true;
+        addCommentCalled++;
+        comments.push_back(std::string(message));
+
+        if (addCommentCalled <= addCommentResults.size()) {
+            return addCommentResults[addCommentCalled - 1];
+        }
+
+        return addCommentResult;
     }
     void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override {
         registerPollCalled = true;
         AUBCommandStreamReceiver::AubFileStream::registerPoll(registerOffset, mask, value, pollNotEqual, timeoutAction);
     }
+    uint32_t addCommentCalled = 0u;
     uint32_t openCalledCnt = 0;
     std::string fileName = "";
+    bool addCommentResult = true;
+    std::vector<bool> addCommentResults = {};
     bool closeCalled = false;
     uint32_t initCalledCnt = 0;
     mutable bool isOpenCalled = false;
     mutable bool getFileNameCalled = false;
     bool registerPollCalled = false;
-    bool addCommentCalled = false;
-    std::string receivedComment = "";
     bool flushCalled = false;
     bool lockStreamCalled = false;
     uint32_t mmioRegisterFromExpectMMIO = 0;
@@ -79,9 +88,6 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     size_t sizeCapturedFromExpectMemory = 0;
     uint32_t addressSpaceCapturedFromExpectMemory = 0;
     uint32_t compareOperationFromExpectMemory = 0;
-};
-
-struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
-    MOCK_METHOD(bool, addComment, (const char *message), (override));
+    std::vector<std::string> comments;
 };
 } // namespace NEO

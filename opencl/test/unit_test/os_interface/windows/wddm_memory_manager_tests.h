@@ -23,7 +23,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <type_traits>
@@ -108,7 +107,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
     void SetUp() override {
         // wddm is deleted by memory manager
 
-        wddm = new NiceMock<GmockWddm>(*executionEnvironment->rootDeviceEnvironments[0].get());
+        wddm = new MockWddm(*executionEnvironment->rootDeviceEnvironments[0].get());
         ASSERT_NE(nullptr, wddm);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
@@ -122,17 +121,14 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       preemptionMode));
-
         osContext->incRefInternal();
-
-        ON_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillByDefault(::testing::Invoke(wddm, &GmockWddm::baseCreateAllocationAndMapGpuVa));
     }
 
     void TearDown() override {
         osContext->decRefInternal();
     }
 
-    NiceMock<GmockWddm> *wddm = nullptr;
+    MockWddm *wddm = nullptr;
     std::unique_ptr<CommandStreamReceiver> csr;
     OSInterface *osInterface;
     OsContext *osContext;

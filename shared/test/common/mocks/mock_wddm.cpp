@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -310,7 +310,7 @@ bool WddmMock::setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allo
     return setAllocationPriorityResult.success;
 }
 
-void *GmockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
+void *MockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
     void *tmp = reinterpret_cast<void *>(virtualAllocAddress);
     size += MemoryConstants::pageSize;
     size -= size % MemoryConstants::pageSize;
@@ -318,6 +318,6 @@ void *GmockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, u
     return tmp;
 }
 
-GmockWddm::GmockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {
+MockWddm::MockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {
     virtualAllocAddress = NEO::windowsMinAddress;
 }

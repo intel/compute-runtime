@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -960,15 +960,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpda
     csr->pageTableManager.reset(mockMngr);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
     auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
-    GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
-    EXPECT_CALL(*mockMngr, updateAuxTable(::testing::_)).Times(1).WillOnce(::testing::Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {ddiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
     auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), true);
-    EXPECT_EQ(ddiUpdateAuxTable.BaseGpuVA, 0ull);
-    EXPECT_EQ(ddiUpdateAuxTable.BaseResInfo, gmm->gmmResourceInfo->peekHandle());
-    EXPECT_EQ(ddiUpdateAuxTable.DoNotWait, true);
-    EXPECT_EQ(ddiUpdateAuxTable.Map, 1u);
+    EXPECT_EQ(0ull, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
+    EXPECT_EQ(gmm->gmmResourceInfo->peekHandle(), mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
+    EXPECT_EQ(true, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.DoNotWait);
+    EXPECT_EQ(1u, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
 
     EXPECT_TRUE(result);
+    EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
@@ -976,13 +975,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpd
     csr->pageTableManager.reset(mockMngr);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
     auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
-    GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
-    EXPECT_CALL(*mockMngr, updateAuxTable(::testing::_)).Times(1).WillOnce(::testing::Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {ddiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
     auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), false);
-    EXPECT_EQ(ddiUpdateAuxTable.BaseGpuVA, 0ull);
-    EXPECT_EQ(ddiUpdateAuxTable.BaseResInfo, gmm->gmmResourceInfo->peekHandle());
-    EXPECT_EQ(ddiUpdateAuxTable.DoNotWait, true);
-    EXPECT_EQ(ddiUpdateAuxTable.Map, 0u);
+    EXPECT_EQ(0ull, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
+    EXPECT_EQ(gmm->gmmResourceInfo->peekHandle(), mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
+    EXPECT_EQ(true, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.DoNotWait);
+    EXPECT_EQ(0u, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
 
     EXPECT_TRUE(result);
+    EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
 }
