@@ -120,6 +120,11 @@ struct MockGTSystemInfo : MockCIF<IGC::GTSystemInfoTagOCL> {
 };
 
 struct MockIgcFeaturesAndWorkarounds : MockCIF<IGC::IgcFeaturesAndWorkaroundsTagOCL> {
+    uint32_t GetMaxOCLParamSize() const override {
+        return this->maxOCLParamSize;
+    };
+
+    uint32_t maxOCLParamSize = 0;
 };
 
 struct MockIgcOclTranslationCtx : MockCIF<IGC::IgcOclTranslationCtxTagOCL> {

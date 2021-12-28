@@ -133,11 +133,20 @@ class MockCompilerInterface : public CompilerInterface {
         }
     }
 
+    CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device) override {
+        if (nullptr != igcFeaturesAndWorkaroundsTagOCL) {
+            return CIF::RAII::RetainAndPack<IGC::IgcFeaturesAndWorkaroundsTagOCL>(igcFeaturesAndWorkaroundsTagOCL);
+        } else {
+            return CompilerInterface::getIgcFeaturesAndWorkarounds(device);
+        }
+    };
+
     static std::vector<char> getDummyGenBinary();
     static void releaseDummyGenBinary();
 
     void (*lockListener)(MockCompilerInterface &compInt) = nullptr;
     void *lockListenerData = nullptr;
+    IGC::IgcFeaturesAndWorkaroundsTagOCL *igcFeaturesAndWorkaroundsTagOCL = nullptr;
     bool failCreateFclTranslationCtx = false;
     bool failCreateIgcTranslationCtx = false;
     bool failLoadFcl = false;

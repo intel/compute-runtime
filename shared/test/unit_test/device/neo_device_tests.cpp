@@ -9,6 +9,8 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
@@ -81,8 +83,19 @@ TEST_F(DeviceTest, whenGetRTDispatchGlobalsIsCalledWithZeroSizeAndMockAllocatorT
 
 using DeviceGetCapsTest = Test<DeviceFixture>;
 
-TEST_F(DeviceGetCapsTest, givenNonZeroMaxParameterSizeFromIGCwhenDeviceIsCreatedThenMaxParameterSizeIsSetCorrectly) {
-    pDevice->maxParameterSizeFromIGC = 1u;
+TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledThenMaxParameterSizeIsSetCorrectly) {
+    auto pCompilerInterface = new MockCompilerInterface;
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+    pDevice->maxParameterSizeFromIGC = 2u;
+    pDevice->callBaseGetMaxParameterSizeFromIGC = true;
+    MockIgcFeaturesAndWorkarounds mockIgcFtrWa;
+    pCompilerInterface->igcFeaturesAndWorkaroundsTagOCL = &mockIgcFtrWa;
+
+    mockIgcFtrWa.maxOCLParamSize = 0u;
     pDevice->initializeCaps();
-    EXPECT_EQ(pDevice->getDeviceInfo().maxParameterSize, 1u);
+    EXPECT_EQ(2048u, pDevice->getDeviceInfo().maxParameterSize);
+
+    mockIgcFtrWa.maxOCLParamSize = 1u;
+    pDevice->initializeCaps();
+    EXPECT_EQ(1u, pDevice->getDeviceInfo().maxParameterSize);
 }

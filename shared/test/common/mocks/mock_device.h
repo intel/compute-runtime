@@ -96,6 +96,9 @@ class MockDevice : public RootDevice {
     }
 
     size_t getMaxParameterSizeFromIGC() const override {
+        if (callBaseGetMaxParameterSizeFromIGC) {
+            return Device::getMaxParameterSizeFromIGC();
+        }
         return maxParameterSizeFromIGC;
     }
 
@@ -180,6 +183,7 @@ class MockDevice : public RootDevice {
     bool isDebuggerActiveParentCall = true;
     bool isDebuggerActiveReturn = false;
     bool rtDispatchGlobalsForceAllocation = false;
+    bool callBaseGetMaxParameterSizeFromIGC = false;
     size_t maxParameterSizeFromIGC = 0u;
 };
 
