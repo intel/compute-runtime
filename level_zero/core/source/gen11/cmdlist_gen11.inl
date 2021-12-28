@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/pipe_control_args.h"
+
+#include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
 namespace L0 {
 

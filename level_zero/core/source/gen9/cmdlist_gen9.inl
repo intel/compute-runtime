@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
 namespace L0 {
-
-template struct CommandListCoreFamily<IGFX_GEN9_CORE>;
-template struct CommandListCoreFamilyImmediate<IGFX_GEN9_CORE>;
-
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t numRanges,
                                                                     const size_t *pRangeSizes,
