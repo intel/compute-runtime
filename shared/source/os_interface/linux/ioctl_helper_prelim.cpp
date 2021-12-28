@@ -20,14 +20,14 @@ namespace NEO {
 
 uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
-    prelim_drm_i915_gem_memory_class_instance data[regionsSize];
+    std::vector<prelim_drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {
-        data[i].memory_class = memClassInstances[i].memoryClass;
-        data[i].memory_instance = memClassInstances[i].memoryInstance;
+        regions[i].memory_class = memClassInstances[i].memoryClass;
+        regions[i].memory_instance = memClassInstances[i].memoryInstance;
     }
     prelim_drm_i915_gem_object_param regionParam{};
     regionParam.size = regionsSize;
-    regionParam.data = reinterpret_cast<uintptr_t>(data);
+    regionParam.data = reinterpret_cast<uintptr_t>(regions.data());
     regionParam.param = PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_MEMORY_REGIONS;
 
     prelim_drm_i915_gem_create_ext_setparam setparamRegion{};
@@ -43,7 +43,7 @@ uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, const std::vector<MemoryCla
 
     if (DebugManager.flags.PrintBOCreateDestroyResult.get()) {
         for (uint32_t i = 0; i < regionsSize; i++) {
-            auto region = reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(data)[i];
+            auto region = regions[i];
             printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
                              region.memory_class, region.memory_instance);
         }

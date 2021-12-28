@@ -26,15 +26,15 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, const std::vector<M
     //fallback to PROD_DG1 kernel
     handle = 0u;
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
-    drm_i915_gem_memory_class_instance data[regionsSize];
+    std::vector<drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (auto i = 0u; i < regionsSize; i++) {
-        data[i].memory_class = memClassInstances[i].memoryClass;
-        data[i].memory_instance = memClassInstances[i].memoryInstance;
+        regions[i].memory_class = memClassInstances[i].memoryClass;
+        regions[i].memory_instance = memClassInstances[i].memoryInstance;
     }
 
     drm_i915_gem_object_param regionParam{};
     regionParam.size = regionsSize;
-    regionParam.data = reinterpret_cast<uintptr_t>(data);
+    regionParam.data = reinterpret_cast<uintptr_t>(regions.data());
     regionParam.param = I915_OBJECT_PARAM | I915_PARAM_MEMORY_REGIONS;
 
     drm_i915_gem_create_ext_setparam setparamRegion{};
