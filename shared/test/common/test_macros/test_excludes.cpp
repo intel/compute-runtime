@@ -16,6 +16,7 @@
 
 using namespace NEO;
 
+PRODUCT_FAMILY productFamily = {};
 GFXCORE_FAMILY renderCoreFamily = {};
 
 static std::unique_ptr<std::map<std::string, std::unordered_set<uint32_t>>> pProductExcludesPerTest;

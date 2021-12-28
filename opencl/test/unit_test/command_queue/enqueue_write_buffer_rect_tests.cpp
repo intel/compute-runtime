@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
@@ -549,10 +550,10 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
     hwInfo->capabilityTable.blitterOperationsSupported = false;
     initializeFixture<FamilyType>();
 
-    if (device->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
-
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);
 
     buffer->forceDisallowCPUCopy = true;

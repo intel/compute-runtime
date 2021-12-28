@@ -15,6 +15,8 @@ namespace NEO {
 
 #ifdef SUPPORT_PVC
 static EnableGfxProductHw<IGFX_PVC> enableGfxProductHwPVC;
+
+#include "shared/source/xe_hpc_core/compiler_hw_info_config_pvc.inl"
 static EnableCompilerHwInfoConfig<IGFX_PVC> enableCompilerHwInfoConfigPVC;
 #endif
 

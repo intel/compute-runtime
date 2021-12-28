@@ -13,8 +13,6 @@
 
 #include "gtest/gtest.h"
 
-PRODUCT_FAMILY productFamily;
-
 TEST(OclocValidate, WhenFileArgIsMissingThenFail) {
     std::map<std::string, std::string> files;
     MockOclocArgHelper argHelper{files};

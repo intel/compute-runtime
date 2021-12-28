@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
@@ -613,7 +614,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
 }
 
 HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
-    if (this->pDevice->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
 
@@ -669,7 +671,8 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
 }
 
 HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
-    if (this->pDevice->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
 

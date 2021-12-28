@@ -72,6 +72,11 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramPipeControlPriorToNonPipel
     EXPECT_FALSE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
 }
 
+using CompilerHwInfoConfigHelperTestsPvc = ::testing::Test;
+PVCTEST_F(CompilerHwInfoConfigHelperTestsPvc, givenPvcWhenIsForceToStatelessRequiredIsCalledThenReturnsTrue) {
+    EXPECT_TRUE(CompilerHwInfoConfig::get(productFamily)->isForceToStatelessRequired());
+}
+
 using PvcHwInfo = ::testing::Test;
 
 PVCTEST_F(PvcHwInfo, givenPvcWhenConfiguringThenDisableCccs) {

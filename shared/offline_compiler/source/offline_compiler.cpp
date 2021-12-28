@@ -771,8 +771,7 @@ void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
 
 void OfflineCompiler::appendExtraInternalOptions(const HardwareInfo &hwInfo, std::string &internalOptions) {
     const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto sharedSystemMemCapabilitiesSupported = (hwInfo.capabilityTable.sharedSystemMemCapabilities > 0);
-    if (sharedSystemMemCapabilitiesSupported && !forceStatelessToStatefulOptimization) {
+    if (compilerHwInfoConfig.isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
     if (compilerHwInfoConfig.isForceEmuInt32DivRemSPRequired()) {

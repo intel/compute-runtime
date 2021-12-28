@@ -66,7 +66,7 @@ bool disabled = false;
 
 using namespace NEO;
 
-PRODUCT_FAMILY productFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
+extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 
 extern std::string lastTest;

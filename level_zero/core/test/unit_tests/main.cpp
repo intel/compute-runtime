@@ -51,7 +51,7 @@ TestEnvironment *environment = nullptr;
 
 using namespace L0::ult;
 
-PRODUCT_FAMILY productFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
+extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 int32_t revId = -1;
 uint32_t euPerSubSlice = 0;

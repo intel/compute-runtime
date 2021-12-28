@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -115,14 +116,17 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
         auto &device = dispatchInfo.begin()->getClDevice();
-        if (!device.areSharedSystemAllocationsAllowed()) {
+        const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(device.getHardwareInfo().platform.eProductFamily);
+
+        if (compilerHwInfoConfig.isForceToStatelessRequired()) {
+            EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+            EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
+        } else {
             EXPECT_FALSE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+
             if (HwHelperHw<FamilyType>::get().isStatelesToStatefullWithOffsetSupported()) {
                 EXPECT_TRUE(kernel->allBufferArgsStateful);
             }
-        } else {
-            EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
-            EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
         }
     }
 };

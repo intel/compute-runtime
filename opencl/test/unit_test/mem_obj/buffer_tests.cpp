@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -1821,7 +1822,8 @@ class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
 };
 
 HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
-    if (ctx.getDevice(0)->areSharedSystemAllocationsAllowed() || !ctx.getDevice(0)->getHardwareInfo().capabilityTable.supportsImages) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !ctx.getDevice(0)->getHardwareInfo().capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
@@ -1857,7 +1859,8 @@ HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteIm
 }
 
 HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteBufferRectThenL3CacheIsOn) {
-    if (ctx.getDevice(0)->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;

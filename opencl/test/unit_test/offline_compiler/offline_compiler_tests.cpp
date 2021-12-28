@@ -12,10 +12,13 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 #include "compiler_options.h"
@@ -1559,6 +1562,54 @@ TEST(OfflineCompilerTest, givenInputOptionsAndOclockOptionsFileWithForceStosOptW
     auto &internalOptions = mockOfflineCompiler->internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
     EXPECT_EQ(std::string::npos, found);
+}
+
+struct OfflineCompilerStatelessToStatefulTests : public ::testing::Test {
+    void SetUp() override {
+        mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+        mockOfflineCompiler->deviceName = gEnvironment->devicePrefix;
+        mockOfflineCompiler->initHardwareInfo(mockOfflineCompiler->deviceName);
+    }
+    void runTest() const {
+        std::pair<bool, bool> testParams[] = {{true, false}, {false, true}};
+
+        for (const auto &[forceStatelessToStatefulOptimization, containsGreaterThan4gbBuffersRequired] : testParams) {
+            auto internalOptions = mockOfflineCompiler->internalOptions;
+            mockOfflineCompiler->forceStatelessToStatefulOptimization = forceStatelessToStatefulOptimization;
+            mockOfflineCompiler->appendExtraInternalOptions(mockOfflineCompiler->hwInfo, internalOptions);
+            auto found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
+
+            if (containsGreaterThan4gbBuffersRequired) {
+                EXPECT_NE(std::string::npos, found);
+            } else {
+                EXPECT_EQ(std::string::npos, found);
+            }
+        }
+    }
+
+    std::unique_ptr<MockOfflineCompiler> mockOfflineCompiler;
+};
+
+TEST_F(OfflineCompilerStatelessToStatefulTests, whenAppendExtraInternalOptionsThenInternalOptionsAreCorrect) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(mockOfflineCompiler->hwInfo.platform.eProductFamily);
+    if (!compilerHwInfoConfig.isForceToStatelessRequired()) {
+        GTEST_SKIP();
+    }
+    runTest();
+}
+
+template <PRODUCT_FAMILY productFamily>
+class MockCompilerHwInfoConfigHw : public CompilerHwInfoConfigHw<productFamily> {
+  public:
+    bool isForceToStatelessRequired() const override {
+        return true;
+    }
+};
+
+HWTEST2_F(OfflineCompilerStatelessToStatefulTests, givenMockWhenAppendExtraInternalOptionsThenInternalOptionsAreCorrect, MatchAny) {
+    MockCompilerHwInfoConfigHw<productFamily> mockCompilerHwInfoConfig;
+    VariableBackup<CompilerHwInfoConfig *> backupMockHwInfoConfig(&CompilerHwInfoConfigFactory[productFamily], &mockCompilerHwInfoConfig);
+    runTest();
 }
 
 TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadOptionsFromFileReturnsFalse) {

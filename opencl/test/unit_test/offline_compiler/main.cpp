@@ -20,6 +20,7 @@ const char *fSeparator = "/";
 #endif
 
 Environment *gEnvironment;
+extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 
 std::string getRunPath() {
@@ -94,6 +95,7 @@ int main(int argc, char **argv) {
         if (NEO::hardwarePrefix[productId] && (0 == strcmp(devicePrefix.c_str(), NEO::hardwarePrefix[productId]))) {
             if (NEO::hardwareInfoTable[productId]) {
                 renderCoreFamily = NEO::hardwareInfoTable[productId]->platform.eRenderCoreFamily;
+                productFamily = NEO::hardwareInfoTable[productId]->platform.eProductFamily;
                 break;
             }
         }
