@@ -72,7 +72,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // supportsVme
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages
-    false,                                           // supportsDeviceEnqueue
+    true,                                            // supportsDeviceEnqueue
     true,                                            // supportsPipes
     true,                                            // supportsOcl21Features
     false,                                           // supportsOnDemandPageFaults
