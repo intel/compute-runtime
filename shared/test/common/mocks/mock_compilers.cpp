@@ -465,7 +465,7 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
 MockIgcOclDeviceCtx::MockIgcOclDeviceCtx() {
     platform = new MockCIFPlatform;
     gtSystemInfo = new MockGTSystemInfo;
-    igcFeWa = new MockIgcFeaturesAndWorkarounds;
+    igcFtrWa = new MockIgcFeaturesAndWorkarounds;
 }
 
 MockIgcOclDeviceCtx::~MockIgcOclDeviceCtx() {
@@ -475,8 +475,8 @@ MockIgcOclDeviceCtx::~MockIgcOclDeviceCtx() {
     if (gtSystemInfo != nullptr) {
         gtSystemInfo->Release();
     }
-    if (igcFeWa != nullptr) {
-        igcFeWa->Release();
+    if (igcFtrWa != nullptr) {
+        igcFtrWa->Release();
     }
 }
 

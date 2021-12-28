@@ -594,47 +594,47 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     this->igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(hwInfo.capabilityTable.defaultProfilingTimerResolution));
     auto igcPlatform = this->igcDeviceCtx->GetPlatformHandle();
     auto igcGtSystemInfo = this->igcDeviceCtx->GetGTSystemInfoHandle();
-    auto igcFeWa = this->igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
-    if ((igcPlatform == nullptr) || (igcGtSystemInfo == nullptr) || (igcFeWa == nullptr)) {
+    auto igcFtrWa = this->igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
+    if ((igcPlatform == nullptr) || (igcGtSystemInfo == nullptr) || (igcFtrWa == nullptr)) {
         return OUT_OF_HOST_MEMORY;
     }
     IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo.platform);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
     // populate with features
 
-    igcFeWa.get()->SetFtrDesktop(hwInfo.featureTable.flags.ftrDesktop);
-    igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.flags.ftrChannelSwizzlingXOREnabled);
+    igcFtrWa.get()->SetFtrDesktop(hwInfo.featureTable.flags.ftrDesktop);
+    igcFtrWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.flags.ftrChannelSwizzlingXOREnabled);
 
-    igcFeWa.get()->SetFtrGtBigDie(hwInfo.featureTable.flags.ftrGtBigDie);
-    igcFeWa.get()->SetFtrGtMediumDie(hwInfo.featureTable.flags.ftrGtMediumDie);
-    igcFeWa.get()->SetFtrGtSmallDie(hwInfo.featureTable.flags.ftrGtSmallDie);
+    igcFtrWa.get()->SetFtrGtBigDie(hwInfo.featureTable.flags.ftrGtBigDie);
+    igcFtrWa.get()->SetFtrGtMediumDie(hwInfo.featureTable.flags.ftrGtMediumDie);
+    igcFtrWa.get()->SetFtrGtSmallDie(hwInfo.featureTable.flags.ftrGtSmallDie);
 
-    igcFeWa.get()->SetFtrGT1(hwInfo.featureTable.flags.ftrGT1);
-    igcFeWa.get()->SetFtrGT1_5(hwInfo.featureTable.flags.ftrGT1_5);
-    igcFeWa.get()->SetFtrGT2(hwInfo.featureTable.flags.ftrGT2);
-    igcFeWa.get()->SetFtrGT3(hwInfo.featureTable.flags.ftrGT3);
-    igcFeWa.get()->SetFtrGT4(hwInfo.featureTable.flags.ftrGT4);
+    igcFtrWa.get()->SetFtrGT1(hwInfo.featureTable.flags.ftrGT1);
+    igcFtrWa.get()->SetFtrGT1_5(hwInfo.featureTable.flags.ftrGT1_5);
+    igcFtrWa.get()->SetFtrGT2(hwInfo.featureTable.flags.ftrGT2);
+    igcFtrWa.get()->SetFtrGT3(hwInfo.featureTable.flags.ftrGT3);
+    igcFtrWa.get()->SetFtrGT4(hwInfo.featureTable.flags.ftrGT4);
 
-    igcFeWa.get()->SetFtrIVBM0M1Platform(hwInfo.featureTable.flags.ftrIVBM0M1Platform);
-    igcFeWa.get()->SetFtrGTL(hwInfo.featureTable.flags.ftrGT1);
-    igcFeWa.get()->SetFtrGTM(hwInfo.featureTable.flags.ftrGT2);
-    igcFeWa.get()->SetFtrGTH(hwInfo.featureTable.flags.ftrGT3);
+    igcFtrWa.get()->SetFtrIVBM0M1Platform(hwInfo.featureTable.flags.ftrIVBM0M1Platform);
+    igcFtrWa.get()->SetFtrGTL(hwInfo.featureTable.flags.ftrGT1);
+    igcFtrWa.get()->SetFtrGTM(hwInfo.featureTable.flags.ftrGT2);
+    igcFtrWa.get()->SetFtrGTH(hwInfo.featureTable.flags.ftrGT3);
 
-    igcFeWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo.featureTable.flags.ftrSGTPVSKUStrapPresent);
-    igcFeWa.get()->SetFtrGTA(hwInfo.featureTable.flags.ftrGTA);
-    igcFeWa.get()->SetFtrGTC(hwInfo.featureTable.flags.ftrGTC);
-    igcFeWa.get()->SetFtrGTX(hwInfo.featureTable.flags.ftrGTX);
-    igcFeWa.get()->SetFtr5Slice(hwInfo.featureTable.flags.ftr5Slice);
+    igcFtrWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo.featureTable.flags.ftrSGTPVSKUStrapPresent);
+    igcFtrWa.get()->SetFtrGTA(hwInfo.featureTable.flags.ftrGTA);
+    igcFtrWa.get()->SetFtrGTC(hwInfo.featureTable.flags.ftrGTC);
+    igcFtrWa.get()->SetFtrGTX(hwInfo.featureTable.flags.ftrGTX);
+    igcFtrWa.get()->SetFtr5Slice(hwInfo.featureTable.flags.ftr5Slice);
 
     auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (compilerHwInfoConfig) {
-        igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
+        igcFtrWa.get()->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
     }
-    igcFeWa.get()->SetFtrIoMmuPageFaulting(hwInfo.featureTable.flags.ftrIoMmuPageFaulting);
-    igcFeWa.get()->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
-    igcFeWa.get()->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
+    igcFtrWa.get()->SetFtrIoMmuPageFaulting(hwInfo.featureTable.flags.ftrIoMmuPageFaulting);
+    igcFtrWa.get()->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
+    igcFtrWa.get()->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
 
-    igcFeWa.get()->SetFtrResourceStreamer(hwInfo.featureTable.flags.ftrResourceStreamer);
+    igcFtrWa.get()->SetFtrResourceStreamer(hwInfo.featureTable.flags.ftrResourceStreamer);
 
     return retVal;
 }

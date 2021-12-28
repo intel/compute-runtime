@@ -209,7 +209,7 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtxTagOCL> {
         if (getIgcDebugVars().failCreateIgcFeWaInterface) {
             return nullptr;
         }
-        return igcFeWa;
+        return igcFtrWa;
     }
 
     IGC::IgcOclTranslationCtxBase *CreateTranslationCtxImpl(CIF::Version_t ver,
@@ -227,7 +227,7 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtxTagOCL> {
 
     MockCIFPlatform *platform = nullptr;
     MockGTSystemInfo *gtSystemInfo = nullptr;
-    MockIgcFeaturesAndWorkarounds *igcFeWa = nullptr;
+    MockIgcFeaturesAndWorkarounds *igcFtrWa = nullptr;
     MockCompilerDebugVars debugVars;
 
     using TranslationOpT = std::pair<IGC::CodeType::CodeType_t, IGC::CodeType::CodeType_t>;
