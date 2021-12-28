@@ -930,4 +930,18 @@ void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isDir
     }
 }
 
+std::vector<uint8_t> Drm::getMemoryRegions() {
+    return this->query(IoctlHelper::get(this)->getMemRegionsIoctlVal(), DrmQueryItemFlags::empty);
+}
+
+bool Drm::queryMemoryInfo() {
+    auto dataQuery = getMemoryRegions();
+    if (!dataQuery.empty()) {
+        auto memRegions = IoctlHelper::get(this)->translateToMemoryRegions(dataQuery);
+        this->memoryInfo.reset(new MemoryInfo(memRegions));
+        return true;
+    }
+    return false;
+}
+
 } // namespace NEO

@@ -181,4 +181,8 @@ uint32_t IoctlHelperPrelim20::getDirectSubmissionFlag() {
     return PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS;
 }
 
+int32_t IoctlHelperPrelim20::getMemRegionsIoctlVal() {
+    return PRELIM_DRM_I915_QUERY_MEMORY_REGIONS;
+}
+
 } // namespace NEO

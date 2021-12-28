@@ -116,3 +116,11 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenDirectSubmissionEnabledThenNoFla
     drm->appendDrmContextFlags(ctx, false);
     EXPECT_EQ(0u, ctx.flags);
 }
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetMemRegionsIoctlValThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    EXPECT_EQ(DRM_I915_QUERY_MEMORY_REGIONS, IoctlHelper::get(drm.get())->getMemRegionsIoctlVal());
+}

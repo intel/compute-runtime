@@ -97,4 +97,8 @@ uint32_t IoctlHelperUpstream::getDirectSubmissionFlag() {
     return 0u;
 }
 
+int32_t IoctlHelperUpstream::getMemRegionsIoctlVal() {
+    return DRM_I915_QUERY_MEMORY_REGIONS;
+}
+
 } // namespace NEO

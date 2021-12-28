@@ -49,6 +49,7 @@ class IoctlHelper {
     virtual uint32_t getPreferredLocationAdvise() = 0;
     virtual bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
+    virtual int32_t getMemRegionsIoctlVal() = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -65,6 +66,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t getPreferredLocationAdvise() override;
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     uint32_t getDirectSubmissionFlag() override;
+    int32_t getMemRegionsIoctlVal() override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -92,6 +94,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t getPreferredLocationAdvise() override;
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     uint32_t getDirectSubmissionFlag() override;
+    int32_t getMemRegionsIoctlVal() override;
 };
 
 } // namespace NEO

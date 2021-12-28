@@ -298,3 +298,12 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenAppendDrmContextFlagsThenCorrectFla
     drm->appendDrmContextFlags(ctx, false);
     EXPECT_EQ(ioctlVal, ctx.flags);
 }
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenGetMemRegionsIoctlValThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    int32_t ioctlVal = (1 << 16) | 4;
+    EXPECT_EQ(ioctlVal, IoctlHelper::get(drm.get())->getMemRegionsIoctlVal());
+}

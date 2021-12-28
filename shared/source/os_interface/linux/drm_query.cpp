@@ -42,20 +42,6 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     return true;
 }
 
-std::vector<uint8_t> Drm::getMemoryRegions() {
-    return {};
-}
-
-bool Drm::queryMemoryInfo() {
-    auto dataQuery = this->query(DRM_I915_QUERY_MEMORY_REGIONS, DrmQueryItemFlags::empty);
-    if (!dataQuery.empty()) {
-        auto memRegions = IoctlHelper::get(this)->translateToMemoryRegions(dataQuery);
-        this->memoryInfo.reset(new MemoryInfo(memRegions));
-        return true;
-    }
-    return false;
-}
-
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
     return DrmEngineMapper::engineNodeMap(engineType);
 }
