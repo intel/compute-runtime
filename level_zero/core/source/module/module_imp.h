@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ struct ModuleTranslationUnit {
     std::vector<uint8_t> generateElfFromSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes);
     bool processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize);
     std::string generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions);
-    bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink);
+    MOCKABLE_VIRTUAL bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink);
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();
     L0::Device *device = nullptr;
@@ -141,6 +141,7 @@ struct ModuleImp : public Module {
     NEO::Debug::Segments getZebinSegments();
     void passDebugData();
     void createDebugZebin();
+    void registerElfInDebuggerL0(NEO::Device *neoDevice);
 
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};

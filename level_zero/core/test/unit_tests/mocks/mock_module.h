@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,14 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 
     bool processUnpackedBinary() override {
         return true;
+    }
+
+    bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
+        if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
+            return true;
+        } else {
+            return ModuleTranslationUnit::compileGenBinary(inputArgs, staticLink);
+        }
     }
 };
 

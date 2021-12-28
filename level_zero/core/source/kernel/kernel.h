@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,10 +71,10 @@ struct KernelImmutableData {
         return isaCopiedToAllocation;
     }
 
-  protected:
     MOCKABLE_VIRTUAL void createRelocatedDebugData(NEO::GraphicsAllocation *globalConstBuffer,
                                                    NEO::GraphicsAllocation *globalVarBuffer);
 
+  protected:
     Device *device = nullptr;
     NEO::KernelInfo *kernelInfo = nullptr;
     NEO::KernelDescriptor *kernelDescriptor = nullptr;

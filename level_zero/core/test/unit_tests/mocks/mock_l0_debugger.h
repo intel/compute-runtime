@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,9 +41,15 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
         L0::DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(cmdStream, sba);
     }
 
+    void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) override {
+        registerElfCount++;
+        L0::DebuggerL0Hw<GfxFamily>::registerElf(debugData, isaAllocation);
+    }
+
     uint32_t captureStateBaseAddressCount = 0;
     uint32_t programSbaTrackingCommandsCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
+    uint32_t registerElfCount = 0;
 };
 
 template <uint32_t productFamily, typename GfxFamily>

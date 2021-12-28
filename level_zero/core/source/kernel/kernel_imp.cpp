@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,13 +135,6 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     UNRECOVERABLE_IF(allocation == nullptr);
 
     isaGraphicsAllocation.reset(allocation);
-
-    if (neoDevice->getDebugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
-        createRelocatedDebugData(globalConstBuffer, globalVarBuffer);
-        if (device->getL0Debugger()) {
-            device->getL0Debugger()->registerElf(kernelInfo->kernelDescriptor.external.debugData.get(), allocation);
-        }
-    }
 
     this->crossThreadDataSize = this->kernelDescriptor->kernelAttributes.crossThreadDataSize;
 

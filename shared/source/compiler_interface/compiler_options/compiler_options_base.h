@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ static constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-
 static constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
 static constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
 static constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
-static constexpr ConstStringRef allowZebin = "-allow-zebin";
+static constexpr ConstStringRef allowZebin = "-cl-intel-allow-zebin";
 static constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
 static constexpr ConstStringRef optLevel = "-ze-opt-level=O";
 static constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";

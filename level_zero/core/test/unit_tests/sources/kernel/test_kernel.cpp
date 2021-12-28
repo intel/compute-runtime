@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1457,57 +1457,6 @@ TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuff
     auto &resCont = kernelImmutableData.getResidencyContainer();
     EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalVarBuffer));
     EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBuffer));
-}
-
-TEST_F(KernelIsaTests, givenDebugONAndKernelDegugInfoWhenInitializingImmutableDataThenRegisterElf) {
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
-    auto debugData = new DebugData;
-    kernelInfo.kernelDescriptor.external.debugData.reset(debugData);
-    class MockDebugger : public DebuggerL0 {
-      public:
-        MockDebugger(NEO::Device *neodev) : DebuggerL0(neodev) {
-        }
-        void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) override {
-            debugData->vIsaSize = 123;
-        };
-        size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override { return static_cast<size_t>(0); };
-        void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override{};
-    };
-    MockDebugger *debugger = new MockDebugger(neoDevice);
-
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(static_cast<NEO::Debugger *>(debugger));
-    KernelImmutableData kernelImmutableData(device);
-
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-    EXPECT_EQ(kernelInfo.kernelDescriptor.external.debugData->vIsaSize, static_cast<uint32_t>(123));
-}
-
-TEST_F(KernelIsaTests, givenDebugONAndNoKernelDegugInfoWhenInitializingImmutableDataThenDoNotRegisterElf) {
-    uint32_t kernelHeap = 0;
-    KernelInfo kernelInfo;
-    kernelInfo.heapInfo.KernelHeapSize = 1;
-    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
-    kernelInfo.kernelDescriptor.external.debugData.reset(nullptr);
-    class MockDebugger : public DebuggerL0 {
-      public:
-        MockDebugger(NEO::Device *neodev) : DebuggerL0(neodev) {
-        }
-        void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) override {
-            debugData->vIsaSize = 123;
-        };
-        size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override { return static_cast<size_t>(0); };
-        void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override{};
-    };
-    MockDebugger *debugger = new MockDebugger(neoDevice);
-
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(static_cast<NEO::Debugger *>(debugger));
-    KernelImmutableData kernelImmutableData(device);
-
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-    EXPECT_EQ(kernelInfo.kernelDescriptor.external.debugData, nullptr);
 }
 
 using KernelImpPatchBindlessTest = Test<ModuleFixture>;

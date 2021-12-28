@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -550,6 +550,8 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
                                   this->type == ModuleType::Builtin);
         kernelImmDatas.push_back(std::move(kernelImmData));
     }
+
+    registerElfInDebuggerL0(neoDevice);
     this->maxGroupSize = static_cast<uint32_t>(this->translationUnit->device->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
 
     checkIfPrivateMemoryPerDispatchIsNeeded();
@@ -997,6 +999,33 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         moduleId->isFullyLinked = true;
     }
     return ZE_RESULT_SUCCESS;
+}
+
+void ModuleImp::registerElfInDebuggerL0(NEO::Device *neoDevice) {
+    if (neoDevice->getDebugger() == nullptr) {
+        return;
+    }
+
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+        size_t debugDataSize = 0;
+        getDebugInfo(&debugDataSize, nullptr);
+        if (device->getL0Debugger()) {
+            NEO::DebugData debugData; // pass debug zebin in vIsa field
+            debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
+            debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
+            device->getL0Debugger()->registerElf(&debugData, kernelImmDatas[0]->getIsaGraphicsAllocation());
+        }
+    } else {
+        for (auto &kernImmData : kernelImmDatas) {
+            if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
+                kernImmData->createRelocatedDebugData(translationUnit->globalConstBuffer, translationUnit->globalVarBuffer);
+                if (device->getL0Debugger()) {
+                    device->getL0Debugger()->registerElf(kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get(), kernImmData->getIsaGraphicsAllocation());
+                }
+            }
+        }
+    }
 }
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName) {
