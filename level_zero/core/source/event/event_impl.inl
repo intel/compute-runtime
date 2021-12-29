@@ -58,6 +58,9 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
 
     for (uint32_t i = 0; i < kernelCount; i++) {
         for (auto packetId = 0u; packetId < kernelEventCompletionData[i].getPacketsUsed(); packetId++) {
+            if (this->l3FlushWaApplied && ((packetId % 2) != 0)) {
+                continue;
+            }
             if (globalStartTS > kernelEventCompletionData[i].getGlobalStartValue(packetId)) {
                 globalStartTS = kernelEventCompletionData[i].getGlobalStartValue(packetId);
             }

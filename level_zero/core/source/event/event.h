@@ -96,6 +96,7 @@ struct Event : _ze_event_handle_t {
     MetricStreamer *metricStreamer = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
     void *hostAddress = nullptr;
+    bool l3FlushWaApplied = false;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;

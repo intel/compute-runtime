@@ -105,6 +105,8 @@ void programEventL3Flush(ze_event_handle_t hEvent,
         event->setPacketsInUse(event->getPacketsInUse() + 1);
     }
 
+    event->l3FlushWaApplied = true;
+
     auto &cmdListStream = *commandContainer.getCommandStream();
     NEO::PipeControlArgs args;
     args.dcFlushEnable = true;

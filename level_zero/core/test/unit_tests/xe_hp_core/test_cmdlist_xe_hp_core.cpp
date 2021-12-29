@@ -284,6 +284,123 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventAndWithoutWa
     ASSERT_EQ(cmdList.end(), itorLri);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWithoutWalkerPartitionThenEventL3FlushWaSet, IsXeHpCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    kernel.setGroupSize(1, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(true, event->l3FlushWaApplied);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventZeroScopeWithoutWalkerPartitionThenEventL3FlushWaNotSet, IsXeHpCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    kernel.setGroupSize(1, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(false, event->l3FlushWaApplied);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWithoutWalkerPartitionThenSkipOddPacketsDuringQuery, IsXeHpCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
+      public:
+        using typename TimestampPackets<uint32_t>::Packet;
+    };
+
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    kernel.setGroupSize(1, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(true, event->l3FlushWaApplied);
+    EXPECT_EQ(2u, event->getPacketsInUse());
+
+    typename MockTimestampPackets32::Packet data[3] = {};
+    data[0].contextStart = 3u;
+    data[0].contextEnd = 4u;
+    data[0].globalStart = 5u;
+    data[0].globalEnd = 6u;
+    data[1].contextStart = 2u;
+    data[1].contextEnd = 6u;
+    data[1].globalStart = 4u;
+    data[1].globalEnd = 8u;
+    event->hostAddress = &data;
+
+    ze_kernel_timestamp_result_t tsResult = {};
+
+    event->queryKernelTimestamp(&tsResult);
+    EXPECT_EQ(data[0].contextStart, tsResult.context.kernelStart);
+    EXPECT_EQ(data[0].contextEnd, tsResult.context.kernelEnd);
+    EXPECT_EQ(data[0].globalStart, tsResult.global.kernelStart);
+    EXPECT_EQ(data[0].globalEnd, tsResult.global.kernelEnd);
+}
+
 HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAddedToBatchBuffer, IsXeHpCore) {
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
