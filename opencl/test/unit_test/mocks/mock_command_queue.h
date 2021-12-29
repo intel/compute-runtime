@@ -20,6 +20,7 @@ class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::bcsEngines;
     using CommandQueue::bcsEngineTypes;
+    using CommandQueue::bcsTimestampPacketContainers;
     using CommandQueue::blitEnqueueAllowed;
     using CommandQueue::blitEnqueueImageAllowed;
     using CommandQueue::bufferCpuCopyAllowed;

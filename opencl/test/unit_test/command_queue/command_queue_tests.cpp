@@ -1849,6 +1849,204 @@ TEST(CommandQueue, givenSupportForOutEventAndOutEventIsPassedWhenValidatingSuppo
     EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, 0, nullptr, &outEvent));
 }
 
+struct CommandQueueWithTimestampPacketTests : ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.EnableTimestampPacket.set(1);
+    }
+
+    DebugManagerStateRestore restore{};
+};
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenInOrderQueueWhenSetupBarrierTimestampForBcsEnginesCalledThenEnsureBarrierNodeIsPresent) {
+    MockContext context{};
+    MockCommandQueue queue{context};
+    TimestampPacketDependencies dependencies{};
+    for (auto &containers : queue.bcsTimestampPacketContainers) {
+        EXPECT_TRUE(containers.lastBarrierToWaitFor.peekNodes().empty());
+    }
+
+    // No pending barrier, skip
+    queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_RCS, dependencies);
+    EXPECT_EQ(0u, dependencies.barrierNodes.peekNodes().size());
+
+    // Add barrier node
+    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_RCS, dependencies);
+    EXPECT_EQ(1u, dependencies.barrierNodes.peekNodes().size());
+    auto node1 = dependencies.barrierNodes.peekNodes()[0];
+
+    // Do not add new node, if it exists
+    queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_RCS, dependencies);
+    EXPECT_EQ(1u, dependencies.barrierNodes.peekNodes().size());
+    auto node2 = dependencies.barrierNodes.peekNodes()[0];
+    EXPECT_EQ(node2, node1);
+
+    for (auto &containers : queue.bcsTimestampPacketContainers) {
+        EXPECT_TRUE(containers.lastBarrierToWaitFor.peekNodes().empty());
+    }
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSetupBarrierTimestampForBcsEnginesCalledOnBcsEngineThenEnsureBarrierNodeIsPresentAndSaveItForOtherBcses) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    MockContext context{};
+    MockCommandQueue queue{&context, context.getDevice(0), props, false};
+    TimestampPacketDependencies dependencies{};
+    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    for (auto &containers : queue.bcsTimestampPacketContainers) {
+        EXPECT_TRUE(containers.lastBarrierToWaitFor.peekNodes().empty());
+    }
+
+    queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_BCS, dependencies);
+    EXPECT_EQ(1u, dependencies.barrierNodes.peekNodes().size());
+    auto barrierNode = dependencies.barrierNodes.peekNodes()[0];
+
+    for (auto currentBcsIndex = 0u; currentBcsIndex < queue.bcsTimestampPacketContainers.size(); currentBcsIndex++) {
+        auto &containers = queue.bcsTimestampPacketContainers[currentBcsIndex];
+        if (currentBcsIndex == 0) {
+            EXPECT_EQ(0u, containers.lastBarrierToWaitFor.peekNodes().size());
+        } else {
+            EXPECT_EQ(1u, containers.lastBarrierToWaitFor.peekNodes().size());
+            EXPECT_EQ(barrierNode, containers.lastBarrierToWaitFor.peekNodes()[0]);
+        }
+    }
+    EXPECT_EQ(queue.bcsTimestampPacketContainers.size(), barrierNode->refCountFetchSub(0));
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSetupBarrierTimestampForBcsEnginesCalledOnNonBcsEngineThenEnsureBarrierNodeIsPresentAndSaveItForBcses) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    MockContext context{};
+    MockCommandQueue queue{&context, context.getDevice(0), props, false};
+    TimestampPacketDependencies dependencies{};
+    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    for (auto &containers : queue.bcsTimestampPacketContainers) {
+        EXPECT_TRUE(containers.lastBarrierToWaitFor.peekNodes().empty());
+    }
+
+    for (auto engineType : {aub_stream::EngineType::ENGINE_RCS,
+                            aub_stream::EngineType::ENGINE_CCS}) {
+        queue.setupBarrierTimestampForBcsEngines(engineType, dependencies);
+        EXPECT_EQ(1u, dependencies.barrierNodes.peekNodes().size());
+        auto barrierNode = dependencies.barrierNodes.peekNodes()[0];
+
+        for (auto &containers : queue.bcsTimestampPacketContainers) {
+            EXPECT_EQ(1u, containers.lastBarrierToWaitFor.peekNodes().size());
+            EXPECT_EQ(barrierNode, containers.lastBarrierToWaitFor.peekNodes()[0]);
+        }
+        EXPECT_EQ(1u + queue.bcsTimestampPacketContainers.size(), barrierNode->refCountFetchSub(0));
+    }
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenSavedBarrierWhenProcessBarrierTimestampForBcsEngineCalledThenMoveSaveBarrierPacketToBarrierNodes) {
+    MockContext context{};
+    MockCommandQueue queue{context};
+    TimestampPacketDependencies dependencies{};
+
+    // No saved barriers
+    queue.processBarrierTimestampForBcsEngine(aub_stream::EngineType::ENGINE_BCS, dependencies);
+    EXPECT_TRUE(dependencies.barrierNodes.peekNodes().empty());
+
+    // Save barrier
+    TagNodeBase *node = queue.getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag();
+    queue.bcsTimestampPacketContainers[0].lastBarrierToWaitFor.add(node);
+    queue.processBarrierTimestampForBcsEngine(aub_stream::EngineType::ENGINE_BCS, dependencies);
+    EXPECT_EQ(1u, dependencies.barrierNodes.peekNodes().size());
+    EXPECT_EQ(node, dependencies.barrierNodes.peekNodes()[0]);
+    EXPECT_TRUE(queue.bcsTimestampPacketContainers[0].lastBarrierToWaitFor.peekNodes().empty());
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenBarrierTimestampAreSetupOnComputeEngineAndProcessedOnBcsThenPacketIsInBarrierNodes) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    MockContext context{};
+    MockCommandQueue queue{&context, context.getDevice(0), props, false};
+    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+
+    for (auto engineType : {aub_stream::EngineType::ENGINE_RCS,
+                            aub_stream::EngineType::ENGINE_CCS}) {
+        TimestampPacketDependencies dependencies{};
+        queue.setupBarrierTimestampForBcsEngines(engineType, dependencies);
+
+        TimestampPacketDependencies blitDependencies{};
+        queue.processBarrierTimestampForBcsEngine(aub_stream::EngineType::ENGINE_BCS, blitDependencies);
+        EXPECT_EQ(1u, blitDependencies.barrierNodes.peekNodes().size());
+    }
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenBarrierTimestampAreSetupOnBcsEngineAndProcessedOnBcsThenPacketIsInBarrierNodes) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    MockContext context{};
+    MockCommandQueue queue{&context, context.getDevice(0), props, false};
+    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+
+    TimestampPacketDependencies dependencies{};
+    queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_BCS, dependencies);
+    queue.processBarrierTimestampForBcsEngine(aub_stream::EngineType::ENGINE_BCS, dependencies);
+    EXPECT_EQ(1u, dependencies.barrierNodes.peekNodes().size());
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenInOrderQueueWhenSettingLastBcsPacketThenDoNotSaveThePacket) {
+    MockContext context{};
+    MockCommandQueue queue{context};
+
+    queue.setLastBcsPacket(aub_stream::EngineType::ENGINE_BCS);
+    EXPECT_TRUE(queue.bcsTimestampPacketContainers[0].lastSignalledPacket.peekNodes().empty());
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSettingLastBcsPacketThenSaveOnlyOneLastPacket) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    MockContext context{};
+    MockCommandQueue queue{&context, context.getDevice(0), props, false};
+
+    queue.timestampPacketContainer->add(queue.getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+    queue.setLastBcsPacket(aub_stream::EngineType::ENGINE_BCS);
+    EXPECT_EQ(queue.timestampPacketContainer->peekNodes(), queue.bcsTimestampPacketContainers[0].lastSignalledPacket.peekNodes());
+    EXPECT_EQ(1u, queue.timestampPacketContainer->peekNodes().size());
+
+    queue.timestampPacketContainer->moveNodesToNewContainer(*queue.getDeferredTimestampPackets());
+
+    queue.timestampPacketContainer->add(queue.getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+    queue.setLastBcsPacket(aub_stream::EngineType::ENGINE_BCS);
+    EXPECT_EQ(queue.timestampPacketContainer->peekNodes(), queue.bcsTimestampPacketContainers[0].lastSignalledPacket.peekNodes());
+    EXPECT_EQ(1u, queue.timestampPacketContainer->peekNodes().size());
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenLastSignalledPacketWhenFillingCsrDependenciesThenMovePacketToCsrDependencies) {
+    MockContext context{};
+    MockCommandQueue queue{context};
+    queue.bcsTimestampPacketContainers[0].lastSignalledPacket.add(queue.getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+
+    CsrDependencies csrDeps;
+    queue.fillCsrDependenciesWithLastBcsPackets(csrDeps);
+    EXPECT_EQ(1u, queue.bcsTimestampPacketContainers[0].lastSignalledPacket.peekNodes().size());
+    EXPECT_EQ(&queue.bcsTimestampPacketContainers[0].lastSignalledPacket, csrDeps.timestampPacketContainer[0]);
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenLastSignalledPacketWhenClearingPacketsThenClearThePacket) {
+    MockContext context{};
+    MockCommandQueue queue{context};
+    queue.bcsTimestampPacketContainers[0].lastSignalledPacket.add(queue.getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+
+    queue.clearLastBcsPackets();
+    EXPECT_EQ(0u, queue.bcsTimestampPacketContainers[0].lastBarrierToWaitFor.peekNodes().size());
+}
+
+TEST_F(CommandQueueWithTimestampPacketTests, givenQueueWhenSettingAndQueryingLastBcsPacketThenReturnCorrectResults) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    MockContext context{};
+    MockCommandQueue queue{&context, context.getDevice(0), props, false};
+    queue.timestampPacketContainer->add(queue.getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+
+    queue.setLastBcsPacket(aub_stream::EngineType::ENGINE_BCS);
+
+    CsrDependencies csrDeps;
+    queue.fillCsrDependenciesWithLastBcsPackets(csrDeps);
+    EXPECT_FALSE(csrDeps.timestampPacketContainer.empty());
+
+    queue.clearLastBcsPackets();
+    for (auto &containers : queue.bcsTimestampPacketContainers) {
+        EXPECT_TRUE(containers.lastSignalledPacket.peekNodes().empty());
+    }
+}
+
 using KernelExecutionTypesTests = DispatchFlagsTests;
 HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
     using CsrType = MockCsrHw2<FamilyType>;
