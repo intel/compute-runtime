@@ -28,6 +28,7 @@ struct XE_HPG_CORE {
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
 
     static constexpr bool isUsingL3Control = true;
+    static constexpr bool isUsingMediaSamplerDopClockGate = false;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

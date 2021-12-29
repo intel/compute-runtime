@@ -44,7 +44,7 @@ void PreambleHelper<Family>::appendProgramPipelineSelect(void *cmd, bool isSpeci
     command->setMaskBits(mask);
 }
 
-template <>
+template <typename Family>
 void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
                                                    const PipelineSelectArgs &pipelineSelectArgs,
                                                    const HardwareInfo &hwInfo) {
@@ -68,8 +68,12 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits;
 
-    cmd.setMaskBits(mask);
     cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+    if constexpr (Family::isUsingMediaSamplerDopClockGate) {
+        mask |= pipelineSelectMediaSamplerDopClockGateMaskBits;
+        cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
+    }
+    cmd.setMaskBits(mask);
 
     appendProgramPipelineSelect(&cmd, pipelineSelectArgs.specialPipelineSelectMode, hwInfo);
 

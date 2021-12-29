@@ -125,3 +125,15 @@ XEHPTEST_F(XeHPPipelineSelect, WhenAppendProgramPipelineSelectThenCorrectValuesS
     EXPECT_FALSE(cmd.getSystolicModeEnable());
     EXPECT_EQ(pipelineSelectSystolicModeEnableMaskBits, cmd.getMaskBits());
 }
+
+XEHPTEST_F(XeHPPipelineSelect, WhenProgramPipelineSelectThenProgramMediaSamplerDopClockGateEnable) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
+    LinearStream pipelineSelectStream(&cmd, sizeof(cmd));
+    PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, {}, *defaultHwInfo);
+
+    auto expectedSubMask = pipelineSelectMediaSamplerDopClockGateMaskBits;
+
+    EXPECT_TRUE(cmd.getMediaSamplerDopClockGateEnable());
+    EXPECT_EQ(expectedSubMask, (cmd.getMaskBits() & expectedSubMask));
+}

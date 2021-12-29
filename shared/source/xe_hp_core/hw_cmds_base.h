@@ -28,6 +28,7 @@ struct XeHpCore {
     static constexpr uint32_t stateComputeModeForceDisableSupportMultiGpuAtomics = (1u << 1);
 
     static constexpr bool isUsingL3Control = true;
+    static constexpr bool isUsingMediaSamplerDopClockGate = true;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

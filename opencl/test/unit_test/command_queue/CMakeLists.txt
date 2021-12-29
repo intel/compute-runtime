@@ -96,7 +96,6 @@ set(IGDRCL_SRCS_tests_command_queue
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_command_queue
        ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_xehp_and_later.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_resource_barier_tests_xehp_and_later.cpp
   )
 endif()

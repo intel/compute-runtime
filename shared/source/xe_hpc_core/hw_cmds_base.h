@@ -34,6 +34,7 @@ struct XE_HPC_CORE {
     static constexpr uint32_t pvcXtTemporaryDeviceId = 0x0BE5;
 
     static constexpr bool isUsingL3Control = false;
+    static constexpr bool isUsingMediaSamplerDopClockGate = false;
 
     static bool isXlA0(const HardwareInfo &hwInfo) {
         auto revId = hwInfo.platform.usRevId & pvcSteppingBits;
