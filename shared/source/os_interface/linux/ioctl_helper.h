@@ -25,10 +25,21 @@ struct MemoryClassInstance {
     uint16_t memoryInstance;
 };
 
+struct EngineClassInstance {
+    uint16_t engineClass;
+    uint16_t engineInstance;
+};
+
 struct MemoryRegion {
     MemoryClassInstance region;
     uint64_t probedSize;
     uint64_t unallocatedSize;
+};
+
+struct DistanceInfo {
+    MemoryClassInstance region;
+    EngineClassInstance engine;
+    int32_t distance;
 };
 
 class IoctlHelper {

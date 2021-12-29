@@ -24,7 +24,7 @@ class MemoryInfo {
 
     MemoryInfo(const RegionContainer &regionInfo);
 
-    void assignRegionsFromDistances(const void *distanceInfosPtr, size_t size);
+    void assignRegionsFromDistances(const std::vector<DistanceInfo> &distances);
 
     MOCKABLE_VIRTUAL uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle);
 

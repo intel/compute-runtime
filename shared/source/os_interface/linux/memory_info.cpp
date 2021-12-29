@@ -15,6 +15,40 @@
 
 namespace NEO {
 
+MemoryInfo::MemoryInfo(const RegionContainer &regionInfo)
+    : drmQueryRegions(regionInfo), systemMemoryRegion(drmQueryRegions[0]) {
+    UNRECOVERABLE_IF(systemMemoryRegion.region.memoryClass != I915_MEMORY_CLASS_SYSTEM);
+    std::copy_if(drmQueryRegions.begin(), drmQueryRegions.end(), std::back_inserter(localMemoryRegions),
+                 [](const MemoryRegion &memoryRegionInfo) {
+                     return (memoryRegionInfo.region.memoryClass == I915_MEMORY_CLASS_DEVICE);
+                 });
+}
+
+void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &distances) {
+    localMemoryRegions.clear();
+
+    uint32_t memoryRegionCounter = 1;
+    uint32_t tile = 0;
+
+    for (size_t i = 0; i < distances.size(); i++) {
+        if (i > 0 && distances[i].region.memoryInstance != distances[i - 1].region.memoryInstance) {
+            UNRECOVERABLE_IF(distances[i].distance == 0);
+
+            memoryRegionCounter++;
+            tile++;
+        }
+
+        if ((distances[i].distance != 0) || (localMemoryRegions.size() == (tile + 1))) {
+            continue;
+        }
+
+        UNRECOVERABLE_IF((drmQueryRegions[memoryRegionCounter].region.memoryClass != distances[i].region.memoryClass) ||
+                         (drmQueryRegions[memoryRegionCounter].region.memoryInstance != distances[i].region.memoryInstance));
+
+        localMemoryRegions.push_back(drmQueryRegions[memoryRegionCounter]);
+    }
+}
+
 uint32_t MemoryInfo::createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) {
     return IoctlHelper::get(drm)->createGemExt(drm, memClassInstances, allocSize, handle);
 }

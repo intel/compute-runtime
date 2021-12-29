@@ -103,31 +103,6 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryEnabledWhenGettingMemor
     EXPECT_EQ(16 * GB, regionSize);
 }
 
-TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryEnabledWhenAssignRegionsFromDistancesThenRegionsNotChanged) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(1);
-    std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
-    regionInfo[1].probedSize = 16 * GB;
-
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-    memoryInfo->assignRegionsFromDistances(&regionInfo, 2);
-    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *defaultHwInfo);
-    EXPECT_EQ(regionInfo[0].region.memoryClass, regionClassAndInstance.memoryClass);
-    EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
-    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
-    EXPECT_EQ(8 * GB, regionSize);
-
-    regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0), *defaultHwInfo);
-    EXPECT_EQ(regionInfo[1].region.memoryClass, regionClassAndInstance.memoryClass);
-    EXPECT_EQ(regionInfo[1].region.memoryInstance, regionClassAndInstance.memoryInstance);
-    regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0));
-    EXPECT_EQ(16 * GB, regionSize);
-}
-
 TEST(MemoryInfo, givenMemoryInfoWithoutDeviceRegionWhenGettingDeviceRegionSizeThenReturnCorrectSize) {
     std::vector<MemoryRegion> regionInfo(1);
     regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
