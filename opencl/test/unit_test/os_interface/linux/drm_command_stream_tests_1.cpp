@@ -30,7 +30,6 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
-#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -726,7 +725,6 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();
         hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
-        static_cast<MockOsContext *>(device->getDefaultEngine().osContext)->directSubmissionAvailableChecked = false;
         csr->initDirectSubmission(*device.get(), *device->getDefaultEngine().osContext);
     }
 
