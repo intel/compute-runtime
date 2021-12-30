@@ -301,6 +301,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     bool migratedMemory = false;
 
+    this->wasNonKernelOperationSent |= enqueueProperties.operation != EnqueueProperties::Operation::GpuKernel;
+
     if (!blockQueue && multiDispatchInfo.peekMainKernel() && multiDispatchInfo.peekMainKernel()->requiresMemoryMigration()) {
         for (auto &arg : multiDispatchInfo.peekMainKernel()->getMemObjectsToMigrate()) {
             MigrationController::handleMigration(*this->context, computeCommandStreamReceiver, arg.second);
