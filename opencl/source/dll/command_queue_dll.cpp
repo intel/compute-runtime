@@ -10,7 +10,7 @@
 namespace NEO {
 
 bool CommandQueue::isAssignEngineRoundRobinEnabled() {
-    auto assignEngineRoundRobin = false;
+    auto assignEngineRoundRobin = true;
 
     if (DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get() != -1) {
         assignEngineRoundRobin = DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get();
