@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1576,7 +1576,7 @@ struct OfflineCompilerStatelessToStatefulTests : public ::testing::Test {
         for (const auto &[forceStatelessToStatefulOptimization, containsGreaterThan4gbBuffersRequired] : testParams) {
             auto internalOptions = mockOfflineCompiler->internalOptions;
             mockOfflineCompiler->forceStatelessToStatefulOptimization = forceStatelessToStatefulOptimization;
-            mockOfflineCompiler->appendExtraInternalOptions(mockOfflineCompiler->hwInfo, internalOptions);
+            mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
             auto found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
 
             if (containsGreaterThan4gbBuffersRequired) {

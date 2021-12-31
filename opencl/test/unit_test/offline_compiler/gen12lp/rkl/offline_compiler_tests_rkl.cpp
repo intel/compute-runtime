@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ RKLTEST_F(MockOfflineCompilerRklTests, givenRklWhenAppendExtraInternalOptionsThe
     mockOfflineCompiler.deviceName = "rkl";
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
     std::string internalOptions = mockOfflineCompiler.internalOptions;
-    mockOfflineCompiler.appendExtraInternalOptions(mockOfflineCompiler.hwInfo, internalOptions);
+    mockOfflineCompiler.appendExtraInternalOptions(internalOptions);
     size_t found = internalOptions.find(NEO::CompilerOptions::forceEmuInt32DivRemSP.data());
     EXPECT_NE(std::string::npos, found);
 }

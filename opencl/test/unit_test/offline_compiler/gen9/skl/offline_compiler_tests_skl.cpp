@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ SKLTEST_F(MockOfflineCompilerSklTests, givenSklWhenAppendExtraInternalOptionsThe
     mockOfflineCompiler.deviceName = "skl";
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
     std::string internalOptions = mockOfflineCompiler.internalOptions;
-    mockOfflineCompiler.appendExtraInternalOptions(mockOfflineCompiler.hwInfo, internalOptions);
+    mockOfflineCompiler.appendExtraInternalOptions(internalOptions);
     size_t found = internalOptions.find(NEO::CompilerOptions::forceEmuInt32DivRemSP.data());
     EXPECT_EQ(std::string::npos, found);
 }
@@ -55,7 +55,7 @@ SKLTEST_F(MockOfflineCompilerSklTests, givenSklWhenAppendExtraInternalOptionsThe
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
     std::string internalOptions = mockOfflineCompiler.internalOptions;
     mockOfflineCompiler.forceStatelessToStatefulOptimization = false;
-    mockOfflineCompiler.appendExtraInternalOptions(mockOfflineCompiler.hwInfo, internalOptions);
+    mockOfflineCompiler.appendExtraInternalOptions(internalOptions);
     size_t found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
     EXPECT_EQ(std::string::npos, found);
 }

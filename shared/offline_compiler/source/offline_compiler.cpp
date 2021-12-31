@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -488,7 +488,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     } else {
         appendExtensionsToInternalOptions(hwInfo, options, internalOptions);
-        appendExtraInternalOptions(hwInfo, internalOptions);
+        appendExtraInternalOptions(internalOptions);
     }
 
     parseDebugSettings();
@@ -769,7 +769,7 @@ void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
     }
 }
 
-void OfflineCompiler::appendExtraInternalOptions(const HardwareInfo &hwInfo, std::string &internalOptions) {
+void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (compilerHwInfoConfig.isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
