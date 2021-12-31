@@ -240,7 +240,13 @@ int Drm::ioctl(unsigned long request, void *arg) {
         }
 
         if (printIoctl) {
-            printf("IOCTL %s returns %d, errno %d(%s)\n", IoctlToStringHelper::getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+            if (ret == 0) {
+                printf("IOCTL %s returns %d\n",
+                       IoctlToStringHelper::getIoctlString(request).c_str(), ret);
+            } else {
+                printf("IOCTL %s returns %d, errno %d(%s)\n",
+                       IoctlToStringHelper::getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+            }
         }
 
     } while (ret == -1 && (returnedErrno == EINTR || returnedErrno == EAGAIN || returnedErrno == EBUSY));

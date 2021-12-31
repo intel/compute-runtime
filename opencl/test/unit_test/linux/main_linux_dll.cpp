@@ -199,7 +199,33 @@ TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
     drm->destroyDrmContext(contextId);
 
     std::string output = ::testing::internal::GetCapturedStdout();
-    EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY returns 0, errno 9(Bad file descriptor)\n");
+    EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY returns 0\n");
+}
+
+struct DrmFailedIoctlTests : public ::testing::Test {
+    void SetUp() override {
+        if (deviceDescriptorTable[0].deviceId == 0) {
+            GTEST_SKIP();
+        }
+    }
+};
+
+TEST_F(DrmFailedIoctlTests, givenPrintIoctlEntriesWhenCallFailedIoctlThenExpectedIoctlIsPrinted) {
+    ::testing::internal::CaptureStdout();
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintIoctlEntries.set(true);
+
+    uint32_t contextId = 1u;
+    uint32_t vmId = 100u;
+    drm->queryVmId(contextId, vmId);
+
+    std::string output = ::testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM returns -1, errno 9(Bad file descriptor)\n");
 }
 
 TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
