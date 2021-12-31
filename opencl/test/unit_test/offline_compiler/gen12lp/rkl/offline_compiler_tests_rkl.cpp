@@ -17,7 +17,7 @@ using MockOfflineCompilerRklTests = ::testing::Test;
 RKLTEST_F(MockOfflineCompilerRklTests, givenRklWhenAppendExtraInternalOptionsThenForceEmuInt32DivRemSPIsApplied) {
 
     MockOfflineCompiler mockOfflineCompiler;
-    mockOfflineCompiler.deviceName = " rkl";
+    mockOfflineCompiler.deviceName = "rkl";
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
     std::string internalOptions = mockOfflineCompiler.internalOptions;
     mockOfflineCompiler.appendExtraInternalOptions(mockOfflineCompiler.hwInfo, internalOptions);
