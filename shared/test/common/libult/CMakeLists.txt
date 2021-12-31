@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -63,8 +63,12 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/gmm_callbacks_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_allocator_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_allocator_multi_device_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_management_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_management_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_manager_fixture.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/memory_manager_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.cpp
@@ -114,14 +118,14 @@ if(TESTS_XEHP_AND_LATER)
 endif()
 
 get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)
-
 list(APPEND neo_libult_common_SRCS_LIB_ULT
      ${NEO_SHARED_TESTS_CMD_PARSE}
 )
+set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT ${neo_libult_common_SRCS_LIB_ULT})
 
-if(UNIX)
-  list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX})
-endif()
+set_property(GLOBAL PROPERTY neo_libult_common_SRCS_ENABLE_TESTED_HW ${neo_libult_common_SRCS_ENABLE_TESTED_HW})
+
+set_property(GLOBAL PROPERTY neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX ${neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX})
 
 add_library(neo_libult_common OBJECT EXCLUDE_FROM_ALL
             ${neo_libult_common_SRCS_LIB_ULT}
@@ -129,27 +133,32 @@ add_library(neo_libult_common OBJECT EXCLUDE_FROM_ALL
 )
 
 set(neo_libult_common_SRCS_LIB_ULT_WIN
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/windows/memory_allocator_multi_device_fixture_windows.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.h
 )
+set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_WIN ${neo_libult_common_SRCS_LIB_ULT_WIN})
 
 set(neo_libult_common_SRCS_LIB_ULT_LINUX
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/linux/memory_allocator_multi_device_fixture_linux.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.h
 )
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_LINUX ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 
-if(UNIX AND NOT DISABLE_WDDM_LINUX)
-  target_sources(neo_libult_common PRIVATE
-                 ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-  )
-endif()
 if(WIN32)
   target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_LIB_ULT_WIN})
 elseif(UNIX)
   target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_LIB_ULT_LINUX})
+  target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX})
+endif()
+
+if(UNIX AND NOT DISABLE_WDDM_LINUX)
+  target_sources(neo_libult_common PRIVATE
+                 ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+  )
 endif()
 
 set(neo_libult_SRCS_LINUX

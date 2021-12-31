@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -95,6 +95,8 @@ if(WIN32)
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_direct_submission.h
   )
 else()

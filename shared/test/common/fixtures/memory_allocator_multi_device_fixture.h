@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,13 @@
 #pragma once
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
-
-#include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 using namespace NEO;
 
@@ -37,8 +38,8 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
         ultHwConfig.forceOsAgnosticMemoryManager = isOsAgnosticMemoryManager;
 
-        initPlatform();
-        executionEnvironment = platform()->peekExecutionEnvironment();
+        executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), true, numRootDevices);
+        devices = DeviceFactory::createDevices(*executionEnvironment);
         memoryManager = executionEnvironment->memoryManager.get();
 
         if (!isOsAgnosticMemoryManager) {
@@ -55,6 +56,7 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public
     uint32_t getNumRootDevices() { return numRootDevices; }
 
   protected:
+    std::vector<std::unique_ptr<Device>> devices;
     ExecutionEnvironment *executionEnvironment = nullptr;
     MemoryManager *memoryManager = nullptr;
     DebugManagerStateRestore restorer;

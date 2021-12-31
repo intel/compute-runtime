@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 using namespace NEO;
 
 class MemoryAllocatorFixture : public MemoryManagementFixture {
@@ -39,7 +38,6 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
 
     void TearDown() override {
         device.reset();
-        platformsImpl->clear();
         MemoryManagementFixture::TearDown();
     }
 
