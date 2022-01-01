@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 namespace NEO {
 
 bool CommandQueue::isAssignEngineRoundRobinEnabled() {
-    auto assignEngineRoundRobin = true;
+    auto assignEngineRoundRobin = false;
 
     if (DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get() != -1) {
         assignEngineRoundRobin = DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get();

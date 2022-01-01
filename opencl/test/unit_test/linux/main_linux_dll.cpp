@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -829,8 +829,8 @@ TEST(DirectSubmissionControllerTest, whenCheckDirectSubmissionControllerSupportT
     EXPECT_TRUE(DirectSubmissionController::isSupported());
 }
 
-TEST(CommandQueueTest, whenCheckEngineRoundRobinAssignThenReturnsTrue) {
-    EXPECT_TRUE(CommandQueue::isAssignEngineRoundRobinEnabled());
+TEST(CommandQueueTest, whenCheckEngineRoundRobinAssignThenReturnsFalse) {
+    EXPECT_FALSE(CommandQueue::isAssignEngineRoundRobinEnabled());
 }
 
 TEST(CommandQueueTest, whenCheckEngineTimestampWaitEnabledThenReturnsTrue) {
