@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,21 +40,21 @@ struct Mock<EngineNeoDrm> : public EngineNeoDrm {
     Mock<EngineNeoDrm>(RootDeviceEnvironment &rootDeviceEnvironment) : EngineNeoDrm(rootDeviceEnvironment) {}
 
     bool queryEngineInfoMockPositiveTest() {
-        drm_i915_engine_info i915engineInfo[6] = {};
-        i915engineInfo[0].engine.engine_class = I915_ENGINE_CLASS_RENDER;
-        i915engineInfo[0].engine.engine_instance = 0;
-        i915engineInfo[1].engine.engine_class = I915_ENGINE_CLASS_RENDER;
-        i915engineInfo[1].engine.engine_instance = 1;
-        i915engineInfo[2].engine.engine_class = I915_ENGINE_CLASS_VIDEO;
-        i915engineInfo[2].engine.engine_instance = 1;
-        i915engineInfo[3].engine.engine_class = I915_ENGINE_CLASS_COPY;
-        i915engineInfo[3].engine.engine_instance = 0;
-        i915engineInfo[4].engine.engine_class = I915_ENGINE_CLASS_VIDEO_ENHANCE;
-        i915engineInfo[4].engine.engine_instance = 0;
-        i915engineInfo[5].engine.engine_class = I915_INVALID_ENGINE_CLASS;
-        i915engineInfo[5].engine.engine_instance = 0;
+        std::vector<NEO::EngineCapabilities> i915engineInfo(6);
+        i915engineInfo[0].engine.engineClass = I915_ENGINE_CLASS_RENDER;
+        i915engineInfo[0].engine.engineInstance = 0;
+        i915engineInfo[1].engine.engineClass = I915_ENGINE_CLASS_RENDER;
+        i915engineInfo[1].engine.engineInstance = 1;
+        i915engineInfo[2].engine.engineClass = I915_ENGINE_CLASS_VIDEO;
+        i915engineInfo[2].engine.engineInstance = 1;
+        i915engineInfo[3].engine.engineClass = I915_ENGINE_CLASS_COPY;
+        i915engineInfo[3].engine.engineInstance = 0;
+        i915engineInfo[4].engine.engineClass = I915_ENGINE_CLASS_VIDEO_ENHANCE;
+        i915engineInfo[4].engine.engineInstance = 0;
+        i915engineInfo[5].engine.engineClass = I915_INVALID_ENGINE_CLASS;
+        i915engineInfo[5].engine.engineInstance = 0;
 
-        this->engineInfo.reset(new EngineInfoImpl(i915engineInfo, 6));
+        this->engineInfo.reset(new EngineInfoImpl(i915engineInfo));
         return true;
     }
 

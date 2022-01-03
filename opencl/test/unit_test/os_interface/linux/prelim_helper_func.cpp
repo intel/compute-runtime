@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,18 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal) {
     } else if (request == PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE) {
         auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
         closReserveArg->clos_index = 1u;
+    } else if (request == DRM_IOCTL_I915_QUERY) {
+        auto query = static_cast<drm_i915_query *>(arg);
+        if (query->items_ptr == 0) {
+            return EINVAL;
+        }
+        for (auto i = 0u; i < query->num_items; i++) {
+            auto queryItemPtr = reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i;
+            if (queryItemPtr->query_id == PRELIM_DRM_I915_QUERY_DISTANCE_INFO) {
+                auto distance = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItemPtr->data_ptr);
+                distance->distance = (distance->engine.engine_instance == distance->region.memory_instance) ? 0 : 100;
+            }
+        }
     }
     return ioctlRetVal;
 }
@@ -61,6 +73,21 @@ std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions
         memoryRegions->regions[i].region.memory_instance = inputRegions[i].region.memoryInstance;
         memoryRegions->regions[i].probed_size = inputRegions[i].probedSize;
         memoryRegions->regions[i].unallocated_size = inputRegions[i].unallocatedSize;
+    }
+    return data;
+}
+
+std::vector<uint8_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines) {
+    auto inputSize = static_cast<uint32_t>(inputEngines.size());
+    int length = sizeof(prelim_drm_i915_query_engine_info) + inputSize * sizeof(prelim_drm_i915_engine_info);
+    auto data = std::vector<uint8_t>(length);
+    auto memoryRegions = reinterpret_cast<prelim_drm_i915_query_engine_info *>(data.data());
+    memoryRegions->num_engines = inputSize;
+
+    for (uint32_t i = 0; i < inputSize; i++) {
+        memoryRegions->engines[i].engine.engine_class = inputEngines[i].engine.engineClass;
+        memoryRegions->engines[i].engine.engine_instance = inputEngines[i].engine.engineInstance;
+        memoryRegions->engines[i].capabilities = inputEngines[i].capabilities;
     }
     return data;
 }

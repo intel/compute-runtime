@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,30 @@ uint32_t IoctlHelperUpstream::getDirectSubmissionFlag() {
 
 int32_t IoctlHelperUpstream::getMemRegionsIoctlVal() {
     return DRM_I915_QUERY_MEMORY_REGIONS;
+}
+
+int32_t IoctlHelperUpstream::getEngineInfoIoctlVal() {
+    return DRM_I915_QUERY_ENGINE_INFO;
+}
+
+std::vector<EngineCapabilities> IoctlHelperUpstream::translateToEngineCaps(const std::vector<uint8_t> &data) {
+    auto engineInfo = reinterpret_cast<const drm_i915_query_engine_info *>(data.data());
+    std::vector<EngineCapabilities> engines;
+    for (uint32_t i = 0; i < engineInfo->num_engines; i++) {
+        EngineCapabilities engine{};
+        engine.capabilities = engineInfo->engines[i].capabilities;
+        engine.engine.engineClass = engineInfo->engines[i].engine.engine_class;
+        engine.engine.engineInstance = engineInfo->engines[i].engine.engine_instance;
+        engines.push_back(engine);
+    }
+    return engines;
+}
+
+uint32_t IoctlHelperUpstream::queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
+    for (auto &query : queryItems) {
+        query.length = -EINVAL;
+    }
+    return 0;
 }
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,12 +33,13 @@ std::string getIoctlParamStringRemaining(int param) {
 } // namespace IoctlToStringHelper
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
-    auto dataQuery = this->query(DRM_I915_QUERY_ENGINE_INFO, DrmQueryItemFlags::empty);
+    auto ioctlHelper = IoctlHelper::get(this);
+    auto dataQuery = this->query(ioctlHelper->getEngineInfoIoctlVal(), DrmQueryItemFlags::empty);
     if (dataQuery.empty()) {
         return false;
     }
-    auto data = reinterpret_cast<drm_i915_query_engine_info *>(dataQuery.data());
-    this->engineInfo.reset(new EngineInfoImpl(data->engines, data->num_engines));
+    auto engines = ioctlHelper->translateToEngineCaps(dataQuery);
+    this->engineInfo.reset(new EngineInfoImpl(engines));
     return true;
 }
 

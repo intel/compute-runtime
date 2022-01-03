@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ using namespace NEO;
 
 extern int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal);
 extern std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions);
+extern std::vector<uint8_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
 
 class DrmPrelimMock : public DrmMock {
   public:
@@ -306,4 +307,52 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenGetMemRegionsIoctlValThenCorrectVal
 
     int32_t ioctlVal = (1 << 16) | 4;
     EXPECT_EQ(ioctlVal, IoctlHelper::get(drm.get())->getMemRegionsIoctlVal());
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenGetEngineInfoIoctlValThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    int32_t ioctlVal = (1 << 16) | 13;
+    EXPECT_EQ(ioctlVal, IoctlHelper::get(drm.get())->getEngineInfoIoctlVal());
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenTranslateToEngineCapsThenReturnSameData) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    std::vector<EngineCapabilities> expectedEngines(2);
+    expectedEngines[0] = {{I915_ENGINE_CLASS_RENDER, 0}, 0};
+    expectedEngines[1] = {{I915_ENGINE_CLASS_COPY, 1}, 0};
+
+    auto engineInfo = getEngineInfo(expectedEngines);
+
+    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto engines = ioctlHelper->translateToEngineCaps(engineInfo);
+    EXPECT_EQ(2u, engines.size());
+    for (uint32_t i = 0; i < engines.size(); i++) {
+        EXPECT_EQ(expectedEngines[i].engine.engineClass, engines[i].engine.engineClass);
+        EXPECT_EQ(expectedEngines[i].engine.engineInstance, engines[i].engine.engineInstance);
+        EXPECT_EQ(expectedEngines[i].capabilities, engines[i].capabilities);
+    }
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimsWhenQueryDistancesThenCorrectDistanceSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    std::vector<DistanceInfo> distances(3);
+    distances[0].engine = {I915_ENGINE_CLASS_RENDER, 0};
+    distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    distances[1].engine = {I915_ENGINE_CLASS_RENDER, 1};
+    distances[1].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    distances[2].engine = {I915_ENGINE_CLASS_COPY, 4};
+    distances[2].region = {I915_MEMORY_CLASS_DEVICE, 2};
+    std::vector<drm_i915_query_item> queryItems(distances.size());
+    auto ret = IoctlHelper::get(drm.get())->queryDistances(drm.get(), queryItems, distances);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, distances[0].distance);
+    EXPECT_EQ(0, distances[1].distance);
+    EXPECT_EQ(100, distances[2].distance);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,10 +36,10 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     }
     auto engineInfo = static_cast<NEO::EngineInfoImpl *>(pDrm->getEngineInfo());
     for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
-        auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->engine.engine_class));
+        auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->engine.engineClass));
         for (auto L0EngineEntryInMap = i915ToEngineMapRange.first; L0EngineEntryInMap != i915ToEngineMapRange.second; L0EngineEntryInMap++) {
             auto L0EngineType = L0EngineEntryInMap->second;
-            engineGroupInstance.insert({L0EngineType, {static_cast<uint32_t>(itr->engine.engine_instance), 0}});
+            engineGroupInstance.insert({L0EngineType, {static_cast<uint32_t>(itr->engine.engineInstance), 0}});
         }
     }
     return ZE_RESULT_SUCCESS;

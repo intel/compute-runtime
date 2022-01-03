@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,4 +123,25 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetMemRegionsIoctlValThenCorrect
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     EXPECT_EQ(DRM_I915_QUERY_MEMORY_REGIONS, IoctlHelper::get(drm.get())->getMemRegionsIoctlVal());
+}
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetEngineInfoIoctlValThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    EXPECT_EQ(DRM_I915_QUERY_ENGINE_INFO, IoctlHelper::get(drm.get())->getEngineInfoIoctlVal());
+}
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDistancesThenReturnEinval) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    std::vector<DistanceInfo> distanceInfos;
+    std::vector<drm_i915_query_item> queries(4);
+    auto ret = IoctlHelper::get(drm.get())->queryDistances(drm.get(), queries, distanceInfos);
+    EXPECT_EQ(0u, ret);
+    const bool queryUnsupported = std::all_of(queries.begin(), queries.end(),
+                                              [](const drm_i915_query_item &item) { return item.length == -EINVAL; });
+    EXPECT_TRUE(queryUnsupported);
 }

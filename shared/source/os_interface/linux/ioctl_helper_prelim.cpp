@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstring>
 #include <sys/ioctl.h>
@@ -183,6 +184,54 @@ uint32_t IoctlHelperPrelim20::getDirectSubmissionFlag() {
 
 int32_t IoctlHelperPrelim20::getMemRegionsIoctlVal() {
     return PRELIM_DRM_I915_QUERY_MEMORY_REGIONS;
+}
+
+int32_t IoctlHelperPrelim20::getEngineInfoIoctlVal() {
+    return PRELIM_DRM_I915_QUERY_ENGINE_INFO;
+}
+
+std::vector<EngineCapabilities> IoctlHelperPrelim20::translateToEngineCaps(const std::vector<uint8_t> &data) {
+    auto engineInfo = reinterpret_cast<const prelim_drm_i915_query_engine_info *>(data.data());
+    std::vector<EngineCapabilities> engines;
+    for (uint32_t i = 0; i < engineInfo->num_engines; i++) {
+        EngineCapabilities engine{};
+        engine.capabilities = engineInfo->engines[i].capabilities;
+        engine.engine.engineClass = engineInfo->engines[i].engine.engine_class;
+        engine.engine.engineInstance = engineInfo->engines[i].engine.engine_instance;
+        engines.push_back(engine);
+    }
+    return engines;
+}
+
+prelim_drm_i915_query_distance_info translateToi915(const DistanceInfo &distanceInfo) {
+    prelim_drm_i915_query_distance_info dist{};
+    dist.engine.engine_class = distanceInfo.engine.engineClass;
+    dist.engine.engine_instance = distanceInfo.engine.engineInstance;
+
+    dist.region.memory_class = distanceInfo.region.memoryClass;
+    dist.region.memory_instance = distanceInfo.region.memoryInstance;
+    return dist;
+}
+
+uint32_t IoctlHelperPrelim20::queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
+    std::vector<prelim_drm_i915_query_distance_info> i915Distances(distanceInfos.size());
+    std::transform(distanceInfos.begin(), distanceInfos.end(), i915Distances.begin(), translateToi915);
+
+    for (auto i = 0u; i < i915Distances.size(); i++) {
+        queryItems[i].query_id = PRELIM_DRM_I915_QUERY_DISTANCE_INFO;
+        queryItems[i].length = sizeof(prelim_drm_i915_query_distance_info);
+        queryItems[i].flags = 0u;
+        queryItems[i].data_ptr = reinterpret_cast<__u64>(&i915Distances[i]);
+    }
+
+    drm_i915_query query{};
+    query.items_ptr = reinterpret_cast<__u64>(queryItems.data());
+    query.num_items = static_cast<uint32_t>(queryItems.size());
+    auto ret = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_QUERY, &query);
+    for (auto i = 0u; i < i915Distances.size(); i++) {
+        distanceInfos[i].distance = i915Distances[i].distance;
+    }
+    return ret;
 }
 
 } // namespace NEO

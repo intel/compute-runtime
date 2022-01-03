@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "drm/i915_drm.h"
 
@@ -22,10 +23,10 @@ namespace NEO {
 struct EngineInfoImpl : public EngineInfo {
     ~EngineInfoImpl() override = default;
 
-    EngineInfoImpl(const drm_i915_engine_info *engineInfo, size_t count) : engines(engineInfo, engineInfo + count) {
+    EngineInfoImpl(const std::vector<EngineCapabilities> &engineInfos) : engines(engineInfos) {
     }
 
-    std::vector<drm_i915_engine_info> engines;
+    std::vector<EngineCapabilities> engines;
 };
 
 } // namespace NEO

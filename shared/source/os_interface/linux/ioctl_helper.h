@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include <memory>
 #include <vector>
 
+struct drm_i915_query_item;
 namespace NEO {
 class Drm;
 class IoctlHelper;
@@ -34,6 +35,11 @@ struct MemoryRegion {
     MemoryClassInstance region;
     uint64_t probedSize;
     uint64_t unallocatedSize;
+};
+
+struct EngineCapabilities {
+    EngineClassInstance engine;
+    uint64_t capabilities;
 };
 
 struct DistanceInfo {
@@ -61,6 +67,9 @@ class IoctlHelper {
     virtual bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual int32_t getMemRegionsIoctlVal() = 0;
+    virtual int32_t getEngineInfoIoctlVal() = 0;
+    virtual std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) = 0;
+    virtual uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -78,6 +87,9 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     uint32_t getDirectSubmissionFlag() override;
     int32_t getMemRegionsIoctlVal() override;
+    int32_t getEngineInfoIoctlVal() override;
+    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
+    uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -106,6 +118,9 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     uint32_t getDirectSubmissionFlag() override;
     int32_t getMemRegionsIoctlVal() override;
+    int32_t getEngineInfoIoctlVal() override;
+    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
+    uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
 };
 
 } // namespace NEO
