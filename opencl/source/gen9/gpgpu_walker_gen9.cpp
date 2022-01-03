@@ -8,7 +8,6 @@
 #include "shared/source/gen9/hw_cmds_base.h"
 
 #include "opencl/source/command_queue/gpgpu_walker_bdw_and_later.inl"
-#include "opencl/source/command_queue/gpgpu_walker_disabled_device_enqueue.inl"
 #include "opencl/source/command_queue/hardware_interface_bdw_and_later.inl"
 
 namespace NEO {

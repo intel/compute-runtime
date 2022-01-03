@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/command_queue_hw_bdw_and_later.inl"
-#include "opencl/source/command_queue/command_queue_hw_disabled_device_enqueue.inl"
 
 #include "command_queue_helpers_gen12lp.inl"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,7 +145,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     auto bcsCsrForAuxTranslation = commandQueue.getBcsForAuxTranslation();
 
     auto commandStreamReceiverOwnership = commandStreamReceiver.obtainUniqueOwnership();
-    bool isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
     if (executionModelKernel) {
         while (!devQueue->isEMCriticalSectionFree())
@@ -174,39 +173,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         printfHandler.get()->makeResident(commandStreamReceiver);
     }
     makeTimestampPacketsResident(commandStreamReceiver);
-
-    if (executionModelKernel) {
-        uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
-        devQueue->setupExecutionModelDispatch(*ssh, *dsh, kernel, kernelCount,
-                                              commandStreamReceiver.getTagAllocation()->getGpuAddress(), taskCount, timestamp, isCcsUsed);
-
-        SchedulerKernel &scheduler = commandQueue.getContext().getSchedulerKernel();
-
-        scheduler.setArgs(devQueue->getQueueBuffer(),
-                          devQueue->getStackBuffer(),
-                          devQueue->getEventPoolBuffer(),
-                          devQueue->getSlbBuffer(),
-                          dsh->getGraphicsAllocation(),
-                          kernel->getKernelReflectionSurface(),
-                          devQueue->getQueueStorageBuffer(),
-                          ssh->getGraphicsAllocation(),
-                          devQueue->getDebugQueue());
-
-        devQueue->dispatchScheduler(
-            *kernelOperation->commandStream,
-            scheduler,
-            preemptionMode,
-            ssh,
-            dsh,
-            isCcsUsed);
-
-        scheduler.makeResident(commandStreamReceiver);
-
-        // Update SLM usage
-        slmUsed |= scheduler.getSlmTotalSize() > 0;
-
-        this->kernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(commandStreamReceiver);
-    }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
         CsrDependencies csrDeps;

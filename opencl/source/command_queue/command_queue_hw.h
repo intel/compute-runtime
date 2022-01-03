@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/queue_helpers.h"
 #include "opencl/source/mem_obj/mem_obj.h"
@@ -502,8 +501,6 @@ class CommandQueueHw : public CommandQueue {
 
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
     void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
-    void forceDispatchScheduler(NEO::MultiDispatchInfo &multiDispatchInfo);
-    void runSchedulerSimulation(DeviceQueueHw<GfxFamily> &devQueueHw, Kernel &parentKernel);
     static void computeOffsetsValueForRectCommands(size_t *bufferOffset,
                                                    size_t *hostOffset,
                                                    const size_t *bufferOrigin,
@@ -513,10 +510,6 @@ class CommandQueueHw : public CommandQueue {
                                                    size_t bufferSlicePitch,
                                                    size_t hostRowPitch,
                                                    size_t hostSlicePitch);
-    void processDeviceEnqueue(DeviceQueueHw<GfxFamily> *devQueueHw,
-                              const MultiDispatchInfo &multiDispatchInfo,
-                              TagNodeBase *hwTimeStamps,
-                              bool &blocking);
 
     template <uint32_t commandType>
     void processDispatchForKernels(const MultiDispatchInfo &multiDispatchInfo,
@@ -524,7 +517,6 @@ class CommandQueueHw : public CommandQueue {
                                    Event *event,
                                    TagNodeBase *&hwTimeStamps,
                                    bool blockQueue,
-                                   DeviceQueueHw<GfxFamily> *devQueueHw,
                                    CsrDependencies &csrDeps,
                                    KernelOperation *blockedCommandsData,
                                    TimestampPacketDependencies &timestampPacketDependencies);

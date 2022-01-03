@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,9 +8,6 @@ set(BUILTIN_KERNELS_SIMULATION_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/opencl_c.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/opencl_c.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.h
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")

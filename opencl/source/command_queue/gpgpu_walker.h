@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
@@ -84,15 +83,6 @@ class GpgpuWalkerHelper {
         TagNodeBase *timestampPacketNode,
         const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    static void dispatchScheduler(
-        LinearStream &commandStream,
-        DeviceQueueHw<GfxFamily> &devQueueHw,
-        PreemptionMode preemptionMode,
-        SchedulerKernel &scheduler,
-        IndirectHeap *ssh,
-        IndirectHeap *dsh,
-        bool isCcsUsed);
-
     static void adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd);
 
   private:
@@ -142,11 +132,6 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
     if (Kernel *parentKernel = multiDispatchInfo.peekParentKernel()) {
         if (heapType == IndirectHeap::SURFACE_STATE) {
             expectedSize += HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(*parentKernel);
-        } else //if (heapType == IndirectHeap::DYNAMIC_STATE || heapType == IndirectHeap::INDIRECT_OBJECT)
-        {
-            DeviceQueueHw<GfxFamily> *pDevQueue = castToObject<DeviceQueueHw<GfxFamily>>(commandQueue.getContext().getDefaultDeviceQueue());
-            DEBUG_BREAK_IF(pDevQueue == nullptr);
-            ih = pDevQueue->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         }
     }
 

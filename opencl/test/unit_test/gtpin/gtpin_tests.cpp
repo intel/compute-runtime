@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,12 +36,10 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/program/program_tests.h"
@@ -1065,161 +1063,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseProgram(pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseContext(context);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
-HWTEST2_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithDeviceEnqueueIsUsedThenKernelCreateAndSubmitCallbacksAreNotCalled, DeviceEnqueueSupport) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pDevice);
-
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
-    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-
-    cl_device_id device = (cl_device_id)pDevice;
-    cl_context context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, context);
-    auto pContext = castToObject<Context>(context);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
-
-    cl_queue_properties devQproperties = 0;
-    auto devQ = std::make_unique<DeviceQueueHw<FamilyType>>(pContext, pDevice, devQproperties);
-    pContext->setDefaultDeviceQueue(devQ.get());
-
-    cl_command_queue cmdQ = nullptr;
-    cl_queue_properties properties = 0;
-
-    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
-    ASSERT_NE(nullptr, cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // Prepare a kernel with fake Execution Environment
-    char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-    size_t binSize = 10;
-    MockProgram *pProgram = Program::createBuiltInFromGenBinary<MockProgram>(pContext, pContext->getDevices(), &binary[0], binSize, &retVal);
-    ASSERT_NE(nullptr, pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    char *pBin = &binary[0];
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBin += sizeof(SProgramBinaryHeader);
-    binSize += sizeof(SProgramBinaryHeader);
-
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 4;
-    pKHdr->PatchListSize = sizeof(SPatchExecutionEnvironment) + sizeof(SPatchBindingTableState);
-    pKHdr->KernelHeapSize = 16;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 64;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBin += sizeof(SKernelBinaryHeaderCommon);
-    binSize += sizeof(SKernelBinaryHeaderCommon);
-    char *pKernelBin = pBin;
-
-    strcpy(pBin, "Tst");
-    pBin += pKHdr->KernelNameSize;
-    binSize += pKHdr->KernelNameSize;
-
-    strcpy(pBin, "fake_ISA_code__");
-    pBin += pKHdr->KernelHeapSize;
-    binSize += pKHdr->KernelHeapSize;
-
-    memset(pBin, 0, pKHdr->SurfaceStateHeapSize);
-    pBin += pKHdr->SurfaceStateHeapSize;
-    binSize += pKHdr->SurfaceStateHeapSize;
-
-    SPatchExecutionEnvironment *pPatch1 = (SPatchExecutionEnvironment *)pBin;
-    pPatch1->Token = iOpenCL::PATCH_TOKEN_EXECUTION_ENVIRONMENT;
-    pPatch1->Size = sizeof(iOpenCL::SPatchExecutionEnvironment);
-    pPatch1->RequiredWorkGroupSizeX = 0;
-    pPatch1->RequiredWorkGroupSizeY = 0;
-    pPatch1->RequiredWorkGroupSizeZ = 0;
-    pPatch1->LargestCompiledSIMDSize = 8;
-    pPatch1->CompiledSubGroupsNumber = 0;
-    pPatch1->HasBarriers = 0;
-    pPatch1->DisableMidThreadPreemption = 0;
-    pPatch1->HasDeviceEnqueue = 1;
-    pPatch1->MayAccessUndeclaredResource = 0;
-    pPatch1->UsesFencesForReadWriteImages = 0;
-    pPatch1->UsesStatelessSpillFill = 0;
-    pPatch1->IsCoherent = 0;
-    pPatch1->IsInitializer = 0;
-    pPatch1->IsFinalizer = 0;
-    pPatch1->SubgroupIndependentForwardProgressRequired = 0;
-    pPatch1->CompiledForGreaterThan4GBBuffers = 0;
-    pBin += sizeof(SPatchExecutionEnvironment);
-    binSize += sizeof(SPatchExecutionEnvironment);
-
-    SPatchBindingTableState *pPatch2 = (SPatchBindingTableState *)pBin;
-    pPatch2->Token = iOpenCL::PATCH_TOKEN_BINDING_TABLE_STATE;
-    pPatch2->Size = sizeof(iOpenCL::SPatchBindingTableState);
-    pPatch2->Offset = 0;
-    pPatch2->Count = 1;
-    pPatch2->SurfaceStateOffset = 0;
-    binSize += sizeof(SPatchBindingTableState);
-
-    uint32_t kernelBinSize =
-        pKHdr->DynamicStateHeapSize +
-        pKHdr->GeneralStateHeapSize +
-        pKHdr->KernelHeapSize +
-        pKHdr->KernelNameSize +
-        pKHdr->PatchListSize +
-        pKHdr->SurfaceStateHeapSize;
-    uint64_t hashValue = Hash::hash(reinterpret_cast<const char *>(pKernelBin), kernelBinSize);
-    pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
-
-    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(&binary[0], binSize);
-    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = binSize;
-    retVal = pProgram->processGenBinary(*pDevice);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // Verify that GT-Pin Kernel Create callback is not called
-    int prevCount = KernelCreateCallbackCount;
-    cl_kernel kernel = clCreateKernel(pProgram, "Tst", &retVal);
-    EXPECT_NE(nullptr, kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount, KernelCreateCallbackCount);
-
-    int prevCount2 = KernelSubmitCallbackCount;
-    cl_uint workDim = 1;
-    size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {1, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
-
-    MockParentKernel *parentKernel = MockParentKernel::create(*pContext);
-    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
-
-    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel.get(), workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
-
-    // Cleanup
-    retVal = clReleaseKernel(kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseProgram(pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseContext(context);

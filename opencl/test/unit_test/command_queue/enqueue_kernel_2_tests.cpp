@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,13 +16,11 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_queue_matcher.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "reg_configs_common.h"
@@ -995,30 +993,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
-}
-
-HWTEST2_F(EnqueueAuxKernelTests, givenParentKernelWhenAuxTranslationIsRequiredThenMakeEnqueueBlocking, DeviceEnqueueSupport) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
-
-    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
-    size_t gws[3] = {1, 0, 0};
-
-    cl_queue_properties queueProperties = {};
-    auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pClDevice, queueProperties);
-    context->setDefaultDeviceQueue(mockDevQueue.get());
-
-    MockParentKernel::CreateParams createParams{};
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, createParams));
-    parentKernel->initialize();
-
-    parentKernel->auxTranslationRequired = false;
-    cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, cmdQ.waitCalled);
-    mockDevQueue->getIgilQueue()->m_controls.m_CriticalSection = 0;
-
-    parentKernel->auxTranslationRequired = true;
-    cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, cmdQ.waitCalled);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelButNoDeviceQueueWhenEnqueueIsCalledThenItReturnsInvalidOperation) {
