@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
-    true,                                          // supportsDeviceEnqueue
+    false,                                         // supportsDeviceEnqueue
     true,                                          // supportsPipes
     true,                                          // supportsOcl21Features
     false,                                         // supportsOnDemandPageFaults

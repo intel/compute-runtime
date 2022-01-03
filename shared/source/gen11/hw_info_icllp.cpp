@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // supportsVme
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages
-    true,                                            // supportsDeviceEnqueue
+    false,                                           // supportsDeviceEnqueue
     true,                                            // supportsPipes
     true,                                            // supportsOcl21Features
     false,                                           // supportsOnDemandPageFaults

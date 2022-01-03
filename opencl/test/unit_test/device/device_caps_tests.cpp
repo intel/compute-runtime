@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1540,6 +1540,30 @@ TEST_F(DeviceGetCapsTest, givenDeviceEnqueueSupportForcedWhenCheckingDeviceEnque
             }
         }
     }
+}
+
+TEST_F(DeviceGetCapsTest, givenDefaultFlagForceDeviceEnqueueSupportWhenCheckingDeviceEnqueueSupportThenFalseIsReported) {
+    DebugManagerStateRestore dbgRestorer;
+    auto hwInfo = *defaultHwInfo;
+    DebugManager.flags.ForceDeviceEnqueueSupport.set(-1);
+
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &caps = pClDevice->getDeviceInfo();
+
+    size_t deviceEnqueueFeaturesCount = 0;
+    for (auto &openclCFeature : caps.openclCFeatures) {
+        if (0 == strcmp(openclCFeature.name, "__opencl_c_device_enqueue")) {
+            deviceEnqueueFeaturesCount++;
+        }
+    }
+
+    EXPECT_FALSE(pClDevice->isDeviceEnqueueSupported());
+    EXPECT_EQ(0u, caps.maxOnDeviceEvents);
+    EXPECT_EQ(0u, caps.maxOnDeviceQueues);
+    EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
+    EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
+    EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
+    EXPECT_EQ(0u, deviceEnqueueFeaturesCount);
 }
 
 TEST_F(DeviceGetCapsTest, givenPipeSupportForcedWhenCheckingPipeSupportThenPipeIsCorrectlyReported) {

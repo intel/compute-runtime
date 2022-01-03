@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,6 @@ struct EnableOCLGen11 {
         populateFactoryTable<BufferHw<Family>>();
         populateFactoryTable<ClHwHelperHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
-        populateFactoryTable<DeviceQueueHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();
     }

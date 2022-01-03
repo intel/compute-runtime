@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,8 +12,6 @@ SET_FLAGS_FOR("XE_HP_CORE" "XE_HP_SDV")
 SET_FLAGS_FOR("XE_HPG_CORE" "DG2")
 SET_FLAGS_FOR("XE_HPC_CORE" "PVC")
 
-set(DEVICE_ENQUEUE_DISABLED_CORE_TYPES "GEN8" "GEN12LP" ${XEHP_AND_LATER_CORE_TYPES})
-
 foreach(CORE_TYPE ${XEHP_AND_LATER_CORE_TYPES})
   if(TESTS_${CORE_TYPE})
     set(TESTS_XEHP_AND_LATER 1)
@@ -21,10 +19,6 @@ foreach(CORE_TYPE ${XEHP_AND_LATER_CORE_TYPES})
   if(SUPPORT_${CORE_TYPE})
     set(SUPPORT_XEHP_AND_LATER 1)
   endif()
-endforeach()
-
-foreach(CORE_TYPE ${DEVICE_ENQUEUE_DISABLED_CORE_TYPES})
-  set(SUPPORT_DEVICE_ENQUEUE_${CORE_TYPE} FALSE CACHE BOOL "Disabled support ${CORE_TYPE} for device side enqueue" FORCE)
 endforeach()
 
 foreach(CORE_TYPE ${DG2_AND_LATER_CORE_TYPES})

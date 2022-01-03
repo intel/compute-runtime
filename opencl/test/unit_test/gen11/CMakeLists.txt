@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,10 +15,8 @@ if(TESTS_GEN11)
       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen11.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_source_tests_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_tests_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen11.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_gen11.cpp
   )
