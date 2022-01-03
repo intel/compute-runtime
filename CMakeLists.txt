@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -770,10 +770,6 @@ if(EXISTS ${NEO_SOURCE_DIR}/../internal)
 endif()
 
 set(NEO_SCRIPT_PROJECTS_FOLDER "neo scripts")
-add_subdirectory_unique(scripts/lint)
-if(EXISTS ${NEO_SOURCE_DIR}/scripts/format)
-  add_subdirectory_unique(scripts/format)
-endif()
 
 configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
