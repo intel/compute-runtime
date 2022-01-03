@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -289,7 +289,7 @@ if(BUILD_WITH_L0)
     )
   endif()
   if(NOT ${DONT_USE_PREBUILT_KERNELS_L0})
-    message("Prebuilt kernels are linked to Level Zero.")
+    message(STATUS "Prebuilt kernels are linked to Level Zero.")
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
