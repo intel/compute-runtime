@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
 
 template <typename GfxFamily>
 uint64_t BlitCommandsHelper<GfxFamily>::calculateBlitCommandDestinationBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice) {
-    return blitProperties.dstGpuAddress + blitProperties.dstOffset.x + offset +
+    return blitProperties.dstGpuAddress + blitProperties.dstOffset.x * blitProperties.bytesPerPixel + offset +
            blitProperties.dstOffset.y * blitProperties.dstRowPitch +
            blitProperties.dstOffset.z * blitProperties.dstSlicePitch +
            row * blitProperties.dstRowPitch +
@@ -163,7 +163,7 @@ uint64_t BlitCommandsHelper<GfxFamily>::calculateBlitCommandDestinationBaseAddre
 
 template <typename GfxFamily>
 uint64_t BlitCommandsHelper<GfxFamily>::calculateBlitCommandSourceBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice) {
-    return blitProperties.srcGpuAddress + blitProperties.srcOffset.x + offset +
+    return blitProperties.srcGpuAddress + blitProperties.srcOffset.x * blitProperties.bytesPerPixel + offset +
            blitProperties.srcOffset.y * blitProperties.srcRowPitch +
            blitProperties.srcOffset.z * blitProperties.srcSlicePitch +
            row * blitProperties.srcRowPitch +
@@ -214,6 +214,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
                     bltCmd.setSourceBaseAddress(srcAddr);
 
                     appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
+                    appendColorDepth(blitProperties, bltCmd);
 
                     auto bltStream = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
                     *bltStream = bltCmd;
@@ -321,11 +322,6 @@ size_t BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands() {
 }
 
 template <typename GfxFamily>
-bool BlitCommandsHelper<GfxFamily>::useOneBlitCopyCommand(const Vec3<size_t> &copySize, uint32_t bytesPerPixel) {
-    return (copySize.x / bytesPerPixel <= BlitterConstants::maxBlitWidth && copySize.y <= BlitterConstants::maxBlitHeight);
-}
-
-template <typename GfxFamily>
 uint32_t BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize) {
     uint32_t bytesPerPixel = BlitterConstants::maxBytesPerPixel;
     while (bytesPerPixel > 1) {
@@ -355,14 +351,14 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &b
 
 template <typename GfxFamily>
 uint64_t BlitCommandsHelper<GfxFamily>::calculateBlitCommandSourceBaseAddressCopyRegion(const BlitProperties &blitProperties, size_t slice) {
-    return blitProperties.srcGpuAddress + blitProperties.srcOffset.x +
+    return blitProperties.srcGpuAddress + blitProperties.srcOffset.x * blitProperties.bytesPerPixel +
            (blitProperties.srcOffset.y * blitProperties.srcRowPitch) +
            (blitProperties.srcSlicePitch * (slice + blitProperties.srcOffset.z));
 }
 
 template <typename GfxFamily>
 uint64_t BlitCommandsHelper<GfxFamily>::calculateBlitCommandDestinationBaseAddressCopyRegion(const BlitProperties &blitProperties, size_t slice) {
-    return blitProperties.dstGpuAddress + blitProperties.dstOffset.x +
+    return blitProperties.dstGpuAddress + blitProperties.dstOffset.x * blitProperties.bytesPerPixel +
            (blitProperties.dstOffset.y * blitProperties.dstRowPitch) +
            (blitProperties.dstSlicePitch * (slice + blitProperties.dstOffset.z));
 }
@@ -396,6 +392,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const Bl
                 bltCmd.setDestinationPitch(static_cast<uint32_t>(blitProperties.dstRowPitch));
 
                 appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
+                appendColorDepth(blitProperties, bltCmd);
 
                 auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
                 *cmd = bltCmd;

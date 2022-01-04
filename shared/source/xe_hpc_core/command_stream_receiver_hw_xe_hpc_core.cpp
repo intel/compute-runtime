@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,11 +189,6 @@ void BlitCommandsHelper<Family>::appendSurfaceType(const BlitProperties &blitPro
 
 template <>
 void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd) {}
-
-template <>
-bool BlitCommandsHelper<Family>::useOneBlitCopyCommand(const Vec3<size_t> &copySize, uint32_t bytesPerPixel) {
-    return false;
-}
 
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -507,7 +507,7 @@ HWTEST2_F(BlitTests, givenGen9AndGetBlitAllocationPropertiesThenCorrectValuesAre
 
 using BlitTestsParams = BlitColorTests;
 
-HWTEST2_P(BlitTestsParams, givenCopySizeAlignedWithin1and16ByteWhenGettingBytesPerPixelThenCorectPixelSizeReturned, BlitPlatforms) {
+HWTEST2_P(BlitTestsParams, givenCopySizeAlignedWithin1and16BytesWhenGettingBytesPerPixelThenCorrectPixelSizeIsReturned, BlitPlatforms) {
     size_t copySize = 33;
     auto aligment = GetParam();
     copySize = alignUp(copySize, aligment);
@@ -519,7 +519,7 @@ HWTEST2_P(BlitTestsParams, givenCopySizeAlignedWithin1and16ByteWhenGettingBytesP
     EXPECT_EQ(bytesPerPixel, aligment);
 }
 
-HWTEST2_P(BlitTestsParams, givenSrcSizeAlignedWithin1and16ByteWhenGettingBytesPerPixelThenCorectPixelSizeReturned, BlitPlatforms) {
+HWTEST2_P(BlitTestsParams, givenSrcSizeAlignedWithin1and16BytesWhenGettingBytesPerPixelThenCorrectPixelSizeIsReturned, BlitPlatforms) {
     size_t copySize = BlitterConstants::maxBytesPerPixel;
     auto aligment = GetParam();
     uint32_t srcOrigin, dstOrigin, srcSize, dstSize;
@@ -531,7 +531,17 @@ HWTEST2_P(BlitTestsParams, givenSrcSizeAlignedWithin1and16ByteWhenGettingBytesPe
     EXPECT_EQ(bytesPerPixel, aligment);
 }
 
-HWTEST2_P(BlitTestsParams, givenDstSizeAlignedWithin1and16ByteWhenGettingBytesPerPixelThenCorectPixelSizeReturned, BlitPlatforms) {
+HWTEST2_P(BlitTestsParams, givenSrcSizeNotAlignedWithin1and16BytesWhenGettingBytesPerPixelThen1BytePixelSizeIsReturned, BlitPlatforms) {
+    size_t copySize = BlitterConstants::maxBytesPerPixel;
+    uint32_t srcOrigin, dstOrigin, srcSize, dstSize;
+    srcSize = 33;
+    srcOrigin = dstOrigin = dstSize = static_cast<uint32_t>(BlitterConstants::maxBytesPerPixel);
+    uint32_t bytesPerPixel = NEO::BlitCommandsHelper<FamilyType>::getAvailableBytesPerPixel(copySize, srcOrigin, dstOrigin, srcSize, dstSize);
+
+    EXPECT_EQ(bytesPerPixel, 1u);
+}
+
+HWTEST2_P(BlitTestsParams, givenDstSizeAlignedWithin1and16BytesWhenGettingBytesPerPixelThenCorrectPixelSizeIsReturned, BlitPlatforms) {
     size_t copySize = BlitterConstants::maxBytesPerPixel;
     auto aligment = GetParam();
     uint32_t srcOrigin, dstOrigin, srcSize, dstSize;
@@ -543,7 +553,17 @@ HWTEST2_P(BlitTestsParams, givenDstSizeAlignedWithin1and16ByteWhenGettingBytesPe
     EXPECT_EQ(bytesPerPixel, aligment);
 }
 
-HWTEST2_P(BlitTestsParams, givenSrcOriginAlignedWithin1and16ByteWhenGettingBytesPerPixelThenCorectPixelSizeReturned, BlitPlatforms) {
+HWTEST2_P(BlitTestsParams, givenDstSizeNotAlignedWithin1and16BytesWhenGettingBytesPerPixelThen1BytePixelSizeIsReturned, BlitPlatforms) {
+    size_t copySize = BlitterConstants::maxBytesPerPixel;
+    uint32_t srcOrigin, dstOrigin, srcSize, dstSize;
+    dstSize = 33;
+    srcOrigin = dstOrigin = srcSize = static_cast<uint32_t>(BlitterConstants::maxBytesPerPixel);
+    uint32_t bytesPerPixel = NEO::BlitCommandsHelper<FamilyType>::getAvailableBytesPerPixel(copySize, srcOrigin, dstOrigin, srcSize, dstSize);
+
+    EXPECT_EQ(bytesPerPixel, 1u);
+}
+
+HWTEST2_P(BlitTestsParams, givenSrcOriginAlignedWithin1and16BytesWhenGettingBytesPerPixelThenCorrectPixelSizeIsReturned, BlitPlatforms) {
     size_t copySize = BlitterConstants::maxBytesPerPixel;
     auto aligment = GetParam();
     uint32_t srcOrigin, dstOrigin, srcSize, dstSize;
@@ -555,7 +575,7 @@ HWTEST2_P(BlitTestsParams, givenSrcOriginAlignedWithin1and16ByteWhenGettingBytes
     EXPECT_EQ(bytesPerPixel, aligment);
 }
 
-HWTEST2_P(BlitTestsParams, givenDrcOriginAlignedWithin1and16ByteWhenGettingBytesPerPixelThenCorectPixelSizeReturned, BlitPlatforms) {
+HWTEST2_P(BlitTestsParams, givenDstOriginAlignedWithin1and16BytesWhenGettingBytesPerPixelThenCorrectPixelSizeIsReturned, BlitPlatforms) {
     size_t copySize = BlitterConstants::maxBytesPerPixel;
     auto aligment = GetParam();
     uint32_t srcOrigin, dstOrigin, srcSize, dstSize;
@@ -567,6 +587,16 @@ HWTEST2_P(BlitTestsParams, givenDrcOriginAlignedWithin1and16ByteWhenGettingBytes
     EXPECT_EQ(bytesPerPixel, aligment);
 }
 
+HWTEST2_P(BlitTestsParams, givenDstOriginNotAlignedWithin1and16BytesWhenGettingBytesPerPixelThen1BytePixelSizeIsReturned, BlitPlatforms) {
+    size_t copySize = BlitterConstants::maxBytesPerPixel;
+    uint32_t srcOrigin, dstOrigin, srcSize, dstSize;
+    dstOrigin = 33;
+    dstSize = srcOrigin = srcSize = static_cast<uint32_t>(BlitterConstants::maxBytesPerPixel);
+    uint32_t bytesPerPixel = NEO::BlitCommandsHelper<FamilyType>::getAvailableBytesPerPixel(copySize, srcOrigin, dstOrigin, srcSize, dstSize);
+
+    EXPECT_EQ(bytesPerPixel, 1u);
+}
+
 INSTANTIATE_TEST_CASE_P(size_t,
                         BlitTestsParams,
                         testing::Values(1,
@@ -574,26 +604,6 @@ INSTANTIATE_TEST_CASE_P(size_t,
                                         4,
                                         8,
                                         16));
-
-HWTEST2_F(BlitTests, givenAllocWidthGreaterThanMaxBlitWidthWhenCheckingIfOneCommandCanBeUsedThenFalseReturned, BlitPlatforms) {
-    uint32_t bytesPerPixel = 1;
-    Vec3<size_t> copySize = {BlitterConstants::maxBlitWidth + 1, 1, 1};
-    bool useOneCommand = NEO::BlitCommandsHelper<FamilyType>::useOneBlitCopyCommand(copySize, bytesPerPixel);
-    EXPECT_FALSE(useOneCommand);
-}
-
-HWTEST2_F(BlitTests, givenAllocHeightGreaterThanMaxBlitHeightWhenCheckingIfOneCommandCanBeUsedThenFalseReturned, BlitPlatforms) {
-    uint32_t bytesPerPixel = 1;
-    Vec3<size_t> copySize = {0x10, BlitterConstants::maxBlitHeight + 1, 1};
-    bool useOneCommand = NEO::BlitCommandsHelper<FamilyType>::useOneBlitCopyCommand(copySize, bytesPerPixel);
-    EXPECT_FALSE(useOneCommand);
-}
-HWTEST2_F(BlitTests, givenAllocDimsLowerThanMaxSizesWhenCheckingIfOneCommandCanBeUsedThenTrueReturned, BlitPlatforms) {
-    uint32_t bytesPerPixel = 1;
-    Vec3<size_t> copySize = {BlitterConstants::maxBlitWidth - 1, BlitterConstants::maxBlitHeight - 1, 1};
-    bool useOneCommand = NEO::BlitCommandsHelper<FamilyType>::useOneBlitCopyCommand(copySize, bytesPerPixel);
-    EXPECT_TRUE(useOneCommand);
-}
 
 using WithoutGen12Lp = IsNotGfxCore<IGFX_GEN12LP_CORE>;
 

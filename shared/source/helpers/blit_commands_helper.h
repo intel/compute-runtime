@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ struct BlitProperties {
     size_t srcSlicePitch = 0;
     Vec3<size_t> dstSize = 0;
     Vec3<size_t> srcSize = 0;
-    size_t bytesPerPixel = 0;
+    size_t bytesPerPixel = 1;
 };
 
 enum class BlitOperationResult {
@@ -149,7 +149,6 @@ struct BlitCommandsHelper {
     static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger,
                                            DebugPauseState waitCondition, const HardwareInfo &hwInfo);
     static size_t getSizeForDebugPauseCommands();
-    static bool useOneBlitCopyCommand(const Vec3<size_t> &copySize, uint32_t bytesPerPixel);
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize);
     static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void programGlobalSequencerFlush(LinearStream &commandStream);
