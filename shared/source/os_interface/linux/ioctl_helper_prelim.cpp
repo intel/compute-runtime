@@ -193,6 +193,7 @@ int32_t IoctlHelperPrelim20::getEngineInfoIoctlVal() {
 std::vector<EngineCapabilities> IoctlHelperPrelim20::translateToEngineCaps(const std::vector<uint8_t> &data) {
     auto engineInfo = reinterpret_cast<const prelim_drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;
+    engines.reserve(engineInfo->num_engines);
     for (uint32_t i = 0; i < engineInfo->num_engines; i++) {
         EngineCapabilities engine{};
         engine.capabilities = engineInfo->engines[i].capabilities;
