@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -288,6 +288,7 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
     MOCK_METHOD(ze_result_t, unbindDevice, (const std::string device), (override));
     MOCK_METHOD(bool, fileExists, (const std::string file), (override));
     MOCK_METHOD(bool, isMyDeviceFile, (const std::string dev), (override));
+    ADDMETHOD_NOBASE(isRootUser, bool, true, ());
 };
 
 class GlobalOperationsProcfsAccess : public ProcfsAccess {};
@@ -452,6 +453,7 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
 
 class PublicLinuxGlobalOperationsImp : public L0::LinuxGlobalOperationsImp {
   public:
+    using LinuxGlobalOperationsImp::pLinuxSysmanImp;
     using LinuxGlobalOperationsImp::resetTimeout;
 };
 

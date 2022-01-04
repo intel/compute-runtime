@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,6 +152,24 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccessOld;
         pLinuxSysmanImp->pFsAccess = pFsAccessOld;
+    }
+};
+class SysmanGlobalOperationsIntegratedFixture : public SysmanGlobalOperationsFixture {
+    void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        SysmanGlobalOperationsFixture::SetUp();
+        auto mockHardwareInfo = neoDevice->getHardwareInfo();
+        mockHardwareInfo.capabilityTable.isIntegratedDevice = true;
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfo(&mockHardwareInfo);
+    }
+
+    void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        SysmanGlobalOperationsFixture::TearDown();
     }
 };
 
@@ -384,7 +402,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDevice
     EXPECT_EQ(0u, deviceState.reset);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenPermissionDeniedWhenCallingGetDeviceStateThenZeResultErrorInsufficientPermissionsIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenPermissionDeniedWhenCallingGetDeviceStateThenZeResultErrorInsufficientPermissionsIsReturned) {
+
     ON_CALL(*pFsAccess.get(), canWrite(Matcher<std::string>(mockFunctionResetPath)))
         .WillByDefault(::testing::Return(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS));
     pGlobalOperationsImp->init();
@@ -392,7 +411,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenPermissionDeniedWhenCallingGetDeviceS
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetThenZeResultErrorHandleObjectInUseIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceInUseWhenCallingResetThenZeResultErrorHandleObjectInUseIsReturned) {
+
     pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
     ON_CALL(*pProcfsAccess.get(), listProcesses(Matcher<std::vector<::pid_t> &>(_)))
@@ -402,7 +422,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetThenZeResu
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenDeviceNotInUseWhenCallingResetThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceNotInUseWhenCallingResetThenSuccessIsReturned) {
+
     // Pretend we have the device open
     pProcfsAccess->ourDevicePid = getpid();
     pProcfsAccess->ourDeviceFd = ::open("/dev/null", 0);
@@ -424,7 +445,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceNotInUseWhenCallingResetThenSuc
     EXPECT_EQ(errno, EBADF);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -440,7 +462,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingRes
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -458,7 +481,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetAndIfNeoDeviceCreateFailsThenErrorIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCallingResetAndIfNeoDeviceCreateFailsThenErrorIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -478,7 +502,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetAndBindFailsThenFailureIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCallingResetAndBindFailsThenFailureIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -496,7 +521,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetAndListProcessesFailsThenZeResultErrorIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceInUseWhenCallingResetAndListProcessesFailsThenZeResultErrorIsReturned) {
+
     pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
     EXPECT_CALL(*pProcfsAccess.get(), listProcesses(Matcher<std::vector<::pid_t> &>(_)))
@@ -506,7 +532,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetAndListPro
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenListProcessesFailsAfterUnbindThenFailureIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenListProcessesFailsAfterUnbindThenFailureIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -521,7 +548,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenListProcesse
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetAndWriteFailsAfterUnbindThenFailureIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCallingResetAndWriteFailsAfterUnbindThenFailureIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -539,7 +567,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetAndUnbindFailsThenFailureIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCallingResetAndUnbindFailsThenFailureIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -556,7 +585,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetAndGetFileNameFailsThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCallingResetAndGetFileNameFailsThenSuccessIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -576,7 +606,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessWontDieWhenCallingResetThenZeResultErrorHandleObjectInUseErrorIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessWontDieWhenCallingResetThenZeResultErrorHandleObjectInUseErrorIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -598,7 +629,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessWontDieWhenCallingResetThenZeR
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetAndGetFileDescriptorsFailsThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCallingResetAndGetFileDescriptorsFailsThenSuccessIsReturned) {
+
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;

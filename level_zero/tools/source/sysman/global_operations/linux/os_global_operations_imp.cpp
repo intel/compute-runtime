@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,82 +101,13 @@ void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING
     return;
 }
 
-static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSysfsAccess, const ::pid_t pid, std::vector<int> &deviceFds) {
-    // Return a list of all the file descriptors of this process that point to this device
-    std::vector<int> fds;
-    deviceFds.clear();
-    if (ZE_RESULT_SUCCESS != pProcfsAccess->getFileDescriptors(pid, fds)) {
-        // Process exited. Not an error. Just ignore.
-        return;
-    }
-    for (auto &&fd : fds) {
-        std::string file;
-        if (pProcfsAccess->getFileName(pid, fd, file) != ZE_RESULT_SUCCESS) {
-            // Process closed this file. Not an error. Just ignore.
-            continue;
-        }
-        if (pSysfsAccess->isMyDeviceFile(file)) {
-            deviceFds.push_back(fd);
-        }
-    }
-}
-
-void LinuxGlobalOperationsImp::releaseSysmanDeviceResources() {
-    pLinuxSysmanImp->getSysmanDeviceImp()->pEngineHandleContext->releaseEngines();
-    pLinuxSysmanImp->getSysmanDeviceImp()->pRasHandleContext->releaseRasHandles();
-    pLinuxSysmanImp->getSysmanDeviceImp()->pDiagnosticsHandleContext->releaseDiagnosticsHandles();
-    pLinuxSysmanImp->getSysmanDeviceImp()->pFirmwareHandleContext->releaseFwHandles();
-    pLinuxSysmanImp->releasePmtObject();
-    pLinuxSysmanImp->releaseFwUtilInterface();
-    pLinuxSysmanImp->releaseLocalDrmHandle();
-}
-
-void LinuxGlobalOperationsImp::releaseDeviceResources() {
-    releaseSysmanDeviceResources();
-    auto device = static_cast<DeviceImp *>(getDevice());
-    device->releaseResources();
-    executionEnvironment->memoryManager->releaseDeviceSpecificMemResources(rootDeviceIndex);
-    executionEnvironment->releaseRootDeviceEnvironmentResources(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get());
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].reset();
-}
-
-void LinuxGlobalOperationsImp::reInitSysmanDeviceResources() {
-    pLinuxSysmanImp->getSysmanDeviceImp()->updateSubDeviceHandlesLocally();
-    pLinuxSysmanImp->createPmtHandles();
-    pLinuxSysmanImp->getSysmanDeviceImp()->pRasHandleContext->init(pLinuxSysmanImp->getSysmanDeviceImp()->deviceHandles);
-    pLinuxSysmanImp->getSysmanDeviceImp()->pEngineHandleContext->init();
-    pLinuxSysmanImp->getSysmanDeviceImp()->pDiagnosticsHandleContext->init(pLinuxSysmanImp->getSysmanDeviceImp()->deviceHandles);
-    pLinuxSysmanImp->getSysmanDeviceImp()->pFirmwareHandleContext->init();
-}
-
-ze_result_t LinuxGlobalOperationsImp::initDevice() {
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = static_cast<DeviceImp *>(getDevice());
-
-    auto neoDevice = NEO::DeviceFactory::createDevice(*executionEnvironment, devicePciBdf, rootDeviceIndex);
-    if (neoDevice == nullptr) {
-        return ZE_RESULT_ERROR_DEVICE_LOST;
-    }
-    static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->updateRootDeviceBitFields(neoDevice);
-    static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->enableRootDeviceDebugger(neoDevice);
-    Device::deviceReinit(device->getDriverHandle(), device, neoDevice, &result);
-    reInitSysmanDeviceResources();
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
+    if (!pSysfsAccess->isRootUser()) {
+        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    }
     std::string resetPath;
     std::string resetName;
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    pSysfsAccess->getRealPath(functionLevelReset, resetPath);
-    // Must run as root. Verify permission to perform reset.
-    result = pFsAccess->canWrite(resetPath);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-    pSysfsAccess->getRealPath(deviceDir, resetName);
-    resetName = pFsAccess->getBaseName(resetName);
 
     ::pid_t myPid = pProcfsAccess->myProcessId();
     std::vector<int> myPidFds;
@@ -188,7 +119,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     }
     for (auto &&pid : processes) {
         std::vector<int> fds;
-        getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
+        pLinuxSysmanImp->getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
         if (pid == myPid) {
             // L0 is expected to have this file open.
             // Keep list of fds. Close before unbind.
@@ -204,8 +135,28 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         }
     }
 
+    pSysfsAccess->getRealPath(deviceDir, resetName);
+    resetName = pFsAccess->getBaseName(resetName);
+
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    pDevice->getProperties(&deviceProperties);
+    if (!(deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)) {
+        result = pSysfsAccess->unbindDevice(resetName);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+        return pLinuxSysmanImp->osWarmReset();
+    }
+
+    pSysfsAccess->getRealPath(functionLevelReset, resetPath);
+    // Must run as root. Verify permission to perform reset.
+    result = pFsAccess->canWrite(resetPath);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
     ExecutionEnvironmentRefCountRestore restorer(executionEnvironment);
-    releaseDeviceResources();
+    pLinuxSysmanImp->releaseDeviceResources();
     for (auto &&fd : myPidFds) {
         // Close open filedescriptors to the device
         // before unbinding device.
@@ -232,7 +183,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     deviceUsingPids.clear();
     for (auto &&pid : processes) {
         std::vector<int> fds;
-        getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
+        pLinuxSysmanImp->getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
         if (!fds.empty()) {
 
             // Kill all processes that have the device open.
@@ -270,7 +221,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         return result;
     }
 
-    return initDevice();
+    return pLinuxSysmanImp->initDevice();
 }
 
 // Processes in the form of clients are present in sysfs like this:

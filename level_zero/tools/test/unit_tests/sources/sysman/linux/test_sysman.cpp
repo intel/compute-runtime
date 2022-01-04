@@ -300,6 +300,18 @@ TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturned
     EXPECT_EQ(pciRootPort2, "device");
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturnedPathIs1LevelAfterPCIePath) {
+    const std::string mockBdf = "0000:00:02.0";
+    const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
+    const std::string mockRootPortPath = "/sys/devices/pci0000:00/0000:00:01.0";
+
+    std::string pciRootPort1 = pLinuxSysmanImp->getPciRootPortDirectoryPathForReset(mockRealPath);
+    EXPECT_EQ(pciRootPort1, mockRootPortPath);
+
+    std::string pciRootPort2 = pLinuxSysmanImp->getPciRootPortDirectoryPathForReset("device");
+    EXPECT_EQ(pciRootPort2, "device");
+}
+
 TEST_F(SysmanDeviceFixture, GivenNullDrmHandleWhenGettingDrmHandleThenValidDrmHandleIsReturned) {
     pLinuxSysmanImp->releaseLocalDrmHandle();
     EXPECT_NO_THROW(pLinuxSysmanImp->getDrm());

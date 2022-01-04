@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,19 +52,6 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
     uint32_t subdeviceId = 0;
     static const std::string invalidateLmemFile;
     static const std::string deviceDir;
-};
-
-class ExecutionEnvironmentRefCountRestore {
-  public:
-    ExecutionEnvironmentRefCountRestore() = delete;
-    ExecutionEnvironmentRefCountRestore(NEO::ExecutionEnvironment *executionEnvironmentRecevied) {
-        executionEnvironment = executionEnvironmentRecevied;
-        executionEnvironment->incRefInternal();
-    }
-    ~ExecutionEnvironmentRefCountRestore() {
-        executionEnvironment->decRefInternal();
-    }
-    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
 };
 
 } // namespace L0

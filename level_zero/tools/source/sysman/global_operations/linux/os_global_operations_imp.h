@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,19 +55,6 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex = 0u;
-};
-
-class ExecutionEnvironmentRefCountRestore {
-  public:
-    ExecutionEnvironmentRefCountRestore() = delete;
-    ExecutionEnvironmentRefCountRestore(NEO::ExecutionEnvironment *executionEnvironmentRecevied) {
-        executionEnvironment = executionEnvironmentRecevied;
-        executionEnvironment->incRefInternal();
-    }
-    ~ExecutionEnvironmentRefCountRestore() {
-        executionEnvironment->decRefInternal();
-    }
-    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
 };
 
 } // namespace L0

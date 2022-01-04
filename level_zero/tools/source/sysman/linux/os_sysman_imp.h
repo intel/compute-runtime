@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,12 +39,30 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     Device *getDeviceHandle();
     SysmanDeviceImp *getSysmanDeviceImp();
     std::string getPciRootPortDirectoryPath(std::string realPciPath);
+    std::string getPciRootPortDirectoryPathForReset(std::string realPciPath);
+    std::string getPciCardBusDirectoryPath(std::string realPciPath);
     void releasePmtObject();
     ze_result_t createPmtHandles();
     void createFwUtilInterface();
     void releaseFwUtilInterface();
     void releaseLocalDrmHandle();
     PRODUCT_FAMILY getProductFamily();
+    void releaseSysmanDeviceResources();
+    void releaseDeviceResources();
+    ze_result_t initDevice();
+    void reInitSysmanDeviceResources();
+    void getPidFdsForOpenDevice(ProcfsAccess *, SysfsAccess *, const ::pid_t, std::vector<int> &);
+    ze_result_t osWarmReset();
+    ze_result_t osColdReset();
+    std::string getAddressFromPath(std::string &rootPortPath);
+    decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
+    decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
+    decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
+    decltype(&NEO::SysCalls::pwrite) pwriteFunction = NEO::SysCalls::pwrite;
+    std::string devicePciBdf = "";
+    uint32_t rootDeviceIndex = 0u;
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+    bool diagnosticsReset = false;
 
   protected:
     FsAccess *pFsAccess = nullptr;
@@ -60,6 +78,18 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   private:
     LinuxSysmanImp() = delete;
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
+    static const std::string deviceDir;
 };
-
+class ExecutionEnvironmentRefCountRestore {
+  public:
+    ExecutionEnvironmentRefCountRestore() = delete;
+    ExecutionEnvironmentRefCountRestore(NEO::ExecutionEnvironment *executionEnvironmentRecevied) {
+        executionEnvironment = executionEnvironmentRecevied;
+        executionEnvironment->incRefInternal();
+    }
+    ~ExecutionEnvironmentRefCountRestore() {
+        executionEnvironment->decRefInternal();
+    }
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+};
 } // namespace L0
