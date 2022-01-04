@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/engine_info_impl.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "level_zero/core/test/unit_tests/mock.h"
@@ -54,7 +54,8 @@ struct Mock<EngineNeoDrm> : public EngineNeoDrm {
         i915engineInfo[5].engine.engineClass = I915_INVALID_ENGINE_CLASS;
         i915engineInfo[5].engine.engineInstance = 0;
 
-        this->engineInfo.reset(new EngineInfoImpl(i915engineInfo));
+        NEO::HardwareInfo hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        this->engineInfo.reset(new EngineInfo(this, &hwInfo, i915engineInfo));
         return true;
     }
 

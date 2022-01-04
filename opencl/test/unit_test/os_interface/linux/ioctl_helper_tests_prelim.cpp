@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-extern int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal);
+extern int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal);
 extern std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions);
 extern std::vector<uint8_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
 
@@ -28,13 +28,14 @@ class DrmPrelimMock : public DrmMock {
     }
 
     int ioctlRetVal = 0;
+    int queryDistanceIoctlRetVal = 0;
 
     void getPrelimVersion(std::string &prelimVersion) override {
         prelimVersion = "2.0";
     }
 
     int handleRemainingRequests(unsigned long request, void *arg) override {
-        return handlePrelimRequests(request, arg, ioctlRetVal);
+        return handlePrelimRequests(request, arg, ioctlRetVal, queryDistanceIoctlRetVal);
     }
 };
 
@@ -355,4 +356,102 @@ TEST(IoctlHelperTestsPrelim, givenPrelimsWhenQueryDistancesThenCorrectDistanceSe
     EXPECT_EQ(0, distances[0].distance);
     EXPECT_EQ(0, distances[1].distance);
     EXPECT_EQ(100, distances[2].distance);
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimWhenQueryEngineInfoWithDeviceMemoryThenDistancesUsedAndMultileValuesSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+    std::vector<MemoryRegion> memRegions{
+        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    EXPECT_TRUE(drm->queryEngineInfo());
+    EXPECT_EQ(3u, drm->ioctlCallsCount);
+    auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+    auto engineInfo = drm->getEngineInfo();
+
+    auto &multiTileArchInfo = const_cast<GT_MULTI_TILE_ARCH_INFO &>(hwInfo->gtSystemInfo.MultiTileArchInfo);
+    EXPECT_TRUE(multiTileArchInfo.IsValid);
+    EXPECT_EQ(3, multiTileArchInfo.TileCount);
+    EXPECT_EQ(7, multiTileArchInfo.TileMask);
+
+    EXPECT_EQ(1024u, drm->memoryInfo->getMemoryRegionSize(1));
+    EXPECT_EQ(1024u, drm->memoryInfo->getMemoryRegionSize(2));
+    EXPECT_EQ(0u, drm->memoryInfo->getMemoryRegionSize(4));
+
+    std::vector<EngineClassInstance> engines;
+    engineInfo->getListOfEnginesOnATile(0u, engines);
+    EXPECT_EQ(3u, engines.size());
+
+    engines.clear();
+    engineInfo->getListOfEnginesOnATile(1u, engines);
+    EXPECT_EQ(3u, engines.size());
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimWhenQueryEngineInfoThenCorrectCCSFlagsSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+    std::vector<MemoryRegion> memRegions{
+        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    EXPECT_TRUE(drm->queryEngineInfo());
+    EXPECT_EQ(3u, drm->ioctlCallsCount);
+    auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+    auto ccsInfo = hwInfo->gtSystemInfo.CCSInfo;
+    EXPECT_TRUE(ccsInfo.IsValid);
+    EXPECT_EQ(1u, ccsInfo.NumberOfCCSEnabled);
+    EXPECT_EQ(1u, ccsInfo.Instances.CCSEnableMask);
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimWhenSysmanQueryEngineInfoThenAdditionalEnginesUsed) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+    std::vector<MemoryRegion> memRegions{
+        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    EXPECT_TRUE(drm->sysmanQueryEngineInfo());
+    EXPECT_EQ(3u, drm->ioctlCallsCount);
+    auto engineInfo = drm->getEngineInfo();
+
+    std::vector<EngineClassInstance> engines;
+    engineInfo->getListOfEnginesOnATile(0u, engines);
+    EXPECT_EQ(5u, engines.size());
+
+    engines.clear();
+    engineInfo->getListOfEnginesOnATile(1u, engines);
+    EXPECT_EQ(5u, engines.size());
+}
+
+TEST(IoctlHelperTestsPrelim, givenPrelimWhenQueryEngineInfoAndFailIoctlThenFalseReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+    drm->queryDistanceIoctlRetVal = -1;
+
+    std::vector<MemoryRegion> memRegions{
+        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    EXPECT_FALSE(drm->queryEngineInfo());
+
+    EXPECT_EQ(3u, drm->ioctlCallsCount);
+    auto engineInfo = drm->getEngineInfo();
+
+    EXPECT_EQ(nullptr, engineInfo);
 }

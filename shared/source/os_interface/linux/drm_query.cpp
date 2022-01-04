@@ -9,7 +9,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
-#include "shared/source/os_interface/linux/engine_info_impl.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -31,17 +31,6 @@ std::string getIoctlParamStringRemaining(int param) {
     return std::to_string(param);
 }
 } // namespace IoctlToStringHelper
-
-bool Drm::queryEngineInfo(bool isSysmanEnabled) {
-    auto ioctlHelper = IoctlHelper::get(this);
-    auto dataQuery = this->query(ioctlHelper->getEngineInfoIoctlVal(), DrmQueryItemFlags::empty);
-    if (dataQuery.empty()) {
-        return false;
-    }
-    auto engines = ioctlHelper->translateToEngineCaps(dataQuery);
-    this->engineInfo.reset(new EngineInfoImpl(engines));
-    return true;
-}
 
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
     return DrmEngineMapper::engineNodeMap(engineType);

@@ -70,6 +70,7 @@ class IoctlHelper {
     virtual int32_t getEngineInfoIoctlVal() = 0;
     virtual std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) = 0;
     virtual uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
+    virtual int32_t getComputeEngineClass() = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -90,6 +91,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     int32_t getEngineInfoIoctlVal() override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
+    int32_t getComputeEngineClass() override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -121,6 +123,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int32_t getEngineInfoIoctlVal() override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
+    int32_t getComputeEngineClass() override;
 };
 
 } // namespace NEO

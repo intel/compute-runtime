@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal) {
+int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal) {
     if (request == PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT) {
         auto createExtParams = static_cast<prelim_drm_i915_gem_create_ext *>(arg);
         if (createExtParams->size == 0) {
@@ -53,8 +53,33 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal) {
         for (auto i = 0u; i < query->num_items; i++) {
             auto queryItemPtr = reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i;
             if (queryItemPtr->query_id == PRELIM_DRM_I915_QUERY_DISTANCE_INFO) {
+                if (queryDistanceIoctlRetVal != 0) {
+                    return queryDistanceIoctlRetVal;
+                }
                 auto distance = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItemPtr->data_ptr);
                 distance->distance = (distance->engine.engine_instance == distance->region.memory_instance) ? 0 : 100;
+            } else if (queryItemPtr->query_id == PRELIM_DRM_I915_QUERY_ENGINE_INFO) {
+                auto numberOfTiles = 2u;
+                uint32_t numberOfEngines = numberOfTiles * 6u;
+                int engineInfoSize = sizeof(prelim_drm_i915_query_engine_info) + numberOfEngines * sizeof(prelim_drm_i915_engine_info);
+                if (queryItemPtr->length == 0) {
+                    queryItemPtr->length = engineInfoSize;
+                } else {
+                    EXPECT_EQ(engineInfoSize, queryItemPtr->length);
+                    auto queryEngineInfo = reinterpret_cast<prelim_drm_i915_query_engine_info *>(queryItemPtr->data_ptr);
+                    EXPECT_EQ(0u, queryEngineInfo->num_engines);
+                    queryEngineInfo->num_engines = numberOfEngines;
+                    auto p = queryEngineInfo->engines;
+                    for (uint16_t tile = 0u; tile < numberOfTiles; tile++) {
+                        p++->engine = {I915_ENGINE_CLASS_RENDER, tile};
+                        p++->engine = {I915_ENGINE_CLASS_COPY, tile};
+                        p++->engine = {I915_ENGINE_CLASS_VIDEO, tile};
+                        p++->engine = {I915_ENGINE_CLASS_VIDEO_ENHANCE, tile};
+                        p++->engine = {PRELIM_I915_ENGINE_CLASS_COMPUTE, tile};
+                        p++->engine = {UINT16_MAX, tile};
+                    }
+                }
+                break;
             }
         }
     }

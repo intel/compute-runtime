@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -948,6 +948,87 @@ bool Drm::queryMemoryInfo() {
         return true;
     }
     return false;
+}
+
+bool Drm::queryEngineInfo(bool isSysmanEnabled) {
+    auto ioctlHelper = IoctlHelper::get(this);
+    auto enginesQuery = this->query(ioctlHelper->getEngineInfoIoctlVal(), DrmQueryItemFlags::empty);
+    if (enginesQuery.empty()) {
+        return false;
+    }
+    auto engines = ioctlHelper->translateToEngineCaps(enginesQuery);
+
+    auto memInfo = memoryInfo.get();
+
+    if (!memInfo) {
+        return false;
+    }
+
+    auto &memoryRegions = memInfo->getDrmRegionInfos();
+
+    auto tileCount = 0u;
+    std::vector<DistanceInfo> distanceInfos;
+    for (const auto &region : memoryRegions) {
+        if (I915_MEMORY_CLASS_DEVICE == region.region.memoryClass) {
+            tileCount++;
+            DistanceInfo distanceInfo{};
+            distanceInfo.region = region.region;
+
+            for (const auto &engine : engines) {
+                switch (engine.engine.engineClass) {
+                case I915_ENGINE_CLASS_RENDER:
+                case I915_ENGINE_CLASS_COPY:
+                    distanceInfo.engine = engine.engine;
+                    distanceInfos.push_back(distanceInfo);
+                    break;
+                case I915_ENGINE_CLASS_VIDEO:
+                case I915_ENGINE_CLASS_VIDEO_ENHANCE:
+                    if (isSysmanEnabled == true) {
+                        distanceInfo.engine = engine.engine;
+                        distanceInfos.push_back(distanceInfo);
+                    }
+                    break;
+                default:
+                    if (engine.engine.engineClass == ioctlHelper->getComputeEngineClass()) {
+                        distanceInfo.engine = engine.engine;
+                        distanceInfos.push_back(distanceInfo);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+
+    if (tileCount == 0u) {
+        this->engineInfo.reset(new EngineInfo(this, hwInfo, engines));
+        return true;
+    }
+
+    std::vector<drm_i915_query_item> queryItems{distanceInfos.size()};
+    auto ret = ioctlHelper->queryDistances(this, queryItems, distanceInfos);
+    if (ret != 0) {
+        return false;
+    }
+
+    const bool queryUnsupported = std::all_of(queryItems.begin(), queryItems.end(),
+                                              [](const drm_i915_query_item &item) { return item.length == -EINVAL; });
+    if (queryUnsupported) {
+        DEBUG_BREAK_IF(tileCount != 1);
+        this->engineInfo.reset(new EngineInfo(this, hwInfo, engines));
+        return true;
+    }
+
+    memInfo->assignRegionsFromDistances(distanceInfos);
+
+    auto &multiTileArchInfo = const_cast<GT_MULTI_TILE_ARCH_INFO &>(hwInfo->gtSystemInfo.MultiTileArchInfo);
+    multiTileArchInfo.IsValid = true;
+    multiTileArchInfo.TileCount = tileCount;
+    multiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
+
+    this->engineInfo.reset(new EngineInfo(this, hwInfo, tileCount, distanceInfos, queryItems, engines));
+    return true;
 }
 
 } // namespace NEO

@@ -126,4 +126,8 @@ uint32_t IoctlHelperUpstream::queryDistances(Drm *drm, std::vector<drm_i915_quer
     return 0;
 }
 
+int32_t IoctlHelperUpstream::getComputeEngineClass() {
+    return 4;
+}
+
 } // namespace NEO

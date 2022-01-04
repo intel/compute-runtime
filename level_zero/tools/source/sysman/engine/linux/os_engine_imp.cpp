@@ -7,7 +7,7 @@
 
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 
-#include "shared/source/os_interface/linux/engine_info_impl.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 
@@ -34,7 +34,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     if (pDrm->sysmanQueryEngineInfo() == false) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    auto engineInfo = static_cast<NEO::EngineInfoImpl *>(pDrm->getEngineInfo());
+    auto engineInfo = pDrm->getEngineInfo();
     for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
         auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->engine.engineClass));
         for (auto L0EngineEntryInMap = i915ToEngineMapRange.first; L0EngineEntryInMap != i915ToEngineMapRange.second; L0EngineEntryInMap++) {

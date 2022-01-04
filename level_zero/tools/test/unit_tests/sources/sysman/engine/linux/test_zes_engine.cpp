@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -226,8 +226,11 @@ TEST_F(ZesEngineFixture, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndIns
 TEST_F(ZesEngineFixture, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {
     auto drm = std::make_unique<DrmMockEngine>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     ASSERT_NE(nullptr, drm);
+    std::vector<MemoryRegion> memRegions{
+        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions));
     drm->sysmanQueryEngineInfo();
-    auto engineInfo = static_cast<EngineInfoImpl *>(drm->getEngineInfo());
+    auto engineInfo = drm->getEngineInfo();
     ASSERT_NE(nullptr, engineInfo);
     EXPECT_EQ(2u, engineInfo->engines.size());
 }
@@ -235,8 +238,11 @@ TEST_F(ZesEngineFixture, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThen
 TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQuerySupportedWhenQueryingEngineInfoWithVideoThenEngineInfoIsCreatedWithEngines) {
     auto drm = std::make_unique<DrmMockEngine>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     ASSERT_NE(nullptr, drm);
+    std::vector<MemoryRegion> memRegions{
+        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions));
     drm->sysmanQueryEngineInfo();
-    auto engineInfo = static_cast<EngineInfoImpl *>(drm->getEngineInfo());
+    auto engineInfo = drm->getEngineInfo();
     ASSERT_NE(nullptr, engineInfo);
     EXPECT_EQ(2u, engineInfo->engines.size());
 }

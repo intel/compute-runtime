@@ -235,4 +235,8 @@ uint32_t IoctlHelperPrelim20::queryDistances(Drm *drm, std::vector<drm_i915_quer
     return ret;
 }
 
+int32_t IoctlHelperPrelim20::getComputeEngineClass() {
+    return PRELIM_I915_ENGINE_CLASS_COMPUTE;
+}
+
 } // namespace NEO

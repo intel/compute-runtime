@@ -145,3 +145,43 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDistancesThenReturnEinval) 
                                               [](const drm_i915_query_item &item) { return item.length == -EINVAL; });
     EXPECT_TRUE(queryUnsupported);
 }
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithoutDeviceMemoryThenDontUseMultitile) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+    std::vector<MemoryRegion> memRegions{
+        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    EXPECT_TRUE(drm->queryEngineInfo());
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
+
+    auto engineInfo = drm->getEngineInfo();
+    std::vector<EngineClassInstance> engines;
+    engineInfo->getListOfEnginesOnATile(0, engines);
+    auto totalEnginesCount = engineInfo->engines.size();
+    ASSERT_NE(nullptr, engineInfo);
+    EXPECT_EQ(totalEnginesCount, engines.size());
+}
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithDeviceMemoryAndDistancesUnsupportedThenDontUseMultitile) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+    std::vector<MemoryRegion> memRegions{
+        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    EXPECT_TRUE(drm->queryEngineInfo());
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
+
+    auto engineInfo = drm->getEngineInfo();
+    std::vector<EngineClassInstance> engines;
+    engineInfo->getListOfEnginesOnATile(0, engines);
+    auto totalEnginesCount = engineInfo->engines.size();
+    ASSERT_NE(nullptr, engineInfo);
+    EXPECT_EQ(totalEnginesCount, engines.size());
+}

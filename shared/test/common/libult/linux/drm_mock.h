@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include <cstdio>
 #include <fstream>
@@ -215,7 +216,9 @@ class DrmMockEngine : public DrmMock {
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryEngineInfoSuccessCount = std::numeric_limits<uint32_t>::max();
 
-    DrmMockEngine(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {}
+    DrmMockEngine(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
+        rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    }
 
     int handleRemainingRequests(unsigned long request, void *arg) override;
 
