@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2780,12 +2780,14 @@ bool Kernel::areMultipleSubDevicesInContext() const {
 
 void Kernel::reconfigureKernel() {
     auto &kernelDescriptor = kernelInfo.kernelDescriptor;
-    if (kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::LargeGrfNumber) {
+    if (kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::LargeGrfNumber &&
+        kernelDescriptor.kernelAttributes.simdSize != 32) {
         maxKernelWorkGroupSize >>= 1;
     }
     this->containsStatelessWrites = kernelDescriptor.kernelAttributes.flags.usesStatelessWrites;
     this->specialPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode;
 }
+
 bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     if (false == HwHelper::cacheFlushAfterWalkerSupported(commandQueue.getDevice().getHardwareInfo())) {
         return false;

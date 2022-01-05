@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3222,8 +3222,8 @@ struct KernelLargeGrfTests : Test<ClDeviceFixture> {
     SPatchExecutionEnvironment executionEnvironment = {};
 };
 
-HWTEST_F(KernelLargeGrfTests, GivenLargeGrfWhenGettingMaxWorkGroupSizeThenCorrectValueReturned) {
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+HWTEST_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned) {
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 16;
     pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4;
     pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 0;
     {
@@ -3242,6 +3242,15 @@ HWTEST_F(KernelLargeGrfTests, GivenLargeGrfWhenGettingMaxWorkGroupSizeThenCorrec
         EXPECT_EQ(CL_SUCCESS, kernel.initialize());
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, *kernel.maxWorkGroupSizeForCrossThreadData);
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, kernel.maxKernelWorkGroupSize);
+    }
+
+    {
+        MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+        EXPECT_EQ(CL_SUCCESS, kernel.initialize());
+        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
+        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
     }
 }
 
