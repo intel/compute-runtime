@@ -20,6 +20,7 @@ struct StateComputeModeProperties;
 struct PipelineSelectArgs;
 class OSInterface;
 class HwInfoConfig;
+enum class DriverModelType;
 
 extern HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT];
 
@@ -57,6 +58,7 @@ class HwInfoConfig {
     virtual void setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) = 0;
     virtual bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool overrideGfxPartitionLayoutForWsl() const = 0;
+    virtual bool overrideResourceInfoParamsForWsl(DriverModelType driverModelType) const = 0;
     virtual std::string getDeviceMemoryName() const = 0;
     virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowCompression(const HardwareInfo &hwInfo) const = 0;
@@ -120,6 +122,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
     bool overrideGfxPartitionLayoutForWsl() const override;
+    bool overrideResourceInfoParamsForWsl(DriverModelType driverModelType) const override;
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;

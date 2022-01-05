@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/driver_model_type.h"
 
 #include <memory>
 
@@ -35,6 +36,10 @@ class GmmClientContext {
         return hardwareInfo;
     }
 
+    DriverModelType getDriverModelType() {
+        return driverModelType;
+    }
+
     MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
     MOCKABLE_VIRTUAL uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
 
@@ -49,6 +54,7 @@ class GmmClientContext {
     }
 
   protected:
+    DriverModelType driverModelType = DriverModelType::UNKNOWN;
     HardwareInfo *hardwareInfo = nullptr;
     GMM_CLIENT_CONTEXT *clientContext;
     std::unique_ptr<GmmHandleAllocator> handleAllocator;

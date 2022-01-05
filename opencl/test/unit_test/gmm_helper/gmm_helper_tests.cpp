@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -218,6 +218,13 @@ TEST_F(GmmTests, givenNullptrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperly
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, 0, false));
 
     EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 1u);
+}
+
+HWTEST_F(GmmTests, givenGmmWithForceLocalMemThenNonLocalIsSetToFalse) {
+    void *pSysMem = nullptr;
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, 0, false, false, false, {}));
+
+    EXPECT_EQ(gmm->resourceParams.Flags.Info.NonLocalOnly, 0u);
 }
 
 TEST_F(GmmTests, givenPtrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {

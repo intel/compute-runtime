@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ GmmClientContext::GmmClientContext(OSInterface *osInterface, HardwareInfo *hwInf
 
     if (osInterface && osInterface->getDriverModel()) {
         osInterface->getDriverModel()->setGmmInputArgs(&inArgs);
+        driverModelType = osInterface->getDriverModel()->getDriverModelType();
     }
 
     auto ret = GmmInterface::initialize(&inArgs, &outArgs);

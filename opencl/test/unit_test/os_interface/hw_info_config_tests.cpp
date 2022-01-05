@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
 
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -385,4 +386,12 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfBlitterForImagesIsSupport
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isTile64With3DSurfaceOnBCSSupported(pInHwInfo));
+}
+
+HWTEST_F(HwInfoConfigTest, WhenOverrideResourceInfoParamsForWslForDRMandWDDMThenFalseIsReturned) {
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    bool ret = hwInfoConfig->overrideResourceInfoParamsForWsl(DriverModelType::DRM);
+    EXPECT_FALSE(ret);
+    ret = hwInfoConfig->overrideResourceInfoParamsForWsl(DriverModelType::WDDM);
+    EXPECT_FALSE(ret);
 }

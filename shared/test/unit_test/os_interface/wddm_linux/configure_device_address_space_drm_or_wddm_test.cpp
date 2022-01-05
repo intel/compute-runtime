@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,6 +234,17 @@ struct WddmLinuxTest : public ::testing::Test {
     WddmLinuxMockHwDeviceIdWddm *hwDeviceId = nullptr;
     std::unique_ptr<NEO::GmmClientContext> mockGmmClientContext;
 };
+
+using GmmTestsDG2 = WddmLinuxTest;
+
+HWTEST_EXCLUDE_PRODUCT(GmmTests, givenGmmWithForceLocalMemThenNonLocalIsSetToFalse, IGFX_XE_HPG_CORE);
+
+DG2TEST_F(GmmTestsDG2, givenGmmWithForceLocalMemThenNonLocalIsSetToTrue) {
+    void *pSysMem = nullptr;
+    std::unique_ptr<NEO::Gmm> gmm(new NEO::Gmm(mockExecEnv.rootDeviceEnvironments[0]->getGmmClientContext(), pSysMem, 4096, 0, false, false, false, {}));
+
+    EXPECT_EQ(gmm->resourceParams.Flags.Info.NonLocalOnly, 1u);
+}
 
 using WddmLinuxConfigureDeviceAddressSpaceTest = WddmLinuxTest;
 

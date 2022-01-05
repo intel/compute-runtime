@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -120,6 +121,11 @@ bool HwInfoConfigHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo 
 
 template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::overrideResourceInfoParamsForWsl(DriverModelType driverModelType) const {
     return false;
 }
 

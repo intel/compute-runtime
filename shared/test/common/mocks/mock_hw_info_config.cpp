@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -274,6 +274,11 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const Hardw
 
 template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+    return false;
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::overrideResourceInfoParamsForWsl(DriverModelType driverModelType) const {
     return false;
 }
 

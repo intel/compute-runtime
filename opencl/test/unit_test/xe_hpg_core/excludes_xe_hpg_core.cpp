@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,3 +14,4 @@ HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSu
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsChanged, IGFX_XE_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfBlitterForImagesIsSupportedThenFalseIsReturned, IGFX_XE_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned, IGFX_XE_HPG_CORE);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, WhenOverrideResourceInfoParamsForWslForDRMandWDDMThenFalseIsReturned, IGFX_XE_HPG_CORE);

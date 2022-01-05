@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -36,5 +37,11 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
 
     return 0;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::overrideResourceInfoParamsForWsl(DriverModelType driverModelType) const {
+    return driverModelType == DriverModelType::WDDM;
+}
+
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

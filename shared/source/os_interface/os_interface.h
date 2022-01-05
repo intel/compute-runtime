@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/driver_info.h"
 
@@ -18,9 +19,6 @@
 namespace NEO {
 class ExecutionEnvironment;
 class MemoryManager;
-enum class DriverModelType { UNKNOWN,
-                             WDDM,
-                             DRM };
 
 class HwDeviceId : public NonCopyableClass {
   public:
