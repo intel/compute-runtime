@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -702,7 +702,7 @@ void HwHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &arg
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::disableL3CacheForDebug() const {
+bool HwHelperHw<GfxFamily>::disableL3CacheForDebug(const HardwareInfo &) const {
     return false;
 }
 template <typename GfxFamily>

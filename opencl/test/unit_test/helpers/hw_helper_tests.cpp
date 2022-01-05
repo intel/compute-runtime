@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1408,13 +1408,13 @@ TEST(HwHelperTests, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {
 using NotATSOrDG2 = AreNotGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
 HWTEST2_F(HwHelperTest, givenNotAtsOrDg2WhenDisableL3ForDebugCalledThenFalseIsReturned, NotATSOrDG2) {
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(hwHelper.disableL3CacheForDebug());
+    EXPECT_FALSE(hwHelper.disableL3CacheForDebug(*defaultHwInfo));
 }
 
 using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
 HWTEST2_F(HwHelperTest, givenAtsOrDg2WhenDisableL3ForDebugCalledThenTrueIsReturned, ATSOrDG2) {
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(hwHelper.disableL3CacheForDebug());
+    EXPECT_TRUE(hwHelper.disableL3CacheForDebug(*defaultHwInfo));
 }
 
 HWTEST_F(HwHelperTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenFalseIsReturned) {

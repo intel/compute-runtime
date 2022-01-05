@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ void DebuggerL0::initialize() {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));
-        if (hwHelper.disableL3CacheForDebug()) {
+        if (hwHelper.disableL3CacheForDebug(hwInfo)) {
             device->getGmmHelper()->disableL3CacheForDebug();
         }
     }

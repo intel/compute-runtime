@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,28 @@ DG2TEST_F(HwHelperTestsDg2, givenRevisionEnumAndPlatformFamilyTypeThenProperValu
 
         EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
         EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo));
+    }
+}
+
+DG2TEST_F(HwHelperTestsDg2, givenRevisionEnumAndDisableL3CacheForDebugCalledThenCorrectValueIsReturned) {
+    uint32_t steppings[] = {
+        REVISION_A0,
+        REVISION_A1,
+        REVISION_B,
+        REVISION_C,
+        CommonConstants::invalidStepping,
+    };
+
+    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+
+    for (auto stepping : steppings) {
+        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
+        if (stepping < REVISION_B) {
+            EXPECT_TRUE(hwHelper.disableL3CacheForDebug(hardwareInfo));
+        } else {
+            EXPECT_FALSE(hwHelper.disableL3CacheForDebug(hardwareInfo));
+        }
     }
 }
 

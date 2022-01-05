@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,7 +155,7 @@ uint32_t HwHelperHw<Family>::getDefaultRevisionId(const HardwareInfo &hwInfo) co
 }
 
 template <>
-bool HwHelperHw<Family>::disableL3CacheForDebug() const {
+bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &) const {
     return true;
 }
 

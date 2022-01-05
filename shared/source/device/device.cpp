@@ -219,7 +219,7 @@ bool Device::createDeviceImpl() {
     }
 
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (getDebugger() && hwHelper.disableL3CacheForDebug()) {
+    if (getDebugger() && hwHelper.disableL3CacheForDebug(hwInfo)) {
         getGmmHelper()->disableL3CacheForDebug();
     }
 

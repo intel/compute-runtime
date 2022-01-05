@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -151,7 +151,7 @@ class HwHelper {
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual bool isStatelesToStatefullWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) = 0;
-    virtual bool disableL3CacheForDebug() const = 0;
+    virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
     virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
 
@@ -387,7 +387,7 @@ class HwHelperHw : public HwHelper {
     uint64_t getMaxMemAllocSize() const override;
     bool isStatelesToStatefullWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override;
-    bool disableL3CacheForDebug() const override;
+    bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isRevisionSpecificBinaryBuiltinRequired() const override;
     bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;
 
