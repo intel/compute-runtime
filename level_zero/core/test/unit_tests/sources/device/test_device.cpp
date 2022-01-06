@@ -824,6 +824,26 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(deviceProperties.maxMemAllocSize, devicePropertiesBefore.maxMemAllocSize);
 }
 
+TEST_F(DeviceTest, WhenRequestingZeEuCountThenExpectedEUsAreReturned) {
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_eu_count_ext_t ze_eu_count_desc = {ZE_STRUCTURE_TYPE_EU_COUNT_EXT};
+    deviceProperties.pNext = &ze_eu_count_desc;
+
+    uint32_t maxEuPerSubSlice = 48;
+    uint32_t subSliceCount = 8;
+    uint32_t sliceCount = 1;
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxEuPerSubSlice = maxEuPerSubSlice;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = subSliceCount;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = sliceCount;
+
+    device->getProperties(&deviceProperties);
+
+    uint32_t expectedEUs = maxEuPerSubSlice * subSliceCount * sliceCount;
+
+    EXPECT_EQ(expectedEUs, ze_eu_count_desc.numTotalEUs);
+}
+
 TEST_F(DeviceTest, WhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnSubslicesSupported) {
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.type = ZE_DEVICE_TYPE_GPU;
@@ -1496,6 +1516,27 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, whenCallingGetMemoryPropertie
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
     EXPECT_EQ(memProperties.totalSize, device0->getNEODevice()->getDeviceInfo().globalMemSize / numSubDevices);
+}
+
+TEST_F(MultipleDevicesEnabledImplicitScalingTest, WhenRequestingZeEuCountThenExpectedEUsAreReturned) {
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_eu_count_ext_t ze_eu_count_desc = {ZE_STRUCTURE_TYPE_EU_COUNT_EXT};
+    deviceProperties.pNext = &ze_eu_count_desc;
+
+    uint32_t maxEuPerSubSlice = 48;
+    uint32_t subSliceCount = 8;
+    uint32_t sliceCount = 1;
+
+    L0::Device *device = driverHandle->devices[0];
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxEuPerSubSlice = maxEuPerSubSlice;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = subSliceCount;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = sliceCount;
+
+    device->getProperties(&deviceProperties);
+
+    uint32_t expectedEUs = maxEuPerSubSlice * subSliceCount * sliceCount;
+
+    EXPECT_EQ(expectedEUs * numSubDevices, ze_eu_count_desc.numTotalEUs);
 }
 
 TEST_F(MultipleDevicesEnabledImplicitScalingTest, whenCallingGetMemoryPropertiesWithSubDevicesThenCorrectSizeReturned) {
