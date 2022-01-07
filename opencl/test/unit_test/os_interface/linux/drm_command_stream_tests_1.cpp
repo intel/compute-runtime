@@ -825,6 +825,60 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 }
 
 template <typename GfxFamily>
+struct MockDrmDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
+    MockDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(Device &device, OsContext &osContext)
+        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext) {
+    }
+
+    ADDMETHOD_NOBASE(dispatchCommandBuffer, bool, false,
+                     (BatchBuffer & batchBuffer, FlushStampTracker &flushStamp));
+};
+
+template <typename GfxFamily>
+struct MockDrmBlitterDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>> {
+    MockDrmBlitterDirectSubmissionDispatchCommandBuffer<GfxFamily>(Device &device, OsContext &osContext)
+        : DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>(device, osContext) {
+    }
+
+    ADDMETHOD_NOBASE(dispatchCommandBuffer, bool, false,
+                     (BatchBuffer & batchBuffer, FlushStampTracker &flushStamp));
+};
+
+HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFailsThenFlushReturnsError) {
+    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device.get(), *device->getDefaultEngine().osContext);
+    auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
+    static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(directSubmission)->dispatchCommandBufferResult = false;
+
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    uint8_t bbStart[64];
+    batchBuffer.endCmdPtr = &bbStart[0];
+
+    auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_GT(static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(directSubmission)->dispatchCommandBufferCalled, 0u);
+    EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDirectSubmissionFailsThenFlushReturnsError) {
+    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission = std::make_unique<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device.get(), *device->getDefaultEngine().osContext);
+    auto blitterDirectSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission.get();
+    static_cast<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType> *>(blitterDirectSubmission)->dispatchCommandBufferResult = false;
+
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    uint8_t bbStart[64];
+    batchBuffer.endCmdPtr = &bbStart[0];
+
+    auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_GT(static_cast<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType> *>(blitterDirectSubmission)->dispatchCommandBufferCalled, 0u);
+    EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
+}
+
+template <typename GfxFamily>
 struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
     using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::currentTagData;
 };

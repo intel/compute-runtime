@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
     DrmMemoryOperationsHandler() = default;
     ~DrmMemoryOperationsHandler() override = default;
 
-    virtual void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
+    virtual MemoryOperationsStatus mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
     virtual std::unique_lock<std::mutex> lockHandlerIfUsed() = 0;
 
     virtual void evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) = 0;

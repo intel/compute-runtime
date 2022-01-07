@@ -91,9 +91,9 @@ class DrmAllocation : public GraphicsAllocation {
     size_t getMmapSize() { return this->mmapSize; }
     void setMmapSize(size_t size) { this->mmapSize = size; }
 
-    void makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
-    void bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
-    void bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    MOCKABLE_VIRTUAL int makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    MOCKABLE_VIRTUAL int bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    MOCKABLE_VIRTUAL int bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     MOCKABLE_VIRTUAL void registerBOBindExtHandle(Drm *drm);
     void freeRegisteredBOBindExtHandles(Drm *drm);
     void linkWithRegisteredHandle(uint32_t handle);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,14 +42,14 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         : UltCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
     }
 
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         flushParametrization.wasCalled = true;
         flushParametrization.receivedBatchBuffer = &batchBuffer;
         flushParametrization.receivedEngine = osContext->getEngineType();
         flushParametrization.receivedAllocationsForResidency = &allocationsForResidency;
         processResidency(allocationsForResidency, 0u);
         flushStamp->setStamp(flushParametrization.flushStampToReturn);
-        return true;
+        return SubmissionStatus::SUCCESS;
     }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {

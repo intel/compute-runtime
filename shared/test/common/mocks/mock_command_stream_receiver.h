@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         waitForCompletionWithTimeoutCalled++;
         return true;
     }
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
     void flushTagUpdate() override{};
     void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvents, bool startOfDispatch, bool endOfDispatch) override{};
@@ -152,8 +152,17 @@ class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStream
   public:
     MockCommandStreamReceiverWithFailingSubmitBatch(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
         : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
-    int submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return -1;
+    SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return SubmissionStatus::FAILED;
+    }
+};
+
+class MockCommandStreamReceiverWithOutOfMemorySubmitBatch : public MockCommandStreamReceiver {
+  public:
+    MockCommandStreamReceiverWithOutOfMemorySubmitBatch(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+    SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return SubmissionStatus::OUT_OF_MEMORY;
     }
 };
 
@@ -204,14 +213,14 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
 
     bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
 
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         flushCalledCount++;
         if (recordedCommandBuffer) {
             recordedCommandBuffer->batchBuffer = batchBuffer;
         }
         copyOfAllocations = allocationsForResidency;
         flushStamp->setStamp(flushStamp->peekStamp() + 1);
-        return true;
+        return SubmissionStatus::SUCCESS;
     }
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,

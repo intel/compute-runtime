@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -510,7 +510,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNo
 HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListWithCooperativeKernelsWhenExecuteCommandListsIsCalledThenCorrectBatchBufferIsSubmitted, IsAtLeastXeHpCore) {
     struct MockCsr : NEO::CommandStreamReceiverHw<FamilyType> {
         using NEO::CommandStreamReceiverHw<FamilyType>::CommandStreamReceiverHw;
-        int submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        NEO::SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
             useSingleSubdeviceValue = batchBuffer.useSingleSubdevice;
             submitBatchBufferCalled++;
             return NEO::CommandStreamReceiver::submitBatchBuffer(batchBuffer, allocationsForResidency);

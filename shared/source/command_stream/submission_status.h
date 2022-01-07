@@ -10,10 +10,9 @@
 
 namespace NEO {
 
-enum class MemoryOperationsStatus : uint32_t {
+enum class SubmissionStatus : uint32_t {
     SUCCESS = 0,
     FAILED,
-    MEMORY_NOT_FOUND,
     OUT_OF_MEMORY,
     UNSUPPORTED,
     DEVICE_UNINITIALIZED,

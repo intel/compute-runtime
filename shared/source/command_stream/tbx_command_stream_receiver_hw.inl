@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -206,7 +206,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
 }
 
 template <typename GfxFamily>
-bool TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     if (subCaptureManager) {
         if (aubManager) {
             aubManager->pause(false);
@@ -254,7 +254,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
         subCaptureManager->disableSubCapture();
     }
 
-    return true;
+    return SubmissionStatus::SUCCESS;
 }
 
 template <typename GfxFamily>

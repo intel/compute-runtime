@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,10 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
         auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
         for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
             if (osContext->getDeviceBitfield().test(drmIterator)) {
-                drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
+                int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
+                if (result) {
+                    return MemoryOperationsStatus::OUT_OF_MEMORY;
+                }
             }
         }
         if (!evictable) {
@@ -64,18 +67,26 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evict(Device *device, Gra
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
-    evictImpl(osContext, gfxAllocation, osContext->getDeviceBitfield());
+    int retVal = evictImpl(osContext, gfxAllocation, osContext->getDeviceBitfield());
+    if (retVal) {
+        return MemoryOperationsStatus::FAILED;
+    }
     return MemoryOperationsStatus::SUCCESS;
 }
 
-void DrmMemoryOperationsHandlerBind::evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) {
+int DrmMemoryOperationsHandlerBind::evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) {
     auto drmAllocation = static_cast<DrmAllocation *>(&gfxAllocation);
     for (auto drmIterator = 0u; drmIterator < deviceBitfield.size(); drmIterator++) {
         if (deviceBitfield.test(drmIterator)) {
-            drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, false);
+            int retVal = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, false);
+            if (retVal) {
+                return retVal;
+            }
         }
     }
     drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, osContext->getContextId());
+
+    return 0;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device, GraphicsAllocation &gfxAllocation) {
@@ -92,8 +103,11 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
     return MemoryOperationsStatus::MEMORY_NOT_FOUND;
 }
 
-void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
-    this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true);
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
+    MemoryOperationsStatus retVal = this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true);
+    if (retVal != MemoryOperationsStatus::SUCCESS) {
+        return retVal;
+    }
 
     auto clearContainer = true;
 
@@ -104,6 +118,7 @@ void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osCo
     if (clearContainer) {
         residencyContainer.clear();
     }
+    return MemoryOperationsStatus::SUCCESS;
 }
 
 std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerIfUsed() {

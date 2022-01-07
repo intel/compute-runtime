@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,8 +75,8 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
 }
 
 template <typename GfxFamily>
-bool CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    return true;
+SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    return SubmissionStatus::SUCCESS;
 }
 
 template <typename GfxFamily>
@@ -754,7 +754,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             primaryCmdBuffer->batchBuffer.endCmdPtr = currentBBendLocation;
 
-            if (!this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit)) {
+            if (this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit) != SubmissionStatus::SUCCESS) {
                 submitResult = false;
                 break;
             }

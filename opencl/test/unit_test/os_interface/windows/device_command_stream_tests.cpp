@@ -1045,6 +1045,56 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+template <typename GfxFamily>
+struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
+    MockWddmDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(Device &device, OsContext &osContext)
+        : MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext) {
+    }
+
+    bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) override {
+        dispatchCommandBufferCalled++;
+        return false;
+    }
+
+    uint32_t dispatchCommandBufferCalled = 0;
+};
+
+TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<DEFAULT_TEST_FAMILY_NAME>;
+
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+
+    std::unique_ptr<OsContext> osContext;
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
+                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
+    osContext->setDefaultContext(true);
+    csr->callParentInitDirectSubmission = false;
+
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0,
+                            nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
+                            &cs, commandBuffer->getUnderlyingBuffer(), false};
+
+    csr->directSubmission = std::make_unique<MockSubmission>(*device.get(), *osContext.get());
+    auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
+
+    auto directSubmission = reinterpret_cast<MockSubmission *>(csr->directSubmission.get());
+    EXPECT_GT(directSubmission->dispatchCommandBufferCalled, 0u);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
 TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
     using Dispatcher = RenderDispatcher<DEFAULT_TEST_FAMILY_NAME>;
     using MockSubmission =

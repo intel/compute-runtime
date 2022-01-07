@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,8 +109,8 @@ class MockCsr : public MockCsrBase<GfxFamily> {
         : BaseClass(execStamp, executionEnvironment, rootDeviceIndex, deviceBitfield) {
     }
 
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return true;
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return SubmissionStatus::SUCCESS;
     }
 
     CompletionStamp flushTask(

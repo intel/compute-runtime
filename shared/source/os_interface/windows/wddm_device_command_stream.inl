@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ WddmCommandStreamReceiver<GfxFamily>::~WddmCommandStreamReceiver() {
 }
 
 template <typename GfxFamily>
-bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     this->printDeviceIndex();
     auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
 
@@ -75,10 +75,18 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Wddm CSR processing residency set: %zu\n", allocationsForResidency.size());
     this->processResidency(allocationsForResidency, 0u);
     if (this->directSubmission.get()) {
-        return this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        if (ret == false) {
+            return SubmissionStatus::FAILED;
+        }
+        return SubmissionStatus::SUCCESS;
     }
     if (this->blitterDirectSubmission.get()) {
-        return this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        bool ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        if (ret == false) {
+            return SubmissionStatus::FAILED;
+        }
+        return SubmissionStatus::SUCCESS;
     }
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
@@ -110,7 +118,11 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
     auto status = wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, submitArgs);
 
     this->flushStamp->setStamp(submitArgs.monitorFence->lastSubmittedFence);
-    return status;
+    if (status == false) {
+        return SubmissionStatus::FAILED;
+    }
+
+    return SubmissionStatus::SUCCESS;
 }
 
 template <typename GfxFamily>

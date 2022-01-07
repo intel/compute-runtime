@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -291,8 +291,27 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
                                                            false,
                                                            returnValue));
     ResidencyContainer container;
-    int ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
-    EXPECT_NE(ret, 0);
+    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    EXPECT_EQ(ret, NEO::SubmissionStatus::FAILED);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCreate, givenOutOfMemoryThenSubmitBatchBufferReturnsOutOfMemoryError) {
+    auto csr = std::make_unique<MockCommandStreamReceiverWithOutOfMemorySubmitBatch>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ResidencyContainer container;
+    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    EXPECT_EQ(ret, NEO::SubmissionStatus::OUT_OF_MEMORY);
 
     commandQueue->destroy();
 }
@@ -1062,6 +1081,73 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     commandQueue->destroy();
     commandList->destroy();
     alignedFree(alloc);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandQueueSubmitBatchBuffer : public MockCommandQueue<gfxCoreFamily> {
+  public:
+    MockCommandQueueSubmitBatchBuffer(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : MockCommandQueue<gfxCoreFamily>(device, csr, desc) {}
+
+    ADDMETHOD_NOBASE(submitBatchBuffer, NEO::SubmissionStatus, NEO::SubmissionStatus::SUCCESS,
+                     (size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+                      bool isCooperative));
+};
+
+HWTEST2_F(ExecuteCommandListTests, givenOutOfMemorySubmitBatchBufferThenExecuteCommandListReturnsOutOfMemoryError, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::OUT_OF_MEMORY;
+
+    commandQueue->initialize(false, false);
+    auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto commandListHandle = commandList->toHandle();
+
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+
+    commandQueue->destroy();
+    commandList->destroy();
+}
+
+HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenExecuteCommandListReturnsErrorUnknown, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
+
+    commandQueue->initialize(false, false);
+    auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto commandListHandle = commandList->toHandle();
+
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+
+    commandQueue->destroy();
+    commandList->destroy();
+}
+
+HWTEST2_F(ExecuteCommandListTests, givenSuccessfulSubmitBatchBufferThenExecuteCommandListReturnsSuccess, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::SUCCESS;
+
+    commandQueue->initialize(false, false);
+    auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto commandListHandle = commandList->toHandle();
+
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    commandQueue->destroy();
+    commandList->destroy();
 }
 
 HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSDirtyFlagAndGSBADirtyFlagAreSetOnlyOnce, IsAtLeastSkl) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,9 @@
 
 namespace NEO {
 
-void DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     auto bo = this->getBO();
-    bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
+    return bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
 }
 
 bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {

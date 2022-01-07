@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -247,11 +247,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenFlushThenCommandBufferAlreadyHasProperTaskCountsAndIsNotIncludedInResidencyVector) {
     struct MockCsrFlushCmdBuffer : public MockCommandStreamReceiver {
         using MockCommandStreamReceiver::MockCommandStreamReceiver;
-        bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        NEO::SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
             EXPECT_EQ(batchBuffer.commandBufferAllocation->getResidencyTaskCount(this->osContext->getContextId()), this->taskCount + 1);
             EXPECT_EQ(batchBuffer.commandBufferAllocation->getTaskCount(this->osContext->getContextId()), this->taskCount + 1);
             EXPECT_EQ(std::find(allocationsForResidency.begin(), allocationsForResidency.end(), batchBuffer.commandBufferAllocation), allocationsForResidency.end());
-            return true;
+            return NEO::SubmissionStatus::SUCCESS;
         }
     };
 
@@ -1050,9 +1050,9 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
           flushCount(0) {
     }
 
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         ++flushCount;
-        return true;
+        return SubmissionStatus::SUCCESS;
     }
 
     int flushCount;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,14 +77,14 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 }
 
 template <typename GfxFamily>
-bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     this->printDeviceIndex();
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
 
     BufferObject *bb = alloc->getBO();
     if (bb == nullptr) {
-        return false;
+        return SubmissionStatus::OUT_OF_MEMORY;
     }
 
     if (this->lastSentSliceCount != batchBuffer.sliceCount) {
@@ -102,19 +102,39 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
 
     this->printBOsForSubmit(allocationsForResidency, *batchBuffer.commandBufferAllocation);
 
-    memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
+    MemoryOperationsStatus retVal = memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
+    if (retVal != MemoryOperationsStatus::SUCCESS) {
+        if (retVal == MemoryOperationsStatus::OUT_OF_MEMORY) {
+            return SubmissionStatus::OUT_OF_MEMORY;
+        }
+        return SubmissionStatus::FAILED;
+    }
 
     if (this->drm->isVmBindAvailable()) {
-        memoryOperationsInterface->makeResidentWithinOsContext(this->osContext, ArrayRef<GraphicsAllocation *>(&batchBuffer.commandBufferAllocation, 1), true);
+        retVal = memoryOperationsInterface->makeResidentWithinOsContext(this->osContext, ArrayRef<GraphicsAllocation *>(&batchBuffer.commandBufferAllocation, 1), true);
+        if (retVal != MemoryOperationsStatus::SUCCESS) {
+            if (retVal == MemoryOperationsStatus::OUT_OF_MEMORY) {
+                return SubmissionStatus::OUT_OF_MEMORY;
+            }
+            return SubmissionStatus::FAILED;
+        }
     }
 
     if (this->directSubmission.get()) {
         this->startControllingDirectSubmissions();
-        return this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+        bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+        if (ret == false) {
+            return SubmissionStatus::FAILED;
+        }
+        return SubmissionStatus::SUCCESS;
     }
     if (this->blitterDirectSubmission.get()) {
         this->startControllingDirectSubmissions();
-        return this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+        bool ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+        if (ret == false) {
+            return SubmissionStatus::FAILED;
+        }
+        return SubmissionStatus::SUCCESS;
     }
 
     if (isUserFenceWaitActive()) {
@@ -130,10 +150,10 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
     }
 
     if (ret) {
-        return false;
+        return SubmissionStatus::FAILED;
     }
 
-    return true;
+    return SubmissionStatus::SUCCESS;
 }
 
 template <typename GfxFamily>

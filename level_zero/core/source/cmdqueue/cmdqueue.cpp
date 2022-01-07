@@ -72,8 +72,8 @@ void CommandQueueImp::reserveLinearStreamSize(size_t size) {
     }
 }
 
-int CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
-                                       bool isCooperative) {
+NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+                                                         bool isCooperative) {
     UNRECOVERABLE_IF(csr == nullptr);
 
     NEO::BatchBuffer batchBuffer(commandStream->getGraphicsAllocation(), offset, 0u, nullptr, false, false,
@@ -85,7 +85,7 @@ int CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &r
 
     csr->setActivePartitions(partitionCount);
     auto ret = csr->submitBatchBuffer(batchBuffer, csr->getResidencyAllocations());
-    if (ret) {
+    if (ret != NEO::SubmissionStatus::SUCCESS) {
         return ret;
     }
 

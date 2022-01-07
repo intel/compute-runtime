@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -83,8 +84,8 @@ struct CommandQueueImp : public CommandQueue {
     virtual bool getPreemptionCmdProgramming() = 0;
 
   protected:
-    MOCKABLE_VIRTUAL int submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
-                                           bool isCooperative);
+    MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+                                                             bool isCooperative);
 
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
 

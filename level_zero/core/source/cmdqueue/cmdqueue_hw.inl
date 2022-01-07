@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -480,7 +481,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     this->heapContainer.clear();
 
     csr->pollForCompletion();
-    if (ret) {
+
+    if (ret != NEO::SubmissionStatus::SUCCESS) {
+        if (ret == NEO::SubmissionStatus::OUT_OF_MEMORY) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -50,6 +50,7 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}stream_properties.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stream_property.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/submission_status.h
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver.cpp

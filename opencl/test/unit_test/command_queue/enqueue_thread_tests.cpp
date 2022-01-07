@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
         this->pClDevice = pDevice->getSpecializedDevice<ClDevice>();
     }
 
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         EXPECT_NE(nullptr, batchBuffer.commandBufferAllocation->getUnderlyingBuffer());
 
         toFree.push_back(batchBuffer.commandBufferAllocation);
@@ -47,7 +47,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 
         EXPECT_TRUE(this->ownershipMutex.try_lock());
         this->ownershipMutex.unlock();
-        return true;
+        return SubmissionStatus::SUCCESS;
     }
 
     ~CommandStreamReceiverMock() override {

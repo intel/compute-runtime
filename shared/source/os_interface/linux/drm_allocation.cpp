@@ -68,27 +68,36 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
     return true;
 }
 
-void DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     if (this->fragmentsStorage.fragmentCount) {
         for (unsigned int f = 0; f < this->fragmentsStorage.fragmentCount; f++) {
             if (!this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()]) {
-                bindBO(static_cast<OsHandleLinux *>(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage)->bo, osContext, vmHandleId, bufferObjects, bind);
+                int retVal = bindBO(static_cast<OsHandleLinux *>(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage)->bo, osContext, vmHandleId, bufferObjects, bind);
+                if (retVal) {
+                    return retVal;
+                }
                 this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()] = true;
             }
         }
     } else {
-        bindBOs(osContext, vmHandleId, bufferObjects, bind);
+        int retVal = bindBOs(osContext, vmHandleId, bufferObjects, bind);
+        if (retVal) {
+            return retVal;
+        }
     }
+
+    return 0;
 }
 
-void DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+int DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+    auto retVal = 0;
     if (bo) {
         bo->requireExplicitResidency(bo->peekDrm()->hasPageFaultSupport() && !shouldAllocationPageFault(bo->peekDrm()));
         if (bufferObjects) {
             if (bo->peekIsReusableAllocation()) {
                 for (auto bufferObject : *bufferObjects) {
                     if (bufferObject == bo) {
-                        return;
+                        return 0;
                     }
                 }
             }
@@ -96,15 +105,14 @@ void DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHa
             bufferObjects->push_back(bo);
 
         } else {
-            auto retVal = 0;
             if (bind) {
                 retVal = bo->bind(osContext, vmHandleId);
             } else {
                 retVal = bo->unbind(osContext, vmHandleId);
             }
-            UNRECOVERABLE_IF(retVal);
         }
     }
+    return retVal;
 }
 
 void DrmAllocation::registerBOBindExtHandle(Drm *drm) {

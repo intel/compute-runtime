@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1873,8 +1873,8 @@ class MockCsrWithFailingFlush : public CommandStreamReceiverHw<GfxFamily> {
         this->dispatchMode = DispatchMode::BatchedDispatch;
         this->tagAddress = &tag;
     }
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return false;
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return SubmissionStatus::FAILED;
     }
     uint32_t tag = 0;
 };
