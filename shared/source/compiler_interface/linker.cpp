@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/linker.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/linker.inl"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
@@ -480,6 +481,23 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
             } else {
                 *pImplicitArgsReloc->second = 0u;
             }
+        }
+    }
+}
+
+void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments) {
+    int vecIndex = static_cast<int>(outUnresolvedExternals.size() - 1u);
+    for (; vecIndex >= 0; --vecIndex) {
+        if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == subDeviceID) {
+            RelocatedSymbol symbol;
+            symbol.gpuAddress = static_cast<uintptr_t>(pDevice->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress());
+            auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
+                                          static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
+
+            NEO::Linker::patchAddress(relocAddress, symbol, outUnresolvedExternals[vecIndex].unresolvedRelocation);
+
+            outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
+            outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);
         }
     }
 }

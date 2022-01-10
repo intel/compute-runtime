@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -591,15 +591,16 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
         return false;
     }
 
+    uint32_t logicalId = 0;
     for (uint32_t deviceIndex = 0; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (!deviceBitfield.test(deviceIndex)) {
             continue;
         }
 
-        const uint32_t copySrc = deviceIndex;
+        const uint32_t copySrc[2] = {logicalId++, deviceIndex};
         DeviceBitfield copyBitfield{};
         copyBitfield.set(deviceIndex);
-        auto copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, workPartitionAllocation, 0, &copySrc, sizeof(copySrc), copyBitfield);
+        auto copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, workPartitionAllocation, 0, copySrc, sizeof(copySrc), copyBitfield);
 
         if (!copySuccess) {
             return false;
