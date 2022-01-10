@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1502,16 +1502,40 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendingBarrierThenPipeControl
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto &commandContainer = commandList->commandContainer;
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     returnValue = commandList->appendBarrier(nullptr, 0, nullptr);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        commandContainer.getCommandStream()->getUsed() - usedBefore));
     auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 
     auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*itor);
     EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+}
+
+HWTEST2_F(CommandListCreate, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedWithHdcAndUntypedFlushSet, IsAtLeastXeHpgCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto &commandContainer = commandList->commandContainer;
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    returnValue = commandList->appendBarrier(nullptr, 0, nullptr);
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        commandContainer.getCommandStream()->getUsed() - usedBefore));
+    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*itor);
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
 }
 
 HWTEST_F(CommandListCreate, givenCommandListWhenAppendingBarrierWithIncorrectWaitEventsThenInvalidArgumentIsReturned) {

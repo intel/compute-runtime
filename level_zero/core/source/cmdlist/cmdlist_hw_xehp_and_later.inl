@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -333,6 +333,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() {
     NEO::PipeControlArgs args;
     args.hdcPipelineFlush = true;
+    args.unTypedDataPortCacheFlush = true;
     return args;
 }
 
