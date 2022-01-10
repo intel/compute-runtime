@@ -20,7 +20,7 @@ class MockMemoryManagerOsAgnosticContext : public MockMemoryManager {
   public:
     MockMemoryManagerOsAgnosticContext(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
-                                          const EngineDescriptor &engineDescriptor) {
+                                          const EngineDescriptor &engineDescriptor) override {
         auto osContext = new OsContext(0, engineDescriptor);
         osContext->incRefInternal();
         registeredEngines.emplace_back(commandStreamReceiver, osContext);
@@ -42,7 +42,7 @@ struct MockDriverModel : NEO::DriverModel {
 template <PRODUCT_FAMILY gfxProduct>
 class MockHwInfoConfigHw : public HwInfoConfigHw<gfxProduct> {
   public:
-    bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+    bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override {
         return false;
     }
 };
