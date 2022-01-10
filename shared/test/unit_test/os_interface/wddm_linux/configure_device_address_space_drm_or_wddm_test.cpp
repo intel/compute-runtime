@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -17,6 +18,7 @@
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -239,11 +241,34 @@ using GmmTestsDG2 = WddmLinuxTest;
 
 HWTEST_EXCLUDE_PRODUCT(GmmTests, givenGmmWithForceLocalMemThenNonLocalIsSetToFalse, IGFX_XE_HPG_CORE);
 
-DG2TEST_F(GmmTestsDG2, givenGmmWithForceLocalMemThenNonLocalIsSetToTrue) {
+HWTEST2_F(GmmTestsDG2, givenGmmForBufferWithForceLocalMemThenNonLocalIsSetToTrue, IsDG2) {
     void *pSysMem = nullptr;
     std::unique_ptr<NEO::Gmm> gmm(new NEO::Gmm(mockExecEnv.rootDeviceEnvironments[0]->getGmmClientContext(), pSysMem, 4096, 0, false, false, false, {}));
 
     EXPECT_EQ(gmm->resourceParams.Flags.Info.NonLocalOnly, 1u);
+    EXPECT_EQ(gmm->resourceParams.Flags.Info.LocalOnly, 0u);
+}
+
+HWTEST2_F(GmmTestsDG2, givenGmmForImageWithForceLocalMemThenNonLocalIsSetToFalseAndoLocalOnlyIsSetToTrue, IsDG2) {
+    const_cast<NEO::HardwareInfo *>(mockExecEnv.rootDeviceEnvironments[0]->getHardwareInfo())->featureTable.flags.ftrLocalMemory = 1u;
+
+    NEO::ImageDescriptor imgDesc = {};
+    imgDesc.imageType = NEO::ImageType::Image2DArray;
+    imgDesc.imageWidth = 60;
+    imgDesc.imageHeight = 1;
+    imgDesc.imageDepth = 1;
+    imgDesc.imageArraySize = 10;
+
+    NEO::ImageInfo imgInfo = NEO::MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    imgInfo.useLocalMemory = true;
+
+    NEO::StorageInfo storageInfo = {};
+    storageInfo.localOnlyRequired = true;
+
+    std::unique_ptr<NEO::Gmm> gmm(new NEO::Gmm(mockExecEnv.rootDeviceEnvironments[0]->getGmmClientContext(), imgInfo, storageInfo, false));
+
+    EXPECT_EQ(gmm->resourceParams.Flags.Info.NonLocalOnly, 0u);
+    EXPECT_EQ(gmm->resourceParams.Flags.Info.LocalOnly, 1u);
 }
 
 using WddmLinuxConfigureDeviceAddressSpaceTest = WddmLinuxTest;

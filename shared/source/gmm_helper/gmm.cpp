@@ -66,6 +66,12 @@ Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t aligned
     applyAppResource(storageInfo);
     applyDebugOverrides();
 
+    auto hardwareInfo = clientContext->getHardwareInfo();
+    if (HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->overrideResourceInfoParamsForWsl(clientContext->getDriverModelType())) {
+        resourceParams.Flags.Info.NonLocalOnly = 1;
+        resourceParams.Flags.Info.LocalOnly = 0;
+    }
+
     gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &resourceParams));
 }
 
@@ -379,10 +385,6 @@ void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) {
             resourceParams.MultiTileArch.LocalMemPreferredSet = static_cast<uint8_t>(tileSelected);
             resourceParams.MultiTileArch.LocalMemEligibilitySet = static_cast<uint8_t>(tileSelected);
         }
-    }
-
-    if (HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->overrideResourceInfoParamsForWsl(clientContext->getDriverModelType())) {
-        resourceParams.Flags.Info.NonLocalOnly = 1;
     }
 }
 
