@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ using Gen8PreemptionEnqueueKernelTest = PreemptionEnqueueKernelTest;
 using Gen8ClPreemptionTests = DevicePreemptionTests;
 
 GEN8TEST_F(Gen8ClPreemptionTests, GivenEmptyFlagsWhenSettingPreemptionLevelFlagsThenThreadGroupPreemptionIsAllowed) {
-    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device->getDevice(), &kernel->getDescriptor(), kernel->isSchedulerKernel);
+    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device->getDevice(), &kernel->getDescriptor());
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
 }
 
@@ -70,7 +70,7 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*pDevice, &mockKernel.mockKernel->getDescriptor(), mockKernel.mockKernel->isSchedulerKernel);
+    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*pDevice, &mockKernel.mockKernel->getDescriptor());
     EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(pDevice->getPreemptionMode(), flags));
 
     UserEvent userEventObj;
@@ -92,7 +92,7 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKe
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*pDevice, &mockKernel.mockKernel->getDescriptor(), mockKernel.mockKernel->isSchedulerKernel);
+    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*pDevice, &mockKernel.mockKernel->getDescriptor());
     EXPECT_EQ(PreemptionMode::Disabled, PreemptionHelper::taskPreemptionMode(pDevice->getPreemptionMode(), flags));
 
     size_t gws[3] = {1, 0, 0};

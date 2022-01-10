@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,13 +18,11 @@ PreemptionMode ClPreemptionHelper::taskPreemptionMode(Device &device, const Mult
         auto kernel = di.getKernel();
 
         const KernelDescriptor *kernelDescriptor = nullptr;
-        bool schedulerKernel = false;
         if (kernel != nullptr) {
             kernelDescriptor = &kernel->getDescriptor();
-            schedulerKernel = kernel->isSchedulerKernel;
         }
 
-        PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device, kernelDescriptor, schedulerKernel);
+        PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(device, kernelDescriptor);
         PreemptionMode taskMode = PreemptionHelper::taskPreemptionMode(devMode, flags);
         if (devMode > taskMode) {
             devMode = taskMode;

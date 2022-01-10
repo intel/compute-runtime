@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,7 @@ struct PreemptionFlags {
             uint32_t disablePerCtxtPreemptionGranularityControl : 1;
             uint32_t usesFencesForReadWriteImages : 1;
             uint32_t disableLSQCROPERFforOCL : 1;
-            uint32_t schedulerKernel : 1;
-            uint32_t reserved : 25;
+            uint32_t reserved : 26;
         } flags;
         uint32_t data;
     };
@@ -47,7 +46,7 @@ class PreemptionHelper {
     static bool allowThreadGroupPreemption(const PreemptionFlags &flags);
     static bool allowMidThreadPreemption(const PreemptionFlags &flags);
     static void adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch);
-    static PreemptionFlags createPreemptionLevelFlags(Device &device, const KernelDescriptor *kernelDescriptor, bool schedulerKernel);
+    static PreemptionFlags createPreemptionLevelFlags(Device &device, const KernelDescriptor *kernelDescriptor);
 
     template <typename GfxFamily>
     static size_t getRequiredPreambleSize(const Device &device);

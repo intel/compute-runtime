@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -325,7 +325,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     bool isBuiltIn = false;
     const bool isParentKernel;
-    const bool isSchedulerKernel;
 
     uint32_t getThreadArbitrationPolicy() const {
         return threadArbitrationPolicy;
@@ -504,7 +503,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
 
     void getParentObjectCounts(ObjectCounts &objectCount);
-    Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice, bool schedulerKernel = false);
+    Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
     void provideInitializationHints();
 
     void patchBlocksCurbeWithConstantValues();

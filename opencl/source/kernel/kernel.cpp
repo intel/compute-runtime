@@ -67,9 +67,8 @@ class Surface;
 
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
 
-Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg, bool schedulerKernel)
+Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg)
     : isParentKernel(kernelInfoArg.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue),
-      isSchedulerKernel(schedulerKernel),
       executionEnvironment(programArg->getExecutionEnvironment()),
       program(programArg),
       clDevice(clDeviceArg),
@@ -1916,7 +1915,7 @@ void Kernel::createReflectionSurface() {
     }
 
     if (DebugManager.flags.ForceDispatchScheduler.get()) {
-        if (this->isSchedulerKernel && kernelReflectionSurface == nullptr) {
+        if (kernelReflectionSurface == nullptr) {
             kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
                 {pClDevice->getRootDeviceIndex(), MemoryConstants::pageSize,
                  GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER,

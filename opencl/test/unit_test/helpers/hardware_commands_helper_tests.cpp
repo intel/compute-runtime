@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -413,50 +413,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsZeroBindingTableEntryCount) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
-    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
-
-    auto &commandStream = cmdQ.getCS(1024);
-    auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
-    *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
-
-    auto expectedBindingTableCount = 3u;
-    mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
-    auto isScheduler = const_cast<bool *>(&mockKernelWithInternal->mockKernel->isSchedulerKernel);
-    *isScheduler = true;
-
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
-    const size_t localWorkSize = 256;
-    const size_t localWorkSizes[3]{localWorkSize, 1, 1};
-    uint32_t interfaceDescriptorIndex = 0;
-    auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
-
-    HardwareCommandsHelper<FamilyType>::sendIndirectState(
-        commandStream,
-        dsh,
-        ioh,
-        ssh,
-        *mockKernelWithInternal->mockKernel,
-        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
-        mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
-        localWorkSizes,
-        0,
-        interfaceDescriptorIndex,
-        pDevice->getPreemptionMode(),
-        pWalkerCmd,
-        nullptr,
-        true,
-        *pDevice);
-
-    auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
-    EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorHas31BindingTableEntriesSet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
@@ -552,7 +508,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = 0;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 3;
-    MockKernel mockKernel(kernel->getProgram(), modifiedKernelInfo, *pClDevice, false);
+    MockKernel mockKernel(kernel->getProgram(), modifiedKernelInfo, *pClDevice);
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(mockKernel);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         size_t &sizePerThreadDataTotal,
         size_t &localWorkItems);
 
-    inline static bool resetBindingTablePrefetch(Kernel &kernel);
+    inline static bool resetBindingTablePrefetch();
 
     static size_t getSizeRequiredCS();
     static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);

@@ -526,24 +526,6 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNonParentKernelWhenCreatingKernelRe
     EXPECT_EQ(nullptr, reflectionSurface);
 }
 
-TEST(KernelReflectionSurfaceTestSingle, GivenNonSchedulerKernelWithForcedSchedulerDispatchWhenCreatingKernelReflectionSurfaceThenKernelReflectionSurfaceIsNotCreated) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceDispatchScheduler.set(true);
-
-    MockClDevice device{new MockDevice};
-    MockProgram program(toClDeviceVector(device));
-    KernelInfo info;
-    MockKernel kernel(&program, info, device);
-
-    EXPECT_FALSE(kernel.isParentKernel);
-
-    kernel.createReflectionSurface();
-
-    auto reflectionSurface = kernel.getKernelReflectionSurface();
-
-    EXPECT_EQ(nullptr, reflectionSurface);
-}
-
 TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
     MockContext context;

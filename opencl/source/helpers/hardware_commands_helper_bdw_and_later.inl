@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -150,8 +150,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 }
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::resetBindingTablePrefetch(Kernel &kernel) {
-    return kernel.isSchedulerKernel || !EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch();
+bool HardwareCommandsHelper<GfxFamily>::resetBindingTablePrefetch() {
+    return !EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch();
 }
 
 template <typename GfxFamily>
