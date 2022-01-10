@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -454,4 +454,39 @@ TEST(ElfEncoder, WhenAppendingSectionNameThenEmplacedStringIsAlwaysNullterminate
     EXPECT_STREQ("ab", reinterpret_cast<const char *>(elfData.data() + sectionNamesSection->offset + strOffset));
     EXPECT_STREQ("de", reinterpret_cast<const char *>(elfData.data() + sectionNamesSection->offset + strOffset2));
     EXPECT_STREQ("g", reinterpret_cast<const char *>(elfData.data() + sectionNamesSection->offset + strOffset3));
+}
+
+TEST(ElfEncoder, WhenProgramHeadersArePresentThenTheyAreSortedByVirtualAddresses) {
+    ElfEncoder<EI_CLASS_64> elfEncoder64(false, false);
+
+    const uint8_t data[] = "123412";
+    elfEncoder64.appendSection(SHT_PROGBITS, "", data);
+    elfEncoder64.appendSection(SHT_PROGBITS, "", data);
+    elfEncoder64.appendSection(SHT_PROGBITS, "", data);
+    elfEncoder64.appendSection(SHT_PROGBITS, "", data);
+
+    std::vector<std::pair<size_t, uint64_t>> sectionIdAndAddr = {{0, 0x1000},
+                                                                 {1, 0x2000},
+                                                                 {2, 0x500},
+                                                                 {3, 0x700}};
+    for (auto [secId, virtAddr] : sectionIdAndAddr) {
+        elfEncoder64.appendProgramHeaderLoad(secId, virtAddr, sizeof(data));
+    }
+    std::sort(sectionIdAndAddr.begin(), sectionIdAndAddr.end(), [](auto a, auto b) { return a.second < b.second; });
+
+    auto elfData = elfEncoder64.encode();
+    auto header = reinterpret_cast<ElfFileHeader<EI_CLASS_64> *>(elfData.data());
+    ArrayRef<ElfSectionHeader<EI_CLASS_64>> sectionHeaders = {reinterpret_cast<ElfSectionHeader<EI_CLASS_64> *>(elfData.data() + header->shOff),
+                                                              static_cast<size_t>(header->shNum)};
+
+    ArrayRef<ElfProgramHeader<EI_CLASS_64>> programHeaders = {reinterpret_cast<ElfProgramHeader<EI_CLASS_64> *>(elfData.data() + header->phOff),
+                                                              static_cast<size_t>(header->phNum)};
+
+    EXPECT_EQ(4U, programHeaders.size());
+    for (size_t i = 0; i < 4U; i++) {
+        auto [secId, virtAddr] = sectionIdAndAddr[i];
+
+        EXPECT_EQ(virtAddr, programHeaders[i].vAddr);
+        EXPECT_EQ(sectionHeaders[secId].offset, programHeaders[i].offset);
+    }
 }

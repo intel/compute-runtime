@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,6 +172,7 @@ std::vector<uint8_t> ElfEncoder<NumBits>::encode() const {
         programHeaders[progSecLookup.programId].fileSz = sectionHeaders[progSecLookup.sectionId].size;
     }
 
+    std::sort(programHeaders.begin(), programHeaders.end(), [](auto &p1, auto &p2) { return p1.vAddr < p2.vAddr; });
     for (auto &programHeader : programHeaders) {
         if (0 != programHeader.fileSz) {
             programHeader.offset = static_cast<decltype(programHeader.offset)>(programHeader.offset + dataOffset);

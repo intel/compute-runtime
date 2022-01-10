@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,8 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
 
     uint8_t debugInfo[0x20] = {0x0};
     uint8_t debugAbbrev[8] = {0x0};
+
+    using Segment = NEO::Debug::Segments::Segment;
 
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel", ArrayRef<const uint8_t>(kernelISA, sizeof(kernelISA)));
     auto kernelSectionIndex = elfEncoder.getLastSectionHeaderIndex();
@@ -98,6 +100,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     segments.varData = {reinterpret_cast<uintptr_t>(varData), {varData, sizeof(varData)}};
     segments.stringData = {reinterpret_cast<uintptr_t>(stringData), {stringData, sizeof(stringData)}};
     segments.nameToSegMap["kernel"] = {reinterpret_cast<uintptr_t>(kernelISA), {kernelISA, sizeof(kernelISA)}};
+
     auto zebinBin = elfEncoder.encode();
 
     std::string warning, error;
@@ -119,7 +122,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     EXPECT_EQ(zebin.sectionHeaders.size(), debugZebin.sectionHeaders.size());
 
     uint64_t offsetKernel, offsetConstData, offsetVarData, offsetStringData;
-    offsetKernel = offsetConstData = offsetVarData = std::numeric_limits<uint64_t>::max();
+    offsetKernel = offsetConstData = offsetVarData = offsetStringData = std::numeric_limits<uint64_t>::max();
     for (uint32_t i = 0; i < zebin.sectionHeaders.size(); ++i) {
         EXPECT_EQ(zebin.sectionHeaders[i].header->type, debugZebin.sectionHeaders[i].header->type);
         EXPECT_EQ(zebin.sectionHeaders[i].header->link, debugZebin.sectionHeaders[i].header->link);
@@ -177,26 +180,23 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
         }
     }
 
+    std::vector<std::pair<Segment, uint64_t>> segmentsSortedByAddr = {{segments.constData, offsetConstData},
+                                                                      {segments.varData, offsetVarData},
+                                                                      {segments.stringData, offsetStringData},
+                                                                      {segments.nameToSegMap["kernel"], offsetKernel}};
+    std::sort(segmentsSortedByAddr.begin(), segmentsSortedByAddr.end(), [](auto seg1, auto seg2) { return seg1.first.address < seg2.first.address; });
+
     EXPECT_EQ(4U, debugZebin.programHeaders.size());
-    EXPECT_EQ(segments.nameToSegMap["kernel"].address, static_cast<uintptr_t>(debugZebin.programHeaders[0].header->vAddr));
-    EXPECT_EQ(segments.nameToSegMap["kernel"].data.size(), static_cast<uintptr_t>(debugZebin.programHeaders[0].header->fileSz));
-    EXPECT_EQ(segments.nameToSegMap["kernel"].data.size(), static_cast<uintptr_t>(debugZebin.programHeaders[0].header->memSz));
-    EXPECT_EQ(offsetKernel, static_cast<uintptr_t>(debugZebin.programHeaders[0].header->offset));
+    for (size_t i = 0; i < 4U; i++) {
+        auto &segment = segmentsSortedByAddr[i].first;
+        auto &offset = segmentsSortedByAddr[i].second;
+        auto &ph = debugZebin.programHeaders[i].header;
 
-    EXPECT_EQ(segments.constData.address, static_cast<uintptr_t>(debugZebin.programHeaders[1].header->vAddr));
-    EXPECT_EQ(segments.constData.data.size(), static_cast<uintptr_t>(debugZebin.programHeaders[1].header->fileSz));
-    EXPECT_EQ(segments.constData.data.size(), static_cast<uintptr_t>(debugZebin.programHeaders[1].header->memSz));
-    EXPECT_EQ(offsetConstData, static_cast<uintptr_t>(debugZebin.programHeaders[1].header->offset));
-
-    EXPECT_EQ(segments.varData.address, static_cast<uintptr_t>(debugZebin.programHeaders[2].header->vAddr));
-    EXPECT_EQ(segments.varData.data.size(), static_cast<uintptr_t>(debugZebin.programHeaders[2].header->fileSz));
-    EXPECT_EQ(segments.varData.data.size(), static_cast<uintptr_t>(debugZebin.programHeaders[2].header->memSz));
-    EXPECT_EQ(offsetVarData, static_cast<uintptr_t>(debugZebin.programHeaders[2].header->offset));
-
-    EXPECT_EQ(segments.stringData.address, static_cast<uintptr_t>(debugZebin.programHeaders[3].header->vAddr));
-    EXPECT_EQ(segments.stringData.data.size(), static_cast<uintptr_t>(debugZebin.programHeaders[3].header->fileSz));
-    EXPECT_EQ(segments.stringData.data.size(), static_cast<uintptr_t>(debugZebin.programHeaders[3].header->memSz));
-    EXPECT_EQ(offsetStringData, static_cast<uintptr_t>(debugZebin.programHeaders[3].header->offset));
+        EXPECT_EQ(segment.address, static_cast<uintptr_t>(ph->vAddr));
+        EXPECT_EQ(segment.data.size(), static_cast<size_t>(ph->fileSz));
+        EXPECT_EQ(segment.data.size(), static_cast<size_t>(ph->memSz));
+        EXPECT_EQ(offset, static_cast<uintptr_t>(ph->offset));
+    }
 }
 
 TEST(DebugZebinTest, givenInvalidZebinThenDebugZebinIsNotGenerated) {
