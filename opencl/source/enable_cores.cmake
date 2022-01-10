@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,21 +21,6 @@ macro(macro_for_each_core_type)
 
     if(EXISTS "${COREX_PREFIX}/additional_files_${CORE_TYPE_LOWER}.cmake")
       include("${COREX_PREFIX}/additional_files_${CORE_TYPE_LOWER}.cmake")
-    endif()
-
-    if(${SUPPORT_DEVICE_ENQUEUE_${CORE_TYPE}})
-      if(EXISTS ${COREX_PREFIX}/device_enqueue.h)
-        list(APPEND RUNTIME_SRCS_${CORE_TYPE}_H_BASE ${COREX_PREFIX}/device_enqueue.h)
-      endif()
-      if(EXISTS ${COREX_PREFIX}/scheduler_definitions.h)
-        list(APPEND RUNTIME_SRCS_${CORE_TYPE}_H_BASE ${COREX_PREFIX}/scheduler_definitions.h)
-      endif()
-      if(EXISTS ${COREX_PREFIX}/scheduler_builtin_kernel.inl)
-        list(APPEND RUNTIME_SRCS_${CORE_TYPE}_H_BASE ${COREX_PREFIX}/scheduler_builtin_kernel.inl)
-      endif()
-      if(EXISTS ${COREX_PREFIX}/device_queue_${CORE_TYPE_LOWER}.cpp)
-        list(APPEND RUNTIME_SRCS_${CORE_TYPE}_CPP_BASE ${COREX_PREFIX}/device_queue_${CORE_TYPE_LOWER}.cpp)
-      endif()
     endif()
 
     foreach(SRC_IT ${RUNTIME_SRCS_COREX_CPP_BASE})

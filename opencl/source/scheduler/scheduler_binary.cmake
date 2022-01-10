@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -68,26 +68,6 @@ function(compile_kernel target core_type platform_type kernel)
     endif()
   endif()
 endfunction()
-
-macro(macro_for_each_core_type)
-  foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-    if(${CORE_TYPE}_HAS_${PLATFORM_TYPE} AND SUPPORT_DEVICE_ENQUEUE_${CORE_TYPE})
-      get_family_name_with_type(${CORE_TYPE} ${PLATFORM_TYPE})
-      set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${CORE_TYPE}_${PLATFORM_TYPE}_PLATFORM})
-      if(COMPILE_BUILT_INS AND PLATFORM_2_0_LOWER)
-        compile_kernel(scheduler_${family_name_with_type} ${CORE_TYPE} ${PLATFORM_TYPE} ${SCHEDULER_KERNEL})
-        if(TARGET scheduler_${family_name_with_type})
-          add_dependencies(scheduler scheduler_${family_name_with_type})
-          list(APPEND SCHEDULER_TARGETS scheduler_${family_name_with_type})
-        endif()
-        list(APPEND GENERATED_SCHEDULER_CPPS ${SCHEDULER_CPP})
-      endif()
-    endif()
-  endforeach()
-  if(NOT "${GENERATED_SCHEDULER_CPPS}" STREQUAL "")
-    source_group("generated files\\${CORE_TYPE_LOWER}" FILES ${GENERATED_SCHEDULER_CPPS})
-  endif()
-endmacro()
 
 apply_macro_for_each_core_type("SUPPORTED")
 
