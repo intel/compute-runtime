@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,6 +102,8 @@ struct FeatureTableBase {
         uint32_t ftr57bGPUAddressing : 1;
         uint32_t reserved : 21;
     };
+
+    BcsInfoMask ftrBcsInfo = 1;
 
     union {
         Flags flags;

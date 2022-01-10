@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,13 @@ TEST(SkuInfoReceiverTest, givenAdapterInfoWhenReceivingThenUpdateFtrTable) {
     ADAPTER_INFO adapterInfo = {};
     memset(&adapterInfo.SkuTable, ~0, sizeof(adapterInfo.SkuTable));
 
+    EXPECT_EQ(1lu, requestedFeatureTable.ftrBcsInfo.to_ulong());
+
     SkuInfoReceiver::receiveFtrTableFromAdapterInfo(&requestedFeatureTable, &adapterInfo);
 
     SkuInfoBaseReference::fillReferenceFtrToReceive(refFeatureTable);
+
+    EXPECT_EQ(1lu, requestedFeatureTable.ftrBcsInfo.to_ulong());
 
     EXPECT_TRUE(refFeatureTable == requestedFeatureTable);
 
