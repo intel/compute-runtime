@@ -1,6 +1,9 @@
 #it's changed by external script
 %global rel i1
 %global ver xxx
+%global NEO_OCL_VERSION_MAJOR xxx
+%global NEO_OCL_VERSION_MINOR xxx
+%global NEO_OCL_VERSION_BUILD xxx
 
 %define _source_payload w5T16.xzdio
 %define _binary_payload w5T16.xzdio
@@ -42,7 +45,9 @@ Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to con
 mkdir build
 cd build
 %cmake .. \
-   -DNEO_VERSION_BUILD=%{ver} \
+   -DNEO_OCL_VERSION_MAJOR=%{NEO_OCL_VERSION_MAJOR} \
+   -DNEO_OCL_VERSION_MINOR=%{NEO_OCL_VERSION_MINOR} \
+   -DNEO_VERSION_BUILD=%{NEO_OCL_VERSION_BUILD} \
    -DCMAKE_BUILD_TYPE=Release \
    -DBUILD_WITH_L0=FALSE \
    -DNEO_SKIP_UNIT_TESTS=TRUE \

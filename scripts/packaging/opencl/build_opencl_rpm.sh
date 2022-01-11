@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -66,6 +66,9 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     fi
 
     # Update spec file with new version
+    perl -pi -e "s/^%global NEO_OCL_VERSION_MAJOR .*/%global NEO_OCL_VERSION_MAJOR ${NEO_OCL_VERSION_MAJOR}/" $BUILD_DIR/SPECS/opencl.spec
+    perl -pi -e "s/^%global NEO_OCL_VERSION_MINOR .*/%global NEO_OCL_VERSION_MINOR ${NEO_OCL_VERSION_MINOR}/" $BUILD_DIR/SPECS/opencl.spec
+    perl -pi -e "s/^%global NEO_OCL_VERSION_BUILD .*/%global NEO_OCL_VERSION_BUILD ${NEO_OCL_VERSION_BUILD}/" $BUILD_DIR/SPECS/opencl.spec
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC
     perl -pi -e "s/^%global ver .*/%global ver ${VERSION}/" $SPEC
 

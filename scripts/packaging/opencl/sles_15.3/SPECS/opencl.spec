@@ -3,6 +3,9 @@
 #it's changed by external script
 %global rel i1
 %global ver xxx
+%global NEO_OCL_VERSION_MAJOR xxx
+%global NEO_OCL_VERSION_MINOR xxx
+%global NEO_OCL_VERSION_BUILD xxx
 
 %define gmmlib_sover  12
 %define igc_sover 1
@@ -50,8 +53,10 @@ Summary:        ocloc package for opencl
 
 %build
 %cmake .. \
+   -DNEO_OCL_VERSION_MAJOR=%{NEO_OCL_VERSION_MAJOR} \
+   -DNEO_OCL_VERSION_MINOR=%{NEO_OCL_VERSION_MINOR} \
+   -DNEO_VERSION_BUILD=%{NEO_OCL_VERSION_BUILD} \
    -DCMAKE_BUILD_TYPE=%{build_type} \
-   -DNEO_VERSION_BUILD=%{ver} \
    -DBUILD_WITH_L0=FALSE \
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
