@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -393,7 +393,7 @@ ze_result_t ContextImp::getMemAddressRange(const void *ptr,
         }
 
         if (pSize) {
-            *pSize = alloc->getUnderlyingBufferSize();
+            *pSize = allocData->size;
         }
 
         return ZE_RESULT_SUCCESS;
