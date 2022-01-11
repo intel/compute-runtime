@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::deviceName;
     using OfflineCompiler::elfBinary;
     using OfflineCompiler::excludeIr;
+    using OfflineCompiler::familyNameWithType;
     using OfflineCompiler::fclDeviceCtx;
     using OfflineCompiler::forceStatelessToStatefulOptimization;
     using OfflineCompiler::genBinary;

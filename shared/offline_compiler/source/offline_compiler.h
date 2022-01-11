@@ -134,6 +134,7 @@ class OfflineCompiler {
     bool useLlvmText = false;
     bool useLlvmBc = false;
     bool useCppFile = false;
+    bool useGenFile = false;
     bool useOptionsSuffix = false;
     bool quiet = false;
     bool onlySpirV = false;
