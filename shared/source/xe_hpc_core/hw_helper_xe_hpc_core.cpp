@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -350,7 +350,7 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
 
 template <>
 uint32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
-    return ThreadArbitrationPolicy::AgeBased;
+    return ThreadArbitrationPolicy::RoundRobin;
 }
 
 template <>
