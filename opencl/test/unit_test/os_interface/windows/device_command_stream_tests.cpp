@@ -801,6 +801,7 @@ TEST_F(WddmCommandStreamMockGdiTest, WhenFlushingThenWddmMakeResidentIsCalledFor
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
+    wddm->callBaseMakeResident = true;
     csr->makeResident(*commandBuffer);
 
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
@@ -1137,6 +1138,7 @@ TEST_F(WddmCommandStreamTest, givenResidencyLoggingAvailableWhenFlushingCommandB
     NEO::IoFunctions::mockFcloseCalled = 0u;
 
     wddm->createPagingFenceLogger();
+    wddm->callBaseMakeResident = true;
 
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
     EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);

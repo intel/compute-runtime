@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,8 @@ struct CallResult {
 struct MakeResidentCall : CallResult {
     std::vector<D3DKMT_HANDLE> handlePack;
     uint32_t handleCount = 0;
+    bool cantTrimFurther{};
+    size_t totalSize{};
 };
 struct KmDafLockCall : CallResult {
     std::vector<D3DKMT_HANDLE> lockedAllocations;

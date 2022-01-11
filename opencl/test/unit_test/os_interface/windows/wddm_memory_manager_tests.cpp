@@ -2116,7 +2116,8 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenP
     handleStorage.fragmentStorageData[0].fragmentSize = 0x1000;
     handleStorage.fragmentStorageData[0].freeTheFragment = false;
 
-    wddm->createAllocationsAndMapGpuVaResult = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+    wddm->callBaseCreateAllocationsAndMapGpuVa = false;
+    wddm->createAllocationsAndMapGpuVaStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
 
     auto result = memoryManager->populateOsHandles(handleStorage, 0);
 
@@ -2136,7 +2137,8 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
     handleStorage.fragmentStorageData[1].cpuPtr = reinterpret_cast<void *>(0x2000);
     handleStorage.fragmentStorageData[1].fragmentSize = 0x6000;
 
-    wddm->createAllocationsAndMapGpuVaResult = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+    wddm->callBaseCreateAllocationsAndMapGpuVa = false;
+    wddm->createAllocationsAndMapGpuVaStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
 
     auto result = memoryManager->populateOsHandles(handleStorage, mockRootDeviceIndex);
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());

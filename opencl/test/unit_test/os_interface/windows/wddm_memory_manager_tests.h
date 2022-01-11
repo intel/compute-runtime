@@ -107,7 +107,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
     void SetUp() override {
         // wddm is deleted by memory manager
 
-        wddm = new MockWddm(*executionEnvironment->rootDeviceEnvironments[0].get());
+        wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[0].get());
         ASSERT_NE(nullptr, wddm);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
@@ -128,7 +128,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         osContext->decRefInternal();
     }
 
-    MockWddm *wddm = nullptr;
+    WddmMock *wddm = nullptr;
     std::unique_ptr<CommandStreamReceiver> csr;
     OSInterface *osInterface;
     OsContext *osContext;

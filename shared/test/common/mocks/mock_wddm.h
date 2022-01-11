@@ -52,8 +52,6 @@ class WddmMock : public Wddm {
     WddmMock(RootDeviceEnvironment &rootDeviceEnvironment);
     ~WddmMock();
 
-    bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override;
-    bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
     bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) override;
     bool mapGpuVirtualAddress(WddmAllocation *allocation);
     bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
@@ -124,9 +122,13 @@ class WddmMock : public Wddm {
     };
 
     void resetGdi(Gdi *gdi);
+    bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override;
+    bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
+    NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) override;
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;
-    WddmMockHelpers::CallResult makeNonResidentResult;
+    WddmMockHelpers::CallResult evictResult;
+    WddmMockHelpers::CallResult createAllocationsAndMapGpuVaResult;
     WddmMockHelpers::CallResult mapGpuVirtualAddressResult;
     WddmMockHelpers::FreeGpuVirtualAddressCall freeGpuVirtualAddressResult;
     WddmMockHelpers::CallResult createAllocationResult;
@@ -150,6 +152,15 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult waitOnPagingFenceFromCpuResult;
     WddmMockHelpers::CallResult setAllocationPriorityResult;
 
+    StackVec<WddmMockHelpers::MakeResidentCall, 2> makeResidentParamsPassed{};
+    bool makeResidentStatus = true;
+    bool callBaseMakeResident = false;
+    std::vector<bool> makeResidentResults = {};
+    uint64_t makeResidentNumberOfBytesToTrim = 0;
+    bool callBaseEvict = false;
+    bool evictStatus = true;
+    bool callBaseCreateAllocationsAndMapGpuVa = true;
+    NTSTATUS createAllocationsAndMapGpuVaStatus = STATUS_UNSUCCESSFUL;
     NTSTATUS createAllocationStatus = STATUS_SUCCESS;
     bool verifyAdapterLuidReturnValue = true;
     bool callBaseVerifyAdapterLuid = false;
@@ -161,71 +172,8 @@ class WddmMock : public Wddm {
     uintptr_t virtualAllocAddress = NEO::windowsMinAddress;
     bool kmDafEnabled = false;
     uint64_t mockPagingFence = 0u;
-    bool makeResidentStatus = true;
-    bool callBaseMakeResident = true;
     bool callBaseCreatePagingLogger = true;
     bool shutdownStatus = false;
     bool callBaseSetAllocationPriority = true;
-};
-
-struct MockWddm : WddmMock {
-    MockWddm(RootDeviceEnvironment &rootDeviceEnvironment);
-    ~MockWddm() = default;
-    bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
-        return true;
-    }
-
-    void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type);
-    uintptr_t virtualAllocAddress;
-
-    bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override {
-        makeResidentCalled++;
-        MakeResidentParams params{};
-        params.cantTrimFurther = cantTrimFurther;
-        params.totalSize = totalSize;
-        if (handles) {
-            for (size_t i = 0; i < count; i++) {
-                params.handles.push_back(handles[i]);
-            }
-        }
-        if (numberOfBytesToTrim != nullptr) {
-            *numberOfBytesToTrim = makeResidentNumberOfBytesToTrim;
-        }
-        makeResidentParamsPassed.push_back(params);
-        if (makeResidentCalled <= makeResidentResults.size()) {
-            return makeResidentResults[makeResidentCalled - 1];
-        }
-        return makeResidentResult;
-    }
-
-    struct MakeResidentParams {
-        StackVec<D3DKMT_HANDLE, 2> handles;
-        bool cantTrimFurther{};
-        size_t totalSize{};
-    };
-
-    StackVec<MakeResidentParams, 2> makeResidentParamsPassed{};
-    uint32_t makeResidentCalled = 0u;
-    bool makeResidentResult = true;
-    std::vector<bool> makeResidentResults = {};
-    uint64_t makeResidentNumberOfBytesToTrim = 0;
-
-    ADDMETHOD_NOBASE(evict, bool, true, (const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim));
-
-    NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) override {
-        createAllocationsAndMapGpuVaCalled++;
-        if (callBaseCreateAllocationAndMapGpuVa) {
-            createAllocationsAndMapGpuVaResult = baseCreateAllocationAndMapGpuVa(osHandles);
-        }
-        return createAllocationsAndMapGpuVaResult;
-    }
-
-    uint32_t createAllocationsAndMapGpuVaCalled = 0u;
-    bool callBaseCreateAllocationAndMapGpuVa = false;
-    NTSTATUS createAllocationsAndMapGpuVaResult = STATUS_UNSUCCESSFUL;
-
-    NTSTATUS baseCreateAllocationAndMapGpuVa(OsHandleStorage &osHandles) {
-        return Wddm::createAllocationsAndMapGpuVa(osHandles);
-    }
 };
 } // namespace NEO

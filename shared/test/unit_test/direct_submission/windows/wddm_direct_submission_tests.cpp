@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -376,6 +376,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenAllocatingResour
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device.get(),
                                                                           *osContext.get());
 
+    wddm->callBaseMakeResident = true;
     wddm->createPagingFenceLogger();
 
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
