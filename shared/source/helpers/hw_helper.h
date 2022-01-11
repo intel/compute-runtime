@@ -154,6 +154,7 @@ class HwHelper {
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
     virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
+    virtual bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const = 0;
 
   protected:
     HwHelper() = default;
@@ -390,6 +391,7 @@ class HwHelperHw : public HwHelper {
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isRevisionSpecificBinaryBuiltinRequired() const override;
     bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;
+    bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

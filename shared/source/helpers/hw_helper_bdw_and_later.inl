@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,4 +139,10 @@ template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
     return false;
 }
+
+template <typename GfxFamily>
+inline bool HwHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO

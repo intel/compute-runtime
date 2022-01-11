@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,10 @@ namespace NEO {
 
 bool ImplicitScalingHelper::isImplicitScalingEnabled(const DeviceBitfield &devices, bool preCondition) {
     bool apiSupport = ImplicitScaling::apiSupport;
-    if (DebugManager.flags.EnableImplicitScaling.get() != -1) {
-        apiSupport = !!DebugManager.flags.EnableImplicitScaling.get();
+    int32_t overrideEnableImplicitScaling = DebugManager.flags.EnableImplicitScaling.get();
+    if (overrideEnableImplicitScaling != -1) {
+        apiSupport = !!overrideEnableImplicitScaling;
+        preCondition = apiSupport;
     }
 
     bool partitionWalker = (devices.count() > 1u) &&

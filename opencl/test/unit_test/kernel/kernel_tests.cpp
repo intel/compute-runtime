@@ -1054,16 +1054,18 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenExportedFun
     // check getResidency as well
     std::vector<NEO::Surface *> residencySurfaces;
     pKernel->getResidency(residencySurfaces);
-    std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv;
+    std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv = std::make_unique<ExecutionEnvironment>();
+    mockCsrExecEnv->prepareRootDeviceEnvironments(1);
+    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    mockCsrExecEnv->initializeMemoryManager();
     {
-        CommandStreamReceiverMock csrMock;
+        CommandStreamReceiverMock csrMock(*mockCsrExecEnv.get(), 0, 1);
         csrMock.passResidencyCallToBaseClass = false;
         for (const auto &s : residencySurfaces) {
             s->makeResident(csrMock);
             delete s;
         }
         EXPECT_EQ(1U, csrMock.residency.count(exportedFunctionsSurface->getUnderlyingBuffer()));
-        mockCsrExecEnv = std::move(csrMock.mockExecutionEnvironment);
     }
 
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
@@ -1092,16 +1094,18 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBuffe
 
     std::vector<NEO::Surface *> residencySurfaces;
     pKernel->getResidency(residencySurfaces);
-    std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv;
+    std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv = std::make_unique<ExecutionEnvironment>();
+    mockCsrExecEnv->prepareRootDeviceEnvironments(1);
+    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    mockCsrExecEnv->initializeMemoryManager();
     {
-        CommandStreamReceiverMock csrMock;
+        CommandStreamReceiverMock csrMock(*mockCsrExecEnv.get(), 0, 1);
         csrMock.passResidencyCallToBaseClass = false;
         for (const auto &s : residencySurfaces) {
             s->makeResident(csrMock);
             delete s;
         }
         EXPECT_EQ(1U, csrMock.residency.count(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getUnderlyingBuffer()));
-        mockCsrExecEnv = std::move(csrMock.mockExecutionEnvironment);
     }
 
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);

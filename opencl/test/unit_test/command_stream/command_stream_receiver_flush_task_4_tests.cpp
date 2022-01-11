@@ -635,6 +635,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhenFlushingTaskThenWorkPartitionAllocationIsMadeResident) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.EnableStaticPartitioning.set(1);
+    DebugManager.flags.EnableImplicitScaling.set(1);
     DebugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
     UltDeviceFactory deviceFactory{1, 2};
     MockDevice *device = deviceFactory.rootDevices[0];

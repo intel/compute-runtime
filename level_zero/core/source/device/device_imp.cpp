@@ -798,17 +798,21 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     device->neoDevice = neoDevice;
     neoDevice->incRefInternal();
 
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
     device->execEnvironment = (void *)neoDevice->getExecutionEnvironment();
     device->allocationsForReuse = std::make_unique<NEO::AllocationsList>();
-    device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true);
+    bool platformImplicitScaling = hwHelper.platformSupportsImplicitScaling(hwInfo);
+    device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), platformImplicitScaling);
     device->metricContext = MetricContext::create(*device);
     device->builtins = BuiltinFunctionsLib::create(
         device, neoDevice->getBuiltIns());
     device->cacheReservation = CacheReservation::create(*device);
-    device->maxNumHwThreads = NEO::HwHelper::getMaxThreadsForVfe(neoDevice->getHardwareInfo());
+    device->maxNumHwThreads = NEO::HwHelper::getMaxThreadsForVfe(hwInfo);
 
     auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
-    device->driverInfo.reset(NEO::DriverInfo::create(&neoDevice->getHardwareInfo(), osInterface));
+    device->driverInfo.reset(NEO::DriverInfo::create(&hwInfo, osInterface));
 
     auto debugSurfaceSize = NEO::SipKernel::maxDbgSurfaceSize;
     std::vector<char> stateSaveAreaHeader;
@@ -840,7 +844,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
 
     if (debugSurface && stateSaveAreaHeader.size() > 0) {
         auto &hwInfo = neoDevice->getHardwareInfo();
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
                                                               *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
                                                               stateSaveAreaHeader.size());

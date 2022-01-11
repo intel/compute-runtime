@@ -1139,8 +1139,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-struct MultiTileCommandListAppendLaunchFunctionXeHpCoreFixture : MultiDeviceModuleFixture {
+struct MultiTileCommandListAppendLaunchFunctionXeHpCoreFixture : public MultiDeviceModuleFixture {
     void SetUp() {
+        DebugManager.flags.EnableImplicitScaling.set(1);
+
         MultiDeviceFixture::numRootDevices = 1u;
         MultiDeviceFixture::numSubDevices = 4u;
 

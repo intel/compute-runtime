@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,6 +210,11 @@ inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStr
 template <typename GfxFamily>
 inline uint32_t ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset() {
     return static_cast<uint32_t>(HwHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw());
+}
+
+template <typename GfxFamily>
+inline bool ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(const HardwareInfo &hwInfo) {
+    return false;
 }
 
 } // namespace NEO

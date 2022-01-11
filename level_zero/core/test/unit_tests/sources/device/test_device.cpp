@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -2507,8 +2508,13 @@ struct MultiSubDeviceFixture : public DeviceFixture {
 
 using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1>>;
 TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsImplicitScalingCapable) {
-    EXPECT_TRUE(device->isImplicitScalingCapable());
-    EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
+    if (NEO::HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).platformSupportsImplicitScaling(neoDevice->getHardwareInfo())) {
+        EXPECT_TRUE(device->isImplicitScalingCapable());
+        EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
+    } else {
+        EXPECT_FALSE(device->isImplicitScalingCapable());
+        EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
+    }
 }
 
 using MultiSubDeviceTestNoApi = Test<MultiSubDeviceFixture<true, false, -1>>;

@@ -56,8 +56,10 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     }
     internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
 
+    const auto &hwInfo = peekHwInfo();
     uint32_t subDeviceCount = static_cast<uint32_t>(deviceBitfield.count());
-    if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, true) &&
+    bool platformImplicitScaling = HwHelper::get(hwInfo.platform.eRenderCoreFamily).platformSupportsImplicitScaling(hwInfo);
+    if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling) &&
         subDeviceCount > 1 &&
         DebugManager.flags.EnableStaticPartitioning.get() != 0) {
         this->activePartitions = subDeviceCount;
@@ -757,6 +759,10 @@ bool CommandStreamReceiver::testTaskCountReady(volatile uint32_t *pollAddress, u
         pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
     }
     return true;
+}
+
+const HardwareInfo &CommandStreamReceiver::peekHwInfo() const {
+    return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 }
 
 } // namespace NEO

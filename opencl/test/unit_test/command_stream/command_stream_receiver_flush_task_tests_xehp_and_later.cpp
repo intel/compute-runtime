@@ -819,6 +819,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public CommandStreamReceiverFlushTaskXeHPAndLaterTests {
     void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(2);
+        DebugManager.flags.EnableImplicitScaling.set(1);
         parsePipeControl = true;
         CommandStreamReceiverFlushTaskXeHPAndLaterTests::SetUp();
     }

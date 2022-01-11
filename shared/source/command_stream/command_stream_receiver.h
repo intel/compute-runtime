@@ -309,6 +309,8 @@ class CommandStreamReceiver {
     virtual void programComputeBarrierCommand(LinearStream &cmdStream) = 0;
     virtual size_t getCmdsSizeForComputeBarrierCommand() const = 0;
 
+    const HardwareInfo &peekHwInfo() const;
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

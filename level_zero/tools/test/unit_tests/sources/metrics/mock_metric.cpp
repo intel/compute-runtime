@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,8 +111,7 @@ void MetricContextFixture::openMetricsAdapterGroup() {
 }
 
 void MetricMultiDeviceFixture::SetUp() {
-
-    NEO::ImplicitScaling::apiSupport = true;
+    DebugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::SetUp();
 
@@ -183,8 +182,6 @@ void MetricMultiDeviceFixture::TearDown() {
     mockMetricEnumeration.reset();
 
     MultiDeviceFixture::TearDown();
-
-    NEO::ImplicitScaling::apiSupport = false;
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapter() {

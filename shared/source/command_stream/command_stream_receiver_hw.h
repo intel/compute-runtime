@@ -78,7 +78,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo);
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
-    const HardwareInfo &peekHwInfo() const;
 
     void collectStateBaseAddresPatchInfo(
         uint64_t commandBufferAddress,

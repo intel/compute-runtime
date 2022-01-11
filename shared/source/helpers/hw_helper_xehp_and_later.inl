@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -192,4 +193,10 @@ template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
     return true;
 }
+
+template <typename GfxFamily>
+inline bool HwHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const {
+    return ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(hwInfo);
+}
+
 } // namespace NEO

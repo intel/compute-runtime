@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -446,6 +446,7 @@ HWTEST_F(DeviceTest, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) 
 
 HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithSubDevicesThenWorkPartitionAllocationIsCreatedForRootDevice) {
     DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableImplicitScaling.set(1);
     {
         UltDeviceFactory deviceFactory{1, 2};
         EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
@@ -479,6 +480,7 @@ HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithSubDevicesThenWorkP
 
 HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithoutSubDevicesThenWorkPartitionAllocationIsNotCreated) {
     DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableImplicitScaling.set(1);
     {
         UltDeviceFactory deviceFactory{1, 1};
         EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());

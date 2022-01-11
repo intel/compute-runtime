@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,8 @@ struct ImplicitScalingDispatch {
                                        uint32_t addressOffset);
 
     static uint32_t getPostSyncOffset();
+
+    static bool platformSupportsImplicitScaling(const HardwareInfo &hwInfo);
 
   private:
     static bool pipeControlStallRequired;

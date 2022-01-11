@@ -887,11 +887,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
 }
 
 template <typename GfxFamily>
-inline const HardwareInfo &CommandStreamReceiverHw<GfxFamily>::peekHwInfo() const {
-    return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-}
-
-template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags) {
     PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, preemptionAllocation);
     this->lastPreemptionMode = dispatchFlags.preemptionMode;

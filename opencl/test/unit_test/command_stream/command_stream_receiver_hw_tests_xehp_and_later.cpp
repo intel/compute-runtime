@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -826,6 +826,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPlatf
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenCreatingWorkPartitionAllocationThenItsPropertiesAreCorrect) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.EnableStaticPartitioning.set(1);
+    DebugManager.flags.EnableImplicitScaling.set(1);
     DebugManager.flags.EnableLocalMemory.set(1);
     UltDeviceFactory deviceFactory{1, 2};
     MockDevice &rootDevice = *deviceFactory.rootDevices[0];

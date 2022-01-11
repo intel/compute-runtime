@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,7 @@ class CommandListFixture : public DeviceFixture {
 template <bool createImmediate, bool createInternal>
 struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
     void SetUp() {
+        DebugManager.flags.EnableImplicitScaling.set(1);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
 

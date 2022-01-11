@@ -1441,7 +1441,7 @@ HWTEST_F(CommandStreamReceiverTest, whenCreatingCommandStreamReceiverThenLastAdd
 
 HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableStaticPartitioningAccordingly) {
     DebugManagerStateRestore restore{};
-    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+    DebugManager.flags.EnableImplicitScaling.set(1);
 
     {
         UltDeviceFactory deviceFactory{1, 2};
@@ -1636,7 +1636,7 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonExisitingPageTableMana
 
 TEST(CreateWorkPartitionAllocationTest, givenDisabledBlitterWhenInitializingWorkPartitionAllocationThenFallbackToCpuCopy) {
     DebugManagerStateRestore restore{};
-    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+    DebugManager.flags.EnableImplicitScaling.set(1);
 
     UltDeviceFactory deviceFactory{1, 2};
     MockDevice &device = *deviceFactory.rootDevices[0];
@@ -1662,7 +1662,7 @@ TEST(CreateWorkPartitionAllocationTest, givenDisabledBlitterWhenInitializingWork
 
 TEST(CreateWorkPartitionAllocationTest, givenEnabledBlitterWhenInitializingWorkPartitionAllocationThenDontCopyOnCpu) {
     DebugManagerStateRestore restore{};
-    VariableBackup<bool> backup(&ImplicitScaling::apiSupport, true);
+    DebugManager.flags.EnableImplicitScaling.set(1);
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
 
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
