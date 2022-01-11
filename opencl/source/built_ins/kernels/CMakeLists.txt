@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,12 +11,6 @@ add_dependencies(${BUILTINS_BINARIES_BINDFUL_LIB_NAME} builtins_vme_sources)
 add_subdirectories()
 set(GENERATED_BUILTINS ${GENERATED_BUILTINS} PARENT_SCOPE)
 set(GENERATED_BUILTINS_STATELESS ${GENERATED_BUILTINS_STATELESS} PARENT_SCOPE)
-
-if("${NEO_ARCH}" STREQUAL "x32")
-  set(BUILTIN_OPTIONS "-cl-intel-greater-than-4GB-buffer-required")
-else()
-  set(BUILTIN_OPTIONS "")
-endif()
 
 set(BUILTIN_OPTIONS_STATELESS
     "-cl-intel-greater-than-4GB-buffer-required"
@@ -35,6 +29,16 @@ function(get_bits_for_stateless core_type platform_type)
     set(BITS "32" PARENT_SCOPE)
   else()
     set(BITS ${NEO_BITS} PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(get_builtin_options core_type neo_arch)
+  if("${neo_arch}" STREQUAL "x32")
+    set(BUILTIN_OPTIONS "-cl-intel-greater-than-4GB-buffer-required" PARENT_SCOPE)
+  elseif("${core_type}" STREQUAL "XE_HPC_CORE")
+    set(BUILTIN_OPTIONS "" PARENT_SCOPE)
+  else()
+    set(BUILTIN_OPTIONS "-force_stos_opt" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -107,6 +111,7 @@ macro(macro_for_each_core_type)
         endif()
       endforeach()
       get_bits_for_stateless(${CORE_TYPE} ${PLATFORM_TYPE})
+      get_builtin_options(${CORE_TYPE} ${NEO_ARCH})
       foreach(GENERATED_BUILTIN_STATELESS ${GENERATED_BUILTINS_STATELESS})
         compile_builtin(${CORE_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN_STATELESS}.builtin_kernel ${BITS} "${BUILTIN_OPTIONS_STATELESS}")
         if(NOT ${BUILTIN_CPP} STREQUAL "")
