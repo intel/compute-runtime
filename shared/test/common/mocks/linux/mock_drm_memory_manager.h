@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,4 +124,20 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     bool alignedMallocShouldFail = false;
     size_t alignedMallocSizeRequired = 0u;
 };
+
+struct MockDrmGemCloseWorker : DrmGemCloseWorker {
+    using DrmGemCloseWorker::DrmGemCloseWorker;
+
+    void close(bool blocking) override {
+        wasBlocking = blocking;
+        DrmGemCloseWorker::close(blocking);
+    }
+    bool wasBlocking = false;
+};
+
+struct MockDrmMemoryManager : DrmMemoryManager {
+    using DrmMemoryManager::DrmMemoryManager;
+    using DrmMemoryManager::gemCloseWorker;
+};
+
 } // namespace NEO
