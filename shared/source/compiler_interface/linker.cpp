@@ -318,7 +318,10 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
             UNRECOVERABLE_IF(nullptr == instSeg.hostPointer);
             auto relocAddress = ptrOffset(instSeg.hostPointer, static_cast<uintptr_t>(relocation.offset));
             if (relocation.symbolName == implicitArgsRelocationSymbolName) {
-                pImplicitArgsRelocationAddresses.insert({segId, reinterpret_cast<uint32_t *>(relocAddress)});
+                if (pImplicitArgsRelocationAddresses.find(segId) == pImplicitArgsRelocationAddresses.end()) {
+                    pImplicitArgsRelocationAddresses.insert({segId, {}});
+                }
+                pImplicitArgsRelocationAddresses[segId].push_back(reinterpret_cast<uint32_t *>(relocAddress));
                 continue;
             }
             auto symbolIt = relocatedSymbols.find(relocation.symbolName);
@@ -472,14 +475,16 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
     for (auto i = 0u; i < kernelDescriptors.size(); i++) {
         UNRECOVERABLE_IF(!kernelDescriptors[i]);
         KernelDescriptor &kernelDescriptor = *kernelDescriptors[i];
-        auto pImplicitArgsReloc = pImplicitArgsRelocationAddresses.find(i);
-        if (pImplicitArgsReloc != pImplicitArgsRelocationAddresses.end()) {
-            UNRECOVERABLE_IF(!pDevice);
-            kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
-            if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
-                *pImplicitArgsReloc->second = sizeof(ImplicitArgs);
-            } else {
-                *pImplicitArgsReloc->second = 0u;
+        auto pImplicitArgsRelocs = pImplicitArgsRelocationAddresses.find(i);
+        if (pImplicitArgsRelocs != pImplicitArgsRelocationAddresses.end()) {
+            for (const auto &pImplicitArgsReloc : pImplicitArgsRelocs->second) {
+                UNRECOVERABLE_IF(!pDevice);
+                kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
+                if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
+                    *pImplicitArgsReloc = sizeof(ImplicitArgs);
+                } else {
+                    *pImplicitArgsReloc = 0u;
+                }
             }
         }
     }

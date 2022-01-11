@@ -234,7 +234,7 @@ struct Linker {
     template <typename PatchSizeT>
     void patchIncrement(Device *pDevice, GraphicsAllocation *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue);
 
-    std::unordered_map<uint32_t /*ISA segment id*/, uint32_t * /*implicit args relocation address to patch*/> pImplicitArgsRelocationAddresses;
+    std::unordered_map<uint32_t /*ISA segment id*/, StackVec<uint32_t *, 2> /*implicit args relocation address to patch*/> pImplicitArgsRelocationAddresses;
 };
 
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);
