@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,6 @@ class MemoryImp : public Memory, NEO::NonCopyableOrMovableClass {
 
   private:
     zes_mem_properties_t memoryProperties = {};
-    ze_device_handle_t deviceHandle = nullptr;
 };
 
 } // namespace L0

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
+
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 
@@ -29,10 +31,11 @@ void MemoryImp::init() {
     }
 }
 
-MemoryImp::MemoryImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsMemory = OsMemory::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+MemoryImp::MemoryImp(OsSysman *pOsSysman, ze_device_handle_t handle) {
+    uint32_t subdeviceId = 0;
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(handle, subdeviceId, onSubdevice);
+    pOsMemory = OsMemory::create(pOsSysman, onSubdevice, subdeviceId);
     init();
 }
 

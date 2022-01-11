@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) override;
     ze_result_t deviceEventRegister(zes_event_type_flags_t events) override;
     bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
+    static void getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice);
 
     void updateSubDeviceHandlesLocally();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <algorithm>
 #include <errno.h>
@@ -184,12 +186,12 @@ void PlatformMonitoringTech::create(const std::vector<ze_device_handle_t> &devic
                                     std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject) {
     if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDevice)) {
         for (const auto &deviceHandle : deviceHandles) {
-            ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-            Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-            auto pPmt = new PlatformMonitoringTech(pFsAccess, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                                   deviceProperties.subdeviceId);
+            uint32_t subdeviceId = 0;
+            ze_bool_t onSubdevice = false;
+            SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+            auto pPmt = new PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId);
             UNRECOVERABLE_IF(nullptr == pPmt);
-            PlatformMonitoringTech::doInitPmtObject(pFsAccess, deviceProperties.subdeviceId, pPmt,
+            PlatformMonitoringTech::doInitPmtObject(pFsAccess, subdeviceId, pPmt,
                                                     rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
         }
     }

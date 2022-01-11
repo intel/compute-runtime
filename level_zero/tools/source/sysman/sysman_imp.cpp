@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,6 +69,20 @@ void SysmanDeviceImp::updateSubDeviceHandlesLocally() {
     } else {
         deviceHandles.resize(subDeviceCount, nullptr);
         Device::fromHandle(hCoreDevice)->getSubDevices(&subDeviceCount, deviceHandles.data());
+    }
+}
+
+void SysmanDeviceImp::getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice) {
+    NEO::Device *neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+    onSubdevice = static_cast<ze_bool_t>(false);
+    if (NEO::HwHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) {
+        onSubdevice = static_cast<ze_bool_t>(true);
+    }
+    if (!neoDevice->isSubDevice()) {                                  // To get physical device or subdeviceIndex Index in case when the device does not support tile architecture is single tile device
+        UNRECOVERABLE_IF(neoDevice->getDeviceBitfield().count() != 1) // or the device is single tile device or AFFINITY_MASK only exposes single tile
+        subdeviceId = Math::log2(static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong()));
+    } else {
+        subdeviceId = static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex();
     }
 }
 
