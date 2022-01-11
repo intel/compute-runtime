@@ -51,6 +51,8 @@ NEO::GraphicsAllocation &EventImp<TagSizeT>::getAllocation(Device *device) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
+    constexpr uint32_t skipL3EventPacketIndex = 2u;
+
     globalStartTS = kernelEventCompletionData[0].getGlobalStartValue(0);
     globalEndTS = kernelEventCompletionData[0].getGlobalEndValue(0);
     contextStartTS = kernelEventCompletionData[0].getContextStartValue(0);
@@ -58,7 +60,7 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
 
     for (uint32_t i = 0; i < kernelCount; i++) {
         for (auto packetId = 0u; packetId < kernelEventCompletionData[i].getPacketsUsed(); packetId++) {
-            if (this->l3FlushWaApplied && ((packetId % 2) != 0)) {
+            if (this->l3FlushWaApplied && ((packetId % skipL3EventPacketIndex) != 0)) {
                 continue;
             }
             if (globalStartTS > kernelEventCompletionData[i].getGlobalStartValue(packetId)) {
