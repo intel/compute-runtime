@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,14 @@ using BufferObjects = StackVec<BufferObject *, EngineLimits::maxHandleCount>;
 
 class DrmAllocation : public GraphicsAllocation {
   public:
+    using MemoryUnmapFunction = int (*)(void *, size_t);
+
+    struct MemoryToUnmap {
+        void *pointer;
+        size_t size;
+        MemoryUnmapFunction unmapFunction;
+    };
+
     DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
         : DrmAllocation(rootDeviceIndex, 1, allocationType, bo, ptrIn, sizeIn, sharedHandle, pool) {}
 
@@ -48,6 +56,8 @@ class DrmAllocation : public GraphicsAllocation {
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, gpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount),
           bufferObjects(bos) {
     }
+
+    ~DrmAllocation() override;
 
     std::string getAllocationInfoString() const override;
 
@@ -89,11 +99,13 @@ class DrmAllocation : public GraphicsAllocation {
     void linkWithRegisteredHandle(uint32_t handle);
     MOCKABLE_VIRTUAL void markForCapture();
     MOCKABLE_VIRTUAL bool shouldAllocationPageFault(const Drm *drm);
+    void registerMemoryToUnmap(void *pointer, size_t size, MemoryUnmapFunction unmapFunction);
 
   protected:
     BufferObjects bufferObjects{};
     StackVec<uint32_t, 1> registeredBoBindHandles;
     MemAdviseFlags enabledMemAdviseFlags{};
+    StackVec<MemoryToUnmap, 2> memoryToUnmap;
 
     void *mmapPtr = nullptr;
     size_t mmapSize = 0u;

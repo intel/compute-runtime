@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,11 +68,9 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         allocation->setMmapPtr(cpuPointer);
         allocation->setMmapSize(alignedSize);
         if (pointerDiff != 0) {
-            [[maybe_unused]] auto retCode = this->munmapFunction(cpuBasePointer, pointerDiff);
-            DEBUG_BREAK_IF(retCode != 0);
+            allocation->registerMemoryToUnmap(cpuBasePointer, pointerDiff, this->munmapFunction);
         }
-        [[maybe_unused]] auto retCode = this->munmapFunction(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff);
-        DEBUG_BREAK_IF(retCode != 0);
+        allocation->registerMemoryToUnmap(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff, this->munmapFunction);
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
 
         bo.release();

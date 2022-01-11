@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,15 @@
 #include <sstream>
 
 namespace NEO {
+
+DrmAllocation::~DrmAllocation() {
+    [[maybe_unused]] int retCode;
+    for (auto &memory : this->memoryToUnmap) {
+        retCode = memory.unmapFunction(memory.pointer, memory.size);
+        DEBUG_BREAK_IF(retCode != 0);
+    }
+}
+
 std::string DrmAllocation::getAllocationInfoString() const {
     std::stringstream ss;
     for (auto bo : bufferObjects) {
@@ -208,6 +217,10 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     }
 
     return success;
+}
+
+void DrmAllocation::registerMemoryToUnmap(void *pointer, size_t size, DrmAllocation::MemoryUnmapFunction unmapFunction) {
+    this->memoryToUnmap.push_back({pointer, size, unmapFunction});
 }
 
 } // namespace NEO

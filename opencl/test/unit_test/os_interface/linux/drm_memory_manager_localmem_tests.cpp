@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -964,9 +964,10 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsU
     auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, 0u);
 
     EXPECT_EQ(alignUp(reinterpret_cast<void *>(0x12345678), MemoryConstants::pageSize64k), allocation->getMmapPtr());
-    EXPECT_EQ(munmapCalledCount, 2u);
-    munmapCalledCount = 0u;
+    EXPECT_EQ(0u, munmapCalledCount);
     memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(3u, munmapCalledCount);
+    munmapCalledCount = 0u;
 }
 
 HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlignedThenCreateAllocWithAlignmentUnmapOneUnalignedPart, NonDefaultIoctlsSupported) {
@@ -1001,9 +1002,10 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsA
     auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, 1u, MemoryConstants::pageSize64k, 0u);
 
     EXPECT_EQ(reinterpret_cast<void *>(0x12345678), allocation->getMmapPtr());
-    EXPECT_EQ(munmapCalledCount, 1u);
-    munmapCalledCount = 0u;
+    EXPECT_EQ(0u, munmapCalledCount);
     memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(2u, munmapCalledCount);
+    munmapCalledCount = 0u;
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithInvalidCacheRegionWhenAllocatingInDevicePoolThenReturnNullptr) {
