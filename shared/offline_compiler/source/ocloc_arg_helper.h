@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,13 +66,13 @@ class OclocArgHelper {
     uint8_t ***dataOutputs = nullptr;
     uint64_t **lenOutputs = nullptr;
     bool hasOutput = false;
+    MessagePrinter messagePrinter;
     const std::vector<DeviceProduct> deviceProductTable;
     std::vector<DeviceMapping> deviceMap;
     DeviceMapping deviceForFatbinary;
     std::map<std::string, unsigned int> genIGFXMap;
     bool fatBinary = false;
     void moveOutputs();
-    MessagePrinter messagePrinter;
     Source *findSourceFile(const std::string &filename);
     bool sourceFileExists(const std::string &filename) const;
 

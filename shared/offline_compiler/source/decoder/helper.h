@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,8 @@ class MessagePrinter {
     const std::stringstream &getLog() {
         return ss;
     }
+
+    bool isSuppressed() const { return suppressMessages; }
 
   private:
     template <typename... Args>

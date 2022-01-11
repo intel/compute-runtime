@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,13 +48,14 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
                                uint32_t *numOutputs, uint8_t ***dataOutputs,
                                uint64_t **lenOutputs, char ***nameOutputs)
     : numOutputs(numOutputs), nameOutputs(nameOutputs),
-      dataOutputs(dataOutputs), lenOutputs(lenOutputs), hasOutput(numOutputs != nullptr), deviceProductTable({
+      dataOutputs(dataOutputs), lenOutputs(lenOutputs), hasOutput(numOutputs != nullptr),
+      messagePrinter(hasOutput), deviceProductTable({
 #define NAMEDDEVICE(devId, product, ignored_gtType, ignored_devName) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
 #define DEVICE(devId, product, ignored_gtType) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
 #include "devices.inl"
 #undef DEVICE
 #undef NAMEDDEVICE
-                                                                                              {0u, std::string("")}}),
+                                     {0u, std::string("")}}),
       deviceMap({
 #define DEVICE_CONFIG_REVISION(product, productConfig, revision_id) {product, &NEO::productConfig::hwInfo, NEO::productConfig::setupHardwareInfo, revision_id},
 #define DEVICE_CONFIG(product, productConfig) {product, &NEO::productConfig::hwInfo, NEO::productConfig::setupHardwareInfo, NEO::productConfig::hwInfo.platform.usRevId},

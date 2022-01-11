@@ -2063,4 +2063,52 @@ TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefullBufferOffsetF
     }
 }
 
+struct WhiteBoxOclocArgHelper : public OclocArgHelper {
+    using OclocArgHelper::messagePrinter;
+    using OclocArgHelper::OclocArgHelper;
+};
+
+TEST(OclocArgHelperTest, GivenOutputSuppressMessagesAndSaveItToFile) {
+    uint32_t numOutputs = 0U;
+    uint64_t *lenOutputs = nullptr;
+    uint8_t **outputs = nullptr;
+    char **nameOutputs = nullptr;
+    auto helper = std::unique_ptr<WhiteBoxOclocArgHelper>(new WhiteBoxOclocArgHelper(0, nullptr, nullptr, nullptr,
+                                                                                     0, nullptr, nullptr, nullptr,
+                                                                                     &numOutputs, &outputs, &lenOutputs, &nameOutputs));
+    EXPECT_TRUE(helper->messagePrinter.isSuppressed());
+
+    ConstStringRef printMsg = "Hello world!";
+    testing::internal::CaptureStdout();
+    helper->printf(printMsg.data());
+    std::string capturedStdout = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(capturedStdout.empty());
+
+    helper.reset(); // Delete helper. Destructor saves data to output
+    EXPECT_EQ(1U, numOutputs);
+    EXPECT_EQ(printMsg.length(), lenOutputs[0]);
+    EXPECT_STREQ("stdout.log", nameOutputs[0]);
+    std::string stdoutStr = std::string(reinterpret_cast<const char *>(outputs[0]),
+                                        static_cast<size_t>(lenOutputs[0]));
+    EXPECT_STREQ(printMsg.data(), stdoutStr.c_str());
+
+    delete[] nameOutputs[0];
+    delete[] outputs[0];
+    delete[] nameOutputs;
+    delete[] outputs;
+    delete[] lenOutputs;
+}
+
+TEST(OclocArgHelperTest, GivenNoOutputPrintMessages) {
+    auto helper = WhiteBoxOclocArgHelper(0, nullptr, nullptr, nullptr,
+                                         0, nullptr, nullptr, nullptr,
+                                         nullptr, nullptr, nullptr, nullptr);
+    EXPECT_FALSE(helper.messagePrinter.isSuppressed());
+    ConstStringRef printMsg = "Hello world!";
+    testing::internal::CaptureStdout();
+    helper.printf(printMsg.data());
+    std::string capturedStdout = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(printMsg.data(), capturedStdout.c_str());
+}
+
 } // namespace NEO
