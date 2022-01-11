@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -273,51 +273,6 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDefaultDeviceQueueWithoutQueu
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOfDevicesGreaterThanMaxWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesErrorIsReturned) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
-    cl_int retVal = CL_SUCCESS;
-    auto pDevice = castToObject<ClDevice>(testedClDevice);
-    cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE, 0};
-
-    auto cmdq1 = clCreateCommandQueueWithProperties(pContext, testedClDevice, odq, &retVal);
-    EXPECT_NE(nullptr, cmdq1);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-
-    auto cmdq2 = clCreateCommandQueueWithProperties(pContext, testedClDevice, odq, &retVal);
-    if (pDevice->getDeviceInfo().maxOnDeviceQueues > 1) {
-        EXPECT_NE(nullptr, cmdq2);
-        EXPECT_EQ(retVal, CL_SUCCESS);
-    } else {
-        EXPECT_EQ(nullptr, cmdq2);
-        EXPECT_EQ(retVal, CL_OUT_OF_RESOURCES);
-    }
-
-    clReleaseCommandQueue(cmdq1);
-    if (cmdq2) {
-        clReleaseCommandQueue(cmdq2);
-    }
-}
-
-HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenFailedAllocationWhenCreatingCommandQueueWithPropertiesThenOutOfHostMemoryErrorIsReturned) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
-    InjectedFunction method = [this](size_t failureIndex) {
-        cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0};
-        auto retVal = CL_INVALID_VALUE;
-
-        auto cmdq = clCreateCommandQueueWithProperties(pContext, testedClDevice, ooq, &retVal);
-
-        if (MemoryManagement::nonfailingAllocation == failureIndex) {
-            EXPECT_EQ(CL_SUCCESS, retVal);
-            EXPECT_NE(nullptr, cmdq);
-            clReleaseCommandQueue(cmdq);
-        } else {
-            EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal) << "for allocation " << failureIndex;
-            EXPECT_EQ(nullptr, cmdq);
-        }
-    };
-    injectFailureOnIndex(method, 0);
-}
-
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenHighPriorityWhenCreatingOoqCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_HIGH_KHR, 0};
@@ -438,33 +393,6 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenCommandQueueCreatedWithVariou
         {0},
         {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0},
         {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0}};
-
-    for (auto properties : propertiesToTest) {
-        auto commandQueue = clCreateCommandQueueWithProperties(pContext, testedClDevice, properties.data(), &retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        retVal = clGetCommandQueueInfo(commandQueue, CL_QUEUE_PROPERTIES_ARRAY,
-                                       sizeof(propertiesArray), propertiesArray, &propertiesArraySize);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(properties.size() * sizeof(cl_queue_properties), propertiesArraySize);
-        for (size_t i = 0; i < properties.size(); i++) {
-            EXPECT_EQ(properties[i], propertiesArray[i]);
-        }
-
-        clReleaseCommandQueue(commandQueue);
-    }
-}
-
-TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceQueueCreatedWithVariousPropertiesWhenQueryingPropertiesArrayThenCorrectValuesAreReturned) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
-
-    cl_int retVal = CL_SUCCESS;
-    cl_queue_properties propertiesArray[5];
-    size_t propertiesArraySize;
-
-    std::vector<std::vector<uint64_t>> propertiesToTest{
-        {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0},
-        {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_SIZE, 16, 0}};
 
     for (auto properties : propertiesToTest) {
         auto commandQueue = clCreateCommandQueueWithProperties(pContext, testedClDevice, properties.data(), &retVal);

@@ -8,7 +8,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/execution_model_kernel_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
@@ -143,16 +143,4 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsA
     parentKernel->initialize();
 
     EXPECT_NE(nullptr, program->getBlockKernelManager()->getPrivateSurface(program->getBlockKernelManager()->getCount() - 1));
-}
-
-struct ParentKernelFromBinaryTest : public ExecutionModelKernelFixture {
-
-    void SetUp() override {
-        ExecutionModelKernelFixture::SetUp("simple_block_kernel", "simple_block_kernel");
-    }
-};
-
-TEST_F(ParentKernelFromBinaryTest, GivenParentKernelWhenGettingInstructionHeapSizeForExecutionModelThenSizeIsGreaterThanZero) {
-    EXPECT_TRUE(pKernel->isParentKernel);
-    EXPECT_LT(0u, pKernel->getInstructionHeapSizeForExecutionModel());
 }

@@ -995,20 +995,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelButNoDeviceQueueWhenEnqueueIsCalledThenItReturnsInvalidOperation) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
-
-    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
-    size_t gws[3] = {1, 0, 0};
-
-    MockParentKernel::CreateParams createParams{};
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, createParams));
-    parentKernel->initialize();
-
-    auto status = cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_OPERATION, status);
-}
-
 HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithoutWaitListThenSizeHasFourMMIOStoresAndPipeControll) {
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     MockKernelWithInternals mockKernel(*pClDevice);

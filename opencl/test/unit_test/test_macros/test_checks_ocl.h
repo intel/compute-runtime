@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,11 +39,6 @@ bool supportsAuxResolves();
 #define REQUIRE_OCL_21_OR_SKIP(param)                     \
     if (NEO::TestChecks::supportsOcl21(param) == false) { \
         GTEST_SKIP();                                     \
-    }
-
-#define REQUIRE_DEVICE_ENQUEUE_OR_SKIP(param)                     \
-    if (NEO::TestChecks::supportsDeviceEnqueue(param) == false) { \
-        GTEST_SKIP();                                             \
     }
 
 #define REQUIRE_AUX_RESOLVES()                             \

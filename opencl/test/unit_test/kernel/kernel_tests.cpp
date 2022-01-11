@@ -441,24 +441,6 @@ typedef Test<ClDeviceFixture> KernelPrivateSurfaceTest;
 typedef Test<ClDeviceFixture> KernelGlobalSurfaceTest;
 typedef Test<ClDeviceFixture> KernelConstantSurfaceTest;
 
-struct KernelWithDeviceQueueFixture : public ClDeviceFixture,
-                                      public DeviceQueueFixture,
-                                      public testing::Test {
-    void SetUp() override {
-        ClDeviceFixture::SetUp();
-        DeviceQueueFixture::SetUp(&context, pClDevice);
-    }
-    void TearDown() override {
-        DeviceQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
-    }
-
-    MockContext context;
-};
-
-typedef KernelWithDeviceQueueFixture KernelDefaultDeviceQueueSurfaceTest;
-typedef KernelWithDeviceQueueFixture KernelEventPoolSurfaceTest;
-
 class CommandStreamReceiverMock : public CommandStreamReceiver {
     typedef CommandStreamReceiver BaseClass;
 

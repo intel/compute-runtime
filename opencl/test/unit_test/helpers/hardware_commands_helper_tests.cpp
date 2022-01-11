@@ -16,13 +16,13 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/test/unit_test/fixtures/execution_model_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 
@@ -1002,59 +1002,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
 
     delete[] mockDsh;
 }
-
-struct ParentKernelCommandsFromBinaryTest : public ExecutionModelKernelFixture,
-                                            public ::testing::WithParamInterface<std::tuple<const char *, const char *>> {
-
-    void SetUp() override {
-
-        ExecutionModelKernelFixture::SetUp(std::get<0>(GetParam()), std::get<1>(GetParam()));
-    }
-};
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, WhenGettingSizeRequiredForExecutionModelForSurfaceStatesThenReturnSizeOfBlocksPlusMaxBindingTableSizeForAllIdtEntriesAndSchedulerSshSize) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
-
-    EXPECT_TRUE(pKernel->isParentKernel);
-
-    size_t totalSize = 0;
-
-    BlockKernelManager *blockManager = pKernel->getProgram()->getBlockKernelManager();
-    uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
-
-    totalSize = BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE - 1; // for initial alignment
-
-    uint32_t maxBindingTableCount = 0;
-
-    for (uint32_t i = 0; i < blockCount; i++) {
-        const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-
-        totalSize += pBlockInfo->heapInfo.SurfaceStateHeapSize;
-        totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-
-        maxBindingTableCount = std::max(maxBindingTableCount, static_cast<uint32_t>(pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries));
-    }
-
-    totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
-
-    auto &scheduler = pContext->getSchedulerKernel();
-    auto schedulerSshSize = scheduler.getSurfaceStateHeapSize();
-    totalSize += schedulerSshSize + ((schedulerSshSize != 0) ? BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0);
-
-    totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-
-    EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*pKernel));
-}
-
-static const char *binaryFile = "simple_block_kernel";
-static const char *KernelNames[] = {"kernel_reflection", "simple_block_kernel"};
-
-INSTANTIATE_TEST_CASE_P(ParentKernelCommandsFromBinaryTest,
-                        ParentKernelCommandsFromBinaryTest,
-                        ::testing::Combine(
-                            ::testing::Values(binaryFile),
-                            ::testing::ValuesIn(KernelNames)));
 
 HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineThenReturnTrue) {
     DebugManagerStateRestore restore;

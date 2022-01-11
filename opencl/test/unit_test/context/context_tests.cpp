@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,15 +131,6 @@ TEST_F(ContextTest, WhenSettingSpecialQueueThenQueueIsAvailable) {
     EXPECT_NE(specialQ, nullptr);
 }
 
-TEST_F(ContextTest, WhenSettingDefaultQueueThenQueueIsAvailable) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
-    EXPECT_EQ(nullptr, context->getDefaultDeviceQueue());
-    auto dq = new DeviceQueue();
-    context->setDefaultDeviceQueue(dq);
-    EXPECT_EQ(dq, context->getDefaultDeviceQueue());
-    delete dq;
-}
-
 TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
     MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
@@ -157,57 +148,11 @@ TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenCo
     EXPECT_EQ(1, context.getRefInternalCount());
 }
 
-TEST_F(ContextTest, givenDeviceQueueWithoutContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
-    MockContext context((ClDevice *)devices[0]);
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    auto cmdQ1 = new DeviceQueue();
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    delete cmdQ1;
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    cl_queue_properties properties = 0;
-    auto cmdQ2 = new DeviceQueue(nullptr, (ClDevice *)devices[0], properties);
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    delete cmdQ2;
-    EXPECT_EQ(1, context.getRefInternalCount());
-}
-
 TEST_F(ContextTest, givenCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
     MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
-    EXPECT_EQ(2, context.getRefInternalCount());
-
-    delete cmdQ;
-    EXPECT_EQ(1, context.getRefInternalCount());
-}
-
-TEST_F(ContextTest, givenDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
-    MockContext context((ClDevice *)devices[0]);
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    cl_queue_properties properties = 0;
-    auto cmdQ = new DeviceQueue(&context, (ClDevice *)devices[0], properties);
-    EXPECT_EQ(2, context.getRefInternalCount());
-
-    delete cmdQ;
-    EXPECT_EQ(1, context.getRefInternalCount());
-}
-
-TEST_F(ContextTest, givenDefaultDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
-    MockContext context((ClDevice *)devices[0]);
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    cl_queue_properties properties = 0;
-    auto cmdQ = new DeviceQueue(&context, (ClDevice *)devices[0], properties);
-    context.setDefaultDeviceQueue(cmdQ);
     EXPECT_EQ(2, context.getRefInternalCount());
 
     delete cmdQ;
