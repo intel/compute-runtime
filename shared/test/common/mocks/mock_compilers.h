@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ struct MockCompilerDebugVars {
         bindful,
         bindless
     };
+    bool shouldReturnInvalidTranslationOutput = false;
     bool forceBuildFailure = false;
     bool forceCreateFailure = false;
     bool forceRegisterFail = false;

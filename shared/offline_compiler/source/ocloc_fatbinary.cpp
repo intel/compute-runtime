@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 
+#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
@@ -378,7 +379,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
             argsCopy[deviceArgIndex] = targetPlatform.str();
 
             std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, false, retVal, argHelper)};
-            if (OfflineCompiler::ErrorCode::SUCCESS != retVal) {
+            if (OclocErrorCode::SUCCESS != retVal) {
                 argHelper->printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
                 return retVal;
             }
@@ -402,7 +403,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
             argHelper->setFatbinary(true);
             argHelper->setDeviceInfoForFatbinaryTarget(targetConfig);
             std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, false, retVal, argHelper)};
-            if (OfflineCompiler::ErrorCode::SUCCESS != retVal) {
+            if (OclocErrorCode::SUCCESS != retVal) {
                 argHelper->printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
                 return retVal;
             }

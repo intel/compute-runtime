@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
+#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/helpers/hw_helper.h"
 
 #include <algorithm>
@@ -505,7 +506,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenMutiplePlatformWhenSecon
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
 
     resString << "Unknown device : unk\n";
     resString << "Failed to parse target devices from : " << platformTarget << "\n";
@@ -536,7 +537,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenClosedRangeTooExtensiveW
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
     resString << "Invalid range : " << configString.str() << " - should be from-to or -to or from-"
               << "\n";
     resString << "Failed to parse target devices from : " << configString.str() << "\n";
@@ -641,7 +642,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoPlatformsWhenFatBinar
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (uint32_t i = 0; i < got.size(); i++) {
         resString << "Build succeeded for : " << expected[i].str() + "." + platformsRevision[i] + ".\n";
@@ -695,7 +696,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsClosedRangeWhen
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (uint32_t i = 0; i < got.size(); i++) {
         resString << "Build succeeded for : " << expected[i].str() + "." + platformsRevisions[i] + ".\n";
@@ -744,7 +745,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsOpenRangeToWhen
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (uint32_t i = 0; i < got.size(); i++) {
         resString << "Build succeeded for : " << expected[i].str() + "." + platformsRevisions[i] + ".\n";
@@ -793,7 +794,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsOpenRangeFromWh
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (uint32_t i = 0; i < got.size(); i++) {
         resString << "Build succeeded for : " << expected[i].str() + "." + platformsRevisions[i] + ".\n";
@@ -847,7 +848,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoConfigsWhenFatBinaryB
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
         std::string platformName = hardwarePrefix[deviceConfig.hwInfo->platform.eProductFamily];
@@ -893,7 +894,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeFr
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
         std::string platformName = hardwarePrefix[deviceConfig.hwInfo->platform.eProductFamily];
@@ -939,7 +940,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeTo
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
         std::string platformName = hardwarePrefix[deviceConfig.hwInfo->platform.eProductFamily];
@@ -993,7 +994,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigClosedRange
     testing::internal::CaptureStdout();
     int retVal = buildFatBinary(argv, argHelper.get());
     auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
         std::string platformName = hardwarePrefix[deviceConfig.hwInfo->platform.eProductFamily];

@@ -33,16 +33,6 @@ std::string getDevicesTypes();
 
 class OfflineCompiler {
   public:
-    enum ErrorCode {
-        SUCCESS = 0,
-        OUT_OF_HOST_MEMORY = -6,
-        BUILD_PROGRAM_FAILURE = -11,
-        INVALID_DEVICE = -33,
-        INVALID_PROGRAM = -44,
-        INVALID_COMMAND_LINE = -5150,
-        INVALID_FILE = -5151,
-    };
-
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
 
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper);

@@ -7,6 +7,7 @@
 
 #include "offline_compiler.h"
 
+#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
@@ -49,6 +50,8 @@
 #define MakeDirectory(dir) mkdir(dir, 0777)
 #define GetCurrentWorkingDirectory getcwd
 #endif
+
+using namespace NEO::OclocErrorCode;
 
 namespace NEO {
 

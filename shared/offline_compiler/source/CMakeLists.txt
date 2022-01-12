@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -60,6 +60,7 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/ocloc_api.h
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
+    ${OCLOC_DIRECTORY}/source/ocloc_error_code.h
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.h
     ${OCLOC_DIRECTORY}/source/ocloc_validator.cpp
@@ -68,6 +69,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/offline_compiler.h
     ${OCLOC_DIRECTORY}/source/offline_compiler_helper.cpp
     ${OCLOC_DIRECTORY}/source/offline_compiler_options.cpp
+    ${OCLOC_DIRECTORY}/source/offline_linker.cpp
+    ${OCLOC_DIRECTORY}/source/offline_linker.h
     ${OCLOC_DIRECTORY}/source/queries.h
     ${OCLOC_DIRECTORY}/source/utilities/get_git_version_info.h
     ${OCLOC_DIRECTORY}/source/utilities/get_git_version_info.cpp

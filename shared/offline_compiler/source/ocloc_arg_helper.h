@@ -132,7 +132,7 @@ class OclocArgHelper {
     bool isFatbinary() {
         return fatBinary;
     }
-    void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize);
+    MOCKABLE_VIRTUAL void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize);
     void saveOutput(const std::string &filename, const std::ostream &stream);
 
     MessagePrinter &getPrinterRef() { return messagePrinter; }

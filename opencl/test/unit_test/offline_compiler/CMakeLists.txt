@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,6 +10,7 @@ set(IGDRCL_SRCS_cloc
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
     ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
+    ${OCLOC_DIRECTORY}/source/offline_linker.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
 )
 
@@ -19,12 +20,13 @@ set(IGDRCL_SRCS_offline_compiler_mock
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_iga_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_argument_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_linker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_sip_ocloc_tests.cpp
 )
 
 set(CLOC_LIB_SRCS_UTILITIES
     ${OCLOC_DIRECTORY}/source/utilities/safety_caller.h
-    ${OCLOC_DIRECTORY}/source/utilities//get_current_dir.h
+    ${OCLOC_DIRECTORY}/source/utilities/get_current_dir.h
 )
 
 if(WIN32)
@@ -58,6 +60,8 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_validator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.h
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.cpp

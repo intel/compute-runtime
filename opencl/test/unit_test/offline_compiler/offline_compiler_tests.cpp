@@ -238,7 +238,7 @@ TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandTh
 
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pMultiCommand);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, retVal);
     DebugManager.flags.PrintDebugMessages.set(false);
 }
 TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
@@ -263,7 +263,7 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(nullptr, pMultiCommand);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, retVal);
     DebugManager.flags.PrintDebugMessages.set(false);
 
     deleteFileWithArgs();
@@ -318,7 +318,7 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_STREQ(OfflineCompiler::queryHelp.data(), output.c_str());
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
 }
 
 TEST_F(OfflineCompilerTests, GivenArgsWhenQueryIsCalledThenSuccessIsReturned) {
@@ -329,7 +329,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenQueryIsCalledThenSuccessIsReturned) {
 
     int retVal = OfflineCompiler::query(argv.size(), argv, oclocArgHelperWithoutInput.get());
 
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
 }
 
 TEST_F(OfflineCompilerTests, GivenArgsWhenOfflineCompilerIsCreatedThenSuccessIsReturned) {
@@ -587,7 +587,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShou
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     const auto buildResult{mockOfflineCompiler.build()};
-    ASSERT_EQ(OfflineCompiler::SUCCESS, buildResult);
+    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
 
     std::string errorReason{};
     std::string warning{};
@@ -611,7 +611,7 @@ TEST_F(OfflineCompilerTests, givenLackOfExcludeIrArgumentWhenCompilingKernelThen
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     const auto buildResult{mockOfflineCompiler.build()};
-    ASSERT_EQ(OfflineCompiler::SUCCESS, buildResult);
+    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
 
     std::string errorReason{};
     std::string warning{};
@@ -872,7 +872,7 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionThenBuildDoesNotOccur) {
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE("", output.c_str());
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
 
     delete pOfflineCompiler;
 }
@@ -890,7 +890,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_FILE, retVal);
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, retVal);
     DebugManager.flags.PrintDebugMessages.set(false);
     delete pOfflineCompiler;
 }
@@ -908,7 +908,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFlagWhenBuildingThenInvalidCommandLineE
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, retVal);
 
     delete pOfflineCompiler;
 }
@@ -925,7 +925,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLi
     EXPECT_STRNE(output.c_str(), "");
 
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, retVal);
 
     delete pOfflineCompiler;
 
@@ -939,7 +939,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLi
     output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, retVal);
 
     delete pOfflineCompiler;
 }
@@ -1724,7 +1724,7 @@ TEST(OfflineCompilerTest, givenCompilerWhenBuildSourceCodeFailsThenGenerateElfBi
     MockOfflineCompiler compiler;
     compiler.overrideBuildSourceCodeStatus = true;
 
-    auto expectedError = OfflineCompiler::ErrorCode::BUILD_PROGRAM_FAILURE;
+    auto expectedError = OclocErrorCode::BUILD_PROGRAM_FAILURE;
     compiler.buildSourceCodeStatus = expectedError;
 
     EXPECT_EQ(0u, compiler.generateElfBinaryCalled);
@@ -1755,7 +1755,7 @@ TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitialized
         gEnvironment->devicePrefix.c_str()};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
     EXPECT_STREQ("-cl-opt-disable", mockOfflineCompiler->options.c_str());
 }
 
@@ -1774,7 +1774,7 @@ TEST(OfflineCompilerTest, givenHexadecimalRevisionIdWhenCompilerIsInitializedThe
         "0x11"};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, 17);
 }
 
@@ -1796,7 +1796,7 @@ TEST(OfflineCompilerTest, givenDebugVariableSetWhenInitializingThenOverrideRevis
         "0x11"};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, 123);
 }
 
@@ -1815,7 +1815,7 @@ TEST(OfflineCompilerTest, givenDecimalRevisionIdWhenCompilerIsInitializedThenPas
         "17"};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, 17);
 }
 
@@ -1834,7 +1834,7 @@ TEST(OfflineCompilerTest, givenNoRevisionIdWhenCompilerIsInitializedThenHwInfoHa
     mockOfflineCompiler->initHardwareInfo(gEnvironment->devicePrefix.c_str());
     auto revId = mockOfflineCompiler->hwInfo.platform.usRevId;
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, revId);
 }
 
@@ -1851,7 +1851,7 @@ TEST(OfflineCompilerTest, whenDeviceIsSpecifiedThenDefaultConfigFromTheDeviceIsU
         gEnvironment->devicePrefix.c_str()};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
 
     HardwareInfo hwInfo = mockOfflineCompiler->hwInfo;
 

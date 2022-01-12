@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -521,6 +521,10 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     CIF::Builtins::BufferSimple *internalOptions,
     CIF::Builtins::BufferSimple *tracingOptions,
     uint32_t tracingOptionsCount) {
+    if (igcDebugVars->shouldReturnInvalidTranslationOutput) {
+        return nullptr;
+    }
+
     auto out = new MockOclTranslationOutput();
     translate(true, src, options, internalOptions, out);
     return out;
@@ -534,6 +538,10 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     CIF::Builtins::BufferSimple *tracingOptions,
     uint32_t tracingOptionsCount,
     void *gtpinInput) {
+    if (igcDebugVars->shouldReturnInvalidTranslationOutput) {
+        return nullptr;
+    }
+
     auto out = new MockOclTranslationOutput();
     translate(true, src, options, internalOptions, out);
     return out;
@@ -556,6 +564,10 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     CIF::Builtins::BufferSimple *tracingOptions,
     uint32_t tracingOptionsCount,
     void *gtPinInput) {
+    if (igcDebugVars->shouldReturnInvalidTranslationOutput) {
+        return nullptr;
+    }
+
     auto out = new MockOclTranslationOutput();
     translate(true, src, options, internalOptions, out);
     return out;
@@ -618,6 +630,10 @@ IGC::OclTranslationOutputBase *MockFclOclTranslationCtx::TranslateImpl(
     CIF::Builtins::BufferSimple *internalOptions,
     CIF::Builtins::BufferSimple *tracingOptions,
     uint32_t tracingOptionsCount) {
+    if (fclDebugVars->shouldReturnInvalidTranslationOutput) {
+        return nullptr;
+    }
+
     auto out = new MockOclTranslationOutput();
     translate(false, src, options, internalOptions, out);
     return out;
