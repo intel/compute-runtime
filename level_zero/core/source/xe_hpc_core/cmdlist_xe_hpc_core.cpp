@@ -44,9 +44,6 @@ ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const 
 
     NEO::LinearStream &cmdStream = *commandContainer.getCommandStream();
 
-    size_t estimatedSizeRequired = NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(size);
-    increaseCommandStreamSpace(estimatedSizeRequired);
-
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *gpuAlloc, static_cast<uint32_t>(size), offset, hwInfo);
 
     return ZE_RESULT_SUCCESS;
@@ -56,9 +53,6 @@ template <>
 void CommandListCoreFamily<IGFX_XE_HPC_CORE>::applyMemoryRangesBarrier(uint32_t numRanges,
                                                                        const size_t *pRangeSizes,
                                                                        const void **pRanges) {
-
-    increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl());
-
     NEO::PipeControlArgs args;
     args.hdcPipelineFlush = true;
     args.unTypedDataPortCacheFlush = true;

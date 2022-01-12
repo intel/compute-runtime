@@ -1449,3 +1449,13 @@ HWTEST2_F(HwHelperTest, givenHwInfoConfigWhenCheckingForceNonGpuCoherencyWAThenF
     EXPECT_FALSE(hwHelper.forceNonGpuCoherencyWA(true));
     EXPECT_FALSE(hwHelper.forceNonGpuCoherencyWA(false));
 }
+
+HWTEST_F(HwHelperTest, GivenHwInfoWhenGetBatchBufferEndSizeCalledThenCorrectSizeReturned) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(hwHelper.getBatchBufferEndSize(), sizeof(typename FamilyType::MI_BATCH_BUFFER_END));
+}
+
+HWTEST_F(HwHelperTest, GivenHwInfoWhenGetBatchBufferEndReferenceCalledThenCorrectPtrReturned) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(hwHelper.getBatchBufferEndReference(), reinterpret_cast<const void *>(&FamilyType::cmdInitBatchBufferEnd));
+}

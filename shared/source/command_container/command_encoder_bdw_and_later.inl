@@ -66,15 +66,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     if (!args.isIndirect) {
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
-    size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(args.device, threadStartVec, threadDimsVec,
-                                                                        args.isInternal, args.isCooperative, args.isIndirect,
-                                                                        args.dispatchInterface, false);
-    if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
-        auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
-        *bbEnd = Family::cmdInitBatchBufferEnd;
-
-        container.allocateNextCommandBuffer();
-    }
 
     WALKER_TYPE cmd = Family::cmdInitGpgpuWalker;
     auto idd = Family::cmdInitInterfaceDescriptorData;
@@ -342,40 +333,6 @@ inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const Har
 
 template <typename Family>
 void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
-
-template <typename Family>
-size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart,
-                                                                          const Vec3<size_t> &groupCount, bool isInternal,
-                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface,
-                                                                          bool isPartitioned) {
-    using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
-    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-    using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;
-
-    size_t issueMediaInterfaceDescriptorLoad = sizeof(MEDIA_STATE_FLUSH) + sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD);
-    size_t totalSize = sizeof(WALKER_TYPE);
-    totalSize += PreemptionHelper::getPreemptionWaCsSize<Family>(*device);
-    totalSize += sizeof(MEDIA_STATE_FLUSH);
-    totalSize += issueMediaInterfaceDescriptorLoad;
-    totalSize += EncodeStates<Family>::getAdjustStateComputeModeSize();
-    totalSize += EncodeWA<Family>::getAdditionalPipelineSelectSize(*device);
-    totalSize += EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams();
-    totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
-    totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
-    if (isIndirect) {
-        UNRECOVERABLE_IF(dispatchInterface == nullptr);
-        totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), false);
-        if (dispatchInterface->getImplicitArgs()) {
-            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
-            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
-            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), true);
-        }
-    }
-
-    totalSize += sizeof(MI_BATCH_BUFFER_END);
-
-    return totalSize;
-}
 
 template <typename Family>
 inline void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo) {

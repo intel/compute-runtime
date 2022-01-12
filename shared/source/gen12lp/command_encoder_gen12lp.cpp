@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,6 @@ size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
         size += 2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(device.getHardwareInfo());
     }
     return size;
-}
-
-template <>
-size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
-    return sizeof(typename Family::STATE_COMPUTE_MODE);
 }
 
 template <>

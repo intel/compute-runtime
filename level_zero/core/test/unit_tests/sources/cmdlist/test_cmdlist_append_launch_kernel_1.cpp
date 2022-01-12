@@ -106,10 +106,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAp
     const auto streamCpu = stream->getCpuBase();
 
     Vec3<size_t> groupCount{1, 1, 1};
-    auto requiredSizeEstimate = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), {0, 0, 0}, groupCount, false, false, false, kernel.get(), false);
+    auto sizeLeftInStream = sizeof(MI_BATCH_BUFFER_END);
     auto available = stream->getAvailableSpace();
-    stream->getSpace(available - requiredSizeEstimate + 1);
+    stream->getSpace(available - sizeLeftInStream);
     auto bbEndPosition = stream->getSpace(0);
 
     const uint32_t threadGroupDimensions[3] = {1, 1, 1};
@@ -234,38 +233,6 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     auto reallocatedAllocation = ssh->getGraphicsAllocation();
     EXPECT_NE(nullptr, reallocatedAllocation);
     EXPECT_NE(initialAllocation, reallocatedAllocation);
-}
-
-HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferSizeDoesNotExceedEstimate, IsAtLeastSkl) {
-    createKernel();
-    ze_group_count_t groupCount{1, 1, 1};
-
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-
-    auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-
-    auto result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, false);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, false, kernel.get(), false);
-
-    EXPECT_LE(sizeAfter - sizeBefore, estimate);
-
-    sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-
-    result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, true, false, false);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, false, kernel.get(), false);
-
-    EXPECT_LE(sizeAfter - sizeBefore, estimate);
-    EXPECT_LE(sizeAfter - sizeBefore, estimate);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppendingKernelThenPostSyncToEventIsGenerated) {
@@ -689,19 +656,10 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWithImplicitArgsWhe
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
                                                      static_cast<ze_group_count_t *>(alloc),
                                                      nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
-    auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, true, &kernel, false);
-
-    EXPECT_LE(sizeAfter - sizeBefore, estimate);
-
     auto heap = commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT);
     uint64_t pImplicitArgsGPUVA = heap->getGraphicsAllocation()->getGpuAddress() + kernel.getSizeForImplicitArgsPatching() - sizeof(ImplicitArgs);
     auto workDimStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
@@ -869,18 +827,10 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
                                                      static_cast<ze_group_count_t *>(alloc),
                                                      nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
-    auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, true, &kernel, false);
-
-    EXPECT_LE(sizeAfter - sizeBefore, estimate);
 
     kernel.groupSize[2] = 2;
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),

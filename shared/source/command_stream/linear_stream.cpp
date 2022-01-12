@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,5 +32,11 @@ LinearStream::LinearStream(GraphicsAllocation *gfxAllocation)
 
 LinearStream::LinearStream()
     : LinearStream(nullptr) {
+}
+
+LinearStream::LinearStream(void *buffer, size_t bufferSize, CommandContainer *cmdContainer, size_t batchBufferEndSize)
+    : LinearStream(buffer, bufferSize) {
+    this->cmdContainer = cmdContainer;
+    this->batchBufferEndSize = batchBufferEndSize;
 }
 } // namespace NEO

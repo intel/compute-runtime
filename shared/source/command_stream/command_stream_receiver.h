@@ -273,7 +273,7 @@ class CommandStreamReceiver {
 
     uint64_t getWorkPartitionAllocationGpuAddress() const;
 
-    bool isRcs() const;
+    MOCKABLE_VIRTUAL bool isRcs() const;
 
     virtual void initializeDefaultsForInternalEngine(){};
 

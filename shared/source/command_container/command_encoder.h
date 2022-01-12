@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/command_container/cmdcontainer.h"
-#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/definitions/mi_flush_args.h"
@@ -64,10 +63,6 @@ struct EncodeDispatchKernel {
 
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
-    static size_t estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart, const Vec3<size_t> &groupCount,
-                                                       bool isInternal, bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface,
-                                                       bool isPartitioned);
-
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     size_t *lws,
                                                     std::array<uint8_t, 3> walkOrder,
@@ -116,8 +111,6 @@ struct EncodeStates {
                                      const void *fnDynamicStateHeap,
                                      BindlessHeapsHelper *bindlessHeapHelper,
                                      const HardwareInfo &hwInfo);
-
-    static size_t getAdjustStateComputeModeSize();
 };
 
 template <typename GfxFamily>
@@ -186,9 +179,6 @@ struct EncodeIndirectParams {
     static void setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offset, uint64_t crossThreadAddress, const uint32_t *groupSize);
     static void setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws);
 
-    static size_t getCmdsSizeForIndirectParams();
-    static size_t getCmdsSizeForSetGroupSizeIndirect();
-    static size_t getCmdsSizeForSetGroupCountIndirect();
     static size_t getCmdsSizeForSetWorkDimIndirect(const uint32_t *groupSize, bool misalignedPtr);
 };
 

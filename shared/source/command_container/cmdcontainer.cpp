@@ -69,8 +69,10 @@ ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusable
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
-    commandStream = std::unique_ptr<LinearStream>(new LinearStream(cmdBufferAllocation->getUnderlyingBuffer(),
-                                                                   defaultListCmdBufferSize));
+    const auto &hardwareInfo = device->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    commandStream = std::make_unique<LinearStream>(cmdBufferAllocation->getUnderlyingBuffer(),
+                                                   alignedSize - cmdBufferReservedSize, this, hwHelper.getBatchBufferEndSize());
 
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
@@ -264,12 +266,21 @@ void CommandContainer::allocateNextCommandBuffer() {
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
-    commandStream->replaceBuffer(cmdBufferAllocation->getUnderlyingBuffer(), defaultListCmdBufferSize);
+    size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
+    commandStream->replaceBuffer(cmdBufferAllocation->getUnderlyingBuffer(), alignedSize - cmdBufferReservedSize);
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
     if (!getFlushTaskUsedForImmediate()) {
         addToResidencyContainer(cmdBufferAllocation);
     }
+}
+
+void CommandContainer::closeAndAllocateNextCommandBuffer() {
+    auto &hwHelper = NEO::HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+    auto bbEndSize = hwHelper.getBatchBufferEndSize();
+    auto ptr = commandStream->getSpace(0u);
+    memcpy_s(ptr, bbEndSize, hwHelper.getBatchBufferEndReference(), bbEndSize);
+    allocateNextCommandBuffer();
 }
 
 void CommandContainer::prepareBindfulSsh() {

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -475,7 +476,8 @@ TEST_F(CommandContainerTest, whenAllocateNextCmdBufferIsCalledThenNewAllocationI
     EXPECT_NE(nullptr, nextBuffer);
     EXPECT_EQ(0u, sizeUsed);
     EXPECT_NE(initialBuffer, nextBuffer);
-    const size_t cmdBufSize = CommandContainer::defaultListCmdBufferSize;
+    size_t alignedSize = alignUp<size_t>(CommandContainer::totalCmdBufferSize, MemoryConstants::pageSize64k);
+    const size_t cmdBufSize = alignedSize - CommandContainer::cmdBufferReservedSize;
     EXPECT_EQ(cmdBufSize, availableSize);
 
     ASSERT_EQ(2u, cmdContainer->getCmdBufferAllocations().size());
@@ -681,4 +683,49 @@ TEST_F(CommandContainerTest, givenContainerAllocatesNextCommandBufferWhenResetin
         }
     }
     EXPECT_TRUE(firstAllocationFound);
+}
+
+class MyLinearStreamMock : public LinearStream {
+  public:
+    using LinearStream::cmdContainer;
+};
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenContainerIsInitializedThenStreamContainsContainerPtr) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+
+    EXPECT_EQ(reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream())->cmdContainer, &cmdContainer);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenContainerIsInitializedThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    size_t alignedSize = alignUp<size_t>(CommandContainer::totalCmdBufferSize, MemoryConstants::pageSize64k);
+    EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - CommandContainer::cmdBufferReservedSize);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenAlocatingNextCmdBufferThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.allocateNextCommandBuffer();
+    size_t alignedSize = alignUp<size_t>(CommandContainer::totalCmdBufferSize, MemoryConstants::pageSize64k);
+    EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - CommandContainer::cmdBufferReservedSize);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBufferCalledThenBBEndPlacedAtEndOfLinearStream) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto ptr = cmdContainer.getCommandStream()->getSpace(0u);
+    cmdContainer.closeAndAllocateNextCommandBuffer();
+    EXPECT_EQ(memcmp(ptr, hwHelper.getBatchBufferEndReference(), hwHelper.getBatchBufferEndSize()), 0);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBufferCalledThenNewCmdBufferAllocationCreated) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+    cmdContainer.closeAndAllocateNextCommandBuffer();
+    EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
 }

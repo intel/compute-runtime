@@ -100,8 +100,10 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                       staticPartitioning,
                                                                                       useSecondaryBatchBuffer);
 
-    uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
-    void *commandBuffer = commandStream.getSpace(0u);
+    auto dispatchCommandsSize = getSize(apiSelfCleanup, preferStaticPartitioning, devices, {walkerCmd.getThreadGroupIdStartingX(), walkerCmd.getThreadGroupIdStartingY(), walkerCmd.getThreadGroupIdStartingZ()}, {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()});
+    void *commandBuffer = commandStream.getSpace(dispatchCommandsSize);
+    uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed() - dispatchCommandsSize;
+
     if (staticPartitioning) {
         UNRECOVERABLE_IF(tileCount != partitionCount);
         WalkerPartition::constructStaticallyPartitionedCommandBuffer<GfxFamily>(commandBuffer,
@@ -126,7 +128,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                  args,
                                                                                  hwInfo);
     }
-    commandStream.getSpace(totalProgrammedSize);
+    UNRECOVERABLE_IF(totalProgrammedSize != dispatchCommandsSize);
 }
 
 template <typename GfxFamily>
@@ -166,8 +168,9 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
     args.postSyncGpuAddress = gpuAddress;
     args.postSyncImmediateValue = immediateData;
 
-    uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
-    void *commandBuffer = commandStream.getSpace(0u);
+    auto barrierCommandsSize = getBarrierSize(hwInfo, apiSelfCleanup, args.usePostSync);
+    void *commandBuffer = commandStream.getSpace(barrierCommandsSize);
+    uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed() - barrierCommandsSize;
 
     WalkerPartition::constructBarrierCommandBuffer<GfxFamily>(commandBuffer,
                                                               cmdBufferGpuAddress,
@@ -175,7 +178,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                               args,
                                                               flushArgs,
                                                               hwInfo);
-    commandStream.getSpace(totalProgrammedSize);
+    UNRECOVERABLE_IF(totalProgrammedSize != barrierCommandsSize);
 }
 
 template <typename GfxFamily>

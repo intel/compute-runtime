@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,7 +159,6 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t reset() override;
     ze_result_t executeCommandListImmediate(bool performMigration) override;
     size_t getReserveSshSize();
-    void increaseCommandStreamSpace(size_t commandSize);
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,

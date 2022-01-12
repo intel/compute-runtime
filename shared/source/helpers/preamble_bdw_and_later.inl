@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble_base.inl"
 #include "shared/source/kernel/kernel_execution_type.h"
 

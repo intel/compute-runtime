@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/linear_stream_fixture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
@@ -108,4 +109,88 @@ TEST_F(LinearStreamTest, givenNewGraphicsAllocationWhenReplaceIsCalledThenLinear
     EXPECT_NE(&newGraphicsAllocation, graphicsAllocation);
     linearStream.replaceGraphicsAllocation(&newGraphicsAllocation);
     EXPECT_EQ(&newGraphicsAllocation, linearStream.getGraphicsAllocation());
+}
+
+class MyLinearStreamMock : public LinearStream {
+  public:
+    using LinearStream::sizeUsed;
+};
+
+TEST_F(LinearStreamTest, givenLinearStreamWithoutCmdContainerWhenOneByteLeftInStreamThenGetSpaceDontThrowAbort) {
+    reinterpret_cast<MyLinearStreamMock *>(&linearStream)->sizeUsed = linearStream.getMaxAvailableSpace() - 1;
+    EXPECT_NO_THROW(linearStream.getSpace(1));
+}
+using CommandContainerLinearStreamTest = Test<DeviceFixture>;
+TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenOneByteLeftInStreamThenGetSpaceThrowAbort) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
+    stream->sizeUsed = stream->getMaxAvailableSpace() - 1;
+    EXPECT_THROW(stream->getSpace(1), std::exception);
+}
+
+TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenNewCmdBufferAllocated) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
+    size_t dummyCommandSize = 2;
+    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
+    EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+    stream->getSpace(dummyCommandSize);
+    EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
+}
+
+TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenLinearStreamHasNewAllocation) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
+    size_t dummyCommandSize = 2;
+    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
+    auto oldBuffer = stream->getCpuBase();
+    stream->getSpace(dummyCommandSize);
+    auto newBuffer = stream->getCpuBase();
+    EXPECT_NE(newBuffer, oldBuffer);
+}
+
+TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenGetSpaceReturnPtrFromNewAllocation) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
+    size_t dummyCommandSize = 2;
+    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
+    auto ptr = stream->getSpace(dummyCommandSize);
+    auto buffer = stream->getCpuBase();
+    EXPECT_EQ(buffer, ptr);
+}
+
+TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsSpaceForCommandAndBBEndThenNewCmdBufferIsNotAllocated) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
+    size_t dummyCommandSize = 2;
+    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize);
+    EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+    stream->getSpace(dummyCommandSize);
+    EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+}
+
+TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenBBEndAddedAtEndOfStream) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr);
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
+    size_t dummyCommandSize = 2;
+    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
+    auto ptr = stream->getSpace(0u);
+    stream->getSpace(dummyCommandSize);
+    EXPECT_EQ(memcmp(ptr, hwHelper.getBatchBufferEndReference(), hwHelper.getBatchBufferEndSize()), 0);
 }

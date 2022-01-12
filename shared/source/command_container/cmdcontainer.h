@@ -36,10 +36,9 @@ enum class ErrorCode {
 class CommandContainer : public NonCopyableOrMovableClass {
   public:
     static constexpr size_t defaultListCmdBufferSize = MemoryConstants::kiloByte * 256;
-    static constexpr size_t totalCmdBufferSize =
-        defaultListCmdBufferSize +
-        MemoryConstants::cacheLineSize +
-        CSRequirements::csOverfetchSize;
+    static constexpr size_t cmdBufferReservedSize = MemoryConstants::cacheLineSize +
+                                                    CSRequirements::csOverfetchSize;
+    static constexpr size_t totalCmdBufferSize = defaultListCmdBufferSize + cmdBufferReservedSize;
 
     CommandContainer();
 
@@ -86,6 +85,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     IndirectHeap *getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment);
     void allocateNextCommandBuffer();
+    void closeAndAllocateNextCommandBuffer();
 
     void handleCmdBufferAllocations(size_t startIndex);
     GraphicsAllocation *obtainNextCommandBufferAllocation();

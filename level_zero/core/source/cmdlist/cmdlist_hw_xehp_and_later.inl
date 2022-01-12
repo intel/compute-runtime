@@ -134,8 +134,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     const auto &hwInfo = this->device->getHwInfo();
     if (NEO::DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
-        increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl());
-
         NEO::PipeControlArgs args;
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
     }
@@ -245,8 +243,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
             event->setPacketsInUse(partitionCount);
         }
         if (L3FlushEnable) {
-            size_t estimatedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
-            increaseCommandStreamSpace(estimatedSize);
             programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);
         }
     }
@@ -302,16 +298,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t partitionDataSize) {
-    size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
-    increaseCommandStreamSpace(estimatedSizeRequired);
     NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),
                                                                     partitionDataSize);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {
-    const size_t estimatedSizeRequired = NEO::ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
-    increaseCommandStreamSpace(estimatedSizeRequired);
     NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),
                                                                     NEO::ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset());
 }
@@ -320,14 +312,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
     if (this->partitionCount > 1) {
         auto neoDevice = device->getNEODevice();
-        auto &hwInfo = neoDevice->getHardwareInfo();
-
-        increaseCommandStreamSpace(estimateBufferSizeMultiTileBarrier(hwInfo));
         appendMultiTileBarrier(*neoDevice);
     } else {
         NEO::PipeControlArgs args = createBarrierFlags();
-        size_t estimatedSizeRequired = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
-        increaseCommandStreamSpace(estimatedSizeRequired);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
     }
 }

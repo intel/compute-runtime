@@ -63,15 +63,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     if (!args.isIndirect) {
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
-    size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(args.device, threadStartVec, threadDimsVec,
-                                                                        args.isInternal, args.isCooperative, args.isIndirect, args.dispatchInterface,
-                                                                        args.partitionCount > 1);
-    if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
-        auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
-        *bbEnd = Family::cmdInitBatchBufferEnd;
-
-        container.allocateNextCommandBuffer();
-    }
 
     bool specialModeRequired = kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode;
     if (PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(container.lastPipelineSelectModeRequired, specialModeRequired, hwInfo)) {
@@ -446,36 +437,6 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
     if (inlineDataProgrammingRequired == true) {
         walkerCmd.setEmitInlineParameter(1);
     }
-}
-
-template <typename Family>
-size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart,
-                                                                          const Vec3<size_t> &groupCount, bool isInternal,
-                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface,
-                                                                          bool isPartitioned) {
-    size_t totalSize = sizeof(WALKER_TYPE);
-    totalSize += PreemptionHelper::getPreemptionWaCsSize<Family>(*device);
-    totalSize += EncodeStates<Family>::getAdjustStateComputeModeSize();
-    totalSize += EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams();
-    totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
-    totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
-    if (isIndirect) {
-        UNRECOVERABLE_IF(dispatchInterface == nullptr);
-        totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), false);
-        if (dispatchInterface->getImplicitArgs()) {
-            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
-            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
-            totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(dispatchInterface->getGroupSize(), true);
-        }
-    }
-
-    if ((isPartitioned && !isCooperative) &&
-        !isInternal) {
-        const bool staticPartitioning = device->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled();
-        totalSize += ImplicitScalingDispatch<Family>::getSize(true, staticPartitioning, device->getDeviceBitfield(), groupStart, groupCount);
-    }
-
-    return totalSize;
 }
 
 template <typename Family>

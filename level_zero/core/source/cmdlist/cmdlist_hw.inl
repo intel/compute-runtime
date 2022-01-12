@@ -332,7 +332,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         if (this->partitionCount > 1) {
             estimateSize += estimateBufferSizeMultiTileBarrier(hwInfo);
         }
-        increaseCommandStreamSpace(estimateSize);
 
         for (uint32_t i = 0u; i < packetsToReset; i++) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
@@ -896,13 +895,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
     NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
-    bool blitterDirectSubmission = true; // assume direct submission enabled, since usually MI_BATCH_BUFFER_START is bigger than MI_BATCH_BUFFER_END
-    size_t estimatedSize = NEO::BlitCommandsHelper<GfxFamily>::template BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer,
-                                                                                                                                false,
-                                                                                                                                false,
-                                                                                                                                blitterDirectSubmission,
-                                                                                                                                *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
-    increaseCommandStreamSpace(estimatedSize);
 
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
@@ -946,13 +938,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
     }
 
     NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
-    bool blitterDirectSubmission = true; // assume direct submission enabled, since usually MI_BATCH_BUFFER_START is bigger than MI_BATCH_BUFFER_END
-    size_t estimatedSize = NEO::BlitCommandsHelper<GfxFamily>::template BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer,
-                                                                                                                                false,
-                                                                                                                                false,
-                                                                                                                                blitterDirectSubmission,
-                                                                                                                                *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
-    increaseCommandStreamSpace(estimatedSize);
 
     appendEventForProfiling(hSignalEvent, true);
     bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
@@ -1684,11 +1669,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
         if (isCopyOnly()) {
             NEO::MiFlushArgs args;
             args.commandWithPostSync = true;
-            increaseCommandStreamSpace(NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), baseAddr, Event::STATE_SIGNALED,
                                                               args, hwInfo);
         } else {
-            increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo));
             NEO::PipeControlArgs args;
             args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
             if (this->partitionCount > 1) {
@@ -1839,7 +1822,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
         args.commandWithPostSync = true;
-        increaseCommandStreamSpace(NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset),
                                                           Event::STATE_SIGNALED, args, hwInfo);
     } else {
@@ -1851,7 +1833,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
             event->setPacketsInUse(this->partitionCount);
         }
         if (applyScope || event->isEventTimestampFlagSet()) {
-            increaseCommandStreamSpace(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo));
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandContainer.getCommandStream(),
                 POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
@@ -1860,7 +1841,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
                 hwInfo,
                 args);
         } else {
-            increaseCommandStreamSpace(NEO::EncodeStoreMemory<GfxFamily>::getStoreDataImmSize());
             NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
                 *commandContainer.getCommandStream(),
                 ptrOffset(baseAddr, eventSignalOffset),
@@ -1928,7 +1908,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             estimatedBufferSize += NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
         }
     }
-    increaseCommandStreamSpace(estimatedBufferSize);
 
     if (dcFlushRequired) {
         if (isCopyOnly()) {
@@ -2205,17 +2184,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reserveSpace(size_t size, void
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::increaseCommandStreamSpace(size_t commandSize) {
-    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
-    size_t estimatedSizeRequired = commandSize + sizeof(MI_BATCH_BUFFER_END);
-    if (commandContainer.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
-        auto bbEnd = commandContainer.getCommandStream()->template getSpaceForCmd<MI_BATCH_BUFFER_END>();
-        *bbEnd = GfxFamily::cmdInitBatchBufferEnd;
-        commandContainer.allocateNextCommandBuffer();
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pThreadGroupDimensions);
@@ -2353,9 +2321,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     const auto &hwInfo = this->device->getHwInfo();
     if (!hSignalEvent) {
         if (isCopyOnly()) {
-            size_t estimatedSizeRequired = NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
-            increaseCommandStreamSpace(estimatedSizeRequired);
-
             NEO::MiFlushArgs args;
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, hwInfo);
         } else {

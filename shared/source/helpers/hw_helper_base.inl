@@ -710,4 +710,12 @@ template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
     return requiresCoherency;
 }
+template <typename GfxFamily>
+size_t HwHelperHw<GfxFamily>::getBatchBufferEndSize() const {
+    return sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
+}
+template <typename GfxFamily>
+const void *HwHelperHw<GfxFamily>::getBatchBufferEndReference() const {
+    return reinterpret_cast<const void *>(&GfxFamily::cmdInitBatchBufferEnd);
+}
 } // namespace NEO

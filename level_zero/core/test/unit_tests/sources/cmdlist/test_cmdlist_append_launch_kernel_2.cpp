@@ -1209,20 +1209,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchFunctionXeHpCoreTes
 HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenDoNotUseImplicitScaling, IsAtLeastXeHpCore) {
     ze_group_count_t groupCount{1, 1, 1};
 
-    auto estimateWithNonCooperativeKernel = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>{0, 0, 0}, Vec3<size_t>{1, 1, 1}, false, false, false, kernel.get(), true);
-    auto estimateWithCooperativeKernel = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>{0, 0, 0}, Vec3<size_t>{1, 1, 1}, false, true, false, kernel.get(), true);
-    EXPECT_GT(estimateWithNonCooperativeKernel, estimateWithCooperativeKernel);
-
     auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = commandListWithNonCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeBefore = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed();
     result = commandListWithNonCooperativeKernel->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto sizeUsedWithNonCooperativeKernel = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed() - sizeBefore;
-    EXPECT_LE(sizeUsedWithNonCooperativeKernel, estimateWithNonCooperativeKernel);
+    auto sizeAfter = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+    auto itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    auto cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
+    EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
 
     auto commandListWithCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     result = commandListWithCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -1230,8 +1229,14 @@ HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperative
     sizeBefore = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
     result = commandListWithCooperativeKernel->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto sizeUsedWithCooperativeKernel = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed() - sizeBefore;
-    EXPECT_LE(sizeUsedWithCooperativeKernel, estimateWithCooperativeKernel);
+    sizeAfter = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+
+    itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
+    EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
 }
 
 } // namespace ult

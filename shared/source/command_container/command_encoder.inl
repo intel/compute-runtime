@@ -93,11 +93,6 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 } // namespace NEO
 
 template <typename Family>
-inline size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
-    return 0;
-}
-
-template <typename Family>
 void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress) {
     int logLws = 0;
     int i = val;
@@ -663,22 +658,6 @@ void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &c
         }
         EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIM[i], lws[i], ptrOffset(crossThreadAddress, offsets[i]));
     }
-}
-
-template <typename Family>
-inline size_t EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams() {
-    return 3 * sizeof(typename Family::MI_LOAD_REGISTER_MEM);
-}
-
-template <typename Family>
-inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect() {
-    return 3 * (sizeof(MI_STORE_REGISTER_MEM));
-}
-
-template <typename Family>
-inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect() {
-    constexpr uint32_t aluCmdSize = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
-    return 3 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) + aluCmdSize + sizeof(MI_STORE_REGISTER_MEM));
 }
 
 template <typename Family>
