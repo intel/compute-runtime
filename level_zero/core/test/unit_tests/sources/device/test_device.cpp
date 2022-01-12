@@ -1562,6 +1562,14 @@ TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsR
     }
 }
 
+TEST_F(MultipleDevicesTest, givenNonZeroNumbersOfSubdevicesWhenGetSubDevicesIsCalledWithNullPointerThenInvalidArgumentIsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+
+    uint32_t count = 1;
+    auto result = device0->getSubDevices(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
 TEST_F(MultipleDevicesTest, whenRetriecingSubDevicePropertiesThenCorrectFlagIsSet) {
     L0::Device *device0 = driverHandle->devices[0];
 
@@ -2334,6 +2342,16 @@ TEST_F(zeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCa
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, res);
 }
 
+TEST_F(zeDeviceCacheReservationTest, givenGreaterThanOneCountOfDeviceCachePropertiesWhenGetCachePropertiesIsCalledThenSetCountToOne) {
+    static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
+    ze_device_cache_properties_t deviceCacheProperties = {};
+
+    uint32_t count = 10;
+    ze_result_t res = device->getCacheProperties(&count, &deviceCacheProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(count, 1u);
+}
+
 TEST_F(zeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledOnDeviceWithNoSupportForCacheReservationThenReturnZeroMaxCacheReservationSize) {
     VariableBackup<size_t> maxCacheReservationSizeBackup{&MockCacheReservation::maxCacheReservationSize, 0};
     static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
@@ -2456,6 +2474,14 @@ TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtFailsTo
 
         EXPECT_EQ(ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_RESERVE_REGION, mockCacheReservation->receivedCacheRegion);
     }
+}
+
+using zeDeviceSystemBarrierTest = DeviceTest;
+
+TEST_F(zeDeviceSystemBarrierTest, whenCallingSystemBarrierThenReturnErrorUnsupportedFeature) {
+
+    auto result = static_cast<DeviceImp *>(device)->systemBarrier();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
 template <bool osLocalMemory, bool apiSupport, int32_t enablePartitionWalker>
