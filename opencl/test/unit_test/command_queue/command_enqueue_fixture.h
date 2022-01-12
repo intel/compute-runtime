@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,18 +115,10 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
-        auto &device = dispatchInfo.begin()->getClDevice();
-        const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(device.getHardwareInfo().platform.eProductFamily);
+        EXPECT_FALSE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
 
-        if (compilerHwInfoConfig.isForceToStatelessRequired()) {
-            EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
-            EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
-        } else {
-            EXPECT_FALSE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
-
-            if (HwHelperHw<FamilyType>::get().isStatelesToStatefullWithOffsetSupported()) {
-                EXPECT_TRUE(kernel->allBufferArgsStateful);
-            }
+        if (HwHelperHw<FamilyType>::get().isStatelesToStatefullWithOffsetSupported()) {
+            EXPECT_TRUE(kernel->allBufferArgsStateful);
         }
     }
 };
