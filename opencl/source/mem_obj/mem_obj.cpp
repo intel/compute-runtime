@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,13 +103,16 @@ MemObj::~MemObj() {
                 if (associatedMemObject->getGraphicsAllocation(graphicsAllocation->getRootDeviceIndex()) != graphicsAllocation) {
                     destroyGraphicsAllocation(graphicsAllocation, false);
                 }
-                associatedMemObject->decRefInternal();
             }
+        }
+        if (associatedMemObject) {
+            associatedMemObject->decRefInternal();
         }
         if (!associatedMemObject) {
             releaseAllocatedMapPtr();
         }
     }
+
     destructorCallbacks.invoke(this);
 
     context->decRefInternal();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -265,7 +265,6 @@ Image *Image::create(Context *context,
                 allocationInfo[rootDeviceIndex].zeroCopyAllowed = true;
                 hostPtr = parentBuffer->getHostPtr();
                 hostPtrToSet = const_cast<void *>(hostPtr);
-                parentBuffer->incRefInternal();
                 GmmTypesConverter::queryImgFromBufferParams(imgInfo, allocationInfo[rootDeviceIndex].memory);
 
                 UNRECOVERABLE_IF(imgInfo.offset != 0);
@@ -466,6 +465,10 @@ Image *Image::create(Context *context,
                 image->mapAllocations.addAllocation(allocationInfo[rootDeviceIndex].mapAllocation);
             }
         }
+        if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
+            parentBuffer->incRefInternal();
+        }
+
         if (errcodeRet != CL_SUCCESS) {
             image->release();
             image = nullptr;

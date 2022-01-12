@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1730,4 +1730,26 @@ TEST(ImageTest, givenImageWhenFillRegionIsCalledThenProperRegionIsSet) {
         EXPECT_EQ(Image3dDefaults::imageDesc.image_height, region[1]);
         EXPECT_EQ(Image3dDefaults::imageDesc.image_depth, region[2]);
     }
+}
+
+TEST(ImageTest, givenMultiDeviceEnvironmentWhenReleaseImageFromBufferThenMainBufferProperlyDereferenced) {
+    MockDefaultContext context;
+    int32_t retVal;
+
+    auto *buffer = Buffer::create(&context, CL_MEM_READ_WRITE,
+                                  MemoryConstants::pageSize, nullptr, retVal);
+
+    auto imageDesc = Image2dDefaults::imageDesc;
+
+    cl_mem clBuffer = buffer;
+    imageDesc.mem_object = clBuffer;
+    auto image = Image2dHelper<>::create(&context, &imageDesc);
+    EXPECT_EQ(3u, buffer->getMultiGraphicsAllocation().getGraphicsAllocations().size());
+    EXPECT_EQ(3u, image->getMultiGraphicsAllocation().getGraphicsAllocations().size());
+
+    EXPECT_EQ(2, buffer->getRefInternalCount());
+    image->release();
+    EXPECT_EQ(1, buffer->getRefInternalCount());
+
+    buffer->release();
 }
