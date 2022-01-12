@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1139,8 +1139,8 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     auto generatedDshPos = kernelDescriptor.generatedHeaps.size();
     uint32_t generatedDshSize = 0U;
     if (maxSamplerIndex >= 0) {
-        static constexpr auto maxSamplerStateSize = 16U;
-        static constexpr auto maxIndirectSamplerStateSize = 64U;
+        constexpr auto maxSamplerStateSize = 16U;
+        constexpr auto maxIndirectSamplerStateSize = 64U;
 
         kernelDescriptor.kernelAttributes.flags.usesSamplers = true;
         auto &samplerTable = kernelDescriptor.payloadMappings.samplerTable;

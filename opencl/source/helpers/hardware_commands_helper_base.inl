@@ -30,24 +30,18 @@ namespace NEO {
 
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(const Kernel &kernel) {
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-    using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-    const auto &samplerTable = kernel.getKernelInfo().kernelDescriptor.payloadMappings.samplerTable;
+    constexpr auto samplerStateSize = sizeof(typename GfxFamily::SAMPLER_STATE);
+    constexpr auto maxIndirectSamplerStateSize = alignUp(sizeof(typename GfxFamily::SAMPLER_BORDER_COLOR_STATE), MemoryConstants::cacheLineSize);
+    const auto numSamplers = kernel.getKernelInfo().kernelDescriptor.payloadMappings.samplerTable.numSamplers;
 
-    auto samplerCount = samplerTable.numSamplers;
-    auto totalSize = samplerCount
-                         ? alignUp(samplerCount * sizeof(SAMPLER_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE)
-                         : 0;
+    if (numSamplers == 0U) {
+        return alignUp(additionalSizeRequiredDsh(), MemoryConstants::cacheLineSize);
+    }
 
-    auto borderColorSize = samplerTable.borderColor;
-    borderColorSize = alignUp(borderColorSize + EncodeStates<GfxFamily>::alignIndirectStatePointer - 1,
-                              EncodeStates<GfxFamily>::alignIndirectStatePointer);
-
-    totalSize += borderColorSize + additionalSizeRequiredDsh();
-
-    DEBUG_BREAK_IF(!(totalSize >= kernel.getDynamicStateHeapSize() || kernel.isVmeKernel()));
-
-    return alignUp(totalSize, EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
+    auto calculatedTotalSize = alignUp(maxIndirectSamplerStateSize + numSamplers * samplerStateSize + additionalSizeRequiredDsh(),
+                                       MemoryConstants::cacheLineSize);
+    DEBUG_BREAK_IF(calculatedTotalSize > kernel.getDynamicStateHeapSize());
+    return calculatedTotalSize;
 }
 
 template <typename GfxFamily>
