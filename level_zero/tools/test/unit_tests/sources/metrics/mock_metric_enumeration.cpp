@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 
 namespace L0 {
 namespace ult {
 
-Mock<MetricEnumeration>::Mock(::L0::MetricContext &metricContext) : MetricEnumeration(metricContext) {
+Mock<MetricEnumeration>::Mock(::L0::OaMetricSourceImp &metricSource) : MetricEnumeration(metricSource) {
 }
 
 Mock<MetricEnumeration>::~Mock() {
@@ -39,8 +41,8 @@ void Mock<MetricEnumeration>::setMockedApi(MockMetricsDiscoveryApi *mockedApi) {
     if (mockedApi) {
 
         //  Mock class used to communicate with metrics library.
-        metricEnumeration = &metricContext.getMetricEnumeration();
-        metricContext.setMetricEnumeration(*this);
+        metricEnumeration = &metricSource.getMetricEnumeration();
+        metricSource.setMetricEnumeration(*this);
 
         // Mock metrics library api functions.
         openAdapterGroup = mockedApi->OpenAdapterGroup;
@@ -51,7 +53,7 @@ void Mock<MetricEnumeration>::setMockedApi(MockMetricsDiscoveryApi *mockedApi) {
     } else {
 
         // Restore an original class used to communicate with metrics library.
-        metricContext.setMetricEnumeration(*metricEnumeration);
+        metricSource.setMetricEnumeration(*metricEnumeration);
     }
 }
 

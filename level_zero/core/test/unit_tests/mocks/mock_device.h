@@ -62,7 +62,7 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE(activateMetricGroupsDeferred, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));
     ADDMETHOD_NOBASE_REFRETURN(getOsInterface, NEO::OSInterface &, ());
     ADDMETHOD_CONST_NOBASE(getPlatformInfo, uint32_t, 0u, ());
-    ADDMETHOD_NOBASE_REFRETURN(getMetricContext, MetricContext &, ());
+    ADDMETHOD_NOBASE_REFRETURN(getMetricDeviceContext, MetricDeviceContext &, ());
     ADDMETHOD_CONST_NOBASE_REFRETURN(getHwInfo, const NEO::HardwareInfo &, ());
     ADDMETHOD_NOBASE(getDriverHandle, L0::DriverHandle *, nullptr, ());
     ADDMETHOD_NOBASE_VOIDRETURN(setDriverHandle, (L0::DriverHandle *));

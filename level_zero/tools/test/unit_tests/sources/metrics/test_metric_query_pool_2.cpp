@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 
 #include "gmock/gmock.h"
@@ -395,8 +396,8 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndMetricsLibraryWillFailWhen
 
 TEST_F(MetricQueryPoolTest, givenRootDeviceWhenGetSubDeviceClientOptionsIsCalledThenReturnRootDeviceProperties) {
 
-    auto &metricContext = device->getMetricContext();
-    auto &metricsLibrary = metricContext.getMetricsLibrary();
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
     auto subDevice = ClientOptionsData_1_0{};
     auto subDeviceIndex = ClientOptionsData_1_0{};
     auto subDeviceCount = ClientOptionsData_1_0{};
@@ -420,8 +421,8 @@ TEST_F(MetricQueryPoolTest, givenRootDeviceWhenGetSubDeviceClientOptionsIsCalled
 
 TEST_F(MetricQueryPoolTest, givenUninitializedMetricEnumerationWhenGetQueryReportGpuSizeIsCalledThenReturnInvalidSize) {
 
-    auto &metricContext = device->getMetricContext();
-    auto &metricsLibrary = metricContext.getMetricsLibrary();
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
 
     EXPECT_CALL(*mockMetricEnumeration, isInitialized())
         .Times(1)

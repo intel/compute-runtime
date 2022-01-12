@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ void DriverImp::initialize(ze_result_t *result) {
             *result = ZE_RESULT_SUCCESS;
 
             if (envVariables.metrics) {
-                *result = MetricContext::enableMetricApi();
+                *result = MetricDeviceContext::enableMetricApi();
                 if (*result != ZE_RESULT_SUCCESS) {
                     delete GlobalDriver;
                     GlobalDriverHandle = nullptr;

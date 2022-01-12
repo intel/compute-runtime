@@ -15,8 +15,10 @@
 
 namespace L0 {
 
+class OaMetricSourceImp;
+
 struct MetricEnumeration {
-    MetricEnumeration(MetricContext &metricContext);
+    MetricEnumeration(OaMetricSourceImp &metricSource);
     virtual ~MetricEnumeration();
 
     ze_result_t metricGroupGet(uint32_t &count, zet_metric_group_handle_t *phMetricGroups);
@@ -53,7 +55,7 @@ struct MetricEnumeration {
     getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType) const;
 
   protected:
-    MetricContext &metricContext;
+    OaMetricSourceImp &metricSource;
     std::vector<MetricGroup *> metricGroups; // Cached metric groups
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
 
@@ -83,18 +85,22 @@ struct OaMetricGroupImp : MetricGroup {
                                          const uint8_t *pRawData, uint32_t *pSetCount,
                                          uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
                                          zet_typed_value_t *pMetricValues) override;
-
     ze_result_t initialize(const zet_metric_group_properties_t &sourceProperties,
                            MetricsDiscovery::IMetricSet_1_5 &metricSet,
                            MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
-                           const std::vector<Metric *> &groupMetrics);
+                           const std::vector<Metric *> &groupMetrics,
+                           OaMetricSourceImp &metricSource);
 
     uint32_t getRawReportSize() override;
 
     bool activate() override;
     bool deactivate() override;
 
+    bool activateMetricSet();
+    bool deactivateMetricSet();
+
     static uint32_t getApiMask(const zet_metric_group_sampling_type_flags_t samplingType);
+    zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) override;
 
     // Time based measurements.
     ze_result_t openIoStream(uint32_t &timerPeriodNs, uint32_t &oaBufferSize) override;
@@ -126,6 +132,8 @@ struct OaMetricGroupImp : MetricGroup {
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
 
     std::vector<zet_metric_group_handle_t> metricGroups;
+
+    OaMetricSourceImp *metricSource;
 };
 
 struct OaMetricImp : Metric {

@@ -10,6 +10,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 #include "level_zero/tools/source/metrics/metric_streamer_imp.h"
 
 using namespace MetricsLibraryApi;
@@ -26,16 +27,16 @@ void MetricContextFixture::SetUp() {
     ContextFixture::SetUp();
 
     // Initialize metric api.
-    auto &metricContext = device->getMetricContext();
-    metricContext.setInitializationState(ZE_RESULT_SUCCESS);
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    metricSource.setInitializationState(ZE_RESULT_SUCCESS);
 
     // Mock metrics library.
-    mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricContext));
+    mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricSource));
     mockMetricsLibrary->setMockedApi(&mockMetricsLibraryApi);
     mockMetricsLibrary->handle = new MockOsLibrary();
 
     //  Mock metric enumeration.
-    mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricContext));
+    mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricSource));
     mockMetricEnumeration->setMockedApi(&mockMetricsDiscoveryApi);
     mockMetricEnumeration->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
 
@@ -122,15 +123,15 @@ void MetricMultiDeviceFixture::SetUp() {
     }
 
     // Initialize metric api.
-    auto &metricContext = devices[0]->getMetricContext();
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
 
     // Mock metrics library.
-    mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricContext));
+    mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricSource));
     mockMetricsLibrary->setMockedApi(&mockMetricsLibraryApi);
     mockMetricsLibrary->handle = new MockOsLibrary();
 
     //  Mock metric enumeration.
-    mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricContext));
+    mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricSource));
     mockMetricEnumeration->setMockedApi(&mockMetricsDiscoveryApi);
     mockMetricEnumeration->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
 
@@ -140,7 +141,7 @@ void MetricMultiDeviceFixture::SetUp() {
     mockMetricsLibrarySubDevices.resize(subDeviceCount);
 
     for (uint32_t i = 0; i < subDeviceCount; i++) {
-        auto &metricsSubDeviceContext = deviceImp.subDevices[i]->getMetricContext();
+        auto &metricsSubDeviceContext = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         mockMetricEnumerationSubDevices[i] = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricsSubDeviceContext));
         mockMetricEnumerationSubDevices[i]->setMockedApi(&mockMetricsDiscoveryApi);
         mockMetricEnumerationSubDevices[i]->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
@@ -273,18 +274,18 @@ void MetricStreamerMultiDeviceFixture::cleanup(zet_device_handle_t &hDevice, zet
         zet_metric_streamer_handle_t metricStreamerSubDeviceHandle = pStreamerImp->getMetricStreamers()[index];
         OaMetricStreamerImp *pStreamerSubDevImp = static_cast<OaMetricStreamerImp *>(MetricStreamer::fromHandle(metricStreamerSubDeviceHandle));
         auto device = deviceImp.subDevices[index];
-        auto &metricContext = device->getMetricContext();
-        auto &metricsLibrary = metricContext.getMetricsLibrary();
-        metricContext.setMetricStreamer(nullptr);
+        auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricsLibrary = metricSource.getMetricsLibrary();
+        metricSource.setMetricStreamer(nullptr);
         metricsLibrary.release();
         delete pStreamerSubDevImp;
     }
-    auto &metricContext = devices[0]->getMetricContext();
-    metricContext.setMetricStreamer(nullptr);
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    metricSource.setMetricStreamer(nullptr);
     delete pStreamerImp;
 }
 
-Mock<MetricsLibrary>::Mock(::L0::MetricContext &metricContext) : MetricsLibrary(metricContext) {
+Mock<MetricsLibrary>::Mock(::L0::OaMetricSourceImp &metricSource) : MetricsLibrary(metricSource) {
 }
 
 Mock<MetricsLibrary>::~Mock() {
@@ -297,8 +298,8 @@ void Mock<MetricsLibrary>::setMockedApi(MockMetricsLibraryApi *mockedApi) {
     if (mockedApi) {
 
         //  Mock class used to communicate with metrics library.
-        metricsLibrary = &metricContext.getMetricsLibrary();
-        metricContext.setMetricsLibrary(*this);
+        metricsLibrary = &metricSource.getMetricsLibrary();
+        metricSource.setMetricsLibrary(*this);
 
         // Mock metrics library api functions.
         contextCreateFunction = mockedApi->ContextCreate;
@@ -331,7 +332,7 @@ void Mock<MetricsLibrary>::setMockedApi(MockMetricsLibraryApi *mockedApi) {
     } else {
 
         // Restore an original class used to communicate with metrics library.
-        metricContext.setMetricsLibrary(*metricsLibrary);
+        metricSource.setMetricsLibrary(*metricsLibrary);
     }
 }
 

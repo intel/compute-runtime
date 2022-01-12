@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ template <>
 struct Mock<MetricsLibrary> : public MetricsLibrary {
 
   public:
-    Mock(::L0::MetricContext &metricContext);
+    Mock(::L0::OaMetricSourceImp &metricSource);
     ~Mock() override;
 
     using MetricsLibrary::handle;

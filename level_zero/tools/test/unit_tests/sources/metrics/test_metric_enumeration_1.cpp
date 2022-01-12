@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 
 #include "gmock/gmock.h"
@@ -2497,9 +2498,9 @@ TEST_F(MetricEnumerationTest, givenLoadedMetricsLibraryAndDiscoveryAndMetricsLib
 
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    auto &metricContext = device->getMetricContext();
-    EXPECT_EQ(metricContext.loadDependencies(), true);
-    EXPECT_EQ(metricContext.isInitialized(), true);
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_EQ(metricSource.isInitialized(), true);
 }
 
 TEST_F(MetricEnumerationTest, givenNotLoadedMetricsLibraryAndDiscoveryWhenLoadDependenciesThenReturnFail) {
@@ -2508,14 +2509,14 @@ TEST_F(MetricEnumerationTest, givenNotLoadedMetricsLibraryAndDiscoveryWhenLoadDe
         .Times(1)
         .WillOnce(Return(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE));
 
-    auto &metricContext = device->getMetricContext();
-    EXPECT_EQ(metricContext.loadDependencies(), false);
-    EXPECT_EQ(metricContext.isInitialized(), false);
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_EQ(metricSource.loadDependencies(), false);
+    EXPECT_EQ(metricSource.isInitialized(), false);
 }
 
 TEST_F(MetricEnumerationTest, givenRootDeviceWhenLoadDependenciesIsCalledThenLegacyOpenMetricsDeviceWillBeCalled) {
 
-    auto &metricContext = device->getMetricContext();
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<IAdapterGroup_1_9> mockAdapterGroup;
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
@@ -2553,18 +2554,18 @@ TEST_F(MetricEnumerationTest, givenRootDeviceWhenLoadDependenciesIsCalledThenLeg
         .WillOnce(Return(TCompletionCode::CC_OK));
 
     // Use first sub device.
-    metricContext.setSubDeviceIndex(0);
+    device->getMetricDeviceContext().setSubDeviceIndex(0);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    EXPECT_EQ(metricContext.loadDependencies(), true);
-    EXPECT_EQ(metricContext.isInitialized(), true);
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_EQ(metricSource.isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenSubDeviceWhenLoadDependenciesIsCalledThenOpenMetricsSubDeviceWillBeCalled) {
 
-    auto &metricContext = device->getMetricContext();
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<IAdapterGroup_1_9> mockAdapterGroup;
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
@@ -2602,18 +2603,18 @@ TEST_F(MetricEnumerationTest, givenSubDeviceWhenLoadDependenciesIsCalledThenOpen
         .WillOnce(Return(TCompletionCode::CC_OK));
 
     // Use second sub device.
-    metricContext.setSubDeviceIndex(1);
+    device->getMetricDeviceContext().setSubDeviceIndex(1);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    EXPECT_EQ(metricContext.loadDependencies(), true);
-    EXPECT_EQ(metricContext.isInitialized(), true);
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_EQ(metricSource.isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenSubDeviceWhenLoadDependenciesIsCalledThenOpenMetricsSubDeviceWillBeCalledWithoutSuccess) {
 
-    auto &metricContext = device->getMetricContext();
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<IAdapterGroup_1_9> mockAdapterGroup;
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
@@ -2649,11 +2650,11 @@ TEST_F(MetricEnumerationTest, givenSubDeviceWhenLoadDependenciesIsCalledThenOpen
         .WillOnce(Return(TCompletionCode::CC_OK));
 
     // Use second sub device.
-    metricContext.setSubDeviceIndex(1);
+    device->getMetricDeviceContext().setSubDeviceIndex(1);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    EXPECT_EQ(metricContext.loadDependencies(), true);
-    EXPECT_EQ(metricContext.isInitialized(), true);
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_EQ(metricSource.isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), false);
 }
 
@@ -2904,7 +2905,7 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsT
     EXPECT_CALL(metricsSet, Activate())
         .WillRepeatedly(Return(MetricsDiscovery::CC_OK));
 
-    EXPECT_EQ(metricGroup.activate(), true);
+    EXPECT_EQ(metricGroup.activateMetricSet(), true);
 }
 
 TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsFalse) {
@@ -2916,7 +2917,7 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsF
     EXPECT_CALL(metricsSet, Activate())
         .WillRepeatedly(Return(MetricsDiscovery::CC_ERROR_GENERAL));
 
-    EXPECT_EQ(metricGroup.activate(), false);
+    EXPECT_EQ(metricGroup.activateMetricSet(), false);
 }
 
 TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateReturnsTrue) {
@@ -2928,7 +2929,7 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateRetu
     EXPECT_CALL(metricsSet, Deactivate())
         .WillRepeatedly(Return(MetricsDiscovery::CC_OK));
 
-    EXPECT_EQ(metricGroup.deactivate(), true);
+    EXPECT_EQ(metricGroup.deactivateMetricSet(), true);
 }
 
 TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateReturnsFalse) {
@@ -2940,7 +2941,7 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateRetu
     EXPECT_CALL(metricsSet, Deactivate())
         .WillRepeatedly(Return(MetricsDiscovery::CC_ERROR_GENERAL));
 
-    EXPECT_EQ(metricGroup.deactivate(), false);
+    EXPECT_EQ(metricGroup.deactivateMetricSet(), false);
 }
 
 TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForReportsReturnsSuccess) {

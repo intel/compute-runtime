@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 
 #include "gmock/gmock.h"
@@ -25,7 +26,7 @@ using MetricEnumerationMultiDeviceTest = Test<MetricMultiDeviceFixture>;
 TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCalledThenOpenMetricsSubDeviceWillBeCalled) {
 
     // Use first root device.
-    auto &metricContext = devices[0]->getMetricContext();
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
     const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
     Mock<IAdapterGroup_1_9> mockAdapterGroup;
@@ -65,11 +66,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
         .WillOnce(Return(TCompletionCode::CC_OK));
 
     // Use root device.
-    metricContext.setSubDeviceIndex(0);
+    devices[0]->getMetricDeviceContext().setSubDeviceIndex(0);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    EXPECT_EQ(metricContext.loadDependencies(), true);
-    EXPECT_EQ(metricContext.isInitialized(), true);
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_EQ(metricSource.isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
@@ -77,7 +78,7 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
 TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCalledThenOpenMetricsSubDeviceWillBeCalledWithoutSuccess) {
 
     // Use first root device.
-    auto &metricContext = devices[0]->getMetricContext();
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<IAdapterGroup_1_9> mockAdapterGroup;
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
@@ -113,11 +114,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
         .WillOnce(Return(TCompletionCode::CC_OK));
 
     // Use root device.
-    metricContext.setSubDeviceIndex(0);
+    devices[0]->getMetricDeviceContext().setSubDeviceIndex(0);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    EXPECT_EQ(metricContext.loadDependencies(), true);
-    EXPECT_EQ(metricContext.isInitialized(), true);
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_EQ(metricSource.isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), false);
 }
 

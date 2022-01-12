@@ -734,7 +734,7 @@ ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     if (!this->isSubdevice && this->isImplicitScalingCapable()) {
         for (auto subDevice : this->subDevices) {
-            result = subDevice->getMetricContext().activateMetricGroupsDeferred(count, phMetricGroups);
+            result = subDevice->getMetricDeviceContext().activateMetricGroupsDeferred(count, phMetricGroups);
             if (result != ZE_RESULT_SUCCESS)
                 break;
         }
@@ -764,13 +764,13 @@ uint32_t DeviceImp::getPlatformInfo() const {
     return hardwareInfo.platform.eRenderCoreFamily;
 }
 
-MetricContext &DeviceImp::getMetricContext() { return *metricContext; }
+MetricDeviceContext &DeviceImp::getMetricDeviceContext() { return *metricContext; }
 
 void DeviceImp::activateMetricGroups() {
     if (metricContext != nullptr) {
         if (metricContext->isImplicitScalingCapable()) {
             for (uint32_t i = 0; i < numSubDevices; i++) {
-                subDevices[i]->getMetricContext().activateMetricGroups();
+                subDevices[i]->getMetricDeviceContext().activateMetricGroups();
             }
         } else {
             metricContext->activateMetricGroups();
@@ -815,7 +815,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     device->allocationsForReuse = std::make_unique<NEO::AllocationsList>();
     bool platformImplicitScaling = hwHelper.platformSupportsImplicitScaling(hwInfo);
     device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), platformImplicitScaling);
-    device->metricContext = MetricContext::create(*device);
+    device->metricContext = MetricDeviceContext::create(*device);
     device->builtins = BuiltinFunctionsLib::create(
         device, neoDevice->getBuiltIns());
     device->cacheReservation = CacheReservation::create(*device);

@@ -27,6 +27,7 @@ namespace L0 {
 struct Device;
 struct CommandList;
 struct MetricGroup;
+class OaMetricSourceImp;
 } // namespace L0
 
 namespace NEO {
@@ -38,7 +39,7 @@ namespace L0 {
 
 struct MetricsLibrary {
   public:
-    MetricsLibrary(MetricContext &metricContext);
+    MetricsLibrary(OaMetricSourceImp &metricSource);
     virtual ~MetricsLibrary();
 
     // Initialization.
@@ -90,7 +91,7 @@ struct MetricsLibrary {
 
   protected:
     NEO::OsLibrary *handle = nullptr;
-    MetricContext &metricContext;
+    OaMetricSourceImp &metricSource;
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
     bool isWorkloadPartitionEnabled = false;
     std::mutex mutex;
@@ -107,7 +108,7 @@ struct MetricsLibrary {
 
 struct OaMetricQueryImp : MetricQuery {
   public:
-    OaMetricQueryImp(MetricContext &metricContext, struct OaMetricQueryPoolImp &pool,
+    OaMetricQueryImp(OaMetricSourceImp &metricSource, struct OaMetricQueryPoolImp &pool,
                      const uint32_t slot);
 
     ze_result_t appendBegin(CommandList &commandList) override;
@@ -130,7 +131,7 @@ struct OaMetricQueryImp : MetricQuery {
                                         const bool begin);
 
   protected:
-    MetricContext &metricContext;
+    OaMetricSourceImp &metricSource;
     MetricsLibrary &metricsLibrary;
     OaMetricQueryPoolImp &pool;
     uint32_t slot;
@@ -139,7 +140,7 @@ struct OaMetricQueryImp : MetricQuery {
 
 struct OaMetricQueryPoolImp : MetricQueryPool {
   public:
-    OaMetricQueryPoolImp(MetricContext &metricContext, zet_metric_group_handle_t hEventMetricGroup, const zet_metric_query_pool_desc_t &poolDescription);
+    OaMetricQueryPoolImp(OaMetricSourceImp &metricSource, zet_metric_group_handle_t hEventMetricGroup, const zet_metric_query_pool_desc_t &poolDescription);
 
     bool create();
     ze_result_t destroy() override;
@@ -155,7 +156,7 @@ struct OaMetricQueryPoolImp : MetricQueryPool {
     bool createSkipExecutionQueryPool();
 
   public:
-    MetricContext &metricContext;
+    OaMetricSourceImp &metricSource;
     MetricsLibrary &metricsLibrary;
     std::vector<OaMetricQueryImp> pool;
     NEO::GraphicsAllocation *pAllocation = nullptr;

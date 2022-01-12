@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,41 +20,51 @@ struct _zet_metric_query_pool_handle_t {};
 struct _zet_metric_query_handle_t {};
 
 namespace L0 {
-struct MetricsLibrary;
 struct CommandList;
-struct MetricEnumeration;
 struct MetricStreamer;
 
-struct MetricContext {
-    virtual ~MetricContext() = default;
-    static std::unique_ptr<MetricContext> create(struct Device &device);
-    static bool isMetricApiAvailable();
-    virtual bool loadDependencies() = 0;
-    virtual bool isInitialized() = 0;
-    virtual void setInitializationState(const ze_result_t state) = 0;
-    virtual Device &getDevice() = 0;
-    virtual MetricsLibrary &getMetricsLibrary() = 0;
-    virtual MetricEnumeration &getMetricEnumeration() = 0;
-    virtual MetricStreamer *getMetricStreamer() = 0;
-    virtual void setMetricStreamer(MetricStreamer *pMetricStreamer) = 0;
-    virtual void setMetricsLibrary(MetricsLibrary &metricsLibrary) = 0;
-    virtual void setMetricEnumeration(MetricEnumeration &metricEnumeration) = 0;
+class MetricSource {
+  public:
+    enum class SourceType {
+        Undefined,
+        Oa
+    };
+    virtual void enable() = 0;
+    virtual bool isAvailable() = 0;
+    virtual ze_result_t appendMetricMemoryBarrier(CommandList &commandList) = 0;
+    virtual ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) = 0;
+    virtual ~MetricSource() = default;
+};
 
-    // Called by zeInit.
+class MetricDeviceContext {
+
+  public:
+    MetricDeviceContext(Device &device);
+    ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
+    ze_result_t activateMetricGroupsDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
+    ze_result_t activateMetricGroups();
+    ze_result_t appendMetricMemoryBarrier(CommandList &commandList);
+    bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
+    bool isMetricGroupActivated() const;
+    bool isImplicitScalingCapable() const;
+    Device &getDevice() const;
+    uint32_t getSubDeviceIndex() const;
+    template <typename T>
+    T &getMetricSource() const;
+    void setSubDeviceIndex(uint32_t subDeviceIndex) { this->subDeviceIndex = subDeviceIndex; }
+
+    static std::unique_ptr<MetricDeviceContext> create(Device &device);
     static ze_result_t enableMetricApi();
 
-    // Metric groups activation.
-    virtual ze_result_t activateMetricGroups() = 0;
-    virtual ze_result_t activateMetricGroupsDeferred(const uint32_t count,
-                                                     zet_metric_group_handle_t *phMetricGroups) = 0;
-    virtual bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) = 0;
-    virtual bool isMetricGroupActivated() = 0;
-
-    virtual void setUseCompute(const bool useCompute) = 0;
-    virtual bool isComputeUsed() = 0;
-    virtual uint32_t getSubDeviceIndex() = 0;
-    virtual void setSubDeviceIndex(const uint32_t index) = 0;
-    virtual bool isImplicitScalingCapable() = 0;
+  private:
+    bool enable();
+    ze_result_t activateAllDomains();
+    ze_result_t deActivateAllDomains();
+    struct Device &device;
+    std::map<uint32_t, std::pair<zet_metric_group_handle_t, bool>> domains;
+    bool multiDeviceCapable = false;
+    uint32_t subDeviceIndex = 0;
+    std::map<MetricSource::SourceType, std::unique_ptr<MetricSource>> metricSources;
 };
 
 struct Metric : _zet_metric_handle_t {
@@ -83,7 +93,8 @@ struct MetricGroup : _zet_metric_group_handle_t {
     static MetricGroup *create(zet_metric_group_properties_t &properties,
                                MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
-                               const std::vector<Metric *> &metrics);
+                               const std::vector<Metric *> &metrics,
+                               MetricSource &metricSource);
     static MetricGroup *fromHandle(zet_metric_group_handle_t handle) {
         return static_cast<MetricGroup *>(handle);
     }
@@ -95,6 +106,7 @@ struct MetricGroup : _zet_metric_group_handle_t {
 
     virtual bool activate() = 0;
     virtual bool deactivate() = 0;
+    virtual zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) = 0;
 
     virtual ze_result_t openIoStream(uint32_t &timerPeriodNs, uint32_t &oaBufferSize) = 0;
     virtual ze_result_t waitForReports(const uint32_t timeoutMs) = 0;
@@ -149,11 +161,8 @@ struct MetricQuery : _zet_metric_query_handle_t {
     virtual ze_result_t appendBegin(CommandList &commandList) = 0;
     virtual ze_result_t appendEnd(CommandList &commandList, ze_event_handle_t hSignalEvent,
                                   uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
-
-    static ze_result_t appendMemoryBarrier(CommandList &commandList);
     static ze_result_t appendStreamerMarker(CommandList &commandList,
                                             zet_metric_streamer_handle_t hMetricStreamer, uint32_t value);
-
     virtual ze_result_t getData(size_t *pRawDataSize, uint8_t *pRawData) = 0;
 
     virtual ze_result_t reset() = 0;

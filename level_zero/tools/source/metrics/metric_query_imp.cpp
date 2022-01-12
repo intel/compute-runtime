@@ -20,13 +20,14 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 
 using namespace MetricsLibraryApi;
 
 namespace L0 {
 
-MetricsLibrary::MetricsLibrary(MetricContext &metricContextInput)
-    : metricContext(metricContextInput) {}
+MetricsLibrary::MetricsLibrary(OaMetricSourceImp &metricSourceInput)
+    : metricSource(metricSourceInput) {}
 
 MetricsLibrary::~MetricsLibrary() {
     release();
@@ -141,7 +142,7 @@ bool MetricsLibrary::getMetricQueryReport(QueryHandle_1_0 &query, const uint32_t
 }
 
 void MetricsLibrary::initialize() {
-    auto &metricsEnumeration = metricContext.getMetricEnumeration();
+    auto &metricsEnumeration = metricSource.getMetricEnumeration();
 
     // Function should be called only once.
     DEBUG_BREAK_IF(initializationState != ZE_RESULT_ERROR_UNINITIALIZED);
@@ -175,7 +176,7 @@ void MetricsLibrary::release() {
 
 bool MetricsLibrary::load() {
     // Load library.
-    handle = NEO::OsLibrary::load(getFilename());
+    handle = OaMetricSourceImp::osLibraryLoadFunction(getFilename());
 
     // Load exported functions.
     if (handle) {
@@ -204,7 +205,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
     ClientOptionsData_1_0 &subDeviceCount,
     ClientOptionsData_1_0 &workloadPartition) {
 
-    const auto &deviceImp = *static_cast<DeviceImp *>(&metricContext.getDevice());
+    const auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
 
     if (!deviceImp.isSubdevice) {
 
@@ -239,7 +240,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
 }
 
 bool MetricsLibrary::createContext() {
-    auto &device = metricContext.getDevice();
+    auto &device = metricSource.getDevice();
     const auto &hwHelper = device.getHwHelper();
     const auto &asyncComputeEngines = hwHelper.getGpgpuEngineInstances(device.getHwInfo());
     ContextCreateData_1_0 createData = {};
@@ -258,7 +259,7 @@ bool MetricsLibrary::createContext() {
     const auto engineType = commandStreamReceiver.getOsContext().getEngineType();
     const bool isComputeUsed = NEO::EngineHelpers::isCcs(engineType);
 
-    metricContext.setUseCompute(isComputeUsed);
+    metricSource.setUseCompute(isComputeUsed);
 
     // Create metrics library context.
     DEBUG_BREAK_IF(!contextCreateFunction);
@@ -269,7 +270,7 @@ bool MetricsLibrary::createContext() {
     clientOptions[0].Compute.Asynchronous = asyncComputeEngine != asyncComputeEngines.end();
 
     clientOptions[1].Type = ClientOptionsType::Tbs;
-    clientOptions[1].Tbs.Enabled = metricContext.getMetricStreamer() != nullptr;
+    clientOptions[1].Tbs.Enabled = metricSource.getMetricStreamer() != nullptr;
 
     // Sub device client options #2
     getSubDeviceClientOptions(clientOptions[2], clientOptions[3], clientOptions[4], clientOptions[5]);
@@ -349,7 +350,7 @@ ConfigurationHandle_1_0
 MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupHandle,
                                     const zet_metric_group_properties_t properties) {
     // Metric group internal data.
-    auto metricGroup = MetricGroup::fromHandle(metricGroupHandle);
+    auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(metricGroupHandle));
     auto metricGroupDummy = ConfigurationHandle_1_0{};
     DEBUG_BREAK_IF(!metricGroup);
 
@@ -366,14 +367,14 @@ MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupH
 
     // Activate metric group through metrics discovery to send metric group
     // configuration to kernel driver.
-    const bool validActivate = isInitialized() && validSampling && metricGroup->activate();
+    const bool validActivate = isInitialized() && validSampling && metricGroup->activateMetricSet();
 
     if (validActivate) {
         // Use metrics library to create configuration for the activated metric group.
         api.ConfigurationCreate(&handleData, &handle);
 
         // Use metrics discovery to deactivate metric group.
-        metricGroup->deactivate();
+        metricGroup->deactivateMetricSet();
     }
 
     return validActivate ? handle : metricGroupDummy;
@@ -424,18 +425,19 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
                                   const zet_metric_query_pool_desc_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool) {
 
     auto device = Device::fromHandle(hDevice);
-    auto &metricContext = device->getMetricContext();
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
 
     // Metric query cannot be used with streamer simultaneously
     // (due to oa buffer usage constraints).
-    if (metricContext.getMetricStreamer() != nullptr) {
+
+    if (metricSource.getMetricStreamer() != nullptr) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     const auto &deviceImp = *static_cast<DeviceImp *>(device);
-    auto metricPoolImp = new OaMetricQueryPoolImp(device->getMetricContext(), hMetricGroup, *pDesc);
+    auto metricPoolImp = new OaMetricQueryPoolImp(metricSource, hMetricGroup, *pDesc);
 
-    if (metricContext.isImplicitScalingCapable()) {
+    if (metricSource.isImplicitScalingCapable()) {
 
         auto emptyMetricGroups = std::vector<zet_metric_group_handle_t>();
         auto &metricGroups = hMetricGroup
@@ -449,15 +451,15 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
         for (size_t i = 0; i < deviceImp.numSubDevices; ++i) {
 
             auto &subDevice = deviceImp.subDevices[i];
-            auto &subDeviceMetricContext = subDevice->getMetricContext();
+            auto &subDeviceMetricSource = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
 
-            subDeviceMetricContext.getMetricsLibrary().enableWorkloadPartition();
+            subDeviceMetricSource.getMetricsLibrary().enableWorkloadPartition();
 
             zet_metric_group_handle_t metricGroupHandle = useMetricGroupSubDevice
-                                                              ? metricGroups[subDeviceMetricContext.getSubDeviceIndex()]
+                                                              ? metricGroups[subDeviceMetricSource.getSubDeviceIndex()]
                                                               : hMetricGroup;
 
-            auto metricPoolSubdeviceImp = new OaMetricQueryPoolImp(subDeviceMetricContext, metricGroupHandle, *pDesc);
+            auto metricPoolSubdeviceImp = new OaMetricQueryPoolImp(subDeviceMetricSource, metricGroupHandle, *pDesc);
 
             // Create metric query pool.
             if (!metricPoolSubdeviceImp->create()) {
@@ -496,10 +498,10 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
     return ZE_RESULT_SUCCESS;
 }
 
-OaMetricQueryPoolImp::OaMetricQueryPoolImp(MetricContext &metricContextInput,
+OaMetricQueryPoolImp::OaMetricQueryPoolImp(OaMetricSourceImp &metricSourceInput,
                                            zet_metric_group_handle_t hEventMetricGroupInput,
                                            const zet_metric_query_pool_desc_t &poolDescription)
-    : metricContext(metricContextInput), metricsLibrary(metricContext.getMetricsLibrary()),
+    : metricSource(metricSourceInput), metricsLibrary(metricSource.getMetricsLibrary()),
       description(poolDescription),
       hMetricGroup(hEventMetricGroupInput) {}
 
@@ -527,7 +529,7 @@ ze_result_t OaMetricQueryPoolImp::destroy() {
             metricsLibrary.destroyMetricQuery(query);
         }
         if (pAllocation) {
-            metricContext.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
+            metricSource.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
         }
         break;
     case ZET_METRIC_QUERY_POOL_TYPE_EXECUTION:
@@ -541,9 +543,9 @@ ze_result_t OaMetricQueryPoolImp::destroy() {
     }
 
     // Check open queries.
-    if (metricContext.getMetricsLibrary().getMetricQueryCount() == 0) {
-        if (!metricContext.isMetricGroupActivated()) {
-            metricContext.getMetricsLibrary().release();
+    if (metricSource.getMetricsLibrary().getMetricQueryCount() == 0) {
+        if (!metricSource.isMetricGroupActivated()) {
+            metricSource.getMetricsLibrary().release();
         }
     }
 
@@ -556,9 +558,10 @@ bool OaMetricQueryPoolImp::allocateGpuMemory() {
 
     if (description.type == ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE) {
         // Get allocation size.
-        const auto &deviceImp = *static_cast<DeviceImp *>(&metricContext.getDevice());
-        allocationSize = (metricContext.isImplicitScalingCapable())
-                             ? deviceImp.subDevices[0]->getMetricContext().getMetricsLibrary().getQueryReportGpuSize() * description.count * deviceImp.numSubDevices
+        const auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
+
+        allocationSize = (metricSource.isImplicitScalingCapable())
+                             ? deviceImp.subDevices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricsLibrary().getQueryReportGpuSize() * description.count * deviceImp.numSubDevices
                              : metricsLibrary.getQueryReportGpuSize() * description.count;
 
         if (allocationSize == 0) {
@@ -567,9 +570,9 @@ bool OaMetricQueryPoolImp::allocateGpuMemory() {
 
         // Allocate gpu memory.
         NEO::AllocationProperties properties(
-            metricContext.getDevice().getRootDeviceIndex(), allocationSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, metricContext.getDevice().getNEODevice()->getDeviceBitfield());
+            metricSource.getDevice().getRootDeviceIndex(), allocationSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, metricSource.getDevice().getNEODevice()->getDeviceBitfield());
         properties.alignment = 64u;
-        pAllocation = metricContext.getDevice().getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        pAllocation = metricSource.getDevice().getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
         UNRECOVERABLE_IF(pAllocation == nullptr);
 
@@ -591,7 +594,7 @@ bool OaMetricQueryPoolImp::createMetricQueryPool() {
     // Pool initialization.
     pool.reserve(description.count);
     for (uint32_t i = 0; i < description.count; ++i) {
-        pool.push_back({metricContext, *this, i});
+        pool.push_back({metricSource, *this, i});
     }
 
     // Metrics library query object initialization.
@@ -602,7 +605,7 @@ bool OaMetricQueryPoolImp::createSkipExecutionQueryPool() {
 
     pool.reserve(description.count);
     for (uint32_t i = 0; i < description.count; ++i) {
-        pool.push_back({metricContext, *this, i});
+        pool.push_back({metricSource, *this, i});
     }
 
     return true;
@@ -623,7 +626,7 @@ ze_result_t OaMetricQueryPoolImp::createMetricQuery(uint32_t index,
 
     if (metricQueryPools.size() > 0) {
 
-        auto pMetricQueryImp = new OaMetricQueryImp(metricContext, *this, index);
+        auto pMetricQueryImp = new OaMetricQueryImp(metricSource, *this, index);
 
         for (auto metricQueryPoolHandle : metricQueryPools) {
             auto &metricQueries = pMetricQueryImp->getMetricQueries();
@@ -647,9 +650,9 @@ std::vector<zet_metric_query_pool_handle_t> &OaMetricQueryPoolImp::getMetricQuer
     return metricQueryPools;
 }
 
-OaMetricQueryImp::OaMetricQueryImp(MetricContext &metricContextInput, OaMetricQueryPoolImp &poolInput,
+OaMetricQueryImp::OaMetricQueryImp(OaMetricSourceImp &metricSourceInput, OaMetricQueryPoolImp &poolInput,
                                    const uint32_t slotInput)
-    : metricContext(metricContextInput), metricsLibrary(metricContext.getMetricsLibrary()),
+    : metricSource(metricSourceInput), metricsLibrary(metricSource.getMetricsLibrary()),
       pool(poolInput), slot(slotInput) {}
 
 ze_result_t OaMetricQueryImp::appendBegin(CommandList &commandList) {
@@ -792,7 +795,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
 
             auto &metricQueryImp = *static_cast<OaMetricQueryImp *>(MetricQuery::fromHandle(metricQueries[i]));
             auto &metricLibrarySubDevice = metricQueryImp.metricsLibrary;
-            auto &metricContextSubDevice = metricQueryImp.metricContext;
+            auto &metricSourceSubDevice = metricQueryImp.metricSource;
 
             // Obtain gpu commands.
             CommandBufferData_1_0 commandBuffer = {};
@@ -802,7 +805,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
             commandBuffer.QueryHwCounters.Slot = slot;
             commandBuffer.Allocation.GpuAddress = gpuAddress;
             commandBuffer.Allocation.CpuAddress = cpuAddress;
-            commandBuffer.Type = metricContextSubDevice.isComputeUsed()
+            commandBuffer.Type = metricSourceSubDevice.isComputeUsed()
                                      ? GpuCommandBufferType::Compute
                                      : GpuCommandBufferType::Render;
 
@@ -845,7 +848,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
         commandBuffer.QueryHwCounters.Slot = slot;
         commandBuffer.Allocation.GpuAddress = pool.pAllocation->getGpuAddress();
         commandBuffer.Allocation.CpuAddress = pool.pAllocation->getUnderlyingBuffer();
-        commandBuffer.Type = metricContext.isComputeUsed()
+        commandBuffer.Type = metricSource.isComputeUsed()
                                  ? GpuCommandBufferType::Compute
                                  : GpuCommandBufferType::Render;
 
@@ -872,7 +875,7 @@ ze_result_t OaMetricQueryImp::writeSkipExecutionQuery(CommandList &commandList, 
     CommandBufferData_1_0 commandBuffer = {};
     commandBuffer.CommandsType = ObjectType::OverrideNullHardware;
     commandBuffer.Override.Enable = begin;
-    commandBuffer.Type = metricContext.isComputeUsed()
+    commandBuffer.Type = metricSource.isComputeUsed()
                              ? GpuCommandBufferType::Compute
                              : GpuCommandBufferType::Render;
 
@@ -891,30 +894,6 @@ ze_result_t OaMetricQueryImp::writeSkipExecutionQuery(CommandList &commandList, 
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t MetricQuery::appendMemoryBarrier(CommandList &commandList) {
-
-    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
-
-    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
-        // Use one of the sub-device contexts to append to command list.
-        pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
-    }
-
-    auto &metricContext = pDeviceImp->getMetricContext();
-    auto &metricsLibrary = metricContext.getMetricsLibrary();
-
-    // Obtain gpu commands.
-    CommandBufferData_1_0 commandBuffer = {};
-    commandBuffer.CommandsType = ObjectType::OverrideFlushCaches;
-    commandBuffer.Override.Enable = true;
-    commandBuffer.Type = metricContext.isComputeUsed()
-                             ? GpuCommandBufferType::Compute
-                             : GpuCommandBufferType::Render;
-
-    return metricsLibrary.getGpuCommands(commandList, commandBuffer) ? ZE_RESULT_SUCCESS
-                                                                     : ZE_RESULT_ERROR_UNKNOWN;
-}
-
 ze_result_t MetricQuery::appendStreamerMarker(CommandList &commandList,
                                               zet_metric_streamer_handle_t hMetricStreamer,
                                               uint32_t value) {
@@ -924,10 +903,11 @@ ze_result_t MetricQuery::appendStreamerMarker(CommandList &commandList,
     if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.
         pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
-        pDeviceImp->metricContext->getMetricsLibrary().enableWorkloadPartition();
+        pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>().getMetricsLibrary().enableWorkloadPartition();
     }
-    auto &metricContext = pDeviceImp->getMetricContext();
-    auto &metricsLibrary = metricContext.getMetricsLibrary();
+
+    OaMetricSourceImp &metricSource = pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
 
     const uint32_t streamerMarkerHighBitsShift = 25;
 
@@ -936,7 +916,7 @@ ze_result_t MetricQuery::appendStreamerMarker(CommandList &commandList,
     commandBuffer.CommandsType = ObjectType::MarkerStreamUser;
     commandBuffer.MarkerStreamUser.Value = value;
     commandBuffer.MarkerStreamUser.Reserved = (value >> streamerMarkerHighBitsShift);
-    commandBuffer.Type = metricContext.isComputeUsed()
+    commandBuffer.Type = metricSource.isComputeUsed()
                              ? GpuCommandBufferType::Compute
                              : GpuCommandBufferType::Render;
 

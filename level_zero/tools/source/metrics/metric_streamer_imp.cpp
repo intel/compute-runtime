@@ -12,6 +12,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_query_imp.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 
 namespace L0 {
 
@@ -114,12 +115,12 @@ ze_result_t OaMetricStreamerImp::close() {
         if (result == ZE_RESULT_SUCCESS) {
 
             auto device = Device::fromHandle(hDevice);
-            auto &metricContext = device->getMetricContext();
-            auto &metricsLibrary = metricContext.getMetricsLibrary();
+            auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+            auto &metricsLibrary = metricSource.getMetricsLibrary();
 
             // Clear metric streamer reference in context.
             // Another metric streamer instance or query can be used.
-            metricContext.setMetricStreamer(nullptr);
+            metricSource.setMetricStreamer(nullptr);
 
             // Close metrics library (if was used to generate streamer's marker gpu commands).
             // It will allow metric query to use Linux Tbs stream exclusively
@@ -235,26 +236,27 @@ uint32_t OaMetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCoun
 
 ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_handle_t hMetricGroup,
                                           zet_metric_streamer_desc_t &desc, zet_metric_streamer_handle_t *phMetricStreamer) {
-    auto &metricContext = pDevice->getMetricContext();
+
+    auto &metricSource = pDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
 
     *phMetricStreamer = nullptr;
 
     // Check whether metric streamer is already open.
-    if (metricContext.getMetricStreamer() != nullptr) {
+    if (metricSource.getMetricStreamer() != nullptr) {
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     }
 
     // metric streamer cannot be used with query simultaneously
     // (oa buffer cannot be shared).
-    if (metricContext.getMetricsLibrary().getMetricQueryCount() > 0) {
+    if (metricSource.getMetricsLibrary().getMetricQueryCount() > 0) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     // Unload metrics library if there are no active queries.
     // It will allow to open metric streamer. Query and streamer cannot be used
     // simultaneously since they use the same exclusive resource (oa buffer).
-    if (metricContext.getMetricsLibrary().getInitializationState() == ZE_RESULT_SUCCESS) {
-        metricContext.getMetricsLibrary().release();
+    if (metricSource.getMetricsLibrary().getInitializationState() == ZE_RESULT_SUCCESS) {
+        metricSource.getMetricsLibrary().release();
     }
 
     // Check metric group sampling type.
@@ -264,7 +266,7 @@ ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_hand
     }
 
     // Check whether metric group is activated.
-    if (!metricContext.isMetricGroupActivated(hMetricGroup)) {
+    if (!metricSource.isMetricGroupActivated(hMetricGroup)) {
         return ZE_RESULT_NOT_READY;
     }
 
@@ -275,7 +277,7 @@ ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_hand
     const ze_result_t result = pMetricStreamer->startMeasurements(
         desc.notifyEveryNReports, desc.samplingPeriod);
     if (result == ZE_RESULT_SUCCESS) {
-        metricContext.setMetricStreamer(pMetricStreamer);
+        metricSource.setMetricStreamer(pMetricStreamer);
     } else {
         delete pMetricStreamer;
         pMetricStreamer = nullptr;

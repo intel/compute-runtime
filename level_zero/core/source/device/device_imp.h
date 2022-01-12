@@ -69,7 +69,7 @@ struct DeviceImp : public Device {
     const NEO::HardwareInfo &getHwInfo() const override;
     NEO::OSInterface &getOsInterface() override;
     uint32_t getPlatformInfo() const override;
-    MetricContext &getMetricContext() override;
+    MetricDeviceContext &getMetricDeviceContext() override;
     DebugSession *getDebugSession(const zet_debug_config_t &config) override;
     DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) override;
     void removeDebugSession() override { debugSession.release(); }
@@ -104,7 +104,7 @@ struct DeviceImp : public Device {
     bool isSubdevice = false;
     void *execEnvironment = nullptr;
     std::unique_ptr<BuiltinFunctionsLib> builtins = nullptr;
-    std::unique_ptr<MetricContext> metricContext = nullptr;
+    std::unique_ptr<MetricDeviceContext> metricContext = nullptr;
     std::unique_ptr<CacheReservation> cacheReservation = nullptr;
     uint32_t maxNumHwThreads = 0;
     uint32_t numSubDevices = 0;

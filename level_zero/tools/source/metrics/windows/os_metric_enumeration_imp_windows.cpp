@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 
 #if defined(_WIN64)
 #define METRICS_DISCOVERY_NAME "igdmd64.dll"
@@ -24,7 +25,7 @@ const char *MetricEnumeration::getMetricsDiscoveryFilename() { return METRICS_DI
 
 bool MetricEnumeration::getAdapterId(uint32_t &major, uint32_t &minor) {
 
-    auto &device = metricContext.getDevice();
+    auto &device = metricSource.getMetricDeviceContext().getDevice();
     auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
     auto luid = wddm->getAdapterLuid();
 

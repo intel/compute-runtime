@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 
 #include "gmock/gmock.h"
@@ -123,9 +124,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
 
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    auto &metricContext = device->getMetricContext();
-    EXPECT_TRUE(metricContext.loadDependencies());
-    EXPECT_TRUE(metricContext.isInitialized());
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_TRUE(metricSource.loadDependencies());
+    EXPECT_TRUE(metricSource.isInitialized());
 
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
@@ -224,9 +225,9 @@ TEST_F(MetricStreamerTest, givenRawReportSizeAsZeroWhenZetMetricStreamerOpenIsCa
 
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    auto &metricContext = device->getMetricContext();
-    EXPECT_TRUE(metricContext.loadDependencies());
-    EXPECT_TRUE(metricContext.isInitialized());
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_TRUE(metricSource.loadDependencies());
+    EXPECT_TRUE(metricSource.isInitialized());
 
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);

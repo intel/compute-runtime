@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 
 #include "gmock/gmock.h"
@@ -53,8 +54,8 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptio
     // Sub devices
     for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
 
-        auto &metricContext = deviceImp.subDevices[i]->getMetricContext();
-        auto &metricsLibrary = metricContext.getMetricsLibrary();
+        auto &metricSource = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricsLibrary = metricSource.getMetricsLibrary();
 
         metricsLibrary.getSubDeviceClientOptions(subDevice, subDeviceIndex, subDeviceCount, workloadPartition);
 
@@ -83,8 +84,8 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWithWorkloadPartitionWhenGe
     // Sub devices
     for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
 
-        auto &metricContext = deviceImp.subDevices[i]->getMetricContext();
-        auto &metricsLibrary = metricContext.getMetricsLibrary();
+        auto &metricSource = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricsLibrary = metricSource.getMetricsLibrary();
 
         metricsLibrary.enableWorkloadPartition();
 
@@ -1224,8 +1225,8 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenInvalidCommandBufferGetWhenZetComman
 
 TEST_F(MultiDeviceMetricQueryPoolTest, givenUninitializedMetricsLibraryWhenGetGpuCommandsIsCalledThenReturnsFail) {
 
-    auto &metricContext = devices[0]->getMetricContext();
-    auto &metricsLibrary = metricContext.getMetricsLibrary();
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
     CommandBufferData_1_0 commandBuffer = {};
 
     EXPECT_CALL(*mockMetricEnumeration, isInitialized())

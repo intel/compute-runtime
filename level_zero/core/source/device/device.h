@@ -36,7 +36,7 @@ namespace L0 {
 struct DriverHandle;
 struct BuiltinFunctionsLib;
 struct ExecutionEnvironment;
-struct MetricContext;
+class MetricDeviceContext;
 struct SysmanDevice;
 struct DebugSession;
 
@@ -103,7 +103,7 @@ struct Device : _ze_device_handle_t {
     virtual const NEO::HardwareInfo &getHwInfo() const = 0;
     virtual NEO::OSInterface &getOsInterface() = 0;
     virtual uint32_t getPlatformInfo() const = 0;
-    virtual MetricContext &getMetricContext() = 0;
+    virtual MetricDeviceContext &getMetricDeviceContext() = 0;
     virtual DebugSession *getDebugSession(const zet_debug_config_t &config) = 0;
     virtual DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) = 0;
     virtual void removeDebugSession() = 0;

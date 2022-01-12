@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_source_oa.h"
 
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
@@ -20,7 +21,7 @@ const char *MetricEnumeration::getMetricsDiscoveryFilename() { return "libmd.so.
 
 bool MetricEnumeration::getAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor) {
 
-    auto &device = metricContext.getDevice();
+    auto &device = metricSource.getMetricDeviceContext().getDevice();
     auto &osInterface = device.getOsInterface();
     auto drm = osInterface.getDriverModel()->as<NEO::Drm>();
     auto drmFile = drm->getFileDescriptor();

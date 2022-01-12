@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,7 @@ list(APPEND L0_SRCS_TOOLS_METRICS
      ${CMAKE_CURRENT_SOURCE_DIR}/metric_enumeration_imp.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/metric_streamer_imp.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_imp.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/metric_source_oa.h
 )
 
 if(UNIX)

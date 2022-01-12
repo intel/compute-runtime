@@ -164,7 +164,7 @@ class Mock<IInformation_1_0> : public IInformation_1_0 {
 
 template <>
 struct Mock<MetricEnumeration> : public MetricEnumeration {
-    Mock(::L0::MetricContext &metricContext);
+    Mock(::L0::OaMetricSourceImp &metricSource);
     ~Mock() override;
 
     using MetricEnumeration::cleanupMetricsDiscovery;
@@ -210,6 +210,9 @@ struct Mock<MetricGroup> : public MetricGroup {
     MOCK_METHOD(ze_result_t, openIoStream, (uint32_t &, uint32_t &), (override));
     MOCK_METHOD(ze_result_t, readIoStream, (uint32_t &, uint8_t &), (override));
     MOCK_METHOD(ze_result_t, closeIoStream, (), (override));
+    zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) override {
+        return nullptr;
+    }
 };
 
 struct MetricGroupImpTest : public OaMetricGroupImp {
