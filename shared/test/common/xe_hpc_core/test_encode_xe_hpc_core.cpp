@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -310,10 +310,23 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNoFenceAsPostSyncOperationInCo
     dispatchInterface->getCrossThreadDataSizeResult = 0u;
 
     bool requiresUncachedMocs = false;
-    uint32_t partitionCount = 0;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
-                                             false, false);
+    EncodeDispatchKernelArgs dispatchArgs{
+        0,
+        pDevice,
+        dispatchInterface.get(),
+        dims,
+        NEO::PreemptionMode::Disabled,
+        0,
+        false,
+        false,
+        false,
+        false,
+        requiresUncachedMocs,
+        false,
+        false,
+        false};
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -337,10 +350,23 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenFenceAsPostSyncOperationInComp
     dispatchInterface->getCrossThreadDataSizeResult = 0u;
 
     bool requiresUncachedMocs = false;
-    uint32_t partitionCount = 0;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
-                                             false, false);
+    EncodeDispatchKernelArgs dispatchArgs{
+        0,
+        pDevice,
+        dispatchInterface.get(),
+        dims,
+        NEO::PreemptionMode::Disabled,
+        0,
+        false,
+        false,
+        false,
+        false,
+        requiresUncachedMocs,
+        false,
+        false,
+        false};
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -364,10 +390,23 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceAsPostSy
     dispatchInterface->getCrossThreadDataSizeResult = 0u;
 
     bool requiresUncachedMocs = false;
-    uint32_t partitionCount = 0;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
-                                             false, false);
+    EncodeDispatchKernelArgs dispatchArgs{
+        0,
+        pDevice,
+        dispatchInterface.get(),
+        dims,
+        NEO::PreemptionMode::Disabled,
+        0,
+        false,
+        false,
+        false,
+        false,
+        requiresUncachedMocs,
+        false,
+        false,
+        false};
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -388,10 +427,23 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
     dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
 
     bool requiresUncachedMocs = true;
-    uint32_t partitionCount = 0;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
-                                             false, false);
+    EncodeDispatchKernelArgs dispatchArgs{
+        0,
+        pDevice,
+        dispatchInterface.get(),
+        dims,
+        NEO::PreemptionMode::Disabled,
+        0,
+        false,
+        false,
+        false,
+        false,
+        requiresUncachedMocs,
+        false,
+        false,
+        false};
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -437,7 +489,6 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, whenSizeForEncodeSystemMemoryFenceQ
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenRevisionBAndAboveWhenSpecialModeRequiredThenDontReprogramPipelineSelect) {
     bool requiresUncachedMocs = false;
-    uint32_t partitionCount = 0;
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -457,8 +508,24 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenRevisionBAndAboveWhenSpecialMo
     for (auto &testInput : testInputs) {
         hwInfo->platform.usRevId = testInput.revId;
         cmdContainer->lastPipelineSelectModeRequired = false;
-        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                                 pDevice, NEO::PreemptionMode::Initial, requiresUncachedMocs, false, partitionCount, false, false);
+
+        EncodeDispatchKernelArgs dispatchArgs{
+            0,
+            pDevice,
+            dispatchInterface.get(),
+            dims,
+            NEO::PreemptionMode::Initial,
+            0,
+            false,
+            false,
+            false,
+            false,
+            requiresUncachedMocs,
+            false,
+            false,
+            false};
+
+        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
         EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequired);
     }
 }

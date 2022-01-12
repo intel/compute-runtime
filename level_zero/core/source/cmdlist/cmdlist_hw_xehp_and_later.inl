@@ -220,23 +220,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
     this->threadArbitrationPolicy = kernelImp->getSchedulingHintExp();
 
-    uint32_t partitionCount = 0;
-    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
-                                                 reinterpret_cast<const void *>(pThreadGroupDimensions),
-                                                 isIndirect,
-                                                 isPredicate,
-                                                 kernel,
-                                                 eventAddress,
-                                                 isTimestampEvent,
-                                                 L3FlushEnable,
-                                                 neoDevice,
-                                                 commandListPreemptionMode,
-                                                 this->containsStatelessUncachedResource,
-                                                 kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
-                                                 partitionCount,
-                                                 internalUsage,
-                                                 isCooperative);
-    this->partitionCount = std::max(partitionCount, this->partitionCount);
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
+        eventAddress,
+        neoDevice,
+        kernel,
+        reinterpret_cast<const void *>(pThreadGroupDimensions),
+        commandListPreemptionMode,
+        0,
+        isIndirect,
+        isPredicate,
+        isTimestampEvent,
+        L3FlushEnable,
+        this->containsStatelessUncachedResource,
+        kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
+        internalUsage,
+        isCooperative};
+    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
+    this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
+    this->partitionCount = std::max(dispatchKernelArgs.partitionCount, this->partitionCount);
     if (hEvent) {
         auto event = Event::fromHandle(hEvent);
         if (partitionCount > 1) {

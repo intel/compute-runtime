@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,7 +109,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
-    uint32_t partitionCount = 0;
 
     NEO::Device *neoDevice = device->getNEODevice();
 
@@ -123,22 +122,23 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     }
 
     updateStreamProperties(*kernel, false, isCooperative);
-
-    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
-                                                 reinterpret_cast<const void *>(pThreadGroupDimensions),
-                                                 isIndirect,
-                                                 isPredicate,
-                                                 kernel,
-                                                 0,
-                                                 false,
-                                                 false,
-                                                 neoDevice,
-                                                 commandListPreemptionMode,
-                                                 this->containsStatelessUncachedResource,
-                                                 false,
-                                                 partitionCount,
-                                                 internalUsage,
-                                                 isCooperative);
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
+        0,
+        neoDevice,
+        kernel,
+        reinterpret_cast<const void *>(pThreadGroupDimensions),
+        commandListPreemptionMode,
+        0,
+        isIndirect,
+        isPredicate,
+        false,
+        false,
+        this->containsStatelessUncachedResource,
+        false,
+        internalUsage,
+        isCooperative};
+    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
+    this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
 
     if (neoDevice->getDebugger()) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);

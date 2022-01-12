@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,10 +38,22 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenOverrideSlmTotalSizeDebugVari
     for (int32_t valueToProgram = 0x0; valueToProgram < maxValueToProgram; valueToProgram++) {
         DebugManager.flags.OverrideSlmAllocationSize.set(valueToProgram);
         cmdContainer->reset();
-        uint32_t partitionCount = 0;
-        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
-                                                 false, false);
+        EncodeDispatchKernelArgs dispatchArgs{
+            0,
+            pDevice,
+            dispatchInterface.get(),
+            dims,
+            NEO::PreemptionMode::Disabled,
+            0,
+            false,
+            false,
+            false,
+            false,
+            requiresUncachedMocs,
+            false,
+            false,
+            false};
+        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

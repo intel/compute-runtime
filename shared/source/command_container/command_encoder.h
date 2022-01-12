@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,23 @@ class IndirectHeap;
 struct HardwareInfo;
 struct StateComputeModeProperties;
 
+struct EncodeDispatchKernelArgs {
+    uint64_t eventAddress = 0ull;
+    Device *device = nullptr;
+    DispatchKernelEncoderI *dispatchInterface = nullptr;
+    const void *pThreadGroupDimensions = nullptr;
+    PreemptionMode preemptionMode = PreemptionMode::Initial;
+    uint32_t partitionCount = 0u;
+    bool isIndirect = false;
+    bool isPredicate = false;
+    bool isTimestampEvent = false;
+    bool L3FlushEnable = false;
+    bool requiresUncachedMocs = false;
+    bool useGlobalAtomics = false;
+    bool isInternal = false;
+    bool isCooperative = false;
+};
+
 template <typename GfxFamily>
 struct EncodeDispatchKernel {
     using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
@@ -35,20 +52,7 @@ struct EncodeDispatchKernel {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     static void encode(CommandContainer &container,
-                       const void *pThreadGroupDimensions,
-                       bool isIndirect,
-                       bool isPredicate,
-                       DispatchKernelEncoderI *dispatchInterface,
-                       uint64_t eventAddress,
-                       bool isTimestampEvent,
-                       bool L3FlushEnable,
-                       Device *device,
-                       PreemptionMode preemptionMode,
-                       bool &requiresUncachedMocs,
-                       bool useGlobalAtomics,
-                       uint32_t &partitionCount,
-                       bool isInternal,
-                       bool isCooperative);
+                       EncodeDispatchKernelArgs &args);
 
     static void encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType);
 

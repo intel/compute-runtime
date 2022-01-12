@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,10 +30,22 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCA
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
 
     bool requiresUncachedMocs = false;
-    uint32_t partitionCount = 0;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), eventAddress, true, true,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
-                                             false, false);
+    EncodeDispatchKernelArgs dispatchArgs{
+        eventAddress,
+        pDevice,
+        dispatchInterface.get(),
+        dims,
+        NEO::PreemptionMode::Disabled,
+        0,
+        false,
+        false,
+        true,
+        true,
+        requiresUncachedMocs,
+        false,
+        false,
+        false};
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -53,10 +65,22 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndDG2T
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
 
     bool requiresUncachedMocs = false;
-    uint32_t partitionCount = 0;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), eventAddress, true, true,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
-                                             false, false);
+    EncodeDispatchKernelArgs dispatchArgs{
+        eventAddress,
+        pDevice,
+        dispatchInterface.get(),
+        dims,
+        NEO::PreemptionMode::Disabled,
+        0,
+        false,
+        false,
+        true,
+        true,
+        requiresUncachedMocs,
+        false,
+        false,
+        false};
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -148,10 +172,22 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocatio
     dispatchInterface->getSlmTotalSizeResult = slmTotalSize;
 
     bool requiresUncachedMocs = false;
-    uint32_t partitionCount = 0;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
-                                             false, false);
+    EncodeDispatchKernelArgs dispatchArgs{
+        0,
+        pDevice,
+        dispatchInterface.get(),
+        dims,
+        NEO::PreemptionMode::Disabled,
+        0,
+        false,
+        false,
+        false,
+        false,
+        requiresUncachedMocs,
+        false,
+        false,
+        false};
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

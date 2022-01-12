@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,23 +113,23 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAp
     auto bbEndPosition = stream->getSpace(0);
 
     const uint32_t threadGroupDimensions[3] = {1, 1, 1};
-    bool requiresUncachedMocs = false;
-    uint32_t partitionCount = 0;
-    NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer,
-                                                  threadGroupDimensions,
-                                                  false,
-                                                  false,
-                                                  kernel.get(),
-                                                  0,
-                                                  false,
-                                                  false,
-                                                  device->getNEODevice(),
-                                                  PreemptionMode::MidBatch,
-                                                  requiresUncachedMocs,
-                                                  false,
-                                                  partitionCount,
-                                                  false,
-                                                  false);
+
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
+        0,
+        device->getNEODevice(),
+        kernel.get(),
+        threadGroupDimensions,
+        PreemptionMode::MidBatch,
+        0,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false};
+    NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs);
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, 0u);
