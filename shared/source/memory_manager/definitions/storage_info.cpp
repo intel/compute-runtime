@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -143,6 +143,10 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.tileInstanced = true;
         }
         storageInfo.localOnlyRequired = true;
+
+        if (properties.flags.shareable) {
+            storageInfo.isLockable = false;
+        }
         break;
     }
     case GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY:

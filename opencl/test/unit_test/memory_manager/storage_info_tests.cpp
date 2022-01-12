@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -343,6 +343,14 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSvmGpuThenLocalOnly
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::SVM_GPU, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForShareableSvmGpuThenLocalOnlyFlagIsRequiredAndIsNotLocable) {
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::SVM_GPU, false, singleTileMask};
+    properties.flags.shareable = 1u;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_TRUE(storageInfo.localOnlyRequired);
+    EXPECT_FALSE(storageInfo.isLockable);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenCreatingStorageInfoThenCorrectValuesAreSet) {

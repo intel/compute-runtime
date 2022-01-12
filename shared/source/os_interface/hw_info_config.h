@@ -91,7 +91,7 @@ class HwInfoConfig {
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
 
   public:
-    uint32_t threadsPerEu;
+    uint32_t threadsPerEu = 0u;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

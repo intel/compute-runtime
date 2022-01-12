@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,62 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAlloca
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
     EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevicePoolThenMemoryIsNotLocableAndLocalOnlyIsSet) {
+    const bool localMemoryEnabled = true;
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.type = GraphicsAllocation::AllocationType::SVM_GPU;
+    allocData.storageInfo.localOnlyRequired = true;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.shareable = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+    EXPECT_NE(allocation->peekInternalHandle(memoryManager.get()), 0u);
+
+    EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphicsMemoryInPreferredPoolThenMemoryIsNotLocableAndLocalOnlyIsSet) {
+    const bool localMemoryEnabled = true;
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+    AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_GPU, mockDeviceBitfield};
+    properties.allFlags = 0;
+    properties.size = MemoryConstants::pageSize;
+    properties.flags.allocateMemory = true;
+    properties.flags.shareable = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+    EXPECT_NE(allocation->peekInternalHandle(memoryManager.get()), 0u);
+
+    EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
