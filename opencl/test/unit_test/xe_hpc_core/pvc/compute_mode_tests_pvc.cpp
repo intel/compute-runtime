@@ -16,8 +16,8 @@
 using namespace NEO;
 
 using ThreadArbitrationPvc = ::testing::Test;
-PVCTEST_F(ThreadArbitrationPvc, givenPvcWhenCallgetDefaultThreadArbitrationPolicyThenRoundRobinisReturned) {
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+PVCTEST_F(ThreadArbitrationPvc, givenPvcWhenCallgetDefaultThreadArbitrationPolicyThenAgeBasedisReturned) {
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
 using PvcComputeModeRequirements = ComputeModeRequirements;
@@ -217,7 +217,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComp
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -236,7 +236,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComp
 
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
@@ -254,7 +254,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCompute
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -278,7 +278,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCompute
 
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL) + startOffset));
@@ -300,7 +300,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(true);
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -320,7 +320,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
@@ -339,7 +339,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRF
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -363,7 +363,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingThenCorrectComm
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -411,7 +411,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenProgramPipeControlPriorToNonPipelined
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
