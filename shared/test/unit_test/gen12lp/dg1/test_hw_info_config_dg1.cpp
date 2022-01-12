@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,6 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/source/helpers/hardware_commands_helper.h"
 
 using namespace NEO;
 
@@ -107,28 +105,11 @@ DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
 }
 
-DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingBlitterPreferenceThenReturnTrue) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    const auto &hardwareInfo = DG1::hwInfo;
-
-    EXPECT_TRUE(hwInfoConfig.obtainBlitterPreference(hardwareInfo));
-}
-
 DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingFullBlitterSupportThenReturnFalse) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     const auto &hardwareInfo = DG1::hwInfo;
 
     EXPECT_FALSE(hwInfoConfig.isBlitterFullySupported(hardwareInfo));
-}
-
-DG1TEST_F(Dg1HwInfo, whenConfigureHwInfoThenBlitterSupportIsEnabled) {
-    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    auto hardwareInfo = *defaultHwInfo;
-
-    hardwareInfo.capabilityTable.blitterOperationsSupported = false;
-    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
-
-    EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
 DG1TEST_F(Dg1HwInfo, whenOverrideGfxPartitionLayoutForWslThenReturnTrue) {

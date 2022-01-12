@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,11 +49,6 @@ bool HwInfoConfigHw<gfxProduct>::is3DPipelineSelectWARequired() const {
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
-    return true;
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
     return true;
 }
 
