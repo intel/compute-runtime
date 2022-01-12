@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -418,6 +418,7 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
     OsPower *pOsPowerOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
+    std::map<uint32_t, L0::PlatformMonitoringTech *> mapOriginal;
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
@@ -451,6 +452,8 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
+        mapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
 
         for (auto &deviceHandle : deviceHandles) {
             ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -468,9 +471,13 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
+        for (const auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
+            delete pmtMapElement.second;
+        }
         SysmanMultiDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = mapOriginal;
     }
 
     std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {

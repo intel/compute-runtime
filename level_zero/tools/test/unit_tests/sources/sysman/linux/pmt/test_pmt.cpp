@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,7 @@ class ZesPmtFixtureMultiDevice : public SysmanMultiDeviceFixture {
         SysmanMultiDeviceFixture::TearDown();
         for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
             delete subDeviceIdToPmtEntry.second;
+            subDeviceIdToPmtEntry.second = nullptr;
         }
     }
 };
@@ -270,6 +271,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenBaseOffsetReadFailWhenDoingPMTInitThenPMTm
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenNoPMTHandleInmapOfSubDeviceIdToPmtObjectWhenCallingreleasePmtObjectThenMapWouldGetEmpty) {
     auto mapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
     for (const auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
@@ -318,6 +320,7 @@ class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
         for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
             delete subDeviceIdToPmtEntry.second;
+            subDeviceIdToPmtEntry.second = nullptr;
         }
     }
 };
