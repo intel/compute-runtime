@@ -957,11 +957,13 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
         return false;
     }
     auto engines = ioctlHelper->translateToEngineCaps(enginesQuery);
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
 
     auto memInfo = memoryInfo.get();
 
     if (!memInfo) {
-        return false;
+        this->engineInfo.reset(new EngineInfo(this, hwInfo, engines));
+        return true;
     }
 
     auto &memoryRegions = memInfo->getDrmRegionInfos();
@@ -998,8 +1000,6 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
             }
         }
     }
-
-    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
 
     if (tileCount == 0u) {
         this->engineInfo.reset(new EngineInfo(this, hwInfo, engines));

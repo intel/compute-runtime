@@ -39,7 +39,7 @@ TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngi
     EXPECT_EQ(2u, engineInfo->engines.size());
 }
 
-TEST(EngineInfoTest, whenQueryingEngineInfoWithoutMemoryInfoThenEngineInfoNotSet) {
+TEST(EngineInfoTest, whenQueryingEngineInfoWithoutMemoryInfoThenEngineInfoCreated) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -49,7 +49,7 @@ TEST(EngineInfoTest, whenQueryingEngineInfoWithoutMemoryInfoThenEngineInfoNotSet
     EXPECT_EQ(2u, drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();
 
-    ASSERT_EQ(nullptr, engineInfo);
+    ASSERT_NE(nullptr, engineInfo);
 }
 
 TEST(EngineInfoTest, whenCreateEngineInfoWithRcsThenCorrectHwInfoSet) {
