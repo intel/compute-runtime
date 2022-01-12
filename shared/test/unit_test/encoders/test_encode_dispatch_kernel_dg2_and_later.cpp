@@ -30,21 +30,11 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCA
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        eventAddress,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        true,
-        true,
-        requiresUncachedMocs,
-        false,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
+    dispatchArgs.L3FlushEnable = true;
+
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
@@ -65,21 +55,11 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndDG2T
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        eventAddress,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        true,
-        true,
-        requiresUncachedMocs,
-        false,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
+    dispatchArgs.L3FlushEnable = true;
+
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
@@ -172,21 +152,8 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocatio
     dispatchInterface->getSlmTotalSizeResult = slmTotalSize;
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        false,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;

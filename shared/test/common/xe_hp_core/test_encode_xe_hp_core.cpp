@@ -164,21 +164,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
 
     bool requiresUncachedMocs = false;
     bool useGlobalAtomics = true;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        useGlobalAtomics,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.useGlobalAtomics = useGlobalAtomics;
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -205,21 +192,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
     bool requiresUncachedMocs = false;
     bool useGlobalAtomics = true;
     cmdContainer->lastSentUseGlobalAtomics = true;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        useGlobalAtomics,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.useGlobalAtomics = useGlobalAtomics;
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -243,21 +217,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
     bool requiresUncachedMocs = false;
     bool useGlobalAtomics = false;
     cmdContainer->lastSentUseGlobalAtomics = true;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        useGlobalAtomics,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.useGlobalAtomics = useGlobalAtomics;
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -284,21 +245,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
     bool requiresUncachedMocs = true;
     bool useGlobalAtomics = false;
     cmdContainer->lastSentUseGlobalAtomics = true;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        useGlobalAtomics,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.useGlobalAtomics = useGlobalAtomics;
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -324,21 +272,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
 
     bool requiresUncachedMocs = false;
     bool useGlobalAtomics = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        useGlobalAtomics,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.useGlobalAtomics = useGlobalAtomics;
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -372,21 +307,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithNoImplicitScalingTests, given
 
     bool requiresUncachedMocs = false;
     bool useGlobalAtomics = true;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        useGlobalAtomics,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.useGlobalAtomics = useGlobalAtomics;
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 

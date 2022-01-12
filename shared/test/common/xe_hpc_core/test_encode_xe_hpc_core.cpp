@@ -310,21 +310,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNoFenceAsPostSyncOperationInCo
     dispatchInterface->getCrossThreadDataSizeResult = 0u;
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        false,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -350,21 +336,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenFenceAsPostSyncOperationInComp
     dispatchInterface->getCrossThreadDataSizeResult = 0u;
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        false,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -390,21 +362,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceAsPostSy
     dispatchInterface->getCrossThreadDataSizeResult = 0u;
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        false,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -427,21 +385,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
     dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
 
     bool requiresUncachedMocs = true;
-    EncodeDispatchKernelArgs dispatchArgs{
-        0,
-        pDevice,
-        dispatchInterface.get(),
-        dims,
-        NEO::PreemptionMode::Disabled,
-        0,
-        false,
-        false,
-        false,
-        false,
-        requiresUncachedMocs,
-        false,
-        false,
-        false};
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -509,21 +453,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenRevisionBAndAboveWhenSpecialMo
         hwInfo->platform.usRevId = testInput.revId;
         cmdContainer->lastPipelineSelectModeRequired = false;
 
-        EncodeDispatchKernelArgs dispatchArgs{
-            0,
-            pDevice,
-            dispatchInterface.get(),
-            dims,
-            NEO::PreemptionMode::Initial,
-            0,
-            false,
-            false,
-            false,
-            false,
-            requiresUncachedMocs,
-            false,
-            false,
-            false};
+        EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+        dispatchArgs.preemptionMode = NEO::PreemptionMode::Initial;
 
         EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
         EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequired);

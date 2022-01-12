@@ -221,20 +221,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     this->threadArbitrationPolicy = kernelImp->getSchedulingHintExp();
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        eventAddress,
-        neoDevice,
-        kernel,
-        reinterpret_cast<const void *>(pThreadGroupDimensions),
-        commandListPreemptionMode,
-        0,
-        isIndirect,
-        isPredicate,
-        isTimestampEvent,
-        L3FlushEnable,
-        this->containsStatelessUncachedResource,
-        kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
-        internalUsage,
-        isCooperative};
+        eventAddress,                                             //eventAddress
+        neoDevice,                                                //device
+        kernel,                                                   //dispatchInterface
+        reinterpret_cast<const void *>(pThreadGroupDimensions),   //pThreadGroupDimensions
+        commandListPreemptionMode,                                //preemptionMode
+        0,                                                        //partitionCount
+        isIndirect,                                               //isIndirect
+        isPredicate,                                              //isPredicate
+        isTimestampEvent,                                         //isTimestampEvent
+        L3FlushEnable,                                            //L3FlushEnable
+        this->containsStatelessUncachedResource,                  //requiresUncachedMocs
+        kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
+        internalUsage,                                            //isInternal
+        isCooperative                                             //isCooperative
+    };
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
     this->partitionCount = std::max(dispatchKernelArgs.partitionCount, this->partitionCount);

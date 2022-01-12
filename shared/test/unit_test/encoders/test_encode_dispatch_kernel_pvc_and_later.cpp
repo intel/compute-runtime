@@ -38,21 +38,8 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenOverrideSlmTotalSizeDebugVari
     for (int32_t valueToProgram = 0x0; valueToProgram < maxValueToProgram; valueToProgram++) {
         DebugManager.flags.OverrideSlmAllocationSize.set(valueToProgram);
         cmdContainer->reset();
-        EncodeDispatchKernelArgs dispatchArgs{
-            0,
-            pDevice,
-            dispatchInterface.get(),
-            dims,
-            NEO::PreemptionMode::Disabled,
-            0,
-            false,
-            false,
-            false,
-            false,
-            requiresUncachedMocs,
-            false,
-            false,
-            false};
+        EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
         EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
         GenCmdList commands;
