@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo,
     }
     auto mainKernel = multiDispatchInfo.peekMainKernel();
     if (mainKernel != nullptr) {
-        if (mainKernel->checkIfIsParentKernelAndBlocksUsesPrintf() || mainKernel->getImplicitArgs()) {
+        if (mainKernel->getImplicitArgs()) {
             return new PrintfHandler(device);
         }
     }

@@ -2033,23 +2033,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
     injectFailures(allocBufferFunc);
 }
 
-TEST_F(GTPinTests, givenParentKernelWhenGtPinAddingSurfaceStateThenItIsNotAddedAndFalseIsReturned) {
-    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*pContext));
-
-    parentKernel->sshLocalSize = 64;
-    parentKernel->pSshLocal.reset(new char[64]);
-
-    size_t sizeSurfaceStates1 = parentKernel->getSurfaceStateHeapSize();
-
-    bool surfaceAdded = gtpinHelper.addSurfaceState(parentKernel.get());
-    EXPECT_FALSE(surfaceAdded);
-
-    size_t sizeSurfaceStates2 = parentKernel->getSurfaceStateHeapSize();
-    EXPECT_EQ(sizeSurfaceStates2, sizeSurfaceStates1);
-}
-
 TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;

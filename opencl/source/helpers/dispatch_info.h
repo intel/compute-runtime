@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -187,7 +187,6 @@ struct MultiDispatchInfo {
         redescribedSurfaces.push_back(memObj.release());
     }
 
-    Kernel *peekParentKernel() const;
     Kernel *peekMainKernel() const;
 
     void setBuiltinOpParams(const BuiltinOpParams &builtinOpParams) {

@@ -129,12 +129,6 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
     }
     // clang-format on
 
-    if (Kernel *parentKernel = multiDispatchInfo.peekParentKernel()) {
-        if (heapType == IndirectHeap::SURFACE_STATE) {
-            expectedSize += HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(*parentKernel);
-        }
-    }
-
     if (ih == nullptr)
         ih = &commandQueue.getIndirectHeap(heapType, expectedSize);
 

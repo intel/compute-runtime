@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     size_t sshSize = pKernel->getSurfaceStateHeapSize();
-    if ((sshSize == 0) || pKernel->isParentKernel) {
+    if (sshSize == 0) {
         // Kernels which do not use SSH or use Execution Model are not supported (yet)
         return false;
     }

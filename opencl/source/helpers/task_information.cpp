@@ -140,19 +140,9 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         return completionStamp;
     }
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
-    bool executionModelKernel = kernel->isParentKernel;
-    auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
     auto bcsCsrForAuxTranslation = commandQueue.getBcsForAuxTranslation();
 
     auto commandStreamReceiverOwnership = commandStreamReceiver.obtainUniqueOwnership();
-
-    if (executionModelKernel) {
-        while (!devQueue->isEMCriticalSectionFree())
-            ;
-
-        devQueue->resetDeviceQueue();
-        devQueue->acquireEMCriticalSection();
-    }
 
     IndirectHeap *dsh = kernelOperation->dsh.get();
     IndirectHeap *ioh = kernelOperation->ioh.get();

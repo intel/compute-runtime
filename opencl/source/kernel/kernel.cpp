@@ -68,8 +68,7 @@ class Surface;
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
 
 Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg)
-    : isParentKernel(kernelInfoArg.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue),
-      executionEnvironment(programArg->getExecutionEnvironment()),
+    : executionEnvironment(programArg->getExecutionEnvironment()),
       program(programArg),
       clDevice(clDeviceArg),
       kernelInfo(kernelInfoArg) {
@@ -262,9 +261,6 @@ cl_int Kernel::initialize() {
         program->getContextPtr()->setResolvesRequiredInKernels(true);
     }
 
-    if (isParentKernel) {
-        program->allocateBlockPrivateSurfaces(*pClDevice);
-    }
     if (program->isKernelDebugEnabled() && isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful)) {
         debugEnabled = true;
     }
@@ -1791,129 +1787,6 @@ void Kernel::unsetArg(uint32_t argIndex) {
 
 void Kernel::createReflectionSurface() {
     auto pClDevice = &clDevice;
-    if (this->isParentKernel && kernelReflectionSurface == nullptr) {
-        auto &hwInfo = pClDevice->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        BlockKernelManager *blockManager = program->getBlockKernelManager();
-        uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
-
-        ObjectCounts objectCount;
-        getParentObjectCounts(objectCount);
-        uint32_t parentImageCount = objectCount.imageCount;
-        uint32_t parentSamplerCount = objectCount.samplerCount;
-        size_t maxConstantBufferSize = 0;
-
-        std::vector<IGIL_KernelCurbeParams> *curbeParamsForBlocks = new std::vector<IGIL_KernelCurbeParams>[blockCount];
-
-        uint64_t *tokenMask = new uint64_t[blockCount];
-        uint32_t *sshTokenOffsetsFromKernelData = new uint32_t[blockCount];
-
-        size_t kernelReflectionSize = alignUp(sizeof(IGIL_KernelDataHeader) + blockCount * sizeof(IGIL_KernelAddressData), sizeof(void *));
-        uint32_t kernelDataOffset = static_cast<uint32_t>(kernelReflectionSize);
-        uint32_t parentSSHAlignedSize = alignUp(this->kernelInfo.heapInfo.SurfaceStateHeapSize, hwHelper.getBindingTableStateAlignement());
-        uint32_t btOffset = parentSSHAlignedSize;
-
-        for (uint32_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-            size_t samplerStateAndBorderColorSize = 0;
-
-            uint32_t firstSSHTokenIndex = 0;
-
-            ReflectionSurfaceHelper::getCurbeParams(curbeParamsForBlocks[i], tokenMask[i], firstSSHTokenIndex, *pBlockInfo, hwInfo);
-
-            maxConstantBufferSize = std::max(maxConstantBufferSize, static_cast<size_t>(pBlockInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize));
-
-            samplerStateAndBorderColorSize = pBlockInfo->getSamplerStateArraySize(hwInfo);
-            samplerStateAndBorderColorSize = alignUp(samplerStateAndBorderColorSize, Sampler::samplerStateArrayAlignment);
-            samplerStateAndBorderColorSize += pBlockInfo->getBorderColorStateSize();
-            samplerStateAndBorderColorSize = alignUp(samplerStateAndBorderColorSize, sizeof(void *));
-
-            sshTokenOffsetsFromKernelData[i] = offsetof(IGIL_KernelData, m_data) + sizeof(IGIL_KernelCurbeParams) * firstSSHTokenIndex;
-
-            kernelReflectionSize += alignUp(sizeof(IGIL_KernelData) + sizeof(IGIL_KernelCurbeParams) * curbeParamsForBlocks[i].size(), sizeof(void *));
-            kernelReflectionSize += parentSamplerCount * sizeof(IGIL_SamplerParams) + samplerStateAndBorderColorSize;
-        }
-
-        maxConstantBufferSize = alignUp(maxConstantBufferSize, sizeof(void *));
-        kernelReflectionSize += blockCount * alignUp(maxConstantBufferSize, sizeof(void *));
-        kernelReflectionSize += parentImageCount * sizeof(IGIL_ImageParamters);
-        kernelReflectionSize += parentSamplerCount * sizeof(IGIL_ParentSamplerParams);
-        kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
-            {pClDevice->getRootDeviceIndex(), kernelReflectionSize,
-             GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER,
-             pClDevice->getDeviceBitfield()});
-
-        for (uint32_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-            uint32_t newKernelDataOffset = ReflectionSurfaceHelper::setKernelData(kernelReflectionSurface->getUnderlyingBuffer(),
-                                                                                  kernelDataOffset,
-                                                                                  curbeParamsForBlocks[i],
-                                                                                  tokenMask[i],
-                                                                                  maxConstantBufferSize,
-                                                                                  parentSamplerCount,
-                                                                                  *pBlockInfo,
-                                                                                  hwInfo);
-
-            uint32_t offset = static_cast<uint32_t>(offsetof(IGIL_KernelDataHeader, m_data) + sizeof(IGIL_KernelAddressData) * i);
-
-            uint32_t samplerHeapOffset = static_cast<uint32_t>(alignUp(kernelDataOffset + sizeof(IGIL_KernelData) + curbeParamsForBlocks[i].size() * sizeof(IGIL_KernelCurbeParams), sizeof(void *)));
-            uint32_t samplerHeapSize = static_cast<uint32_t>(alignUp(pBlockInfo->getSamplerStateArraySize(hwInfo), Sampler::samplerStateArrayAlignment) + pBlockInfo->getBorderColorStateSize());
-            uint32_t constantBufferOffset = alignUp(samplerHeapOffset + samplerHeapSize, sizeof(void *));
-
-            uint32_t samplerParamsOffset = 0;
-            if (parentSamplerCount) {
-                samplerParamsOffset = newKernelDataOffset - sizeof(IGIL_SamplerParams) * parentSamplerCount;
-                IGIL_SamplerParams *pSamplerParams = (IGIL_SamplerParams *)ptrOffset(kernelReflectionSurface->getUnderlyingBuffer(), samplerParamsOffset);
-                uint32_t sampler = 0;
-                const auto &args = pBlockInfo->kernelDescriptor.payloadMappings.explicitArgs;
-                for (uint32_t argID = 0; argID < args.size(); argID++) {
-                    if (args[argID].is<ArgDescriptor::ArgTSampler>()) {
-
-                        pSamplerParams[sampler].m_ArgID = argID;
-                        pSamplerParams[sampler].m_SamplerStateOffset = args[argID].as<ArgDescSampler>().bindful;
-                        sampler++;
-                    }
-                }
-            }
-
-            ReflectionSurfaceHelper::setKernelAddressData(kernelReflectionSurface->getUnderlyingBuffer(),
-                                                          offset,
-                                                          kernelDataOffset,
-                                                          samplerHeapOffset,
-                                                          constantBufferOffset,
-                                                          samplerParamsOffset,
-                                                          sshTokenOffsetsFromKernelData[i] + kernelDataOffset,
-                                                          btOffset,
-                                                          *pBlockInfo,
-                                                          hwInfo);
-
-            if (samplerHeapSize > 0) {
-                void *pDst = ptrOffset(kernelReflectionSurface->getUnderlyingBuffer(), samplerHeapOffset);
-                const void *pSrc = ptrOffset(pBlockInfo->heapInfo.pDsh, pBlockInfo->getBorderColorOffset());
-                memcpy_s(pDst, samplerHeapSize, pSrc, samplerHeapSize);
-            }
-
-            void *pDst = ptrOffset(kernelReflectionSurface->getUnderlyingBuffer(), constantBufferOffset);
-            const char *pSrc = pBlockInfo->crossThreadData;
-            memcpy_s(pDst, pBlockInfo->getConstantBufferSize(), pSrc, pBlockInfo->getConstantBufferSize());
-
-            btOffset += pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset;
-            kernelDataOffset = newKernelDataOffset;
-        }
-
-        uint32_t samplerOffset = 0;
-        if (parentSamplerCount) {
-            samplerOffset = kernelDataOffset + parentImageCount * sizeof(IGIL_ImageParamters);
-        }
-        ReflectionSurfaceHelper::setKernelDataHeader(kernelReflectionSurface->getUnderlyingBuffer(), blockCount, parentImageCount, parentSamplerCount, kernelDataOffset, samplerOffset);
-        delete[] curbeParamsForBlocks;
-        delete[] tokenMask;
-        delete[] sshTokenOffsetsFromKernelData;
-
-        // Patch constant values once after reflection surface creation
-        patchBlocksCurbeWithConstantValues();
-    }
-
     if (DebugManager.flags.ForceDispatchScheduler.get()) {
         if (kernelReflectionSurface == nullptr) {
             kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
@@ -1927,7 +1800,6 @@ void Kernel::createReflectionSurface() {
 void Kernel::getParentObjectCounts(ObjectCounts &objectCount) {
     objectCount.imageCount = 0;
     objectCount.samplerCount = 0;
-    DEBUG_BREAK_IF(!isParentKernel);
 
     for (const auto &arg : this->kernelArguments) {
         if (arg.type == SAMPLER_OBJ) {
@@ -1940,22 +1812,6 @@ void Kernel::getParentObjectCounts(ObjectCounts &objectCount) {
 
 bool Kernel::hasPrintfOutput() const {
     return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf;
-}
-
-size_t Kernel::getInstructionHeapSizeForExecutionModel() const {
-    BlockKernelManager *blockManager = program->getBlockKernelManager();
-    uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
-
-    size_t totalSize = 0;
-    if (isParentKernel) {
-        totalSize = kernelBinaryAlignment - 1; // for initial alignment
-        for (uint32_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-            totalSize += pBlockInfo->heapInfo.KernelHeapSize;
-            totalSize = alignUp(totalSize, kernelBinaryAlignment);
-        }
-    }
-    return totalSize;
 }
 
 void Kernel::patchBlocksCurbeWithConstantValues() {
@@ -2620,10 +2476,6 @@ void Kernel::addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocati
 void Kernel::setReflectionSurfaceBlockBtOffset(uint32_t blockID, uint32_t offset) {
     DEBUG_BREAK_IF(blockID >= program->getBlockKernelManager()->getCount());
     ReflectionSurfaceHelper::setKernelAddressDataBtOffset(getKernelReflectionSurface()->getUnderlyingBuffer(), blockID, offset);
-}
-
-bool Kernel::checkIfIsParentKernelAndBlocksUsesPrintf() {
-    return isParentKernel && getProgram()->getBlockKernelManager()->getIfBlockUsesPrintf();
 }
 
 uint64_t Kernel::getKernelStartOffset(

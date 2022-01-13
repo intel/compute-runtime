@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,10 +31,6 @@ Kernel *MultiDispatchInfo::peekMainKernel() const {
         return nullptr;
     }
     return mainKernel ? mainKernel : dispatchInfos.begin()->getKernel();
-}
-
-Kernel *MultiDispatchInfo::peekParentKernel() const {
-    return (mainKernel && mainKernel->isParentKernel) ? mainKernel : nullptr;
 }
 
 void MultiDispatchInfo::backupUnifiedMemorySyncRequirement() {

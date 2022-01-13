@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,10 +42,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
     auto &kernel = *pKernel;
     const auto &kernelInfo = kernel.getKernelInfo();
-
-    if (kernel.isParentKernel && !this->context->getDefaultDeviceQueue()) {
-        return CL_INVALID_OPERATION;
-    }
 
     if (!kernel.isPatched()) {
         if (event) {

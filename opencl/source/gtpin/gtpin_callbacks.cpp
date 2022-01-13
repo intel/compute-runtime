@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         // Enlarge local copy of SSH by 1 SS
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
-        if (pKernel->isParentKernel || !gtpinHelper.addSurfaceState(pKernel)) {
+        if (!gtpinHelper.addSurfaceState(pKernel)) {
             // Kernel with no SSH or Kernel EM, not supported
             return;
         }
@@ -117,7 +117,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         auto rootDeviceIndex = device.getRootDeviceIndex();
         auto pMultiDeviceKernel = castToObjectOrAbort<MultiDeviceKernel>(kernel);
         auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize() == 0) {
+        if (pKernel->getSurfaceStateHeapSize() == 0) {
             // Kernel with no SSH, not supported
             return;
         }

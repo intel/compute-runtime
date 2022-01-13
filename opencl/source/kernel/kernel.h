@@ -236,8 +236,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         return kernelReflectionSurface;
     }
 
-    size_t getInstructionHeapSizeForExecutionModel() const;
-
     // Helpers
     cl_int setArg(uint32_t argIndex, uint32_t argValue);
     cl_int setArg(uint32_t argIndex, uint64_t argValue);
@@ -324,7 +322,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     uint32_t allBufferArgsStateful = CL_TRUE;
 
     bool isBuiltIn = false;
-    const bool isParentKernel;
 
     uint32_t getThreadArbitrationPolicy() const {
         return threadArbitrationPolicy;
@@ -332,8 +329,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     KernelExecutionType getExecutionType() const {
         return executionType;
     }
-
-    bool checkIfIsParentKernelAndBlocksUsesPrintf();
 
     bool is32Bit() const {
         return kernelInfo.kernelDescriptor.kernelAttributes.gpuPointerSize == 4;

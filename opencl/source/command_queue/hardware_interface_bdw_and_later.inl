@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,18 +19,13 @@ inline void HardwareInterface<GfxFamily>::getDefaultDshSpace(
     CommandQueue &commandQueue,
     const MultiDispatchInfo &multiDispatchInfo,
     size_t &totalInterfaceDescriptorTableSize,
-    Kernel *parentKernel,
     IndirectHeap *dsh,
     LinearStream *commandStream) {
 
     size_t numDispatches = multiDispatchInfo.size();
     totalInterfaceDescriptorTableSize *= numDispatches;
 
-    if (!parentKernel) {
-        dsh->getSpace(totalInterfaceDescriptorTableSize);
-    } else {
-        dsh->getSpace(commandQueue.getContext().getDefaultDeviceQueue()->getDshOffset() - dsh->getUsed());
-    }
+    dsh->getSpace(totalInterfaceDescriptorTableSize);
 }
 
 template <typename GfxFamily>
