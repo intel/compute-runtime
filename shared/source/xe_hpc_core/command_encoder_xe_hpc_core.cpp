@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,11 +34,12 @@ template <>
 void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const HardwareInfo &hwInfo) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
-        interfaceDescriptor.setThreadGroupDispatchSize(3u);
+        interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
     }
 
     if (DebugManager.flags.ForceThreadGroupDispatchSize.get() != -1) {
-        interfaceDescriptor.setThreadGroupDispatchSize(DebugManager.flags.ForceThreadGroupDispatchSize.get());
+        interfaceDescriptor.setThreadGroupDispatchSize(static_cast<INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE>(
+            DebugManager.flags.ForceThreadGroupDispatchSize.get()));
     }
 }
 
@@ -169,7 +170,7 @@ template <>
 void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor,
                                                         uint32_t value,
                                                         const HardwareInfo &hwInfo) {
-    interfaceDescriptor.setNumberOfBarriers(value);
+    interfaceDescriptor.setNumberOfBarriers(static_cast<INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS>(value));
 }
 
 template <>
@@ -200,8 +201,7 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareIn
 
 template <>
 void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
-    using PREFERRED_SLM_SIZE_OVERRIDE = typename Family::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_SIZE_OVERRIDE;
-    using PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS = typename Family::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS;
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
     const uint32_t threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
     const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
@@ -221,18 +221,18 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
 
     struct SizeToPreferredSlmValue {
         uint32_t upperLimit;
-        PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS valueToProgram;
+        PREFERRED_SLM_ALLOCATION_SIZE valueToProgram;
     };
     const std::array<SizeToPreferredSlmValue, 6> ranges = {{
         // upper limit, retVal
-        {0, PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_0K},
-        {16 * KB, PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_16K},
-        {32 * KB, PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_32K},
-        {64 * KB, PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_64K},
-        {96 * KB, PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_96K},
+        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K},
+        {16 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K},
+        {32 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K},
+        {64 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K},
+        {96 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K},
     }};
 
-    auto programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_128K;
+    auto programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K;
     for (auto &range : ranges) {
         if (slmSize <= range.upperLimit) {
             programmableIdPreferredSlmSize = range.valueToProgram;
@@ -241,16 +241,29 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
     }
 
     if ((slmSize == 0) && (Family::isXlA0(hwInfo))) {
-        programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_16K;
+        programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K;
     }
 
-    pInterfaceDescriptor->setPreferredSlmSizeOverride(PREFERRED_SLM_SIZE_OVERRIDE::PREFERRED_SLM_SIZE_OVERRIDE_IS_ENABLED);
-    pInterfaceDescriptor->setPreferredSlmAllocationSizePerDss(programmableIdPreferredSlmSize);
+    pInterfaceDescriptor->setPreferredSlmAllocationSize(programmableIdPreferredSlmSize);
 
     if (DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
         auto toProgram =
-            static_cast<PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS>(DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
-        pInterfaceDescriptor->setPreferredSlmAllocationSizePerDss(toProgram);
+            static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
+        pInterfaceDescriptor->setPreferredSlmAllocationSize(toProgram);
+    }
+}
+
+template <>
+void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
+    auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
+    if (DebugManager.flags.ForceBtpPrefetchMode.get() != -1) {
+        enablePrefetch = static_cast<bool>(DebugManager.flags.ForceBtpPrefetchMode.get());
+    }
+
+    if (enablePrefetch) {
+        interfaceDescriptor.setBindingTableEntryCount(std::min(bindingTableEntryCount, 31u));
+    } else {
+        interfaceDescriptor.setBindingTableEntryCount(0u);
     }
 }
 

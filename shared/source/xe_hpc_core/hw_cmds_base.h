@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ struct XE_HPC_CORE {
 
     static constexpr bool isUsingL3Control = false;
     static constexpr bool isUsingMediaSamplerDopClockGate = false;
+    static constexpr bool supportsSampler = false;
 
     static bool isXlA0(const HardwareInfo &hwInfo) {
         auto revId = hwInfo.platform.usRevId & pvcSteppingBits;

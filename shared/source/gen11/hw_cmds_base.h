@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ namespace NEO {
 struct GEN11 {
 #include "shared/source/generated/gen11/hw_cmds_generated_gen11.inl"
 
+    static constexpr bool supportsSampler = true;
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

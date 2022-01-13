@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,21 +15,19 @@
 template <typename FamilyType>
 struct PreferredSlmTestValues {
     uint32_t preferredSlmAllocationSizePerDss;
-    typename FamilyType::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS expectedValueInIdd;
+    typename FamilyType::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE expectedValueInIdd;
 };
 
 template <typename FamilyType>
 void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest, NEO::HardwareInfo &hwInfo) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using PREFERRED_SLM_SIZE_OVERRIDE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_SIZE_OVERRIDE;
-    using PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS;
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
     auto threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
     uint32_t localWorkGroupsPerDssCounts[] = {1, 2, 4};
 
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-    EXPECT_EQ(0u, idd.getPreferredSlmAllocationSizePerDss());
-    EXPECT_EQ(PREFERRED_SLM_SIZE_OVERRIDE::PREFERRED_SLM_SIZE_OVERRIDE_IS_DISABLED, idd.getPreferredSlmSizeOverride());
+    EXPECT_EQ(0u, idd.getPreferredSlmAllocationSize());
 
     const std::array<NEO::SlmPolicy, 3> slmPolicies = {
         NEO::SlmPolicy::SlmPolicyNone,
@@ -50,8 +48,7 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
                                                                                  slmTotalSize,
                                                                                  slmPolicy);
 
-                EXPECT_EQ(valueToTest.expectedValueInIdd, idd.getPreferredSlmAllocationSizePerDss());
-                EXPECT_EQ(PREFERRED_SLM_SIZE_OVERRIDE::PREFERRED_SLM_SIZE_OVERRIDE_IS_ENABLED, idd.getPreferredSlmSizeOverride());
+                EXPECT_EQ(valueToTest.expectedValueInIdd, idd.getPreferredSlmAllocationSize());
             }
         }
     }

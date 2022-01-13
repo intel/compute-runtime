@@ -87,7 +87,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             offset += kernelDescriptor.entryPoints.skipPerThreadDataLoad;
         }
         idd.setKernelStartPointer(offset);
-        idd.setKernelStartPointerHigh(0u);
     }
 
     auto threadsPerThreadGroup = args.dispatchInterface->getNumThreadsPerThreadGroup();
@@ -141,7 +140,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         }
     }
 
-    idd.setSamplerStatePointer(samplerStateOffset);
+    if constexpr (Family::supportsSampler) {
+        idd.setSamplerStatePointer(samplerStateOffset);
+    }
 
     EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
 

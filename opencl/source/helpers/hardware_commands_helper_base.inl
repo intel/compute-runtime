@@ -140,7 +140,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     size_t sizeCrossThreadData,
     size_t sizePerThreadData,
     size_t bindingTablePointer,
-    size_t offsetSamplerState,
+    [[maybe_unused]] size_t offsetSamplerState,
     uint32_t numSamplers,
     uint32_t threadsPerThreadGroup,
     const Kernel &kernel,
@@ -158,8 +158,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     auto interfaceDescriptor = GfxFamily::cmdInitInterfaceDescriptorData;
 
     // Program the kernel start pointer
-    interfaceDescriptor.setKernelStartPointerHigh(kernelStartOffset >> 32);
-    interfaceDescriptor.setKernelStartPointer((uint32_t)kernelStartOffset);
+    interfaceDescriptor.setKernelStartPointer(static_cast<uint32_t>(kernelStartOffset & std::numeric_limits<uint32_t>::max()));
 
     // # of threads in thread group should be based on LWS.
     interfaceDescriptor.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
@@ -173,7 +172,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
-    interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+    if constexpr (GfxFamily::supportsSampler) {
+        interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+    }
 
     EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
 

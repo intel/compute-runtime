@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5150,49 +5150,48 @@ STATIC_ASSERT(20 == sizeof(POSTSYNC_DATA));
 typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     union tagTheStructure {
         struct tagCommon {
-            uint32_t Reserved_0_0_5 : BITFIELD_RANGE(0, 5);
-            uint32_t KernelStartPointer : BITFIELD_RANGE(6, 31);
-
-            uint32_t KernelStartPointerHigh : BITFIELD_RANGE(0, 15);
-            uint32_t Reserved_1_16_31 : BITFIELD_RANGE(16, 31);
-
-            uint32_t Reserved_2_0_6 : BITFIELD_RANGE(0, 6);
+            // DWORD 0
+            uint64_t Reserved_0 : BITFIELD_RANGE(0, 5);
+            uint64_t KernelStartPointer : BITFIELD_RANGE(6, 31);
+            // DWORD 1
+            uint64_t Reserved_32 : BITFIELD_RANGE(32, 63);
+            // DWORD 2
+            uint32_t Reserved_64 : BITFIELD_RANGE(0, 6);
             uint32_t SoftwareExceptionEnable : BITFIELD_RANGE(7, 7);
-            uint32_t Reserved_2_8_10 : BITFIELD_RANGE(8, 10);
+            uint32_t Reserved_72 : BITFIELD_RANGE(8, 10);
             uint32_t MaskStackExceptionEnable : BITFIELD_RANGE(11, 11);
-            uint32_t Reserved_2_12_12 : BITFIELD_RANGE(12, 12);
+            uint32_t Reserved_76 : BITFIELD_RANGE(12, 12);
             uint32_t IllegalOpcodeExceptionEnable : BITFIELD_RANGE(13, 13);
-            uint32_t Reserved_2_14_15 : BITFIELD_RANGE(14, 15);
+            uint32_t Reserved_78 : BITFIELD_RANGE(14, 15);
             uint32_t FloatingPointMode : BITFIELD_RANGE(16, 16);
-            uint32_t Reserved_2_17_17 : BITFIELD_RANGE(17, 17);
+            uint32_t Reserved_81 : BITFIELD_RANGE(17, 17);
             uint32_t SingleProgramFlow : BITFIELD_RANGE(18, 18);
             uint32_t DenormMode : BITFIELD_RANGE(19, 19);
             uint32_t ThreadPreemptionDisable : BITFIELD_RANGE(20, 20);
-            uint32_t Reserved_2_21_31 : BITFIELD_RANGE(21, 31);
-
-            uint32_t Reserved_3_0_1 : BITFIELD_RANGE(0, 1);
+            uint32_t Reserved_85 : BITFIELD_RANGE(21, 31);
+            // DWORD 3
+            uint32_t Reserved_96 : BITFIELD_RANGE(0, 1);
             uint32_t SamplerCount : BITFIELD_RANGE(2, 4);
             uint32_t SamplerStatePointer : BITFIELD_RANGE(5, 31);
-
+            // DWORD 4
             uint32_t BindingTableEntryCount : BITFIELD_RANGE(0, 4);
             uint32_t BindingTablePointer : BITFIELD_RANGE(5, 20);
-            uint32_t Reserved_4_21_31 : BITFIELD_RANGE(21, 31);
-
+            uint32_t Reserved_149 : BITFIELD_RANGE(21, 31);
+            // DWORD 5
             uint32_t NumberOfThreadsInGpgpuThreadGroup : BITFIELD_RANGE(0, 9);
-            uint32_t Reserved_5_10_15 : BITFIELD_RANGE(10, 15);
+            uint32_t Reserved_170 : BITFIELD_RANGE(10, 15);
             uint32_t SharedLocalMemorySize : BITFIELD_RANGE(16, 20);
-            uint32_t BarrierEnable : BITFIELD_RANGE(21, 21);
+            uint32_t Reserved_181 : BITFIELD_RANGE(21, 21);
             uint32_t RoundingMode : BITFIELD_RANGE(22, 23);
-            uint32_t Reserved_5_24_25 : BITFIELD_RANGE(24, 25);
+            uint32_t Reserved_184 : BITFIELD_RANGE(24, 25);
             uint32_t ThreadGroupDispatchSize : BITFIELD_RANGE(26, 27);
             uint32_t NumberOfBarriers : BITFIELD_RANGE(28, 30);
-            uint32_t Reserved_5_31_31 : BITFIELD_RANGE(31, 31);
-
-            uint32_t PreferredSlmAllocationSizePerDss : BITFIELD_RANGE(0, 2);
-            uint32_t PreferredSlmSizeOverride : BITFIELD_RANGE(3, 3);
-            uint32_t Reserved_6_4_31 : BITFIELD_RANGE(4, 31);
-
-            uint32_t Reserved_7;
+            uint32_t BtdMode : BITFIELD_RANGE(31, 31);
+            // DWORD 6
+            uint32_t PreferredSlmAllocationSize : BITFIELD_RANGE(0, 3);
+            uint32_t Reserved_196 : BITFIELD_RANGE(4, 31);
+            // DWORD 7
+            uint32_t Reserved_224;
         } Common;
         uint32_t RawData[8];
     } TheStructure;
@@ -5219,6 +5218,11 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         SAMPLER_COUNT_BETWEEN_9_AND_12_SAMPLERS_USED = 0x3,
         SAMPLER_COUNT_BETWEEN_13_AND_16_SAMPLERS_USED = 0x4,
     } SAMPLER_COUNT;
+    typedef enum tagBINDING_TABLE_ENTRY_COUNT {
+        BINDING_TABLE_ENTRY_COUNT_PREFETCH_DISABLED = 0x0,
+        BINDING_TABLE_ENTRY_COUNT_PREFETCH_COUNT_MIN = 0x1,
+        BINDING_TABLE_ENTRY_COUNT_PREFETCH_COUNT_MAX = 0x1f,
+    } BINDING_TABLE_ENTRY_COUNT;
     typedef enum tagSHARED_LOCAL_MEMORY_SIZE {
         SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K = 0x0,
         SHARED_LOCAL_MEMORY_SIZE_ENCODES_1K = 0x1,
@@ -5235,32 +5239,43 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         ROUNDING_MODE_RD = 0x2,
         ROUNDING_MODE_RTZ = 0x3,
     } ROUNDING_MODE;
-    typedef enum tagPREFERRED_SLM_SIZE_OVERRIDE {
-        PREFERRED_SLM_SIZE_OVERRIDE_IS_DISABLED = 0x0,
-        PREFERRED_SLM_SIZE_OVERRIDE_IS_ENABLED = 0x1,
-    } PREFERRED_SLM_SIZE_OVERRIDE;
-    typedef enum tagPREFERRED_SLM_ALLOCATION_SIZE_PER_DSS {
-        PREFERRED_SLM_SIZE_IS_0K = 0x0,
-        PREFERRED_SLM_SIZE_IS_16K = 0x1,
-        PREFERRED_SLM_SIZE_IS_32K = 0x2,
-        PREFERRED_SLM_SIZE_IS_64K = 0x3,
-        PREFERRED_SLM_SIZE_IS_96K = 0x4,
-        PREFERRED_SLM_SIZE_IS_128K = 0x5,
-    } PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS;
-
+    typedef enum tagTHREAD_GROUP_DISPATCH_SIZE {
+        THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8 = 0x0,
+        THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4 = 0x1,
+        THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2 = 0x2,
+        THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1 = 0x3,
+    } THREAD_GROUP_DISPATCH_SIZE;
+    typedef enum tagNUMBER_OF_BARRIERS {
+        NUMBER_OF_BARRIERS_NONE = 0x0,
+        NUMBER_OF_BARRIERS_B1 = 0x1,
+    } NUMBER_OF_BARRIERS;
+    typedef enum tagBTD_MODE {
+        BTD_MODE_DISABLE = 0x0,
+        BTD_MODE_ENABLE = 0x1,
+    } BTD_MODE;
+    typedef enum tagPREFERRED_SLM_ALLOCATION_SIZE {
+        PREFERRED_SLM_ALLOCATION_SIZE_MAX = 0x0,
+        PREFERRED_SLM_ALLOCATION_SIZE_0K = 0x8,
+        PREFERRED_SLM_ALLOCATION_SIZE_16K = 0x9,
+        PREFERRED_SLM_ALLOCATION_SIZE_32K = 0xa,
+        PREFERRED_SLM_ALLOCATION_SIZE_64K = 0xb,
+        PREFERRED_SLM_ALLOCATION_SIZE_96K = 0xc,
+        PREFERRED_SLM_ALLOCATION_SIZE_128K = 0xd,
+    } PREFERRED_SLM_ALLOCATION_SIZE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.FloatingPointMode = FLOATING_POINT_MODE_IEEE_754;
         TheStructure.Common.SingleProgramFlow = SINGLE_PROGRAM_FLOW_MULTIPLE;
         TheStructure.Common.DenormMode = DENORM_MODE_FTZ;
-        TheStructure.Common.ThreadPreemptionDisable =
-            THREAD_PREEMPTION_DISABLE_DISABLE;
+        TheStructure.Common.ThreadPreemptionDisable = THREAD_PREEMPTION_DISABLE_DISABLE;
         TheStructure.Common.SamplerCount = SAMPLER_COUNT_NO_SAMPLERS_USED;
-        TheStructure.Common.SharedLocalMemorySize =
-            SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
+        TheStructure.Common.BindingTableEntryCount = BINDING_TABLE_ENTRY_COUNT_PREFETCH_DISABLED;
+        TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
         TheStructure.Common.RoundingMode = ROUNDING_MODE_RTNE;
-        TheStructure.Common.PreferredSlmSizeOverride = PREFERRED_SLM_SIZE_OVERRIDE_IS_DISABLED;
-        TheStructure.Common.PreferredSlmAllocationSizePerDss = PREFERRED_SLM_SIZE_IS_0K;
+        TheStructure.Common.ThreadGroupDispatchSize = THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8;
+        TheStructure.Common.NumberOfBarriers = NUMBER_OF_BARRIERS_NONE;
+        TheStructure.Common.BtdMode = BTD_MODE_DISABLE;
+        TheStructure.Common.PreferredSlmAllocationSize = PREFERRED_SLM_ALLOCATION_SIZE_MAX;
     }
     static tagINTERFACE_DESCRIPTOR_DATA sInit() {
         INTERFACE_DESCRIPTOR_DATA state;
@@ -5268,7 +5283,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 8);
+        UNRECOVERABLE_IF(index >= 8);
         return TheStructure.RawData[index];
     }
     typedef enum tagKERNELSTARTPOINTER {
@@ -5276,35 +5291,28 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         KERNELSTARTPOINTER_ALIGN_SIZE = 0x40,
     } KERNELSTARTPOINTER;
     inline void setKernelStartPointer(const uint64_t value) {
-        DEBUG_BREAK_IF(value >= 0x100000000);
-        TheStructure.Common.KernelStartPointer = (uint32_t)value >> KERNELSTARTPOINTER_BIT_SHIFT;
+        TheStructure.Common.KernelStartPointer = static_cast<uint32_t>(value) >> KERNELSTARTPOINTER_BIT_SHIFT;
     }
-    inline uint32_t getKernelStartPointer() const {
-        return (TheStructure.Common.KernelStartPointer << KERNELSTARTPOINTER_BIT_SHIFT);
+    inline uint64_t getKernelStartPointer() const {
+        return static_cast<uint64_t>(TheStructure.Common.KernelStartPointer) << KERNELSTARTPOINTER_BIT_SHIFT; // patched
     }
-    inline void setKernelStartPointerHigh(const uint32_t value) {
-        TheStructure.Common.KernelStartPointerHigh = value;
-    }
-    inline uint32_t getKernelStartPointerHigh() const {
-        return (TheStructure.Common.KernelStartPointerHigh);
-    }
-    inline void setSoftwareExceptionEnable(const uint32_t value) {
+    inline void setSoftwareExceptionEnable(const bool value) {
         TheStructure.Common.SoftwareExceptionEnable = value;
     }
-    inline uint32_t getSoftwareExceptionEnable() const {
-        return (TheStructure.Common.SoftwareExceptionEnable);
+    inline bool getSoftwareExceptionEnable() const {
+        return TheStructure.Common.SoftwareExceptionEnable;
     }
-    inline void setMaskStackExceptionEnable(const uint32_t value) {
+    inline void setMaskStackExceptionEnable(const bool value) {
         TheStructure.Common.MaskStackExceptionEnable = value;
     }
-    inline uint32_t getMaskStackExceptionEnable() const {
-        return (TheStructure.Common.MaskStackExceptionEnable);
+    inline bool getMaskStackExceptionEnable() const {
+        return TheStructure.Common.MaskStackExceptionEnable;
     }
-    inline void setIllegalOpcodeExceptionEnable(const uint32_t value) {
+    inline void setIllegalOpcodeExceptionEnable(const bool value) {
         TheStructure.Common.IllegalOpcodeExceptionEnable = value;
     }
-    inline uint32_t getIllegalOpcodeExceptionEnable() const {
-        return (TheStructure.Common.IllegalOpcodeExceptionEnable);
+    inline bool getIllegalOpcodeExceptionEnable() const {
+        return TheStructure.Common.IllegalOpcodeExceptionEnable;
     }
     inline void setFloatingPointMode(const FLOATING_POINT_MODE value) {
         TheStructure.Common.FloatingPointMode = value;
@@ -5340,35 +5348,34 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         SAMPLERSTATEPOINTER_BIT_SHIFT = 0x5,
         SAMPLERSTATEPOINTER_ALIGN_SIZE = 0x20,
     } SAMPLERSTATEPOINTER;
-    inline void setSamplerStatePointer(const uint64_t value) {
-        DEBUG_BREAK_IF(value >= 0x100000000);
-        TheStructure.Common.SamplerStatePointer = (uint32_t)value >> SAMPLERSTATEPOINTER_BIT_SHIFT;
+    inline void setSamplerStatePointer(const uint32_t value) {
+        TheStructure.Common.SamplerStatePointer = static_cast<uint32_t>(value) >> SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
     inline uint32_t getSamplerStatePointer() const {
-        return (TheStructure.Common.SamplerStatePointer << SAMPLERSTATEPOINTER_BIT_SHIFT);
+        return TheStructure.Common.SamplerStatePointer << SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
     inline void setBindingTableEntryCount(const uint32_t value) {
         TheStructure.Common.BindingTableEntryCount = value;
     }
     inline uint32_t getBindingTableEntryCount() const {
-        return (TheStructure.Common.BindingTableEntryCount);
+        return TheStructure.Common.BindingTableEntryCount;
     }
     typedef enum tagBINDINGTABLEPOINTER {
         BINDINGTABLEPOINTER_BIT_SHIFT = 0x5,
         BINDINGTABLEPOINTER_ALIGN_SIZE = 0x20,
     } BINDINGTABLEPOINTER;
-    inline void setBindingTablePointer(const uint64_t value) {
-        DEBUG_BREAK_IF(value >= 0x100000000);
-        TheStructure.Common.BindingTablePointer = (uint32_t)value >> BINDINGTABLEPOINTER_BIT_SHIFT;
+    inline void setBindingTablePointer(const uint32_t value) {
+        TheStructure.Common.BindingTablePointer = static_cast<uint32_t>(value) >> BINDINGTABLEPOINTER_BIT_SHIFT;
     }
     inline uint32_t getBindingTablePointer() const {
-        return (TheStructure.Common.BindingTablePointer << BINDINGTABLEPOINTER_BIT_SHIFT);
+        return TheStructure.Common.BindingTablePointer << BINDINGTABLEPOINTER_BIT_SHIFT;
     }
     inline void setNumberOfThreadsInGpgpuThreadGroup(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3ff);
         TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup = value;
     }
     inline uint32_t getNumberOfThreadsInGpgpuThreadGroup() const {
-        return (TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup);
+        return TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup;
     }
     inline void setSharedLocalMemorySize(const SHARED_LOCAL_MEMORY_SIZE value) {
         TheStructure.Common.SharedLocalMemorySize = value;
@@ -5376,41 +5383,35 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline SHARED_LOCAL_MEMORY_SIZE getSharedLocalMemorySize() const {
         return static_cast<SHARED_LOCAL_MEMORY_SIZE>(TheStructure.Common.SharedLocalMemorySize);
     }
-    inline void setBarrierEnable(const uint32_t value) {
-        TheStructure.Common.BarrierEnable = (value > 0u) ? 1u : 0u;
-    }
-    inline void setNumberOfBarriers(const uint32_t value) {
-        TheStructure.Common.NumberOfBarriers = value;
-    }
-    inline bool getBarrierEnable() const {
-        return (TheStructure.Common.BarrierEnable);
-    }
-    inline uint32_t getNumberOfBarriers() const {
-        return TheStructure.Common.NumberOfBarriers;
-    }
     inline void setRoundingMode(const ROUNDING_MODE value) {
         TheStructure.Common.RoundingMode = value;
     }
     inline ROUNDING_MODE getRoundingMode() const {
         return static_cast<ROUNDING_MODE>(TheStructure.Common.RoundingMode);
     }
-    inline void setThreadGroupDispatchSize(const uint32_t value) {
+    inline void setThreadGroupDispatchSize(const THREAD_GROUP_DISPATCH_SIZE value) {
         TheStructure.Common.ThreadGroupDispatchSize = value;
     }
-    inline uint32_t getThreadGroupDispatchSize() const {
-        return (TheStructure.Common.ThreadGroupDispatchSize);
+    inline THREAD_GROUP_DISPATCH_SIZE getThreadGroupDispatchSize() const {
+        return static_cast<THREAD_GROUP_DISPATCH_SIZE>(TheStructure.Common.ThreadGroupDispatchSize);
     }
-    inline void setPreferredSlmSizeOverride(const PREFERRED_SLM_SIZE_OVERRIDE value) {
-        TheStructure.Common.PreferredSlmSizeOverride = value;
+    inline void setNumberOfBarriers(const NUMBER_OF_BARRIERS value) {
+        TheStructure.Common.NumberOfBarriers = value;
     }
-    inline PREFERRED_SLM_SIZE_OVERRIDE getPreferredSlmSizeOverride() const {
-        return static_cast<PREFERRED_SLM_SIZE_OVERRIDE>(TheStructure.Common.PreferredSlmSizeOverride);
+    inline NUMBER_OF_BARRIERS getNumberOfBarriers() const {
+        return static_cast<NUMBER_OF_BARRIERS>(TheStructure.Common.NumberOfBarriers);
     }
-    inline void setPreferredSlmAllocationSizePerDss(const PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS value) {
-        TheStructure.Common.PreferredSlmAllocationSizePerDss = value;
+    inline void setBtdMode(const BTD_MODE value) {
+        TheStructure.Common.BtdMode = value;
     }
-    inline PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS getPreferredSlmAllocationSizePerDss() const {
-        return static_cast<PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS>(TheStructure.Common.PreferredSlmAllocationSizePerDss);
+    inline BTD_MODE getBtdMode() const {
+        return static_cast<BTD_MODE>(TheStructure.Common.BtdMode);
+    }
+    inline void setPreferredSlmAllocationSize(const PREFERRED_SLM_ALLOCATION_SIZE value) {
+        TheStructure.Common.PreferredSlmAllocationSize = value;
+    }
+    inline PREFERRED_SLM_ALLOCATION_SIZE getPreferredSlmAllocationSize() const {
+        return static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(TheStructure.Common.PreferredSlmAllocationSize);
     }
 } INTERFACE_DESCRIPTOR_DATA;
 STATIC_ASSERT(32 == sizeof(INTERFACE_DESCRIPTOR_DATA));

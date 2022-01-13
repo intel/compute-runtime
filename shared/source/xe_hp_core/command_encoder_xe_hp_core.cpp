@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,11 +44,12 @@ template <>
 void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const HardwareInfo &hwInfo) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
-        interfaceDescriptor.setThreadGroupDispatchSize(3u);
+        interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
     }
 
     if (DebugManager.flags.ForceThreadGroupDispatchSize.get() != -1) {
-        interfaceDescriptor.setThreadGroupDispatchSize(DebugManager.flags.ForceThreadGroupDispatchSize.get());
+        interfaceDescriptor.setThreadGroupDispatchSize(static_cast<INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE>(
+            DebugManager.flags.ForceThreadGroupDispatchSize.get()));
     }
 }
 

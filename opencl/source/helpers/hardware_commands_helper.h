@@ -51,7 +51,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         size_t sizeCrossThreadData,
         size_t sizePerThreadData,
         size_t bindingTablePointer,
-        size_t offsetSamplerState,
+        [[maybe_unused]] size_t offsetSamplerState,
         uint32_t numSamplers,
         uint32_t numThreadsPerThreadGroup,
         const Kernel &kernel,

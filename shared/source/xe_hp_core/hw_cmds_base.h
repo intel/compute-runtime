@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,7 @@ struct XeHpCore {
 
     static constexpr bool isUsingL3Control = true;
     static constexpr bool isUsingMediaSamplerDopClockGate = true;
+    static constexpr bool supportsSampler = true;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

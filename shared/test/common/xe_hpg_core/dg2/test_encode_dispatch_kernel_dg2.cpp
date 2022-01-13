@@ -20,8 +20,7 @@ using CommandEncodeStatesDg2Test = ::testing::Test;
 
 DG2TEST_F(CommandEncodeStatesDg2Test, GivenSmallSlmTotalSizesWhenSetAdditionalInfoIsCalledThenCorrectValuesAreSet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using PREFERRED_SLM_SIZE_OVERRIDE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_SIZE_OVERRIDE;
-    using PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS;
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
     VariableBackup<unsigned short> revisionId(&defaultHwInfo->platform.usRevId);
     uint32_t threadsCount = 1;
@@ -31,19 +30,19 @@ DG2TEST_F(CommandEncodeStatesDg2Test, GivenSmallSlmTotalSizesWhenSetAdditionalIn
         revisionId = HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_A0, *defaultHwInfo);
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, *defaultHwInfo, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
-        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_128K, idd.getPreferredSlmAllocationSizePerDss());
+        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K, idd.getPreferredSlmAllocationSize());
     }
     {
         revisionId = HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, *defaultHwInfo, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
-        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_0K, idd.getPreferredSlmAllocationSizePerDss());
+        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K, idd.getPreferredSlmAllocationSize());
     }
 }
 
 DG2TEST_F(CommandEncodeStatesDg2Test, givenNoWorkaroundNeededWhenSelectingPreferredSlmSizePerDssThenUseDssCount) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS;
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.platform.usRevId = HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
@@ -56,27 +55,27 @@ DG2TEST_F(CommandEncodeStatesDg2Test, givenNoWorkaroundNeededWhenSelectingPrefer
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, hwInfo, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::SlmPolicyLargeSlm);
-        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_64K, idd.getPreferredSlmAllocationSizePerDss());
+        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 8; // 16 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, hwInfo, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::SlmPolicyLargeSlm);
-        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_32K, idd.getPreferredSlmAllocationSizePerDss());
+        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 9; // 14 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, hwInfo, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::SlmPolicyLargeSlm);
-        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_32K, idd.getPreferredSlmAllocationSizePerDss());
+        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 50; // 2 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 16 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, hwInfo, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::SlmPolicyLargeSlm);
-        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE_PER_DSS::PREFERRED_SLM_SIZE_IS_32K, idd.getPreferredSlmAllocationSizePerDss());
+        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K, idd.getPreferredSlmAllocationSize());
     }
 }

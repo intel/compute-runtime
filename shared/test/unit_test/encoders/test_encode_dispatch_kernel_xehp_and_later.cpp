@@ -212,8 +212,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhe
 
     EXPECT_EQ(idd.getBindingTablePointer(), 0u);
 }
+struct SamplerSupportedMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (HwMapper<productFamily>::GfxProduct::supportsCmdSet(IGFX_XE_HP_CORE)) {
+            return HwMapper<productFamily>::GfxProduct::supportsSampler;
+        }
+        return false;
+    }
+};
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensamplerStateWasCopied) {
+HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensamplerStateWasCopied, SamplerSupportedMatcher) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -370,10 +379,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 
         if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
             EXPECT_NE(0u, idd.getBindingTableEntryCount());
-            EXPECT_NE(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd.getSamplerCount());
         } else {
             EXPECT_EQ(0u, idd.getBindingTableEntryCount());
-            EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd.getSamplerCount());
+        }
+
+        if constexpr (FamilyType::supportsSampler) {
+            if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
+                EXPECT_NE(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd.getSamplerCount());
+            } else {
+                EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd.getSamplerCount());
+            }
         }
     }
 
@@ -394,7 +409,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
         auto &idd = cmd->getInterfaceDescriptor();
 
         EXPECT_EQ(0u, idd.getBindingTableEntryCount());
-        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd.getSamplerCount());
+        if constexpr (FamilyType::supportsSampler) {
+            EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd.getSamplerCount());
+        }
     }
 
     {
@@ -414,7 +431,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
         auto &idd = cmd->getInterfaceDescriptor();
 
         EXPECT_NE(0u, idd.getBindingTableEntryCount());
-        EXPECT_NE(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd.getSamplerCount());
+        if constexpr (FamilyType::supportsSampler) {
+            EXPECT_NE(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd.getSamplerCount());
+        }
     }
 }
 

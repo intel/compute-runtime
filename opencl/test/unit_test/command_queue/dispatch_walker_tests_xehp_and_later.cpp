@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -636,7 +636,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocal
                                          kernel->kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad;
 
     EXPECT_EQ((uint32_t)(expectedKernelStartOffset), idd.getKernelStartPointer());
-    EXPECT_EQ((uint32_t)(expectedKernelStartOffset >> 32), idd.getKernelStartPointerHigh());
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, CsrDependencies(), false, false,
                                                                                false, *cmdQ.get(), multiDispatchInfo, false, false);
@@ -710,7 +709,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     uint64_t expectedKernelStartOffset = kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
 
     EXPECT_EQ((uint32_t)(expectedKernelStartOffset), idd.getKernelStartPointer());
-    EXPECT_EQ((uint32_t)(expectedKernelStartOffset >> 32), idd.getKernelStartPointerHigh());
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, CsrDependencies(), false, false,
                                                                                false, *cmdQ.get(), multiDispatchInfo, false, false);
@@ -1009,7 +1007,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
                                          kernel->kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad;
 
     EXPECT_EQ((uint32_t)(expectedKernelStartOffset), idd.getKernelStartPointer());
-    EXPECT_EQ((uint32_t)(expectedKernelStartOffset >> 32), idd.getKernelStartPointerHigh());
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
@@ -1062,7 +1059,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     uint64_t expectedKernelStartOffset = kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
 
     EXPECT_EQ((uint32_t)(expectedKernelStartOffset), idd.getKernelStartPointer());
-    EXPECT_EQ((uint32_t)(expectedKernelStartOffset >> 32), idd.getKernelStartPointerHigh());
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
